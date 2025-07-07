@@ -5,11 +5,24 @@ import matplotlib.pyplot as plt
 # TO DO -> create template classes for points, lines, loop lines, surfaces & physical objects. This would guarantee a certain flexibility and a more organised work flow
 # For instance, some function in the writing.geo file are pretty redundant, and can be improved. 
 
+class c_phase():
+    def __init__(self,
+                 cr=35e3,
+                 ocr=6e3,
+                 lit_mt=70e3,
+                 lc = 0.5,
+                 wc = 1.5e3):
+        self.cr = cr 
+        self.ocr = ocr
+        self.lit_mt = lit_mt 
+        self.lc = lc
+        self.wc = wc 
+        self.lt_d = (cr+lit_mt)
+        
 
 
 
-
-def function_create_slab_channel(data_real:bool,wc:float,lt:float,SP=[],fname=[]): 
+def function_create_slab_channel(data_real:bool,c_phase,SP=[],fname=[]): 
 
     """
     Input: 
@@ -58,22 +71,23 @@ def function_create_slab_channel(data_real:bool,wc:float,lt:float,SP=[],fname=[]
         theta_mean = SP.theta_mean 
         
     # Create the channel using the subduction interface as guide
-    cx,cy = function_create_subduction_channel(ax,ay,theta_mean,lt,wc)
+    cx,cy = function_create_subduction_channel(ax,ay,theta_mean,c_phase)
+    ox,oy = function_create_oceanic_crust(ax,ay,theta_mean,c_phase.ocr)
     # Correct the slab surface and find the extra node
-    ax,ay,theta_mean = find_extra_node(ax,ay,theta_mean,lt)
+    ax,ay,theta_mean = find_extra_node(ax,ay,theta_mean,c_phase)
     # Correct the subduction channel as well finding the extranode 
     # I needed to correct first the slab and then the channel, because otherwise it was
     # creating an unrealistic bending of the weak zone. Initially I was recomputing the angle 
     # between the linear segment, using an average. It is more convinient use two // lines and then 
     # correcting them. 
-    cx,cy,ex,ey = correct_channel(cx,cy,ax,ay,lt)
+    cx,cy,ex,ey = correct_channel(cx,cy,ax,ay,c_phase)
     isch = np.where(ay>=-100e3)
 
-    return ax,ay,theta_mean,cx,cy,ex,ey,isch[-1]
+    return ax,ay,theta_mean,cx,cy,ex,ey,isch[-1],ox,oy
 
 
-def function_create_subduction_channel(sx,sy,th,lt,wc):
-
+def function_create_subduction_channel(sx,sy,th,c_phase):
+    wc = c_phase.wc
     cx = np.zeros([np.amax(sx.shape),1])
     cy = np.zeros([np.amax(sx.shape),1])
     # Loop over the interface of the slab and find the points on the top of the surface of the subduction channel: the point on the of the top of the channel are perpendicular to the slab interface#
@@ -105,60 +119,125 @@ def function_create_subduction_channel(sx,sy,th,lt,wc):
     return cx,cy
 
 
+def function_create_oceanic_crust(sx,sy,th,olt):
 
+    cx = np.zeros([np.amax(sx.shape),1])
+    cy = np.zeros([np.amax(sx.shape),1])
+    # Loop over the interface of the slab and find the points on the top of the surface of the subduction channel: the point on the of the top of the channel are perpendicular to the slab interface#
+    # Compute the top surface of the subduction channel
+    cx = sx - olt*np.sin(th)
+    cy = sy - olt*np.cos(th)
+    # Find the node that are lower than the left boundary [same function, but switching the position -> ca rotate ]
+    cord_x = 0.0 
+    cord_z = -olt/np.cos(th[0])
+    cy = cy[cx>0.0]
+    cx = cx[cx>0.0]
+    cx = np.insert(cx,0,0.0)  
+    cy = np.insert(cy,0,cord_z)  
 
-def find_extra_node(ax:float,ay:float,t:float,lt:float):
-    # check if there is a node that coincides with the thickness of the overriding plate 
+    
+    
+
+    e_node2,t_ex1 = _find_e_node(cx,cy,cx*0.0,-np.min(sy),flag=False)
+    cx,cy,t  = _correct_(cx,cy,e_node2,0.0,cy*0.0,0.0)
+
+    cx_n = cx[(cx>=0.0) & (cy>=np.min(sy))]
+    cy_n = cy[(cx>=0.0) & (cy>=np.min(sy))]
+
+    return cx_n,cy_n
+
+    
+    
+def _find_e_node(ax,ay,t,lt,flag=False):
+    if lt == 0.0 and flag == False: 
+    
+        return [],[]
+    
     for i in range (0,len(ax)-1):
+    
+        if flag == False: 
+            a = i 
+            b = i+1 
+        else: 
+            a = i+1 
+            b = i 
+    
         if ay[i] == -lt:
-            extra_node = 0
-        elif ay[i] > -lt and ay[i+1] < -lt:
-            extra_node = 1
+            e_node = 0
+    
+        elif ay[a] > -lt and ay[b] < -lt:
+            e_node = 1
             index_extra_node = i+1
-            theta_extra = t[i]/2+t[i+1]/2
+            t_ex = t[i]/2+t[i+1]/2
+    
+    return index_extra_node,t_ex
 
-    if extra_node == 1:
-     # add a no
-        ax_ex = ax[index_extra_node-1] + ( (ax[index_extra_node] - ax[index_extra_node-1])
-                     * (lt - np.abs(ay[index_extra_node-1])) ) / (np.abs(ay[index_extra_node]) - np.abs(ay[index_extra_node-1]))
-        ax = np.insert(ax,index_extra_node,ax_ex) #ax[index_extra_node-2] + ( (ax[index_extra_node] - ax[index_extra_node-2])* (lt - np.abs(ay[index_extra_node-2])) ) / (np.abs(ay[index_extra_node]) - np.abs(ay[index_extra_node-2])))
-        ay = np.insert(ay,index_extra_node,-lt)  
-        t = np.insert(t,index_extra_node,theta_extra)  
-        #nr_interface_points = nr_interface_points +1 
+
+def _correct_(ax,ay,index_extra_node,lt,t,tex):
+    
+    if index_extra_node == []:
+        return ax,ay,t
+    
+    ax_ex = ax[index_extra_node-1] + ( (ax[index_extra_node] - ax[index_extra_node-1])
+                 * (lt - np.abs(ay[index_extra_node-1])) ) / (np.abs(ay[index_extra_node]) - np.abs(ay[index_extra_node-1]))
+    
+    ax = np.insert(ax,index_extra_node,ax_ex) #ax[index_extra_node-2] + ( (ax[index_extra_node] - ax[index_extra_node-2])* (lt - np.abs(ay[index_extra_node-2])) ) / (np.abs(ay[index_extra_node]) - np.abs(ay[index_extra_node-2])))
+    
+    ay = np.insert(ay,index_extra_node,-lt)  
+    
+    t = np.insert(t,index_extra_node,tex)  
+    
+    return ax,ay,t 
+    
+
+def find_extra_node(ax:float,ay:float,t:float,c_phase):
+
+    #-- Find nodes 
+    e_node_uc,t_ex1 = _find_e_node(ax,ay,t,c_phase.cr*(1-c_phase.lc))
+    
+    e_node_lc,t_ex2 = _find_e_node(ax,ay,t,c_phase.cr)
+    
+    e_node_lit,t_ex3 = _find_e_node(ax,ay,t,c_phase.lt_d)
+    
+    #-- e_node - correction 
+    
+    ax,ay,t = _correct_(ax,ay,e_node_uc,c_phase.cr*(1-c_phase.lc),t,t_ex1)
+    
+    ax,ay,t = _correct_(ax,ay,e_node_lc,c_phase.cr,t,t_ex2)
+    
+    ax,ay,t = _correct_(ax,ay,e_node_lit,c_phase.lt_d,t,t_ex3)
 
     return ax,ay,t
 
 
-def correct_channel(cx,cy,sx,sy,lt,decouplig_depth=-100e3):
+def correct_channel(cx,cy,sx,sy,c_phase,decouplig_depth=-100e3):
     nr_channel_points = np.amax(cx.shape)
-
-    for i in range (0,nr_channel_points-1):
-        if cy[i] == -lt:
-            extra_node = 0
-        elif cy[i] > -lt and cy[i+1] < -lt:
-            extra_node = 1
-            index_extra_node = i+1
-
-    if extra_node == 1:
-    # add a node for a flat base of the overriding plate
-        cx_ex = cx[index_extra_node-1] + ((cx[index_extra_node] - cx[index_extra_node-1]) * (lt - np.abs(cy[index_extra_node-1])) ) / (np.abs(cy[index_extra_node]) - np.abs(cy[index_extra_node-1]))
-        cx = np.insert(cx,index_extra_node,cx_ex)#cx[index_extra_node-2] + ( (cx[index_extra_node] - cx[index_extra_node-2]) * (lt - np.abs(cy[index_extra_node-2])) ) / (np.abs(cy[index_extra_node]) - np.abs(cy[index_extra_node-2])))
-        cy = np.insert(cy,index_extra_node,-lt)   
+    #-- Find nodes 
+    e_node_uc,t_ex1 = _find_e_node(cx,cy,np.zeros_like(cx),c_phase.cr*(1-c_phase.lc))
+    
+    e_node_lc,t_ex2 = _find_e_node(cx,cy,np.zeros_like(cx),c_phase.cr)
+    
+    e_node_lit,t_ex3 = _find_e_node(cx,cy,np.zeros_like(cx),c_phase.lt_d)
+    
+    cx,cy,t = _correct_(cx,cy,e_node_uc,c_phase.cr*(1-c_phase.lc),cx*0.0,0)
+    cx,cy,t = _correct_(cx,cy,e_node_lc,c_phase.cr,cx*0.0,0)
+    cx,cy,t = _correct_(cx,cy,e_node_lit,c_phase.lt_d,cx*0.0,0)
+    
 
     if decouplig_depth != 0.0:
         cx = cx[cy>=decouplig_depth]
         cy = cy[cy>=decouplig_depth]
     
     else:
-        cx = cx[0:index_extra_node+1:1]
-        cy = cy[0:index_extra_node+1:1]
+        cx = cx[0:e_node_lit+1:1]
+        cy = cy[0:e_node_lit+1:1]
 
     # we want to add an extra node in the middle of the channel so that we can easily assign boundary conditions and we control the mesh there
     for i in range (0,len(sx)-1):
-        if sy[i] == -lt:
+        if sy[i] == - c_phase.lt_d:
             slab_x_extra_node = sx[i]
-    ex = (cx[index_extra_node] + slab_x_extra_node) / 2
-    ey = -lt
+    ex = (cx[e_node_lit] + slab_x_extra_node) / 2
+    ey = - c_phase.lt_d
 
 
     return cx,cy,ex,ey

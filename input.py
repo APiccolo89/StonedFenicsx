@@ -21,6 +21,22 @@ from dolfinx import mesh, fem, io, nls, log
 from dolfinx.fem.petsc import NonlinearProblem
 from dolfinx.nls.petsc import NewtonSolver
 
+class c_phase():
+    def __init__(self,
+                 cr=35e3,
+                 ocr=6e3,
+                 lit_mt=70e3,
+                 lc = 0.5,
+                 wc = 1e5):
+        self.cr = cr 
+        self.ocr = ocr
+        self.lit_mt = lit_mt 
+        self.lc = lc
+        self.wc = wc 
+        self.lt_d = -(cr+lit_mt)
+        
+
+
 def set_initial_():
     v_ST = [1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0]
 
@@ -97,17 +113,6 @@ def set_initial_():
 
     make_mesh = True
     meshfilename = '%s.msh'%(sname)
-#    if os.path.isfile(meshfilename) == False or make_mesh == True: 
-#        C_msh._create_mesh_(sname=sname,
-#                            width_channel=r_channel,
-#                            depth_high_res_trench=r_channel,
-#                            lc_normal = 2e3,
-#                            lc_litho=2e3,
-#                            lc_top = 2e3,
-#                            X=X,
-#                            Z=Z,
-#                            path_test=IOCtrl.path_test,
-#                            van_keken = 1)
 
     BC_STOKES = [['Top','NoSlip',np.array([0.0,0.0],dtype=np.float64)],
                  ['Bottom','DoNothing',np.array([0.0,0.0],dtype=np.float64)],
@@ -137,19 +142,52 @@ def set_initial_():
     return PDB,BC_spec,num_ctrl,scal,IOCtrl
 
 
+def _create_points(gmsh,x,y,res,tag_pr,point_flag=False):
+    tag_list = []
+    if point_flag == True:
+        gmsh.model.geo.addPoint(x, y, 0.0,res,tag_pr+1) 
+        tag_list.append(tag_pr+1)
+    else:
+        for i in range(len(x)):
+            gmsh.model.geo.addPoint(x[i], y[i], 0.0,res,tag_pr+1+i) 
+            tag_list.append(tag_pr+1+i)
+    
+    max_tag = np.max(tag_list)
+    
+    return max_tag,tag_list
+
+
+def _create_lines(gmsh,previous, tag_p,flag=False):
+    
+    len_p = len(tag_p)-1
+    tag_l = []
+    previous = previous+1
+    for i in range(len_p): 
+        tag_1 = tag_p[i]
+        tag_2 = tag_p[i+1] 
+        gmsh.model.geo.addLine(tag_1,tag_2,previous+i)
+        tag_l.append(previous+i)
+    max_tag = np.max(tag_l)
+    
+    return max_tag,tag_l
+
 def create_parallel_mesh(ctrl,ctrlio):
+    
+    
+    
     from dolfinx.io import XDMFFile, gmshio
     from mpi4py import MPI
     import gmsh 
+    from make_mesh.Subducting_plate import Slab
+    import make_mesh.Function_make_mesh as fmm 
 
-    oc_crust      = 6e3 
-    crust         = 35e3
-    lc            = 0.3 
-    lit_mantle_tk = 60e3 
-    lit_tk        = crust+lit_mantle_tk
+
+
+
+    c_phase = fmm.c_phase()
     
     # Set up slab top surface a
-    Data_real = False; S = []
+    Data_Real = False; S = []
     van_keken = 1
     if (Data_Real==False) & (isinstance(S, Slab)== False):
         if van_keken == 1: 
@@ -157,9 +195,9 @@ def create_parallel_mesh(ctrl,ctrlio):
             max_x           = 660e3                 # Max domain x direction
             min_y           = -600e3 # Min domain y direction
             max_y           = 0.0 # Max domain y direction 
-            S = ffm.Slab(D0 = 100.0, L0 = 800.0, Lb = 400, trench = 0.0,theta_0=5, theta_max = 45.0, num_segment=100,flag_constant_theta=True,y_min=min_y)
+            S = Slab(D0 = 100.0, L0 = 800.0, Lb = 400, trench = 0.0,theta_0=5, theta_max = 45.0, num_segment=100,flag_constant_theta=True,y_min=min_y)
         else: 
-            S = fmm.Slab(D0 = 100.0, L0 = 800.0, Lb = 400, trench = 0.0,theta_0=1.0, theta_max = 45.0, num_segment=100,flag_constant_theta=False,y_min=min_y)
+            S = Slab(D0 = 100.0, L0 = 800.0, Lb = 400, trench = 0.0,theta_0=1.0, theta_max = 45.0, num_segment=100,flag_constant_theta=False,y_min=min_y)
 
         for a in dir(S):
             if (not a.startswith('__')):
@@ -168,20 +206,57 @@ def create_parallel_mesh(ctrl,ctrlio):
                     print('%s = %.2f'%(a, att))
 
     # Create the subduction interfaces using either the real data set, or the slab class
-    slab_x, slab_y, theta_mean,channel_x,channel_y,extra_x,extra_y,isch = fmm.function_create_slab_channel(Data_Real,width_channel,lithosphere_thickness,S,real_slab_file)
-    
+    slab_x, slab_y, theta_mean,channel_x,channel_y,extra_x,extra_y,isch,oc_cx,oc_cy = fmm.function_create_slab_channel(Data_Real,c_phase,SP=S)
     
     gmsh.initialize()
     
+    #-- Create the subduction,channel and oceanic crust points 
+    max_tag_s,tag_subduction   = _create_points(gmsh,slab_x,slab_y,c_phase.wc,0)
+    max_tag_c,tag_channel      = _create_points(gmsh,channel_x,channel_y,c_phase.wc,max_tag_s)
+    max_tag_oc,tag_oc          = _create_points(gmsh,channel_x,channel_y,c_phase.wc,max_tag_c)
+    max_tag_a,tag_left_c       = _create_points(gmsh,min_x,min_y,c_phase.wc*2,max_tag_oc,True)
+    max_tag_b,tag_right_c      = _create_points(gmsh,max_x,min_y,c_phase.wc*2,max_tag_a,True)
+    max_tag_c,tag_right_c_l    = _create_points(gmsh,max_x,-c_phase.lt_d,c_phase.wc*2,max_tag_b,True)
+    max_tag_d,tag_right_c_t    = _create_points(gmsh,max_x,max_y,c_phase.wc*2,max_tag_c,True)
+    
+    #-- 
+    if c_phase.cr !=0: 
+        max_tag_e,tag_right_c_cr    = _create_points(gmsh,max_x,-c_phase.cr,c_phase.wc*2,max_tag_d,True)
+        if c_phase.lc !=0: 
+            max_tag_f,tag_right_c_lcr    = _create_points(gmsh,max_x,-c_phase.cr*(1-c_phase.lc),c_phase.wc*2,max_tag_e,True)
+    
+    
+    # -- Create Lines 
+    max_tag_line_subduction,tag_L_sub = _create_lines(gmsh,0,tag_subduction,False)
+    max_tag_line_channel,tag_L_ch     = _create_lines(gmsh,max_tag_line_subduction,tag_channel,False)
+    max_tag_line_ocean,tag_L_oc       = _create_lines(gmsh,max_tag_line_channel,tag_oc,False)
+    #Top Boundary
+    
+    # Right Boundary
+    
+    # Bottom Boundary
+    
+    # Left Boundary 
+    
+    # Lithosphere
+
+    # Crust
+    
+    # Lower crust 
+    
+        
+    
+    
+    # -- Create loop 
+    
+    # -- Create surfaces 
+    
+    # -- Mesh -> parallel 
     
     
     
     
-    # -> Generate the subduction node and channel node 
     
-    
-    # -> Generate the loop of the phase 
-    # -> Generate the mesh 
     
     
     
@@ -250,8 +325,8 @@ def Poisson_lithostatic_tutorial(pdb,BC,ctrl,IOCtrl,sc):
 
 if __name__ == "__main__":
     
-    pdb,BC_spec,ctrl,sc = set_initial_()
-    Poisson_lithostatic_tutorial(pdb,BC_spec,ctrl,sc)
+    pdb,BC_spec,ctrl,sc,IOCtrl = set_initial_()
+    Poisson_lithostatic_tutorial(pdb,BC_spec,ctrl,IOCtrl,sc)
     
     
     
