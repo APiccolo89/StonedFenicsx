@@ -1,0 +1,37 @@
+BUILDING THE MESH
+
+The mesh is built using Gmsh (Geuzaine & Remacle, 2009). Here, we briefly describe the steps required to make a generic subduction geometry mesh. This workflow can be easily adapted to any complex subduction geometry desired. 
+
+The first step towards building a mesh with Gmsh is to make a .geo file, which sets up the entire mesh. Here, we provide a meshing script make_mesh.py that makes a .geo file for you. To get the make_mesh.py script to work, all you need is a file with a predefined subduction geometry with the first column indicating all the x-coordinates in km with the convention that the positive x-axis is towards the right and the second column indicating the y-coordinates in km with the convention that the y-axis is positive downwards. 
+
+In the input section of make_mesh.py, the model dimensions and resolution of different sections of the mesh can be changed. After that, the script dives into writing the .geo file. The .geo file starts by defining the different resolutions that will be used throughout the mesh. Then, all the points in the mesh (i.e., those setting up the model domain and the subduction geometry) are written including the desired resolution at each point. This way, we can easily define a high resolution at the subduction interface and a lower resolution in parts of the mantle (i.e., lower left corner). 
+
+We add additional points in the mesh to form a subduction channel between the slab and the overriding plate (its width can be specified in the input parameters) to deal with the discontinuity in kinematically described velocities on the downgoing plate interface and the overriding plate. 
+
+After describing all the points in the mesh, we define the relevant lines in the mesh by connecting two points. We add flags (i.e., specific numbers) to certain lines to simplify the setup of the boundary conditions in iFieldstone. For example, we give the 101 flag to all lines that together create the top of the subducting plate, so that we know that we have to impose a velocity to all element edges with a 101 flag.
+
+We then create a closed loop of the lines (a line loop) for each area in the mesh. Note that all the line loops are created counterclockwise. Consistency in the direction of the line loops is important to preserve sign consistency of all areas across the mesh. This is handy when setting up the surfaces later. Correct signs of line loops become increasingly important when going towards three-dimensional meshes. Also note that to set up line loops correctly, the individual lines need to have the correct direction as well. For example, line number 1 which might be defined as the line from point 1 to point 2, should be called line number -1 when the line from point 2 to point 1 is required in the line loop. 
+
+After making the line loops, each line loop is made into a plane surface. Combining these separate plane surfaces into a physical surface completes the mesh setup. 
+
+We add one additional line to the mesh for the plane surface of the subduction channel:
+
+MeshAlgorithm Surface{2000000} = 3;
+
+This ensures that the width of the channel is always one element, which reduces the amount of miniconvection cells in the channel in the vicinity of contrasting kinematic boundary conditions at the interface between the subducting slab and the overriding plate. 
+
+So, now you can run
+
+$ python3 make_mesh.py
+
+and the script produces the .geo file (note that your .txt file with coordinates and the make_mesh.py script need to be in the same folder).
+
+You can open this .geo file in Gmsh version 4.5.6 or later 
+(earlier versions will not support the last line in the .geo script describing 
+the one-element wide area). To produce the mesh in the Gmsh GUI, 
+click on 'mesh', and then '2D'. 
+To increase the order of the elements (as needed in iFieldstone), click 'Set order 2'.
+ To save the mesh in the format that iFieldstone can handle, click on 
+ 'File > Export' and choose extension 'Mesh - Gmsh MSH (*.msh)'. 
+ In the little pop-up box with options, choose 'Version 2 ASCII' and click 'OK'. 
+ This will then produce a .msh file that can be read in and used by iFieldstone. 
