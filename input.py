@@ -20,6 +20,8 @@ from petsc4py import PETSc
 from dolfinx import mesh, fem, io, nls, log
 from dolfinx.fem.petsc import NonlinearProblem
 from dolfinx.nls.petsc import NewtonSolver
+import matplotlib.pyplot as plt
+
 
 class c_phase():
     def __init__(self,
@@ -142,19 +144,53 @@ def set_initial_():
     return PDB,BC_spec,num_ctrl,scal,IOCtrl
 
 
-def _create_points(gmsh,x,y,res,tag_pr,point_flag=False):
+def _create_points(gmsh,                                            # I am not able to classify 
+                   x:float,                                         # coordinate point/points
+                   y:float,                                         # coordinate point/points
+                   res:float,                                       # resolution of the ppint
+                   tag_pr:int,                                      # maximum tag of the previous group
+                   point_flag:bool=False)-> tuple[int, int, float]: # a flag to highlight that there is only one point, yes, lame. 
+    
+    """_summary_: Summary: function that creates the point using gmsh. 
+    gmsh   : the gmsh object(?)
+    x,y    : coordinate [float]-> can be an array as well as a single point
+    res    : the resolution of the triangular mesh 
+    tag_pr : previous tag -> i.e., since gmsh is internally assign a tag, I need to keep track of these points for then updating coherently
+    Returns:
+        max_tag  : -> the maximum tag of function call
+        tag_list : -> the list of tag for the point of this function call
+        coord    : -> the coordinates -> rather necessary for some functionality later on. Small modification {should I change the name?} -> Add also the tag,  
+    
+    Problem that solves: for a given list of points (from 1 to N) -> call gmsh function, create points, store information for the setup generation
+    -> Nothing sideral, but I try to document everything for the future generations. 
+    """
+    
+    
     tag_list = []
+
     if point_flag == True:
+        coord = np.zeros(3,dtype=np.float64)
         gmsh.model.geo.addPoint(x, y, 0.0,res,tag_pr+1) 
         tag_list.append(tag_pr+1)
+        coord[0] = x 
+        coord[1] = y
+        coord[2] = tag_pr+1
+        
     else:
+        coord = np.zeros([3,len(x)],dtype=np.float64)
         for i in range(len(x)):
-            gmsh.model.geo.addPoint(x[i], y[i], 0.0,res,tag_pr+1+i) 
+
+            gmsh.model.geo.addPoint(x[i], y[i], 0.0, res, tag_pr + 1 + i) 
             tag_list.append(tag_pr+1+i)
+            coord[0,i]   = x[i]
+            coord[1,i]   = y[i] 
+            coord[2,i]   = tag_pr + 1 + i
+            
     
     max_tag = np.max(tag_list)
+
     
-    return max_tag,tag_list
+    return max_tag,tag_list,coord 
 
 
 def _create_lines(gmsh,previous, tag_p,flag=False):
@@ -162,17 +198,32 @@ def _create_lines(gmsh,previous, tag_p,flag=False):
     len_p = len(tag_p)-1
     tag_l = []
     previous = previous+1
+    lines = np.zeros([3,len_p])
     for i in range(len_p): 
         tag_1 = tag_p[i]
         tag_2 = tag_p[i+1] 
         gmsh.model.geo.addLine(tag_1,tag_2,previous+i)
         tag_l.append(previous+i)
+        lines[0,i] = tag_1 
+        lines[1,i] = tag_2 
+        lines[2,i] = previous+i
+        
     max_tag = np.max(tag_l)
     
-    return max_tag,tag_l
+    return max_tag,tag_l,lines
 
+
+# First draft -> I Need to make it a decent function, otherwise this is a fucking nightmare
 def create_parallel_mesh(ctrl,ctrlio):
-    
+    """_summary_: I cannot really do something better that this garbage, everything is connected in perverted design 
+
+    Args:
+        ctrl (_type_): _description_
+        ctrlio (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     
     
     from dolfinx.io import XDMFFile, gmshio
@@ -180,8 +231,6 @@ def create_parallel_mesh(ctrl,ctrlio):
     import gmsh 
     from make_mesh.Subducting_plate import Slab
     import make_mesh.Function_make_mesh as fmm 
-
-
 
 
     c_phase = fmm.c_phase()
@@ -209,44 +258,224 @@ def create_parallel_mesh(ctrl,ctrlio):
     slab_x, slab_y, theta_mean,channel_x,channel_y,extra_x,extra_y,isch,oc_cx,oc_cy = fmm.function_create_slab_channel(Data_Real,c_phase,SP=S)
     
     gmsh.initialize()
+    # Function CREATE POINTS
+    
+    
     
     #-- Create the subduction,channel and oceanic crust points 
-    max_tag_s,tag_subduction   = _create_points(gmsh,slab_x,slab_y,c_phase.wc,0)
-    max_tag_c,tag_channel      = _create_points(gmsh,channel_x,channel_y,c_phase.wc,max_tag_s)
-    max_tag_oc,tag_oc          = _create_points(gmsh,channel_x,channel_y,c_phase.wc,max_tag_c)
-    max_tag_a,tag_left_c       = _create_points(gmsh,min_x,min_y,c_phase.wc*2,max_tag_oc,True)
-    max_tag_b,tag_right_c      = _create_points(gmsh,max_x,min_y,c_phase.wc*2,max_tag_a,True)
-    max_tag_c,tag_right_c_l    = _create_points(gmsh,max_x,-c_phase.lt_d,c_phase.wc*2,max_tag_b,True)
-    max_tag_d,tag_right_c_t    = _create_points(gmsh,max_x,max_y,c_phase.wc*2,max_tag_c,True)
+    # Point of subduction -> In general, the good wisdom would tell you to not put a disordered list of points, 
+    # but, I am paranoid, therefore: just create the geometry of slab, channel and oceanic crust such that y = f(x) where f(x) is always growing (or decreasing)
+    # if you want to be creative, you have to modify the function of create points, up to you, no one is against it. 
     
-    #-- 
+    max_tag_s,tag_subduction,coord_sub             = _create_points(gmsh,slab_x,slab_y,c_phase.wc,0)
+    max_tag_c,tag_channel,coord_channel            = _create_points(gmsh,channel_x,channel_y,c_phase.wc,max_tag_s)
+    max_tag_oc,tag_oc,coord_ocean                  = _create_points(gmsh,oc_cx,oc_cy,c_phase.wc,max_tag_c)
+    # -- Here are the points at the boundary of the model. The size of the model is defined earlier, and subduction zone is modified as such to comply the main geometrical input, 
+    # I used subduction points because they define a few important point. 
+    max_tag_a,tag_left_c,coord_lc                  = _create_points(gmsh,min_x,min_y,c_phase.wc*2,max_tag_oc,True)
+    max_tag_b,tag_right_c_b,coord_bc               = _create_points(gmsh,max_x,min_y,c_phase.wc*2,max_tag_a,True)
+    max_tag_c,tag_right_c_l,coord_lr               = _create_points(gmsh,max_x,-c_phase.lt_d,c_phase.wc*2,max_tag_b,True)
+    max_tag_d,tag_right_c_t,coord_top              = _create_points(gmsh,max_x,max_y,c_phase.wc*2,max_tag_c,True)
+    
     if c_phase.cr !=0: 
-        max_tag_e,tag_right_c_cr    = _create_points(gmsh,max_x,-c_phase.cr,c_phase.wc*2,max_tag_d,True)
+        max_tag_e,tag_right_c_cr,coord_crust       = _create_points(gmsh,max_x,-c_phase.cr,c_phase.wc*2,max_tag_d,True)
         if c_phase.lc !=0: 
-            max_tag_f,tag_right_c_lcr    = _create_points(gmsh,max_x,-c_phase.cr*(1-c_phase.lc),c_phase.wc*2,max_tag_e,True)
+            max_tag_f,tag_right_c_lcr,coord_lcr    = _create_points(gmsh,max_x,-c_phase.cr*(1-c_phase.lc),c_phase.wc*2,max_tag_e,True)
+     
+    
+    fig = plt.figure()
     
     
-    # -- Create Lines 
-    max_tag_line_subduction,tag_L_sub = _create_lines(gmsh,0,tag_subduction,False)
-    max_tag_line_channel,tag_L_ch     = _create_lines(gmsh,max_tag_line_subduction,tag_channel,False)
-    max_tag_line_ocean,tag_L_oc       = _create_lines(gmsh,max_tag_line_channel,tag_oc,False)
-    #Top Boundary
+    # Function CREATE LINES
     
-    # Right Boundary
-    
-    # Bottom Boundary
-    
-    # Left Boundary 
-    
-    # Lithosphere
+    #-- Lines  
+    # This part of the script is devoted to create the line defining the main unit {Line as entity not physical line}
 
-    # Crust
-    
-    # Lower crust 
-    
-        
+    # -- Create Boundary Lines [top boundary] 
+    p_list = [tag_subduction[0],tag_channel[0],tag_right_c_t[0]]
+    max_tag_top,tag_L_T,lines_top = _create_lines(gmsh,0,p_list,False)
     
     
+    
+    #[right boundary]
+    # -- This a tedius job, but remember, dear, to just follow the logic: since I introduced a few new functionality, and the gmsh function are pretty annoying 
+    # I tried to make the function as simple as my poor demented mind can do. So, it is not the most easiest possible, but the easiest that I was able to conceive
+    # in 10 minutes. Good luck 
+    
+    if c_phase.cr !=0: 
+        if c_phase.lc !=0:
+            p_list = [tag_right_c_t[0],tag_right_c_lcr[0],tag_right_c_cr[0],tag_right_c_l[0],tag_right_c_b[0]]
+        else:
+            p_list = [tag_right_c_t[0],tag_right_c_cr[0],tag_right_c_l[0],tag_right_c_b[0]]
+    else: 
+            p_list = [tag_right_c_t[0],tag_right_c_l[0],tag_right_c_b[0]]
+    
+    max_tag_right,tag_L_R,lines_R = _create_lines(gmsh,max_tag_top,p_list,False)
+    #[bottom boundary]
+    p_list = [tag_right_c_b[0],tag_subduction[-1],tag_oc[-1],tag_left_c[0]]
+    max_tag_bottom,tag_L_B,lines_B = _create_lines(gmsh,max_tag_right,p_list,False)
+    # -- 
+    p_list = [tag_left_c[0],tag_oc[0],tag_subduction[0]]
+    max_tag_left,tag_L_L,lines_L = _create_lines(gmsh,max_tag_bottom,p_list,False)
+    # -- Create Lines 
+    max_tag_line_subduction,tag_L_sub,lines_S = _create_lines(gmsh,max_tag_left,tag_subduction,False)
+    max_tag_line_channel,tag_L_ch,lines_ch     = _create_lines(gmsh,max_tag_line_subduction,tag_channel,False)
+    max_tag_line_ocean,tag_L_oc,lines_oc       = _create_lines(gmsh,max_tag_line_channel,tag_oc,False)
+    # Create line overriding plate:
+    #-- find tag of the of the channel 
+    i_s = np.where(coord_sub[1,:]==-c_phase.lt_d)
+    i_s = i_s[0][0]+1 # point subduction
+    i_c = np.where(coord_channel[1,:]==-c_phase.lt_d)
+    i_c = i_c[0][0]+1 
+
+    p_list = [i_s,i_c]
+    max_tag_line_ch_ov,tag_L_ch_ov,lines_ch_ov       = _create_lines(gmsh,max_tag_line_ocean,p_list,False)
+
+    p_list = [i_c,tag_right_c_l[0]]
+    max_tag_line_ov,tag_L_ov,lines_L_ov       = _create_lines(gmsh,max_tag_line_ch_ov,p_list,False)
+    
+    
+    i_s = np.where(coord_sub[1,:]==-c_phase.decoupling)
+    i_s = i_s[0][0]+1
+    i_c = np.where(coord_sub[1,:]==-c_phase.decoupling)
+    i_c = i_c[0][0]+1
+    
+    p_list = [i_s,i_c]
+    max_tag_line,tag_base_ch,lines_base_ch  = _create_lines(gmsh,max_tag_line_ov,p_list,False)
+    if c_phase.cr !=0: 
+        i_c = np.where(coord_channel[1,:]==-c_phase.cr)
+        i_c = i_c[0][0]+1 
+        p_list = [i_c,tag_right_c_cr[0]]
+        max_tag_line_crust,tag_L_cr,lines_cr       = _create_lines(gmsh,max_tag_line,p_list,False)
+
+        if c_phase.lc !=0:
+            i_c = np.where(coord_channel[1,:]==-(1-c_phase.lc)*c_phase.cr)
+            i_c = i_c[0][0]+1 
+            p_list = [i_c,tag_right_c_lcr[0]]
+            max_tag_line_Lcrust,tag_L_Lcr,lines_lcr  = _create_lines(gmsh,max_tag_line_crust,p_list,False)
+
+
+    # Function create Physical line
+    #-- Create Physical Line
+ 
+    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+    
+    gmsh.model.addPhysicalGroup(1, tag_L_T, tag=111)
+    
+    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    gmsh.model.addPhysicalGroup(1, tag_L_R, tag=112)
+
+    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    gmsh.model.addPhysicalGroup(1, tag_L_B, tag=113)
+    
+    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    gmsh.model.addPhysicalGroup(1, tag_L_L, tag=114)
+    
+    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    gmsh.model.addPhysicalGroup(1, tag_L_sub, tag=101)
+    
+    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    gmsh.model.addPhysicalGroup(1, tag_L_ch, tag=102)
+    
+    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    gmsh.model.addPhysicalGroup(1, tag_L_oc, tag=103)    
+    
+    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    gmsh.model.addPhysicalGroup(1, tag_L_ch_ov, tag=104)    
+    
+    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    gmsh.model.addPhysicalGroup(1, tag_L_ov, tag=105)    
+
+    if c_phase.cr !=0: 
+
+        gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+        gmsh.model.addPhysicalGroup(1, tag_L_cr, tag=106)    
+
+
+        if c_phase.lc !=0:
+            gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+            gmsh.model.addPhysicalGroup(1, tag_L_Lcr, tag=107)    
+
+
+    # FUNCTION CREATE LINE OF SUBDUCTION
+    
+    # left side of the subduction
+    a = []
+    a.extend(tag_L_oc)
+    a.extend([tag_L_B[-1]])
+    a.extend([tag_L_L[0]])
+    
+    loop1 = gmsh.model.geo.addCurveLoop(a,10)
+
+    # oceanic crust 
+    a = []
+    a.extend(tag_L_sub)
+    a.extend([tag_L_B[1]])
+    b = np.array(tag_L_oc)*-1
+    a.extend(b[::-1])
+    loop2 = gmsh.model.geo.addCurveLoop(a,15)
+    
+    # right_mantle 
+    a = []
+    a.extend([tag_L_R[-1]])
+    a.extend([tag_L_B[0]])
+    # find index subduction 
+    c = 0 
+    for i in range(len(lines_S[0,:])):
+        p0 = np.int32(lines_S[0,i])
+        p1 = np.int32(lines_S[1,i])
+        z1 = coord_sub[1,p1-1]
+        if z1 == -c_phase.decoupling: 
+            index = i+1 
+            break 
+    
+
+    buf_array = np.array(lines_S[2,index:-1:1])
+    chose_sub = buf_array[c:-1:1] 
+    chose_sub = chose_sub[::-1]
+    a.extend(chose_sub)
+    a.extend(-np.array(tag_base_ch))
+    # Make a small function out of it. 
+    for i in range(len(lines_ch[0,:])):
+        p0 = np.int32(lines_S[0,i])
+        p1 = np.int32(lines_S[1,i])
+        z1 = coord_sub[1,p1-1]
+        if z1 == -c_phase.lt_d:
+            index = i+1 
+            break 
+    
+    buf_array = np.array(tag_L_ch)
+    chose_sub = buf_array[c:-1:1] 
+    chose_sub = chose_sub[::-1]
+    a.extend(chose_sub)
+    a.extend(tag_L_ov)
+
+    loop2 = gmsh.model.geo.addCurveLoop(a,20)
+
+    if c_phase.cr !=0:
+
+    for i in range(len(lines_ch[0,:])):
+        p0 = np.int32(lines_S[0,i])
+        p1 = np.int32(lines_S[1,i])
+        z1 = coord_sub[1,p1-1]
+        if z1 == -c_phase.lt_d:
+            index = i+1 
+            break 
+    
+    
+    
+    gmsh.model.mesh.generate(2)
+    gmsh.write("exp.msh")
+
     # -- Create loop 
     
     # -- Create surfaces 

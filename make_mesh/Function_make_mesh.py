@@ -9,7 +9,7 @@ class c_phase():
     def __init__(self,
                  cr=35e3,
                  ocr=6e3,
-                 lit_mt=70e3,
+                 lit_mt=30e3,
                  lc = 0.5,
                  wc = 1.5e3):
         self.cr = cr 
@@ -18,6 +18,7 @@ class c_phase():
         self.lc = lc
         self.wc = wc 
         self.lt_d = (cr+lit_mt)
+        self.decoupling = 100e3
         
 
 
@@ -81,7 +82,7 @@ def function_create_slab_channel(data_real:bool,c_phase,SP=[],fname=[]):
     # between the linear segment, using an average. It is more convinient use two // lines and then 
     # correcting them. 
     cx,cy,ex,ey = correct_channel(cx,cy,ax,ay,c_phase)
-    isch = np.where(ay>=-100e3)
+    isch = np.where(ay>=-c_phase.lt_d)
 
     return ax,ay,theta_mean,cx,cy,ex,ey,isch[-1],ox,oy
 
@@ -135,8 +136,6 @@ def function_create_oceanic_crust(sx,sy,th,olt):
     cx = np.insert(cx,0,0.0)  
     cy = np.insert(cy,0,cord_z)  
 
-    
-    
 
     e_node2,t_ex1 = _find_e_node(cx,cy,cx*0.0,-np.min(sy),flag=False)
     cx,cy,t  = _correct_(cx,cy,e_node2,0.0,cy*0.0,0.0)
@@ -198,6 +197,9 @@ def find_extra_node(ax:float,ay:float,t:float,c_phase):
     e_node_lc,t_ex2 = _find_e_node(ax,ay,t,c_phase.cr)
     
     e_node_lit,t_ex3 = _find_e_node(ax,ay,t,c_phase.lt_d)
+        
+    e_node_lit,t_ex3 = _find_e_node(ax,ay,t,c_phase.decoupling)
+
     
     #-- e_node - correction 
     
@@ -206,11 +208,13 @@ def find_extra_node(ax:float,ay:float,t:float,c_phase):
     ax,ay,t = _correct_(ax,ay,e_node_lc,c_phase.cr,t,t_ex2)
     
     ax,ay,t = _correct_(ax,ay,e_node_lit,c_phase.lt_d,t,t_ex3)
+    
+    ax,ay,t = _correct_(ax,ay,e_node_lit,c_phase.decoupling,t,t_ex3)
 
     return ax,ay,t
 
 
-def correct_channel(cx,cy,sx,sy,c_phase,decouplig_depth=-100e3):
+def correct_channel(cx,cy,sx,sy,c_phase):
     nr_channel_points = np.amax(cx.shape)
     #-- Find nodes 
     e_node_uc,t_ex1 = _find_e_node(cx,cy,np.zeros_like(cx),c_phase.cr*(1-c_phase.lc))
@@ -219,18 +223,19 @@ def correct_channel(cx,cy,sx,sy,c_phase,decouplig_depth=-100e3):
     
     e_node_lit,t_ex3 = _find_e_node(cx,cy,np.zeros_like(cx),c_phase.lt_d)
     
+    e_node_lit,t_ex3 = _find_e_node(cx,cy,np.zeros_like(cx),c_phase.decoupling)
+
+    
     cx,cy,t = _correct_(cx,cy,e_node_uc,c_phase.cr*(1-c_phase.lc),cx*0.0,0)
     cx,cy,t = _correct_(cx,cy,e_node_lc,c_phase.cr,cx*0.0,0)
     cx,cy,t = _correct_(cx,cy,e_node_lit,c_phase.lt_d,cx*0.0,0)
-    
+    cx,cy,t = _correct_(cx,cy,e_node_lit,c_phase.decoupling,cx*0.0,0)
 
-    if decouplig_depth != 0.0:
-        cx = cx[cy>=decouplig_depth]
-        cy = cy[cy>=decouplig_depth]
+
+   
+    cx = cx[cy>=-c_phase.decoupling]
+    cy = cy[cy>=-c_phase.decoupling]
     
-    else:
-        cx = cx[0:e_node_lit+1:1]
-        cy = cy[0:e_node_lit+1:1]
 
     # we want to add an extra node in the middle of the channel so that we can easily assign boundary conditions and we control the mesh there
     for i in range (0,len(sx)-1):

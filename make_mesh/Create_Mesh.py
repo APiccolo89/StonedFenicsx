@@ -184,12 +184,11 @@ def _create_mesh_(sname='fake',width_channel=1.5e3,lithosphere_thickness=50e3,de
     print('======================== Finished ========================================================== ')
     print('=============== Creating loop line =========================================================')
     # For meshing, you need to create a loop: subduction_line, left line of the bottom, then left boundary
-    Left_side_loop = fmm.create_loop_left(subduction_lines,Bottom_Boundary[1][:],Left_Boundary[1][:],10)
-    Channel_loop = fmm.create_loop_channel(channel_line[0:index_lithosC+1],subduction_lines[0:index_lithos+1],Top_boundary[1][0],lithospheric_line,20)
-
-    Mantle_above = fmm.create_mantle_loop2(subduction_lines[(index_lithos2):],channel_line[index_lithosC+1:],close_channel_line,lithospheric_line,Bottom_Boundary[1][0],Right_Boundary[1][1],30)
+    Left_side_loop   = fmm.create_loop_left(subduction_lines,Bottom_Boundary[1][:],Left_Boundary[1][:],10)
+    Channel_loop     = fmm.create_loop_channel(channel_line[0:index_lithosC+1],subduction_lines[0:index_lithos+1],Top_boundary[1][0],lithospheric_line,20)
+    Mantle_above     = fmm.create_mantle_loop2(subduction_lines[(index_lithos2):],channel_line[index_lithosC+1:],close_channel_line,lithospheric_line,Bottom_Boundary[1][0],Right_Boundary[1][1],30)
     Lithosphere_loop = fmm.create_lithospheric_loop(lithospheric_line,channel_line[0:index_lithosC+1],Top_boundary[1][1],Right_Boundary[1][0],40)
-    Channel_loop2 = fmm.create_loop_channel2(channel_line[index_lithosC+1:],subduction_lines[index_lithos+1:index_lithos2],lithospheric_line,close_channel_line,50)
+    Channel_loop2    = fmm.create_loop_channel2(channel_line[index_lithosC+1:],subduction_lines[index_lithos+1:index_lithos2],lithospheric_line,close_channel_line,50)
 
     # Writing the geo file
     wgm.writing_geo(sname
