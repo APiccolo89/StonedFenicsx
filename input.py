@@ -23,6 +23,18 @@ from dolfinx.nls.petsc import NewtonSolver
 import matplotlib.pyplot as plt
 
 
+# Prepare a few small function. By the end I need to release array because list in python are a scam. 
+
+def find_tag_line(coord,x,dir):
+    if dir == 'x':
+        a = 0 
+    else:
+        a = 1 
+    
+    i = np.where(coord[a,:]==-x)
+    i = i[0][0];i = coord[2,i]
+    return np.int32(i)                            
+
 class c_phase():
     def __init__(self,
                  cr=35e3,
@@ -37,6 +49,30 @@ class c_phase():
         self.wc = wc 
         self.lt_d = -(cr+lit_mt)
         
+
+def find_line_index(Lin_ar,point,d):
+    
+    for i in range(len(Lin_ar[0,:])-1):
+        # Select pint of the given line
+        p0 = np.int32(Lin_ar[0,i])
+
+        p1 = np.int32(Lin_ar[1,i])
+        # find the index of the point 
+        ip0 = np.where(p0==np.int32(point[2,:]))
+        ip = np.where(p1==np.int32(point[2,:]))
+        print(i,p0,p1)
+        # Check wheter or not the coordinate z is the one. 
+        z1 = point[1,ip]
+        if z1 == -d: 
+            X = [point[0,ip0],point[0,ip]]
+            Y = [point[1,ip0],point[1,ip]]
+            print(X)
+            print(Y)
+            index = i+1 
+            break    
+    
+    
+    return index 
 
 
 def set_initial_():
@@ -169,7 +205,7 @@ def _create_points(gmsh,                                            # I am not a
     tag_list = []
 
     if point_flag == True:
-        coord = np.zeros(3,dtype=np.float64)
+        coord = np.zeros([3,1],dtype=np.float64)
         gmsh.model.geo.addPoint(x, y, 0.0,res,tag_pr+1) 
         tag_list.append(tag_pr+1)
         coord[0] = x 
@@ -198,10 +234,15 @@ def _create_lines(gmsh,previous, tag_p,flag=False):
     len_p = len(tag_p)-1
     tag_l = []
     previous = previous+1
-    lines = np.zeros([3,len_p])
+    lines = np.zeros([3,len_p],dtype=np.int32)
     for i in range(len_p): 
-        tag_1 = tag_p[i]
-        tag_2 = tag_p[i+1] 
+        a = tag_p[i]
+        b = tag_p[i+1]
+        'it appears that the gmsh is an horrible person: i try to give the golden rule that the tag of the points are following an order,'
+        'which entails that the minimum of the two point defining a segment is the first -> such that it is always possible determine the fucking order'
+ 
+        tag_1 = np.min([a,b])
+        tag_2 = np.max([a,b]) 
         gmsh.model.geo.addLine(tag_1,tag_2,previous+i)
         tag_l.append(previous+i)
         lines[0,i] = tag_1 
@@ -215,8 +256,8 @@ def _create_lines(gmsh,previous, tag_p,flag=False):
 
 # First draft -> I Need to make it a decent function, otherwise this is a fucking nightmare
 def create_parallel_mesh(ctrl,ctrlio):
-    """_summary_: I cannot really do something better that this garbage, everything is connected in perverted design 
-
+    """_summary_: The function is composed by three part: -> create points, create lines, loop 
+    ->-> 
     Args:
         ctrl (_type_): _description_
         ctrlio (_type_): _description_
@@ -256,11 +297,11 @@ def create_parallel_mesh(ctrl,ctrlio):
 
     # Create the subduction interfaces using either the real data set, or the slab class
     slab_x, slab_y, theta_mean,channel_x,channel_y,extra_x,extra_y,isch,oc_cx,oc_cy = fmm.function_create_slab_channel(Data_Real,c_phase,SP=S)
-    
+
+
+    # -> USE GMSH FUNCTION 
     gmsh.initialize()
     # Function CREATE POINTS
-    
-    
     
     #-- Create the subduction,channel and oceanic crust points 
     # Point of subduction -> In general, the good wisdom would tell you to not put a disordered list of points, 
@@ -281,9 +322,8 @@ def create_parallel_mesh(ctrl,ctrlio):
         max_tag_e,tag_right_c_cr,coord_crust       = _create_points(gmsh,max_x,-c_phase.cr,c_phase.wc*2,max_tag_d,True)
         if c_phase.lc !=0: 
             max_tag_f,tag_right_c_lcr,coord_lcr    = _create_points(gmsh,max_x,-c_phase.cr*(1-c_phase.lc),c_phase.wc*2,max_tag_e,True)
-     
     
-    fig = plt.figure()
+    global_points = np.hstack([coord_sub,coord_channel,coord_ocean,coord_lc,coord_bc,coord_lr,coord_top,coord_crust,coord_lcr])
     
     
     # Function CREATE LINES
@@ -293,7 +333,7 @@ def create_parallel_mesh(ctrl,ctrlio):
 
     # -- Create Boundary Lines [top boundary] 
     p_list = [tag_subduction[0],tag_channel[0],tag_right_c_t[0]]
-    max_tag_top,tag_L_T,lines_top = _create_lines(gmsh,0,p_list,False)
+    max_tag_top,tag_L_T,lines_T = _create_lines(gmsh,0,p_list,False)
     
     
     
@@ -318,42 +358,42 @@ def create_parallel_mesh(ctrl,ctrlio):
     p_list = [tag_left_c[0],tag_oc[0],tag_subduction[0]]
     max_tag_left,tag_L_L,lines_L = _create_lines(gmsh,max_tag_bottom,p_list,False)
     # -- Create Lines 
-    max_tag_line_subduction,tag_L_sub,lines_S = _create_lines(gmsh,max_tag_left,tag_subduction,False)
+    max_tag_line_subduction,tag_L_sub,lines_S  = _create_lines(gmsh,max_tag_left,tag_subduction,False)
     max_tag_line_channel,tag_L_ch,lines_ch     = _create_lines(gmsh,max_tag_line_subduction,tag_channel,False)
     max_tag_line_ocean,tag_L_oc,lines_oc       = _create_lines(gmsh,max_tag_line_channel,tag_oc,False)
     # Create line overriding plate:
-    #-- find tag of the of the channel 
-    i_s = np.where(coord_sub[1,:]==-c_phase.lt_d)
-    i_s = i_s[0][0]+1 # point subduction
-    i_c = np.where(coord_channel[1,:]==-c_phase.lt_d)
-    i_c = i_c[0][0]+1 
+    #-- find tag of the of the channel # -> find the mistake: confusion with index types
+    i_s = find_tag_line(coord_sub,c_phase.lt_d,'y')
 
+    i_c = find_tag_line(coord_channel,c_phase.lt_d,'y')
+    # CHECK!
     p_list = [i_s,i_c]
-    max_tag_line_ch_ov,tag_L_ch_ov,lines_ch_ov       = _create_lines(gmsh,max_tag_line_ocean,p_list,False)
+    max_tag_line_ch_ov,tag_L_ch_ov,lines_ch_ov = _create_lines(gmsh,max_tag_line_ocean,p_list,False)
 
     p_list = [i_c,tag_right_c_l[0]]
-    max_tag_line_ov,tag_L_ov,lines_L_ov       = _create_lines(gmsh,max_tag_line_ch_ov,p_list,False)
+    max_tag_line_ov,tag_L_ov,lines_L_ov        = _create_lines(gmsh,max_tag_line_ch_ov,p_list,False)
     
-    
-    i_s = np.where(coord_sub[1,:]==-c_phase.decoupling)
-    i_s = i_s[0][0]+1
-    i_c = np.where(coord_sub[1,:]==-c_phase.decoupling)
-    i_c = i_c[0][0]+1
+    i_s = find_tag_line(coord_sub,c_phase.decoupling,'y')
+
+    i_c = find_tag_line(coord_channel,c_phase.decoupling,'y')
     
     p_list = [i_s,i_c]
-    max_tag_line,tag_base_ch,lines_base_ch  = _create_lines(gmsh,max_tag_line_ov,p_list,False)
+    max_tag_line,tag_base_ch,lines_base_ch         = _create_lines(gmsh,max_tag_line_ov,p_list,False)
     if c_phase.cr !=0: 
-        i_c = np.where(coord_channel[1,:]==-c_phase.cr)
-        i_c = i_c[0][0]+1 
+        
+        i_c = find_tag_line(coord_channel,c_phase.cr,'y')
+
         p_list = [i_c,tag_right_c_cr[0]]
         max_tag_line_crust,tag_L_cr,lines_cr       = _create_lines(gmsh,max_tag_line,p_list,False)
 
         if c_phase.lc !=0:
-            i_c = np.where(coord_channel[1,:]==-(1-c_phase.lc)*c_phase.cr)
-            i_c = i_c[0][0]+1 
-            p_list = [i_c,tag_right_c_lcr[0]]
-            max_tag_line_Lcrust,tag_L_Lcr,lines_lcr  = _create_lines(gmsh,max_tag_line_crust,p_list,False)
+            
+            i_c = find_tag_line(coord_channel,(1-c_phase.lc)*c_phase.cr,'y')
 
+            p_list = [i_c,tag_right_c_lcr[0]]
+            max_tag_line_Lcrust,tag_L_Lcr,lines_lcr = _create_lines(gmsh,max_tag_line_crust,p_list,False)
+
+    line_global = np.hstack([lines_T,lines_R,lines_B,lines_L,lines_S,lines_ch,lines_oc,lines_ch_ov,lines_L_ov,lines_base_ch,lines_cr,lines_lcr])
 
     # Function create Physical line
     #-- Create Physical Line
@@ -406,70 +446,145 @@ def create_parallel_mesh(ctrl,ctrlio):
             gmsh.model.addPhysicalGroup(1, tag_L_Lcr, tag=107)    
 
 
-    # FUNCTION CREATE LINE OF SUBDUCTION
     
     # left side of the subduction
     a = []
-    a.extend(tag_L_oc)
-    a.extend([tag_L_B[-1]])
-    a.extend([tag_L_L[0]])
+    a.extend(lines_oc[2,:])
+    a.extend([lines_B[2,-1]])
+    a.extend([-lines_L[2,0]])
+    for i in range(len(a)):
+        l = np.abs(a[i])
+        i_l = np.where(line_global[2,:]==l)
+        p0  = line_global[0,i_l][0][0]
+        p1  = line_global[1,i_l][0][0]
+        p_i_0 = np.where(global_points[2,:]==p0)
+        p_i_1 = np.where(global_points[2,:]==p1)
+        x   = [global_points[0,p_i_0][0],
+               global_points[0,p_i_1][0]]
+        y   = [global_points[1,p_i_0][0],
+               global_points[1,p_i_1][0]]
+        plt.plot(x,y,c='k')
+    
     
     loop1 = gmsh.model.geo.addCurveLoop(a,10)
 
     # oceanic crust 
     a = []
-    a.extend(tag_L_sub)
-    a.extend([tag_L_B[1]])
-    b = np.array(tag_L_oc)*-1
+    a.extend(lines_S[2,:])
+    a.extend([lines_B[2,1]])
+    b = (lines_oc[2,:])*-1
     a.extend(b[::-1])
+    a.extend([-lines_L[2,-1]])
+    for i in range(len(a)):
+        l = np.abs(a[i])
+        i_l = np.where(line_global[2,:]==l)
+        p0  = line_global[0,i_l][0][0]
+        p1  = line_global[1,i_l][0][0]
+        p_i_0 = np.where(global_points[2,:]==p0)
+        p_i_1 = np.where(global_points[2,:]==p1)
+        x   = [global_points[0,p_i_0][0],
+               global_points[0,p_i_1][0]]
+        y   = [global_points[1,p_i_0][0],
+               global_points[1,p_i_1][0]]
+        plt.plot(x,y,c='b')
+   
+    
+    
+    
     loop2 = gmsh.model.geo.addCurveLoop(a,15)
     
     # right_mantle 
+    # From p0 belonging ch -> ch->base channel -> subduction -> 
+    
     a = []
-    a.extend([tag_L_R[-1]])
-    a.extend([tag_L_B[0]])
+    a.extend([-lines_R[2,-1]])
+    a.extend([-lines_B[2,0]])
     # find index subduction 
-    c = 0 
-    for i in range(len(lines_S[0,:])):
-        p0 = np.int32(lines_S[0,i])
-        p1 = np.int32(lines_S[1,i])
-        z1 = coord_sub[1,p1-1]
-        if z1 == -c_phase.decoupling: 
-            index = i+1 
-            break 
+    'Select the node of the slab from bottom to the base of decoupling'
+    index = find_line_index(lines_S,coord_sub,c_phase.decoupling)
+    index = index 
+    buf_array = lines_S[2,index:]
+    chose_sub = -buf_array 
+    chose_sub = chose_sub[::-1]
+    a.extend(chose_sub)
+    a.extend(lines_base_ch[2,:])
+    # Make a small function out of it. 
+    
+    index = find_line_index(lines_ch,coord_channel,c_phase.lt_d)
+    index = index 
+    choose_sub = []
+    buf_array = np.array(lines_ch[2,index:])
+    chose_sub = -1*buf_array 
+    chose_sub = chose_sub[::-1]
+    a.extend(chose_sub)
+    a.extend(lines_base_ch[2,:])
+    a.extend(lines_L_ov[2,:])
+
+    for i in range(len(a)):
+        l = np.abs(a[i])
+        i_l = np.where(line_global[2,:]==l)
+        p0  = line_global[0,i_l][0][0]
+        p1  = line_global[1,i_l][0][0]
+        p_i_0 = np.where(global_points[2,:]==p0)
+        p_i_1 = np.where(global_points[2,:]==p1)
+        x   = [global_points[0,p_i_0][0],
+               global_points[0,p_i_1][0]]
+        y   = [global_points[1,p_i_0][0],
+               global_points[1,p_i_1][0]]
+        plt.plot(x,y,c='r')
     
 
-    buf_array = np.array(lines_S[2,index:-1:1])
-    chose_sub = buf_array[c:-1:1] 
-    chose_sub = chose_sub[::-1]
-    a.extend(chose_sub)
-    a.extend(-np.array(tag_base_ch))
-    # Make a small function out of it. 
-    for i in range(len(lines_ch[0,:])):
-        p0 = np.int32(lines_S[0,i])
-        p1 = np.int32(lines_S[1,i])
-        z1 = coord_sub[1,p1-1]
-        if z1 == -c_phase.lt_d:
-            index = i+1 
-            break 
-    
-    buf_array = np.array(tag_L_ch)
-    chose_sub = buf_array[c:-1:1] 
-    chose_sub = chose_sub[::-1]
-    a.extend(chose_sub)
-    a.extend(tag_L_ov)
 
     loop2 = gmsh.model.geo.addCurveLoop(a,20)
 
     if c_phase.cr !=0:
+            
+        index_a    = find_line_index(lines_ch,coord_channel,c_phase.cr)
+        index_b    = find_line_index(lines_ch,coord_channel,c_phase.lt_d)-1
+        line_valid = lines_ch[2,index_a:index_b]
+        a = []
+        a.expand(line_valid)
+        a.expand(lines_L_ov[2,:])
+        a.expand(lines_R[2,2])
+        a.expand(lines_cr[2,:])
+        # Permanent subcrustal mantle 
+        gmsh.model.geo.addCurveLoop(a,25)
+        if c_phase.lc == 1:
+            a = []
+            index_a    = lines_ch[2,0]
+            index_b    = find_line_index(lines_ch,coord_channel,(1-c_phase.lc)*c_phase.cr)-1
 
-    for i in range(len(lines_ch[0,:])):
-        p0 = np.int32(lines_S[0,i])
-        p1 = np.int32(lines_S[1,i])
-        z1 = coord_sub[1,p1-1]
-        if z1 == -c_phase.lt_d:
-            index = i+1 
-            break 
+            line_valid = lines_ch[2,index_a:index_b]
+            a.expand(line_valid)
+            a.expand(lines_lcr)
+            a.expand(lines_R[0])
+            a.expand(lines_T[1])
+            gmsh.model.geo.addCurveLoop(a,26)
+ 
+            a = []
+            index_a    = find_line_index(lines_ch,coord_channel,(1-c_phase.lc)*c_phase.cr)
+            index_b    = find_line_index(lines_ch,coord_channel,c_phase.cr)
+
+            line_valid = lines_ch[2,index_a:index_b]
+            a.expand(line_valid)
+            a.expand(lines_cr)
+            a.expand(lines_R[1])
+            a.expand(lines_lcr)
+            gmsh.model.geo.addCurveLoop(a,26)
+
+    a = []
+    index = find_line_index(lines_S,coord_sub,c_phase.decoupling)-1
+    line_valid = lines_ch[2,0:index]
+    a.expand(line_valid)
+    a.expand(lines_base_ch)
+    a.expand(-1*np.int32(lines_ch[2,::-1]))
+    a.expand(lines_T[0])
+    gmsh.model.geo.addCurveLoop(a,40)
+  
+            
+            
+
+        
     
     
     

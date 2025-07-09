@@ -168,6 +168,7 @@ def _find_e_node(ax,ay,t,lt,flag=False):
             e_node = 1
             index_extra_node = i+1
             t_ex = t[i]/2+t[i+1]/2
+            break
     
     return index_extra_node,t_ex
 
@@ -193,23 +194,20 @@ def find_extra_node(ax:float,ay:float,t:float,c_phase):
 
     #-- Find nodes 
     e_node_uc,t_ex1 = _find_e_node(ax,ay,t,c_phase.cr*(1-c_phase.lc))
-    
-    e_node_lc,t_ex2 = _find_e_node(ax,ay,t,c_phase.cr)
-    
-    e_node_lit,t_ex3 = _find_e_node(ax,ay,t,c_phase.lt_d)
-        
-    e_node_lit,t_ex3 = _find_e_node(ax,ay,t,c_phase.decoupling)
+    ax,ay,t = _correct_(ax,ay,e_node_uc,c_phase.cr*(1-c_phase.lc),t,t_ex1)
 
     
-    #-- e_node - correction 
-    
-    ax,ay,t = _correct_(ax,ay,e_node_uc,c_phase.cr*(1-c_phase.lc),t,t_ex1)
-    
+    e_node_lc,t_ex2 = _find_e_node(ax,ay,t,c_phase.cr)
     ax,ay,t = _correct_(ax,ay,e_node_lc,c_phase.cr,t,t_ex2)
+
     
+    e_node_lit,t_ex3 = _find_e_node(ax,ay,t,c_phase.lt_d)
     ax,ay,t = _correct_(ax,ay,e_node_lit,c_phase.lt_d,t,t_ex3)
-    
+
+        
+    e_node_lit,t_ex3 = _find_e_node(ax,ay,t,c_phase.decoupling)
     ax,ay,t = _correct_(ax,ay,e_node_lit,c_phase.decoupling,t,t_ex3)
+
 
     return ax,ay,t
 
@@ -217,19 +215,20 @@ def find_extra_node(ax:float,ay:float,t:float,c_phase):
 def correct_channel(cx,cy,sx,sy,c_phase):
     nr_channel_points = np.amax(cx.shape)
     #-- Find nodes 
+    ' Dovevo alternare le cazzo di funzioni, ho perso 5-7 ore del mio tempo, per fortuna non ho il cancro, altrimenti che gioia' 
+    
+    
     e_node_uc,t_ex1 = _find_e_node(cx,cy,np.zeros_like(cx),c_phase.cr*(1-c_phase.lc))
-    
-    e_node_lc,t_ex2 = _find_e_node(cx,cy,np.zeros_like(cx),c_phase.cr)
-    
-    e_node_lit,t_ex3 = _find_e_node(cx,cy,np.zeros_like(cx),c_phase.lt_d)
-    
-    e_node_lit,t_ex3 = _find_e_node(cx,cy,np.zeros_like(cx),c_phase.decoupling)
-
-    
     cx,cy,t = _correct_(cx,cy,e_node_uc,c_phase.cr*(1-c_phase.lc),cx*0.0,0)
+
+    e_node_lc,t_ex2 = _find_e_node(cx,cy,np.zeros_like(cx),c_phase.cr)
     cx,cy,t = _correct_(cx,cy,e_node_lc,c_phase.cr,cx*0.0,0)
+
+    e_node_lit,t_ex3 = _find_e_node(cx,cy,np.zeros_like(cx),c_phase.lt_d)
     cx,cy,t = _correct_(cx,cy,e_node_lit,c_phase.lt_d,cx*0.0,0)
-    cx,cy,t = _correct_(cx,cy,e_node_lit,c_phase.decoupling,cx*0.0,0)
+
+    e_node_dc,t_ex4 = _find_e_node(cx,cy,np.zeros_like(cx),c_phase.decoupling)
+    cx,cy,t = _correct_(cx,cy,e_node_dc,c_phase.decoupling,cx*0.0,0)
 
 
    
