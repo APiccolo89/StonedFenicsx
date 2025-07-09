@@ -138,7 +138,7 @@ def function_create_oceanic_crust(sx,sy,th,olt):
 
 
     e_node2,t_ex1 = _find_e_node(cx,cy,cx*0.0,-np.min(sy),flag=False)
-    cx,cy,t  = _correct_(cx,cy,e_node2,0.0,cy*0.0,0.0)
+    cx,cy,t  = _correct_(cx,cy,e_node2,-np.min(sy),cy*0.0,0.0)
 
     cx_n = cx[(cx>=0.0) & (cy>=np.min(sy))]
     cy_n = cy[(cx>=0.0) & (cy>=np.min(sy))]

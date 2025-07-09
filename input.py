@@ -21,7 +21,12 @@ from dolfinx import mesh, fem, io, nls, log
 from dolfinx.fem.petsc import NonlinearProblem
 from dolfinx.nls.petsc import NewtonSolver
 import matplotlib.pyplot as plt
-
+def get_line_points(gmsh,line_ids):
+    gmsh.model.geo.synchronize()
+    for lid in line_ids:
+        pts = gmsh.model.getAdjacencies(1, abs(lid))[1]
+        print(f"Line {lid}: {pts[0]} → {pts[1]}")
+    return line_ids
 
 # Prepare a few small function. By the end I need to release array because list in python are a scam. 
 
@@ -541,44 +546,105 @@ def create_parallel_mesh(ctrl,ctrlio):
             
         index_a    = find_line_index(lines_ch,coord_channel,c_phase.cr)
         index_b    = find_line_index(lines_ch,coord_channel,c_phase.lt_d)-1
-        line_valid = lines_ch[2,index_a:index_b]
+        buf_array = lines_ch[2,index_a:index_b+1]
+        buf_array = -buf_array[::-1]
         a = []
-        a.expand(line_valid)
-        a.expand(lines_L_ov[2,:])
-        a.expand(lines_R[2,2])
-        a.expand(lines_cr[2,:])
+
+        a.extend([-lines_R[2,2]])
+        a.extend([-lines_L_ov[2,:].item()])
+        a.extend(buf_array)
+        a.extend([lines_cr[2,:][0]])
+
+
+        
+        for i in range(len(a)):
+            l = np.abs(a[i])
+            i_l = np.where(line_global[2,:]==l)
+            p0  = line_global[0,i_l][0][0]
+            p1  = line_global[1,i_l][0][0]
+            p_i_0 = np.where(global_points[2,:]==p0)
+            p_i_1 = np.where(global_points[2,:]==p1)
+            x   = [global_points[0,p_i_0][0],
+                   global_points[0,p_i_1][0]]
+            y   = [global_points[1,p_i_0][0],
+                   global_points[1,p_i_1][0]]
+            plt.plot(x,y,c='g')
+    
+
+        
+        
         # Permanent subcrustal mantle 
         gmsh.model.geo.addCurveLoop(a,25)
-        if c_phase.lc == 1:
+        if c_phase.lc !=0:
             a = []
-            index_a    = lines_ch[2,0]
-            index_b    = find_line_index(lines_ch,coord_channel,(1-c_phase.lc)*c_phase.cr)-1
+            index_a    = find_line_index(lines_ch,coord_channel,(1-c_phase.lc)*c_phase.cr)
+            index_b    = find_line_index(lines_ch,coord_channel,c_phase.cr)-1
 
-            line_valid = lines_ch[2,index_a:index_b]
-            a.expand(line_valid)
-            a.expand(lines_lcr)
-            a.expand(lines_R[0])
-            a.expand(lines_T[1])
+            buf_array = -lines_ch[2,index_a:index_b+1]
+            buf_array = buf_array[::-1]
+            
+            a = []
+
+            a.extend([-lines_R[2,1]])
+            a.extend([-lines_cr[2,:].item()])
+            a.extend(buf_array)
+            a.extend([lines_lcr[2,:].item()])
+
+            
+            for i in range(len(a)):
+                l = np.abs(a[i])
+                i_l = np.where(line_global[2,:]==l)
+                p0  = line_global[0,i_l][0][0]
+                p1  = line_global[1,i_l][0][0]
+                p_i_0 = np.where(global_points[2,:]==p0)
+                p_i_1 = np.where(global_points[2,:]==p1)
+                x   = [global_points[0,p_i_0][0],
+                       global_points[0,p_i_1][0]]
+                y   = [global_points[1,p_i_0][0],
+                       global_points[1,p_i_1][0]]
+                plt.plot(x,y,c='firebrick')
+    
+
+
             gmsh.model.geo.addCurveLoop(a,26)
  
             a = []
-            index_a    = find_line_index(lines_ch,coord_channel,(1-c_phase.lc)*c_phase.cr)
-            index_b    = find_line_index(lines_ch,coord_channel,c_phase.cr)
+            index_a    = 0
+            index_b    = find_line_index(lines_ch,coord_channel,(1-c_phase.lc)*c_phase.cr)-1
 
-            line_valid = lines_ch[2,index_a:index_b]
-            a.expand(line_valid)
-            a.expand(lines_cr)
-            a.expand(lines_R[1])
-            a.expand(lines_lcr)
-            gmsh.model.geo.addCurveLoop(a,26)
+            buf_array = -lines_ch[2,index_a:index_b+1]
+            buf_array = buf_array[::-1]
+            
+            a.extend([lines_R[2,0]])
+            a.extend([-lines_lcr[2,:].item()])
+            a.extend(buf_array)
+            a.extend([lines_T[2,1]])
+
+            
+            for i in range(len(a)):
+                l = np.abs(a[i])
+                i_l = np.where(line_global[2,:]==l)
+                p0  = line_global[0,i_l][0][0]
+                p1  = line_global[1,i_l][0][0]
+                p_i_0 = np.where(global_points[2,:]==p0)
+                p_i_1 = np.where(global_points[2,:]==p1)
+                x   = [global_points[0,p_i_0][0],
+                       global_points[0,p_i_1][0]]
+                y   = [global_points[1,p_i_0][0],
+                       global_points[1,p_i_1][0]]
+                plt.plot(x,y,c='r')
+
+            
+            gmsh.model.geo.addCurveLoop(a,27)
 
     a = []
-    index = find_line_index(lines_S,coord_sub,c_phase.decoupling)-1
-    line_valid = lines_ch[2,0:index]
-    a.expand(line_valid)
-    a.expand(lines_base_ch)
-    a.expand(-1*np.int32(lines_ch[2,::-1]))
-    a.expand(lines_T[0])
+    index = find_line_index(lines_S,coord_sub,c_phase.decoupling)
+    buf_array = -lines_S[2,0:index]
+    buf_array = buf_array[::-1]
+    a.extend(np.int32(lines_ch[2,::-1]))
+    a.extend([-lines_base_ch[2,:].item()])
+    a.extend(buf_array)
+    a.extend([lines_T[2,0]])
     gmsh.model.geo.addCurveLoop(a,40)
   
             
