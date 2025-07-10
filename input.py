@@ -306,6 +306,8 @@ def create_parallel_mesh(ctrl,ctrlio):
 
     # -> USE GMSH FUNCTION 
     gmsh.initialize()
+    gmsh.model.geo.synchronize()
+    gmsh.model.add("Partitioned")
     # Function CREATE POINTS
     
     #-- Create the subduction,channel and oceanic crust points 
@@ -450,7 +452,14 @@ def create_parallel_mesh(ctrl,ctrlio):
             gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
             gmsh.model.addPhysicalGroup(1, tag_L_Lcr, tag=107)    
 
-
+    # Left side of the subduction zone 10 
+    # Oceanic crust 15
+    # Right side of the subduction zone 20
+    # Right mantle 25
+    # Lithospheric mantle 25
+    # Crust LC  30
+    # Crust UC  35 
+    # Channel 
     
     # left side of the subduction
     a = []
@@ -471,7 +480,7 @@ def create_parallel_mesh(ctrl,ctrlio):
         plt.plot(x,y,c='k')
     
     
-    loop1 = gmsh.model.geo.addCurveLoop(a,10)
+    loop1 = gmsh.model.geo.addCurveLoop(a,10) # Left side of the subudction zone
 
     # oceanic crust 
     a = []
@@ -496,7 +505,7 @@ def create_parallel_mesh(ctrl,ctrlio):
     
     
     
-    loop2 = gmsh.model.geo.addCurveLoop(a,15)
+    loop2 = gmsh.model.geo.addCurveLoop(a,15) # Oceanic crust 
     
     # right_mantle 
     # From p0 belonging ch -> ch->base channel -> subduction -> 
@@ -522,7 +531,6 @@ def create_parallel_mesh(ctrl,ctrlio):
     chose_sub = -1*buf_array 
     chose_sub = chose_sub[::-1]
     a.extend(chose_sub)
-    a.extend(lines_base_ch[2,:])
     a.extend(lines_L_ov[2,:])
 
     for i in range(len(a)):
@@ -540,7 +548,7 @@ def create_parallel_mesh(ctrl,ctrlio):
     
 
 
-    loop2 = gmsh.model.geo.addCurveLoop(a,20)
+    loop2 = gmsh.model.geo.addCurveLoop(a,20) # Right mantle 
 
     if c_phase.cr !=0:
             
@@ -570,11 +578,9 @@ def create_parallel_mesh(ctrl,ctrlio):
                    global_points[1,p_i_1][0]]
             plt.plot(x,y,c='g')
     
-
-        
-        
         # Permanent subcrustal mantle 
-        gmsh.model.geo.addCurveLoop(a,25)
+        gmsh.model.geo.addCurveLoop(a,25) # Right mantle
+        
         if c_phase.lc !=0:
             a = []
             index_a    = find_line_index(lines_ch,coord_channel,(1-c_phase.lc)*c_phase.cr)
@@ -606,7 +612,7 @@ def create_parallel_mesh(ctrl,ctrlio):
     
 
 
-            gmsh.model.geo.addCurveLoop(a,26)
+            gmsh.model.geo.addCurveLoop(a,30)
  
             a = []
             index_a    = 0
@@ -635,31 +641,92 @@ def create_parallel_mesh(ctrl,ctrlio):
                 plt.plot(x,y,c='r')
 
             
-            gmsh.model.geo.addCurveLoop(a,27)
+            gmsh.model.geo.addCurveLoop(a,35)
 
     a = []
-    index = find_line_index(lines_S,coord_sub,c_phase.decoupling)
+    index_a = find_line_index(lines_ch,coord_channel,c_phase.lt_d)
     buf_array = -lines_S[2,0:index]
     buf_array = buf_array[::-1]
-    a.extend(np.int32(lines_ch[2,::-1]))
-    a.extend([-lines_base_ch[2,:].item()])
+    a.extend(np.int32(lines_ch[2,0:index_a]))
+    a.extend([-lines_ch_ov[2,:].item()])
     a.extend(buf_array)
     a.extend([lines_T[2,0]])
     gmsh.model.geo.addCurveLoop(a,40)
-  
-            
-            
 
-        
-    
-    
-    
-    gmsh.model.mesh.generate(2)
-    gmsh.write("exp.msh")
 
-    # -- Create loop 
+
+
+
+    a = []
+    index = find_line_index(lines_S,coord_sub,c_phase.decoupling)
+    buf_array = -lines_S[2,index_a:index]
+    buf_array = buf_array[::-1]
+    a.extend(np.int32(lines_ch[2,index_a:]))
+    a.extend([-lines_base_ch[2,:].item()])
+    a.extend(buf_array)
+    a.extend([lines_ch_ov[2,:].item()])
+    for i in range(len(a)):
+        l = np.abs(a[i])
+        i_l = np.where(line_global[2,:]==l)
+        p0  = line_global[0,i_l][0][0]
+        p1  = line_global[1,i_l][0][0]
+        p_i_0 = np.where(global_points[2,:]==p0)
+        p_i_1 = np.where(global_points[2,:]==p1)
+        x   = [global_points[0,p_i_0][0],
+               global_points[0,p_i_1][0]]
+        y   = [global_points[1,p_i_0][0],
+               global_points[1,p_i_1][0]]
+        plt.plot(x,y,c='k')
     
+    gmsh.model.geo.addCurveLoop(a,45)
+
+
     # -- Create surfaces 
+    
+    
+    # Left side of the subduction zone 10 
+    # Oceanic crust 15
+    # Right side of the subduction zone 20
+    # Right mantle 25
+    # Lithospheric mantle 25
+    # Crust LC  30
+    # Crust UC  35 
+    # Channel 40
+    
+    Left_side_of_subduction_surf   = gmsh.model.geo.addPlaneSurface([10],tag=100) # Left side of the subudction zone
+    Oceanic_Crust_surf             = gmsh.model.geo.addPlaneSurface([15],tag=150) # Left side of the subudction zone
+    Right_side_of_subduction_surf  = gmsh.model.geo.addPlaneSurface([20],tag=200) # Right side of the subudction zone    
+    Lithhospheric_Mantle_surf      = gmsh.model.geo.addPlaneSurface([25],tag=250) # Right mantle
+    Crust_LC_surf                  = gmsh.model.geo.addPlaneSurface([30],tag=300) # Crust LC
+    Crust_UC_surf                  = gmsh.model.geo.addPlaneSurface([35],tag=350) # Crust LC
+    Channel_surf_A                 = gmsh.model.geo.addPlaneSurface([40],tag=400) # Channel
+    Channel_surf_B                 = gmsh.model.geo.addPlaneSurface([45],tag=450) # Channel
+
+    
+    gmsh.model.geo.synchronize()
+
+    gmsh.model.addPhysicalGroup(2, [Left_side_of_subduction_surf], tag=10000)
+    gmsh.model.addPhysicalGroup(2, [Oceanic_Crust_surf], tag=15000)
+    gmsh.model.addPhysicalGroup(2, [Right_side_of_subduction_surf], tag=20000)
+    gmsh.model.addPhysicalGroup(2, [Lithhospheric_Mantle_surf], tag=25000)
+    gmsh.model.addPhysicalGroup(2, [Crust_LC_surf], tag=30000)
+    gmsh.model.addPhysicalGroup(2, [Crust_UC_surf], tag=35000)
+    gmsh.model.addPhysicalGroup(2, [Channel_surf_A], tag=40000)   
+    gmsh.model.addPhysicalGroup(2, [Channel_surf_B], tag=45000)   
+
+    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    gmsh.model.geo.mesh.setAlgorithm(2, 40000, 3)
+    gmsh.model.geo.mesh.setAlgorithm(2, 45000, 3)
+    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+
+    gmsh.model.mesh.generate(2)
+    gmsh.model.mesh.setOrder(2)
+    gmsh.write("experimental.msh")
+    gmsh.finalize()
+
+    
     
     # -- Mesh -> parallel 
     
