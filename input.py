@@ -185,7 +185,7 @@ def set_initial_():
     return PDB,BC_spec,num_ctrl,scal,IOCtrl
 
 
-def _create_points(gmsh,                                            # I am not able to classify 
+def _create_points(mesh,                                            # I am not able to classify 
                    x:float,                                         # coordinate point/points
                    y:float,                                         # coordinate point/points
                    res:float,                                       # resolution of the ppint
@@ -211,7 +211,7 @@ def _create_points(gmsh,                                            # I am not a
 
     if point_flag == True:
         coord = np.zeros([3,1],dtype=np.float64)
-        gmsh.model.geo.addPoint(x, y, 0.0,res,tag_pr+1) 
+        mesh.geo.addPoint(x, y, 0.0,res,tag_pr+1) 
         tag_list.append(tag_pr+1)
         coord[0] = x 
         coord[1] = y
@@ -221,7 +221,7 @@ def _create_points(gmsh,                                            # I am not a
         coord = np.zeros([3,len(x)],dtype=np.float64)
         for i in range(len(x)):
 
-            gmsh.model.geo.addPoint(x[i], y[i], 0.0, res, tag_pr + 1 + i) 
+            mesh.geo.addPoint(x[i], y[i], 0.0, res, tag_pr + 1 + i) 
             tag_list.append(tag_pr+1+i)
             coord[0,i]   = x[i]
             coord[1,i]   = y[i] 
@@ -231,10 +231,10 @@ def _create_points(gmsh,                                            # I am not a
     max_tag = np.max(tag_list)
 
     
-    return max_tag,tag_list,coord 
+    return max_tag,tag_list,coord,mesh
 
 
-def _create_lines(gmsh,previous, tag_p,flag=False):
+def _create_lines(mesh_model,previous, tag_p,flag=False):
     
     len_p = len(tag_p)-1
     tag_l = []
@@ -248,7 +248,7 @@ def _create_lines(gmsh,previous, tag_p,flag=False):
  
         tag_1 = np.min([a,b])
         tag_2 = np.max([a,b]) 
-        gmsh.model.geo.addLine(tag_1,tag_2,previous+i)
+        mesh_model.geo.addLine(tag_1,tag_2,previous+i)
         tag_l.append(previous+i)
         lines[0,i] = tag_1 
         lines[1,i] = tag_2 
@@ -256,7 +256,7 @@ def _create_lines(gmsh,previous, tag_p,flag=False):
         
     max_tag = np.max(tag_l)
     
-    return max_tag,tag_l,lines
+    return max_tag,tag_l,lines,mesh_model
 
 
 # First draft -> I Need to make it a decent function, otherwise this is a fucking nightmare
@@ -306,8 +306,10 @@ def create_parallel_mesh(ctrl,ctrlio):
 
     # -> USE GMSH FUNCTION 
     gmsh.initialize()
+
     gmsh.model.geo.synchronize()
-    gmsh.model.add("Partitioned")
+
+    mesh_model = gmsh.model()
     # Function CREATE POINTS
     
     #-- Create the subduction,channel and oceanic crust points 
@@ -315,20 +317,20 @@ def create_parallel_mesh(ctrl,ctrlio):
     # but, I am paranoid, therefore: just create the geometry of slab, channel and oceanic crust such that y = f(x) where f(x) is always growing (or decreasing)
     # if you want to be creative, you have to modify the function of create points, up to you, no one is against it. 
     
-    max_tag_s,tag_subduction,coord_sub             = _create_points(gmsh,slab_x,slab_y,c_phase.wc,0)
-    max_tag_c,tag_channel,coord_channel            = _create_points(gmsh,channel_x,channel_y,c_phase.wc,max_tag_s)
-    max_tag_oc,tag_oc,coord_ocean                  = _create_points(gmsh,oc_cx,oc_cy,c_phase.wc,max_tag_c)
+    max_tag_s,tag_subduction,coord_sub,mesh_model            = _create_points(mesh_model,slab_x,slab_y,c_phase.wc,0)
+    max_tag_c,tag_channel,coord_channel,mesh_model            = _create_points(mesh_model,channel_x,channel_y,c_phase.wc,max_tag_s)
+    max_tag_oc,tag_oc,coord_ocean,mesh_model                  = _create_points(mesh_model,oc_cx,oc_cy,c_phase.wc,max_tag_c)
     # -- Here are the points at the boundary of the model. The size of the model is defined earlier, and subduction zone is modified as such to comply the main geometrical input, 
     # I used subduction points because they define a few important point. 
-    max_tag_a,tag_left_c,coord_lc                  = _create_points(gmsh,min_x,min_y,c_phase.wc*2,max_tag_oc,True)
-    max_tag_b,tag_right_c_b,coord_bc               = _create_points(gmsh,max_x,min_y,c_phase.wc*2,max_tag_a,True)
-    max_tag_c,tag_right_c_l,coord_lr               = _create_points(gmsh,max_x,-c_phase.lt_d,c_phase.wc*2,max_tag_b,True)
-    max_tag_d,tag_right_c_t,coord_top              = _create_points(gmsh,max_x,max_y,c_phase.wc*2,max_tag_c,True)
+    max_tag_a,tag_left_c,coord_lc,mesh_model                  = _create_points(mesh_model,min_x,min_y,c_phase.wc*2,max_tag_oc,True)
+    max_tag_b,tag_right_c_b,coord_bc,mesh_model               = _create_points(mesh_model,max_x,min_y,c_phase.wc*2,max_tag_a,True)
+    max_tag_c,tag_right_c_l,coord_lr,mesh_model               = _create_points(mesh_model,max_x,-c_phase.lt_d,c_phase.wc*2,max_tag_b,True)
+    max_tag_d,tag_right_c_t,coord_top,mesh_model              = _create_points(mesh_model,max_x,max_y,c_phase.wc*2,max_tag_c,True)
     
     if c_phase.cr !=0: 
-        max_tag_e,tag_right_c_cr,coord_crust       = _create_points(gmsh,max_x,-c_phase.cr,c_phase.wc*2,max_tag_d,True)
+        max_tag_e,tag_right_c_cr,coord_crust,mesh_model       = _create_points(mesh_model,max_x,-c_phase.cr,c_phase.wc*2,max_tag_d,True)
         if c_phase.lc !=0: 
-            max_tag_f,tag_right_c_lcr,coord_lcr    = _create_points(gmsh,max_x,-c_phase.cr*(1-c_phase.lc),c_phase.wc*2,max_tag_e,True)
+            max_tag_f,tag_right_c_lcr,coord_lcr,mesh_model    = _create_points(mesh_model,max_x,-c_phase.cr*(1-c_phase.lc),c_phase.wc*2,max_tag_e,True)
     
     global_points = np.hstack([coord_sub,coord_channel,coord_ocean,coord_lc,coord_bc,coord_lr,coord_top,coord_crust,coord_lcr])
     
@@ -340,7 +342,7 @@ def create_parallel_mesh(ctrl,ctrlio):
 
     # -- Create Boundary Lines [top boundary] 
     p_list = [tag_subduction[0],tag_channel[0],tag_right_c_t[0]]
-    max_tag_top,tag_L_T,lines_T = _create_lines(gmsh,0,p_list,False)
+    max_tag_top,tag_L_T,lines_T,mesh_model = _create_lines(mesh_model,0,p_list,False)
     
     
     
@@ -357,17 +359,17 @@ def create_parallel_mesh(ctrl,ctrlio):
     else: 
             p_list = [tag_right_c_t[0],tag_right_c_l[0],tag_right_c_b[0]]
     
-    max_tag_right,tag_L_R,lines_R = _create_lines(gmsh,max_tag_top,p_list,False)
+    max_tag_right,tag_L_R,lines_R,mesh_model = _create_lines(mesh_model,max_tag_top,p_list,False)
     #[bottom boundary]
     p_list = [tag_right_c_b[0],tag_subduction[-1],tag_oc[-1],tag_left_c[0]]
-    max_tag_bottom,tag_L_B,lines_B = _create_lines(gmsh,max_tag_right,p_list,False)
+    max_tag_bottom,tag_L_B,lines_B,mesh_model = _create_lines(mesh_model,max_tag_right,p_list,False)
     # -- 
     p_list = [tag_left_c[0],tag_oc[0],tag_subduction[0]]
-    max_tag_left,tag_L_L,lines_L = _create_lines(gmsh,max_tag_bottom,p_list,False)
+    max_tag_left,tag_L_L,lines_L,mesh_model = _create_lines(mesh_model,max_tag_bottom,p_list,False)
     # -- Create Lines 
-    max_tag_line_subduction,tag_L_sub,lines_S  = _create_lines(gmsh,max_tag_left,tag_subduction,False)
-    max_tag_line_channel,tag_L_ch,lines_ch     = _create_lines(gmsh,max_tag_line_subduction,tag_channel,False)
-    max_tag_line_ocean,tag_L_oc,lines_oc       = _create_lines(gmsh,max_tag_line_channel,tag_oc,False)
+    max_tag_line_subduction,tag_L_sub,lines_S,mesh_model  = _create_lines(mesh_model,max_tag_left,tag_subduction,False)
+    max_tag_line_channel,tag_L_ch,lines_ch,mesh_model     = _create_lines(mesh_model,max_tag_line_subduction,tag_channel,False)
+    max_tag_line_ocean,tag_L_oc,lines_oc,mesh_model       = _create_lines(mesh_model,max_tag_line_channel,tag_oc,False)
     # Create line overriding plate:
     #-- find tag of the of the channel # -> find the mistake: confusion with index types
     i_s = find_tag_line(coord_sub,c_phase.lt_d,'y')
@@ -375,82 +377,101 @@ def create_parallel_mesh(ctrl,ctrlio):
     i_c = find_tag_line(coord_channel,c_phase.lt_d,'y')
     # CHECK!
     p_list = [i_s,i_c]
-    max_tag_line_ch_ov,tag_L_ch_ov,lines_ch_ov = _create_lines(gmsh,max_tag_line_ocean,p_list,False)
+    max_tag_line_ch_ov,tag_L_ch_ov,lines_ch_ov,mesh_model = _create_lines(mesh_model,max_tag_line_ocean,p_list,False)
 
     p_list = [i_c,tag_right_c_l[0]]
-    max_tag_line_ov,tag_L_ov,lines_L_ov        = _create_lines(gmsh,max_tag_line_ch_ov,p_list,False)
+    max_tag_line_ov,tag_L_ov,lines_L_ov,mesh_model        = _create_lines(mesh_model,max_tag_line_ch_ov,p_list,False)
     
     i_s = find_tag_line(coord_sub,c_phase.decoupling,'y')
 
     i_c = find_tag_line(coord_channel,c_phase.decoupling,'y')
     
     p_list = [i_s,i_c]
-    max_tag_line,tag_base_ch,lines_base_ch         = _create_lines(gmsh,max_tag_line_ov,p_list,False)
+    max_tag_line,tag_base_ch,lines_base_ch,mesh_model         = _create_lines(mesh_model,max_tag_line_ov,p_list,False)
     if c_phase.cr !=0: 
         
         i_c = find_tag_line(coord_channel,c_phase.cr,'y')
 
         p_list = [i_c,tag_right_c_cr[0]]
-        max_tag_line_crust,tag_L_cr,lines_cr       = _create_lines(gmsh,max_tag_line,p_list,False)
+        max_tag_line_crust,tag_L_cr,lines_cr,mesh_model       = _create_lines(mesh_model,max_tag_line,p_list,False)
 
         if c_phase.lc !=0:
             
             i_c = find_tag_line(coord_channel,(1-c_phase.lc)*c_phase.cr,'y')
 
             p_list = [i_c,tag_right_c_lcr[0]]
-            max_tag_line_Lcrust,tag_L_Lcr,lines_lcr = _create_lines(gmsh,max_tag_line_crust,p_list,False)
+            max_tag_line_Lcrust,tag_L_Lcr,lines_lcr,mesh_model = _create_lines(mesh_model,max_tag_line_crust,p_list,False)
 
     line_global = np.hstack([lines_T,lines_R,lines_B,lines_L,lines_S,lines_ch,lines_oc,lines_ch_ov,lines_L_ov,lines_base_ch,lines_cr,lines_lcr])
 
     # Function create Physical line
     #-- Create Physical Line
  
-    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
     
-    gmsh.model.addPhysicalGroup(1, tag_L_T, tag=111)
+    mesh_model.addPhysicalGroup(1, tag_L_T, tag=111)
+    gmsh.model.setPhysicalName(1, 111, "top")
+    
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    mesh_model.addPhysicalGroup(1, tag_L_R, tag=112)
+    gmsh.model.setPhysicalName(1, 112, "right")
+
+
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    mesh_model.addPhysicalGroup(1, tag_L_B, tag=113)
+    gmsh.model.setPhysicalName(1, 113, "bottom")
+
+    
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    mesh_model.addPhysicalGroup(1, tag_L_L, tag=114)
+    gmsh.model.setPhysicalName(1, 114, "left")
+
+    
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    mesh_model.addPhysicalGroup(1, tag_L_sub, tag=101)
+    gmsh.model.setPhysicalName(1, 101, "subduction")
+
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    mesh_model.addPhysicalGroup(1, tag_L_ch, tag=102)
+    gmsh.model.setPhysicalName(1, 102, "channel")
+    
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    mesh_model.addPhysicalGroup(1, tag_L_oc, tag=103)  
+    gmsh.model.setPhysicalName(1, 103, "ocean")
+  
+    
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    mesh_model.addPhysicalGroup(1, tag_L_ch_ov, tag=104)    
+    gmsh.model.setPhysicalName(1, 104, "channel_ovriding")
+
     
     gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    gmsh.model.addPhysicalGroup(1, tag_L_R, tag=112)
+    mesh_model.addPhysicalGroup(1, tag_L_ov, tag=105)    
+    gmsh.model.setPhysicalName(1, 104, "overriding_plate")
 
-    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
-    gmsh.model.addPhysicalGroup(1, tag_L_B, tag=113)
-    
-    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
-    gmsh.model.addPhysicalGroup(1, tag_L_L, tag=114)
-    
-    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
-    gmsh.model.addPhysicalGroup(1, tag_L_sub, tag=101)
-    
-    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
-    gmsh.model.addPhysicalGroup(1, tag_L_ch, tag=102)
-    
-    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
-    gmsh.model.addPhysicalGroup(1, tag_L_oc, tag=103)    
-    
-    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
-    gmsh.model.addPhysicalGroup(1, tag_L_ch_ov, tag=104)    
-    
-    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
-    gmsh.model.addPhysicalGroup(1, tag_L_ov, tag=105)    
 
     if c_phase.cr !=0: 
 
-        gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+        mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-        gmsh.model.addPhysicalGroup(1, tag_L_cr, tag=106)    
+        mesh_model.addPhysicalGroup(1, tag_L_cr, tag=106)    
+        gmsh.model.setPhysicalName(1, 104, "crust_over")
+
 
 
         if c_phase.lc !=0:
-            gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-            gmsh.model.addPhysicalGroup(1, tag_L_Lcr, tag=107)    
+            mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+            mesh_model.addPhysicalGroup(1, tag_L_Lcr, tag=107) 
+            gmsh.model.setPhysicalName(1, 104, "crust_lower_over")
+   
 
     # Left side of the subduction zone 10 
     # Oceanic crust 15
@@ -480,7 +501,7 @@ def create_parallel_mesh(ctrl,ctrlio):
         plt.plot(x,y,c='k')
     
     
-    loop1 = gmsh.model.geo.addCurveLoop(a,10) # Left side of the subudction zone
+    loop1 = mesh_model.geo.addCurveLoop(a,10) # Left side of the subudction zone
 
     # oceanic crust 
     a = []
@@ -505,7 +526,7 @@ def create_parallel_mesh(ctrl,ctrlio):
     
     
     
-    loop2 = gmsh.model.geo.addCurveLoop(a,15) # Oceanic crust 
+    loop2 = mesh_model.geo.addCurveLoop(a,15) # Oceanic crust 
     
     # right_mantle 
     # From p0 belonging ch -> ch->base channel -> subduction -> 
@@ -548,7 +569,7 @@ def create_parallel_mesh(ctrl,ctrlio):
     
 
 
-    loop2 = gmsh.model.geo.addCurveLoop(a,20) # Right mantle 
+    loop2 = mesh_model.geo.addCurveLoop(a,20) # Right mantle 
 
     if c_phase.cr !=0:
             
@@ -579,7 +600,7 @@ def create_parallel_mesh(ctrl,ctrlio):
             plt.plot(x,y,c='g')
     
         # Permanent subcrustal mantle 
-        gmsh.model.geo.addCurveLoop(a,25) # Right mantle
+        mesh_model.geo.addCurveLoop(a,25) # Right mantle
         
         if c_phase.lc !=0:
             a = []
@@ -612,7 +633,7 @@ def create_parallel_mesh(ctrl,ctrlio):
     
 
 
-            gmsh.model.geo.addCurveLoop(a,30)
+            mesh_model.geo.addCurveLoop(a,30)
  
             a = []
             index_a    = 0
@@ -641,7 +662,7 @@ def create_parallel_mesh(ctrl,ctrlio):
                 plt.plot(x,y,c='r')
 
             
-            gmsh.model.geo.addCurveLoop(a,35)
+            mesh_model.geo.addCurveLoop(a,35)
 
     a = []
     index_a = find_line_index(lines_ch,coord_channel,c_phase.lt_d)
@@ -651,7 +672,7 @@ def create_parallel_mesh(ctrl,ctrlio):
     a.extend([-lines_ch_ov[2,:].item()])
     a.extend(buf_array)
     a.extend([lines_T[2,0]])
-    gmsh.model.geo.addCurveLoop(a,40)
+    mesh_model.geo.addCurveLoop(a,40)
 
 
 
@@ -678,7 +699,7 @@ def create_parallel_mesh(ctrl,ctrlio):
                global_points[1,p_i_1][0]]
         plt.plot(x,y,c='k')
     
-    gmsh.model.geo.addCurveLoop(a,45)
+    mesh_model.geo.addCurveLoop(a,45)
 
 
     # -- Create surfaces 
@@ -703,27 +724,28 @@ def create_parallel_mesh(ctrl,ctrlio):
     Channel_surf_B                 = gmsh.model.geo.addPlaneSurface([45],tag=450) # Channel
 
     
-    gmsh.model.geo.synchronize()
+    mesh_model.geo.synchronize()
 
-    gmsh.model.addPhysicalGroup(2, [Left_side_of_subduction_surf], tag=10000)
-    gmsh.model.addPhysicalGroup(2, [Oceanic_Crust_surf], tag=15000)
-    gmsh.model.addPhysicalGroup(2, [Right_side_of_subduction_surf], tag=20000)
-    gmsh.model.addPhysicalGroup(2, [Lithhospheric_Mantle_surf], tag=25000)
-    gmsh.model.addPhysicalGroup(2, [Crust_LC_surf], tag=30000)
-    gmsh.model.addPhysicalGroup(2, [Crust_UC_surf], tag=35000)
-    gmsh.model.addPhysicalGroup(2, [Channel_surf_A], tag=40000)   
-    gmsh.model.addPhysicalGroup(2, [Channel_surf_B], tag=45000)   
+    mesh_model.addPhysicalGroup(2, [Left_side_of_subduction_surf], tag=10000)
+    mesh_model.addPhysicalGroup(2, [Oceanic_Crust_surf], tag=15000)
+    mesh_model.addPhysicalGroup(2, [Right_side_of_subduction_surf], tag=20000)
+    mesh_model.addPhysicalGroup(2, [Lithhospheric_Mantle_surf], tag=25000)
+    mesh_model.addPhysicalGroup(2, [Crust_LC_surf], tag=30000)
+    mesh_model.addPhysicalGroup(2, [Crust_UC_surf], tag=35000)
+    mesh_model.addPhysicalGroup(2, [Channel_surf_A], tag=40000)   
+    mesh_model.addPhysicalGroup(2, [Channel_surf_B], tag=45000)   
 
-    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    gmsh.model.geo.mesh.setAlgorithm(2, 40000, 3)
-    gmsh.model.geo.mesh.setAlgorithm(2, 45000, 3)
-    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+    mesh_model.geo.mesh.setAlgorithm(2, 40000, 3)
+    mesh_model.geo.mesh.setAlgorithm(2, 45000, 3)
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
 
-    gmsh.model.mesh.generate(2)
-    gmsh.model.mesh.setOrder(2)
+    mesh_model.mesh.generate(2)
+    mesh_model.mesh.setOrder(2)
     gmsh.write("experimental.msh")
+    mesh, cell_tags, facet_tags = gmshio.model_to_mesh(mesh_model,MPI.COMM_WORLD,0)
     gmsh.finalize()
 
     
@@ -740,7 +762,7 @@ def create_parallel_mesh(ctrl,ctrlio):
     
     
     
-    return 0
+    return mesh, cell_tags, facet_tags
 
 
 def Poisson_lithostatic_tutorial(pdb,BC,ctrl,IOCtrl,sc): 
@@ -750,20 +772,20 @@ def Poisson_lithostatic_tutorial(pdb,BC,ctrl,IOCtrl,sc):
         return 1 + u**2
     # Load mesh with standard data: 
     
-    create_parallel_mesh(ctrl,IOCtrl)
+    mesh, cell_tags, facet_tags = create_parallel_mesh(ctrl,IOCtrl)
 
-    domain = mesh.create_unit_square(MPI.COMM_WORLD, 10, 10)
-    x = ufl.SpatialCoordinate(domain)
+    #domain = mesh.create_unit_square(MPI.COMM_WORLD, 10, 10)
+    x = ufl.SpatialCoordinate(mesh)
     u_ufl = 1 + x[0] + 2 * x[1]
     f = - ufl.div(q(u_ufl) * ufl.grad(u_ufl))
 
-    V = fem.functionspace(domain, ("Lagrange", 1))
+    V = fem.functionspace(mesh, ("Lagrange", 1))
     def u_exact(x): return eval(str(u_ufl))
 
     u_D = fem.Function(V)
     u_D.interpolate(u_exact)
-    fdim = domain.topology.dim - 1
-    boundary_facets = mesh.locate_entities_boundary(domain, fdim, lambda x: numpy.full(x.shape[1], True, dtype=bool))
+    fdim = mesh.topology.dim - 1
+    boundary_facets = mesh.locate_entities_boundary(mesh, fdim, lambda x: numpy.full(x.shape[1], True, dtype=bool))
     bc = fem.dirichletbc(u_D, fem.locate_dofs_topological(V, fdim, boundary_facets))
 
 
