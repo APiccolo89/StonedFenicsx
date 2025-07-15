@@ -13,7 +13,7 @@ from solver_function.numerical_control import bc_controls
 from solver_function.scal import Scal 
 import ufl
 import numpy
-
+import meshio
 from mpi4py import MPI
 from petsc4py import PETSc
 
@@ -21,6 +21,31 @@ from dolfinx import mesh, fem, io, nls, log
 from dolfinx.fem.petsc import NonlinearProblem
 from dolfinx.nls.petsc import NewtonSolver
 import matplotlib.pyplot as plt
+from dolfinx.io import XDMFFile, gmshio
+import gmsh 
+from ufl import exp, conditional, eq, as_ufl
+
+
+dict_surf = {
+    'sub_plate'         : 10000,
+    'oceanic_crust'     : 15000,
+    'wedge'             : 20000,
+    'overriding_lm'     : 25000,
+    'lower_crust'       : 30000,
+    'upper_crust'       : 35000,
+    'Channel_surf_a'    : 40000,
+    'Channel_surf_b'    : 45000,
+}
+
+
+def assign_phases(dict_surf, cell_tags,phase):
+    """Assigns phase tags to the mesh based on the provided surface tags."""
+    for tag, value in dict_surf.items():
+        indices = cell_tags.find(value) 
+        phase.x.array[indices] = np.full_like(indices,  value , dtype=PETSc.IntType)
+    
+    return phase 
+
 def get_line_points(gmsh,line_ids):
     gmsh.model.geo.synchronize()
     for lid in line_ids:
@@ -406,71 +431,76 @@ def create_parallel_mesh(ctrl,ctrlio):
 
     # Function create Physical line
     #-- Create Physical Line
+    
+    
+    dict_tag_lines = {
+        'Top'               : 1,
+        'Right'             : 2,
+        'Bottom'            : 3,
+        'Left'              : 4,
+        'Subduction'        : 5,
+        'Channel'           : 6,
+        'Oceanic'           : 7,
+        'Channel_over'      : 8,
+        'Overriding_mantle' : 9,
+        'Channel_decoupling': 10,
+        'Crust_overplate'   : 11,
+        'LCrust_overplate'  : 12,
+    }
  
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
     
-    mesh_model.addPhysicalGroup(1, tag_L_T, tag=111)
-    gmsh.model.setPhysicalName(1, 111, "top")
+    mesh_model.addPhysicalGroup(1, tag_L_T, tag=dict_tag_lines['Top'])
     
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    mesh_model.addPhysicalGroup(1, tag_L_R, tag=112)
-    gmsh.model.setPhysicalName(1, 112, "right")
+    mesh_model.addPhysicalGroup(1, tag_L_R, tag=dict_tag_lines['Right'])
 
 
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    mesh_model.addPhysicalGroup(1, tag_L_B, tag=113)
-    gmsh.model.setPhysicalName(1, 113, "bottom")
-
-    
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
-    mesh_model.addPhysicalGroup(1, tag_L_L, tag=114)
-    gmsh.model.setPhysicalName(1, 114, "left")
+    mesh_model.addPhysicalGroup(1, tag_L_B, tag=dict_tag_lines['Bottom'])
 
     
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    mesh_model.addPhysicalGroup(1, tag_L_sub, tag=101)
-    gmsh.model.setPhysicalName(1, 101, "subduction")
+    mesh_model.addPhysicalGroup(1, tag_L_L, tag=dict_tag_lines['Left'])
 
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
-    mesh_model.addPhysicalGroup(1, tag_L_ch, tag=102)
-    gmsh.model.setPhysicalName(1, 102, "channel")
     
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    mesh_model.addPhysicalGroup(1, tag_L_oc, tag=103)  
-    gmsh.model.setPhysicalName(1, 103, "ocean")
+    mesh_model.addPhysicalGroup(1, tag_L_sub,tag=dict_tag_lines['Subduction'])
+
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    mesh_model.addPhysicalGroup(1, tag_L_ch,tag=dict_tag_lines['Channel'])
+    
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    mesh_model.addPhysicalGroup(1, tag_L_oc, tag=dict_tag_lines['Oceanic'])
   
     
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    mesh_model.addPhysicalGroup(1, tag_L_ch_ov, tag=104)    
-    gmsh.model.setPhysicalName(1, 104, "channel_ovriding")
+    mesh_model.addPhysicalGroup(1, tag_L_ch_ov, tag=dict_tag_lines['Channel_over']) 
 
     
     gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    mesh_model.addPhysicalGroup(1, tag_L_ov, tag=105)    
-    gmsh.model.setPhysicalName(1, 104, "overriding_plate")
+    mesh_model.addPhysicalGroup(1, tag_L_ov, tag=dict_tag_lines['Overriding_mantle'])
 
 
     if c_phase.cr !=0: 
 
         mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-        mesh_model.addPhysicalGroup(1, tag_L_cr, tag=106)    
-        gmsh.model.setPhysicalName(1, 104, "crust_over")
+        mesh_model.addPhysicalGroup(1, tag_L_cr, tag=dict_tag_lines['Crust_overplate'])
 
 
 
         if c_phase.lc !=0:
             mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-            mesh_model.addPhysicalGroup(1, tag_L_Lcr, tag=107) 
-            gmsh.model.setPhysicalName(1, 104, "crust_lower_over")
+            mesh_model.addPhysicalGroup(1, tag_L_Lcr,tag=dict_tag_lines['LCrust_overplate'])
    
 
     # Left side of the subduction zone 10 
@@ -745,59 +775,121 @@ def create_parallel_mesh(ctrl,ctrlio):
     mesh_model.mesh.generate(2)
     mesh_model.mesh.setOrder(2)
     gmsh.write("experimental.msh")
-    mesh, cell_tags, facet_tags = gmshio.model_to_mesh(mesh_model,MPI.COMM_WORLD,0)
-    gmsh.finalize()
+    
+    mesh, cell_markers, facet_markers = gmshio.read_from_msh("experimental.msh", MPI.COMM_WORLD, gdim=2)
+    proc = 0 
+    if proc == 0:
+        # Read in mesh
+        msh = meshio.read("experimental.msh")
+
+        # Create and save one file for the mesh, and one file for the facets
+        triangle_mesh = create_mesh(msh, "triangle6", prune_z=True)
+        line_mesh = create_mesh(msh, "line3", prune_z=True)
+        meshio.write("mesh.xdmf", triangle_mesh)
+        meshio.write("mt.xdmf", line_mesh)
+    MPI.COMM_WORLD.barrier()
+    
+    
 
     
-    
-    # -- Mesh -> parallel 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    return mesh, cell_tags, facet_tags
+    return mesh, cell_markers, facet_markers 
 
 
-def Poisson_lithostatic_tutorial(pdb,BC,ctrl,IOCtrl,sc): 
+def create_mesh(mesh, cell_type, prune_z=False):
+    # From the tutorials of dolfinx
+    cells = mesh.get_cells_type(cell_type)
+    cell_data = mesh.get_cell_data("gmsh:physical", cell_type)
+    points = mesh.points[:, :2] if prune_z else mesh.points
+    out_mesh = meshio.Mesh(points=points, cells={cell_type: cells}, cell_data={"name_to_read": [cell_data.astype(np.int32)]})
+    return out_mesh
+
+
+
+def density_alt(p, T, rho_0):
+    """
+    UFL-compatible density function with temperature and pressure dependence.
+    Arguments:
+        option_rho: int (0=constant, 1=T-dependent, 2=T+P-dependent)
+        p: Pressure (ufl.Expr or Function)
+        T: Temperature (ufl.Expr or Function)
+        rho_0: Reference density (ufl.Expr or float)
+    """
+    alpha_0 = 2.832e-5
+    alpha_1 = 3.79e-8
+    T0 = 273.15
+
+    # Base T dependence (option 1 or 2)
+    thermal_exp = - (alpha_0 * (T - T0) + 0.5 * alpha_1 * (T**2 - T0**2))
+    rho_T = rho_0 * exp(thermal_exp)
+
+    # Pressure dependence (option 2 only)
+    Kb = (2 * 100e9 * (1 + 0.25)) / (3 * (1 - 0.25 * 2))  # Bulk modulus
+    rho_TP = rho_T * exp(p / Kb)
+
+    # Conditional branching
+    return rho_TP  # fallback zero
+
+
+def density(ph, P, T,sc):
+    rho = ufl.conditional(ufl.eq(ph, 10000), 3300.0,
+          ufl.conditional(ufl.eq(ph, 15000), 2900.0,
+          ufl.conditional(ufl.eq(ph, 20000), 3300.0,
+          ufl.conditional(ufl.eq(ph, 25000), 3250.0,
+          ufl.conditional(ufl.eq(ph, 30000), 2800.0,
+          ufl.conditional(ufl.eq(ph, 35000), 2700.0,
+          ufl.conditional(ufl.eq(ph, 40000), 3250.0,
+          ufl.conditional(ufl.eq(ph, 45000), 3250.0,
+          0.0))))))))  # default to 0 if not matched
+
+    return density_alt(P*sc.stress, T, rho) / sc.rho
+
+def compute_lithostatic_pressure(pdb,BC,ctrl,IOCtrl,sc): 
     
-    
-    def q(u):
-        return 1 + u**2
-    # Load mesh with standard data: 
-    
+        
     mesh, cell_tags, facet_tags = create_parallel_mesh(ctrl,IOCtrl)
+    mesh.geometry.x[:] *= np.array([1.0/sc.L, 1.0/sc.L, 1.0/sc.L]) # Scale the mesh to the correct size
 
-    #domain = mesh.create_unit_square(MPI.COMM_WORLD, 10, 10)
     x = ufl.SpatialCoordinate(mesh)
-    u_ufl = 1 + x[0] + 2 * x[1]
-    f = - ufl.div(q(u_ufl) * ufl.grad(u_ufl))
+    
+    # Define the function space for the lithostatic pressure
+    ph = fem.functionspace(mesh, ("DG", 0))      # Material ID function space
+    V = fem.functionspace(mesh, ("Lagrange", 2)) # Function space for the solution 
+    
+    
+    
+    # Define the material property field
+    phase = fem.Function(ph) # Create a function to hold the phase information
+    phase.x.name = "phase"
+    phase = assign_phases(dict_surf, cell_tags,phase) # Assign phases using the cell tags and physical surfaces -> i.e. 10000 = Mantle ? is going to assign unique phase to each node? 
+    
+    # Define the lithostatic pressure function
+    P    = fem.Function(V)
+    P_n  = fem.Function(V) # ? {still blinding following the God}
+    q    = ufl.TestFunction(V) # Trial function for the nonlinear solver
+    T    = fem.Function(V) # Temperature function, can be set to a constant or variable later
+    T.x.array[:] = 1200+273.15  # Set a constant temperature for the test function
 
-    V = fem.functionspace(mesh, ("Lagrange", 1))
-    def u_exact(x): return eval(str(u_ufl))
+    
+    
+    # Use the function space of the lithostatic pressure to interpolate the phase information and use as function for the nonlinear solver
+    ph_V = fem.Function(V)
+    ph_V.interpolate(phase)
+    
+    # Set the boundary conditions for this specific problem
+    fdim = mesh.topology.dim - 1    
+    top_facets   = facet_tags.find(1)
+    top_dofs    = fem.locate_dofs_topological(V, mesh.topology.dim-1, top_facets)
+    bc = fem.dirichletbc(0.0, top_dofs, V)
 
-    u_D = fem.Function(V)
-    u_D.interpolate(u_exact)
-    fdim = mesh.topology.dim - 1
-    boundary_facets = mesh.locate_entities_boundary(mesh, fdim, lambda x: numpy.full(x.shape[1], True, dtype=bool))
-    bc = fem.dirichletbc(u_D, fem.locate_dofs_topological(V, fdim, boundary_facets))
+    
+    g = fem.Constant(mesh, PETSc.ScalarType([0.0, -ctrl.g]))    
+    F = ufl.dot(ufl.grad(P), ufl.grad(q)) * ufl.dx - ufl.dot(ufl.grad(q),density(phase,P,T,sc)*g) * ufl.dx
 
-
-    uh = fem.Function(V)
-    v = ufl.TestFunction(V)
-    F = q(uh) * ufl.dot(ufl.grad(uh), ufl.grad(v)) * ufl.dx - f * v * ufl.dx
-
-    problem = NonlinearProblem(F, uh, bcs=[bc])
+    problem = NonlinearProblem(F, P, bcs=[bc])
 
     solver = NewtonSolver(MPI.COMM_WORLD, problem)
     solver.convergence_criterion = "incremental"
-    solver.rtol = 1e-6
+    solver.rtol = 1e-9
     solver.report = True
 
 
@@ -813,7 +905,26 @@ def Poisson_lithostatic_tutorial(pdb,BC,ctrl,IOCtrl,sc):
     ksp.setFromOptions()
 
     log.set_log_level(log.LogLevel.INFO)
-    n, converged = solver.solve(uh)
+    n, converged = solver.solve(P)
+    
+    
+    pr = P.x.array
+    pr = pr * sc.stress  # Scale the pressure to the correct units
+    print(f"Scaled lithostatic pressure: {np.min(pr/1e9):.2f} GPa, {np.max(pr/1e9):.2f} GPa")
+    
+    rho = fem.Function(ph)
+    v = ufl.TestFunction(ph)
+    rho_trial = ufl.TrialFunction(ph)
+    rho_expr = density(phase, P, T,sc)
+
+    a = ufl.inner(rho_trial, v) * ufl.dx
+    L = ufl.inner(rho_expr, v) * ufl.dx
+    fem.petsc.LinearProblem(a, L, bcs=[], u=rho).solve()
+    cell_density = rho.x.array*sc.rho  # Scale the density to the correct units
+    print(f"Scaled density: {np.min(cell_density):.2f} kg/m^3, {np.max(cell_density):.2f} kg/m^3")
+    
+    
+    
     assert (converged)
     print(f"Number of interations: {n:d}")
     
@@ -825,7 +936,7 @@ def Poisson_lithostatic_tutorial(pdb,BC,ctrl,IOCtrl,sc):
 if __name__ == "__main__":
     
     pdb,BC_spec,ctrl,sc,IOCtrl = set_initial_()
-    Poisson_lithostatic_tutorial(pdb,BC_spec,ctrl,IOCtrl,sc)
+    compute_lithostatic_pressure(pdb,BC_spec,ctrl,IOCtrl,sc)
     
     
     

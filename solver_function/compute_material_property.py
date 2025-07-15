@@ -115,6 +115,27 @@ def heat_capacity(option_C_p,T,p,it):
         
     return C_p
 #---------------------------------------------------------------------------------
+@njit
+def density_alt(option_rho,rho_0,T,p,it):
+    if (option_rho == 0) or (it==0):
+        # constant variables 
+        rho = rho_0 + (T - T)
+    elif option_rho == 1 or option_rho == 2:
+        # constants 
+        rho_0   = rho_0
+        alpha_0 = 2.832e-5
+        alpha_1 = 3.79e-8 
+        # calculate rho
+        rho     = rho_0 * np.exp( - ( alpha_0 * (T - 273.15) + (alpha_1/2.) * ( T**2 - 273.15**2 ) ) )
+        if option_rho == 2:
+            # calculate the pressure dependence of the density
+            Kb = (2*100e9*(1+0.25))/(3*(1-0.25*2))
+            rho = rho * np.exp(p/Kb)    
+    return rho
+
+
+
+#----------------------------------------------------------------------------------
 
 @njit
 def density(option_rho,T,p,it):
