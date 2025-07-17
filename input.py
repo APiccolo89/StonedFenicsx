@@ -305,16 +305,16 @@ def create_parallel_mesh(ctrl,ctrlio):
 
 
     c_phase = fmm.c_phase()
-    
+    min_x           = 0.0 # The beginning of the model is the trench of the slab
+    max_x           = 1000e3                 # Max domain x direction
+    max_y           = 0.0 
+    min_y           = -660e3                # Min domain y direction
     # Set up slab top surface a
     Data_Real = False; S = []
-    van_keken = 1
+    van_keken = 0
     if (Data_Real==False) & (isinstance(S, Slab)== False):
         if van_keken == 1: 
-            min_x           = 0.0 # The beginning of the model is the trench of the slab
-            max_x           = 660e3                 # Max domain x direction
-            min_y           = -600e3 # Min domain y direction
-            max_y           = 0.0 # Max domain y direction 
+# Max domain y direction 
             S = Slab(D0 = 100.0, L0 = 800.0, Lb = 400, trench = 0.0,theta_0=5, theta_max = 45.0, num_segment=100,flag_constant_theta=True,y_min=min_y)
         else: 
             S = Slab(D0 = 100.0, L0 = 800.0, Lb = 400, trench = 0.0,theta_0=1.0, theta_max = 45.0, num_segment=100,flag_constant_theta=False,y_min=min_y)
@@ -696,6 +696,8 @@ def create_parallel_mesh(ctrl,ctrlio):
 
     a = []
     index_a = find_line_index(lines_ch,coord_channel,c_phase.lt_d)
+    index = find_line_index(lines_S,coord_sub,c_phase.lt_d)
+
     buf_array = -lines_S[2,0:index]
     buf_array = buf_array[::-1]
     a.extend(np.int32(lines_ch[2,0:index_a]))
@@ -709,9 +711,11 @@ def create_parallel_mesh(ctrl,ctrlio):
 
 
     a = []
+    index_a = find_line_index(lines_S,coord_sub,c_phase.lt_d)
     index = find_line_index(lines_S,coord_sub,c_phase.decoupling)
     buf_array = -lines_S[2,index_a:index]
     buf_array = buf_array[::-1]
+    index_a = find_line_index(lines_ch,coord_channel,c_phase.lt_d)
     a.extend(np.int32(lines_ch[2,index_a:]))
     a.extend([-lines_base_ch[2,:].item()])
     a.extend(buf_array)
@@ -852,7 +856,8 @@ def compute_lithostatic_pressure(pdb,BC,ctrl,IOCtrl,sc):
     x = ufl.SpatialCoordinate(mesh)
     
     # Define the function space for the lithostatic pressure
-    ph = fem.functionspace(mesh, ("DG", 0))      # Material ID function space
+    ph = fem.functionspace(mesh, ("DG", 0))      # Material ID function space # Defined in the cell space {element wise} apperently there is a black magic that 
+    # automatically does the interpolation of the function space, i.e. the function space is defined in the cell space, but it is automatically interpolated to the nodes                                    
     V = fem.functionspace(mesh, ("Lagrange", 2)) # Function space for the solution 
     
     
@@ -867,13 +872,8 @@ def compute_lithostatic_pressure(pdb,BC,ctrl,IOCtrl,sc):
     P_n  = fem.Function(V) # ? {still blinding following the God}
     q    = ufl.TestFunction(V) # Trial function for the nonlinear solver
     T    = fem.Function(V) # Temperature function, can be set to a constant or variable later
-    T.x.array[:] = 1200+273.15  # Set a constant temperature for the test function
+    T.x.array[:] = 1200+273.15  # Set a constant temperature for the test function -> this will be the previous timestep temperature in the future 
 
-    
-    
-    # Use the function space of the lithostatic pressure to interpolate the phase information and use as function for the nonlinear solver
-    ph_V = fem.Function(V)
-    ph_V.interpolate(phase)
     
     # Set the boundary conditions for this specific problem
     fdim = mesh.topology.dim - 1    
@@ -922,9 +922,6 @@ def compute_lithostatic_pressure(pdb,BC,ctrl,IOCtrl,sc):
     fem.petsc.LinearProblem(a, L, bcs=[], u=rho).solve()
     cell_density = rho.x.array*sc.rho  # Scale the density to the correct units
     print(f"Scaled density: {np.min(cell_density):.2f} kg/m^3, {np.max(cell_density):.2f} kg/m^3")
-    
-    
-    
     assert (converged)
     print(f"Number of interations: {n:d}")
     
