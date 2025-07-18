@@ -187,17 +187,19 @@ spec_phase = [
     ("option_k", int32[:]),  # Option for conductivity calculation
 
     # Density parameters
-    ("alpha", float64[:]),       # Thermal expansivity [1/K]
-    ("alpha2", float64[:]),      # Second-order thermal expansivity [1/K^2]
+    ("alpha0", float64[:]),       # Thermal expansivity [1/K]
+    ("alpha1", float64[:]),      # Second-order thermal expansivity [1/K^2]
     ("Kb", float64[:]),          # Bulk modulus [Pa]
     ("rho0", float64[:]),        # Reference density [kg/m^3]
     ("option_rho", int32[:]),    # Option for density calculation
 
     # Constants
-    ("T_ref", float64),      # Reference temperature [K]
-    ("P_ref", float64),      # Reference pressure [Pa]
+    ("Tref", float64),      # Reference temperature [K]
+    ("Pref", float64),      # Reference pressure [Pa]
     ("R", float64),          # Gas constant [J/mol/K]
-]
+    ("T_Scal",float64),     # T_scal -> Important, as within the exponential soul of diffusion/dislocation creep  R is in mol I don't know how to make dimensionless
+    ("P_scal",float64),     # Same reason as before
+]   
 
 #-----------------------------------------------------------------------------------------------------------
 
@@ -208,15 +210,15 @@ class PhaseDataBase:
         if number_phases>8: 
             raise ValueError("The number of phases should not exceed 7")
         
-        self.T_ref      = 298.15  # Reference temperature [K]
-        self.P_ref      = 1e5     # Reference pressure [Pa]
-        self.R          = 8.3145  # Universal gas constant [J/(mol K)]
+        self.Tref        = 298.15  # Reference temperature [K]
+        self.Pref        = 1e5     # Reference pressure [Pa]
+        self.R           = 8.3145  # Universal gas constant [J/(mol K)]
         
         # Viscosity data 
         # Diffusion creep
-        self.Edif       = np.zeros(number_phases, dtype=np.float64)              # Activation energy diffusion creep [J/mol]
-        self.Vdif       = np.zeros(number_phases, dtype=np.float64)              # Activation volume diffusion creep [m^3/mol]
-        self.Bdif       = np.zeros(number_phases, dtype=np.float64)              # Pre-exponential factor diffusion creep [Pa^-1 s^-1]
+        self.Edif         = np.zeros(number_phases, dtype=np.float64)              # Activation energy diffusion creep [J/mol]
+        self.Vdif         = np.zeros(number_phases, dtype=np.float64)              # Activation volume diffusion creep [m^3/mol]
+        self.Bdif         = np.zeros(number_phases, dtype=np.float64)              # Pre-exponential factor diffusion creep [Pa^-1 s^-1]
         
         # Dislocation creep
         self.Edis       = np.zeros(number_phases, dtype=np.float64)              # Activation energy dislocaiton creep [J/mol]
@@ -248,15 +250,14 @@ class PhaseDataBase:
 
         
         # Density parameters 
-        self.alpha      = np.zeros(number_phases, dtype=np.float64)               # Thermal expansivity coefficient [1/K]   
-        self.alpha2     = np.zeros(number_phases, dtype=np.float64)               # Second-order expansivity [1/K^2]
+        self.alpha0      = np.zeros(number_phases, dtype=np.float64)               # Thermal expansivity coefficient [1/K]   
+        self.alpha1     = np.zeros(number_phases, dtype=np.float64)               # Second-order expansivity [1/K^2]
         self.Kb         = np.zeros(number_phases, dtype=np.float64)               # Bulk modulus [Pa]                
         self.rho0       = np.zeros(number_phases, dtype=np.float64)               # Reference density [kg/m^3] {In case of constant density}
         self.option_rho = np.zeros(number_phases, dtype=np.int32)                 # Option for density calculation
 
 #-----------------------------------------------------------------------------------------------------------
 def _generate_phase(PD:PhaseDataBase,
-                    number_phases:int,
                     id:int                 = -100,
                     name_diffusion:str     = '',
                     Edif:float             = -1e23, 
@@ -272,8 +273,9 @@ def _generate_phase(PD:PhaseDataBase,
                     rho:float              = 3300,
                     eta:float              = -1e23,
                     option_rheology:float  = 0,
-                    option_C_p:float       = 0,
-                    option_k:float         = 0) -> PhaseDataBase:
+                    option_Cp:int       = 0,
+                    option_k:int         = 0,
+                    option_rho:int = 0  )     -> PhaseDataBase:
     """
     Generate phase: 
     id : phase id number [0->n] 
@@ -325,14 +327,14 @@ def _generate_phase(PD:PhaseDataBase,
     
     
     # Heat capacity
-    if option_C_p == 0:
+    if option_Cp == 0:
         # constant heat capacity 
         PD.Cp[id] = Cp
-    elif option_C_p > 0 and option_C_p < 7:
+    elif option_Cp > 0 and option_Cp < 7:
         # Compute the material the effective material property 
-        PD.C0[i],PD.C1[i],PD.C2[i],PD.C3[i] = release_heat_capacity_parameters(option_C_p)
+        PD.C0[id],PD.C1[id],PD.C2[id],PD.C3[id] = release_heat_capacity_parameters(option_Cp)
     
-    PD.option_Cp[id] = option_C_p
+    PD.option_Cp[id] = option_Cp
     
     # Heat Conductivity
     if option_k == 0:
@@ -397,8 +399,8 @@ def release_heat_capacity_parameters(option_C_p: int) -> Tuple[float, float, flo
     # The law of the heat capacity is only temperature dependent, and it is a polynomial. For now I keep the vision of Iris, and introduce a few options later on 
     
 
-    mmfo = 140.691/1000
-    mmfa = 203.771/1000
+    mmfo = 1/(140.691/1000)
+    mmfa = 1/(203.771/1000)
 
     if option_C_p > 0 and option_C_p < 4:
         # Berman 1988 

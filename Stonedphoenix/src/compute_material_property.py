@@ -13,11 +13,12 @@ import scipy.sparse.linalg.dsolve as linsolve
 from numba import njit
 from numba import jit, prange
 from scipy.optimize import bisect
+
 #---------------------------------------------------------------------------------
 
 
 #---------------------------------------------------------------------------------
-@njit
+#@njit
 def heat_conductivity(pdb,T,p,ph):    
     
     if pdb.option_k[ph] == 0:
@@ -44,9 +45,9 @@ def heat_conductivity(pdb,T,p,ph):
     return k 
 #---------------------------------------------------------------------------------
 
-@njit
+#@njit
 def heat_capacity(pdb,T,p,ph):
-    if (option_C_p == 0) 
+    if (pdb.option_Cp[ph] == 0): 
         # constant vriables 
         C_p = pdb.C_p[ph]
     else:
@@ -55,16 +56,16 @@ def heat_capacity(pdb,T,p,ph):
         
     return C_p
 #---------------------------------------------------------------------------------
-@njit
+#@njit
 def density(pdb,T,p,ph):
     rho_0 = pdb.rho0[ph] 
     
-    if pdb.option_rho[ph] == 0
+    if pdb.option_rho[ph] == 0:
         # constant variables 
         return rho_0 
     else :
         # calculate rho
-        rho     = rho_0 * np.exp( - ( pdb.alpha0[ph] * (T - pdb.Tref) + (pdb.alpha2[ph]/2.) * ( T**2 - pdb.Tref**2 )))
+        rho     = rho_0 * np.exp( - ( pdb.alpha0[ph] * (T - pdb.Tref) + (pdb.alpha1[ph]/2.) * ( T**2 - pdb.Tref**2 )))
         if pdb.option_rho[ph] == 2:
             # calculate the pressure dependence of the density
             Kb = (2*100e9*(1+0.25))/(3*(1-0.25*2))
@@ -74,26 +75,7 @@ def density(pdb,T,p,ph):
 
 #----------------------------------------------------------------------------------
 
-@njit
-def density(option_rho,T,p,it):
-    if (option_rho == 0) or (it==0):
-        # constant variables 
-        rho = 3300. + (T - T)
-    elif option_rho == 1 or option_rho == 2:
-        # constants 
-        rho_0   = 3330
-        alpha_0 = 2.832e-5
-        alpha_1 = 3.79e-8 
-        # calculate rho
-        rho     = rho_0 * np.exp( - ( alpha_0 * (T - 273.15) + (alpha_1/2.) * ( T**2 - 273.15**2 ) ) )
-        if option_rho == 2:
-            # calculate the pressure dependence of the density
-            Kb = (2*100e9*(1+0.25))/(3*(1-0.25*2))
-            rho = rho * np.exp(p/Kb)    
-    return rho
-
-
-@njit
+#@njit
 def compute_viscosity(e,T,P,B,n,E,V,R):
 
     t = -1+1/n
@@ -329,42 +311,131 @@ def _check_iteration(ctrl,ph,e,T,P,it):
 
 
 
-if __name__ == '__main__':
-    import sys
-    import os
 
-    # Append absolute path to the folder (NOT to the file)
-    sys.path.append(os.path.abspath("material_property"))
-    sys.path.append(os.path.abspath("solver_function"))
 
-    # Now import the module by filename (without .py)
-    import phase_db as pdb
-    import numerical_control as nc
-    ctrl = nc.NumericalControls(rheology=3) 
 
-    ph = pdb.PhaseDataBase(2)
-    pdb._generate_phase(ph,2,id=0,name_diffusion='Hirth_Dry_Olivine_diff',name_dislocation='Hirth_Dry_Olivine_disl')
-    pdb._generate_phase(ph,2,id=1,name_diffusion='Van_Keken_diff',name_dislocation='Hirth_Dry_Olivine_disl')
-    exx,eyy,exy = 1e-15,1e-15,1e-15
-    e=np.sqrt(0.5*(exx**2+eyy**2)+exy**2)
 
-    T = np.linspace(273.15, 1300+273.15, 200)  # Temperature range from 0 to 1600 K
-    P = np.linspace(0, 20e9, 1000)  # Pressure range from 0 to 1000 MPa
+
+
+
+
+
+def unit_test_thermal_properties(pt_save):    
+    """
+    Unit test for thermal properties functions. Function that the author used to test the thermal properties functions and debug -> by the end
+    I will introduce a few folder in which the data will be saved for being benchmarked in other system and being sure that the code is worked as
+    expected. On the other hand, there are a few shit with fenicx that I need to account for, fuck. 
+    """
+    import numpy as np 
+    import sys, os
+    sys.path.append(os.path.abspath("src"))
+    from phase_db import PhaseDataBase 
+    from phase_db import _generate_phase
+    from scal import Scal
     
-    eta_iter = np.zeros([len(T),len(P)], dtype=np.float64)
-    for it in range(len(T)):
-        for it2  in range(len(P)):
-            # Compute the minimum and maximum viscosity for the current temperature and pressure
-            eta_iter[it,it2] = _check_iteration(ctrl,ph,e,T[it],P[it2],it)
+    T = np.linspace(298.15,273.15+1500,num=1000) # Vector temperature
+    P = np.linspace(0.0, 15, num = 10000) * 1e9  # Vector pressure   
+    
+    # phase data base for the test 
+    
+    pdb = PhaseDataBase(1)
+    pdb = _generate_phase(pdb,0,option_rho = 2,option_rheology = 0, option_k = 2, option_Cp = 3,eta=1e21)
+    
+    rho_test = np.zeros([len(T),len(P)],dtype = np.float64); k_test = np.zeros_like(rho_test); Cp_test = np.zeros_like(rho_test)
+    
+    for i in range(len(T)):
+        for j in range(len(P)):
+            rho_test[i,j] = density(pdb,T[i],P[j],0)
+            k_test[i,j]   = heat_conductivity(pdb,T[i],P[j],0)
+            Cp_test[i,j]  = heat_capacity(pdb,T[i],P[j],0)
+    
+    thermal_diffusivity = k_test/rho_test/Cp_test
+    
+    base_cmap = plt.get_cmap('inferno')
+    from matplotlib.colors import ListedColormap
 
-    T = T - 273.15  # Convert to Celsius for plotting
-    plt.contourf(T, P/1e6, np.log10(np.transpose(eta_iter)), levels=30, cmap='viridis')
-    plt.colorbar(label='Viscosity (Pa.s)')
-    plt.xlim(0, 1300)  # Limit temperature to 1300 K for better visibility
-    plt.xlabel('Temperature (deg C)')
-    plt.xlabel('Pressure (MPa)')
+    # Number of discrete colors
+    N = 20
 
-    plt.title('Viscosity vs Temperature')
-    plt.legend()
-    print("Viscosity at T=1300K:", eta_iter[np.where(T==1300)[0][0]])
+    # Create a new discrete colormap
+    colors = base_cmap(np.linspace(0, 1, N))
+    discrete_cmap = ListedColormap(colors)
+    
+    
+    fig = plt.figure()
+    ax = fig.gca()
+    a = ax.pcolormesh(T-273.15,P,rho_test.T,shading='gouraud',cmap = discrete_cmap)
+    plt.colorbar(a,label=r'$\varrho$ [$\frac{\mathrm{kg}}{\mathrm{m}^3}$]')
+    ax.set_xlabel('T [${\circ}^{C}$]')    
+    ax.set_xlabel('P [GPa]')
+    fig.savefig("%s/density.png"%pt_save)      
+    
+    
+        
+    fig = plt.figure()
+    ax = fig.gca()
+    a = ax.pcolormesh(T-273.15,P,rho_test.T,shading='gouraud',cmap = discrete_cmap)
+    plt.colorbar(a,label=r'$\varrho$ [$\frac{\mathrm{kg}}{\mathrm{m}^3}$]')
+    ax.set_xlabel('T [${\circ}^{C}$]')    
+    ax.set_xlabel('P [GPa]')
+    fig.savefig("%s/density.png"%pt_save)     
+    
+    
+        
+    fig = plt.figure()
+    ax = fig.gca()
+    a = ax.pcolormesh(T-273.15,P,k_test.T,shading='gouraud',cmap = discrete_cmap)
+    plt.colorbar(a,label=r'$k$ [$\frac{\mathrm{W}}{\mathrm{m}\mathrm{K}}$]')
+    ax.set_xlabel('T [${\circ}^{C}$]')    
+    ax.set_xlabel('P [GPa]')
+    fig.savefig("%s/conductivity.png"%pt_save)     
+    
+    fig = plt.figure()
+    ax = fig.gca()
+    a = ax.pcolormesh(T-273.15,P,Cp_test.T,shading='gouraud',cmap = discrete_cmap)
+    plt.colorbar(a,label=r'$C_p$ [$\frac{\mathrm{J}}{\mathrm{kg}\mathrm{K}}$]')
+    ax.set_xlabel('T [${\circ}^{C}$]')    
+    ax.set_xlabel('P [GPa]')
+    fig.savefig("%s/capacity.png"%pt_save)  
+    
+    fig = plt.figure()
+    ax = fig.gca()
+    a = ax.pcolormesh(T-273.15,P,np.log10(thermal_diffusivity.T),shading='gouraud',cmap = discrete_cmap)
+    plt.colorbar(a,label=r'$\kappa$ [$\frac{\mathrm{m^2}}{\mathrm{s}}$]')
+    ax.set_xlabel('T [${\circ}^{C}$]')    
+    ax.set_xlabel('P [GPa]')
+    fig.savefig("%s/diffusivity.png"%pt_save)  
+    
+    plt.close('all')
+    
+    
+    
+    
+    
 
+
+
+
+if __name__ == '__main__':
+    
+    import os 
+    
+    pt_save = '../debug'
+    
+    if not os.path.exists(pt_save): 
+        os.makedirs(pt_save)   
+         
+    unit_test_thermal_properties(pt_save)
+    
+    #unit_test_thermal_properties_scaling()
+    
+
+
+
+
+"""
+from pathlib import Path
+
+folder_path = Path("your_folder_name")
+folder_path.mkdir(parents=True, exist_ok=True)
+"""
