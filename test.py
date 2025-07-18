@@ -34,25 +34,31 @@ def heat_capacity(option_C_p,T,p,it):
             k_1_fa = -20.137e2
             k_3_fa = -6.219e7
     
-        if option_C_p == 1 or option_C_p == 4: 
-            # forsterite 
-            molar_fraction_fa = 0.
-        if option_C_p == 2 or option_C_p == 5: 
-            # fayalite 
-            molar_fraction_fa = 1.
-        if option_C_p == 3 or option_C_p == 6: 
-            # molar fraction of fayalite is 0.11 
-            molar_fraction_fa = 0.11 
+
+        molar_fraction_fa = 0.11 
             
         # calculate C_p 
-        C_p_fo = (k_0_fo + k_1_fo * (T**(-0.5)) + k_3_fo * (T**(-3.))) #* (1./molecular_mass_fo)
-        C_p_fa = (k_0_fa + k_1_fa * (T**(-0.5)) + k_3_fa * (T**(-3.))) #* (1./molecular_mass_fa)
+        C_p_fo = (k_0_fo + k_1_fo * (T**(-0.5)) + k_3_fo * (T**(-3.))) * (1./molecular_mass_fo)
+        C_p_fa = (k_0_fa + k_1_fa * (T**(-0.5)) + k_3_fa * (T**(-3.))) * (1./molecular_mass_fa)
+        
+        K0 = (1-molar_fraction_fa)*k_0_fo * (1./molecular_mass_fo) + molar_fraction_fa*k_0_fa * (1./molecular_mass_fa)
+        K1 = (1-molar_fraction_fa)*k_1_fo * (1./molecular_mass_fo) + molar_fraction_fa*k_1_fa * (1./molecular_mass_fa)
+        K3 = (1-molar_fraction_fa)*k_3_fo * (1./molecular_mass_fo) + molar_fraction_fa*k_3_fa * (1./molecular_mass_fa)
+        
+        
+        molar_mass = (1-molar_fraction_fa)*molecular_mass_fo + molar_fraction_fa*molecular_mass_fa
+        Cp  = (K0 + K1 * (T**(-0.5)) + K3 * (T**(-3.)))
+        
+     
+     
+     
+     
      
         C_p       = (1 - molar_fraction_fa) * C_p_fo + molar_fraction_fa * C_p_fa
         
-    return C_p
+    return C_p,Cp
 
 
 T = np.linspace(300, 2000, 1000)
-C_p_1 = heat_capacity(1, T, 0, 1)
+C_p_1,Cp_alt = heat_capacity(1, T, 0, 1)
 print("C_p for option 1:", C_p_1)

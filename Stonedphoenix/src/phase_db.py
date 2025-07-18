@@ -15,6 +15,7 @@ Dic_rheo ={'Hirth_Dry_Olivine_diff':  'Dislocation_DryOlivine',
           'Hirth_Wet_Olivine_diff' :  'Diffusion_WetOlivine',
           'Hirth_Wet_Olivine_disl' :  'Dislocation_WetOlivine'}
 
+#-----------------------------------------------------------------------------------------------------------
 
 class Rheological_data_Base():
     """
@@ -107,6 +108,7 @@ class Rheological_data_Base():
         self.Diffusion_vanKeken = Rheological_flow_law(E,V,n,m,d0,B,0,0,r,water,q,gamma,taup)
 
 
+#-----------------------------------------------------------------------------------------------------------
 
 class Rheological_flow_law():
     """
@@ -123,6 +125,7 @@ class Rheological_flow_law():
         self.q  = q
         self.gamma = gamma
         self.taup = taup
+    #-----------------------------------------------------------------------------------------------------------
     def _correction(self,B,F=0,n=1,m=0,MPa=0,d0=0,r=0,water=0):
         # Correct for accounting the typology of the experiment
         if F == 1: # Simple shear
@@ -136,6 +139,7 @@ class Rheological_flow_law():
         B = B*d0**(-m)*water**(r)
         return B 
 
+#-----------------------------------------------------------------------------------------------------------
 
 def _check_rheological(tag:str) -> Rheological_flow_law:
 
@@ -149,43 +153,53 @@ def _check_rheological(tag:str) -> Rheological_flow_law:
         return A 
 
 
+#-----------------------------------------------------------------------------------------------------------
 
 spec_phase = [
-    # Diffusion creep
+    # Viscosity – Diffusion creep
     ("Edif", float64[:]),    # Activation energy diffusion creep [J/mol]
     ("Vdif", float64[:]),    # Activation volume diffusion creep [m^3/mol]
     ("Bdif", float64[:]),    # Pre-exponential factor diffusion creep [Pa^-1 s^-1]
 
-    # Dislocation creep
+    # Viscosity – Dislocation creep
     ("Edis", float64[:]),    # Activation energy dislocation creep [J/mol]
     ("Vdis", float64[:]),    # Activation volume dislocation creep [m^3/mol]
-    ("Bdis", float64[:]),    # Pre-exponential factor [Pa^-n s^-1]
-    ("n",    float64[:]),    # Stress exponent
-    ("eta",  float64[:]),    # Constant viscosity [Pa s]
+    ("Bdis", float64[:]),    # Pre-exponential factor dislocation creep [Pa^-n s^-1]
+    ("n", float64[:]),       # Stress exponent
+    ("eta", float64[:]),     # Constant viscosity [Pa s]
     ("option_eta", int32[:]),# Option for viscosity calculation
 
     # Heat capacity
-    ("Cp", float64[:]),      # Constant heat capacity [J/kg K]
-    ("C0", float64[:]),      # Reference Cp [J/mol/K]
-    ("C1", float64[:]),      # Cp term [J/mol/K]
-    ("C2", float64[:]),      # Cp term [J/mol/K]
-    ("C3", float64[:]),      # Cp term [J/mol/K]
+    ("Cp", float64[:]),      # Constant heat capacity [J/kg/K]
+    ("C0", float64[:]),      # Cp coefficient [J/mol/K]
+    ("C1", float64[:]),      # Cp coefficient [J/mol/K^0.5]
+    ("C2", float64[:]),      # Cp coefficient [J·K/mol]
+    ("C3", float64[:]),      # Cp coefficient [J·K^2/mol]
     ("option_Cp", int32[:]), # Option for Cp calculation
 
     # Thermal conductivity
     ("k", float64[:]),       # Constant thermal conductivity [W/m/K]
-    ("k0", float64[:]),      # Reference conductivity [W/m/K]
-    ("a", float64[:]),       # Thermal expansivity [1/Pa]
-    ("T", float64[:]),       # Reference temperature [K]
+    ("k0", float64[:]),      # Reference thermal conductivity [W/m/K]
+    ("a", float64[:]),       # Pressure-dependent coefficient [1/Pa]
+    ("k_b", float64[:]),     # Radiative heat transfer coefficient [W/m/K]
+    ("k_c", float64[:]),     # Radiative heat transfer coefficient [W/m/K^2]
+    ("k_d", float64[:, :]),  # Radiative polynomial coefficients [W/m/K^3]
     ("option_k", int32[:]),  # Option for conductivity calculation
 
     # Density parameters
-    ("alpha", float64[:]),       # Thermal expansivity coefficient
-    ("alpha2", float64[:]),      # Second-order expansivity
-    ("Kb", float64[:]),          # Bulk modulus
-    ("rho0", float64[:]),        # Reference density
+    ("alpha", float64[:]),       # Thermal expansivity [1/K]
+    ("alpha2", float64[:]),      # Second-order thermal expansivity [1/K^2]
+    ("Kb", float64[:]),          # Bulk modulus [Pa]
+    ("rho0", float64[:]),        # Reference density [kg/m^3]
     ("option_rho", int32[:]),    # Option for density calculation
+
+    # Constants
+    ("T_ref", float64),      # Reference temperature [K]
+    ("P_ref", float64),      # Reference pressure [Pa]
+    ("R", float64),          # Gas constant [J/mol/K]
 ]
+
+#-----------------------------------------------------------------------------------------------------------
 
 @jitclass(spec_phase)
 class PhaseDataBase:
@@ -193,6 +207,10 @@ class PhaseDataBase:
         # Initialize individual fields as arrays
         if number_phases>8: 
             raise ValueError("The number of phases should not exceed 7")
+        
+        self.T_ref      = 298.15  # Reference temperature [K]
+        self.P_ref      = 1e5     # Reference pressure [Pa]
+        self.R          = 8.3145  # Universal gas constant [J/(mol K)]
         
         # Viscosity data 
         # Diffusion creep
@@ -211,17 +229,23 @@ class PhaseDataBase:
         # Thermal properties
         self.Cp         = np.zeros(number_phases, dtype=np.float64)               # Heat capacity [J/kg K] {In case of constant heat capacity}
         self.C0         = np.zeros(number_phases, dtype=np.float64)               # Reference heat capacity [J/mol/K]
-        self.C1         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [J/mol/K^0.5]         
-        self.C2         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [(J*K)/mol]   
-        self.C3         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [(J*K^2)/mol]
+        self.C1         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [J/mol/K^0.5]  -> CONVERTED INTO J/kg/K^0.5       
+        self.C2         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [(J*K)/mol]    -> CONVERTED INTO J/kg/K^2
+        self.C3         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [(J*K^2)/mol]  -> CONVERTED INTO J/kg/K^3
         self.option_Cp  = np.zeros(number_phases, dtype=np.int32)                 # Option for heat capacity calculation
         
         # Thermal conductivity 
         self.k          = np.zeros(number_phases, dtype=np.float64)               # Heat conductivity [W/m/K] {In case of constant heat conductivity}
         self.k0         = np.zeros(number_phases, dtype=np.float64)               # Reference heat conductivity [W/m/K]
         self.a          = np.zeros(number_phases, dtype=np.float64)               # Thermal expansivity [1/Pa]
-        self.T          = np.ones (number_phases, dtype=np.float64)*298.15        # Reference temperature [K] -> By DEFAULT 298.15 K {25+273.15}K
+        # Radiative heat transfer
+        self.k_b        = np.zeros(number_phases, dtype=np.float64)               # Radiative heat transfer constant [W/m/K]
+        self.k_c        = np.zeros(number_phases, dtype=np.float64)               # Radiative heat transfer constant [W/m/K^2]
+        self.k_d        = np.zeros((number_phases, 4), dtype=np.float64)             # Radiative heat transfer polynomial coefficients [W/m/K^3]        
+    
+        # Radiative heat transfer 
         self.option_k   = np.zeros(number_phases, dtype=np.int32)                 # Option for heat conductivity calculation
+
         
         # Density parameters 
         self.alpha      = np.zeros(number_phases, dtype=np.float64)               # Thermal expansivity coefficient [1/K]   
@@ -230,28 +254,26 @@ class PhaseDataBase:
         self.rho0       = np.zeros(number_phases, dtype=np.float64)               # Reference density [kg/m^3] {In case of constant density}
         self.option_rho = np.zeros(number_phases, dtype=np.int32)                 # Option for density calculation
 
-
-
-
-
+#-----------------------------------------------------------------------------------------------------------
 def _generate_phase(PD:PhaseDataBase,
                     number_phases:int,
-                    id             = -100,
-                    name_diffusion = '',
-                    Edif = -1e23, 
-                    Vdif = -1e23,
-                    Bdif = -1e23, 
-                    name_dislocation = '',
-                    n    = -1e23,
-                    Edis = -1e23,
-                    Vdis = -1e23, 
-                    Bdis = -1e23, 
-                    Cp   = 1171.52,
-                    k    = 3.138,
-                    alpha = 3e-5,
-                    beta = 1e-12,
-                    rho   = 3300,
-                    eta = -1e23):
+                    id:int                 = -100,
+                    name_diffusion:str     = '',
+                    Edif:float             = -1e23, 
+                    Vdif:float             = -1e23,
+                    Bdif:float             = -1e23, 
+                    name_dislocation:float = '',
+                    n:float                = -1e23,
+                    Edis:float             = -1e23,
+                    Vdis:float             = -1e23, 
+                    Bdis:float             = -1e23, 
+                    Cp:float               = 1171.52,
+                    k:float                = 3.138,
+                    rho:float              = 3300,
+                    eta:float              = -1e23,
+                    option_rheology:float  = 0,
+                    option_C_p:float       = 0,
+                    option_k:float         = 0) -> PhaseDataBase:
     """
     Generate phase: 
     id : phase id number [0->n] 
@@ -287,7 +309,7 @@ def _generate_phase(PD:PhaseDataBase,
         PD.Edis[id] = A.E 
         PD.Vdis[id] = A.V
         PD.Bdis[id] = A.B 
-        PD.n[id] = A.n 
+        PD.n[id]    = A.n 
     if n!= -1e23: 
         PD.n[id] = n 
         if PD.Bdis[id] != 0.0: 
@@ -298,120 +320,126 @@ def _generate_phase(PD:PhaseDataBase,
         PD.Vdis[id] = Vdis 
     elif Bdis != -1e23:
         PD.Bdis[id] = Bdis  
+    PD.eta[id] = eta
+    PD.option_eta[id] = option_rheology
     
-    PD.Cp[id] = Cp
-    PD.alpha[id] = alpha
-    PD.k[id] = k 
-    PD.beta[id] = beta 
-    PD.rho[id] = rho 
-    PD.eta[id] = eta 
+    
+    # Heat capacity
+    if option_C_p == 0:
+        # constant heat capacity 
+        PD.Cp[id] = Cp
+    elif option_C_p > 0 and option_C_p < 7:
+        # Compute the material the effective material property 
+        PD.C0[i],PD.C1[i],PD.C2[i],PD.C3[i] = release_heat_capacity_parameters(option_C_p)
+    
+    PD.option_Cp[id] = option_C_p
+    
+    # Heat Conductivity
+    if option_k == 0:
+        # constant heat conductivity 
+        PD.k[id] = k
+    elif option_k != 0:
+        # Compute the material the effective material property 
+        PD.k0[id],PD.a[id]  = release_heat_conductivity_parameters(option_k)
+    
+    elif option_k == 3:
+
+        PD.k_b[id]    = 5.3
+        PD.k_c[id]    = 0.0015
+        PD.k_d[id,:]  = np.array([1.753e-2, -1.0365e-4, 2.2451e-7, -3.4071e-11], dtype=np.float64) 
+    
+    PD.option_k[id]   = option_k    
+    
+    # Density
+    PD.alpha0[id]      = 2.832e-5
+    PD.alpha1[id]     = 3.79e-8 
+    PD.Kb[id]         = (2*100e9*(1+0.25))/(3*(1-0.25*2))  # Bulk modulus [Pa]
+    PD.rho0[id]       = rho
+    
+    PD.option_rho[id] = option_rho
+    
     return PD 
 
+    
+#-----------------------------------------------------------------------------------------------------------
 
-#@dataclass(slots=True)
-#class phase_data_base:
-#    """
-#    Class that contains the data for the phase database. 
-#    """
-#    number_phases: int
-#    phase_db: np.ndarray = field(init=False)
-#
-#    def __post_init__(self):
-#        """
-#        Initialize the phase database after the dataclass is created.
-#        """
-#        dtype = [('id', np.int32),
-#                 ('Edif', np.float64),
-#                 ('Vdif', np.float64),
-#                 ('Bdif', np.float64),
-#                 ('n', np.float64),
-#                 ('Edis', np.float64),
-#                 ('Vdis', np.float64),
-#                 ('Bdis', np.float64),
-#                 ('Cp', np.float64),
-#                 ('k', np.float64),
-#                 ('alpha', np.float64),
-#                 ('beta',np.float64),
-#                 ('rho', np.float64),
-#                 ('eta', np.float64),]
-#        self.phase_db = np.zeros(self.number_phases, dtype=dtype)
-#    
-#    def _generate_phase(self,
-#                        id             = -100,
-#                        name_diffusion = '',
-#                        Edif = -1e23, 
-#                        Vdif = -1e23,
-#                        Bdif = -1e23, 
-#                        name_dislocation = '',
-#                        n    = -1e23,
-#                        Edis = -1e23,
-#                        Vdis = -1e23, 
-#                        Bdis = -1e23, 
-#                        Cp   = 1171.52,
-#                        k    = 3.138,
-#                        alpha = 3e-5,
-#                        beta = 1e-12,
-#                        rho   = 3300,
-#                        eta = -1e23):
-#        """
-#        Generate phase: 
-#        id : phase id number [0->n] 
-#        name_diffusion : name of the diffusion/dislocation creep law 
-#        Edif: data of the diffusion creep [Energy of activation]  
-#        Vdif: data of the diffusion creep [Activation volume]
-#        Bdif: preexponential factor diffusion
-#        name_dislocation: name of the dislocation creep law
-#        Edis: data of dislocation [Energy of activation]
-#        Vdis: data of dislocation [Activation volume]
-#        Bdis: preexponential factor dislocation 
-#        n   : stress exponent 
-#        Cp  : heat capacity 
-#        k   : heat conductivity 
-#        alpha:  thermal expansivity
-#        beta : compressibility 
-#        rho : density 
-#        => output -> update the id_th phase_db 
-#        """
-#        if name_diffusion != 'constant':
-#            A = _check_rheological(name_diffusion)
-#            self.phase_db['Edif'][self.phase_db['id']==id] = A.E 
-#            self.phase_db['Vdif'][self.phase_db['id']==id] = A.V
-#            self.phase_db['Bdif'][self.phase_db['id']==id] = A.B 
-#
-#        if Edif != -1e23: 
-#            self.phase_db['Edif'][self.phase_db['id']==id] = Edif 
-#        elif Vdif !=-1e23:  
-#            self.phase_db['Vdif'][self.phase_db['id']==id] = Vdif 
-#        elif Bdif != -1e23:
-#            self.phase_db['Bdif'][self.phase_db['id']==id] = Bdif  
-#
-#        if name_dislocation != 'constant':
-#            A = _check_rheological(name_dislocation)
-#            self.phase_db['Edis'][self.phase_db['id']==id] = A.E 
-#            self.phase_db['Vdis'][self.phase_db['id']==id] = A.V
-#            self.phase_db['Bdis'][self.phase_db['id']==id] = A.B 
-#            self.phase_db['n'][self.phase_db['id']==id] = A.n 
-#
-#        if n!= -1e23: 
-#            self.phase_db['n'][self.phase_db['id']==id] = n 
-#            if self.phase_db['Bdis'][self.phase_db['id']==id] != 0.0: 
-#                print('Warning: Stress pre-exponential factor has inconsistent measure [Pa^-ns^-1] wrt the original flow law')
-#        elif Edis != -1e23: 
-#            self.phase_db['Edis'][self.phase_db['id']==id] = Edis 
-#        elif Vdis !=-1e23:  
-#            self.phase_db['Vdis'][self.phase_db['id']==id] = Vdis 
-#        elif Bdis != -1e23:
-#            self.phase_db['Bdis'][self.phase_db['id']==id] = Bdis  
-#        
-#        self.phase_db['Cp'][self.phase_db['id']==id] = Cp
-#        self.phase_db['alpha'][self.phase_db['id']==id] = alpha
-#        self.phase_db['k'][self.phase_db['id']==id] = k 
-#        self.phase_db['beta'][self.phase_db['id']==id] = beta 
-#        self.phase_db['rho'][self.phase_db['id']==id] = rho 
-#        self.phase_db['eta'][self.phase_db['id']==id] = eta 
-#
-#
-#        return self 
-#
-#
+
+def release_heat_conductivity_parameters(option_k: int) -> Tuple[float, float]:
+    '''
+    So, long story short: Hofmeister 1999 conductivity formulation is basically:
+    $k(T,P) = k_298(298/T)^a * exp([-(4/gamma+1/3)*\integral(0,T)alpha(\theta)d\theta])$ 
+    In the formulation that I found in Tosi, and also in Xu, they use this except with the exp 
+    term. 
+    Hofmeister 1999, claims that the k_tot(T,P) = k(T,P)+k_rad(T,P) -> So, I will use as 
+    constitutive model the $k(T,P) = (k_298 + k_298 * a * P)(298/T)^a$ Assuming that k_298 and a 
+    are accouting the exponential term. On the other hand, I need to check in Xu 2004, if it is the case. 
+    '''
+    
+    if option_k == 1: 
+        k    = 4.10 
+        n    = 0.493   
+        a    = 0.032/1e9*k #[Convert from 1/GPa to 1/Pa]
+    elif option_k == 2:
+        k  = 2.47 # [Wm-1K-1]
+        a = 0.33/1e9 # [Wm-1K-1GPa-1] GPA PD!!!!
+        n  = 0.48 
+    
+        
+    else:
+        raise ValueError("The option for heat conductivity is not implemented")
+
+    return k, a
+#-----------------------------------------------------------------------------------------------------------
+
+def release_heat_capacity_parameters(option_C_p: int) -> Tuple[float, float, float, float]:
+    
+    # To do in the future: generalise -> Database of heat capacity parameters as a function of the major mineral molar composition
+    # The law of the heat capacity is only temperature dependent, and it is a polynomial. For now I keep the vision of Iris, and introduce a few options later on 
+    
+
+    mmfo = 140.691/1000
+    mmfa = 203.771/1000
+
+    if option_C_p > 0 and option_C_p < 4:
+        # Berman 1988 
+        # forsterite 
+        C0_fo = mmfo * 238.64    
+        C1_fo = mmfo * -20.013e2 
+        C3_fo = mmfo * -11.624e7 
+    
+        # fayalite 
+        C0_fa = mmfa * 248.93    
+        C1_fa = mmfa * -19.239e2 
+        C3_fa = mmfa * -13.910e7 
+    elif option_C_p > 3 and option_C_p < 7:
+        # Berman & Aranovich 1996 
+        # forsterite 
+        C0_fo = mmfo * 233.18
+        C1_fo = mmfo * -18.016e2
+        C3_fo = mmfo * -26.794e7
+    
+        # fayalite 
+        C0_fa = mmfa * 252.
+        C1_fa = mmfa * -20.137e2
+        C3_fa = mmfa * -6.219e7   
+    
+    
+    if option_C_p == 1 or option_C_p == 4: 
+        # forsterite 
+        x = 0.
+    if option_C_p == 2 or option_C_p == 5: 
+        # fayalite 
+        x = 1.
+    if option_C_p == 3 or option_C_p == 6: 
+        # molar fraction of fayalite is 0.11 
+        x = 0.11 
+    
+    C0 = (1-x)*C0_fo + x*C0_fa
+    C1 = (1-x)*C1_fo + x*C1_fa
+    C2 = 0.0
+    C3 = (1-x)*C3_fo + x*C3_fa
+    
+    return C0, C1, C2, C3
+      
+    
 
