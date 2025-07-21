@@ -28,16 +28,16 @@ def heat_conductivity(pdb,T,p,ph):
     
     elif pdb.option_k[ph] >1: 
         
-        k = (pdb.k0[ph] + pdb.a[ph] * p)
+        k = (pdb.k0[ph] + pdb.a[ph] * p) * (pdb.Tref/T)**pdb.k_n[ph]
         
-        if pdb.option_k[ph] == 3:
+        if pdb.option_k[ph] == 3 or pdb.option_k[ph] == 4 :
            
            # radiative component of the conductivity
             k_h_radiative = 0.
             
             for i in range(0,4):
             
-                k_h_radiative = k_h_radiative + pdb.d[ph,i] * (T)**i
+                k_h_radiative = k_h_radiative + pdb.k_d[ph,i] * (T)**i
      
             k = k + k_h_radiative
              
@@ -68,7 +68,7 @@ def density(pdb,T,p,ph):
         rho     = rho_0 * np.exp( - ( pdb.alpha0[ph] * (T - pdb.Tref) + (pdb.alpha1[ph]/2.) * ( T**2 - pdb.Tref**2 )))
         if pdb.option_rho[ph] == 2:
             # calculate the pressure dependence of the density
-            Kb = (2*100e9*(1+0.25))/(3*(1-0.25*2))
+            Kb = pdb.Kb[ph]
             rho = rho * np.exp(p/Kb)    
     
     return rho
@@ -85,34 +85,43 @@ def compute_viscosity(e,T,P,B,n,E,V,R):
     return eta 
 #---------------------------------------------------------------------------------
 # TILL STOKES BETTER TO NOT TOUCH THIS FUNCTION
-@njit
-def viscosity(exx:float,eyy:float,exy:float,T:float,P:float,ctrl,p_data,it:int,ph:int):#,imat):
+#@njit
+def viscosity(exx:float,eyy:float,exy:float,T:float,P:float,p_data,it:int,ph:int):#,imat):
     ck = 0
     e=np.sqrt(0.5*(exx**2+eyy**2)+exy**2)
     
     
     
-    rheo_type = ctrl.rheology
-    eta_max   = ctrl.eta_max
-    eta_min   = ctrl.eta_min
+    rheo_type = p_data.option_eta[ph]
+    eta_max   = p_data.eta_max
+    eta_min   = p_data.eta_min
     Bdif = p_data.Bdif[ph]
     Edif = p_data.Edif[ph]
     Vdif = p_data.Vdif[ph]
 
-    R    = ctrl.R
+    R    = p_data.R
     Bdis = p_data.Bdis[ph]
     Edis = p_data.Edis[ph]
     Vdis = p_data.Vdis[ph]
     n    = p_data.n[ph]
+    T = p_data.T_Scal * T 
+    P = p_data.P_Scal * P
+    # Short explanation: I do not know how to not dimensionalise E, R and V all these quantities have 
+    # a dependency with mol which is a measure of mass, but, also specific to the chemical composition 
+    # of the element -> so, in principle, we can derive a measure in E/kg R -> E/kg and so forth 
+    # However seems arbitrary. Since the exponential exp(E+PV/RT)=> is by default dimensionless, I simply 
+    # unscale the temperature and pressure for computing the temperature dependency. In alterative -> I scale m^3/mol and 
+    # E/mol with the usual scale leaving E* V* to be 1/mol. This is an alternative strategy, but seems annoying. 
 
+    
     # Certain area of the model does not have a real velocity field
     if e == 0: 
         e = 1e-21
     
     if (it == 0) or (rheo_type== 0):
-        return ctrl.eta_def
-
-    if p_data.eta[ph] != -1e23:
+        return p_data.eta_def
+    
+    if (rheo_type) == 0: 
         return p_data.eta[ph]
 
           
@@ -141,7 +150,7 @@ def viscosity(exx:float,eyy:float,exy:float,T:float,P:float,ctrl,p_data,it:int,p
     return val
 #---------------------------------------------------------------------------------
 
-@njit
+#@njit
 def _find_tau_guess(cdf,cds,n,eta_max,e):
     """
     input:
@@ -188,13 +197,13 @@ def _find_tau_guess(cdf,cds,n,eta_max,e):
 #---------------------------------------------------------------------------------
 
 # Define the function f(tau) for root-finding
-@njit
+##@njit
 def f(tau, compliance_disl, compliance_diff, B_max, e, n):
     """Equation to solve for tau."""
     return (e - (compliance_disl * tau**n + compliance_diff * tau + B_max * tau)) / e
 
 # Custom bisection method
-@njit
+#@njit
 def bisection_method(a, b, tol, max_iter, compliance_disl, compliance_diff, B_max, e, n):
     """Perform bisection method to find the root of f in the interval [a, b]."""
     fa = f(a, compliance_disl, compliance_diff, B_max, e, n)
@@ -223,7 +232,7 @@ def bisection_method(a, b, tol, max_iter, compliance_disl, compliance_diff, B_ma
 #---------------------------------------------------------------------------------
 
 # Main point_iteration function
-@njit
+#@njit
 def point_iteration(eta_max: float,
                     eta_min: float,
                     e: float,
@@ -265,47 +274,6 @@ def point_iteration(eta_max: float,
 
     return eta, tau_total
 #---------------------------------------------------------------------------------
-def _check_iteration(ctrl,ph,e,T,P,it):
-
-    
-    rheo_type = ctrl.rheology
-    eta_max   = ctrl.eta_max
-    eta_min   = ctrl.eta_min
-    Bdif = ph.Bdif[0]
-    Edif = ph.Edif[0]
-    Vdif = ph.Vdif[0]
-
-    R    = ctrl.R
-    Bdis = ph.Bdis[0]
-    Edis = ph.Edis[0]
-    Vdis = ph.Vdis[0]
-    n    = ph.n[0]
-    eta_dif = compute_viscosity(e,T,P,Bdif,1,Edif,Vdif,R)
-    eta_dis = compute_viscosity(e,T,P,Bdis,n,Edis,Vdis,R)
-    eta_effA = (1/eta_dif+1/eta_dis+1/eta_max)**(-1)
-    eta_effB = np.min([eta_dif, eta_dis, eta_max])
-    
-    
-    B_max = 1 / (2 * eta_max)
-    compliance_disl = Bdis * np.exp(-(Edis+P*Vdis) / (R * T))
-    compliance_diff = Bdif * np.exp(-(Edif+P*Vdif) / (R * T))
-    # cross check with compliance
-    eta_dif2 = 0.5*compliance_diff**(-1)
-    eta_dis2 = 0.5*compliance_disl**(-1/n)* np.sqrt(e)**((1-n)/n)
-    tau_min, tau_max = _find_tau_guess(compliance_diff, compliance_disl, n, eta_max, e)
-    tau_max2 = 2*eta_effB*e
-    tau_min2 = 2*eta_effA*e
-    tau = bisection_method(tau_min, tau_max, 1e-6, 100, compliance_disl, compliance_diff, B_max, e, n)
-    eta  = tau / (2 * e)
-    tau_min2 = 2*eta_min*e
-    eta_2 = (tau + 2 * eta_min * e) / (2 * e)
-
-    e_diff = compliance_diff * tau
-    e_dis = compliance_disl * tau ** n
-    e_max = B_max * tau
-    r = e/e-(e_diff + e_dis + e_max)/e 
-    return eta_2
-
 
 
 
@@ -334,12 +302,12 @@ def unit_test_thermal_properties(pt_save):
     from scal import Scal
     
     T = np.linspace(298.15,273.15+1500,num=1000) # Vector temperature
-    P = np.linspace(0.0, 15, num = 10000) * 1e9  # Vector pressure   
+    P = np.linspace(0.0, 15, num = 1000) * 1e9  # Vector pressure   
     
     # phase data base for the test 
     
     pdb = PhaseDataBase(1)
-    pdb = _generate_phase(pdb,0,option_rho = 2,option_rheology = 0, option_k = 2, option_Cp = 3,eta=1e21)
+    pdb = _generate_phase(pdb,0,option_rho = 2,option_rheology = 0, option_k = 3, option_Cp = 3,eta=1e21)
     
     rho_test = np.zeros([len(T),len(P)],dtype = np.float64); k_test = np.zeros_like(rho_test); Cp_test = np.zeros_like(rho_test)
     
@@ -366,51 +334,254 @@ def unit_test_thermal_properties(pt_save):
     ax = fig.gca()
     a = ax.pcolormesh(T-273.15,P,rho_test.T,shading='gouraud',cmap = discrete_cmap)
     plt.colorbar(a,label=r'$\varrho$ [$\frac{\mathrm{kg}}{\mathrm{m}^3}$]')
-    ax.set_xlabel('T [${\circ}^{C}$]')    
-    ax.set_xlabel('P [GPa]')
+    ax.set_xlabel(r'T [${\circ}^{C}$]')    
+    ax.set_ylabel(r'P [GPa]')
     fig.savefig("%s/density.png"%pt_save)      
     
     
         
     fig = plt.figure()
     ax = fig.gca()
-    a = ax.pcolormesh(T-273.15,P,rho_test.T,shading='gouraud',cmap = discrete_cmap)
+    a = ax.pcolormesh(T-273.15,P/1e9,rho_test.T,shading='gouraud',cmap = discrete_cmap)
     plt.colorbar(a,label=r'$\varrho$ [$\frac{\mathrm{kg}}{\mathrm{m}^3}$]')
-    ax.set_xlabel('T [${\circ}^{C}$]')    
-    ax.set_xlabel('P [GPa]')
+    ax.set_xlabel(r'T [^${\circ}{C}$]')    
+    ax.set_ylabel(r'P [GPa]')
     fig.savefig("%s/density.png"%pt_save)     
     
     
         
     fig = plt.figure()
     ax = fig.gca()
-    a = ax.pcolormesh(T-273.15,P,k_test.T,shading='gouraud',cmap = discrete_cmap)
+    a = ax.pcolormesh(T-273.15,P/1e9,k_test.T,shading='gouraud',cmap = discrete_cmap)
     plt.colorbar(a,label=r'$k$ [$\frac{\mathrm{W}}{\mathrm{m}\mathrm{K}}$]')
-    ax.set_xlabel('T [${\circ}^{C}$]')    
-    ax.set_xlabel('P [GPa]')
+    ax.set_xlabel(r'T [^${\circ}{C}$]')    
+    ax.set_ylabel(r'P [GPa]')
     fig.savefig("%s/conductivity.png"%pt_save)     
     
     fig = plt.figure()
     ax = fig.gca()
-    a = ax.pcolormesh(T-273.15,P,Cp_test.T,shading='gouraud',cmap = discrete_cmap)
+    a = ax.pcolormesh(T-273.15,P/1e9,Cp_test.T,shading='gouraud',cmap = discrete_cmap)
     plt.colorbar(a,label=r'$C_p$ [$\frac{\mathrm{J}}{\mathrm{kg}\mathrm{K}}$]')
-    ax.set_xlabel('T [${\circ}^{C}$]')    
-    ax.set_xlabel('P [GPa]')
+    ax.set_xlabel(r'T [^${\circ}{C}$]')    
+    ax.set_ylabel(r'P [GPa]')
     fig.savefig("%s/capacity.png"%pt_save)  
     
     fig = plt.figure()
     ax = fig.gca()
-    a = ax.pcolormesh(T-273.15,P,np.log10(thermal_diffusivity.T),shading='gouraud',cmap = discrete_cmap)
+    a = ax.pcolormesh(T-273.15,P/1e9,np.log10(thermal_diffusivity.T),shading='gouraud',cmap = discrete_cmap)
     plt.colorbar(a,label=r'$\kappa$ [$\frac{\mathrm{m^2}}{\mathrm{s}}$]')
-    ax.set_xlabel('T [${\circ}^{C}$]')    
-    ax.set_xlabel('P [GPa]')
+    ax.set_xlabel(r'T [^${\circ}{C}$]')    
+    ax.set_ylabel(r'P [GPa]')
     fig.savefig("%s/diffusivity.png"%pt_save)  
+        
     
     plt.close('all')
+    return rho_test, k_test, Cp_test 
+    
+    
+def unit_test_thermal_properties_scaling(pt_save,dim_rho,dim_k,dim_Cp):    
+    """
+    Unit test for thermal properties functions. Function that the author used to test the thermal properties functions and debug -> by the end
+    I will introduce a few folder in which the data will be saved for being benchmarked in other system and being sure that the code is worked as
+    expected. On the other hand, there are a few shit with fenicx that I need to account for, fuck. 
+    """
+    import numpy as np 
+    import sys, os
+    sys.path.append(os.path.abspath("src"))
+    from phase_db import PhaseDataBase 
+    from phase_db import _generate_phase
+    from scal import Scal
+    from scal import _scaling_material_properties
+
+    sc = Scal(L=660e3, eta = 1e21, Temp = 1350, stress = 2e9) 
+    
+    T = np.linspace(298.15,273.15+1500,num=1000) # Vector temperature
+    P = np.linspace(0.0, 15, num = 1000) * 1e9  # Vector pressure   
+    
+    T /= sc.Temp 
+    P /= sc.stress 
+
+    
+    
+    # phase data base for the test 
+    
+    pdb = PhaseDataBase(1)
+    pdb = _generate_phase(pdb,0,option_rho = 2,option_rheology = 0, option_k = 3, option_Cp = 3,eta=1e21)
+    
+    
+    pdb = _scaling_material_properties(pdb,sc)
+    
+    rho_test = np.zeros([len(T),len(P)],dtype = np.float64); k_test = np.zeros_like(rho_test); Cp_test = np.zeros_like(rho_test)
+    
+    for i in range(len(T)):
+        for j in range(len(P)):
+            rho_test[i,j] = density(pdb,T[i],P[j],0)
+            k_test[i,j]   = heat_conductivity(pdb,T[i],P[j],0)
+            Cp_test[i,j]  = heat_capacity(pdb,T[i],P[j],0)
+    
+    thermal_diffusivity = k_test/rho_test/Cp_test
+    
+    base_cmap = plt.get_cmap('inferno')
+    from matplotlib.colors import ListedColormap
+
+    # Number of discrete colors
+    N = 20
+
+    # Create a new discrete colormap
+    colors = base_cmap(np.linspace(0, 1, N))
+    discrete_cmap = ListedColormap(colors)
+    
+    
+        
+    fig = plt.figure()
+    ax = fig.gca()
+    a = ax.pcolormesh(T,P,rho_test.T,shading='gouraud',cmap = discrete_cmap)
+    plt.colorbar(a,label=r'$\varrho^{\dagger}$')
+    ax.set_xlabel(r'$T^{\dagger}$')    
+    ax.set_ylabel(r'$P^{\dagger}$')
+    fig.savefig("%s/density_ND.png"%pt_save)     
+    
+    
+        
+    fig = plt.figure()
+    ax = fig.gca()
+    a = ax.pcolormesh(T,P,k_test.T,shading='gouraud',cmap = discrete_cmap)
+    plt.colorbar(a,label=r'$k^{\dagger}$')
+    ax.set_xlabel(r'$T^{\dagger}$')    
+    ax.set_ylabel(r'$P^{\dagger}$')
+    fig.savefig("%s/conductivity_ND.png"%pt_save)     
+    
+    fig = plt.figure()
+    ax = fig.gca()
+    a = ax.pcolormesh(T,P,Cp_test.T,shading='gouraud',cmap = discrete_cmap)
+    plt.colorbar(a,label=r'$C_p^{\dagger}$')
+    ax.set_xlabel(r'$T^{\dagger}$')    
+    ax.set_ylabel(r'$P^{\dagger}$')
+    fig.savefig("%s/capacity_ND.png"%pt_save)  
+    
+    fig = plt.figure()
+    ax = fig.gca()
+    a = ax.pcolormesh(T,P,np.log10(thermal_diffusivity.T),shading='gouraud',cmap = discrete_cmap)
+    plt.colorbar(a,label=r'$\kappa^{\dagger}$')
+    ax.set_xlabel(r'$T^{\dagger}$')    
+    ax.set_ylabel(r'$P^{\dagger}$')
+    fig.savefig("%s/diffusivity_ND.png"%pt_save)  
+
+    plt.close('all')
+    k_test   *= sc.k 
+    rho_test *= sc.rho 
+    Cp_test  *= sc.Cp 
+    res_Cp   = np.linalg.norm(Cp_test-dim_Cp,2)/np.linalg.norm(Cp_test+dim_Cp,2)
+    res_k    = np.linalg.norm(k_test-dim_k,2)/np.linalg.norm(k_test+dim_k,2)
+    res_rho  = np.linalg.norm(rho_test-dim_rho,2)/np.linalg.norm(rho_test+dim_rho,2)
+    
+    print('    { => Test <= }')
+    print('      res Cp   %.4e'%res_Cp)
+    print('      res rho  %.4e'%res_rho)
+    print('      res k    %.4e'%res_k)
+    print('    { <= Test => }') 
+    tol = 1e-12
+    if res_Cp > tol or res_k > tol or res_rho > tol : 
+        raise('Something wrong, wrong scaling, wrong computer, wrong everything')
+    else: 
+        assert('Pass')
+    
+    return 0    
+
+    
+    
+    
+def unit_test_viscosity(pt_save): 
+    
+    import numpy as np 
+    import sys, os
+    sys.path.append(os.path.abspath("src"))
+    from phase_db import PhaseDataBase 
+    from phase_db import _generate_phase
+    from scal import Scal
+    from scal import _scaling_material_properties
+
+    #sc = Scal(L=660e3, eta = 1e21, Temp = 1350, stress = 2e9) 
+    
+    
+    T = np.linspace(298.15,273.15+1500,num=1000) # Vector temperature
+    
+    P = np.linspace(0.0, 15, num = 1000) * 1e9  # Vector pressure   
+    # Strain rate {required}
+    
+    exx, eyy, exy = 1e-14,1e-14,1e-14 
+    
+    pdb = PhaseDataBase(1)
+    pdb = _generate_phase(pdb,0,option_rho = 2,option_rheology = 4, option_k = 3, option_Cp = 3,eta=1e21,name_diffusion='Van_Keken_diff',name_dislocation='Van_Keken_disl')
+    
+    eta_dim = np.zeros([len(T),len(P)],dtype = np.float64)
+    eta_nd  = np.zeros([len(T),len(P)],dtype = np.float64)
+
+    for i in range(len(T)):
+        for j in range(len(P)):#exx:float,eyy:float,exy:float,T:float,P:float,p_data,it:int,ph:int
+            eta_dim[i,j] = viscosity(exx,eyy,exy,T[i],P[i],pdb,1,0)
+    
+    
+    
+    from matplotlib.colors import ListedColormap
+    import cmcrameri as cmc
+    base_cmap = plt.get_cmap('cmc.oslo')
+
+    # Number of discrete colors
+    N = 20
+
+    # Create a new discrete colormap
+    colors = base_cmap(np.linspace(0, 1, N))
+    discrete_cmap = ListedColormap(colors)
+    
+    
+    
+    fig = plt.figure()
+    ax = fig.gca()
+    a = ax.pcolormesh(T-273.15,P/1e9,np.log10(eta_dim.T),shading='gouraud',cmap = discrete_cmap)
+    plt.colorbar(a,label=r'$\eta_{eff}$ [Pas]')
+    ax.set_xlabel(r'T [^${\circ}{C}$]')    
+    ax.set_ylabel(r'P [GPa]')
+    fig.savefig("%s/viscosity.png"%pt_save)
+        
+    sc = Scal(L=660e3, eta = 1e21, Temp = 1350, stress = 2e9) 
+    
+    T /= sc.Temp 
+    P /= sc.stress 
+    exx/= sc.strain ; exy /=sc.strain; eyy /= sc.strain  
+    pdb = _scaling_material_properties(pdb,sc)
+     
+    for i in range(len(T)):
+        for j in range(len(P)):#exx:float,eyy:float,exy:float,T:float,P:float,p_data,it:int,ph:int
+            eta_nd[i,j] = viscosity(exx,eyy,exy,T[i],P[i],pdb,1,0)
+    
+    err = np.linalg.norm(eta_dim - eta_nd*sc.eta,2)/np.linalg.norm(eta_dim + eta_nd*sc.eta,2)
+    print('Error is %.4e' %err)
+    if err > 1e-12:
+        raise ('Something wrong')
+    else: 
+        fig = plt.figure()
+        ax = fig.gca()
+        a = ax.pcolormesh(T,P,np.log10(eta_nd.T),shading='gouraud',cmap = discrete_cmap)
+        plt.colorbar(a,label=r'$\eta_{eff}^{\dagger}$')
+        ax.set_xlabel(r'$T^{\dagger}$')    
+        ax.set_ylabel(r'$P^{\dagger}$')
+        fig.savefig("%s/viscosity.png"%pt_save)
     
     
     
     
+    
+
+
+
+
+"""
+from pathlib import Path
+
+folder_path = Path("your_folder_name")
+folder_path.mkdir(parents=True, exist_ok=True)
+"""
     
 
 
@@ -425,17 +596,10 @@ if __name__ == '__main__':
     if not os.path.exists(pt_save): 
         os.makedirs(pt_save)   
          
-    unit_test_thermal_properties(pt_save)
+    #rho_dim,k_dim,Cp_dim = unit_test_thermal_properties(pt_save)
     
-    #unit_test_thermal_properties_scaling()
+    #unit_test_thermal_properties_scaling(pt_save,rho_dim,k_dim,Cp_dim)
     
+    eta_dim = unit_test_viscosity(pt_save)
 
 
-
-
-"""
-from pathlib import Path
-
-folder_path = Path("your_folder_name")
-folder_path.mkdir(parents=True, exist_ok=True)
-"""

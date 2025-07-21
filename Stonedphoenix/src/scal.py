@@ -49,28 +49,66 @@ class Scal:
 
 
 
+
 def _scaling_material_properties(pdb,sc:Scal):
     
     # scal the references values 
      
     pdb.Tref /= sc.Temp 
     pdb.Pref /= sc.stress
-    pdb.T_scal = sc.Temp 
-    pdb.P_scal = sc.stress 
+    pdb.T_Scal = sc.Temp 
+    pdb.P_Scal = sc.stress 
     
     # Viscosity
     pdb.eta /= sc.eta 
+    pdb.eta_min /= sc.eta
+    pdb.eta_max /= sc.eta 
+    pdb.eta_def /= sc.eta 
+    
     # B_dif/disl 
-    scal_Bdls = sc.stress**(pdb.n)*sc.T**(-1)    # Pa^-ns-1
-    scal_Bdf  = (sc.stress*sc.T)**(-1)
+    scal_Bdsl = sc.stress**(-pdb.n)*sc.T**(-1)    # Pa^-ns-1
+    scal_Bdif  = (sc.stress*sc.T)**(-1)
+    pdb.Bdif /= scal_Bdif 
+    pdb.Bdis /= scal_Bdsl
+
+    # Scal the heat capacity 
+    scal_c1   = sc.Energy/sc.M/sc.Temp**(0.5) 
+    scal_c2   = (sc.Energy*sc.Temp)/sc.M
+    scal_c3   = (sc.Energy*sc.Temp**2)/sc.M
+    pdb.Cp    /= sc.Cp 
+    pdb.C0    /= sc.Cp
+    pdb.C1    /= scal_c1 
+    pdb.C2    /= scal_c2 
+    pdb.C3    /= scal_c3 
     
+    # conductivity     
+    pdb.k   /= sc.k
+    pdb.k0 /= sc.k
+    pdb.a   /= sc.k/sc.stress 
+    # k_b / c are useless parameter from the Mckenzie parameterisation, keep them for potential use 
+    for i in range(4): 
+        scal_rad = (sc.Watt*sc.L)/sc.Temp**(1+i) 
+        pdb.k_d[:,i] /= scal_rad 
     
+
+    pdb.alpha0 /= 1/sc.Temp 
+    pdb.alpha1 /= 1/sc.Temp**2 
+    pdb.Kb     /= sc.stress 
+    pdb.rho0    /= sc.rho 
     
-    
-    
+    print('{ :  -   > Scaling <  -  : }')
+    print('         Material properties has been scaled following: ')
+    print('         L [length]   = %.3f [m]'%sc.L) 
+    print('         Stress       = %.3f [Pa]'%sc.stress)
+    print('         eta          = %.3e [Pas]'%sc.eta)
+    print('         Temp         = %.2f [K]'%sc.Temp)
+    print('The other unit of measure are derived from this set of scaling')
+    print('{ <  -   : Scaling :  -  > }')
+
     return pdb 
 
     
+
     
     
     

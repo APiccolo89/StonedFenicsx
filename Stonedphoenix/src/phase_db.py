@@ -181,6 +181,7 @@ spec_phase = [
     ("k", float64[:]),       # Constant thermal conductivity [W/m/K]
     ("k0", float64[:]),      # Reference thermal conductivity [W/m/K]
     ("a", float64[:]),       # Pressure-dependent coefficient [1/Pa]
+    ("k_n", float64[:]),       # Pressure-dependent coefficient [1/Pa]
     ("k_b", float64[:]),     # Radiative heat transfer coefficient [W/m/K]
     ("k_c", float64[:]),     # Radiative heat transfer coefficient [W/m/K^2]
     ("k_d", float64[:, :]),  # Radiative polynomial coefficients [W/m/K^3]
@@ -197,8 +198,11 @@ spec_phase = [
     ("Tref", float64),      # Reference temperature [K]
     ("Pref", float64),      # Reference pressure [Pa]
     ("R", float64),          # Gas constant [J/mol/K]
-    ("T_Scal",float64),     # T_scal -> Important, as within the exponential soul of diffusion/dislocation creep  R is in mol I don't know how to make dimensionless
-    ("P_scal",float64),     # Same reason as before
+    ("T_Scal",float64),     # T_scal [K] -> Important, as within the exponential soul of diffusion/dislocation creep  R is in mol I don't know how to make dimensionless
+    ("P_Scal",float64),     # Same reason as before [Pa]
+    ("eta_min",float64),    # minimum viscosity [Pas]
+    ("eta_max",float64),    # max viscosity [Pas]
+    ("eta_def",float64),    # default viscosity [Pas]
 ]   
 
 #-----------------------------------------------------------------------------------------------------------
@@ -213,6 +217,16 @@ class PhaseDataBase:
         self.Tref        = 298.15  # Reference temperature [K]
         self.Pref        = 1e5     # Reference pressure [Pa]
         self.R           = 8.3145  # Universal gas constant [J/(mol K)]
+        self.eta_min     = 1e18    # Min viscosity [Pas]
+        self.eta_max     = 1e26    # Max viscosity [Pas]
+        self.eta_def     = 1e21    # Default viscosity [Pas]
+        self.T_Scal      = 1.      # Default temperature scale
+        self.P_Scal      = 1.      # Default Pressure scale 
+        
+        # Explanation: For testing the pressure and t scal are set to be 1.0 -> so, the software is not performing any 
+        # scaling operation. 
+        # -> When the property are automatically scaled these value will be update automatically. 
+        
         
         # Viscosity data 
         # Diffusion creep
@@ -240,6 +254,7 @@ class PhaseDataBase:
         self.k          = np.zeros(number_phases, dtype=np.float64)               # Heat conductivity [W/m/K] {In case of constant heat conductivity}
         self.k0         = np.zeros(number_phases, dtype=np.float64)               # Reference heat conductivity [W/m/K]
         self.a          = np.zeros(number_phases, dtype=np.float64)               # Thermal expansivity [1/Pa]
+        self.k_n        = np.zeros(number_phases, dtype=np.float64)               # exponent
         # Radiative heat transfer
         self.k_b        = np.zeros(number_phases, dtype=np.float64)               # Radiative heat transfer constant [W/m/K]
         self.k_c        = np.zeros(number_phases, dtype=np.float64)               # Radiative heat transfer constant [W/m/K^2]
@@ -250,7 +265,7 @@ class PhaseDataBase:
 
         
         # Density parameters 
-        self.alpha0      = np.zeros(number_phases, dtype=np.float64)               # Thermal expansivity coefficient [1/K]   
+        self.alpha0     = np.zeros(number_phases, dtype=np.float64)               # Thermal expansivity coefficient [1/K]   
         self.alpha1     = np.zeros(number_phases, dtype=np.float64)               # Second-order expansivity [1/K^2]
         self.Kb         = np.zeros(number_phases, dtype=np.float64)               # Bulk modulus [Pa]                
         self.rho0       = np.zeros(number_phases, dtype=np.float64)               # Reference density [kg/m^3] {In case of constant density}
@@ -273,9 +288,9 @@ def _generate_phase(PD:PhaseDataBase,
                     rho:float              = 3300,
                     eta:float              = -1e23,
                     option_rheology:float  = 0,
-                    option_Cp:int       = 0,
-                    option_k:int         = 0,
-                    option_rho:int = 0  )     -> PhaseDataBase:
+                    option_Cp:int          = 0,
+                    option_k:int           = 0,
+                    option_rho:int         = 0  )     -> PhaseDataBase:
     """
     Generate phase: 
     id : phase id number [0->n] 
@@ -342,7 +357,7 @@ def _generate_phase(PD:PhaseDataBase,
         PD.k[id] = k
     elif option_k != 0:
         # Compute the material the effective material property 
-        PD.k0[id],PD.a[id]  = release_heat_conductivity_parameters(option_k)
+        PD.k0[id],PD.a[id],PD.k_n[id]  = release_heat_conductivity_parameters(option_k)
     
     elif option_k == 3:
 
@@ -377,11 +392,11 @@ def release_heat_conductivity_parameters(option_k: int) -> Tuple[float, float]:
     are accouting the exponential term. On the other hand, I need to check in Xu 2004, if it is the case. 
     '''
     
-    if option_k == 1: 
+    if option_k == 1 or option_k == 3: 
         k    = 4.10 
         n    = 0.493   
         a    = 0.032/1e9*k #[Convert from 1/GPa to 1/Pa]
-    elif option_k == 2:
+    elif option_k == 2 or option_k == 3 :
         k  = 2.47 # [Wm-1K-1]
         a = 0.33/1e9 # [Wm-1K-1GPa-1] GPA PD!!!!
         n  = 0.48 
@@ -390,7 +405,7 @@ def release_heat_conductivity_parameters(option_k: int) -> Tuple[float, float]:
     else:
         raise ValueError("The option for heat conductivity is not implemented")
 
-    return k, a
+    return k, a, n 
 #-----------------------------------------------------------------------------------------------------------
 
 def release_heat_capacity_parameters(option_C_p: int) -> Tuple[float, float, float, float]:
