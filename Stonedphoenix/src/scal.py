@@ -94,7 +94,7 @@ def _scaling_material_properties(pdb,sc:Scal):
     pdb.alpha0 /= 1/sc.Temp 
     pdb.alpha1 /= 1/sc.Temp**2 
     pdb.Kb     /= sc.stress 
-    pdb.rho0    /= sc.rho 
+    pdb.rho0   /= sc.rho 
     
     print('{ :  -   > Scaling <  -  : }')
     print('         Material properties has been scaled following: ')
