@@ -12,6 +12,21 @@ from Function_make_mesh import find_line_index
 import numpy as np
 import gmsh 
 
+import ufl
+import meshio
+from mpi4py import MPI
+from petsc4py import PETSc
+
+from dolfinx import mesh, fem, io, nls, log
+from dolfinx.fem.petsc import NonlinearProblem
+from dolfinx.nls.petsc import NewtonSolver
+import matplotlib.pyplot as plt
+from dolfinx.io import XDMFFile, gmshio
+import gmsh 
+from ufl import exp, conditional, eq, as_ufl
+
+import basix.ufl
+
 # dictionary for surface and phase. 
 """
  Long comment: physical surfaces are geometrical subdomain where I solve a set of equation/define phases. The physical surface, in this context,
@@ -30,31 +45,55 @@ class geom_input():
                  lc = 0.5,
                  wc = 1.5e3,
                  decoupling = 100e3):
-        self.x  = x                    # main grid coordinate
-        self.y  = y   
-        self.cr = cr                   # crust 
-        self.ocr = ocr                 # oceanic crust
-        self.lit_mt = lit_mt           # lithosperic mantle  
-        self.lc = lc                   # lower crust ratio 
-        self.wc = wc                   # weak zone 
-        self.lt_d = (cr+lit_mt)        # total lithosphere thickness
-        self.decoupling = decoupling   # decoupling depth -> i.e. where the weak zone is prolonged 
+        self.x                 = x               # main grid coordinate
+        self.y                 = y   
+        self.cr                = cr              # crust 
+        self.ocr               = ocr             # oceanic crust
+        self.lit_mt            = lit_mt          # lithosperic mantle  
+        self.lc                = lc              # lower crust ratio 
+        self.wc                = wc              # weak zone 
+        self.lt_d              = (cr+lit_mt)     # total lithosphere thickness
+        self.decoupling        = decoupling      # decoupling depth -> i.e. where the weak zone is prolonged 
+        self.resolution_normal = wc*2  # To Do
+
+
+def assign_phases(dict_surf, cell_tags,phase):
+    """Assigns phase tags to the mesh based on the provided surface tags."""
+    for tag, value in dict_surf.items():
+        indices = cell_tags.find(value) 
+        phase.x.array[indices] = np.full_like(indices,  value , dtype=PETSc.IntType)
+    
+    return phase 
 
 
 class Mesh(): 
-    def __init__(self):
-        self.meshv_o  
-        self.mesht_o   
-        self.P        
-        self.VP       
-        self.PT      
-        self.name
+    def __init__(self) :
+
+        " Class where to store the information of the mesh"
+
+        self.mesh      : dolfinx.mesh.Mesh                     # Mesh 
+        self.mesh_Ctag : dolfinx.mesh.MeshTags                 # Mesh cell tag       {i.e., Physical surface, where I define the phase properties}
+        self.mesh_Ftag : dolfinx.mesh.MeshTags                 # Mesh cell face tage {i.e., Face tag, where the information of the internal boundary are stored}
+        self.Pph       : dolfinx.fem.function.FunctionSpace    # Function space      [mesh + element type + dof]
+        self.PT        : dolfinx.fem.function.FunctionSpace    # Function space 
+        self.PD        : dolphinx.fem.function.FunctionSpace   # Function space      
+        self.V         : dolphinx.fem.function.FunctionSpace   # Vectorial function space 
+        self.phase     : dolfinx.fem.function.Function         # Function a Field (solution potential of the function space)
+        self.T_i       : dolfinx.fem.function.Function         # Function      
+
+        
 
        
-class class_line():
-    pass 
 
 
+
+def create_mesh(mesh, cell_type, prune_z=False):
+    # From the tutorials of dolfinx
+    cells = mesh.get_cells_type(cell_type)
+    cell_data = mesh.get_cell_data("gmsh:physical", cell_type)
+    points = mesh.points[:, :2] if prune_z else mesh.points
+    out_mesh = meshio.Mesh(points=points, cells={cell_type: cells}, cell_data={"name_to_read": [cell_data.astype(np.int32)]})
+    return out_mesh
 
 
 dict_surf = {
@@ -82,7 +121,6 @@ dict_tag_lines = {
     'Crust_overplate'   : 11,
     'LCrust_overplate'  : 12,
 }
-
 
 
 
@@ -270,9 +308,8 @@ def create_gmsh(sx,        # subduction x
     
     return mesh_model 
 
-
-# First draft -> I Need to make it a decent function, otherwise this is a fucking nightmare
-def create_parallel_mesh(ctrlio):
+#----------------------------------------------------------------------------------------------------------------------
+def create_gmesh(ioctrl):
     """_summary_: The function is composed by three part: -> create points, create lines, loop 
     ->-> 
     Args:
@@ -315,9 +352,6 @@ def create_parallel_mesh(ctrlio):
 
     mesh_model = create_gmsh(slab_x,slab_y,theta_mean,channel_x,channel_y,oc_cx,oc_cy,g_input) 
 
-
-
-
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
     mesh_model.geo.mesh.setAlgorithm(2, dict_surf['Channel_surf_a'], 3)
@@ -328,15 +362,79 @@ def create_parallel_mesh(ctrlio):
     mesh_model.mesh.generate(2)
     mesh_model.mesh.setOrder(2)
     
-    mesh_name = os.path.join
+    mesh_name = os.path.join(ioctrl.path_save,ioctrl.sname)
     
-    gmsh.write("experimental.msh")
+    gmsh.write("%s.msh"%mesh_name)
     
     return 0
     
+#------------------------------------------------------------------------------------------------------
+def read_mesh(ioctrl):
 
 
 
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()  # 0, 1, ..., size-1
+    size = comm.Get_size()  # total number of MPI processes
+
+
+    mesh_name = os.path.join(ioctrl.path_save,'%s.msh'%ioctrl.sname)
+
+    mesh, cell_markers, facet_markers = gmshio.read_from_msh(mesh_name, MPI.COMM_WORLD, gdim=2)
+    
+    
+    if rank == 0: 
+        # Read in mesh
+        msh = meshio.read("experimental.msh")
+
+        # Create and save one file for the mesh, and one file for the facets
+        triangle_mesh = create_mesh(msh, "triangle6", prune_z=True)
+        line_mesh = create_mesh(msh, "line3", prune_z=True)
+        meshio.write("mesh.xdmf", triangle_mesh)
+        meshio.write("mt.xdmf", line_mesh)
+        
+        
+    
+    Pph           = fem.functionspace(mesh, ("DG", 0))      # Material ID function space # Defined in the cell space {element wise} apperently there is a black magic that 
+    # automatically does the interpolation of the function space, i.e. the function space is defined in the cell space, but it is automatically interpolated to the nodes                                    
+    PT           = fem.functionspace(mesh, ("Lagrange", 2)) # Function space for the solution 
+    # V-P 
+    element_u = basix.ufl.element("Lagrange", "triangle", 2, shape=(2,))
+    element_p = basix.ufl.element("DG", "triangle", 0) 
+    V         = fem.functionspace(mesh,element_u)
+    PD        = fem.functionspace(mesh,element_p)
+    
+
+    # Define the material property field
+    phase        = fem.Function(Pph) # Create a function to hold the phase information
+    phase.x.name = "phase"
+    phase        = assign_phases(dict_surf, cell_markers, phase) # Assign phases using the cell tags and physical surfaces -> i.e. 10000 = Mantle ? is going to assign unique phase to each node? 
+    # -- 
+    T_i             = fem.Function(PT)
+    T_i.x.array[:]  = 0. 
+    
+    MESH = Mesh()
+    
+    
+    MESH.mesh      = mesh 
+    MESH.mesh_Ctag = cell_markers 
+    MESH.mesh_Ftag = facet_markers 
+    MESH.Pph       = Pph  
+    MESH.PT        = PT 
+    MESH.V         = V 
+    MESH.PD        = PD 
+    MESH.phase     = phase 
+    MESH.T_i       = T_i 
+    
+    X = m
+    
+
+
+    return MESH
+
+
+
+#------------------------------------------------------------------------------------------------------
 def unit_test():
     import numpy as np 
     import sys, os
@@ -351,18 +449,31 @@ def unit_test():
                         path_save = '../Debug_mesh',
                         sname = 'Experimental')
     IOCtrl.generate_io()
-    create_parallel_mesh(IOCtrl)
+
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()  # 0, 1, ..., size-1
+    size = comm.Get_size()  # total number of MPI processes
     
+    if rank == 0: 
+        create_gmesh(IOCtrl)
     
+    read_mesh(IOCtrl)
     
-    assert Passed == True 
+    return 0
     
     
 
 if __name__ == '__main__':
     
     unit_test()
-
+    
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()  # 0, 1, ..., size-1
+    size = comm.Get_size()  # total number of MPI processes
+    
+    if rank == 0: 
+        print('I am here') 
+    
 
     
 

@@ -152,30 +152,30 @@ class Class_Line():
         i_c = find_tag_line(CP.coord_channel, g_input.lt_d,'y')
         # CHECK!
         p_list = [i_s,i_c]
-        self.max_tag_line_ch_ov, self.tag_L_ch_ov, self.lines_ch_ov, mesh_model        = _create_lines(mesh_model,  self.max_tag_line_ocean,  p_list,  False)
+        self.max_tag_line_ch_ov, self.tag_L_ch_ov, self.lines_ch_ov, mesh_model         = _create_lines(mesh_model,  self.max_tag_line_ocean,  p_list,  False)
 
         p_list = [i_c, CP.tag_right_c_l[0]]
-        self.max_tag_line_ov,    self.tag_L_ov,    self.lines_L_ov,  mesh_model        = _create_lines(mesh_model, self.max_tag_line_ch_ov, p_list, False)
+        self.max_tag_line_ov,    self.tag_L_ov,    self.lines_L_ov,  mesh_model         = _create_lines(mesh_model, self.max_tag_line_ch_ov, p_list, False)
 
         i_s = find_tag_line(CP.coord_sub,     g_input.decoupling,'y')
 
         i_c = find_tag_line(CP.coord_channel, g_input.decoupling,'y')
 
         p_list = [i_s,i_c]
-        self.max_tag_line, self.tag_base_ch, self.lines_base_ch, mesh_model      = _create_lines(mesh_model,self.max_tag_line_ov,p_list,False)
+        self.max_tag_line, self.tag_base_ch, self.lines_base_ch, mesh_model              = _create_lines(mesh_model,self.max_tag_line_ov,p_list,False)
         if g_input.cr !=0: 
 
             i_c = find_tag_line(CP.coord_channel, g_input.cr,'y')
 
             p_list = [i_c, CP.tag_right_c_cr[0]]
-            self.max_tag_line_crust, self.tag_L_cr, self.lines_cr, mesh_model     = _create_lines(mesh_model,self.max_tag_line,p_list,False)
+            self.max_tag_line_crust, self.tag_L_cr, self.lines_cr, mesh_model             = _create_lines(mesh_model,self.max_tag_line,p_list,False)
 
             if g_input.lc !=0:
 
                 i_c = find_tag_line(CP.coord_channel,(1-g_input.lc)*g_input.cr,'y')
 
                 p_list = [i_c, CP.tag_right_c_lcr[0]]
-                self.max_tag_line_Lcrust, self.tag_L_Lcr, self.lines_lcr, mesh_model = _create_lines(mesh_model, self.max_tag_line_crust,p_list,False)
+                self.max_tag_line_Lcrust, self.tag_L_Lcr, self.lines_lcr, mesh_model      = _create_lines(mesh_model, self.max_tag_line_crust,p_list,False)
 
         self.line_global = np.hstack([self.lines_T, self.lines_R, self.lines_B, self.lines_L, self.lines_S, self.lines_ch, self.lines_oc, self.lines_ch_ov, self.lines_L_ov, self.lines_base_ch, self.lines_cr, self.lines_lcr])
         
@@ -407,336 +407,6 @@ def correct_channel(cx,cy,sx,sy,c_phase):
 
 
     return cx,cy,ex,ey
-
-def create_subduction_point(sx,sy,lt,dhrs,lc1,lc2,p,pn_):
-    """
-    function to create the points of the slab
-    Input: 
-        sx   = coordinate x slab
-        sy   = coordinate y slab
-        lt   = lithospheric thickness
-        dhrs = high resolution depth
-        lc1  = resolution 1 
-        lc2  = resolution 2
-        p    = point list
-        pn_  = point number (current)
-    Output: 
-        p       = update point list
-        pn_slab = total number of slab point
-        pn_slab_p = important point number for slab [0,interface,bottom]
-        pn_     = update number point 
-    """
-    pn_slab_p = []
-    for i in range(len(sx)):
-        # Save the important point in the slab. 
-        if i == 0:
-            pn_slab_p.append(pn_)
-        elif sy[i] == -lt:
-            pn_slab_p.append(pn_)
-            lc = lc1
-        elif i  == len(sx)-1:
-            pn_slab_p.append(pn_)
-        
-        if sy[i]>-dhrs:
-            lc = lc1
-        elif sy[i]<-500e3:
-            lc = lc2#*2.2
-        else: 
-            lc = lc2 
-        
-        p.append([float(sx[i]),float(sy[i]),0.0,float(lc),int(pn_)])
-        pn_ +=1 
-    
-    pn_slab = pn_-1
-
-    return p,pn_slab,pn_slab_p,pn_
-
-def create_ancor_points(sx,sy,mx,lt,lc_n,lc_lt,lc_tp,p,pn_):
-    """
-    Function to create the anchor points.
-    Input point: 
-        sx 
-        sy 
-        mx 
-        lt
-        lc_n
-        lc_tp
-        lc_lt
-        p 
-        pn_
-    Output: 
-        p   = update list of points
-        pn_ = update number of points
-        pac_ = number of point of anchor
-        p_ac_p = list of important node
-                p_ac_p[0] => left corner
-                p_ac_p[1] => right corner (up)
-                p_ac_p[2] => intersection lit with right edge
-                p_ac_p[3] => right corner (bot)
-    """
-    pac_ac_p = []
-    for i in range(0,4):
-        if i == 0:
-        # bottom left corner
-            a = [sx[0],sy[-1],0.0,lc_n,pn_]  
-        elif i==1:
-            a = [mx,sy[0],0.0,lc_n,pn_]
-        elif i==2:
-            a = [mx,-lt,0.0,lc_lt,pn_]
-        elif i==3:
-            a = [mx,sy[-1],0.0,lc_n,pn_]
-        
-        pac_ac_p.append(pn_) 
-     
-        p.append([float(a[0]),float(a[1]),a[2],a[3],int(pn_)])
-        pn_ +=1
-
-    pac_ = pn_-1
-
-    return p,pac_,pac_ac_p,pn_
-
-def create_channel_points(cx,cy,dhrs,lt,lc1,lc2,p,ex,ey,pn_):
-    """
-    Function to create the anchor points.
-    Input point: 
-        cx 
-        cy 
-        dhrs 
-        lt
-        lc_1
-        lc2
-        ex
-        ey
-        p 
-        pn_
-    Output: 
-        p   = update list of points
-        pn_ = update number of points
-        pac_ = number of point of anchor
-         p_ac_p = list of important node
-            p_ac_p[0] => left corner
-            p_ac_p[1] => right corner (up)
-            p_ac_p[2] => intersection lit with right edge
-            p_ac_p[3] => right corner (bot)
-"""
-    pch_ch_p = []
-    for i in range(len(cx)):
-        if cy[i]>-dhrs:
-            if i==0:
-                a=[cx[i],0.0,0.0,lc1,pn_]
-                pch_ch_p.append(pn_)
-            else: 
-                a = [cx[i],cy[i],0.0,lc2,pn_]
-
-        else:
-            a = [cx[i],cy[i],0.0,lc2,pn_]
-            if cy[i] == -lt:
-                pch_ch_p.append(pn_)
-        p.append([float(a[0]),float(a[1]),float(a[2]),float(a[3]),int(a[4])])
-        pn_ +=1 
-    pch_ch_p.append(pn_-1)
-    pch_ = pn_-1
-    pch_ch_p.append(pn_)
-
-    p.append([float(ex),float(ey),0.0,lc2,int(pn_)])
-    pn_ +=1
-    return p,pch_,pch_ch_p,pn_
-
-def create_boundary_line(lines_list,ln_,points_boundary):
-    """
-    
-    
-    """
-
-    num_line = len(points_boundary)-1
-    list_boundary = []
-    for i in range(num_line):
-        if i == num_line-1:
-            lines_list.append([points_boundary[i],points_boundary[0],ln_])
-        else:
-            lines_list.append([points_boundary[i],points_boundary[i+1],ln_])
-        list_boundary.append(ln_)
-        ln_ +=1 
-
-    return lines_list,list_boundary,ln_ 
-
-def create_subudction_lines(lines_list,ln_,point_list,pn_slab,pn_slab_p,d_ch):
-    """
-    
-    
-    """
-    i_max = pn_slab 
-    line_subduction = []
-    lit_point = pn_slab_p[1]
-    for i in range(i_max-1): 
-        p_i = point_list[i][-1]
-        p_i1= point_list[i+1][-1]
-        lines_list.append([p_i,p_i1,ln_])
-        line_subduction.append(ln_)
-        if p_i1 == lit_point:
-            line_lit_S = i
-        if d_ch != 0:
-            if p_i1==d_ch:
-                line_lit_S2 = i 
-        ln_+=1
-    
-    return lines_list,line_subduction,line_lit_S,line_lit_S2,ln_
-
-
-def create_channel_lines(lines_list,ln_,point_list,pn_an,pn_ch,pn_ch_p):
-    """
-    
-    
-    """
-    channel_list = []
-    lin_num = pn_ch-pn_an-1
-    i_ch = 1
-    for i in range(pn_an,pn_ch-1):
-        p_i = point_list[i][-1]
-        p_i1= point_list[i+1][-1]
-        lines_list.append([p_i,p_i1,ln_])
-        channel_list.append(ln_)
-        if p_i1 == pn_ch_p[1]-1:
-            line_lit_C = i_ch
-        i_ch = i_ch + 1
-        ln_+=1
-    
-    return lines_list,channel_list,line_lit_C,ln_
-def create_lithospheric_lines(lines_list,ln_,point_list,p_b_ovr):
-    """
-    
-    
-    
-    """
-    num_lin = len(p_b_ovr)
-    litho_line = []
-    for i in range(num_lin-1):
-        p_i = point_list[p_b_ovr[i]-1][-1]
-        p_i1= point_list[p_b_ovr[i+1]-1][-1]
-        lines_list.append([p_i,p_i1,ln_])
-        litho_line.append(ln_)
-        ln_+=1
-    
-    return lines_list,litho_line,ln_ 
-def create_loop_left(ss,bb,lb,tag):
-    """
-    
-    i know an overkill
-    """
-    loop_lines = []
-    for i in range(len(ss)+2):
-        if i == len(ss):
-            loop_lines.append(-bb[1])
-        elif i == len(ss)+1: 
-            loop_lines.append(-lb[0])
-        else:
-            loop_lines.append(-ss[i])
-
-
-    left_loop = [[tag],loop_lines]
-    return left_loop
-
-def create_loop_channel(cc,ss,tt,ltl,tag):
-    """
-    
-    
-    """
-
-    loop_lines = []
-    for i in range(len(ss)):
-        loop_lines.append(ss[i])
-    
-    loop_lines.append(-ltl[-1])
-    loop_lines.append(-ltl[-2])
-    for i in reversed(cc):
-        loop_lines.append(-i)
-    loop_lines.append(-tt)
-
-    channel_loop = [[tag],loop_lines]
-
-    return channel_loop 
-
-def create_loop_channel2(cc,ss,tt,closing,tag):
-    """
-    
-    
-    """
-
-    loop_lines = []
-    for i in range(len(ss)):
-        loop_lines.append(ss[i])
-
-    loop_lines.append(closing)
-    
-    for i in reversed(cc):
-        loop_lines.append(-i)
-    
-    
-    loop_lines.append(tt[1])
-    loop_lines.append(tt[2])
-
-    channel_loop = [[tag],loop_lines]
-
-    return channel_loop 
-
-
-def create_lithospheric_loop(ll,cc,tt,rb,tag):
-    """
-    
-    """
-    line_loop = []
-
-    for i in cc: 
-        line_loop.append(i)
-    line_loop.append(-ll[0])
-    line_loop.append(-rb)
-    line_loop.append(-tt) 
-
-
-    litho_loop = [[tag],line_loop]
-
-
-    return litho_loop
-
-
-def create_mantle_loop(ss,lt,bb,rb,tag):
-    """
-    
-    """
-    line_loop = []
-
-    for i in range(len(ss)):
-        line_loop.append(ss[i])
-    
-    line_loop.append(-bb)
-    line_loop.append(-rb)
-    for i in range(len(lt)):
-        line_loop.append(lt[i])
-
-    mantle_loop = [[tag],line_loop]
-
-
-    return mantle_loop
-def create_mantle_loop2(ss,ch,cl,lt,bb,rb,tag):
-    """
-    
-    """
-    line_loop = []
-
-    for i in range(len(ss)):
-        line_loop.append(ss[i])
-    
-    line_loop.append(-bb)
-    line_loop.append(-rb)
-    line_loop.append(lt[0])
-    for i in range(len(ch)):
-        line_loop.append(ch[i])
-    line_loop.append(-cl)
-
-    mantle_loop = [[tag],line_loop]
-
-
-    return mantle_loop
 
 #----------------------------------------------------------------------------------------------------------------------------------
 
