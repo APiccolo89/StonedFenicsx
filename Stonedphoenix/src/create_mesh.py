@@ -6,6 +6,8 @@ sys.path.append(os.path.abspath("src"))
 import Function_make_mesh 
 from Function_make_mesh import Class_Points
 from Function_make_mesh import Class_Line
+from Function_make_mesh import create_loop
+from Function_make_mesh import find_line_index
 
 import numpy as np
 import gmsh 
@@ -109,294 +111,137 @@ def create_gmsh(sx,        # subduction x
     # Function create Physical line
     #-- Create Physical Line
     
-
- 
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
     
-    mesh_model.addPhysicalGroup(1, tag_L_T, tag=dict_tag_lines['Top'])
+    mesh_model.addPhysicalGroup(1, LC.tag_L_T, tag=dict_tag_lines['Top'])
     
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    mesh_model.addPhysicalGroup(1, tag_L_R, tag=dict_tag_lines['Right'])
+    mesh_model.addPhysicalGroup(1, LC.tag_L_R, tag=dict_tag_lines['Right'])
 
 
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    mesh_model.addPhysicalGroup(1, tag_L_B, tag=dict_tag_lines['Bottom'])
+    mesh_model.addPhysicalGroup(1, LC.tag_L_B, tag=dict_tag_lines['Bottom'])
 
     
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    mesh_model.addPhysicalGroup(1, tag_L_L, tag=dict_tag_lines['Left'])
+    mesh_model.addPhysicalGroup(1, LC.tag_L_L, tag=dict_tag_lines['Left'])
 
     
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    mesh_model.addPhysicalGroup(1, tag_L_sub,tag=dict_tag_lines['Subduction'])
+    mesh_model.addPhysicalGroup(1, LC.tag_L_sub,   tag=dict_tag_lines['Subduction'])
 
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    mesh_model.addPhysicalGroup(1, tag_L_ch,tag=dict_tag_lines['Channel'])
+    mesh_model.addPhysicalGroup(1, LC.tag_L_ch,    tag=dict_tag_lines['Channel'])
     
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    mesh_model.addPhysicalGroup(1, tag_L_oc, tag=dict_tag_lines['Oceanic'])
+    mesh_model.addPhysicalGroup(1, LC.tag_L_oc,    tag=dict_tag_lines['Oceanic'])
   
-    
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    mesh_model.addPhysicalGroup(1, tag_L_ch_ov, tag=dict_tag_lines['Channel_over']) 
+    mesh_model.addPhysicalGroup(1, LC.tag_L_ch_ov, tag=dict_tag_lines['Channel_over']) 
 
-    
     gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    mesh_model.addPhysicalGroup(1, tag_L_ov, tag=dict_tag_lines['Overriding_mantle'])
+    mesh_model.addPhysicalGroup(1, LC.tag_L_ov,    tag=dict_tag_lines['Overriding_mantle'])
 
 
     if g_input.cr !=0: 
 
         mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-        mesh_model.addPhysicalGroup(1, tag_L_cr, tag=dict_tag_lines['Crust_overplate'])
-
-
+        mesh_model.addPhysicalGroup(1,    LC.tag_L_cr, tag=dict_tag_lines['Crust_overplate'])
 
         if g_input.lc !=0:
             mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-            mesh_model.addPhysicalGroup(1, tag_L_Lcr,tag=dict_tag_lines['LCrust_overplate'])
+            mesh_model.addPhysicalGroup(1, LC.tag_L_Lcr,tag=dict_tag_lines['LCrust_overplate'])
    
+      
+    # Create the line loop [anticlockwise] -> TODO automatic detection orientation of the line, and a more automatic way to select the lines   
+    # Incoming plate  
+    l_list     = [LC.lines_oc[2,:], LC.lines_B[2,-1], -LC.lines_L[2,0]]
+    mesh_model = create_loop(l_list, mesh_model, 10)
 
-    # Left side of the subduction zone 10 
-    # Oceanic crust 15
-    # Right side of the subduction zone 20
-    # Right mantle 25
-    # Lithospheric mantle 25
-    # Crust LC  30
-    # Crust UC  35 
-    # Channel 
-    
-    # left side of the subduction
-    a = []
-    a.extend(lines_oc[2,:])
-    a.extend([lines_B[2,-1]])
-    a.extend([-lines_L[2,0]])
-    for i in range(len(a)):
-        l = np.abs(a[i])
-        i_l = np.where(line_global[2,:]==l)
-        p0  = line_global[0,i_l][0][0]
-        p1  = line_global[1,i_l][0][0]
-        p_i_0 = np.where(global_points[2,:]==p0)
-        p_i_1 = np.where(global_points[2,:]==p1)
-        x   = [global_points[0,p_i_0][0],
-               global_points[0,p_i_1][0]]
-        y   = [global_points[1,p_i_0][0],
-               global_points[1,p_i_1][0]]
-        plt.plot(x,y,c='k')
-    
-    
-    loop1 = mesh_model.geo.addCurveLoop(a,10) # Left side of the subudction zone
+    # Oceanic crust  
+    l_list     = [LC.lines_S[2,:],   LC.lines_B[2,1],  -LC.lines_oc[2,::-1],  -LC.lines_L[2,-1]]
+    mesh_model = create_loop(l_list, mesh_model, 15)
 
-    # oceanic crust 
-    a = []
-    a.extend(lines_S[2,:])
-    a.extend([lines_B[2,1]])
-    b = (lines_oc[2,:])*-1
-    a.extend(b[::-1])
-    a.extend([-lines_L[2,-1]])
-    for i in range(len(a)):
-        l = np.abs(a[i])
-        i_l = np.where(line_global[2,:]==l)
-        p0  = line_global[0,i_l][0][0]
-        p1  = line_global[1,i_l][0][0]
-        p_i_0 = np.where(global_points[2,:]==p0)
-        p_i_1 = np.where(global_points[2,:]==p1)
-        x   = [global_points[0,p_i_0][0],
-               global_points[0,p_i_1][0]]
-        y   = [global_points[1,p_i_0][0],
-               global_points[1,p_i_1][0]]
-        plt.plot(x,y,c='b')
-   
+    # Wedge 
     
-    
-    
-    loop2 = mesh_model.geo.addCurveLoop(a,15) # Oceanic crust 
-    
-    # right_mantle 
-    # From p0 belonging ch -> ch->base channel -> subduction -> 
-    
-    a = []
-    a.extend([-lines_R[2,-1]])
-    a.extend([-lines_B[2,0]])
-    # find index subduction 
-    'Select the node of the slab from bottom to the base of decoupling'
-    index = find_line_index(lines_S,coord_sub,g_input.decoupling)
+    index = find_line_index(LC.lines_S,CP.coord_sub,g_input.decoupling)
     index = index 
-    buf_array = lines_S[2,index:]
-    chose_sub = -buf_array 
-    chose_sub = chose_sub[::-1]
-    a.extend(chose_sub)
-    a.extend(lines_base_ch[2,:])
-    # Make a small function out of it. 
+    buf_array = LC.lines_S[2,index:]
+    buf_array = -buf_array 
+    buf_array = buf_array[::-1]
     
-    index = find_line_index(lines_ch,coord_channel,g_input.lt_d)
+    
+    index = find_line_index(LC.lines_ch,CP.coord_channel,g_input.lt_d)
     index = index 
-    choose_sub = []
-    buf_array = np.array(lines_ch[2,index:])
-    chose_sub = -1*buf_array 
-    chose_sub = chose_sub[::-1]
-    a.extend(chose_sub)
-    a.extend(lines_L_ov[2,:])
+    buf_array2 = np.array(LC.lines_ch[2,index:])
+    buf_array2 = -1*buf_array2 
+    buf_array2 = buf_array2[::-1]
 
-    for i in range(len(a)):
-        l = np.abs(a[i])
-        i_l = np.where(line_global[2,:]==l)
-        p0  = line_global[0,i_l][0][0]
-        p1  = line_global[1,i_l][0][0]
-        p_i_0 = np.where(global_points[2,:]==p0)
-        p_i_1 = np.where(global_points[2,:]==p1)
-        x   = [global_points[0,p_i_0][0],
-               global_points[0,p_i_1][0]]
-        y   = [global_points[1,p_i_0][0],
-               global_points[1,p_i_1][0]]
-        plt.plot(x,y,c='r')
     
-
-
-    loop2 = mesh_model.geo.addCurveLoop(a,20) # Right mantle 
+    l_list     = [-LC.lines_R[2,-1],-LC.lines_B[2,0],buf_array,LC.lines_base_ch[2,:],buf_array2,LC.lines_L_ov[2,:]]
+    mesh_model = create_loop(l_list, mesh_model, 20)
+    
 
     if g_input.cr !=0:
             
-        index_a    = find_line_index(lines_ch,coord_channel,g_input.cr)
-        index_b    = find_line_index(lines_ch,coord_channel,g_input.lt_d)-1
-        buf_array = lines_ch[2,index_a:index_b+1]
+        index_a    = find_line_index(LC.lines_ch,CP.coord_channel,g_input.cr)
+        index_b    = find_line_index(LC.lines_ch,CP.coord_channel,g_input.lt_d)-1
+        buf_array = LC.lines_ch[2,index_a:index_b+1]
         buf_array = -buf_array[::-1]
-        a = []
-
-        a.extend([-lines_R[2,2]])
-        a.extend([-lines_L_ov[2,:].item()])
-        a.extend(buf_array)
-        a.extend([lines_cr[2,:][0]])
-
-
         
-        for i in range(len(a)):
-            l = np.abs(a[i])
-            i_l = np.where(line_global[2,:]==l)
-            p0  = line_global[0,i_l][0][0]
-            p1  = line_global[1,i_l][0][0]
-            p_i_0 = np.where(global_points[2,:]==p0)
-            p_i_1 = np.where(global_points[2,:]==p1)
-            x   = [global_points[0,p_i_0][0],
-                   global_points[0,p_i_1][0]]
-            y   = [global_points[1,p_i_0][0],
-                   global_points[1,p_i_1][0]]
-            plt.plot(x,y,c='g')
-    
-        # Permanent subcrustal mantle 
-        mesh_model.geo.addCurveLoop(a,25) # Right mantle
+        l_list     = [-LC.lines_R[2,2],-LC.lines_L_ov[2,:],buf_array,LC.lines_cr[2,:]]
+        mesh_model = create_loop(l_list, mesh_model, 25)
+
         
         if g_input.lc !=0:
             a = []
-            index_a    = find_line_index(lines_ch,coord_channel,(1-g_input.lc)*g_input.cr)
-            index_b    = find_line_index(lines_ch,coord_channel,g_input.cr)-1
+            index_a    = find_line_index(LC.lines_ch,CP.coord_channel,(1-g_input.lc)*g_input.cr)
+            index_b    = find_line_index(LC.lines_ch,CP.coord_channel,g_input.cr)-1
 
-            buf_array = -lines_ch[2,index_a:index_b+1]
+            buf_array = -LC.lines_ch[2,index_a:index_b+1]
             buf_array = buf_array[::-1]
             
-            a = []
-
-            a.extend([-lines_R[2,1]])
-            a.extend([-lines_cr[2,:].item()])
-            a.extend(buf_array)
-            a.extend([lines_lcr[2,:].item()])
-
-            
-            for i in range(len(a)):
-                l = np.abs(a[i])
-                i_l = np.where(line_global[2,:]==l)
-                p0  = line_global[0,i_l][0][0]
-                p1  = line_global[1,i_l][0][0]
-                p_i_0 = np.where(global_points[2,:]==p0)
-                p_i_1 = np.where(global_points[2,:]==p1)
-                x   = [global_points[0,p_i_0][0],
-                       global_points[0,p_i_1][0]]
-                y   = [global_points[1,p_i_0][0],
-                       global_points[1,p_i_1][0]]
-                plt.plot(x,y,c='firebrick')
-    
+            l_list = [-LC.lines_R[2,1],-LC.lines_cr[2,:],buf_array,LC.lines_lcr[2,:]]
+            mesh_model = create_loop(l_list, mesh_model, 30)
 
 
-            mesh_model.geo.addCurveLoop(a,30)
- 
-            a = []
             index_a    = 0
-            index_b    = find_line_index(lines_ch,coord_channel,(1-g_input.lc)*g_input.cr)-1
-
-            buf_array = -lines_ch[2,index_a:index_b+1]
+            index_b    = find_line_index(LC.lines_ch, CP.coord_channel,(1-g_input.lc)*g_input.cr)-1
+            buf_array = -LC.lines_ch[2,index_a:index_b+1]
             buf_array = buf_array[::-1]
-            
-            a.extend([lines_R[2,0]])
-            a.extend([-lines_lcr[2,:].item()])
-            a.extend(buf_array)
-            a.extend([lines_T[2,1]])
 
-            
-            for i in range(len(a)):
-                l = np.abs(a[i])
-                i_l = np.where(line_global[2,:]==l)
-                p0  = line_global[0,i_l][0][0]
-                p1  = line_global[1,i_l][0][0]
-                p_i_0 = np.where(global_points[2,:]==p0)
-                p_i_1 = np.where(global_points[2,:]==p1)
-                x   = [global_points[0,p_i_0][0],
-                       global_points[0,p_i_1][0]]
-                y   = [global_points[1,p_i_0][0],
-                       global_points[1,p_i_1][0]]
-                plt.plot(x,y,c='r')
+            l_list = [LC.lines_R[2,0],-LC.lines_lcr[2,:],buf_array,LC.lines_T[2,1]]
+            mesh_model = create_loop(l_list, mesh_model, 35)
 
-            
-            mesh_model.geo.addCurveLoop(a,35)
+    index_a = find_line_index(LC.lines_ch,CP.coord_channel,g_input.lt_d)
+    index = find_line_index(LC.lines_S,CP.coord_sub,g_input.lt_d)
 
-    a = []
-    index_a = find_line_index(lines_ch,coord_channel,g_input.lt_d)
-    index = find_line_index(lines_S,coord_sub,g_input.lt_d)
-
-    buf_array = -lines_S[2,0:index]
+    buf_array = -LC.lines_S[2,0:index]
     buf_array = buf_array[::-1]
-    a.extend(np.int32(lines_ch[2,0:index_a]))
-    a.extend([-lines_ch_ov[2,:].item()])
-    a.extend(buf_array)
-    a.extend([lines_T[2,0]])
-    mesh_model.geo.addCurveLoop(a,40)
-
-
-
-
-
-    a = []
-    index_a = find_line_index(lines_S,coord_sub,g_input.lt_d)
-    index = find_line_index(lines_S,coord_sub,g_input.decoupling)
-    buf_array = -lines_S[2,index_a:index]
-    buf_array = buf_array[::-1]
-    index_a = find_line_index(lines_ch,coord_channel,g_input.lt_d)
-    a.extend(np.int32(lines_ch[2,index_a:]))
-    a.extend([-lines_base_ch[2,:].item()])
-    a.extend(buf_array)
-    a.extend([lines_ch_ov[2,:].item()])
-    for i in range(len(a)):
-        l = np.abs(a[i])
-        i_l = np.where(line_global[2,:]==l)
-        p0  = line_global[0,i_l][0][0]
-        p1  = line_global[1,i_l][0][0]
-        p_i_0 = np.where(global_points[2,:]==p0)
-        p_i_1 = np.where(global_points[2,:]==p1)
-        x   = [global_points[0,p_i_0][0],
-               global_points[0,p_i_1][0]]
-        y   = [global_points[1,p_i_0][0],
-               global_points[1,p_i_1][0]]
-        plt.plot(x,y,c='k')
     
-    mesh_model.geo.addCurveLoop(a,45)
+    l_list = [LC.lines_ch[2,0:index_a], -LC.lines_ch_ov[2,:], buf_array, LC.lines_T[2,0]]
+    mesh_model = create_loop(l_list, mesh_model, 40)
+    
+    
+    index_a = find_line_index(LC.lines_S,CP.coord_sub,g_input.lt_d)
+    index = find_line_index(LC.lines_S,CP.coord_sub,g_input.decoupling)
+    buf_array = -LC.lines_S[2,index_a:index]
+    buf_array = buf_array[::-1]
+    index_b = find_line_index(LC.lines_ch,CP.coord_channel,g_input.lt_d)    
+    
+    l_list = [LC.lines_ch[2,index_b:],-LC.lines_base_ch[2,:],buf_array,LC.lines_ch_ov[2,:]]
+    mesh_model = create_loop(l_list, mesh_model, 45)
+
+
 
     
     Left_side_of_subduction_surf   = gmsh.model.geo.addPlaneSurface([10],tag=100) # Left side of the subudction zone
@@ -411,19 +256,19 @@ def create_gmsh(sx,        # subduction x
     
     mesh_model.geo.synchronize()
 
-    mesh_model.addPhysicalGroup(2, [Left_side_of_subduction_surf], tag=dict_tag_surf['sub_plate'])
-    mesh_model.addPhysicalGroup(2, [Oceanic_Crust_surf], tag=dict_tag_surf['oceanic_crust'])
-    mesh_model.addPhysicalGroup(2, [Right_side_of_subduction_surf], tag=dict_tag_surf['wedge'])
-    mesh_model.addPhysicalGroup(2, [Lithhospheric_Mantle_surf], tag=dict_tag_surf['overriding_lm'])
-    mesh_model.addPhysicalGroup(2, [Crust_LC_surf], tag=dict_tag_surf['lower_crust'])
-    mesh_model.addPhysicalGroup(2, [Crust_UC_surf], tag=dict_tag_surf['upper_crust'])
-    mesh_model.addPhysicalGroup(2, [Channel_surf_A], tag=dict_tag_surf['Channel_surf_a'])
-    mesh_model.addPhysicalGroup(2, [Channel_surf_B], tag=dict_tag_surf['Channel_surf_b'])
+    mesh_model.addPhysicalGroup(2, [Left_side_of_subduction_surf],  tag=dict_surf['sub_plate'])
+    mesh_model.addPhysicalGroup(2, [Oceanic_Crust_surf],            tag=dict_surf['oceanic_crust'])
+    mesh_model.addPhysicalGroup(2, [Right_side_of_subduction_surf], tag=dict_surf['wedge'])
+    mesh_model.addPhysicalGroup(2, [Lithhospheric_Mantle_surf],     tag=dict_surf['overriding_lm'])
+    mesh_model.addPhysicalGroup(2, [Crust_LC_surf],                 tag=dict_surf['lower_crust'])
+    mesh_model.addPhysicalGroup(2, [Crust_UC_surf],                 tag=dict_surf['upper_crust'])
+    mesh_model.addPhysicalGroup(2, [Channel_surf_A],                tag=dict_surf['Channel_surf_a'])
+    mesh_model.addPhysicalGroup(2, [Channel_surf_B],                tag=dict_surf['Channel_surf_b'])
 
     
     
     
-    return model_gmsh 
+    return mesh_model 
 
 
 # First draft -> I Need to make it a decent function, otherwise this is a fucking nightmare
@@ -475,13 +320,16 @@ def create_parallel_mesh(ctrlio):
 
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    mesh_model.geo.mesh.setAlgorithm(2, 40000, 3)
-    mesh_model.geo.mesh.setAlgorithm(2, 45000, 3)
+    mesh_model.geo.mesh.setAlgorithm(2, dict_surf['Channel_surf_a'], 3)
+    mesh_model.geo.mesh.setAlgorithm(2, dict_surf['Channel_surf_b'], 3)
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
 
     mesh_model.mesh.generate(2)
     mesh_model.mesh.setOrder(2)
+    
+    mesh_name = os.path.join
+    
     gmsh.write("experimental.msh")
     
     return 0

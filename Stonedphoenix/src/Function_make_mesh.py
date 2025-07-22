@@ -6,6 +6,24 @@ import matplotlib.pyplot as plt
 # For instance, some function in the writing.geo file are pretty redundant, and can be improved. 
 
 
+def create_loop(l_list,mesh_model,tag):
+    a = []
+    
+    for i in range(len(l_list)):
+        
+        if isinstance(l_list[i], (int, np.integer)): 
+            val = [l_list[i]]
+        else: 
+            val = l_list[i]
+    
+        a.extend(val)
+        
+    
+    mesh_model.geo.addCurveLoop(a,tag) # Left side of the subudction zone
+   
+    return mesh_model
+
+
 def find_line_index(Lin_ar,point,d):
     
     for i in range(len(Lin_ar[0,:])-1):
@@ -39,6 +57,7 @@ def find_tag_line(coord,x,dir):
     
     i = np.where(coord[a,:]==-x)
     i = i[0][0];i = coord[2,i]
+    
     return np.int32(i)                 
 
 

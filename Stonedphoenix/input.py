@@ -673,7 +673,7 @@ def create_parallel_mesh(ctrl,ctrlio):
             buf_array = buf_array[::-1]
             
             a.extend([lines_R[2,0]])
-            a.extend([-lines_lcr[2,:].item()])
+            a.extend([-lines_lcr[2,:]])
             a.extend(buf_array)
             a.extend([lines_T[2,1]])
 
