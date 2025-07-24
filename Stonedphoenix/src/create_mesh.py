@@ -8,6 +8,7 @@ from Function_make_mesh import Class_Points
 from Function_make_mesh import Class_Line
 from Function_make_mesh import create_loop
 from Function_make_mesh import find_line_index
+from numerical_control import IOControls
 
 import numpy as np
 import gmsh 
@@ -24,7 +25,7 @@ import matplotlib.pyplot as plt
 from dolfinx.io import XDMFFile, gmshio
 import gmsh 
 from ufl import exp, conditional, eq, as_ufl
-
+import scal as sc_f 
 import basix.ufl
 
 # dictionary for surface and phase. 
@@ -88,6 +89,16 @@ class Mesh():
 
 
 def create_mesh(mesh, cell_type, prune_z=False):
+    """
+    mesh, cell_type, remove z 
+    
+    
+    
+    
+    
+    source: Dokken tutorial generating mesh 
+    """
+    
     # From the tutorials of dolfinx
     cells = mesh.get_cells_type(cell_type)
     cell_data = mesh.get_cell_data("gmsh:physical", cell_type)
@@ -140,7 +151,7 @@ def create_gmsh(sx,        # subduction x
     mesh_model = gmsh.model()
 
     CP = Class_Points()
-    mesh_model = CP.update_points(mesh_model,sx,sy,chx,chy,oc_cy,oc_cy,g_input)
+    mesh_model = CP.update_points(mesh_model,sx,sy,chx,chy,oc_cx,oc_cy,g_input)
 
     LC = Class_Line()
     mesh_model = LC.update_lines(mesh_model,CP, g_input)
@@ -202,6 +213,9 @@ def create_gmsh(sx,        # subduction x
       
     # Create the line loop [anticlockwise] -> TODO automatic detection orientation of the line, and a more automatic way to select the lines   
     # Incoming plate  
+    
+    
+    
     l_list     = [LC.lines_oc[2,:], LC.lines_B[2,-1], -LC.lines_L[2,0]]
     mesh_model = create_loop(l_list, mesh_model, 10)
 
@@ -369,7 +383,7 @@ def create_gmesh(ioctrl):
     return 0
     
 #------------------------------------------------------------------------------------------------------
-def read_mesh(ioctrl):
+def read_mesh(ioctrl,sc):
 
 
 
@@ -385,7 +399,8 @@ def read_mesh(ioctrl):
     
     if rank == 0: 
         # Read in mesh
-        msh = meshio.read("experimental.msh")
+        mesh_name = os.path.join(ioctrl.path_save,'%s.msh'%ioctrl.sname)
+        msh = meshio.read(mesh_name)
 
         # Create and save one file for the mesh, and one file for the facets
         triangle_mesh = create_mesh(msh, "triangle6", prune_z=True)
@@ -394,6 +409,13 @@ def read_mesh(ioctrl):
         meshio.write("mt.xdmf", line_mesh)
         
         
+    mesh = sc_f._scaling_mesh(mesh,sc)
+
+    return mesh, cell_markers, facet_markers
+#-----------------------------------------------------------------------------------------------------
+def create_mesh_object(mesh,sc,ioctrl):    
+    
+    mesh, cell_markers, facet_markers = read_mesh(ioctrl, sc)
     
     Pph           = fem.functionspace(mesh, ("DG", 0))      # Material ID function space # Defined in the cell space {element wise} apperently there is a black magic that 
     # automatically does the interpolation of the function space, i.e. the function space is defined in the cell space, but it is automatically interpolated to the nodes                                    
@@ -409,6 +431,8 @@ def read_mesh(ioctrl):
     phase        = fem.Function(Pph) # Create a function to hold the phase information
     phase.x.name = "phase"
     phase        = assign_phases(dict_surf, cell_markers, phase) # Assign phases using the cell tags and physical surfaces -> i.e. 10000 = Mantle ? is going to assign unique phase to each node? 
+    # Correct the phase: 
+    phase.x.array[:] -= 1 # Rather necessary remember to put plus one once you publish it 
     # -- 
     T_i             = fem.Function(PT)
     T_i.x.array[:]  = 0. 
@@ -426,8 +450,6 @@ def read_mesh(ioctrl):
     MESH.phase     = phase 
     MESH.T_i       = T_i 
     
-    X = m
-    
 
 
     return MESH
@@ -435,7 +457,7 @@ def read_mesh(ioctrl):
 
 
 #------------------------------------------------------------------------------------------------------
-def unit_test():
+def unit_test_mesh(ioctrl, sc):
     import numpy as np 
     import sys, os
     sys.path.append(os.path.abspath("src"))
@@ -445,28 +467,32 @@ def unit_test():
     
     g_input = geom_input() 
     
-    IOCtrl = IOControls(test_name = 'Debug_test',
-                        path_save = '../Debug_mesh',
-                        sname = 'Experimental')
-    IOCtrl.generate_io()
-
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()  # 0, 1, ..., size-1
     size = comm.Get_size()  # total number of MPI processes
     
     if rank == 0: 
-        create_gmesh(IOCtrl)
+        create_gmesh(ioctrl)
     
-    read_mesh(IOCtrl)
+    M = create_mesh_object(mesh,sc,ioctrl)
     
-    return 0
+    return M
     
-    
+#------------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
     
-    unit_test()
+    ioctrl = IOControls(test_name = 'Debug_test',
+                        path_save = '../Debug_mesh',
+                        sname = 'Experimental')
+    ioctrl.generate_io()
     
+    sc = sc_f.Scal(L=660e3, Temp = 1350, eta = 1e21, stress = 1e9)
+    
+    unit_test_mesh(ioctrl,sc)
+    
+    
+
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()  # 0, 1, ..., size-1
     size = comm.Get_size()  # total number of MPI processes

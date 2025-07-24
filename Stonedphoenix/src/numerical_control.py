@@ -32,103 +32,50 @@ dict_rheology = {'default':0,
                  'composite_iter':4}
 
 # Numba JIT class spec definition
-spec = [
-    ('option_k', int64),
-    ('option_Cp', int64),
-    ('option_rho', int64),
-    ('recalculate', int64),
-    ('rheology', int64),
-    ('it_max', int64),
+spec = [('it_max', int64),
     ('tol', float64),
     ('relax', float64),
-    ('eta_max', float64),
-    ('eta_def', float64),
-    ('eta_min', float64),
     ('Tmax', float64),
     ('Ttop', float64),
     ('g', float64),
-    ('pressure_scaling', float64),
     ('slab_age', float64),
-    ('R', float64),
-    ('yr2s', float64),
-    ('cm2m', float64),
     ('v_s', float64[:]),
-    ('scal_year',float64),
-    ('scal_vel',float64),
-    ('b_vk',int64),
-    ('b_vk_t',int64),
-    ('pressure_bc',int64),
-    ('advect_temperature',int64),
-    ('dt', float64),
-    ('t_max', float64),  # Maximum time in seconds
-    ('petsc',int32),
-    ('time_dependent_v',int64)# Assuming this is a NumPy array
+    ('time_max', float64),  # Maximum time in seconds
+    ('time_dependent_v',int64),
+    ('time_max', float64),
+    ('steady_state',int64)# Assuming this is a NumPy array
 ]
 
 @jitclass(spec)
 class NumericalControls:
     def __init__(self,
-                 option_k=0,
-                 option_Cp=0,
-                 option_rho=0, 
-                 rheology=0, 
                  it_max=100,
                  tol=1e-8,
-                 relax=0.6,
-                 eta_max=1e26, 
-                 eta_def=1e20, 
-                 eta_min=1e16,
                  Ttop=0.0,
                  Tmax=1300,
                  g=9.81, 
+                 time_max = 20, 
                  pressure_scaling=1e22/1000e3,
                  slab_age=0.0,
-                 v_s=np.array([5.0,0.0], dtype=np.float64),
-                 scal_vel=1e-2/(365.25*24*60*60),
-                 scal_year= 365.25*24*60*60,
-                 b_vk = 1,
-                 pressure_bc = 1,
-                 advect_temperature = 1,
-                 dt = 0.0,  # Default time step in seconds
-                 petsc = 0,
-                 time_dependent_v = 1):
+                 v_s = np.array([5.0,0.0], dtype=np.float64),
+                 steady_state = 1,
+                 relax = 0.6,
+                 time_dependent_v=1):
 
         # Direct initialization of class attributes
-        self.option_k = option_k
-        self.option_Cp = option_Cp
-        self.option_rho = option_rho
-        self.rheology = rheology
-        self.it_max = it_max 
-        self.tol = tol 
-        self.relax = relax
-        self.eta_max = eta_max
-        self.eta_def = eta_def
-        self.eta_min = eta_min
-        self.Tmax = Tmax + 273.15
-        self.Ttop = Ttop + 273.15
-        self.g = g 
-        self.pressure_scaling = pressure_scaling
-        self.R = 8.3145
-        self.scal_year = scal_year
-        self.scal_vel  = scal_vel
-        self.v_s = v_s*np.float64(scal_vel)  # Convert cm/yr to m/s
-        self.slab_age = slab_age*scal_year 
-        self.b_vk = b_vk 
-        self.b_vk_t = rheology
-        self.pressure_bc = pressure_bc
-        self.advect_temperature = advect_temperature
-        self.dt = dt 
-        self.petsc = petsc
-        time_dependent_v = time_dependent_v
+        self.it_max           = it_max 
+        self.tol              = tol 
+        self.relax            = relax
+        self.Tmax             = Tmax + 273.15
+        self.Ttop             = Ttop + 273.15
+        self.g                = g 
+        self.v_s              = v_s  # Convert cm/yr to m/s
+        self.slab_age         = slab_age
+        self.time_max         = time_max
+        self.time_dependent_v = time_dependent_v
+        self.steady_state     = steady_state
         
-        
-
-
-
-
-
-
-
+    
 
 class IOControls():
     def __init__(self, test_name='', path_save='', sname=''):

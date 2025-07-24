@@ -194,6 +194,8 @@ spec_phase = [
     ("rho0", float64[:]),        # Reference density [kg/m^3]
     ("option_rho", int32[:]),    # Option for density calculation
 
+    ("id", int32[:]),              # phase number
+    
     # Constants
     ("Tref", float64),      # Reference temperature [K]
     ("Pref", float64),      # Reference pressure [Pa]
@@ -203,16 +205,17 @@ spec_phase = [
     ("eta_min",float64),    # minimum viscosity [Pas]
     ("eta_max",float64),    # max viscosity [Pas]
     ("eta_def",float64),    # default viscosity [Pas]
+    
 ]   
 
 #-----------------------------------------------------------------------------------------------------------
-
-@jitclass(spec_phase)
 class PhaseDataBase:
     def __init__(self, number_phases):
         # Initialize individual fields as arrays
         if number_phases>8: 
             raise ValueError("The number of phases should not exceed 7")
+        
+
         
         self.Tref        = 298.15  # Reference temperature [K]
         self.Pref        = 1e5     # Reference pressure [Pa]
@@ -222,7 +225,7 @@ class PhaseDataBase:
         self.eta_def     = 1e21    # Default viscosity [Pas]
         self.T_Scal      = 1.      # Default temperature scale
         self.P_Scal      = 1.      # Default Pressure scale 
-        
+        self.id          = np.zeros(number_phases, dtype=np.int32)
         # Explanation: For testing the pressure and t scal are set to be 1.0 -> so, the software is not performing any 
         # scaling operation. 
         # -> When the property are automatically scaled these value will be update automatically. 
@@ -270,6 +273,7 @@ class PhaseDataBase:
         self.Kb         = np.zeros(number_phases, dtype=np.float64)               # Bulk modulus [Pa]                
         self.rho0       = np.zeros(number_phases, dtype=np.float64)               # Reference density [kg/m^3] {In case of constant density}
         self.option_rho = np.zeros(number_phases, dtype=np.int32)                 # Option for density calculation
+        
 
 #-----------------------------------------------------------------------------------------------------------
 def _generate_phase(PD:PhaseDataBase,
@@ -285,7 +289,7 @@ def _generate_phase(PD:PhaseDataBase,
                     Bdis:float             = -1e23, 
                     Cp:float               = 1171.52,
                     k:float                = 3.138,
-                    rho:float              = 3300,
+                    rho0:float              = 3300,
                     eta:float              = -1e23,
                     option_rheology:float  = 0,
                     option_Cp:int          = 0,
@@ -310,6 +314,8 @@ def _generate_phase(PD:PhaseDataBase,
     rho : density 
     => output -> update the id_th phase_db 
     """
+    PD.id[id-1] = id 
+    id = id - 1 
     if name_diffusion != 'constant':
         A = _check_rheological(name_diffusion)
         PD.Edif[id] = A.E 
@@ -371,7 +377,7 @@ def _generate_phase(PD:PhaseDataBase,
     PD.alpha0[id]      = 2.832e-5
     PD.alpha1[id]     = 3.79e-8 
     PD.Kb[id]         = (2*100e9*(1+0.25))/(3*(1-0.25*2))  # Bulk modulus [Pa]
-    PD.rho0[id]       = rho
+    PD.rho0[id]       = rho0
     
     PD.option_rho[id] = option_rho
     

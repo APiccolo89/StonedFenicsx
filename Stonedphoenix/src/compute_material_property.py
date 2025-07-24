@@ -4,15 +4,18 @@
 # import all the constants and defined model setup parameters 
 
 # modules
-import numpy as np
-import matplotlib.pyplot as plt
-import time as timing
-import scipy.linalg as la 
-import scipy.sparse as sps
-import scipy.sparse.linalg.dsolve as linsolve
-from numba import njit
-from numba import jit, prange
-from scipy.optimize import bisect
+import numpy                         as np
+import matplotlib.pyplot             as plt
+import time                          as timing
+
+import scipy.sparse.linalg.dsolve    as linsolve
+from numba                           import njit
+from numba                           import jit, prange
+from scipy.optimize                  import bisect
+from ufl                             import exp, conditional, eq, as_ufl, Constant
+from mpi4py import MPI
+from petsc4py import PETSc
+from dolfinx import fem
 
 #---------------------------------------------------------------------------------
 
@@ -73,6 +76,35 @@ def density(pdb,T,p,ph):
     
     return rho
 
+#-----
+def density_FX(pdb, T, p, phase, M):
+    """
+    Compute density as a UFL expression, FEniCSx-compatible.
+    """
+    # Again: apperently the phase field is converted into numpy 64. First I need to extract the array, then, I need to convert into int32 
+    ph = np.int32(phase.x.array)
+    P0 = phase.function_space
+    # Gather material parameters as UFL expressions via indexing
+    rho0    = fem.Function(P0)  ; rho0.x.array[:]    =  pdb.rho0[ph]
+    alpha0  = fem.Function(P0)  ; alpha0.x.array[:]  =  pdb.alpha0[ph]
+    alpha1  = fem.Function(P0)  ; alpha1.x.array[:]  =  pdb.alpha1[ph] 
+    Kb      = fem.Function(P0)  ; Kb.x.array[:]      =  pdb.Kb[ph]
+    opt_rho = fem.Function(P0)  ; opt_rho.x.array[:] =  pdb.option_rho[ph]
+
+    # Base density (with temperature dependence)
+    temp_term = - (alpha0 * (T - pdb.Tref) + (alpha1 / 2.0) * (T**2 - pdb.Tref**2))
+    rho_temp = rho0 * exp(temp_term)
+
+    # Add pressure dependence if needed
+    rho = conditional(
+        eq(opt_rho, 0), rho0,
+        conditional(
+            eq(opt_rho, 1), rho_temp,
+            rho_temp * exp(p / Kb)
+        )
+    )
+
+    return rho 
 #----------------------------------------------------------------------------------
 
 #@njit

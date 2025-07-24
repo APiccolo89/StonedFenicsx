@@ -22,30 +22,32 @@ data_scal = [('L',float64),
              ('cm2myr',float64),
              ('strain',float64),
              ('ac',float64),
-             ('Energy',float64)]
+             ('Energy',float64),
+             ('scale_Myr2sec',float64),
+             ('scale_vel',float64)]
 
 @jitclass(data_scal)
 class Scal: 
     def __init__(self,L=1.0,
                  stress = 1e9,
                  eta = 1e22,
-                 Temp  = 1.0,
-                 cm2myr = 1e-2/365.25/24/60/60):
-        self.cm2myr    = cm2myr
-        self.L         = L 
-        self.Temp      = Temp
-        self.eta       = eta
-        self.stress    = stress
-        self.T         = self.eta/self.stress 
-        self.M         = (self.stress*self.L**2)*self.T**2/self.L
-        self.ac        = self.L/self.T**2
-        self.rho       = self.M/self.L**3
-        self.Force     = self.M*self.ac
-        self.Energy    = self.Force*self.L
-        self.Watt      = self.Energy/self.T
-        self.strain    = 1/self.T
-        self.k         = self.Watt/(self.L*self.Temp)
-        self.Cp        = self.Energy/(self.Temp*self.M)
+                 Temp  = 1.0):
+        self.L             = L 
+        self.Temp          = Temp
+        self.eta           = eta
+        self.stress        = stress
+        self.T             = self.eta/self.stress 
+        self.M             = (self.stress*self.L**2)*self.T**2/self.L
+        self.ac            = self.L/self.T**2
+        self.rho           = self.M/self.L**3
+        self.Force         = self.M*self.ac
+        self.Energy        = self.Force*self.L
+        self.Watt          = self.Energy/self.T
+        self.strain        = 1/self.T
+        self.k             = self.Watt/(self.L*self.Temp)
+        self.Cp            = self.Energy/(self.Temp*self.M)
+        self.scale_vel     = 1e-2 / 365.25 / 24 / 60 / 60
+        self.scale_Myr2sec = 1e6 * 365.25 * 60 * 60 * 24
 
 
 
@@ -54,37 +56,37 @@ def _scaling_material_properties(pdb,sc:Scal):
     
     # scal the references values 
      
-    pdb.Tref /= sc.Temp 
-    pdb.Pref /= sc.stress
-    pdb.T_Scal = sc.Temp 
-    pdb.P_Scal = sc.stress 
+    pdb.Tref    /= sc.Temp 
+    pdb.Pref    /= sc.stress
+    pdb.T_Scal   = sc.Temp 
+    pdb.P_Scal   = sc.stress 
     
     # Viscosity
-    pdb.eta /= sc.eta 
+    pdb.eta     /= sc.eta 
     pdb.eta_min /= sc.eta
     pdb.eta_max /= sc.eta 
     pdb.eta_def /= sc.eta 
     
     # B_dif/disl 
-    scal_Bdsl = sc.stress**(-pdb.n)*sc.T**(-1)    # Pa^-ns-1
-    scal_Bdif  = (sc.stress*sc.T)**(-1)
-    pdb.Bdif /= scal_Bdif 
-    pdb.Bdis /= scal_Bdsl
+    scal_Bdsl   = sc.stress**(-pdb.n)*sc.T**(-1)    # Pa^-ns-1
+    scal_Bdif   = (sc.stress*sc.T)**(-1)
+    pdb.Bdif   /= scal_Bdif 
+    pdb.Bdis   /= scal_Bdsl
 
     # Scal the heat capacity 
-    scal_c1   = sc.Energy/sc.M/sc.Temp**(0.5) 
-    scal_c2   = (sc.Energy*sc.Temp)/sc.M
-    scal_c3   = (sc.Energy*sc.Temp**2)/sc.M
-    pdb.Cp    /= sc.Cp 
-    pdb.C0    /= sc.Cp
-    pdb.C1    /= scal_c1 
-    pdb.C2    /= scal_c2 
-    pdb.C3    /= scal_c3 
+    scal_c1     = sc.Energy/sc.M/sc.Temp**(0.5) 
+    scal_c2     = (sc.Energy*sc.Temp)/sc.M
+    scal_c3     = (sc.Energy*sc.Temp**2)/sc.M
+    pdb.Cp     /= sc.Cp 
+    pdb.C0     /= sc.Cp
+    pdb.C1     /= scal_c1 
+    pdb.C2     /= scal_c2 
+    pdb.C3     /= scal_c3 
     
     # conductivity     
-    pdb.k   /= sc.k
-    pdb.k0 /= sc.k
-    pdb.a   /= sc.k/sc.stress 
+    pdb.k     /= sc.k
+    pdb.k0    /= sc.k
+    pdb.a     /= sc.k/sc.stress 
     # k_b / c are useless parameter from the Mckenzie parameterisation, keep them for potential use 
     for i in range(4): 
         scal_rad = (sc.Watt*sc.L)/sc.Temp**(1+i) 
@@ -111,15 +113,20 @@ def _scaling_material_properties(pdb,sc:Scal):
 
     
     
+def _scaling_control_parameters(ctrl,scal):
+    
+    ctrl.Ttop /= scal.Temp 
+    ctrl.Tmax /= scal.Temp 
+    ctrl.v_s   = (ctrl.v_s * scal.scale_vel)/(scal.L/scal.T)
+    ctrl.g     = ctrl.g / (scal.L/scal.T**2)
     
     
+    return ctrl  
     
     
-    
-def _scaling_control_parameters(ctrl):
-    pass
 
-
-
-def _scaling_mesh():
-    pass
+def _scaling_mesh(M,scal):
+    
+    M.geometry.x[:] /= scal.L 
+    
+    return M 
