@@ -374,7 +374,7 @@ def create_gmesh(ioctrl):
 
 
     mesh_model.mesh.generate(2)
-    mesh_model.mesh.setOrder(2)
+    #mesh_model.mesh.setOrder(2)
     
     mesh_name = os.path.join(ioctrl.path_save,ioctrl.sname)
     
@@ -403,8 +403,8 @@ def read_mesh(ioctrl,sc):
         msh = meshio.read(mesh_name)
 
         # Create and save one file for the mesh, and one file for the facets
-        triangle_mesh = create_mesh(msh, "triangle6", prune_z=True)
-        line_mesh = create_mesh(msh, "line3", prune_z=True)
+        triangle_mesh = create_mesh(msh, "triangle", prune_z=True)
+        line_mesh = create_mesh(msh, "line", prune_z=True)
         meshio.write("mesh.xdmf", triangle_mesh)
         meshio.write("mt.xdmf", line_mesh)
         

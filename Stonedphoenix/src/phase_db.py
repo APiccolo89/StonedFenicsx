@@ -170,7 +170,6 @@ spec_phase = [
     ("option_eta", int32[:]),# Option for viscosity calculation
 
     # Heat capacity
-    ("Cp", float64[:]),      # Constant heat capacity [J/kg/K]
     ("C0", float64[:]),      # Cp coefficient [J/mol/K]
     ("C1", float64[:]),      # Cp coefficient [J/mol/K^0.5]
     ("C2", float64[:]),      # Cp coefficient [J·K/mol]
@@ -178,7 +177,6 @@ spec_phase = [
     ("option_Cp", int32[:]), # Option for Cp calculation
 
     # Thermal conductivity
-    ("k", float64[:]),       # Constant thermal conductivity [W/m/K]
     ("k0", float64[:]),      # Reference thermal conductivity [W/m/K]
     ("a", float64[:]),       # Pressure-dependent coefficient [1/Pa]
     ("k_n", float64[:]),       # Pressure-dependent coefficient [1/Pa]
@@ -246,7 +244,6 @@ class PhaseDataBase:
         self.option_eta = np.zeros(number_phases, dtype=np.int32)                 # Option for viscosity calculation
 
         # Thermal properties
-        self.Cp         = np.zeros(number_phases, dtype=np.float64)               # Heat capacity [J/kg K] {In case of constant heat capacity}
         self.C0         = np.zeros(number_phases, dtype=np.float64)               # Reference heat capacity [J/mol/K]
         self.C1         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [J/mol/K^0.5]  -> CONVERTED INTO J/kg/K^0.5       
         self.C2         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [(J*K)/mol]    -> CONVERTED INTO J/kg/K^2
@@ -254,7 +251,6 @@ class PhaseDataBase:
         self.option_Cp  = np.zeros(number_phases, dtype=np.int32)                 # Option for heat capacity calculation
         
         # Thermal conductivity 
-        self.k          = np.zeros(number_phases, dtype=np.float64)               # Heat conductivity [W/m/K] {In case of constant heat conductivity}
         self.k0         = np.zeros(number_phases, dtype=np.float64)               # Reference heat conductivity [W/m/K]
         self.a          = np.zeros(number_phases, dtype=np.float64)               # Thermal expansivity [1/Pa]
         self.k_n        = np.zeros(number_phases, dtype=np.float64)               # exponent
@@ -350,7 +346,7 @@ def _generate_phase(PD:PhaseDataBase,
     # Heat capacity
     if option_Cp == 0:
         # constant heat capacity 
-        PD.Cp[id] = Cp
+        PD.C0[id] = Cp
     elif option_Cp > 0 and option_Cp < 7:
         # Compute the material the effective material property 
         PD.C0[id],PD.C1[id],PD.C2[id],PD.C3[id] = release_heat_capacity_parameters(option_Cp)
@@ -360,7 +356,7 @@ def _generate_phase(PD:PhaseDataBase,
     # Heat Conductivity
     if option_k == 0:
         # constant heat conductivity 
-        PD.k[id] = k
+        PD.k0[id] = k
     elif option_k != 0:
         # Compute the material the effective material property 
         PD.k0[id],PD.a[id],PD.k_n[id]  = release_heat_conductivity_parameters(option_k)
@@ -374,7 +370,7 @@ def _generate_phase(PD:PhaseDataBase,
     PD.option_k[id]   = option_k    
     
     # Density
-    PD.alpha0[id]      = 2.832e-5
+    PD.alpha0[id]     = 2.832e-5
     PD.alpha1[id]     = 3.79e-8 
     PD.Kb[id]         = (2*100e9*(1+0.25))/(3*(1-0.25*2))  # Bulk modulus [Pa]
     PD.rho0[id]       = rho0

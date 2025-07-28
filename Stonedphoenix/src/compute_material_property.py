@@ -18,8 +18,43 @@ from petsc4py import PETSc
 from dolfinx import fem
 
 #---------------------------------------------------------------------------------
+def heat_conductivity_FX(pdb, T, p, phase, M):
+    
+    ph      = np.int32(phase.x.array)
+    P0      = phase.function_space
+    # Gather material parameters as UFL expressions via indexing
+    """
+    """
+    k0      = fem.Function(P0)  ; k0.x.array[:]    =  pdb.rho0[ph]
+    a       = fem.Function(P0)  ; a.x.array[:]     =  pdb.alpha0[ph]
+    n       = fem.Function(P0)  ; n.x.array[:]     =  pdb.Kb[ph]
+    
+    kr0     = fem.Function(P0)  ; kr0.x.array[:]     =  pdb.k_d[ph,0]
+    kr1     = fem.Function(P0)  ; kr1.x.array[:]     =  pdb.k_d[ph,1]
+    kr2     = fem.Function(P0)  ; kr2.x.array[:]     =  pdb.k_d[ph,2]
+    kr3     = fem.Function(P0)  ; kr3.x.array[:]     =  pdb.k_d[ph,3]
 
+    
+    k_rad   = kr0 * T**0 + kr1 * T**1 + kr2 * T**2 + kr3 * T**3 
+    
+    k       = (k0 + a * p) * (pdb.Tref/T)**n + k_rad
+    
+    
+    return k 
+# --------------------------------------------------------------------------------------
+def heat_capacity_FX(pdb, T, phase, M): 
+    ph      = np.int32(phase.x.array)
+    P0      = phase.function_space
+            
+    Cp0       = fem.Function(P0)  ; Cp0.x.array[:]     =   pdb.C0[ph]
+    Cp1       = fem.Function(P0)  ; Cp1.x.array[:]     =  pdb.C1[ph]
+    Cp3       = fem.Function(P0)  ; Cp3.x.array[:]     =  pdb.C3[ph]
 
+    
+    C_p = Cp0 + Cp1 * (T**(-0.5)) + Cp3 * (T**(-3.))
+
+    return C_p
+    
 #---------------------------------------------------------------------------------
 #@njit
 def heat_conductivity(pdb,T,p,ph):    
@@ -105,8 +140,52 @@ def density_FX(pdb, T, p, phase, M):
     )
 
     return rho 
-#----------------------------------------------------------------------------------
+#-----------------------------------
+def compute_viscosity_FX(e,T,P,pdb,phase,M):
+    """
+    It is wrong, but frequently used: it does not change too much by the end the prediction. 
+    I use the minimum viscosity possible. The alternative is taking the average between eta_min and eta_av. So, 
+    since I do not understand how I can easily integrate a full local iteration, I prefer to use the "wrong" composite method
+    """    
+    
+    ph = np.int32(phase.x.array)
+    P0 = phase.function_space
 
+    
+    # Gather material parameters as UFL expressions via indexing
+    Bdif    = fem.Function(P0)  ; Bdif.x.array[:]    =  pdb.Bdif[ph]
+    Bdis    = fem.Function(P0)  ; Bdis.x.array[:]    =  pdb.Bids[ph]
+    n       = fem.Function(P0)  ; n.x.array[:]       =  pdb.n[ph] 
+    Edif    = fem.Function(P0)  ; Edif.x.array[:]    =  pdb.Edif[ph]
+    Edis    = fem.Function(P0)  ; Edis.x.array[:]    =  pdb.Edis[ph]
+    Vdif    = fem.Function(P0)  ; Vdif.x.array[:]    =  pdb.Vdif[ph]
+    Vdis    = fem.Function(P0)  ; Vdis.x.array[:]    =  pdb.Vdis[ph]
+
+    # In case the viscosity for the given phase is constant 
+    eta_con     = fem.Function(P0) ; eta_con.x.array[:]     =  pdb.eta[ph]
+    # Option for eta for a given marker number ph 
+    opt_eta = fem.Function(P0)  ; opt_eta.x.array[:] =  pdb.option_eta[ph]
+    # Eta max 
+    Bd_max  = 1 / 2 / pdb.eta_max
+    # strain indipendent  
+    cdf = Bdif * exp((Edif + P * Vdif )/(pdb.R * T)) ; cds = Bdis * exp((Edis + P * Vdis)/(pdb.R * T))
+    # compute tau guess
+    etads     = 0.5 * cds**(-1/n) * e**((1-n)/n)
+    etadf     = 0.5 * cdf**(-1)
+    eta_av    = 1 / (1 / etads + 1/etadf + 1/pdb.eta_max)
+    eta_df    = 1 / (1 / etadf + 1 / pdb.eta_max) 
+    eta_ds    = 1 / (1 / etads + 1 / pdb.eta_max)
+    
+    # check if the option_eta -> constant or not, otherwise release the composite eta 
+    eta = conditional(
+        eq(opt_eta , 0), eta_con, conditional(eq(opt_eta , 1.0),eta_df, conditional(eq(opt_eta, 2.0), eta_ds, eta_av))
+    )
+
+    return eta
+
+
+
+#-----------------------------------------------------------------------------------
 #@njit
 def compute_viscosity(e,T,P,B,n,E,V,R):
 

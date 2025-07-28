@@ -77,14 +77,13 @@ def _scaling_material_properties(pdb,sc:Scal):
     scal_c1     = sc.Energy/sc.M/sc.Temp**(0.5) 
     scal_c2     = (sc.Energy*sc.Temp)/sc.M
     scal_c3     = (sc.Energy*sc.Temp**2)/sc.M
-    pdb.Cp     /= sc.Cp 
+
     pdb.C0     /= sc.Cp
     pdb.C1     /= scal_c1 
     pdb.C2     /= scal_c2 
     pdb.C3     /= scal_c3 
     
     # conductivity     
-    pdb.k     /= sc.k
     pdb.k0    /= sc.k
     pdb.a     /= sc.k/sc.stress 
     # k_b / c are useless parameter from the Mckenzie parameterisation, keep them for potential use 
