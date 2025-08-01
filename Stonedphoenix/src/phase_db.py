@@ -207,6 +207,7 @@ spec_phase = [
 ]   
 
 #-----------------------------------------------------------------------------------------------------------
+@jitclass(spec_phase)
 class PhaseDataBase:
     def __init__(self, number_phases):
         # Initialize individual fields as arrays

@@ -109,7 +109,17 @@ def _scaling_material_properties(pdb,sc:Scal):
     return pdb 
 
     
-
+def _scale_parameters(lhs,scal):
+    scal_factor       = (scal.scale_Myr2sec/scal.T)
+    lhs.end_time     = lhs.end_time    * scal_factor
+    lhs.dt           = lhs.dt          * scal_factor
+    lhs.c_age_plate  = lhs.c_age_plate * scal_factor
+    lhs.c_age_var    = lhs.c_age_var   * scal_factor  
+    lhs.dz           = lhs.dz / scal.L 
+    lhs.alpha_g      = lhs.alpha_g / (1 / scal.Temp)
+    
+    
+    return lhs 
     
     
 def _scaling_control_parameters(ctrl,scal):

@@ -38,8 +38,8 @@ import basix.ufl
 
 class geom_input():
     def __init__(self,
-                 x = [0.,1000e3],
-                 y = [-660e3,0.],
+                 x = np.array([0.,1000e3]),
+                 y = np.array([-660e3,0.]),
                  cr=35e3,
                  ocr=6e3,
                  lit_mt=30e3,
@@ -56,6 +56,21 @@ class geom_input():
         self.lt_d              = (cr+lit_mt)     # total lithosphere thickness
         self.decoupling        = decoupling      # decoupling depth -> i.e. where the weak zone is prolonged 
         self.resolution_normal = wc*2  # To Do
+    
+    def dimensionless_ginput(self,sc):
+        self.x                 /= sc.L               # main grid coordinate
+        self.y                 /= sc.L   
+        self.cr                /= sc.L              # crust 
+        self.ocr               /= sc.L             # oceanic crust
+        self.lit_mt            /= sc.L          # lithosperic mantle  
+        self.wc                /= sc.L             # weak zone 
+        self.lt_d              /= sc.L    # total lithosphere thickness
+        self.decoupling        /= sc.L      # decoupling depth -> i.e. where the weak zone is prolonged 
+        self.resolution_normal /= sc.L  # To Do
+        
+        return self 
+        
+        
 
 
 def assign_phases(dict_surf, cell_tags,phase):
@@ -380,7 +395,7 @@ def create_gmesh(ioctrl):
     
     gmsh.write("%s.msh"%mesh_name)
     
-    return 0
+    return g_input
     
 #------------------------------------------------------------------------------------------------------
 def read_mesh(ioctrl,sc):
@@ -413,7 +428,7 @@ def read_mesh(ioctrl,sc):
 
     return mesh, cell_markers, facet_markers
 #-----------------------------------------------------------------------------------------------------
-def create_mesh_object(mesh,sc,ioctrl):    
+def create_mesh_object(mesh,sc,ioctrl,g_input):    
     
     mesh, cell_markers, facet_markers = read_mesh(ioctrl, sc)
     
@@ -450,6 +465,11 @@ def create_mesh_object(mesh,sc,ioctrl):
     MESH.phase     = phase 
     MESH.T_i       = T_i 
     
+    # dimension-> g_input
+    g_input = g_input.dimensionless_ginput(sc)
+    
+    MESH.g_input   = g_input 
+    
 
 
     return MESH
@@ -472,9 +492,9 @@ def unit_test_mesh(ioctrl, sc):
     size = comm.Get_size()  # total number of MPI processes
     
     if rank == 0: 
-        create_gmesh(ioctrl)
+        g_input = create_gmesh(ioctrl)
     
-    M = create_mesh_object(mesh,sc,ioctrl)
+    M = create_mesh_object(mesh,sc,ioctrl, g_input)
     
     return M
     

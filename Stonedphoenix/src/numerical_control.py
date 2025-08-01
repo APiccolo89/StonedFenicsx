@@ -97,52 +97,72 @@ class IOControls():
 
 
 
-        
-
-spec_LHS = [('dz',float64),
-            ('nz',int32),
-            ('alpha_g',float64),
-            ('end_time',float64),
-            ('depth_melt',float64),
-            ('option_1D_solve',int32),
-            ('dt',float64),
-            ('recalculate',int32),
-            ('van_keken',int32),
-            ('z',float64[:]),
-            ('LHS',float64[:]),
-            ('d_RHS',float64)]
+spec_LHS = [
+    ('dz', float64),
+    ('nz', int32),
+    ('alpha_g', float64),
+    ('end_time', float64),
+    ('depth_melt', float64),
+    ('option_1D_solve', int32),
+    ('dt', float64),
+    ('recalculate', int32),
+    ('van_keken', int32),
+    ('z', float64[:]),
+    ('LHS', float64[:]),
+    ('LHS_var', float64[:, :]),
+    ('c_age_plate', float64),
+    ('c_age_var', float64[:]),
+    ('flag', int32[:]),
+    ('d_RHS', float64),
+    ('t_res_vec',float64[:])
+]
 
 @jitclass(spec_LHS)
-class ctrl_LHS:    
-    def __init__(self,
-            dz = 1e3,
-            nz = 108,
-            alpha_g = 3e-5,
-            end_time = 80e6,
-            depth_melt = 0.,
-            option_1D_solve = 1,
-            dt = 1e3,
-            recalculate = 0,
-            van_keken = 0,
-            d_RHS = -50e3):
-        
-        self.dz  = dz 
-        self.nz  = nz
+class ctrl_LHS:
+    """
+    This class stores and initializes parameters for the 1D thermal LHS problem.
+    """
+
+    def __init__(
+        self,
+        dz=1e3,               # spatial step
+        nz=500,               # number of vertical cells
+        alpha_g=3e-5,         # thermal expansivity
+        end_time=80,       # end time [yr]
+        depth_melt=0.0,       # depth of melt boundary
+        option_1D_solve=1,    # flag to enable 1D solve
+        dt=5e-3,              # time step
+        c_age_plate=50.0,     # characteristic plate age
+        c_age_var=(30.0, 60.0),  # variation in plate age
+        t_res=1000,           # temporal resolution
+        recalculate=0,        # flag for recomputation
+        van_keken=0,          # benchmark flag
+        d_RHS=-50e3,
+        z_min= 660e3# distance for RHS term
+    ):
+        if dt > 0.1: 
+            raise ValueError('dt: The input data must be in Myr. This timestep will be blow up the system. As a general remark: all input SI is Myr for time related parameters')
+        elif end_time > 200: 
+            raise ValueError('end_time: 200 Myr is already an overkill.')
+        self.dz = z_min/nz 
+        self.nz = nz
         self.alpha_g = alpha_g
+        self.end_time = end_time
         self.depth_melt = depth_melt
         self.option_1D_solve = option_1D_solve
-        self.end_time = end_time
-        self.dt = dt 
+        self.dt = dt
         self.recalculate = recalculate
-        self.van_keken = van_keken 
-        self.LHS       = np.zeros(nz,dtype=float64)
-        self.z         = np.zeros(nz,dtype=float64)
-        self.d_RHS     = d_RHS
+        self.van_keken = van_keken
+        self.c_age_plate = c_age_plate
+        self.c_age_var = np.array(c_age_var, dtype=float64)
+        self.z = np.zeros(nz, dtype=float64)
+        self.LHS = np.zeros(nz, dtype=float64)
+        self.LHS_var = np.zeros((nz, t_res), dtype=float64)
+        self.t_res_vec = np.zeros((t_res), dtype=float64)
+        self.flag = np.zeros(nz, dtype=int32)
+        self.d_RHS = d_RHS
+        
 
-    def _scale_parameters(self,ctrl):
-        self.end_time = self.end_time*ctrl.scal_year
-        self.dt       = self.dt*ctrl.scal_year
-        return self 
 
     
     

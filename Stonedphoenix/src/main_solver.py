@@ -10,7 +10,7 @@ from dolfinx.nls.petsc               import NewtonSolver
 from dolfinx.io                      import XDMFFile, gmshio
 from ufl                             import exp, conditional, eq, as_ufl
 from src.create_mesh                 import Mesh
-from src.numerical_control           import NumericalControls
+from src.numerical_control           import NumericalControls, ctrl_LHS
 from src.numerical_control           import IOControls 
 from src.solution                    import Solution 
 from src.compute_material_property   import density_FX
@@ -30,6 +30,78 @@ import matplotlib.pyplot             as plt
 import compute_material_property     as cmp 
 import src.scal                      as sc_f 
 import basix.ufl
+import time                          as timing
+
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+
+def get_discrete_colormap(n_colors, base_cmap='viridis'):
+    """
+    Create a discrete colormap with `n_colors` from a given base colormap.
+    
+    Parameters:
+        n_colors (int): Number of discrete colors.
+        base_cmap (str or Colormap): Name of the matplotlib colormap to base on.
+    
+    Returns:
+        matplotlib.colors.ListedColormap: A discrete version of the colormap.
+    """
+    base = plt.cm.get_cmap(base_cmap)
+    color_list = base(np.linspace(0, 1, n_colors))
+    return mcolors.ListedColormap(color_list, name=f'{base_cmap}_{n_colors}')
+
+def initial_temperature_field(X, ph, M, ctrl, lhs):
+    from scipy.interpolate import griddata
+    from ufl import conditional, Or, Eq
+    from functools import reduce
+    """
+    X    -:- Functionspace (i.e., an abstract stuff that represents all the possible solution for the given mesh and element type)
+    M    -:- Mesh object (i.e., a random container of utils related to the mesh)
+    ctrl -:- Control structure containing the information of the simulations 
+    lhs  -:- left side boundary condition controls. Separated from the control structure for avoiding clutter in the main ctrl  
+    ---- 
+    Function: Create a function out of the function space (T_i). From the function extract dofs, interpolate (initial) lhs all over. 
+    Then select the crustal+lithospheric marker, and overwrite the T_i with a linear geotherm. Simple. 
+    ----
+    output : T_i the initial temperature field.  
+        T_gr = (-M.g_input.lt_d-0)/(ctrl.Tmax-ctrl.Ttop)
+        T_gr = T_gr**(-1) 
+        
+        bc_fun = fem.Function(X)
+        bc_fun.x.array[dofs_dirichlet] = ctrl.Ttop + T_gr * cd_dof[dofs_dirichlet,1]
+        bc_fun.x.scatter_forward()
+    """    
+    #- Create part of the thermal field: create function, extract dofs, 
+    T_i_A = fem.Function(X)
+    cd_dof = X.tabulate_dof_coordinates()
+    T_i_A.x.array[:] = griddata(-lhs.z, lhs.LHS, c_dofs[:,1], method='nearest')
+    T_i_A.x.scatter_forward() 
+    #- 
+    T_gr = (-M.g_input.lt_d-0)/(ctrl.Tmax-ctrl.Ttop)
+    T_gr = T_gr**(-1) 
+    
+    T_expr = fem.Function(X)
+    ind_A = np.where(cd_dof[:,1] >= -M.g_input.lt_d)[0]
+    ind_B = np.where(cd_dof[:,1] < -M.g_input.lt_d)[0]
+    T_expr.x.array[ind_A] = ctrl.Ttop + T_gr * cd_dof[ind_A,1]
+    T_expr.x.array[ind_B] = ctrl.Tmax
+    T_expr.x.scatter_forward()
+        
+
+    expr = conditional(
+        reduce(Or,[eq(phase, i) for i in [2, 3, 4, 5]]),
+        T_expr,
+        T_i_A
+    )
+    
+    v = ufl.TestFunction(X)
+    u = ufl.TrialFunction(X)
+    T_i = fem.Function(X)
+    a = u * v * ufl.dx 
+    L = expr * v * ufl.dx
+    prb = fem.petsc.LinearProblem(a,L,u=T_i)
+    prb.solve()
+    return T_i 
 
 
 def set_lithostatic_problem(P, T, q ,  pdb, sc, g, M):
@@ -55,7 +127,7 @@ def strain_rate(vel):
     
     return ufl.sym(ufl.grad(vel))
     
-def eps_II(vel)
+def eps_II(vel):
  
     e = strain_rate(vel)
     
@@ -70,7 +142,53 @@ def eps_II(vel)
     
     return eII 
 
+def compute_sigma():
+    pass
+
+
+
+def compute_nitsche_BC():
+
+
+
+    pass 
+    
+
+
+
+def set_Stokes_equationset_stokes(PL,T_on,pdb,sc,g,M):
+
+    flag_linear = 'False'
+    if np.all(pdb.opt_eta) == 0: 
+        flag_linear = 'True':
+    
+    if flag_linear == 'True'
+
+
+        # BiLinear 
+    
+    
+    
+        # Linear
+    
+
+        # Solver 
+    
+    
+        # -> output the field that are relevant 
+
+
+
+
+
+
+    
+    pass 
+
 def main_solver_steady_state(M, S, ctrl, pdb, sc ): 
+    # Segregate solvers seems the most reasonable solution -> I can use also a switch between the options, such that I can use linear/non linear solver 
+    # -> BC -> 
+    
     
     # Create mixed function space 
     element_p       = basix.ufl.element("DG", "triangle", 0) 
@@ -129,6 +247,8 @@ def unit_test():
     
     from phase_db import PhaseDataBase
     from phase_db import _generate_phase
+    from thermal_structure_ocean import compute_initial_LHS
+
     
     from create_mesh import unit_test_mesh
     # Create scal 
@@ -183,6 +303,15 @@ def unit_test():
     pdb = _generate_phase(pdb, 8, rho0 = 3250 , option_rho = 2, option_rheology = 3, option_k = 3, option_Cp = 3, eta=1e21, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
 
     pdb = sc_f._scaling_material_properties(pdb,sc)
+    
+    timeA = timing.time()
+    lhs_ctrl = ctrl_LHS()
+
+    lhs_ctrl = sc_f._scale_parameters(lhs_ctrl, sc)
+    
+    lhs_ctrl = compute_initial_LHS(ctrl,lhs_ctrl, sc, pdb)
+    timeB = timing.time()
+    print('Time is %.3f sec'%(timeB-timeA))
     
     # call the lithostatic pressure 
     

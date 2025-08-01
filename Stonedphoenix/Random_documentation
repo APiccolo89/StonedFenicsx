@@ -27,3 +27,18 @@ non vengono selezionati uno alla volta. Non so come spiegarlo in maniera efficac
 
 ===== Domani: 
 Temperatura e Output function conceptualisation. 
+
+
+Ci sono un po' di problemi concettuali. Oggi ho fatto una funzione per la viscosita'. Sfortunatamente, non avendo familiarita' 
+con ufl e sarcazzi vari, ho optato per una scelta pragmatica per quanto riguarda la viscosita': uso la media armonica. 
+1. La media armonica e' la viscosita' minima possibile del sistema in serie: dislocation+diffusion+max_viscosity 
+-> La viscosita' corretta rispetto ad un modello in serie e' quello di ripartire la deformazione tra i vari meccanismi, e poi, calcolare lo stress che 
+minimizza la differenza con lo strain rate dato in pasto alla funzione. Apparentemente e' un inferno farlo con ufl, o meglio, non ho esempi
+che mi permettano di capire come fare una funzione con ufl. 
+2. L'alternativa e' calcolare la viscosita' sullo stress guess: 
+tau_guess = (2 * eta_av * eII + 2 * eta_min * eII)/2 -> eta = tau_guess/2/e 
+Anche in questo caso e' scorretto, ma almeno non prendo la viscosita' minima possibile. 
+
+== 
+Bisogna calcolare le condizioni a contorno. Devo resuscitare un po' alcune funzionalita' del vecchio codice e costruire delle classi che contengano queste informazioni. 
+ 

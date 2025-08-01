@@ -56,7 +56,7 @@ def heat_capacity_FX(pdb, T, phase, M):
     return C_p
     
 #---------------------------------------------------------------------------------
-#@njit
+@njit
 def heat_conductivity(pdb,T,p,ph):    
     
     if pdb.option_k[ph] == 0:
@@ -83,18 +83,15 @@ def heat_conductivity(pdb,T,p,ph):
     return k 
 #---------------------------------------------------------------------------------
 
-#@njit
-def heat_capacity(pdb,T,p,ph):
-    if (pdb.option_Cp[ph] == 0): 
-        # constant vriables 
-        C_p = pdb.C_p[ph]
-    else:
-        C_p = pdb.C0[ph] + pdb.C1[ph] * (T**(-0.5)) + pdb.C3[ph] * (T**(-3.))
+@njit
+def heat_capacity(pdb,T,ph):
+
+    C_p = pdb.C0[ph] + pdb.C1[ph] * (T**(-0.5)) + pdb.C3[ph] * (T**(-3.))
 
         
     return C_p
 #---------------------------------------------------------------------------------
-#@njit
+@njit
 def density(pdb,T,p,ph):
     rho_0 = pdb.rho0[ph] 
     

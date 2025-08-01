@@ -105,7 +105,7 @@ class Slab():
 
         
         
-            if self.y_min != []: 
+            if self.y_min != -1e23: 
                 x = self.slab_top[it+1,1]
                 statement = x > self.y_min
                 if statement == False:
@@ -117,7 +117,7 @@ class Slab():
 
             l = ln
 
-            if self.y_min == []:
+            if self.y_min == -1e23:
                 statement = it < self.num_segment 
 
 
