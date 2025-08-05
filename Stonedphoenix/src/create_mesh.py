@@ -146,6 +146,7 @@ dict_tag_lines = {
     'Channel_decoupling': 10,
     'Crust_overplate'   : 11,
     'LCrust_overplate'  : 12,
+    'Full_over'         : 13,
 }
 
 
@@ -214,6 +215,9 @@ def create_gmsh(sx,        # subduction x
 
     mesh_model.addPhysicalGroup(1, LC.tag_L_ov,    tag=dict_tag_lines['Overriding_mantle'])
 
+    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    mesh_model.addPhysicalGroup(1, [LC.tag_L_ov[0],LC.tag_L_ch_ov[0]] , tag=dict_tag_lines['Full_over'])
 
     if g_input.cr !=0: 
 

@@ -33,6 +33,7 @@ import basix.ufl
 import time                          as timing
 import scipy.interpolate             as interp 
 from scipy.interpolate import griddata
+from ufl import FacetNormal, ds, dot, sqrt, as_vector
 
 
 
@@ -57,6 +58,9 @@ dict_tag_lines = {
     'Crust_overplate'   : 11,
     'LCrust_overplate'  : 12,
 }
+
+
+
 def find_coordinate_facet(M, physical_line):
     " Simple function to extract the coordinate of the given physical line: argument: M mesh, physical line the tag of the line"
     fdim     = M.mesh.topology.dim - 1    
@@ -69,34 +73,13 @@ def find_coordinate_facet(M, physical_line):
     return coords    
 
 
-#----
-class bc_class():
-    def __init__(self, M): 
-        
-        self.bc_stokes = bc_stokes(M) 
-        self.bc_energy = bc_energy(M)
-
-#----
-class bc_stokes(): 
-    def __init__(self, M): 
-        self.top_left  
-        self.top_right  
-        self.bottom
-        self.right_sup
-        self.right_bot
-        self.left 
-        self.top_sub 
-        self.chan_sup 
-        self.mant_ast 
-
-
-
+#---
 class bc_energy():
     def __init__(self, M, X, ctrl, lhs,v):
          
         self.top     = self.create_bc_temp(M,X,ctrl,lhs,1,v)
-        self.right  = self.create_bc_temp(M,X,ctrl,lhs,2,v)
-        self.bottom   = self.create_bc_temp(M,X,ctrl,lhs,3,v)
+        self.right   = self.create_bc_temp(M,X,ctrl,lhs,2,v)
+        self.bottom  = self.create_bc_temp(M,X,ctrl,lhs,3,v)
         self.left    = self.create_bc_temp(M,X,ctrl,lhs,4,v)
     
     def create_bc_temp(self,M,X,ctrl,lhs,physical_line,v):
@@ -274,6 +257,7 @@ def unit_test():
 
 
     BC_E = bc_energy(M, X, ctrl, lhs_ctrl,v)
+    BC_S = bc_stokes(M,V,ctrl)
     
 
     pass 
