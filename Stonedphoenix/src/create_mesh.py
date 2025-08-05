@@ -30,10 +30,35 @@ import basix.ufl
 
 # dictionary for surface and phase. 
 """
- Long comment: physical surfaces are geometrical subdomain where I solve a set of equation/define phases. The physical surface, in this context,
- are the subdomain of the phases.
- -> sub_plate is the inflowing mantle
- -> oceanic crust .. 
+Updated Branch: The mesh is created as a function of the slab geometry: first, the slab geometry is either defined by an input file (To do) 
+                or by the class that I introduced that create a slab geometry as a function of lambda function (to do this particular feature). 
+                Then, I create oceanic crust, bottom of the slab, and crustal units and store relevant information in the fundamental points array 
+                ----
+                After that i create the points with gmesh, then the line, physical line {save the dictionary} 
+                ----                                         Domain            [Phase]
+                After that I create the physical domains: a. Subduction plate  [1. Slab s.s.
+                                                                                2. Oceanic plate]
+                                                          b. Mantle Wedge       [3. Wedge ]
+                                                          c. Overriding         [4. Lithospheric mantle s.s.
+                                                                                 5. Crust (upper crust)
+                                                                                 6. Lower crust (optional)]
+                                                        The domain are the geometrical entities that I use to solve the equations. They are composed of a several 
+                                                        phases which represents the material property. 
+                                                        So the script for generating the mesh is organise as follow -> 
+                                                        ====
+                                                        Domain A [Subduction plate]        -> create lines, create loops, create surfaces
+                                                        Domain B [Wedge plate]             -> create lines, create loops, create surfaces
+                                                        Domain C [Crust -> the useless one]-> create lines, create loops, create surfaces
+                                                        ====
+                                                        -> Create a class where to store all these data -> and pass to the main code for the resolution
+                                                        ---
+                                                        I dislike the usage of the class, i prefer to distinguis the material property
+                                                        and use ad hoc function within the resolution of the system. I don't know what are the benefits, but looking a few repository 
+                                                        it seems a bit chaotic.
+                                   
+                In this updated version I am not introducing a channel. I have the impression that my way to produce the setup is too rigid, and I think 
+                that after the first working example would be worth to simplify the work flow. 
+                General rule: If I copy or take ispiration for pre-existing software I cite in the function where do I steal the idea. 
 """
 
 class geom_input():
@@ -45,9 +70,11 @@ class geom_input():
                  lit_mt=30e3,
                  lc = 0.5,
                  wc = 1.5e3,
+                 slab_tk = 130e3, 
                  decoupling = 100e3):
         self.x                 = x               # main grid coordinate
         self.y                 = y   
+        self.slab_tk           = slab_tk
         self.cr                = cr              # crust 
         self.ocr               = ocr             # oceanic crust
         self.lit_mt            = lit_mt          # lithosperic mantle  
@@ -127,10 +154,9 @@ dict_surf = {
     'oceanic_crust'     : 2,
     'wedge'             : 3,
     'overriding_lm'     : 4,
-    'lower_crust'       : 5,
-    'upper_crust'       : 6,
-    'Channel_surf_a'    : 7,
-    'Channel_surf_b'    : 8,
+    'upper_crust'       : 5,
+    'lower_crust'       : 6,
+
 }
 
 dict_tag_lines = {
@@ -138,10 +164,9 @@ dict_tag_lines = {
     'Right'             : 2,
     'Bottom'            : 3,
     'Left'              : 4,
-    'Subduction'        : 5,
-    'Channel'           : 6,
+    'Subduction_top'    : 5,
+    'Subduction_bot'    : 6,
     'Oceanic'           : 7,
-    'Channel_over'      : 8,
     'Overriding_mantle' : 9,
     'Channel_decoupling': 10,
     'Crust_overplate'   : 11,
@@ -149,16 +174,31 @@ dict_tag_lines = {
     'Full_over'         : 13,
 }
 
+def create_domainA():
+    
+    
+    pass
+
+
+def create_domainB():
+    
+    pass 
+
+
+def create_domainC():
+
+    pass 
+
 
 
 def create_gmsh(sx,        # subduction x
                 sy,        # subdcution y 
-                th,        # theta
-                chx,       # channel x
-                chy,       # channel y 
+                bsx,       # bottom subduction x
+                bsy,       # bottom subduction y 
                 oc_cx,     # oceanic cx 
                 oc_cy,     # oceanic cu
-                g_input):  # geometry input class 
+                g_input,
+                fp):  # geometry input class 
     
     # -> USE GMSH FUNCTION 
     gmsh.initialize()
@@ -167,7 +207,7 @@ def create_gmsh(sx,        # subduction x
     mesh_model = gmsh.model()
 
     CP = Class_Points()
-    mesh_model = CP.update_points(mesh_model,sx,sy,chx,chy,oc_cx,oc_cy,g_input)
+    mesh_model = CP.update_points(mesh_model,sx,sy,bsx,bsy,oc_cx,oc_cy,g_input,fp)
 
     LC = Class_Line()
     mesh_model = LC.update_lines(mesh_model,CP, g_input)
@@ -380,10 +420,29 @@ def create_gmesh(ioctrl):
                     print('%s = %.2f'%(a, att))
 
     # Create the subduction interfaces using either the real data set, or the slab class
-    slab_x, slab_y, theta_mean,channel_x,channel_y,extra_x,extra_y,isch,oc_cx,oc_cy = fmm.function_create_slab_channel(Data_Real,g_input,SP=S)
+    slab_x, slab_y, bot_x, bot_y,oc_cx,oc_cy = fmm.function_create_slab_channel(Data_Real,g_input,SP=S)
 
-
-    mesh_model = create_gmsh(slab_x,slab_y,theta_mean,channel_x,channel_y,oc_cx,oc_cy,g_input) 
+    ind_oc_lc = np.where(slab_y == -g_input.cr*(1-g_input.lc))[0][0]
+    ind_oc_cr = np.where(slab_y == -g_input.cr)[0][0]
+    ind_oc_lt = np.where(slab_y == -g_input.lt_d)[0][0]
+    
+    
+    fundamental_points = np.array([[slab_x[0],    slab_y[0]],                       # Point A [left corner global model] 
+                                  [oc_cx[0],     oc_cy[1]],                        # Point B [oceanic crust]
+                                  [bot_x[0],     bot_y[1]],                        # Point C [bottom lithosphere]
+                                  [bot_x[-1],    bot_y[-1]],                       # Point D [bottom right node]
+                                  [oc_cx[-1],    oc_cy[-1]],                       # Point E [bottom oceanic crust]
+                                  [slab_x[-1],   slab_y[-1]],                      # Point F [slab top]
+                                  [g_input.x[1], g_input.y[0]],                    # Point G
+                                  [g_input.x[1], -g_input.lt_d],                   # Point H 
+                                  [g_input.x[1], -g_input.cr],                     # Point I
+                                  [g_input.x[1], -g_input.cr*(1-g_input.lc)],      # Point L 
+                                  [g_input.x[1], -g_input.y[1]],                   # Point M 
+                                  [oc_cx[ind_oc_lc],oc_cy[ind_oc_lc]],             # Point N
+                                   [oc_cx[ind_oc_cr],oc_cy[ind_oc_cr]],            # Point O
+                                  [oc_cx[ind_oc_lt],oc_cy[ind_oc_lt]]],dtype = np.float64) #           # Point P 
+    
+    mesh_model = create_gmsh(slab_x,slab_y,bot_x,bot_y,oc_cx,oc_cy,g_input,fundamental_points) 
 
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 

@@ -66,11 +66,12 @@ class Class_Points():
                             mesh_model,
                             sx,
                             sy,
-                            cx,
-                            cy,
+                            bx,
+                            by,
                             oc_cx,
                             oc_cy,
-                            g_input):
+                            g_input,
+                            fp):
         """
         To Do Friday: document this function
 
@@ -78,10 +79,6 @@ class Class_Points():
 
         """
 
-        min_x   = g_input.x[0]
-        min_y   = g_input.y[0]
-        max_x   = g_input.x[1]
-        max_y   = g_input.y[1]
         # Function CREATE POINTS
 
         #-- Create the subduction,channel and oceanic crust points 
@@ -90,23 +87,22 @@ class Class_Points():
         # if you want to be creative, you have to modify the function of create points, up to you, no one is against it. 
 
         self.max_tag_s,  self.tag_subduction, self.coord_sub,     mesh_model     = _create_points(mesh_model, sx,    sy,    g_input.wc, 0)
-        self.max_tag_c,  self.tag_channel,    self.coord_channel, mesh_model     = _create_points(mesh_model, cx,    cy,    g_input.wc, self.max_tag_s)
-        self.max_tag_oc, self.tag_oc,         self.coord_ocean,   mesh_model     = _create_points(mesh_model, oc_cx, oc_cy, g_input.wc, self.max_tag_c)
+        self.max_tag_bots,  self.tag_bottom,    self.coord_bottom, mesh_model     = _create_points(mesh_model, bx,    by,    g_input.wc, self.max_tag_s)
+        self.max_tag_oc, self.tag_oc,         self.coord_ocean,   mesh_model     = _create_points(mesh_model, oc_cx, oc_cy, g_input.wc, self.max_tag_bots)
         # -- Here are the points at the boundary of the model. The size of the model is defined earlier, and subduction zone is modified as such to comply the main geometrical input, 
         # I used subduction points because they define a few important point. 
 
 
-        self.max_tag_a, self.tag_left_c,    self.coord_lc,  mesh_model            = _create_points(mesh_model,  min_x, min_y,         g_input.wc*2,  self.max_tag_oc, True)
-        self.max_tag_b, self.tag_right_c_b, self.coord_bc,  mesh_model            = _create_points(mesh_model,  max_x, min_y,         g_input.wc*2,  self.max_tag_a,  True)
-        self.max_tag_c, self.tag_right_c_l, self.coord_lr,  mesh_model            = _create_points(mesh_model,  max_x, -g_input.lt_d, g_input.wc*2,  self.max_tag_b,  True)
-        self.max_tag_d, self.tag_right_c_t, self.coord_top, mesh_model            = _create_points(mesh_model,  max_x, max_y,         g_input.wc*2,  self.max_tag_c,  True)
+        self.max_tag_b, self.tag_right_c_b, self.coord_bc,  mesh_model            = _create_points(mesh_model,  g_input.x[1], g_input.y[0],         g_input.wc*2,  self.max_tag_oc,  True)
+        self.max_tag_c, self.tag_right_c_l, self.coord_lr,  mesh_model            = _create_points(mesh_model,   g_input.x[1], -g_input.lt_d, g_input.wc*2,  self.max_tag_b,  True)
+        self.max_tag_d, self.tag_right_c_t, self.coord_top, mesh_model            = _create_points(mesh_model,   g_input.x[1],  g_input.y[1],         g_input.wc*2,  self.max_tag_c,  True)
 
-        if g_input.cr !=0: 
-            self.max_tag_e, self.tag_right_c_cr, self.coord_crust,    mesh_model  = _create_points(mesh_model, max_x, -g_input.cr,                g_input.wc*2, self.max_tag_d, True)
-            if g_input.lc !=0: 
-                self.max_tag_f, self.tag_right_c_lcr,  self.coord_lcr, mesh_model = _create_points(mesh_model, max_x, -g_input.cr*(1-g_input.lc), g_input.wc*2, self.max_tag_e, True)
+         
+        self.max_tag_e, self.tag_right_c_cr, self.coord_crust,    mesh_model  = _create_points(mesh_model,  g_input.x[1], -g_input.cr,                g_input.wc*2, self.max_tag_d, True)
+        if g_input.lc !=0: 
+                self.max_tag_f, self.tag_right_c_lcr,  self.coord_lcr, mesh_model = _create_points(mesh_model,  g_input.x[1], -g_input.cr*(1-g_input.lc), g_input.wc*2, self.max_tag_e, True)
 
-        self.global_points = np.hstack([self.coord_sub, self.coord_channel, self.coord_ocean, self.coord_lc, self.coord_bc, self.coord_lr, self.coord_top, self.coord_crust, self.coord_lcr])
+        self.global_points = np.hstack([self.coord_sub, self.coord_bottom, self.coord_ocean, self.coord_bc, self.coord_lr, self.coord_top, self.coord_crust, self.coord_lcr])
 
         return mesh_model
  
@@ -114,7 +110,7 @@ class Class_Line():
     def update_lines(self, mesh_model, CP, g_input):
         
         # Top Boundary      
-        p_list                                                    = [CP.tag_subduction[0],   CP.tag_channel[0],  CP.tag_right_c_t[0]]
+        p_list                                                    = [CP.tag_subduction[0], CP.tag_right_c_t[0]]
         self.max_tag_top, self.tag_L_T, self.lines_T, mesh_model  = _create_lines(mesh_model,0,p_list,False)
 
         #[right boundary]
@@ -234,7 +230,7 @@ def function_create_slab_channel(data_real:bool,c_phase,SP=[],fname=[]):
         theta_mean = SP.theta_mean 
         
     # Create the channel using the subduction interface as guide
-    cx,cy = function_create_subduction_channel(ax,ay,theta_mean,c_phase)
+    #cx,cy = function_create_subduction_channel(ax,ay,theta_mean,c_phase)
     ox,oy = function_create_oceanic_crust(ax,ay,theta_mean,c_phase.ocr)
     # Correct the slab surface and find the extra node
     ax,ay,theta_mean = find_extra_node(ax,ay,theta_mean,c_phase)
@@ -243,10 +239,10 @@ def function_create_slab_channel(data_real:bool,c_phase,SP=[],fname=[]):
     # creating an unrealistic bending of the weak zone. Initially I was recomputing the angle 
     # between the linear segment, using an average. It is more convinient use two // lines and then 
     # correcting them. 
-    cx,cy,ex,ey = correct_channel(cx,cy,ax,ay,c_phase)
-    isch = np.where(ay>=-c_phase.lt_d)
+    #cx,cy,ex,ey = correct_channel(cx,cy,ax,ay,c_phase)
+    bx,by = function_create_subduction_bottom(ax,ay,theta_mean,c_phase.slab_tk)
 
-    return ax,ay,theta_mean,cx,cy,ex,ey,isch[-1],ox,oy
+    return ax,ay,bx,by,ox,oy
 
 
 def function_create_subduction_channel(sx,sy,th,c_phase):
@@ -255,8 +251,8 @@ def function_create_subduction_channel(sx,sy,th,c_phase):
     cy = np.zeros([np.amax(sx.shape),1])
     # Loop over the interface of the slab and find the points on the top of the surface of the subduction channel: the point on the of the top of the channel are perpendicular to the slab interface#
     # Compute the top surface of the subduction channel
-    cx = sx + wc*np.sin(th)
-    cy = sy + wc*np.cos(th)
+    cx = sx + wc * np.sin(th)
+    cy = sy + wc * np.cos(th)
     # Find the node that are lower than the top boundary
     ind = np.where(cy < sy[0])
     ind = ind[0]
@@ -307,6 +303,32 @@ def function_create_oceanic_crust(sx,sy,th,olt):
 
     return cx_n,cy_n
 
+
+
+def function_create_subduction_bottom(sx,sy,th,lt):
+
+    cx = np.zeros([np.amax(sx.shape),1])
+    cy = np.zeros([np.amax(sx.shape),1])
+    # Loop over the interface of the slab and find the points on the top of the surface of the subduction channel: the point on the of the top of the channel are perpendicular to the slab interface#
+    # Compute the top surface of the subduction channel
+    cx = sx - lt*np.sin(th)
+    cy = sy - lt*np.cos(th)
+    # Find the node that are lower than the left boundary [same function, but switching the position -> ca rotate ]
+    cord_x = 0.0 
+    cord_z = -lt/np.cos(th[0])
+    cy = cy[cx>0.0]
+    cx = cx[cx>0.0]
+    cx = np.insert(cx,0,0.0)  
+    cy = np.insert(cy,0,cord_z)  
+
+
+    e_node2,t_ex1 = _find_e_node(cx,cy,cx*0.0,-np.min(sy),flag=False)
+    cx,cy,t  = _correct_(cx,cy,e_node2,-np.min(sy),cy*0.0,0.0)
+
+    cx_n = cx[(cx>=0.0) & (cy>=np.min(sy))]
+    cy_n = cy[(cx>=0.0) & (cy>=np.min(sy))]
+
+    return cx_n,cy_n
     
     
 def _find_e_node(ax,ay,t,lt,flag=False):
