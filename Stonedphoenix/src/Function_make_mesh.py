@@ -129,51 +129,55 @@ class Class_Line():
         self.max_tag_right, self.tag_L_R, self.lines_R, mesh_model  = _create_lines(mesh_model,  self.max_tag_top,  p_list,  False)
         
         #[bottom boundary]
-        p_list                                                      = [CP.tag_right_c_b[0], CP.tag_subduction[-1], CP.tag_oc[-1], CP.tag_left_c[0]]
+        p_list                                                      = [CP.tag_right_c_b[0], CP.tag_subduction[-1], CP.tag_oc[-1], CP.tag_bottom[-1]]
         self.max_tag_bottom, self.tag_L_B, self.lines_B, mesh_model = _create_lines(mesh_model, self.max_tag_right, p_list, False)
         
-        # ] 
-        p_list                                                    = [CP.tag_left_c[0], CP.tag_oc[0], CP.tag_subduction[0]]
+        # ] curved line
+        p_list                                                    = [CP.tag_bottom[0], CP.tag_oc[0], CP.tag_subduction[0]]
         self.max_tag_left, self.tag_L_L, self.lines_L, mesh_model = _create_lines(mesh_model,  self.max_tag_bottom,  p_list,  False)
         
         
         # -- Create Lines 
-        self.max_tag_line_subduction, self.tag_L_sub, self.lines_S,  mesh_model        = _create_lines(mesh_model,  self.max_tag_left,           CP.tag_subduction,False)
-        self.max_tag_line_channel,    self.tag_L_ch,  self.lines_ch, mesh_model        = _create_lines(mesh_model,  self.max_tag_line_subduction,CP.tag_channel,   False)
-        self.max_tag_line_ocean,      self.tag_L_oc,  self.lines_oc, mesh_model        = _create_lines(mesh_model,  self.max_tag_line_channel,   CP.tag_oc,        False)
+        self.max_tag_line_subduction,  self.tag_L_sub, self.lines_S,   mesh_model      = _create_lines(mesh_model,  self.max_tag_left,           CP.tag_subduction,False)
+        self.max_tag_line_Bsubduction, self.tag_L_Bsub,self.lines_BS,  mesh_model      = _create_lines(mesh_model,  self.max_tag_line_subduction,     CP.tag_bottom,False)
+        self.max_tag_line_ocean,       self.tag_L_oc,  self.lines_oc,  mesh_model      = _create_lines(mesh_model,  self.max_tag_line_Bsubduction,   CP.tag_oc,        False)
         # Create line overriding plate:
         #-- find tag of the of the channel # -> find the mistake: confusion with index types
         i_s = find_tag_line(CP.coord_sub,     g_input.lt_d,'y')
+        p_list = [i_s, CP.tag_right_c_l[0]]
 
-        i_c = find_tag_line(CP.coord_channel, g_input.lt_d,'y')
-        # CHECK!
-        p_list = [i_s,i_c]
-        self.max_tag_line_ch_ov, self.tag_L_ch_ov, self.lines_ch_ov, mesh_model         = _create_lines(mesh_model,  self.max_tag_line_ocean,  p_list,  False)
+        self.max_tag_line_ov,    self.tag_L_ov,    self.lines_L_ov,  mesh_model         = _create_lines(mesh_model, self.max_tag_line_ocean, p_list, False)
 
-        p_list = [i_c, CP.tag_right_c_l[0]]
-        self.max_tag_line_ov,    self.tag_L_ov,    self.lines_L_ov,  mesh_model         = _create_lines(mesh_model, self.max_tag_line_ch_ov, p_list, False)
-
-        i_s = find_tag_line(CP.coord_sub,     g_input.decoupling,'y')
-
-        i_c = find_tag_line(CP.coord_channel, g_input.decoupling,'y')
-
-        p_list = [i_s,i_c]
-        self.max_tag_line, self.tag_base_ch, self.lines_base_ch, mesh_model              = _create_lines(mesh_model,self.max_tag_line_ov,p_list,False)
         if g_input.cr !=0: 
 
-            i_c = find_tag_line(CP.coord_channel, g_input.cr,'y')
+            i_c = find_tag_line(CP.coord_sub, g_input.cr,'y')
 
             p_list = [i_c, CP.tag_right_c_cr[0]]
-            self.max_tag_line_crust, self.tag_L_cr, self.lines_cr, mesh_model             = _create_lines(mesh_model,self.max_tag_line,p_list,False)
+            self.max_tag_line_crust, self.tag_L_cr, self.lines_cr, mesh_model             = _create_lines(mesh_model,self.max_tag_line_ov,p_list,False)
 
             if g_input.lc !=0:
 
-                i_c = find_tag_line(CP.coord_channel,(1-g_input.lc)*g_input.cr,'y')
+                i_c = find_tag_line(CP.coord_sub,(1-g_input.lc)*g_input.cr,'y')
 
                 p_list = [i_c, CP.tag_right_c_lcr[0]]
                 self.max_tag_line_Lcrust, self.tag_L_Lcr, self.lines_lcr, mesh_model      = _create_lines(mesh_model, self.max_tag_line_crust,p_list,False)
 
-        self.line_global = np.hstack([self.lines_T, self.lines_R, self.lines_B, self.lines_L, self.lines_S, self.lines_ch, self.lines_oc, self.lines_ch_ov, self.lines_L_ov, self.lines_base_ch, self.lines_cr, self.lines_lcr])
+        self.line_global = np.hstack([self.lines_T, self.lines_R, self.lines_B, self.lines_L, self.lines_S, self.lines_BS, self.lines_oc, self.lines_L_ov, self.lines_cr, self.lines_lcr])
+        
+        # Plot debug 
+        DEBUG = 0 
+        if DEBUG == 1: 
+            
+            for i in range(len(self.line_global[0,:])):
+                p0 = self.line_global[0,i]
+                p1 = self.line_global[1,i]
+                coord_x = [CP.global_points[0,p0-1],CP.global_points[0,p1-1]] 
+                coord_y = [CP.global_points[1,p0-1],CP.global_points[1,p1-1]]
+                plt.plot(coord_x, coord_y, c='r') 
+        
+        
+        
+        
         
         return mesh_model
         

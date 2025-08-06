@@ -28,6 +28,18 @@ from ufl import exp, conditional, eq, as_ufl
 import scal as sc_f 
 import basix.ufl
 
+def debug_plot(target,global_line,global_point,color):
+    for i in range(len(target)):
+        line = np.abs(target[i])
+        
+        p0   = global_line[0,line-1]
+        p1   = global_line[1,line-1]
+        coord_x = [global_point[0,p0-1],global_point[0,p1-1]]            
+        coord_y = [global_point[1,p0-1],global_point[1,p1-1]]
+        plt.plot(coord_x,coord_y,c=color)
+        
+
+
 # dictionary for surface and phase. 
 """
 Updated Branch: The mesh is created as a function of the slab geometry: first, the slab geometry is either defined by an input file (To do) 
@@ -149,6 +161,16 @@ def create_mesh(mesh, cell_type, prune_z=False):
     return out_mesh
 
 
+def from_line_to_point_coordinate(L,LG,GP):
+    p0   = LG[0,L-1]
+    p1   = LG[1,L-1]
+
+    coord_x = [GP[0,p0-1],GP[0,p1-1]]            
+    coord_y = [GP[1,p0-1],GP[1,p1-1]]
+
+    return p0, p1, coord_x, coord_y 
+
+
 dict_surf = {
     'sub_plate'         : 1,
     'oceanic_crust'     : 2,
@@ -161,35 +183,170 @@ dict_surf = {
 
 dict_tag_lines = {
     'Top'               : 1,
-    'Right'             : 2,
-    'Bottom'            : 3,
-    'Left'              : 4,
-    'Subduction_top'    : 5,
+    'Right_lit'         : 2,
+    'Right_wed'         : 3,
+    'Bottom_wed'        : 4,
+    'Bottom_sla'        : 5,
     'Subduction_bot'    : 6,
-    'Oceanic'           : 7,
-    'Overriding_mantle' : 9,
-    'Channel_decoupling': 10,
-    'Crust_overplate'   : 11,
-    'LCrust_overplate'  : 12,
-    'Full_over'         : 13,
+    'Left_inlet'        : 7,
+    'Subduction_top_lit': 8,
+    'Subduction_top_wed': 9,
+    'Oceanic'           : 10,
+    'Overriding_mantle' : 11,
+    'Crust_overplate'   : 12,
+    'LCrust_overplate'  : 13,
 }
 
-def create_domainA():
+def create_domain_A(mesh_model, CP, LC, g_input):
+    """
+    Domain: subduction plate: domain composed by two area: oceanic crust and lithospheric mantle 
+    Short disclaimer: I might be a bit retarded, but the way in which gmsh is assessing wheter or not 
+    a line is correct, are still obscure. At the end I did trial and error till it works. My internal convection 
+    is to start from the uppermost and rightmost corner and doing anticlockwise collection of lines 
+    -> [the sign of the line depends on the order of the points, but I could not be arsed enough to create a function
+    to recognise it]
+    """
+    l_list     = [LC.lines_oc[2,:],-LC.lines_B[2,-1],-LC.lines_BS[2,::-1], LC.lines_L[2,0]]
+    mesh_model = create_loop(l_list, mesh_model, 10)
+
+    # Oceanic crust  
+    l_list     = [LC.lines_S[2,:], LC.lines_B[2,1], -LC.lines_oc[2,::-1],  -LC.lines_L[2,-1]]
+    mesh_model = create_loop(l_list, mesh_model, 15)
+    print('Finished to generate the curved loop for domain A [subducting plate]')
+
+    return mesh_model
+
+
+def create_domain_B(mesh_model, CP, LC, g_input):
+    
+    index = find_line_index(LC.lines_S,CP.coord_sub,g_input.lt_d)
+    index = index 
+    buf_array = LC.lines_S[2,index:]
+    buf_array = -buf_array 
+    buf_array = buf_array[::-1]
+
+
+    
+    l_list     = [-LC.lines_R[2,-1],-LC.lines_B[2,0],buf_array, LC.lines_L_ov[2,:]]
+    mesh_model = create_loop(l_list, mesh_model, 20)
+    
+
+    
+    print('Finished to generate the curved loop for domain B [subducting plate]')
+    return mesh_model 
+
+
+def create_domain_C(mesh_model, CP, LC, g_input):
+
+
+    if g_input.cr !=0:
+            
+        index_a    = find_line_index(LC.lines_S,CP.coord_sub,g_input.cr)
+        index_b    = find_line_index(LC.lines_S,CP.coord_sub,g_input.lt_d)-1
+        buf_array = LC.lines_S[2,index_a:index_b+1]
+        buf_array = -buf_array[::-1]
+        
+        l_list     = [-LC.lines_R[2,2],-LC.lines_L_ov[2,:],buf_array,LC.lines_cr[2,:]]
+        mesh_model = create_loop(l_list, mesh_model, 25)
+
+        
+        if g_input.lc !=0:
+            index_a    = find_line_index(LC.lines_S,CP.coord_sub,(1-g_input.lc)*g_input.cr)
+            index_b    = find_line_index(LC.lines_S,CP.coord_sub,g_input.cr)-1
+
+            buf_array = -LC.lines_S[2,index_a:index_b+1]
+            buf_array = buf_array[::-1]
+            
+            l_list = [-LC.lines_R[2,1],-LC.lines_cr[2,:],buf_array,LC.lines_lcr[2,:]]
+            mesh_model = create_loop(l_list, mesh_model, 30)
+
+
+            index_a    = 0
+            index_b    = find_line_index(LC.lines_S, CP.coord_sub,(1-g_input.lc)*g_input.cr)-1
+            buf_array = -LC.lines_S[2,index_a:index_b+1]
+            buf_array = buf_array[::-1]
+
+            l_list = [LC.lines_R[2,0],-LC.lines_lcr[2,:],buf_array,LC.lines_T[2,:]]
+            mesh_model = create_loop(l_list, mesh_model, 35)
+
+
+
+
+
+    print('Finished to generate the curved loop for domain B [subducting plate]')
+    return mesh_model
+
+
+def create_physical_line(CP,LC, g_input,mesh_model):
+
+
+    
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+    
+    mesh_model.addPhysicalGroup(1, LC.tag_L_T, tag=dict_tag_lines['Top'])
+    
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    # Find point above the lithosphere 
+    for i in range(len(LC.tag_L_R)):
+        L = LC.tag_L_R[i]
+        p0,p1,cx,cy = from_line_to_point_coordinate(L,LC.line_global, CP.global_points)
+        if cy[0] == -g_input.lt_d or cy[1] == -g_input.lt_d:
+            break 
+    mesh_model.addPhysicalGroup(1, LC.tag_L_R[0:i+1], tag=dict_tag_lines['Right_lit'])
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+    mesh_model.addPhysicalGroup(1, LC.tag_L_R[i+1:], tag=dict_tag_lines['Right_wed'])
+
+
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+    mesh_model.addPhysicalGroup(1, [LC.tag_L_B[0]], tag=dict_tag_lines['Bottom_wed'])
+
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+    mesh_model.addPhysicalGroup(1, LC.tag_L_B[1:], tag=dict_tag_lines['Bottom_sla'])
     
     
-    pass
-
-
-def create_domainB():
     
-    pass 
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+    mesh_model.addPhysicalGroup(1, LC.tag_L_Bsub, tag=dict_tag_lines['Subduction_bot'])
+
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+    mesh_model.addPhysicalGroup(1, LC.tag_L_L, tag=dict_tag_lines['Left_inlet'])
+
+    for i in range(len(LC.tag_L_sub)):
+        L = LC.tag_L_sub[i]
+        p0,p1,cx,cy = from_line_to_point_coordinate(L,LC.line_global, CP.global_points)
+        if cy[0] == -g_input.lt_d or cy[1] == -g_input.lt_d:
+            break 
+    
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+    mesh_model.addPhysicalGroup(1, LC.tag_L_sub[0:i+1],   tag=dict_tag_lines['Subduction_top_lit'])
+
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+    mesh_model.addPhysicalGroup(1, LC.tag_L_sub[i:],   tag=dict_tag_lines['Subduction_top_wed'])
+
+    
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    mesh_model.addPhysicalGroup(1, LC.tag_L_oc,    tag=dict_tag_lines['Oceanic'])
+  
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
+    mesh_model.addPhysicalGroup(1, LC.tag_L_ov,    tag=dict_tag_lines['Overriding_mantle'])
 
 
-def create_domainC():
 
-    pass 
+    if g_input.cr !=0: 
 
+        mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
+        mesh_model.addPhysicalGroup(1,    LC.tag_L_cr, tag=dict_tag_lines['Crust_overplate'])
+
+        if g_input.lc !=0:
+            mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+            mesh_model.addPhysicalGroup(1, LC.tag_L_Lcr,tag=dict_tag_lines['LCrust_overplate'])
+    return mesh_model 
 
 def create_gmsh(sx,        # subduction x
                 sy,        # subdcution y 
@@ -210,171 +367,40 @@ def create_gmsh(sx,        # subduction x
     mesh_model = CP.update_points(mesh_model,sx,sy,bsx,bsy,oc_cx,oc_cy,g_input,fp)
 
     LC = Class_Line()
-    mesh_model = LC.update_lines(mesh_model,CP, g_input)
+    mesh_model = LC.update_lines(mesh_model, CP, g_input)
 
+    mesh_model = create_physical_line(CP,LC,g_input,mesh_model)
 
-    # Function create Physical line
-    #-- Create Physical Line
+    mesh_model = create_domain_A(mesh_model, CP, LC, g_input)
+    mesh_model = create_domain_B(mesh_model, CP, LC, g_input)
+    mesh_model = create_domain_C(mesh_model, CP, LC, g_input)    
     
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-    
-    mesh_model.addPhysicalGroup(1, LC.tag_L_T, tag=dict_tag_lines['Top'])
-    
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
-    mesh_model.addPhysicalGroup(1, LC.tag_L_R, tag=dict_tag_lines['Right'])
-
-
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
-    mesh_model.addPhysicalGroup(1, LC.tag_L_B, tag=dict_tag_lines['Bottom'])
-
-    
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
-    mesh_model.addPhysicalGroup(1, LC.tag_L_L, tag=dict_tag_lines['Left'])
-
-    
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
-    mesh_model.addPhysicalGroup(1, LC.tag_L_sub,   tag=dict_tag_lines['Subduction'])
-
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
-    mesh_model.addPhysicalGroup(1, LC.tag_L_ch,    tag=dict_tag_lines['Channel'])
-    
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
-    mesh_model.addPhysicalGroup(1, LC.tag_L_oc,    tag=dict_tag_lines['Oceanic'])
-  
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
-    mesh_model.addPhysicalGroup(1, LC.tag_L_ch_ov, tag=dict_tag_lines['Channel_over']) 
-
-    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
-    mesh_model.addPhysicalGroup(1, LC.tag_L_ov,    tag=dict_tag_lines['Overriding_mantle'])
-
-    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
-    mesh_model.addPhysicalGroup(1, [LC.tag_L_ov[0],LC.tag_L_ch_ov[0]] , tag=dict_tag_lines['Full_over'])
-
-    if g_input.cr !=0: 
-
-        mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
-        mesh_model.addPhysicalGroup(1,    LC.tag_L_cr, tag=dict_tag_lines['Crust_overplate'])
-
-        if g_input.lc !=0:
-            mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-            mesh_model.addPhysicalGroup(1, LC.tag_L_Lcr,tag=dict_tag_lines['LCrust_overplate'])
-   
-      
-    # Create the line loop [anticlockwise] -> TODO automatic detection orientation of the line, and a more automatic way to select the lines   
-    # Incoming plate  
-    
-    
-    
-    l_list     = [LC.lines_oc[2,:], LC.lines_B[2,-1], -LC.lines_L[2,0]]
-    mesh_model = create_loop(l_list, mesh_model, 10)
-
-    # Oceanic crust  
-    l_list     = [LC.lines_S[2,:],   LC.lines_B[2,1],  -LC.lines_oc[2,::-1],  -LC.lines_L[2,-1]]
-    mesh_model = create_loop(l_list, mesh_model, 15)
 
     # Wedge 
     
-    index = find_line_index(LC.lines_S,CP.coord_sub,g_input.decoupling)
-    index = index 
-    buf_array = LC.lines_S[2,index:]
-    buf_array = -buf_array 
-    buf_array = buf_array[::-1]
-    
-    
-    index = find_line_index(LC.lines_ch,CP.coord_channel,g_input.lt_d)
-    index = index 
-    buf_array2 = np.array(LC.lines_ch[2,index:])
-    buf_array2 = -1*buf_array2 
-    buf_array2 = buf_array2[::-1]
+ 
 
-    
-    l_list     = [-LC.lines_R[2,-1],-LC.lines_B[2,0],buf_array,LC.lines_base_ch[2,:],buf_array2,LC.lines_L_ov[2,:]]
-    mesh_model = create_loop(l_list, mesh_model, 20)
-    
-
-    if g_input.cr !=0:
-            
-        index_a    = find_line_index(LC.lines_ch,CP.coord_channel,g_input.cr)
-        index_b    = find_line_index(LC.lines_ch,CP.coord_channel,g_input.lt_d)-1
-        buf_array = LC.lines_ch[2,index_a:index_b+1]
-        buf_array = -buf_array[::-1]
-        
-        l_list     = [-LC.lines_R[2,2],-LC.lines_L_ov[2,:],buf_array,LC.lines_cr[2,:]]
-        mesh_model = create_loop(l_list, mesh_model, 25)
-
-        
-        if g_input.lc !=0:
-            a = []
-            index_a    = find_line_index(LC.lines_ch,CP.coord_channel,(1-g_input.lc)*g_input.cr)
-            index_b    = find_line_index(LC.lines_ch,CP.coord_channel,g_input.cr)-1
-
-            buf_array = -LC.lines_ch[2,index_a:index_b+1]
-            buf_array = buf_array[::-1]
-            
-            l_list = [-LC.lines_R[2,1],-LC.lines_cr[2,:],buf_array,LC.lines_lcr[2,:]]
-            mesh_model = create_loop(l_list, mesh_model, 30)
-
-
-            index_a    = 0
-            index_b    = find_line_index(LC.lines_ch, CP.coord_channel,(1-g_input.lc)*g_input.cr)-1
-            buf_array = -LC.lines_ch[2,index_a:index_b+1]
-            buf_array = buf_array[::-1]
-
-            l_list = [LC.lines_R[2,0],-LC.lines_lcr[2,:],buf_array,LC.lines_T[2,1]]
-            mesh_model = create_loop(l_list, mesh_model, 35)
-
-    index_a = find_line_index(LC.lines_ch,CP.coord_channel,g_input.lt_d)
-    index = find_line_index(LC.lines_S,CP.coord_sub,g_input.lt_d)
-
-    buf_array = -LC.lines_S[2,0:index]
-    buf_array = buf_array[::-1]
-    
-    l_list = [LC.lines_ch[2,0:index_a], -LC.lines_ch_ov[2,:], buf_array, LC.lines_T[2,0]]
-    mesh_model = create_loop(l_list, mesh_model, 40)
-    
-    
-    index_a = find_line_index(LC.lines_S,CP.coord_sub,g_input.lt_d)
-    index = find_line_index(LC.lines_S,CP.coord_sub,g_input.decoupling)
-    buf_array = -LC.lines_S[2,index_a:index]
-    buf_array = buf_array[::-1]
-    index_b = find_line_index(LC.lines_ch,CP.coord_channel,g_input.lt_d)    
-    
-    l_list = [LC.lines_ch[2,index_b:],-LC.lines_base_ch[2,:],buf_array,LC.lines_ch_ov[2,:]]
-    mesh_model = create_loop(l_list, mesh_model, 45)
 
 
 
     
     Left_side_of_subduction_surf   = gmsh.model.geo.addPlaneSurface([10],tag=100) # Left side of the subudction zone
     Oceanic_Crust_surf             = gmsh.model.geo.addPlaneSurface([15],tag=150) # Left side of the subudction zone
-    Right_side_of_subduction_surf  = gmsh.model.geo.addPlaneSurface([20],tag=200) # Right side of the subudction zone    
+    Wedge                          = gmsh.model.geo.addPlaneSurface([20],tag=200) # Right side of the subudction zone    
     Lithhospheric_Mantle_surf      = gmsh.model.geo.addPlaneSurface([25],tag=250) # Right mantle
     Crust_LC_surf                  = gmsh.model.geo.addPlaneSurface([30],tag=300) # Crust LC
     Crust_UC_surf                  = gmsh.model.geo.addPlaneSurface([35],tag=350) # Crust LC
-    Channel_surf_A                 = gmsh.model.geo.addPlaneSurface([40],tag=400) # Channel
-    Channel_surf_B                 = gmsh.model.geo.addPlaneSurface([45],tag=450) # Channel
 
     
     mesh_model.geo.synchronize()
 
     mesh_model.addPhysicalGroup(2, [Left_side_of_subduction_surf],  tag=dict_surf['sub_plate'])
     mesh_model.addPhysicalGroup(2, [Oceanic_Crust_surf],            tag=dict_surf['oceanic_crust'])
-    mesh_model.addPhysicalGroup(2, [Right_side_of_subduction_surf], tag=dict_surf['wedge'])
+    mesh_model.addPhysicalGroup(2, [Wedge],                       tag=dict_surf['wedge'])
     mesh_model.addPhysicalGroup(2, [Lithhospheric_Mantle_surf],     tag=dict_surf['overriding_lm'])
     mesh_model.addPhysicalGroup(2, [Crust_LC_surf],                 tag=dict_surf['lower_crust'])
     mesh_model.addPhysicalGroup(2, [Crust_UC_surf],                 tag=dict_surf['upper_crust'])
-    mesh_model.addPhysicalGroup(2, [Channel_surf_A],                tag=dict_surf['Channel_surf_a'])
-    mesh_model.addPhysicalGroup(2, [Channel_surf_B],                tag=dict_surf['Channel_surf_b'])
+
 
     
     
@@ -446,8 +472,6 @@ def create_gmesh(ioctrl):
 
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    mesh_model.geo.mesh.setAlgorithm(2, dict_surf['Channel_surf_a'], 3)
-    mesh_model.geo.mesh.setAlgorithm(2, dict_surf['Channel_surf_b'], 3)
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
 
