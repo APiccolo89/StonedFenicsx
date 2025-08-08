@@ -720,11 +720,11 @@ def create_mesh_object(mesh,sc,ioctrl,g_input):
     MESH.Sol_SpaceSTK         = Sol_spaceSTK  # Function space stokes equation       
     MESH.phase                = phase         # Function containing phases
     MESH.elemet_STK           = mixed_el      
-    MESH.element_T            = element_PT     
-    MESH.domainA              = Domain()
-    MESH.domainB              = Domain()
-    MESH.domainC              = Domain()  
-    
+    MESH.element_T            = element_PT
+    MESH.domainA              = domainA     
+    MESH.domainB              = domainB
+    MESH.domainC              = domainC   
+
     # dimension-> g_input
     g_input                   = g_input.dimensionless_ginput(sc)
     
