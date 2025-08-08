@@ -34,9 +34,10 @@ import time                          as timing
 
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+from utils import timing_function, print_ph
 
 
-
+#---------------------------------------------------------------------------
 def get_discrete_colormap(n_colors, base_cmap='viridis'):
     """
     Create a discrete colormap with `n_colors` from a given base colormap.
@@ -47,14 +48,17 @@ def get_discrete_colormap(n_colors, base_cmap='viridis'):
     
     Returns:
         matplotlib.colors.ListedColormap: A discrete version of the colormap.
+        copied from internet
     """
     base = plt.cm.get_cmap(base_cmap)
     color_list = base(np.linspace(0, 1, n_colors))
     return mcolors.ListedColormap(color_list, name=f'{base_cmap}_{n_colors}')
+#---------------------------------------------------------------------------
 
-def initial_temperature_field(X, ph, M, ctrl, lhs):
+@timing_function
+def initial_temperature_field(M, ctrl, lhs):
     from scipy.interpolate import griddata
-    from ufl import conditional, Or, Eq
+    from ufl import conditional, Or, eq
     from functools import reduce
     """
     X    -:- Functionspace (i.e., an abstract stuff that represents all the possible solution for the given mesh and element type)
@@ -74,9 +78,10 @@ def initial_temperature_field(X, ph, M, ctrl, lhs):
         bc_fun.x.scatter_forward()
     """    
     #- Create part of the thermal field: create function, extract dofs, 
+    X     = M.Sol_SpaceT 
     T_i_A = fem.Function(X)
     cd_dof = X.tabulate_dof_coordinates()
-    T_i_A.x.array[:] = griddata(-lhs.z, lhs.LHS, c_dofs[:,1], method='nearest')
+    T_i_A.x.array[:] = griddata(-lhs.z, lhs.LHS, cd_dof[:,1], method='nearest')
     T_i_A.x.scatter_forward() 
     #- 
     T_gr = (-M.g_input.lt_d-0)/(ctrl.Tmax-ctrl.Ttop)
@@ -91,7 +96,7 @@ def initial_temperature_field(X, ph, M, ctrl, lhs):
         
 
     expr = conditional(
-        reduce(Or,[eq(phase, i) for i in [2, 3, 4, 5]]),
+        reduce(Or,[eq(M.phase, i) for i in [2, 3, 4, 5]]),
         T_expr,
         T_i_A
     )
@@ -105,15 +110,68 @@ def initial_temperature_field(X, ph, M, ctrl, lhs):
     prb.solve()
     return T_i 
 
+#---------------------------------------------------------------------------
 
-def set_lithostatic_problem(P, T, q ,  pdb, sc, g, M):
+@timing_function
+def set_lithostatic_problem(PL, T_o, tPL, TPL, pdb, sc, g, M ):
+    """
+    PL  : function
+    T_o : previous Temperature field
+    tPL : trial function for lithostatic pressure 
+    TPL : test function for lithostatic pressure
+    pdb : phase data base 
+    sc  : scaling 
+    g   : gravity vector 
+    M   : Mesh object 
+    --- 
+    Output: current lithostatic pressure. 
     
-    F = ufl.dot(ufl.grad(P), ufl.grad(q)) * ufl.dx - ufl.dot(ufl.grad(q), density_FX(pdb, T, P, M.phase,M.mesh)*g) * ufl.dx
+    To do: Improve the solver options and make it faster
+    create an utils function for timing. 
     
-    return F
+    """
+    flag = 1 
+    fdim = M.mesh.topology.dim - 1    
+    top_facets   = M.mesh_Ftag.find(1)
+    top_dofs    = fem.locate_dofs_topological(M.Sol_SpaceT, M.mesh.topology.dim-1, top_facets)
+    bc = fem.dirichletbc(0.0, top_dofs, M.Sol_SpaceT)
+    
+    # -> yeah only rho counts here. 
+    if (np.all(pdb.option_rho) == 0):
+        flag = 0
+        bilinear = ufl.dot(ufl.grad(TPL), ufl.grad(tPL)) * ufl.dx
+        linear   = ufl.dot(ufl.grad(TPL), density_FX(pdb, T_o, PL, M.phase,M.mesh)*g) * ufl.dx
+        problem = fem.petsc.LinearProblem(bilinear, linear, bcs=[bc], petsc_options={"ksp_type": "preonly", "pc_type": "lu","pc_factor_mat_solver_type": "mumps"})
+        
+        PL = problem.solve()
+                
+    
+    if flag !=0: 
+        # Solve lithostatic pressure - Non linear 
+        F = ufl.dot(ufl.grad(PL), ufl.grad(TPL)) * ufl.dx - ufl.dot(ufl.grad(TPL), density_FX(pdb, T_o, PL, M.phase,M.mesh)*g) * ufl.dx
 
+        problem = fem.petsc.NonlinearProblem(F, PL, bcs=[bc])
+        solver = NewtonSolver(MPI.COMM_WORLD, problem)
+        solver.convergence_criterion = "incremental"
+        solver.rtol = 1e-5
+        solver.report = True
+        ksp = solver.krylov_solver
+        opts = PETSc.Options()
+        option_prefix = ksp.getOptionsPrefix()
+        opts[f"{option_prefix}ksp_type"] = "gmres"
+        opts[f"{option_prefix}ksp_rtol"] = 1.0e-5
+        ksp.setFromOptions()
+        n, converged = solver.solve(PL)
+    local_max = np.max(PL.x.array)
 
-def set_steady_state_thermal_problem(P, T, vel ,q ,  pdb, sc, M):
+    # Global min and max using MPI reduction
+    global_max = M.comm.allreduce(local_max, op=MPI.MAX)
+    print_ph('.  Global max lithostatic pressure is %.2f GPa'%(global_max*sc.stress/1e9))
+    return PL 
+
+#---------------------------------------------------------------------------
+
+def set_steady_state_thermal_problem(PL, T_on, tPL, TPL, pdb, sc, g, M ):
     
     
     
@@ -124,10 +182,13 @@ def set_steady_state_thermal_problem(P, T, vel ,q ,  pdb, sc, M):
     
     return F
 
+#---------------------------------------------------------------------------
 
 def strain_rate(vel):
     
     return ufl.sym(ufl.grad(vel))
+#---------------------------------------------------------------------------
+
     
 def eps_II(vel):
  
@@ -137,35 +198,25 @@ def eps_II(vel):
     
     # Portion of the model do not have any strain rate, for avoiding blow up, I just put a fictitious low strain rate
     
-    eII = conditional(
-        eq(e, 0.0), 1e-18,
-    )
-    
     
     return eII 
+#---------------------------------------------------------------------------
+
 
 def compute_sigma():
     pass
 
 
-
-def compute_nitsche_BC():
-
-
-
-    pass 
-    
-
-
+#---------------------------------------------------------------------------
 
 def set_Stokes_equationset_stokes(PL,T_on,pdb,sc,g,M):
 
     flag_linear = 'False'
     if np.all(pdb.opt_eta) == 0: 
-        flag_linear = 'True':
+        flag_linear = 'True'
     
-    if flag_linear == 'True'
-
+    if flag_linear == 'True': 
+        print('not yet here')
 
         # BiLinear 
     
@@ -179,71 +230,78 @@ def set_Stokes_equationset_stokes(PL,T_on,pdb,sc,g,M):
     
         # -> output the field that are relevant 
 
-
-
-
-
-
+#---------------------------------------------------------------------------
+@timing_fun    
+def main_solver_steady_state(M, S, ctrl, pdb, sc, lhs ): 
+    """
+    To Do explanation: 
     
-    pass 
-
-def main_solver_steady_state(M, S, ctrl, pdb, sc ): 
+    
+    
+    -- 
+    Random developing notes: The idea is to solve temperature, and lithostatic pressure for the entire domain and solve two small system for the slab [a pipe of 130 km] and the wedge. from these two small system-> interpolate the velocity into the main mesh and resolve it. 
+    --- 
+    A. Solve lithostatic pressure: 
+    ->whole mesh 
+    B. Solve Slab -> function to solve stokes problem -> class for the stokes solver -> bc -> specific function ? 
+    C. Solve Wedge -> function to solve stokes problem -> class for the stokes solver -> bc 
+    
+    D. Merge the velocities field in only one big field -> plug in the temperature solve and solve for the whole mesh
+    ----> Slab by definition with a fixed geometry is undergoing to rigid motion 
+            -> No deformation -> no strain rate -> constant viscosity is good enough yahy 
+            => SOLVE ONLY ONE TIME and whenever you change velocity of the slab. [change age is for free]
+    ----> Wedge -> Non linear {T & ε, with/out P_l}/ Linear {T,with/out P_l}
+            -> In case of temperature dependency, or pressure dependency -> each time the solution must be computed [each iteration/timestep]
+    ---- Crust in any case useless and it is basically there for being evolving only thermally 
+    """
+    
+    
+    
+    
+    
     # Segregate solvers seems the most reasonable solution -> I can use also a switch between the options, such that I can use linear/non linear solver 
     # -> BC -> 
     
+    # Split subspace stokes
     
-    # Create mixed function space 
-    element_p       = basix.ufl.element("DG", "triangle", 0) 
-    element_PT      = basix.ufl.element("Lagrange","triangle",2)
-    element_V       = basix.ufl.element("Lagrange","triangle",2,shape=(M.mesh.geometry.dim,))
+    V_subs, _ = M.Sol_SpaceSTK.sub(0).collapse()
+    p_subs, _ = M.Sol_SpaceSTK.sub(1).collapse()
     
-    mixed_el        = basix.ufl.mixed_element([element_V,element_p,element_PT, element_PT])
-    
-    Sol_space       = fem.functionspace(M.mesh,mixed_el)
-    
-    sol_spaceV,  _  = Sol_space.sub(0).collapse()
-    sol_spacep,  _  = Sol_space.sub(1).collapse()
-    sol_spaceT,  _  = Sol_space.sub(2).collapse()
-    sol_spacePl, _  = Sol_space.sub(3).collapse()
-    
-    
-    tV , tP , ten, tpl     = ufl.TrialFunctions(Sol_space)
-    TV , TP , Ten, Tpl     = ufl.TestFunctions(Sol_space)
+    # Generate trial and test function for all the problems     
+    tV , tP     = ufl.TrialFunctions(M.Sol_SpaceSTK)
+    TV , TP     = ufl.TestFunctions(M.Sol_SpaceSTK)
     # -- 
-    T_on        = fem.Function(sol_spaceT)
-    T_on.interpolate(M.T_i)
     # -- 
-    PL          = fem.Function(sol_spacePl)
-    vel         = fem.Function(sol_spaceV)
-    p           = fem.Function(sol_spacep)
-    
-
+    PL          = fem.Function(M.Sol_SpaceT)
+    vel         = fem.Function(V_subs)
+    p           = fem.Function(p_subs)
+    T_o = initial_temperature_field(M, ctrl, lhs)
+    # -- Test and trial function for pressure and temperature 
+    tT =  ufl.TrialFunction(M.Sol_SpaceT); tPL = ufl.TrialFunction(M.Sol_SpaceT) 
+    TT = ufl.TestFunction(M.Sol_SpaceT)  ; TPL = ufl.TestFunction(M.Sol_SpaceT)
     # -- 
-    
     g = fem.Constant(M.mesh, PETSc.ScalarType([0.0, -ctrl.g]))    
-
-    # Boundary condition 
-    # Define 
     
-    # Set the lithostatic problem 
-    # -> set boundary condition [To do ]
+    # Main Loop for the convergence -> check residuum of each subsystem 
     
-    # -> Produce non linear 
+    F_l = set_lithostatic_problem(PL, T_o, tPL, TPL, pdb, sc, g, M )
     
-    F_l = set_lithostatic_problem(PL, T_on, Tpl, pdb, sc, g, M )
     
-    F_S = set_stokes(PL,T_on,pdb,sc,g,M )
+    F_S = set_stokes_slab()
+    
+    F_S = set_stokes_wedge(PL,T_on,pdb,sc,g,M )
+    
     
     # Set the temperature problem 
-    F_T = set_steady_state_thermal_problem(PL, T_on, vel, Ten ,pdb , sc, M)
+    #F_T = set_steady_state_thermal_problem(PL, T_on, vel, Ten ,pdb , sc, M)
     
-    # Set the Stokes equation
+    # Check residuum and plot the residuum plot 
     
+    # Save the solution 
     
+    return  
 
-    
-    return 0 
-
+#---------------------------------------------------------------------------
 def unit_test(): 
     
     
@@ -263,14 +321,7 @@ def unit_test():
     
     # Create mesh 
     M = unit_test_mesh(ioctrl, sc)
-        
-    print('mesh done')
-    
-    # Create initial temperature field
-    
-    M.T_i.x.array[:] = 1300/sc.Temp
-    
-    # Create Controls 
+            
     
     ctrl = NumericalControls()
     
@@ -278,48 +329,41 @@ def unit_test():
     
 
     
-    pdb = PhaseDataBase(8)
+    pdb = PhaseDataBase(6)
     # Slab
     
-    pdb = _generate_phase(pdb, 1, rho0 = 3300 , option_rho = 2, option_rheology = 0, option_k = 3, option_Cp = 3, eta=1e22, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 1, rho0 = 3300 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)
     # Oceanic Crust
     
-    pdb = _generate_phase(pdb, 2, rho0 = 2900 , option_rho = 2, option_rheology = 0, option_k = 3, option_Cp = 3, eta=1e21, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 2, rho0 = 2900 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e21)
     # Wedge
     
-    pdb = _generate_phase(pdb, 3, rho0 = 3300 , option_rho = 2, option_rheology = 3, option_k = 3, option_Cp = 3, eta=1e21, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 3, rho0 = 3300 , option_rho = 0, option_rheology = 3, option_k = 0, option_Cp = 0, eta=1e21)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     # 
     
-    pdb = _generate_phase(pdb, 4, rho0 = 3250 , option_rho = 2, option_rheology = 0, option_k = 3, option_Cp = 3, eta=1e23, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 4, rho0 = 3250 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e23)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     #
     
-    pdb = _generate_phase(pdb, 5, rho0 = 2800 , option_rho = 2, option_rheology = 0, option_k = 3, option_Cp = 3, eta=1e21, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 5, rho0 = 2800 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e21)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     #
     
-    pdb = _generate_phase(pdb, 6, rho0 = 2700 , option_rho = 2, option_rheology = 0, option_k = 3, option_Cp = 3, eta=1e21, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 6, rho0 = 2700 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e21)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     #
     
-    pdb = _generate_phase(pdb, 7, rho0 = 3250 , option_rho = 2, option_rheology = 3, option_k = 3, option_Cp = 3, eta=1e21, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
-    #
-    
-    pdb = _generate_phase(pdb, 8, rho0 = 3250 , option_rho = 2, option_rheology = 3, option_k = 3, option_Cp = 3, eta=1e21, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
-
     pdb = sc_f._scaling_material_properties(pdb,sc)
     
-    timeA = timing.time()
     lhs_ctrl = ctrl_LHS()
 
     lhs_ctrl = sc_f._scale_parameters(lhs_ctrl, sc)
     
     lhs_ctrl = compute_initial_LHS(ctrl,lhs_ctrl, sc, pdb)
-    timeB = timing.time()
-    print('Time is %.3f sec'%(timeB-timeA))
+
     
     # call the lithostatic pressure 
     
     S   = Solution()
     
-    main_solver_steady_state(M, S, ctrl, pdb, sc )
+    main_solver_steady_state(M, S, ctrl, pdb, sc, lhs_ctrl )
     
     pass 
     

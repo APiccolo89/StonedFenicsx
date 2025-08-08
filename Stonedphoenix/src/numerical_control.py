@@ -126,7 +126,7 @@ class ctrl_LHS:
     def __init__(
         self,
         dz=1e3,               # spatial step
-        nz=500,               # number of vertical cells
+        nz=200,               # number of vertical cells
         alpha_g=3e-5,         # thermal expansivity
         end_time=80,       # end time [yr]
         depth_melt=0.0,       # depth of melt boundary
@@ -138,7 +138,7 @@ class ctrl_LHS:
         recalculate=0,        # flag for recomputation
         van_keken=0,          # benchmark flag
         d_RHS=-50e3,
-        z_min= 660e3# distance for RHS term
+        z_min= 140e3# distance for RHS term
     ):
         if dt > 0.1: 
             raise ValueError('dt: The input data must be in Myr. This timestep will be blow up the system. As a general remark: all input SI is Myr for time related parameters')

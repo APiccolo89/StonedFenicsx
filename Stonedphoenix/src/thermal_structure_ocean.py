@@ -17,6 +17,7 @@ from numba import njit
 
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
+from utils import timing_function, print_ph
 
 start       = timing.time()
 zeros       = np.zeros
@@ -414,7 +415,7 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
     return lhs, t, temperature
 
 
-
+@timing_function
 def compute_initial_LHS(ctrl,lhs,scal,pdb):
     
     

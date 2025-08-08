@@ -34,14 +34,12 @@ def find_line_index(Lin_ar,point,d):
         # find the index of the point 
         ip0 = np.where(p0==np.int32(point[2,:]))
         ip = np.where(p1==np.int32(point[2,:]))
-        print(i,p0,p1)
         # Check wheter or not the coordinate z is the one. 
         z1 = point[1,ip]
         if z1 == -d: 
             X = [point[0,ip0],point[0,ip]]
             Y = [point[1,ip0],point[1,ip]]
-            print(X)
-            print(Y)
+
             index = i+1 
             break    
     

@@ -34,6 +34,7 @@ import time                          as timing
 import scipy.interpolate             as interp 
 from scipy.interpolate import griddata
 from ufl import FacetNormal, ds, dot, sqrt, as_vector
+from create_mesh import dict_tag_lines 
 
 
 
@@ -44,20 +45,7 @@ from ufl import FacetNormal, ds, dot, sqrt, as_vector
 
 
 """
-dict_tag_lines = {
-    'Top'               : 1,
-    'Right'             : 2,
-    'Bottom'            : 3,
-    'Left'              : 4,
-    'Subduction'        : 5,
-    'Channel'           : 6,
-    'Oceanic'           : 7,
-    'Channel_over'      : 8,
-    'Overriding_mantle' : 9,
-    'Channel_decoupling': 10,
-    'Crust_overplate'   : 11,
-    'LCrust_overplate'  : 12,
-}
+
 
 
 
@@ -75,12 +63,16 @@ def find_coordinate_facet(M, physical_line):
 
 #---
 class bc_energy():
+    
+    
     def __init__(self, M, X, ctrl, lhs,v):
          
-        self.top     = self.create_bc_temp(M,X,ctrl,lhs,1,v)
-        self.right   = self.create_bc_temp(M,X,ctrl,lhs,2,v)
-        self.bottom  = self.create_bc_temp(M,X,ctrl,lhs,3,v)
-        self.left    = self.create_bc_temp(M,X,ctrl,lhs,4,v)
+        self.top       = self.create_bc_temp( M, X, ctrl, lhs, dict_tag_lines['Top'],       v)
+        self.right_B   = self.create_bc_temp( M, X, ctrl, lhs, dict_tag_lines['Right_wed'], v)
+        self.right_C   = self.create_bc_temp( M, X, ctrl, lhs, dict_tag_lines['Right_lit'], v)
+        self.bottom_B  = self.create_bc_temp( M, X, ctrl, lhs, dict_tag_lines['Bottom_wed'],v)
+        self.bottom_A  = self.create_bc_temp( M, X, ctrl, lhs, dict_tag_lines['Bottom_sla'],v)
+        self.left      = self.create_bc_temp( M, X, ctrl, lhs, dict_tag_lines['Left_inlet'],v)
     
     def create_bc_temp(self,M,X,ctrl,lhs,physical_line,v):
     
@@ -90,10 +82,10 @@ class bc_energy():
         if physical_line == 1: 
             # -> Probably I need to use some parallel shit here 
             bc = fem.dirichletbc(ctrl.Ttop, dofs, X) 
-        elif physical_line == 2: 
-            bc = self.right_boundary_thermal(fdim, facets, dofs, M, X,v,ctrl)
+        elif physical_line == 3 or physical_line == 2: 
+            bc = self.right_boundary_thermal(fdim, facets, dofs, M, X,v,ctrl,physical_line)
         
-        elif physical_line == 3:
+        elif physical_line == 4 or physical_line == 5: 
             # Do nothing bc -> tough I would like to have a similar approach for the right bc for safety reason
             # or U if it's already a UFL expression
             v_vel  = v.sub(1) # index 1 = y-direction (2D)
@@ -105,41 +97,40 @@ class bc_energy():
             dofs_vel = dofs[ind_z[0]]                
             bc = fem.dirichletbc(ctrl.Tmax, dofs_vel,X)
 
-        else: 
+        elif physical_line == 7: 
             bc = self.left_thermal_boundary(fdim, facets, dofs, M, X,ctrl,lhs)
         
         
         return bc 
     
-    def right_boundary_thermal(self,fdim, facets, dofs, M, X, v, ctrl):
+    def right_boundary_thermal(self,fdim, facets, dofs, M, X, v, ctrl, domain):
         # - > set the lithosphere -> then set the area in which exist a negative velocity field along x
         # Extract coordinate of the dof
-        cd_dof = X.tabulate_dof_coordinates()
-        cd_dof_b = cd_dof[dofs]
+        if domain == 2:
+            cd_dof = X.tabulate_dof_coordinates()
+            cd_dof_b = cd_dof[dofs]
         
-        # Set dirichlet for the upper plate: # index of the array not the dof 
-        ind_z = np.where(cd_dof_b[:,1]>-M.g_input.lt_d)
-        dofs_dirichlet = dofs[ind_z]
+
         
-        T_gr = (-M.g_input.lt_d-0)/(ctrl.Tmax-ctrl.Ttop)
-        T_gr = T_gr**(-1) 
+            T_gr = (-M.g_input.lt_d-0)/(ctrl.Tmax-ctrl.Ttop)
+            T_gr = T_gr**(-1) 
         
-        bc_fun = fem.Function(X)
-        bc_fun.x.array[dofs_dirichlet] = ctrl.Ttop + T_gr * cd_dof[dofs_dirichlet,1]
-        bc_fun.x.scatter_forward()
+            bc_fun = fem.Function(X)
+            bc_fun.x.array[dofs] = ctrl.Ttop + T_gr * cd_dof[dofs,1]
+            bc_fun.x.scatter_forward()
         
-        bc = fem.dirichletbc(bc_fun, dofs_dirichlet)
-        #--- 
+            bc = fem.dirichletbc(bc_fun, dofs)
+        else: 
          # or U if it's already a UFL expression
-        h_vel  = v.sub(0) # index 1 = y-direction (2D)
+            h_vel  = v.sub(0) # index 1 = y-direction (2D)
         
-        vel_T  = fem.Function(X)
-        vel_T.interpolate(h_vel)
-        vel_bc = vel_T.x.array[dofs]
-        ind_z = np.where((vel_bc <= -M.g_input.lt_d) & (vel_bc <= 0.0))
-        dofs_vel = dofs[ind_z[0]]        
+            vel_T  = fem.Function(X)
+            vel_T.interpolate(h_vel)
+            vel_bc = vel_T.x.array[dofs]
+            ind_z = np.where((vel_bc <= 0.0))
+            dofs_vel = dofs[ind_z[0]]        
         
-        bc = fem.dirichletbc(ctrl.Tmax, dofs_vel,X)
+            bc = fem.dirichletbc(ctrl.Tmax, dofs_vel,X)
 
         return bc 
 

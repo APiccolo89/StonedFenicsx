@@ -27,6 +27,10 @@ import gmsh
 from ufl import exp, conditional, eq, as_ufl
 import scal as sc_f 
 import basix.ufl
+from utils import timing_function, print_ph
+import dolfinx
+from dolfinx.mesh import create_submesh
+
 
 def debug_plot(target,global_line,global_point,color):
     for i in range(len(target)):
@@ -126,20 +130,43 @@ class Mesh():
 
         " Class where to store the information of the mesh"
 
-        self.mesh      : dolfinx.mesh.Mesh                     # Mesh 
-        self.mesh_Ctag : dolfinx.mesh.MeshTags                 # Mesh cell tag       {i.e., Physical surface, where I define the phase properties}
-        self.mesh_Ftag : dolfinx.mesh.MeshTags                 # Mesh cell face tage {i.e., Face tag, where the information of the internal boundary are stored}
-        self.Pph       : dolfinx.fem.function.FunctionSpace    # Function space      [mesh + element type + dof]
-        self.PT        : dolfinx.fem.function.FunctionSpace    # Function space 
-        self.PD        : dolphinx.fem.function.FunctionSpace   # Function space      
-        self.V         : dolphinx.fem.function.FunctionSpace   # Vectorial function space 
-        self.phase     : dolfinx.fem.function.Function         # Function a Field (solution potential of the function space)
-        self.T_i       : dolfinx.fem.function.Function         # Function      
-
+        self.mesh            : dolfinx.mesh.Mesh                     # Mesh 
+        self.mesh_Ctag       : dolfinx.mesh.MeshTags                 # Mesh cell tag       {i.e., Physical surface, where I define the phase properties}
+        self.mesh_Ftag       : dolfinx.mesh.MeshTags                 # Mesh cell face tage {i.e., Face tag, where the information of the internal boundary are stored}
+        self.Sol_Spaceph     : dolfinx.fem.function.FunctionSpace    # Function space      [mesh + element type + dof]
+        self.Sol_SpaceT      : dolfinx.fem.function.FunctionSpace    # Function space 
+        self.Sol_SpaceSTK    : dolphinx.fem.function.FunctionSpace   # Function space      
+        self.phase           : dolfinx.fem.function.Function         # Function a Field (solution potential of the function space)
+        self.g_input         : geom_input                            # Function for the geometric input
+        self.element_STK     : basix.ufl._MixedElement
+        self.element_T       : basix.ufl._BasixElement
         
+        self.domainA         : Domain
+        self.domainB         : Domain
+        self.domainC         : Domain
+         
+        self.comm            : mpi4py.MPI.Intracomm
+        self.rank            : int
+        self.size            : int 
+ 
+ 
 
-       
+class Boundary:
+    pass
 
+class Domain:
+    name: str
+    smesh: dolfinx.mesh.Mesh
+    scell: np.int32
+    snode: np.int32
+    boundary: Boundary
+
+    def __init__(self, name, smesh, scell, snodes, bc):
+        self.name = name
+        self.smesh = smesh
+        self.scell = scell
+        self.snode = snodes
+        self.bc_facet =bc
 
 
 def create_mesh(mesh, cell_type, prune_z=False):
@@ -178,7 +205,6 @@ dict_surf = {
     'overriding_lm'     : 4,
     'upper_crust'       : 5,
     'lower_crust'       : 6,
-
 }
 
 dict_tag_lines = {
@@ -359,7 +385,7 @@ def create_gmsh(sx,        # subduction x
     
     # -> USE GMSH FUNCTION 
     gmsh.initialize()
-
+    gmsh.option.setNumber("General.Terminal", 0)
 
     mesh_model = gmsh.model()
 
@@ -378,11 +404,6 @@ def create_gmsh(sx,        # subduction x
 
     # Wedge 
     
- 
-
-
-
-
     
     Left_side_of_subduction_surf   = gmsh.model.geo.addPlaneSurface([10],tag=100) # Left side of the subudction zone
     Oceanic_Crust_surf             = gmsh.model.geo.addPlaneSurface([15],tag=150) # Left side of the subudction zone
@@ -402,9 +423,6 @@ def create_gmsh(sx,        # subduction x
     mesh_model.addPhysicalGroup(2, [Crust_UC_surf],                 tag=dict_surf['upper_crust'])
 
 
-    
-    
-    
     return mesh_model 
 
 #----------------------------------------------------------------------------------------------------------------------
@@ -465,14 +483,13 @@ def create_gmesh(ioctrl):
                                   [g_input.x[1], -g_input.cr*(1-g_input.lc)],      # Point L 
                                   [g_input.x[1], -g_input.y[1]],                   # Point M 
                                   [oc_cx[ind_oc_lc],oc_cy[ind_oc_lc]],             # Point N
-                                   [oc_cx[ind_oc_cr],oc_cy[ind_oc_cr]],            # Point O
+                                  [oc_cx[ind_oc_cr],oc_cy[ind_oc_cr]],            # Point O
                                   [oc_cx[ind_oc_lt],oc_cy[ind_oc_lt]]],dtype = np.float64) #           # Point P 
     
     mesh_model = create_gmsh(slab_x,slab_y,bot_x,bot_y,oc_cx,oc_cy,g_input,fundamental_points) 
 
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
 
     mesh_model.mesh.generate(2)
@@ -482,7 +499,147 @@ def create_gmesh(ioctrl):
     
     gmsh.write("%s.msh"%mesh_name)
     
+    
     return g_input
+
+
+def extract_facet_boundary(Mesh, Mfacet_tag, submesh, sm_vertex_maps, boundary):
+    """
+    ]Function to create an array of list containing the facet of BC (from the parent mesh)
+
+    """
+
+    # Extract facet from the parent mesh. Boundary -> list of marker of the boundary [i.e., {5,6}].     
+    chosen_one = []
+    for tag in boundary:
+        chosen_one.extend(Mfacet_tag.find(tag))
+        
+    #--     
+     # Parent Mesh -> extract information. 
+     # First extract information for any particular boundary (also composite), then select the facet that are belonging to this particular boundary 
+     # then extract the nodes id {the function that creates the submesh release the maps to the parent mesh, we can exploit it for generating a list of
+     # facet}
+    #--     
+    
+    # Remove the double entries []    
+    chosen_one = np.unique(chosen_one)
+    # Create the topology => from the set of facet, generate an object containing number of facet and the point/vertices that define each of them
+    Mesh.topology.create_connectivity(Mfacet_tag.dim, 0)
+    # Extract connectivity
+    facet_to_vertex = Mesh.topology.connectivity(Mfacet_tag.dim, 0)
+    # From facet number to node 
+    vertex_indices = [] # Empty list
+    for f in chosen_one:
+        vertex_indices.extend(facet_to_vertex.links(f))
+
+    # Remove double entries
+    vertex_indices = np.unique(vertex_indices)
+    # -- 
+    # Sub mesh 
+    # --
+    # Extract the vertex from submesh 
+    cell_dim = submesh.topology.dim
+    cell_to_vertex = submesh.topology.connectivity(cell_dim, 0)
+
+    # Extract the vertices
+    v_ids = cell_to_vertex.links(0)
+
+    # Extract the indices and then find the unique one 
+    all_vertex_ids = []
+    for c in range(submesh.topology.index_map(cell_dim).size_local):
+        all_vertex_ids.extend(cell_to_vertex.links(c))
+
+    unique_vertex_ids = np.unique(all_vertex_ids)
+
+    # Loop over the indeces of the nodes belonging to the given boundary from the parent mesh
+    # -> find the index in the local sub-mesh mapping 
+    # -> Collect the index from the local_mesh index 
+    ind_facet = []
+    for i in range(len(vertex_indices)): 
+        ind = np.where(sm_vertex_maps == vertex_indices[i])[0]
+        ind_facet.extend(unique_vertex_ids[ind])
+    
+
+    # 3. Loop over all the facet -> extract the node ids of the facet of the submesh if both of them exist in the array ind_facet
+    # -> collect the number of the facet and collect into a list -> then turn into an array -> you have your boundary 
+    connectivity = submesh.topology.connectivity(1, 0)   
+    chosen_facet = []        
+    for facet_index in range(submesh.topology.index_map(1).size_local):
+        sub_mesh_vertex_index = connectivity.links(facet_index)
+        if (np.isin(sub_mesh_vertex_index[0],ind_facet)) and (np.isin(sub_mesh_vertex_index[1],ind_facet)): 
+            chosen_facet.append(facet_index)
+    
+    chosen_facet = np.asarray(chosen_facet,dtype=np.int32)
+
+    return chosen_facet 
+
+
+@timing_function
+def create_subdomain(mesh, mesh_tag, facet_tag, phase_set, name):
+    
+    """
+    https://fenicsproject.discourse.group/t/how-to-define-bcs-on-boundaries-of-submeshes-of-a-parent-mesh/5470/3
+    """
+    # Find the chosen markers 
+    marked_cells = []
+    
+    for marker in phase_set:
+        marked_cells.extend(mesh_tag.find(marker))
+
+    marked_cells = np.array(marked_cells, dtype=np.int32)
+    # 
+    submesh, entity_maps, vertex_maps, node_maps = create_submesh(mesh, mesh.topology.dim, marked_cells)
+    
+    submesh.topology.create_connectivity(2, 0)
+    submesh.topology.create_connectivity(1, 0)
+    submesh.topology.create_connectivity(2, 1)
+    submesh.topology.create_connectivity(1, 2)
+    bc_facet = Boundary()
+    
+    # Facet marker original mesh -> 
+    # Select subduction: 
+    if name == 'Subduction': 
+        # top subduction 8-9 For the subduction subdomain, the tag of the subdcution 
+        # are the entire top surface 
+        # -- 
+        boundary = [8, 9]
+        bc_facet.boundary_top_S       = extract_facet_boundary(mesh, facet_tag, submesh, vertex_maps, boundary)
+        boundary = [6]
+        bc_facet.boundary_bot_S       = extract_facet_boundary(mesh, facet_tag, submesh, vertex_maps, boundary)
+        boundary = [7]
+        bc_facet.boundary_inflow  = extract_facet_boundary(mesh, facet_tag, submesh, vertex_maps, boundary)
+        boundary = [5]
+        bc_facet.boundary_outflow = extract_facet_boundary(mesh, facet_tag, submesh, vertex_maps, boundary)
+        # -- 
+    elif name == 'Wedge':
+        
+        boundary = [11]
+        bc_facet.boundary_lith       = extract_facet_boundary(mesh, facet_tag, submesh, vertex_maps, boundary)
+        boundary = [4]
+        bc_facet.boundary_bottom       = extract_facet_boundary(mesh, facet_tag, submesh, vertex_maps, boundary)
+        boundary = [3]
+        bc_facet.boundary_right  = extract_facet_boundary(mesh, facet_tag, submesh, vertex_maps, boundary)
+        boundary = [9]
+        bc_facet.boundary_slab = extract_facet_boundary(mesh, facet_tag, submesh, vertex_maps, boundary)
+    elif name == 'Lithosphere':
+        
+        boundary = [11]
+        bc_facet.boundary_lith       = extract_facet_boundary(mesh, facet_tag, submesh, vertex_maps, boundary)
+        boundary = [1]
+        bc_facet.boundary_top       = extract_facet_boundary(mesh, facet_tag, submesh, vertex_maps, boundary)
+        boundary = [2]
+        bc_facet.boundary_right  = extract_facet_boundary(mesh, facet_tag, submesh, vertex_maps, boundary)
+        boundary = [8]
+        bc_facet.boundary_subd = extract_facet_boundary(mesh, facet_tag, submesh, vertex_maps, boundary)
+        
+        
+    
+    
+    domain = Domain(submesh, entity_maps, vertex_maps, name, bc_facet)
+    
+    return domain
+
+
     
 #------------------------------------------------------------------------------------------------------
 def read_mesh(ioctrl,sc):
@@ -515,50 +672,64 @@ def read_mesh(ioctrl,sc):
 
     return mesh, cell_markers, facet_markers
 #-----------------------------------------------------------------------------------------------------
+@timing_function
 def create_mesh_object(mesh,sc,ioctrl,g_input):    
     
+    from dolfinx.mesh import create_submesh
+
     mesh, cell_markers, facet_markers = read_mesh(ioctrl, sc)
     
     Pph           = fem.functionspace(mesh, ("DG", 0))      # Material ID function space # Defined in the cell space {element wise} apperently there is a black magic that 
-    # automatically does the interpolation of the function space, i.e. the function space is defined in the cell space, but it is automatically interpolated to the nodes                                    
-    PT           = fem.functionspace(mesh, ("Lagrange", 2)) # Function space for the solution 
-    # V-P 
-    element_u = basix.ufl.element("Lagrange", "triangle", 2, shape=(2,))
-    element_p = basix.ufl.element("DG", "triangle", 0) 
-    V         = fem.functionspace(mesh,element_u)
-    PD        = fem.functionspace(mesh,element_p)
+    # Create mixed function space 
+
+    element_p       = basix.ufl.element("DG", "triangle", 0) 
+    element_PT      = basix.ufl.element("Lagrange","triangle",2)
+    element_V       = basix.ufl.element("Lagrange","triangle",2,shape=(mesh.geometry.dim,))
     
+    mixed_el        = basix.ufl.mixed_element([element_V,element_p])
+    
+    Sol_spaceSTK      = fem.functionspace(mesh,mixed_el)
+    Sol_spaceT      = fem.functionspace(mesh,element_PT)    
 
     # Define the material property field
-    phase        = fem.Function(Pph) # Create a function to hold the phase information
-    phase.x.name = "phase"
-    phase        = assign_phases(dict_surf, cell_markers, phase) # Assign phases using the cell tags and physical surfaces -> i.e. 10000 = Mantle ? is going to assign unique phase to each node? 
+
+    phase           = fem.Function(Pph) # Create a function to hold the phase information
+    phase.x.name    = "phase"
+    phase           = assign_phases(dict_surf, cell_markers, phase) # Assign phases using the cell tags and physical surfaces -> i.e. 10000 = Mantle ? is going to assign unique phase to each node? 
+
     # Correct the phase: 
     phase.x.array[:] -= 1 # Rather necessary remember to put plus one once you publish it 
+
     # -- 
-    T_i             = fem.Function(PT)
-    T_i.x.array[:]  = 0. 
+    
+    domainA = create_subdomain(mesh, cell_markers, facet_markers, [1,2]  , 'Subduction')
+    
+    domainB = create_subdomain(mesh, cell_markers, facet_markers, [3]    , 'Wedge')
+    
+    domainC = create_subdomain(mesh, cell_markers, facet_markers, [4,5,6], 'Lithosphere')
+
+    # --
     
     MESH = Mesh()
     
-    
-    MESH.mesh      = mesh 
-    MESH.mesh_Ctag = cell_markers 
-    MESH.mesh_Ftag = facet_markers 
-    MESH.Pph       = Pph  
-    MESH.PT        = PT 
-    MESH.V         = V 
-    MESH.PD        = PD 
-    MESH.phase     = phase 
-    MESH.T_i       = T_i 
+    MESH.mesh                 = mesh          # Effective mesh 
+    MESH.mesh_Ctag            = cell_markers  # the marker {Phase}
+    MESH.mesh_Ftag            = facet_markers # face tag 
+    MESH.Sol_Spaceph          = Pph           # Function space phase
+    MESH.Sol_SpaceT           = Sol_spaceT    # Function space Poisson-like proble (i.e., Temperature and lithostatic pressure)
+    MESH.Sol_SpaceSTK         = Sol_spaceSTK  # Function space stokes equation       
+    MESH.phase                = phase         # Function containing phases
+    MESH.elemet_STK           = mixed_el      
+    MESH.element_T            = element_PT     
+    MESH.domainA              = Domain()
+    MESH.domainB              = Domain()
+    MESH.domainC              = Domain()  
     
     # dimension-> g_input
-    g_input = g_input.dimensionless_ginput(sc)
+    g_input                   = g_input.dimensionless_ginput(sc)
     
-    MESH.g_input   = g_input 
+    MESH.g_input              = g_input 
     
-
-
     return MESH
 
 
@@ -569,6 +740,7 @@ def unit_test_mesh(ioctrl, sc):
     import sys, os
     sys.path.append(os.path.abspath("src"))
     from numerical_control import IOControls
+    
 
     
     
@@ -582,6 +754,10 @@ def unit_test_mesh(ioctrl, sc):
         g_input = create_gmesh(ioctrl)
     
     M = create_mesh_object(mesh,sc,ioctrl, g_input)
+    M.comm = comm 
+    M.rank = rank 
+    M.size = size 
+    
     
     return M
     
@@ -596,16 +772,12 @@ if __name__ == '__main__':
     
     sc = sc_f.Scal(L=660e3, Temp = 1350, eta = 1e21, stress = 1e9)
     
-    unit_test_mesh(ioctrl,sc)
+    M = unit_test_mesh(ioctrl,sc)
     
     
 
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()  # 0, 1, ..., size-1
-    size = comm.Get_size()  # total number of MPI processes
+  
     
-    if rank == 0: 
-        print('I am here') 
     
 
     

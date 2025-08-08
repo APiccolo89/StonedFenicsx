@@ -6,6 +6,9 @@ from numba import int64, float64,int32, types
 from typing import Tuple, List
 from typing import Optional
 from numba import njit, prange
+from mpi4py                          import MPI
+from utils import timing_function, print_ph
+
 
 data_scal = [('L',float64),
              ('v',float64),
@@ -51,7 +54,7 @@ class Scal:
 
 
 
-
+@timing_function
 def _scaling_material_properties(pdb,sc:Scal):
     
     # scal the references values 
@@ -97,18 +100,20 @@ def _scaling_material_properties(pdb,sc:Scal):
     pdb.Kb     /= sc.stress 
     pdb.rho0   /= sc.rho 
     
-    print('{ :  -   > Scaling <  -  : }')
-    print('         Material properties has been scaled following: ')
-    print('         L [length]   = %.3f [m]'%sc.L) 
-    print('         Stress       = %.3f [Pa]'%sc.stress)
-    print('         eta          = %.3e [Pas]'%sc.eta)
-    print('         Temp         = %.2f [K]'%sc.Temp)
-    print('The other unit of measure are derived from this set of scaling')
-    print('{ <  -   : Scaling :  -  > }')
+    if MPI.COMM_WORLD.rank == 0: 
+    
+        print('{ :  -   > Scaling <  -  : }')
+        print('         Material properties has been scaled following: ')
+        print('         L [length]   = %.3f [m]'%sc.L) 
+        print('         Stress       = %.3f [Pa]'%sc.stress)
+        print('         eta          = %.3e [Pas]'%sc.eta)
+        print('         Temp         = %.2f [K]'%sc.Temp)
+        print('The other unit of measure are derived from this set of scaling')
+        print('{ <  -   : Scaling :  -  > }')
 
     return pdb 
 
-    
+@timing_function
 def _scale_parameters(lhs,scal):
     scal_factor       = (scal.scale_Myr2sec/scal.T)
     lhs.end_time     = lhs.end_time    * scal_factor
@@ -121,7 +126,7 @@ def _scale_parameters(lhs,scal):
     
     return lhs 
     
-    
+@timing_function
 def _scaling_control_parameters(ctrl,scal):
     
     ctrl.Ttop /= scal.Temp 
@@ -133,7 +138,7 @@ def _scaling_control_parameters(ctrl,scal):
     return ctrl  
     
     
-
+@timing_function
 def _scaling_mesh(M,scal):
     
     M.geometry.x[:] /= scal.L 

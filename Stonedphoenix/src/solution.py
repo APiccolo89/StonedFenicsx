@@ -16,8 +16,7 @@ from ufl import exp, conditional, eq, as_ufl
 import scal as sc_f 
 import basix.ufl
 
-
-
+#--------------------------------------------------------------------------------------------------------------
 class Solution():
     def __init__(self):
         self.P_L : dolfinx.fem.function.Function 
@@ -25,5 +24,27 @@ class Solution():
         self.T_N : dolfinx.fem.function.Function 
         self.Vel : dolfinx.fem.function.Function 
         self.P   : dolfinx.fem.function.Function 
-
-# Extract solution array 
+##-------------------------------------------------------------------------------------------------------------
+#class Stokes_solver():
+#    def __init__(self):
+#        
+#    def solve_the_stokes(self):
+#        
+## -------------------------------------------------------------------------------------------------------------
+#class Lithos_solver(): 
+#    def __init__(self):
+#        pass
+#    
+#    def solve_the_lit(self):
+#        pass
+## -------------------------------------------------------------------------------------------------------------
+#class Thermal_solver():
+#    def __init__(self):
+#        pass
+#    def solve_the_lit(self): 
+#        pass
+##
+##--------------------------------------------------------------------------------------------------------------
+#def solve_UFL_expression():
+#    pass
+##--------------------------------------------------------------------------------------------------------------
