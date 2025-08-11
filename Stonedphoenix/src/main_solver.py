@@ -208,27 +208,70 @@ def compute_sigma():
 
 
 #---------------------------------------------------------------------------
-
-def set_Stokes_equationset_stokes(PL,T_on,pdb,sc,g,M):
-
-    flag_linear = 'False'
-    if np.all(pdb.opt_eta) == 0: 
-        flag_linear = 'True'
-    
-    if flag_linear == 'True': 
-        print('not yet here')
-
-        # BiLinear 
-    
-    
-    
-        # Linear
+def linear_stokes_solver(M, pdb, sc, T_on, PL, g,):
     
 
-        # Solver 
     
     
-        # -> output the field that are relevant 
+    
+    
+    
+    
+    
+    
+    
+
+
+#---------------------------------------------------------------------------
+@timing_fun    
+def set_Stokes_Slab(PL,T_on,pdb,sc,g,M):
+    """
+    Input:
+    PL  : lithostatic pressure field
+    T_on: temperature field
+    pdb : phase data base
+    sc  : scaling
+    g   : gravity vector
+    M   : Mesh object
+    Output:
+    F   : Stokes problem for the slab/Solution -> still to decide
+    ---
+    The slab proble is by definition linear. First, we are speaking of an object that moves at constant velocity from top to bottom, by definition, it is not deforming. Secondly
+    why introducing non-linear rheology? Would be a waste of time 
+    Considering the slab problem linear implies that can be computed only once or potentially whenever the slab velocity changes. For example, if the age of the incoming slab changes, the problem is still linear as the temperature is moving as a function of the velocity field. 
+    Then depends wheter or not the velocity field is constantly changing or stepwise changing.
+    ---
+    """
+    #-----
+    # Extract the relevant information from the mesh object
+    mesh = M.domainA.submesh
+    V_subs = M.domainA.solSTK
+    p_subs = M.domainA.solPT
+    # Trial function for the velocity: naming convection is t(V) -> trial/ and T(V)-> test
+    tV = M.domainA.TrialV
+    TV = M.domainA.TestV
+    # Trial function for the pressure
+    tP = M.domainA.TrialP
+    TP = M.domainA.TestP
+    eta_slab = pdb.eta[0]  # Assuming slab is the first phase in pdb [oceanic crust has its own viscosity, but it is not relevant for the slab problem] Most of the routine that 
+    # I created are also for expanding the code to something more complex in the future, for now, remains simple.
+    dS = ufl.
+    
+    # -------
+    # Project temperature and lithostatic pressure on the submesh 
+    # Form the linear problem for the slab
+    # -> 
+    # -> Nitsche free slip boundary condition upper slab 
+    # -> Nitsche free slip boundary condition lower slab
+    # -> Nitche free slip boundary condition for inflow 
+    # -> Nitsche free slip boundary condition for outflow     
+
+    
+    # Select the subspace of the slab 
+    
+    # Slab problem is always linear.
+        
+
 
 #---------------------------------------------------------------------------
 @timing_fun    
@@ -262,14 +305,6 @@ def main_solver_steady_state(M, S, ctrl, pdb, sc, lhs ):
     # Segregate solvers seems the most reasonable solution -> I can use also a switch between the options, such that I can use linear/non linear solver 
     # -> BC -> 
     
-    # Split subspace stokes
-    
-    V_subs, _ = M.Sol_SpaceSTK.sub(0).collapse()
-    p_subs, _ = M.Sol_SpaceSTK.sub(1).collapse()
-    
-    # Generate trial and test function for all the problems     
-    tV , tP     = ufl.TrialFunctions(M.Sol_SpaceSTK)
-    TV , TP     = ufl.TestFunctions(M.Sol_SpaceSTK)
     # -- 
     # -- 
     PL          = fem.Function(M.Sol_SpaceT)
@@ -289,7 +324,7 @@ def main_solver_steady_state(M, S, ctrl, pdb, sc, lhs ):
     
     F_S = set_stokes_slab()
     
-    F_S = set_stokes_wedge(PL,T_on,pdb,sc,g,M )
+    #F_S = set_stokes_wedge(PL,T_on,pdb,sc,g,M )
     
     
     # Set the temperature problem 

@@ -25,11 +25,12 @@ class Solution():
         self.Vel : dolfinx.fem.function.Function 
         self.P   : dolfinx.fem.function.Function 
 ##-------------------------------------------------------------------------------------------------------------
-#class Stokes_solver():
-#    def __init__(self):
-#        
-#    def solve_the_stokes(self):
-#        
+
+
+        
+        
+        
+        
 ## -------------------------------------------------------------------------------------------------------------
 #class Lithos_solver(): 
 #    def __init__(self):
