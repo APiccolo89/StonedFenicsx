@@ -1,7 +1,7 @@
 import numpy as np
 
 class Slab():
-    def __init__(self,num_segment=[],theta_0=[],theta_max=[],D0=[],L0=[],Lb=[],y_min=[],dl = 5 ,trench=0.0,flag_constant_theta:bool=False):
+    def __init__(self,num_segment=[],theta_0=[],theta_max=[],D0=[],L0=[],Lb=[],y_min=[],dl = 10 ,trench=0.0,flag_constant_theta:bool=False):
         """
         Class containing the information of the subducting plate
         

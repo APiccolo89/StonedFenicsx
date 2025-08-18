@@ -99,6 +99,7 @@ class geom_input():
         self.lt_d              = (cr+lit_mt)     # total lithosphere thickness
         self.decoupling        = decoupling      # decoupling depth -> i.e. where the weak zone is prolonged 
         self.resolution_normal = wc*2  # To Do
+        self.theta_out_slab    = []
     
     def dimensionless_ginput(self,sc):
         self.x                 /= sc.L               # main grid coordinate
@@ -160,7 +161,8 @@ class Domain:
     smesh    : dolfinx.mesh.Mesh
     scell    : np.int32
     snode    : np.int32
-    boundary : Boundary
+    facets   : dolfinx.mesh.MeshTags
+    bc_dict  : dict
     solSTK   : dolfinx.fem.function.FunctionSpace
     solPT    : dolfinx.fem.function.FunctionSpace
     solPh    : dolfinx.fem.function.FunctionSpace
@@ -171,7 +173,7 @@ class Domain:
     phase    : dolfinx.fem.function.Function
     
     
-    def __init__(self, name, smesh, scell, snodes, bc, solSTK, solPT, solPh, TestV, TestP, TrialV, TrialP,ph):
+    def __init__(self, name, smesh, scell, snodes, bc, solSTK, solPT, solPh, TestV, TestP, TrialV, TrialP,ph, dict_bc):
         self.name          = name
         self.smesh         = smesh
         self.scell         = scell
@@ -185,6 +187,7 @@ class Domain:
         self.TrialV        = TrialV 
         self.TrialP        = TrialP 
         self.phase         = ph 
+        self.bc_dict       = dict_bc
         
 
 
@@ -472,9 +475,9 @@ def create_gmesh(ioctrl):
     van_keken = 0
     if (Data_Real==False) & (isinstance(S, Slab)== False):
         if van_keken == 1: 
-            S = Slab(D0 = 100.0, L0 = 800.0, Lb = 400, trench = 0.0,theta_0=5, theta_max = 45.0, num_segment=100,flag_constant_theta=True,y_min=min_y)
+            S = Slab(D0 = 100.0, L0 = 800.0, Lb = 800, trench = 0.0,theta_0=5, theta_max = 30.0, num_segment=100,flag_constant_theta=True,y_min=min_y)
         else: 
-            S = Slab(D0 = 100.0, L0 = 800.0, Lb = 400, trench = 0.0,theta_0=1.0, theta_max = 45.0, num_segment=100,flag_constant_theta=False,y_min=min_y)
+            S = Slab(D0 = 100.0, L0 = 800.0, Lb = 800, trench = 0.0,theta_0=1.0, theta_max = 30.0, num_segment=100,flag_constant_theta=False,y_min=min_y)
 
         for a in dir(S):
             if (not a.startswith('__')):
@@ -482,9 +485,13 @@ def create_gmesh(ioctrl):
                 if (callable(att)==False) & (np.isscalar(att)):
                     print('%s = %.2f'%(a, att))
 
+       # Max domain x direction
+
     # Create the subduction interfaces using either the real data set, or the slab class
     slab_x, slab_y, bot_x, bot_y,oc_cx,oc_cy = fmm.function_create_slab_channel(Data_Real,g_input,SP=S)
-
+    g_input.x[1] = np.max(slab_x)+200e3
+    min_x           = g_input.x[0] # The beginning of the model is the trench of the slab
+    max_x           = g_input.x[1]          
     ind_oc_lc = np.where(slab_y == -g_input.cr*(1-g_input.lc))[0][0]
     ind_oc_cr = np.where(slab_y == -g_input.cr)[0][0]
     ind_oc_lt = np.where(slab_y == -g_input.lt_d)[0][0]
@@ -508,8 +515,8 @@ def create_gmesh(ioctrl):
     mesh_model = create_gmsh(slab_x,slab_y,bot_x,bot_y,oc_cx,oc_cy,g_input,fundamental_points) 
 
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
-
+    theta = np.arctan2((slab_y[-1]-slab_y[-2]),(slab_x[-1]-slab_x[-2]))
+    g_input.theta_out_slab = theta   # Convert to degrees
 
     mesh_model.mesh.generate(2)
     #mesh_model.mesh.setOrder(2)
@@ -638,19 +645,36 @@ def create_subdomain(mesh, mesh_tag, facet_tag, phase_set, name, phase):
         # top subduction 8-9 For the subduction subdomain, the tag of the subdcution 
         # are the entire top surface 
         # -- 
-        specs = [([8, 9],1), ([6],2), ([7],3), ([5],4)] # [8,9] are the top subduction, [6] is the bottom subduction, [7] is the left side of the subduction, [5] is the right side of the subduction
+        specs = [([8, 9],1), ([6],2), ([7],3), ([5],4)] # [8,9] are the top subduction[6] is the bottom subduction, [7] is the left side of the subduction, [5] is the right side of the subduction
+        dict_local = {
+            'top_subduction' : 1, # Top subduction
+            'bot_subduction' : 2, # Right side of the subduction
+            'inflow'         : 3, # Bottom side of the subduction
+            'outflow'        : 4, # Left side of the subduction
+        }
         # --
         bc = facet_BC(mesh, facet_tag, submesh, vertex_maps, specs)
         # -- 
     elif name == 'Wedge':
         
         specs = [([11],1), ([4],2), ([3],3), ([9],4)] # [1] is the top, [2] is the right side of the wedge, [3] is the bottom side of the wedge, [4] is the left side of the wedge
-        
+        dict_local = {
+            'overriding'    : 1, # Top subduction
+            'right'         : 2, # Right side of the subduction
+            'bottom'        : 3, # Bottom side of the subduction
+            'slab'          : 4, # Left side of the subduction
+        }
         bc = facet_BC(mesh, facet_tag, submesh, vertex_maps, specs)
 
     elif name == 'Lithosphere':
         
         specs = [([11],1), ([1],2), ([2],3), ([8],4)] # [1] is the top, [2] is the right side of the wedge, [3] is the bottom side of the wedge, [4] is the left side of the wedge
+        dict_local = {
+            'overriding'    : 1, # Top subduction
+            'right'         : 2, # Right side of the subduction
+            'bottom'        : 3, # Bottom side of the subduction
+            'slab'          : 4, # Left side of the subduction
+        }
 
         bc = facet_BC(mesh, facet_tag, submesh, vertex_maps, specs)
 
@@ -676,7 +700,7 @@ def create_subdomain(mesh, mesh_tag, facet_tag, phase_set, name, phase):
     
     ph.interpolate(phase, cells0=entity_maps, cells1=np.arange(len(entity_maps)))
     
-    domain = Domain(submesh, entity_maps, vertex_maps, name, bc ,Sol_SpaceSTK, Sol_SpaceT, Sol_Spaceph, TestV, TestP, trialV, trialP, ph)
+    domain = Domain(name, submesh, entity_maps, vertex_maps, bc ,Sol_SpaceSTK, Sol_SpaceT, Sol_Spaceph, TestV, TestP, trialV, trialP, ph, dict_local)
     
     return domain
 
@@ -723,9 +747,9 @@ def create_mesh_object(mesh,sc,ioctrl,g_input):
     Pph           = fem.functionspace(mesh, ("DG", 0))      # Material ID function space # Defined in the cell space {element wise} apperently there is a black magic that 
     # Create mixed function space 
 
-    element_p       = basix.ufl.element("DG", "triangle", 0) 
-    element_PT      = basix.ufl.element("Lagrange","triangle",2)
-    element_V       = basix.ufl.element("Lagrange","triangle",2,shape=(mesh.geometry.dim,))
+    element_p       = basix.ufl.element("Lagrange", "triangle", 1) 
+    element_PT      = basix.ufl.element("Lagrange", "triangle", 2)
+    element_V       = basix.ufl.element("Lagrange", "triangle", 2, shape=(mesh.geometry.dim,))
     
     mixed_el        = basix.ufl.mixed_element([element_V,element_p])
     
@@ -782,6 +806,7 @@ def unit_test_mesh(ioctrl, sc):
     sys.path.append(os.path.abspath("src"))
     from numerical_control import IOControls
     
+    print_ph("[] - - - -> Creating mesh <- - - - []")
 
     
     
@@ -799,7 +824,11 @@ def unit_test_mesh(ioctrl, sc):
     M.rank = rank 
     M.size = size 
     
-    
+    print_ph("               _")
+    print_ph("               :")
+    print_ph("[] - - - -> Finished <- - - - []")
+    print_ph("               :")
+    print_ph("               _")    
     return M
     
 #------------------------------------------------------------------------------------------------

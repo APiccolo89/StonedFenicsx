@@ -34,27 +34,618 @@ import time                          as timing
 
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-from utils import timing_function, print_ph
+from src.utils import timing_function, print_ph
+from ufl import FacetNormal, ds, dot, sqrt, as_vector,inner, outer, grad, Identity, CellDiameter
+from dolfinx.fem.petsc import assemble_matrix_block, assemble_vector_block
+from dolfinx.fem import (Constant, Function, FunctionSpace, dirichletbc,
+                         extract_function_spaces, form,
+                         locate_dofs_topological, locate_dofs_geometrical)
+from dolfinx import default_real_type, la
 
+
+
+
+
+def dof_coords_on_facet(V, facet_tags, marker, component=None):
+    """
+    Return the coordinates of DOFs of V (or V.sub(component)) that lie on facets with a given marker.
+    """
+    mesh = V.mesh
+    tdim  = mesh.topology.dim
+    fdim  = tdim - 1
+    gdim  = mesh.geometry.dim
+
+    # Ensure needed connectivities exist
+    mesh.topology.create_connectivity(fdim, tdim)
+    mesh.topology.create_connectivity(tdim, fdim)
+
+    # Facet indices with the given tag
+    facets = facet_tags.find(marker)
+
+    # Parent-space DOF coordinates
+    X_all = V.tabulate_dof_coordinates().reshape(-1, gdim)
+
+    if component is None:
+        # scalar space: locate directly on V
+        dofs = fem.locate_dofs_topological(V, fdim, facets)
+        coords = X_all[dofs]
+    else:
+        # vector/mixed space: locate on subspace, then map to parent DOFs
+        Vs = V.sub(component)
+        dofs_s = fem.locate_dofs_topological(Vs, fdim, facets)
+        parent_map = Vs.dofmap.list.array  # subspace -> parent DOF ids
+        coords = X_all[parent_map[dofs_s]]
+
+    # Often multiple DOFs share the same point on higher-order spaces; deduplicate if desired
+    coords = np.unique(coords, axis=0)
+    return coords
+
+@timing_function    
+def block_direct_solver(a, a_p, L, bcs, V, Q, mesh, sc):
+    """Solve the Stokes problem using blocked matrices and a direct
+    solver."""
+
+    # Assembler the block operator and RHS vector
+    A, _, b = block_operators(a, a_p, L, bcs, V, Q)
+
+    # Create a solver
+    ksp = PETSc.KSP().create(mesh.comm)
+    ksp.setOperators(A)
+    ksp.setType("preonly")
+
+    # Set the solver type to MUMPS (LU solver) and configure MUMPS to
+    # handle pressure nullspace
+    pc = ksp.getPC()
+    pc.setType("lu")
+    use_superlu = PETSc.IntType == np.int64
+    if PETSc.Sys().hasExternalPackage("mumps") and not use_superlu:
+        pc.setFactorSolverType("mumps")
+        pc.setFactorSetUpSolverType()
+        pc.getFactorMatrix().setMumpsIcntl(icntl=24, ival=1)
+        pc.getFactorMatrix().setMumpsIcntl(icntl=25, ival=0)
+    else:
+        pc.setFactorSolverType("superlu_dist")
+
+    # Create a block vector (x) to store the full solution, and solve
+    x = A.createVecLeft()
+    ksp.solve(b, x)
+
+    # Create Functions and scatter x solution
+    u, p = Function(V), Function(Q)
+    offset = V.dofmap.index_map.size_local * V.dofmap.index_map_bs
+    u.x.array[:offset] = x.array_r[:offset]
+    p.x.array[: (len(x.array_r) - offset)] = x.array_r[offset:]
+
+    # Compute the $L^2$ norms of the u and p vectors
+    norm_u, norm_p = la.norm(u.x), la.norm(p.x)
+
+
+    return u,p
 
 #---------------------------------------------------------------------------
-def get_discrete_colormap(n_colors, base_cmap='viridis'):
-    """
-    Create a discrete colormap with `n_colors` from a given base colormap.
-    
-    Parameters:
-        n_colors (int): Number of discrete colors.
-        base_cmap (str or Colormap): Name of the matplotlib colormap to base on.
-    
-    Returns:
-        matplotlib.colors.ListedColormap: A discrete version of the colormap.
-        copied from internet
-    """
-    base = plt.cm.get_cmap(base_cmap)
-    color_list = base(np.linspace(0, 1, n_colors))
-    return mcolors.ListedColormap(color_list, name=f'{base_cmap}_{n_colors}')
-#---------------------------------------------------------------------------
+@timing_function    
+def nested_iterative_solver():
+    """Solve the Stokes problem using nest matrices and an iterative solver."""
 
+    # Assemble nested matrix operators
+    A = fem.petsc.assemble_matrix_nest(a, bcs=bcs)
+    A.assemble()
+
+    # Create a nested matrix P to use as the preconditioner. The
+    # top-left block of P is shared with the top-left block of A. The
+    # bottom-right diagonal entry is assembled from the form a_p11:
+    P11 = fem.petsc.assemble_matrix(a_p11, [])
+    P = PETSc.Mat().createNest([[A.getNestSubMatrix(0, 0), None], [None, P11]])
+    P.assemble()
+
+    # Assemble right-hand side vector
+    b = fem.petsc.assemble_vector_nest(L)
+
+    # Modify ('lift') the RHS for Dirichlet boundary conditions
+    fem.petsc.apply_lifting_nest(b, a, bcs=bcs)
+
+    # Sum contributions for vector entries that are share across
+    # parallel processes
+    for b_sub in b.getNestSubVecs():
+        b_sub.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+
+    # Set Dirichlet boundary condition values in the RHS vector
+    bcs0 = fem.bcs_by_block(extract_function_spaces(L), bcs)
+    fem.petsc.set_bc_nest(b, bcs0)
+
+    # The pressure field is determined only up to a constant. We supply
+    # a vector that spans the nullspace to the solver, and any component
+    # of the solution in this direction will be eliminated during the
+    # solution process.
+    null_vec = fem.petsc.create_vector_nest(L)
+
+    # Set velocity part to zero and the pressure part to a non-zero
+    # constant
+    null_vecs = null_vec.getNestSubVecs()
+    null_vecs[0].set(0.0), null_vecs[1].set(1.0)
+
+    # Normalize the vector that spans the nullspace, create a nullspace
+    # object, and attach it to the matrix
+    null_vec.normalize()
+    nsp = PETSc.NullSpace().create(vectors=[null_vec])
+    #assert nsp.test(A)
+    A.setNullSpace(nsp)
+
+    # Create a MINRES Krylov solver and a block-diagonal preconditioner
+    # using PETSc's additive fieldsplit preconditioner
+    ksp = PETSc.KSP().create(msh.comm)
+    ksp.setOperators(A, P)
+    ksp.setType("minres")
+    ksp.setTolerances(rtol=1e-10)
+    ksp.getPC().setType("fieldsplit")
+    ksp.getPC().setFieldSplitType(PETSc.PC.CompositeType.ADDITIVE)
+
+    # Define the matrix blocks in the preconditioner with the velocity
+    # and pressure matrix index sets
+    nested_IS = P.getNestISs()
+    ksp.getPC().setFieldSplitIS(("u", nested_IS[0][0]), ("p", nested_IS[0][1]))
+
+    # Set the preconditioners for each block. For the top-left
+    # Laplace-type operator we use algebraic multigrid. For the
+    # lower-right block we use a Jacobi preconditioner. By default, GAMG
+    # will infer the correct near-nullspace from the matrix block size.
+    ksp_u, ksp_p = ksp.getPC().getFieldSplitSubKSP()
+    ksp_u.setType("preonly")
+    ksp_u.getPC().setType("gamg")
+    ksp_p.setType("preonly")
+    ksp_p.getPC().setType("jacobi")
+
+    # Create finite element {py:class}`Function <dolfinx.fem.Function>`s
+    # for the velocity (on the space `V`) and for the pressure (on the
+    # space `Q`). The vectors for `u` and `p` are combined to form a
+    # nested vector and the system is solved.
+    u, p = Function(V), Function(Q)
+    x = PETSc.Vec().createNest([la.create_petsc_vector_wrap(u.x),
+                                la.create_petsc_vector_wrap(p.x)])
+    ksp.solve(b, x)
+
+    # Save solution to file in XDMF format for visualization, e.g. with
+    # ParaView. Before writing to file, ghost values are updated using
+    # `scatter_forward`.
+    with XDMFFile(MPI.COMM_WORLD, "velocity.xdmf", "w") as ufile_xdmf:
+        u.x.scatter_forward()
+        ufile_xdmf.write_mesh(msh)
+        ufile_xdmf.write_function(u)
+
+    with XDMFFile(MPI.COMM_WORLD, "pressure.xdmf", "w") as pfile_xdmf:
+        p.x.scatter_forward()
+        pfile_xdmf.write_mesh(msh)
+        pfile_xdmf.write_function(p)
+
+    # Compute norms of the solution vectors
+    norm_u = u.x.norm()
+    norm_p = p.x.norm()
+
+
+    return norm_u, norm_p
+
+def block_operators(a, a_p, L, bcs, V, Q):
+    """Return block operators and block RHS vector for the Stokes
+    problem"""
+    A = assemble_matrix_block(a, bcs=bcs); A.assemble()
+    P = assemble_matrix_block(a_p, bcs=bcs); P.assemble()
+    b = assemble_vector_block(L, a, bcs=bcs)
+
+    # nullspace vector [0_u; 1_p] locally
+    null_vec = A.createVecLeft()
+    nloc_u = V.dofmap.index_map.size_local * V.dofmap.index_map_bs
+    nloc_p = Q.dofmap.index_map.size_local
+    null_vec.array[:nloc_u]  = 0.0
+    null_vec.array[nloc_u:nloc_u+nloc_p] = 1.0
+    null_vec.normalize()
+    nsp = PETSc.NullSpace().create(vectors=[null_vec])
+    A.setNullSpace(nsp)
+
+    return A, P, b
+
+def block_iterative_solver(a, a_p, L, bcs, V, Q, msh, sc):
+    """Solve the Stokes problem using blocked matrices and an iterative
+    solver."""
+
+    # Assembler the operators and RHS vector
+    A, P, b = block_operators(a, a_p, L, bcs, V, Q)
+
+    # Build PETSc index sets for each field (global dof indices for each
+    # field)
+    V_map = V.dofmap.index_map
+    Q_map = Q.dofmap.index_map
+    bs_u  = V.dofmap.index_map_bs  # = mesh.dim for vector CG
+    nloc_u = V_map.size_local * bs_u
+    nloc_p = Q_map.size_local
+
+    # local starts in the *assembled block vector*
+    offset_u = 0
+    offset_p = nloc_u
+
+    is_u = PETSc.IS().createStride(nloc_u, offset_u, 1, comm=PETSc.COMM_SELF)
+    is_p = PETSc.IS().createStride(nloc_p, offset_p, 1, comm=PETSc.COMM_SELF)
+
+
+    # Create a MINRES Krylov solver and a block-diagonal preconditioner
+    # using PETSc's additive fieldsplit preconditioner
+    ksp = PETSc.KSP().create(msh.comm)
+    ksp.setOperators(A, P)
+    ksp.setTolerances(rtol=1e-10)
+    ksp.setType("minres")
+    ksp.getPC().setType("fieldsplit")
+    ksp.getPC().setFieldSplitType(PETSc.PC.CompositeType.ADDITIVE)
+    ksp.getPC().setFieldSplitIS(("u", is_u), ("p", is_p))
+
+    # Configure velocity and pressure sub-solvers
+    ksp_u, ksp_p = ksp.getPC().getFieldSplitSubKSP()
+    ksp_u.setType("preonly")
+    ksp_u.getPC().setType("gamg")
+    ksp_p.setType("preonly")
+    ksp_p.getPC().setType("jacobi")
+
+    # The matrix A combined the vector velocity and scalar pressure
+    # parts, hence has a block size of 1. Unlike the MatNest case, GAMG
+    # cannot infer the correct near-nullspace from the matrix block
+    # size. Therefore, we set block size on the top-left block of the
+    # preconditioner so that GAMG can infer the appropriate near
+    # nullspace.
+    ksp.getPC().setUp()
+    Pu, _ = ksp_u.getPC().getOperators()
+    Pu.setBlockSize(msh.topology.dim)
+
+    # Create a block vector (x) to store the full solution and solve
+    x = A.createVecRight()
+    ksp.solve(b, x)
+
+    xu = x.getSubVector(is_u)
+    xp = x.getSubVector(is_p)
+    u, p = fem.Function(V), fem.Function(Q)
+    
+    u.x.array[:] = xu.array_r
+    p.x.array[:] = xp.array_r
+    
+    u.name, p.name = "Velocity", "Pressure"
+    
+
+        
+
+
+    return  u, p
+
+
+def tau(eta, u):
+    return 2 * eta * ufl.sym(ufl.grad(u))
+
+def compute_nitsche_FS(mesh, eta, tV, TV, tP, TP, dS, a1, a2, a3, gamma=100.0):
+    """
+    Compute the Nitsche free slip boundary condition for the slab problem.
+    This is a placeholder function and should be implemented with the actual Nitsche method.
+    """
+    n = ufl.FacetNormal(mesh)
+    h = ufl.CellDiameter(mesh)
+
+    a1 += (
+        - ufl.inner(tau(eta, tV), ufl.outer(ufl.dot(TV, n) * n, n)) * dS
+        - ufl.inner(ufl.outer(ufl.dot(tV, n) * n, n), tau(eta, TV)) * dS
+        + (2 * eta * gamma / h)
+        * ufl.inner(ufl.outer(ufl.dot(tV, n) * n, n), ufl.outer(TV, n))
+        * dS
+    )
+    a2 += ufl.inner(tP, ufl.dot(TV, n)) * dS
+    a3 += ufl.inner(TP, ufl.dot(tV, n)) * dS
+
+    return a1, a2, a3
+
+
+
+def compute_nitsche_moving_wall(mesh, eta, tV, TV, tP, TP, dS, a1, a2, a3,L ,gamma=50.0,gn=0.0):
+    """
+    Free-slip via Nitsche: impose (u·n)=0, tangential traction free.
+    https://github.com/MiroK/fenics-nitsche/blob/master/stokes/stokes_freeslip.py
+
+    """
+    n = ufl.FacetNormal(mesh)
+    h = ufl.CellDiameter(mesh)
+    Pn = ufl.outer(n, n)                 # projector onto the normal direction
+    un  = ufl.dot(tV, n)          # scalare (u·n)
+    vn  = ufl.dot(TV, n)          # scalare (v·n)
+    tVn = un * n                  # vettore: parte normale
+    TVn = vn * n
+    
+    gamma = gamma * eta / h
+    gn = float(gn)
+    
+    a1 += (- ufl.inner(tau(eta, tV) * n, TVn)
+            - ufl.inner(tau(eta, TV) * n, tVn)
+            + (gamma * eta / h) * un * vn) * dS
+    a2 += (- tP * vn) * dS
+    a3 += (- TP * un) * dS
+    # Pressure coupling on the boundary (only normal component)
+ 
+    L[0] += ((gamma * eta / h) * gn * vn - ufl.inner(tau(eta, TV) * n, gn * n)) * dS
+        # Termine da integrazione per parti nel blocco di continuità
+    L[1] += (- TP * gn) * dS
+
+    return a1, a2, a3, L    
+#---------------------------------------------------------------------------
+def compute_normal(X,dofs):
+    """
+    ===== OFFCOURSE the number of the node within the physical line seems to be generated by 
+    a person under the influence of some substance. 
+    ---- The assumption that the slab is a strict function of x AND that x & y are not repeating 
+    -1) Select node 
+    -2) Select coordinate
+    -3) order the coordinate of the node
+    -4) compute the vector dot product of the convergence velocity with the tangent vector/norm
+    ========================================================================
+    Input:
+    M: Mesh object
+    bc_int: vector of integer
+    Output:
+    nx,ny: vector of normal vector
+    ========================================================================
+    Function that extract the normal vector at the interface 
+    NB: the curvilinear slab is constructed as set of linear segment: this entails 
+    that the slope of the slab within this segment is constant. Since the velocity 
+    is v [1,0] the velocity along the interface is u_s = tan_v*v + nor_v*n. Where tan_v and norm_v
+    are the versor of the tangent and normal vector of a given segment. 
+
+    """
+
+    nx=np.zeros(len(X[:,0]),dtype=np.float64) # x component of the normal vector
+    ny=np.zeros(len(X[:,0]),dtype=np.float64) # y component of the normal vector
+        
+    count_av = np.zeros(len(X[:,0]),dtype=int) # count the number of time the node is used
+    vc = [1.0,0]
+    # Sort the coordinate of the node 
+    X_s = X[dofs,0]
+    Y_s = X[dofs,1]
+    u, c = np.unique(X_s, return_counts=True)
+    dup = u[c > 1]
+    if len(dup)>0:
+        raise ValueError('X coordinate of the node is not unique.The local profile of the slab must have monotonic x coordinate')
+
+    i_s = np.argsort(X_s)
+    dofs = dofs[i_s]
+    # Compute the normal vector
+    for i in range(len(dofs)-1):
+    
+
+        i0 = dofs[i]
+        i1 = dofs[i+1]
+        
+        count_av[i0] +=1 
+        count_av[i1] +=1 
+
+        x0 = X[i0,0]
+        x1 = X[i1,0]
+        y0 = X[i0,1]
+        y1 = X[i1,1]
+        cy  = abs(y1-y0)
+        cx  = abs(x1-x0)
+      
+
+        slope = np.arctan(cy/cx)
+        
+        v_nor = [-np.sin(slope),np.cos(slope)]
+        v_tan = [np.cos(slope),-np.sin(slope)]
+        u_s = np.dot(vc[0],v_tan)+np.dot(vc[1],v_nor)
+
+        nx[i0] +=u_s[0]
+        nx[i1] +=u_s[0] 
+        ny[i0] +=u_s[1] 
+        ny[i1] +=u_s[1]
+     
+    # Normalise the line with the amount of counts
+    nx[nx!=0] = nx[nx!=0]/count_av[nx!=0]
+    ny[nx!=0] = ny[nx!=0]/count_av[nx!=0]
+
+    
+    return nx,ny 
+
+
+
+
+#----------------------------------------------------------------------------
+def set_slab_dirichlecht(ctrl, V, D, theta,sc):
+    mesh = V.mesh
+    tdim = mesh.topology.dim
+    fdim = tdim - 1
+
+    # facet ids
+    inflow_facets  = D.facets.find(D.bc_dict['inflow'])
+    outflow_facets = D.facets.find(D.bc_dict['outflow'])
+    slab_facets    = D.facets.find(D.bc_dict['top_subduction'])
+    X              = V.tabulate_dof_coordinates()
+    dofs        = fem.locate_dofs_topological(V, fdim, slab_facets)
+    
+    # dofs on subspaces (entities = facet indices!)
+    dofs_in_x  = fem.locate_dofs_topological(V.sub(0), fdim, inflow_facets)
+    dofs_in_y  = fem.locate_dofs_topological(V.sub(1), fdim, inflow_facets)
+    dofs_out_x = fem.locate_dofs_topological(V.sub(0), fdim, outflow_facets)
+    dofs_out_y = fem.locate_dofs_topological(V.sub(1), fdim, outflow_facets)
+    dofs_s_x   = fem.locate_dofs_topological(V.sub(0), fdim, slab_facets)
+    dofs_s_y   = fem.locate_dofs_topological(V.sub(1), fdim, slab_facets)
+    
+    
+    # scalar BCs on subspaces
+    bc_left_x   = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]), dofs_in_x,  V.sub(0))
+    bc_left_y   = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[1]), dofs_in_y,  V.sub(1))
+    bc_bottom_x = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]*np.cos(theta)), dofs_out_x, V.sub(0))
+    bc_bottom_y = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]*np.sin(theta)), dofs_out_y, V.sub(1))
+    
+    nx,ny = compute_normal(X,dofs)
+    #ds = ufl.Measure("ds", domain=mesh, subdomain_data=D.facets)
+  #
+    #n = ufl.FacetNormal(mesh)                    # exact facet normal in weak form
+    #t = ufl.as_vector((-n[1], n[0]))             # 2D +90° rotation => unit tangent
+    #v_const = ufl.as_vector((ctrl.v_s[0], ctrl.v_s[1]))
+    #t_hat = t / ufl.sqrt(ufl.inner(t, t))
+    #vl = fem.Constant(mesh, PETSc.ScalarType(ctrl.v_s[0]))
+    #ut = v_const * t_hat             # desired tangential velocity on slab
+#
+    #w = ufl.TrialFunction(V)
+    #v = ufl.TestFunction(V)
+    #a = ufl.inner(w, v) * ds(D.bc_dict['top_subduction'])        # boundary mass matrix (vector)
+    #L = ufl.inner(ut, v) * ds(D.bc_dict['top_subduction'])
+#
+    #ubc = fem.petsc.LinearProblem(
+    #    a, L,
+    #    petsc_options={
+    #        "ksp_type": "cg",
+    #        "pc_type": "jacobi",
+    #        "ksp_rtol": 1e-12,
+    #    }
+    #).solve()  # ut_h \in V
+
+    # DOFs of each component on the slab (in the parent V index space)
+    dofs_s_x = fem.locate_dofs_topological(V.sub(0), fdim, slab_facets)
+    dofs_s_y = fem.locate_dofs_topological(V.sub(1), fdim, slab_facets)
+
+    # Impose the projected tangential velocity as Dirichlet on the slab:
+    # Use the overload dirichletbc(g: Function(V), dofs: [dofs_x, dofs_y], V)
+    #bc_slab = fem.dirichletbc(ut_h, [dofs_s_x, dofs_s_y], V)
+#
+  #
+  #
+    ubc = fem.Function(V)
+    ubc.x.array[dofs_s_x] = nx[dofs] * ctrl.v_s[0]
+    ubc.x.array[dofs_s_y] = ny[dofs] * ctrl.v_s[0]
+    bcx = fem.dirichletbc(ubc.sub(0), dofs_s_x)
+    bcy = fem.dirichletbc(ubc.sub(1), dofs_s_y)
+    return [bcx, bcy]
+#---------------------------------------------------------------------------
+@timing_function    
+def set_Stokes_Slab(pdb,sc,M,ctrl):
+    """
+    Input:
+    PL  : lithostatic pressure field
+    T_on: temperature field
+    pdb : phase data base
+    sc  : scaling
+    g   : gravity vector
+    M   : Mesh object
+    Output:
+    F   : Stokes problem for the slab/Solution -> still to decide
+    ---
+    Facet marker = 1 
+    T
+    
+    
+    The slab proble is by definition linear. First, we are speaking of an object that moves at constant velocity from top to bottom, by definition, it is not deforming. Secondly
+    why introducing non-linear rheology? Would be a waste of time 
+    Considering the slab problem linear implies that can be computed only once or potentially whenever the slab velocity changes. For example, if the age of the incoming slab changes, the problem is still linear as the temperature is moving as a function of the velocity field. 
+    Then depends wheter or not the velocity field is constantly changing or stepwise changing.
+    ---
+    Following Nate Sime's approach, I will use a Nitsche method to impose the free slip boundary condition on the slab.
+    """
+    
+    from ufl import inner, grad, div, Identity, dx, Measure, dot, sym, Constant
+    
+    print_ph("[] - - - -> Solving the slab's stokes problem <- - - - []")
+    
+    mesh = M.domainA.smesh
+    #-----
+    # Extract the relevant information from the mesh object
+    V_subs0 = M.domainA.solSTK.sub(0)
+    p_subs0 = M.domainA.solSTK.sub(1)
+    V_subs, _ = V_subs0.collapse()
+    p_subs, _ = p_subs0.collapse()
+    
+    tV = ufl.TrialFunction(V_subs)
+    TV = ufl.TestFunction(V_subs)
+    tP = ufl.TrialFunction(p_subs)
+    TP = ufl.TestFunction(p_subs)
+    
+    eta_slab = fem.Constant(mesh, PETSc.ScalarType(float(pdb.eta[0])))
+    ds = ufl.Measure("ds", domain=mesh, subdomain_data=M.domainA.facets)
+    
+    a_1 = ufl.inner(2*eta_slab*ufl.sym(ufl.grad(tV)), ufl.grad(TV)) * ufl.dx
+    a_2 = - ufl.inner(ufl.div(TV), tP) * ufl.dx
+    a_3 = - ufl.inner(TP, ufl.div(tV)) * ufl.dx
+    
+    dS_top = ds(M.domainA.bc_dict["top_subduction"])
+    dS_bot = ds(M.domainA.bc_dict["bot_subduction"])
+    
+    f  = fem.Constant(mesh, [0.0]*mesh.geometry.dim)
+    f2 = fem.Constant(mesh, 0.0)
+    L  = [ufl.inner(f, TV)*ufl.dx, ufl.inner(f2, TP)*ufl.dx]
+    #a_1, a_2, a_3, L = compute_nitsche_moving_wall(mesh, eta_slab, tV, TV, tP, TP, dS_top, a_1, a_2, a_3, L ,100,ctrl.v_s[0])
+    a_1, a_2, a_3 = compute_nitsche_FS(mesh, eta_slab, tV, TV, tP, TP, dS_bot, a_1, a_2, a_3, 100.0)
+
+    #a_1, a_2, a_3 = compute_nitsche_FS(mesh, eta_slab, tV, TV, tP, TP, dS_top, a_1, a_2, a_3,100.0)
+    
+    a   = fem.form([[a_1, a_2],[a_3, None]])
+    a_p0 = fem.form(ufl.inner(TP, tP) * ufl.dx)
+    a_p  = fem.form([[a_1, None],[None, a_p0]])   # make this a fem.form too
+    L = fem.form(L)
+    # -> Inflow and outflow boundary condition
+    bcs = set_slab_dirichlecht(ctrl,V_subs,M.domainA,M.g_input.theta_out_slab,sc)
+    #bcs = []
+    u, p = block_direct_solver(a, a_p, L, bcs, V_subs, p_subs, mesh, sc)
+
+    #print("Stokes slab problem solved")
+    F1 = compute_boundary_flux(u,M,'top_subduction')
+    F2 = compute_boundary_flux(u,M,'bot_subduction')
+    F3 = compute_boundary_flux(u,M,'inflow')
+    F4 = compute_boundary_flux(u,M,'outflow')
+    div_form = ufl.div(u) * ufl.dx
+    div_int = fem.assemble_scalar(fem.form(div_form))
+
+    total_flux = F1 + F2 + F3 + F4
+    incoming_flux = ctrl.v_s[0] * 130e3/sc.L 
+    print_ph("[] - - - -> Solved <- - - - []")
+    print_ph(f"// - - - /Relative Total flux on the slab boundaries    : {total_flux/incoming_flux:.2e}[]/")
+    print_ph(f"// - - - /Relative Total divergence integral            : {div_int/incoming_flux:.2e}[]/")
+    print_ph(f"// - - - /Relative flux across the top slab abs.   [MW] : {np.abs(F1)/incoming_flux:.2e}[]/")
+    print_ph(f"// - - - /Relative flux accorss bottom slab abs.   [FS] : {np.abs(F2)/incoming_flux:.2e}[]/")
+    print_ph(f"// - - - /Relative influx                   abs.   [DN] : {np.abs(F3)/incoming_flux:.2e}[]/")
+    print_ph(f"// - - - /Relative outflux                  abs.   [DN] : {np.abs(F4)/incoming_flux:.2e}[]/")
+    
+    print_ph("               _")
+    print_ph("               :")
+    print_ph("[] - - - -> Finished <- - - - []")
+    print_ph("               :")
+    print_ph("               _")
+    
+    with XDMFFile(MPI.COMM_WORLD, "velocity.xdmf", "w") as ufile_xdmf:
+        
+        element = basix.ufl.element("Lagrange", "triangle", 1, shape=(mesh.geometry.dim,))
+        u_triangular = fem.functionspace(mesh,element)
+        u_T = fem.Function(u_triangular)
+        u_T.name = "Velocity [cm/yr]"
+        u_T.interpolate(u)
+        u_T.x.array[:] = u_T.x.array[:]*(sc.L/sc.T)/sc.scale_vel
+        u_T.x.scatter_forward()
+
+        ufile_xdmf.write_mesh(mesh)
+        ufile_xdmf.write_function(u_T)
+
+    with XDMFFile(MPI.COMM_WORLD, "pressure.xdmf", "w") as pfile_xdmf:
+        p.x.scatter_forward()
+        pfile_xdmf.write_mesh(mesh)
+        pfile_xdmf.write_function(p)
+    
+    
+    return u,p 
+
+#---------------------------------------------------------------------------
+def compute_boundary_flux(u,M,boundary_id):
+    mesh = M.domainA.smesh
+    facet_tags = M.domainA.facets            # MeshTags for facets (dim-1)
+    tag = M.domainA.bc_dict[boundary_id]       # <- your boundary id
+
+    # Boundary measure with tags
+    ds = ufl.Measure("ds", domain=mesh, subdomain_data=facet_tags)
+
+    n = ufl.FacetNormal(mesh)
+
+    # Signed flux (outward positive)
+    flux_form = ufl.dot(u, n) * ds(tag)
+    flux_local = fem.assemble_scalar(fem.form(flux_form))
+    flux = mesh.comm.allreduce(flux_local, op=MPI.SUM)
+    return flux
+#---------------------------------------------------------------------------
 @timing_function
 def initial_temperature_field(M, ctrl, lhs):
     from scipy.interpolate import griddata
@@ -130,6 +721,9 @@ def set_lithostatic_problem(PL, T_o, tPL, TPL, pdb, sc, g, M ):
     create an utils function for timing. 
     
     """
+    print_ph("[] - - - -> Solving Lithostatic pressure problem <- - - - []")
+
+    
     flag = 1 
     fdim = M.mesh.topology.dim - 1    
     top_facets   = M.mesh_Ftag.find(1)
@@ -163,10 +757,16 @@ def set_lithostatic_problem(PL, T_o, tPL, TPL, pdb, sc, g, M ):
         ksp.setFromOptions()
         n, converged = solver.solve(PL)
     local_max = np.max(PL.x.array)
+    print_ph("[] - - - -> Solved <- - - - []")
 
     # Global min and max using MPI reduction
     global_max = M.comm.allreduce(local_max, op=MPI.MAX)
-    print_ph('.  Global max lithostatic pressure is %.2f GPa'%(global_max*sc.stress/1e9))
+    print_ph(f"// - - - /Global max lithostatic pressure is    : {global_max*sc.stress/1e9:.2f}[GPa]/")
+    print_ph("               _")
+    print_ph("               :")
+    print_ph("[] - - - -> Finished <- - - - []")
+    print_ph("               :")
+    print_ph("               _")
     return PL 
 
 #---------------------------------------------------------------------------
@@ -188,7 +788,6 @@ def strain_rate(vel):
     
     return ufl.sym(ufl.grad(vel))
 #---------------------------------------------------------------------------
-
     
 def eps_II(vel):
  
@@ -202,79 +801,31 @@ def eps_II(vel):
     return eII 
 #---------------------------------------------------------------------------
 
-
-def compute_sigma():
-    pass
-
-
-#---------------------------------------------------------------------------
-def linear_stokes_solver(M, pdb, sc, T_on, PL, g,):
+def sigma(eta, u, p):
     
-
+    sigma = 2 * eta * strain_rate(u) - p * ufl.Identity(2) 
     
-    
-    
-    
-    
-    
-    
-    
-    
+    return sigma 
 
 
 #---------------------------------------------------------------------------
-@timing_fun    
-def set_Stokes_Slab(PL,T_on,pdb,sc,g,M):
-    """
-    Input:
-    PL  : lithostatic pressure field
-    T_on: temperature field
-    pdb : phase data base
-    sc  : scaling
-    g   : gravity vector
-    M   : Mesh object
-    Output:
-    F   : Stokes problem for the slab/Solution -> still to decide
-    ---
-    The slab proble is by definition linear. First, we are speaking of an object that moves at constant velocity from top to bottom, by definition, it is not deforming. Secondly
-    why introducing non-linear rheology? Would be a waste of time 
-    Considering the slab problem linear implies that can be computed only once or potentially whenever the slab velocity changes. For example, if the age of the incoming slab changes, the problem is still linear as the temperature is moving as a function of the velocity field. 
-    Then depends wheter or not the velocity field is constantly changing or stepwise changing.
-    ---
-    """
-    #-----
-    # Extract the relevant information from the mesh object
-    mesh = M.domainA.submesh
-    V_subs = M.domainA.solSTK
-    p_subs = M.domainA.solPT
-    # Trial function for the velocity: naming convection is t(V) -> trial/ and T(V)-> test
-    tV = M.domainA.TrialV
-    TV = M.domainA.TestV
-    # Trial function for the pressure
-    tP = M.domainA.TrialP
-    TP = M.domainA.TestP
-    eta_slab = pdb.eta[0]  # Assuming slab is the first phase in pdb [oceanic crust has its own viscosity, but it is not relevant for the slab problem] Most of the routine that 
-    # I created are also for expanding the code to something more complex in the future, for now, remains simple.
-    dS = ufl.
+def linear_stokes_solver(a, b, bcs, M):
     
-    # -------
-    # Project temperature and lithostatic pressure on the submesh 
-    # Form the linear problem for the slab
-    # -> 
-    # -> Nitsche free slip boundary condition upper slab 
-    # -> Nitsche free slip boundary condition lower slab
-    # -> Nitche free slip boundary condition for inflow 
-    # -> Nitsche free slip boundary condition for outflow     
+    
+    
+    
+    return u,p 
 
+#---------------------------------------------------------------------------
+
+
+def set_dirichlet_inflow():
     
-    # Select the subspace of the slab 
-    
-    # Slab problem is always linear.
-        
+    return bc
 
 
 #---------------------------------------------------------------------------
-@timing_fun    
+@timing_function
 def main_solver_steady_state(M, S, ctrl, pdb, sc, lhs ): 
     """
     To Do explanation: 
@@ -308,8 +859,6 @@ def main_solver_steady_state(M, S, ctrl, pdb, sc, lhs ):
     # -- 
     # -- 
     PL          = fem.Function(M.Sol_SpaceT)
-    vel         = fem.Function(V_subs)
-    p           = fem.Function(p_subs)
     T_o = initial_temperature_field(M, ctrl, lhs)
     # -- Test and trial function for pressure and temperature 
     tT =  ufl.TrialFunction(M.Sol_SpaceT); tPL = ufl.TrialFunction(M.Sol_SpaceT) 
@@ -322,9 +871,11 @@ def main_solver_steady_state(M, S, ctrl, pdb, sc, lhs ):
     F_l = set_lithostatic_problem(PL, T_o, tPL, TPL, pdb, sc, g, M )
     
     
-    F_S = set_stokes_slab()
+    F_S = set_Stokes_Slab(pdb,sc,M,ctrl)
     
     #F_S = set_stokes_wedge(PL,T_on,pdb,sc,g,M )
+    
+    # -> Interpolate the velocity field from the slab and wedge to the main mesh
     
     
     # Set the temperature problem 
@@ -353,15 +904,16 @@ def unit_test():
                         path_save = '../Debug_mesh',
                         sname = 'Experimental')
     ioctrl.generate_io()
-    
+    print_ph("[] - - - -> Creating mesh <- - - - []")
     # Create mesh 
     M = unit_test_mesh(ioctrl, sc)
             
-    
+    print_ph("[] - - - -> Creating numerical controls <- - - - []")
     ctrl = NumericalControls()
     
     ctrl = sc_f._scaling_control_parameters(ctrl, sc)
     
+    print_ph("[] - - - -> Phase Database <- - - - []")
 
     
     pdb = PhaseDataBase(6)
@@ -387,6 +939,8 @@ def unit_test():
     
     pdb = sc_f._scaling_material_properties(pdb,sc)
     
+    print_ph("[] - - - -> Left thermal boundary condition <- - - - []")
+
     lhs_ctrl = ctrl_LHS()
 
     lhs_ctrl = sc_f._scale_parameters(lhs_ctrl, sc)
