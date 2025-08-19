@@ -469,48 +469,42 @@ def set_slab_dirichlecht(ctrl, V, D, theta,sc):
     
     
     # scalar BCs on subspaces
-    bc_left_x   = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]), dofs_in_x,  V.sub(0))
-    bc_left_y   = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[1]), dofs_in_y,  V.sub(1))
-    bc_bottom_x = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]*np.cos(theta)), dofs_out_x, V.sub(0))
-    bc_bottom_y = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]*np.sin(theta)), dofs_out_y, V.sub(1))
+    #bc_left_x   = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]), dofs_in_x,  V.sub(0))
+    #bc_left_y   = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[1]), dofs_in_y,  V.sub(1))
+    #bc_bottom_x = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]*np.cos(theta)), dofs_out_x, V.sub(0))
+    #bc_bottom_y = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]*np.sin(theta)), dofs_out_y, V.sub(1))
     
-    nx,ny = compute_normal(X,dofs)
-    #ds = ufl.Measure("ds", domain=mesh, subdomain_data=D.facets)
-  #
-    #n = ufl.FacetNormal(mesh)                    # exact facet normal in weak form
-    #t = ufl.as_vector((-n[1], n[0]))             # 2D +90° rotation => unit tangent
-    #v_const = ufl.as_vector((ctrl.v_s[0], ctrl.v_s[1]))
-    #t_hat = t / ufl.sqrt(ufl.inner(t, t))
-    #vl = fem.Constant(mesh, PETSc.ScalarType(ctrl.v_s[0]))
-    #ut = v_const * t_hat             # desired tangential velocity on slab
-#
-    #w = ufl.TrialFunction(V)
-    #v = ufl.TestFunction(V)
-    #a = ufl.inner(w, v) * ds(D.bc_dict['top_subduction'])        # boundary mass matrix (vector)
-    #L = ufl.inner(ut, v) * ds(D.bc_dict['top_subduction'])
-#
-    #ubc = fem.petsc.LinearProblem(
-    #    a, L,
-    #    petsc_options={
-    #        "ksp_type": "cg",
-    #        "pc_type": "jacobi",
-    #        "ksp_rtol": 1e-12,
-    #    }
-    #).solve()  # ut_h \in V
+    #nx,ny = compute_normal(X,dofs)
+    ds = ufl.Measure("ds", domain=mesh, subdomain_data=D.facets)
+  
+    n = ufl.FacetNormal(mesh)                    # exact facet normal in weak form
+    v_slab = float(np.linalg.norm(ctrl.v_s))  # slab velocity magnitude
+
+    v_const = ufl.as_vector((1.0, 0.0))
+    
+    proj = ufl.Identity(mesh.geometry.dim) - ufl.outer(n, n)  # projector onto the tangential plane
+    t = ufl.dot(proj, v_const)                     # tangential velocity vector on slab
+    t_hat = t / ufl.sqrt(ufl.inner(t, t))    
+    v_project = v_slab * t_hat  # projected tangential velocity vector on slab
+    
+    w = ufl.TrialFunction(V)
+    v = ufl.TestFunction(V)
+    a = ufl.inner(w, v) * ds(D.bc_dict['top_subduction'])        # boundary mass matrix (vector)
+    L = ufl.inner(v_project, v) * ds(D.bc_dict['top_subduction'])
+
+    ubc = fem.petsc.LinearProblem(
+        a, L,
+        petsc_options={
+            "ksp_type": "cg",
+            "pc_type": "jacobi",
+            "ksp_rtol": 1e-12,
+        }
+    ).solve()  # ut_h \in V
 
     # DOFs of each component on the slab (in the parent V index space)
     dofs_s_x = fem.locate_dofs_topological(V.sub(0), fdim, slab_facets)
     dofs_s_y = fem.locate_dofs_topological(V.sub(1), fdim, slab_facets)
 
-    # Impose the projected tangential velocity as Dirichlet on the slab:
-    # Use the overload dirichletbc(g: Function(V), dofs: [dofs_x, dofs_y], V)
-    #bc_slab = fem.dirichletbc(ut_h, [dofs_s_x, dofs_s_y], V)
-#
-  #
-  #
-    ubc = fem.Function(V)
-    ubc.x.array[dofs_s_x] = nx[dofs] * ctrl.v_s[0]
-    ubc.x.array[dofs_s_y] = ny[dofs] * ctrl.v_s[0]
     bcx = fem.dirichletbc(ubc.sub(0), dofs_s_x)
     bcy = fem.dirichletbc(ubc.sub(1), dofs_s_y)
     return [bcx, bcy]
@@ -599,9 +593,11 @@ def set_Stokes_Slab(pdb,sc,M,ctrl):
     print_ph(f"// - - - /Relative Total divergence integral            : {div_int/incoming_flux:.2e}[]/")
     print_ph(f"// - - - /Relative flux across the top slab abs.   [MW] : {np.abs(F1)/incoming_flux:.2e}[]/")
     print_ph(f"// - - - /Relative flux accorss bottom slab abs.   [FS] : {np.abs(F2)/incoming_flux:.2e}[]/")
-    print_ph(f"// - - - /Relative influx                   abs.   [DN] : {np.abs(F3)/incoming_flux:.2e}[]/")
-    print_ph(f"// - - - /Relative outflux                  abs.   [DN] : {np.abs(F4)/incoming_flux:.2e}[]/")
-    
+    print_ph(f"// - - - /Relative influx                   abs.   [DN] : {np.abs(F3)/incoming_flux:.5e}[]/")
+    print_ph(f"// - - - /Relative outflux                  abs.   [DN] : {np.abs(F4)/incoming_flux:.5e}[]/")
+    print_ph(f"// - - - /Flux error                        abs.   [DN] : {(np.abs(F4)-np.abs(F3))/(np.abs(F4)+np.abs(F3)):.5e}[]/")
+    print_ph("[============================]")
+    print_ph("")
     print_ph("               _")
     print_ph("               :")
     print_ph("[] - - - -> Finished <- - - - []")
@@ -613,7 +609,7 @@ def set_Stokes_Slab(pdb,sc,M,ctrl):
         element = basix.ufl.element("Lagrange", "triangle", 1, shape=(mesh.geometry.dim,))
         u_triangular = fem.functionspace(mesh,element)
         u_T = fem.Function(u_triangular)
-        u_T.name = "Velocity [cm/yr]"
+        u_T.name = "Velocity"
         u_T.interpolate(u)
         u_T.x.array[:] = u_T.x.array[:]*(sc.L/sc.T)/sc.scale_vel
         u_T.x.scatter_forward()
