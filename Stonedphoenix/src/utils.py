@@ -50,3 +50,21 @@ def get_discrete_colormap(n_colors, base_cmap='cmc.lipari'):
     color_list = base(np.linspace(0, 1, n_colors))
     return mcolors.ListedColormap(color_list, name=f'{base_cmap}_{n_colors}')
 #---------------------------------------------------------------------------
+
+def interpolate_from_sub_to_main(u_global, u_sub,VM,VSub,cells):
+    """
+    Interpolate the solution from the subdomain to the main domain.
+    
+    Parameters:
+        u_slab (Function): The solution in the subdomain.
+        u_global (Function): The solution in the main domain.
+        M (Mesh): The mesh of the main domain.
+        V (FunctionSpace): The function space of the main domain.
+    """
+    from dolfinx                         import mesh, fem, io, nls, log
+
+    interpolation_data = fem.create_interpolation_data(VM,VSub, cells, padding=1e-14)
+    
+    u_global.interpolate_nonmatching(u_sub, cells, interpolation_data=interpolation_data)
+    
+    return u_global

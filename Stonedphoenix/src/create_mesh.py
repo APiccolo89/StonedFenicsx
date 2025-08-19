@@ -280,7 +280,7 @@ def create_domain_B(mesh_model, CP, LC, g_input):
     
 
     
-    print('Finished to generate the curved loop for domain B [subducting plate]')
+    print('Finished to generate the curved loop for domain B [Wedge]')
     return mesh_model 
 
 
@@ -317,11 +317,7 @@ def create_domain_C(mesh_model, CP, LC, g_input):
             l_list = [LC.lines_R[2,0],-LC.lines_lcr[2,:],buf_array,LC.lines_T[2,:]]
             mesh_model = create_loop(l_list, mesh_model, 35)
 
-
-
-
-
-    print('Finished to generate the curved loop for domain B [subducting plate]')
+    print('Finished to generate the curved loop for domain C [Crust]')
     return mesh_model
 
 
@@ -439,7 +435,7 @@ def create_gmsh(sx,        # subduction x
 
     mesh_model.addPhysicalGroup(2, [Left_side_of_subduction_surf],  tag=dict_surf['sub_plate'])
     mesh_model.addPhysicalGroup(2, [Oceanic_Crust_surf],            tag=dict_surf['oceanic_crust'])
-    mesh_model.addPhysicalGroup(2, [Wedge],                       tag=dict_surf['wedge'])
+    mesh_model.addPhysicalGroup(2, [Wedge],                         tag=dict_surf['wedge'])
     mesh_model.addPhysicalGroup(2, [Lithhospheric_Mantle_surf],     tag=dict_surf['overriding_lm'])
     mesh_model.addPhysicalGroup(2, [Crust_LC_surf],                 tag=dict_surf['lower_crust'])
     mesh_model.addPhysicalGroup(2, [Crust_UC_surf],                 tag=dict_surf['upper_crust'])
@@ -823,12 +819,14 @@ def unit_test_mesh(ioctrl, sc):
     M.comm = comm 
     M.rank = rank 
     M.size = size 
-    
+    print_ph("")
     print_ph("               _")
     print_ph("               :")
     print_ph("[] - - - -> Finished <- - - - []")
     print_ph("               :")
     print_ph("               _")    
+    print_ph("")
+
     return M
     
 #------------------------------------------------------------------------------------------------
