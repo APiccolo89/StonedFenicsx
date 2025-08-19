@@ -43,7 +43,9 @@ spec = [('it_max', int64),
     ('time_max', float64),  # Maximum time in seconds
     ('time_dependent_v',int64),
     ('time_max', float64),
-    ('steady_state',int64)# Assuming this is a NumPy array
+    ('steady_state',int64),# Assuming this is a NumPy array
+    ('slab_bc',int64),# Assuming this is a NumPy array
+    ('decoupling',int64), # 1 decoupled, 0 coupled
 ]
 
 @jitclass(spec)
@@ -60,7 +62,9 @@ class NumericalControls:
                  v_s = np.array([5.0,0.0], dtype=np.float64),
                  steady_state = 1,
                  relax = 0.6,
-                 time_dependent_v=1):
+                 time_dependent_v=0,
+                 slab_bc=1,
+                 decoupling = 0):  # 1 moving wall, 0 pipe-like slab
 
         # Direct initialization of class attributes
         self.it_max           = it_max 
@@ -74,7 +78,8 @@ class NumericalControls:
         self.time_max         = time_max
         self.time_dependent_v = time_dependent_v
         self.steady_state     = steady_state
-        
+        self.slab_bc          = 1 # 1 moving wall, 0 pipe-like slab 
+        self.decoupling       = decoupling # 1 decoupled, 0 coupled
     
 
 class IOControls():

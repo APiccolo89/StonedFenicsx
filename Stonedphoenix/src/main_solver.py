@@ -565,7 +565,7 @@ def set_Stokes_Slab(pdb,sc,M,ctrl):
     f2 = fem.Constant(mesh, 0.0)
     L  = [ufl.inner(f, TV)*ufl.dx, ufl.inner(f2, TP)*ufl.dx]
     #a_1, a_2, a_3, L = compute_nitsche_moving_wall(mesh, eta_slab, tV, TV, tP, TP, dS_top, a_1, a_2, a_3, L ,100,ctrl.v_s[0])
-    a_1, a_2, a_3 = compute_nitsche_FS(mesh, eta_slab, tV, TV, tP, TP, dS_bot, a_1, a_2, a_3, 100.0)
+    a_1, a_2, a_3 = compute_nitsche_FS(mesh, eta_slab, tV, TV, tP, TP, dS_bot, a_1, a_2, a_3, 50.0)
 
     #a_1, a_2, a_3 = compute_nitsche_FS(mesh, eta_slab, tV, TV, tP, TP, dS_top, a_1, a_2, a_3,100.0)
     
@@ -604,7 +604,16 @@ def set_Stokes_Slab(pdb,sc,M,ctrl):
     print_ph("               :")
     print_ph("               _")
     
-    with XDMFFile(MPI.COMM_WORLD, "velocity.xdmf", "w") as ufile_xdmf:
+    if MPI.COMM_WORLD.rank == 0:
+        pt_save = 'output/'
+        if not os.path.exists(pt_save):
+            os.makedirs(pt_save)
+        pt_save = os.path.join(pt_save, "slab")
+        if not os.path.exists(pt_save):
+            os.makedirs(pt_save)    
+    
+    
+    with XDMFFile(MPI.COMM_WORLD, "%s/velocity.xdmf"%pt_save, "w") as ufile_xdmf:
         
         element = basix.ufl.element("Lagrange", "triangle", 1, shape=(mesh.geometry.dim,))
         u_triangular = fem.functionspace(mesh,element)
@@ -617,13 +626,19 @@ def set_Stokes_Slab(pdb,sc,M,ctrl):
         ufile_xdmf.write_mesh(mesh)
         ufile_xdmf.write_function(u_T)
 
-    with XDMFFile(MPI.COMM_WORLD, "pressure.xdmf", "w") as pfile_xdmf:
+    with XDMFFile(MPI.COMM_WORLD, "%s/pressure.xdmf"%ptsave, "w") as pfile_xdmf:
         p.x.scatter_forward()
+
+        p2 = fem.Function(p_subs)
+        p2.name = "Pressure"
+        p2.interpolate(p)
+        p2.x.array[:] = p2.x.array[:]*sc.stress 
+        p2.x.scatter_forward()
         pfile_xdmf.write_mesh(mesh)
-        pfile_xdmf.write_function(p)
+        pfile_xdmf.write_function(p2)
     
     
-    return u,p 
+    return u
 
 #---------------------------------------------------------------------------
 def compute_boundary_flux(u,M,boundary_id):
@@ -854,7 +869,14 @@ def main_solver_steady_state(M, S, ctrl, pdb, sc, lhs ):
     
     # -- 
     # -- 
+    Stk = M.Sol_SpaceSTK    
+    V    = Stk.sub(0)  # Velocity space
+    P    = Stk.sub(1)  # Pressure space
+    u_global = fem.function(V[0])  # Global velocity function
+    
+    
     PL          = fem.Function(M.Sol_SpaceT)
+    
     T_o = initial_temperature_field(M, ctrl, lhs)
     # -- Test and trial function for pressure and temperature 
     tT =  ufl.TrialFunction(M.Sol_SpaceT); tPL = ufl.TrialFunction(M.Sol_SpaceT) 
@@ -864,10 +886,19 @@ def main_solver_steady_state(M, S, ctrl, pdb, sc, lhs ):
     
     # Main Loop for the convergence -> check residuum of each subsystem 
     
-    F_l = set_lithostatic_problem(PL, T_o, tPL, TPL, pdb, sc, g, M )
+    PL = set_lithostatic_problem(PL, T_o, tPL, TPL, pdb, sc, g, M )
     
     
-    F_S = set_Stokes_Slab(pdb,sc,M,ctrl)
+    u_slab = set_Stokes_Slab(pdb,sc,M,ctrl)
+    
+    dofs_Sub = fem.locate_dofs_topological(V, M.domainA.smesh.topology.dim, submesh.topology.indices)
+
+    u_global.x.array[dofs_Sub] = u_slab.x.array
+    
+    
+    
+    # interpolate the velocity field from the slab to the main mesh
+    
     
     #F_S = set_stokes_wedge(PL,T_on,pdb,sc,g,M )
     
