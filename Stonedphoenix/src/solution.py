@@ -60,6 +60,70 @@ class Solution():
 
         return self 
 #---------------------------------------------------------------------------
+class Solver():
+    """
+    Solver class: it is call for setting up the problem, 
+    """
+    
+    def __init__(self,Linear,NonLinear): 
+        self.Linear    = NonLinear
+        self.NonLinear = Linear 
+    
+    def 
+    
+         
+        
+class Problem(): 
+        name     : list 
+        FS       : dolfinx.fem.function.FunctionSpace # Function space of the problem 
+        F0       : dolfinx.fem.function.FunctionSpace # Function space of the subspace 
+        F1       : dolfinx.fem.function.FunctionSpace # Function space of the subspace
+        trial0   : ufl.argument.Argument              # Trial 
+        trial1   : ufl.argument.Argument              # Trial
+        test0    : ufl.argument.Argument              # Test
+        test1    : ufl.argument.Argument              # Test 
+        bilinearF: ufl.form.Form                      # Bilinearform of the problem
+        linearF  : ufl.form.Form                      # Linear form of the problem,
+        type     : str                                # Linear/Non Linear -> decide on the phase database 
+        dofs     : np.int32                           # List of array [[tag_bc, type,array_dofs],....]
+        J        : ufl.form.Form                      # Jacobian in case non newtonian and newton solver 
+    def __init__(self, M:MESH, elements:touple, name:list)->self:
+        """
+        Arguments: 
+        self    : the class its self 
+        M       : the mesh object 
+        elements: touple containing the elements if they are more than 1 -> it assumes that the problem is mixed and populate accordingly 
+                  the trial and test function. 
+                  if elements == 1 -> FS -> trial0,test0 are going to use to form the problem 
+        -> dofs and type of boundary conditions will be populated accordingly as a function of the subclasses that are created out of this superclass 
+        name    : list ['nameoftheproblem', 'domain']
+        """
+        self.name = name 
+        if name[1] != 'global':  
+            M = getattr(M,name[1]) # extract the subdomain 
+        elif name[1] != 'domainA' and name[1] != 'domainB' and name[1] != 'domainC':
+            raise NameError('Wrong domain name')
+        elif name[1] == 'domainC':
+            printph('Are you sure? DomainC for this problem is basically junk for and is solved in thermal-pressure_lit -> stokes should not be used there')
+        if len(elements) == 1: 
+            self.FS      = dolfinx.fem.functionspace(M.mesh,elements[0]) 
+            self.trial0  = ufl.TrialFunction(self.FS)
+            self.test0   = ufl.TrialFunction(self.FS)
+        if len(elements) >1: 
+            mixed_element = 
+            self.FS      = dolfinx.fem.functionspace(M.mesh,elements[0]) 
+
+                   
+        
+        
+        
+
+            
+
+
+
+
+
 
 @timing_function
 def solve_lithostatic_problem(S, pdb, sc, g, M ):
@@ -138,13 +202,17 @@ def solve_lithostatic_problem(S, pdb, sc, g, M ):
 #---------------------------------------------------------------------------
 def solution_stokes_problem(Sol,M,ctrl,bc):
     
+    asl,Lsl,rsl,bcsl = form_stokes_variational_problem(D, S, ctrl, pdb)
+    awe,Lwe,rwe,bcwe = form_stokes_variational_problem(D, S, ctrl, pdb)
+    
+    
 
         
         
         
     return 0
 
-def form_stokes_variational_problem():
+def form_stokes_variational_problem(D, S, ctrl, pdb):
     
     
     
