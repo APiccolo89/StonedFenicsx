@@ -30,7 +30,7 @@ import basix.ufl
 from utils import timing_function, print_ph
 import dolfinx
 from dolfinx.mesh import create_submesh
-
+from dataclasses import dataclass, field
 
 def debug_plot(target,global_line,global_point,color):
     for i in range(len(target)):
@@ -95,10 +95,10 @@ class geom_input():
         self.ocr               = ocr             # oceanic crust
         self.lit_mt            = lit_mt          # lithosperic mantle  
         self.lc                = lc              # lower crust ratio 
-        self.wc                = wc              # weak zone 
+        self.wc                = wc*2              # weak zone 
         self.lt_d              = (cr+lit_mt)     # total lithosphere thickness
         self.decoupling        = decoupling      # decoupling depth -> i.e. where the weak zone is prolonged 
-        self.resolution_normal = wc*2  # To Do
+        self.resolution_normal = wc*3  # To Do
         self.theta_out_slab    = []
     
     def dimensionless_ginput(self,sc):
@@ -129,76 +129,44 @@ def assign_phases(dict_surf, cell_tags,phase):
 class Mesh(): 
     def __init__(self) :
 
-        " Class where to store the information of the mesh"
+        " Class where to store the information of the meshes"
 
-        self.mesh            : dolfinx.mesh.Mesh                     # Mesh 
-        self.mesh_Ctag       : dolfinx.mesh.MeshTags                 # Mesh cell tag       {i.e., Physical surface, where I define the phase properties}
-        self.mesh_Ftag       : dolfinx.mesh.MeshTags                 # Mesh cell face tage {i.e., Face tag, where the information of the internal boundary are stored}
-        self.Sol_Spaceph     : dolfinx.fem.function.FunctionSpace    # Function space      [mesh + element type + dof]
-        self.Sol_SpaceT      : dolfinx.fem.function.FunctionSpace    # Function space 
-        self.Sol_SpaceSTK    : dolphinx.fem.function.FunctionSpace   # Function space      
-        self.phase           : dolfinx.fem.function.Function         # Function a Field (solution potential of the function space)
-        self.g_input         : geom_input                            # Function for the geometric input
-        self.element_STK     : basix.ufl._MixedElement
-        self.element_T       : basix.ufl._BasixElement
-        
+        self.g_input         : geom_input                            # Geometric input
+        self.domainG         : Domain                                # 
         self.domainA         : Domain
         self.domainB         : Domain
         self.domainC         : Domain
-         
         self.comm            : mpi4py.MPI.Intracomm
         self.rank            : int
         self.size            : int 
  
  
-
-class Boundary:
-    pass
-
+@dataclass
 class Domain:
-    
-    name     : str
-    smesh    : dolfinx.mesh.Mesh
-    scell    : np.int32
-    snode    : np.int32
-    facets   : dolfinx.mesh.MeshTags
-    bc_dict  : dict
-    solSTK   : dolfinx.fem.function.FunctionSpace
-    solPT    : dolfinx.fem.function.FunctionSpace
-    solPh    : dolfinx.fem.function.FunctionSpace
-    TestV    : ufl.TestFunction
-    TestP    : ufl.TestFunction
-    TrialV   : ufl.TrialFunction
-    TrialP   : ufl.TrialFunction
-    phase    : dolfinx.fem.function.Function
-    
-    
-    def __init__(self, name, smesh, scell, snodes, bc, solSTK, solPT, solPh, TestV, TestP, TrialV, TrialP,ph, dict_bc):
-        self.name          = name
-        self.smesh         = smesh
-        self.scell         = scell
-        self.snode         = snodes
-        self.facets        = bc
-        self.solSTK        = solSTK 
-        self.solPT         = solPT  
-        self.solPh         = solPh  
-        self.TestV         = TestV  
-        self.TestP         = TestP  
-        self.TrialV        = TrialV 
-        self.TrialP        = TrialP 
-        self.phase         = ph 
-        self.bc_dict       = dict_bc
+    """
+    Domain stores the mesh and associated data:
+      - cell_par, node_par: parent relationships (if global mesh has submeshes)
+      - facets: tagged facets (boundary features)
+      - Tagcells: tagged cells (markers)
+      - bc_dict: dictionary of boundary condition tags/names
+      - solPh: function space for material properties
+      - phase: material phase function
+      # Admit: corrected with chatgpt, yeah, I am lazy
+    """
+    hierarchy: str = "Parent"
+    mesh: dolfinx.mesh.Mesh = None
+    cell_par: np.ndarray = field(default_factory=lambda: np.array([], dtype=np.int32))
+    node_par: np.ndarray = field(default_factory=lambda: np.array([], dtype=np.int32))
+    facets: dolfinx.mesh.MeshTags = None
+    Tagcells: dolfinx.mesh.MeshTags = None
+    bc_dict: dict = field(default_factory=dict)
+    solPh: dolfinx.fem.FunctionSpace = None
+    phase: dolfinx.fem.Function = None
         
-
 
 def create_mesh(mesh, cell_type, prune_z=False):
     """
     mesh, cell_type, remove z 
-    
-    
-    
-    
-    
     source: Dokken tutorial generating mesh 
     """
     
@@ -633,7 +601,6 @@ def create_subdomain(mesh, mesh_tag, facet_tag, phase_set, name, phase):
     submesh.topology.create_connectivity(1, 0)
     submesh.topology.create_connectivity(2, 1)
     submesh.topology.create_connectivity(1, 2)
-    bc_facet = Boundary()
     
     # Facet marker original mesh -> 
     # Select subduction: 
@@ -676,19 +643,8 @@ def create_subdomain(mesh, mesh_tag, facet_tag, phase_set, name, phase):
 
     # Create the functionsubspace for the subdomain
     
-    element_p           = basix.ufl.element("DG", "triangle", 0) 
-    element_PT          = basix.ufl.element("Lagrange","triangle",2)
-    element_V           = basix.ufl.element("Lagrange","triangle",2,shape=(2,))
-    mixed_el            = basix.ufl.mixed_element([element_V,element_p])
-    
-    Sol_SpaceSTK        = fem.functionspace(submesh,mixed_el)
-    Sol_SpaceT          = fem.functionspace(submesh,element_PT)    
     Sol_Spaceph         = fem.functionspace(submesh, ("DG", 0))      # Material ID function space # Defined in the cell space {element wise} apperently there is a black magic that
 
-    
-    # Generate trial and test function for all the problems     
-    trialV , trialP     = ufl.TrialFunctions(Sol_SpaceSTK)
-    TestV  , TestP      = ufl.TestFunctions(Sol_SpaceSTK)
     
     ph = fem.Function(Sol_Spaceph)
     ph.x.name = "phase"
@@ -696,7 +652,7 @@ def create_subdomain(mesh, mesh_tag, facet_tag, phase_set, name, phase):
     
     ph.interpolate(phase, cells0=entity_maps, cells1=np.arange(len(entity_maps)))
     
-    domain = Domain(name, submesh, entity_maps, vertex_maps, bc ,Sol_SpaceSTK, Sol_SpaceT, Sol_Spaceph, TestV, TestP, trialV, trialP, ph, dict_local)
+    domain = Domain(hierarchy = 'Child', mesh = submesh, cell_par = entity_maps, node_par = vertex_maps, facets = bc , phase = ph,solPh = Sol_Spaceph , bc_dict = dict_local)
     
     return domain
 
@@ -741,16 +697,6 @@ def create_mesh_object(mesh,sc,ioctrl,g_input):
     mesh, cell_markers, facet_markers = read_mesh(ioctrl, sc)
     
     Pph           = fem.functionspace(mesh, ("DG", 0))      # Material ID function space # Defined in the cell space {element wise} apperently there is a black magic that 
-    # Create mixed function space 
-
-    element_p       = basix.ufl.element("Lagrange", "triangle", 1) 
-    element_PT      = basix.ufl.element("Lagrange", "triangle", 2)
-    element_V       = basix.ufl.element("Lagrange", "triangle", 2, shape=(mesh.geometry.dim,))
-    
-    mixed_el        = basix.ufl.mixed_element([element_V,element_p])
-    
-    Sol_spaceSTK    = fem.functionspace(mesh,mixed_el)
-    Sol_spaceT      = fem.functionspace(mesh,element_PT)    
 
     # Define the material property field
 
@@ -762,6 +708,14 @@ def create_mesh_object(mesh,sc,ioctrl,g_input):
     phase.x.array[:] -= 1 # Rather necessary remember to put plus one once you publish it 
 
     # -- 
+    domainG = Domain(
+            mesh=mesh,
+            facets=facet_markers,
+            Tagcells=cell_markers,
+            phase=phase,
+            solPh=Pph,
+            bc_dict=dict_tag_lines,
+            )    
     
     domainA = create_subdomain(mesh, cell_markers, facet_markers, [1,2]  , 'Subduction',  phase)
     
@@ -773,15 +727,7 @@ def create_mesh_object(mesh,sc,ioctrl,g_input):
     
     MESH = Mesh()
     
-    MESH.mesh                 = mesh          # Effective mesh 
-    MESH.mesh_Ctag            = cell_markers  # the marker {Phase}
-    MESH.mesh_Ftag            = facet_markers # face tag 
-    MESH.Sol_Spaceph          = Pph           # Function space phase
-    MESH.Sol_SpaceT           = Sol_spaceT    # Function space Poisson-like proble (i.e., Temperature and lithostatic pressure)
-    MESH.Sol_SpaceSTK         = Sol_spaceSTK  # Function space stokes equation       
-    MESH.phase                = phase         # Function containing phases
-    MESH.elemet_STK           = mixed_el      
-    MESH.element_T            = element_PT
+    MESH.domainG              = domainG
     MESH.domainA              = domainA     
     MESH.domainB              = domainB
     MESH.domainC              = domainC   

@@ -758,48 +758,6 @@ def set_steady_state_thermal_problem(PL, T_on, tPL, TPL, pdb, sc, g, M ):
     return F
 
 #---------------------------------------------------------------------------
-
-def strain_rate(vel):
-    
-    return ufl.sym(ufl.grad(vel))
-#---------------------------------------------------------------------------
-    
-def eps_II(vel):
- 
-    e = strain_rate(vel)
-    
-    eII = ufl.sqrt(2 * ufl.inner(e,e)) 
-    
-    # Portion of the model do not have any strain rate, for avoiding blow up, I just put a fictitious low strain rate
-    
-    
-    return eII 
-#---------------------------------------------------------------------------
-
-def sigma(eta, u, p):
-    
-    sigma = 2 * eta * strain_rate(u) - p * ufl.Identity(2) 
-    
-    return sigma 
-
-
-#---------------------------------------------------------------------------
-def linear_stokes_solver(a, b, bcs, M):
-    
-    
-    
-    
-    return u,p 
-
-#---------------------------------------------------------------------------
-
-
-def set_dirichlet_inflow():
-    
-    return bc
-
-
-#---------------------------------------------------------------------------
 @timing_function
 def main_solver_steady_state(M, S, ctrl, pdb, sc, lhs ): 
     """

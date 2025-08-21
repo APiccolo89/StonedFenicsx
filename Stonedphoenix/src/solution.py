@@ -5,7 +5,7 @@ import ufl
 import meshio
 from mpi4py import MPI
 from petsc4py import PETSc
-
+import dolfinx 
 from dolfinx import mesh, fem, io, nls, log
 from dolfinx.fem.petsc import NonlinearProblem
 from dolfinx.nls.petsc import NewtonSolver
@@ -17,11 +17,13 @@ import scal as sc_f
 import basix.ufl
 from utils import timing_function, print_ph
 from compute_material_property import density_FX, heat_conductivity_FX, heat_capacity_FX, compute_viscosity_FX
+from create_mesh import Mesh 
+from phase_db import PhaseDataBase
 
 #--------------------------------------------------------------------------------------------------------------
 class Solution():
     def __init__(self):
-        self.PL      : dolfinx.fem.function.Function 
+        self.PL       : dolfinx.fem.function.Function 
         self.T_O      : dolfinx.fem.function.Function 
         self.T_N      : dolfinx.fem.function.Function 
         self.u_global : dolfinx.fem.function.Function
@@ -29,14 +31,33 @@ class Solution():
         self.p_lwedge : dolfinx.fem.function.Function
         self.t_owedge : dolfinx.fem.function.Function
         self.p_lslab  : dolfinx.fem.function.Function
-        self.t_oslab  : dolfinx.fem.function.Function
+        self.t_nslab  : dolfinx.fem.function.Function
         self.u_slab   : dolfinx.fem.function.Function
         self.p_global : dolfinx.fem.function.Function 
         self.p_wedge  : dolfinx.fem.function.Function 
         self.p_slab   : dolfinx.fem.function.Function
         
         
-    def create_function(self,M): 
+    def create_function(self,PG,PS,PW,elements): 
+        """
+        ======
+        I am pretty pissed off about this problem: it is impossible to have a generalised approach that can be flexible 
+        whoever had this diabolical idea, should be granted with a damnatio memoriae. So, inevitable, this class must 
+        be modified as a function of the problem at hand.
+        
+        Argument: 
+        PG : Global Problem 
+        PS : Slab Problem
+        PW : Wedge Problem
+        
+        -> update the solution functions that will be used later on. 
+        
+        =======
+        """
+        mixed_element = basix.ufl.mixed_element([elements[0], elements[1]])
+
+        space_GL = fem.functionspace(PG.FS.mesh,mixed_element) # PORCO DIO 
+        
         
         def gives_Function(space):
             Va = space.sub(0)
@@ -47,16 +68,14 @@ class Solution():
             b = fem.Function(P)
             return a,b 
         
-        self.PL       = fem.Function(M.Sol_SpaceT)
-        self.T_O      = fem.Function(M.Sol_SpaceT)
-        self.T_N      = fem.Function(M.Sol_SpaceT)
-        self.p_lwedge = fem.Function(M.domainB.solPT)
-        self.t_owedge = fem.Function(M.domainB.solPT)
-        self.p_lslab  = fem.Function(M.domainA.solPT)
-        self.t_oslab  = fem.Function(M.domainA.solPT)
-        self.u_global, self.p_global = gives_Function(M.Sol_SpaceSTK)
-        self.u_slab  , self.p_slab   = gives_Function(M.domainA.solSTK)
-        self.u_wedge , self.p_wedge  = gives_Function(M.domainB.solSTK)
+        self.PL       = fem.Function(PG.FS) # Thermal and Pressure problems share the same functional space -> Need to enforce this bullshit 
+        self.T_O      = fem.Function(PG.FS) 
+        self.T_N      = fem.Function(PG.FS)
+        self.p_lwedge = fem.Function(PW.FSPT) # PW.SolPT -> It is the only part of this lovercraftian nightmare that needs to have temperature and pressure -> Viscosity depends pressure and temperature potentially
+        self.t_nwedge = fem.Function(PW.FSPT) # same stuff as before, again, this is a nightmare: why the fuck. 
+        self.u_global, self.p_global = gives_Function(space_GL)
+        self.u_slab  , self.p_slab   = gives_Function(PS.FS)
+        self.u_wedge , self.p_wedge  = gives_Function(PW.FS)
 
         return self 
 #---------------------------------------------------------------------------
@@ -69,75 +88,84 @@ class Solver():
         self.Linear    = NonLinear
         self.NonLinear = Linear 
     
-    def 
-    
-         
-        
-class Problem(): 
-        name     : list                               # name of the problem, domain [global, domainA...]
-        mixed    : bool                               # is a mixed problem (e.g. Stokes problem has two function spaces: velocity and pressure)
-        FS       : dolfinx.fem.function.FunctionSpace # Function space of the problem 
-        F0       : dolfinx.fem.function.FunctionSpace # Function space of the subspace 
-        F1       : dolfinx.fem.function.FunctionSpace # Function space of the subspace
-        trial0   : ufl.argument.Argument              # Trial 
-        trial1   : ufl.argument.Argument              # Trial
-        test0    : ufl.argument.Argument              # Test
-        test1    : ufl.argument.Argument              # Test 
-        bilinearF: ufl.form.Form                      # Bilinearform of the problem
-        linearF  : ufl.form.Form                      # Linear form of the problem,
-        type     : str                                # Linear/Non Linear -> decide on the phase database 
-        dofs     : np.int32                           # List of array [[tag_bc, type,array_dofs],....]
-        bc       : list                               # List of dirichlecht bc 
-        J        : ufl.form.Form                      # Jacobian in case non newtonian and newton solver 
-    # -- 
-    def __init__(self, M:MESH, elements:touple, name:list)->self:
+     
+class Problem:
+    name     : list                               # name of the problem, domain [global, domainA...]
+    mixed    : bool                               # is a mixed problem (e.g. Stokes problem has two function spaces: velocity and pressure)
+    FS       : dolfinx.fem.FunctionSpace          # Function space of the problem 
+    F0       : dolfinx.fem.FunctionSpace | None   # Function space of the subspace 
+    F1       : dolfinx.fem.FunctionSpace | None   # Function space of the subspace
+    trial0   : ufl.Argument | None                # Trial 
+    trial1   : ufl.Argument | None                # Trial
+    test0    : ufl.Argument | None                # Test
+    test1    : ufl.Argument | None                # Test 
+    bilinearF: ufl.form.Form | None               # Bilinear form of the problem
+    linearF  : ufl.form.Form | None               # Linear form of the problem
+    typology : str | None                         # Linear/Non Linear
+    dofs     : np.ndarray | None                  # Boundary dofs
+    bc       : list                               # Dirichlet BC list
+    J        : ufl.form.Form | None               # Jacobian (for Newton)
+
+    # --
+    def __init__(self, M: Mesh, elements: tuple, name: list):
         """
         Arguments: 
-        self    : the class its self 
-        M       : the mesh object 
-        elements: touple containing the elements if they are more than 1 -> it assumes that the problem is mixed and populate accordingly 
-                  the trial and test function. 
-                  if elements == 1 -> FS -> trial0,test0 are going to use to form the problem 
-        -> dofs and type of boundary conditions will be populated accordingly as a function of the subclasses that are created out of this superclass 
-        name    : list ['nameoftheproblem', 'domain']
+            M       : the mesh object 
+            elements: tuple containing the elements.
+                      If >1 -> assumes mixed problem
+            name    : list ['problem_name', 'domain']
         """
         self.name = name 
-        if name[1] != 'global':  
-            M = getattr(M,name[1]) # extract the subdomain 
-        elif name[1] != 'domainA' and name[1] != 'domainB' and name[1] != 'domainC':
-            raise NameError('Wrong domain name')
-        elif name[1] == 'domainC':
-            printph('Are you sure? DomainC for this problem is basically junk for and is solved in thermal-pressure_lit -> stokes should not be used there')
+
+        if name[1] not in ("domainA", "domainB", "domainC", "domainG"):
+            raise NameError("Wrong domain name, check the spelling, in my case was it")
+        elif name[1] == "domainC":
+            print("Are you sure? DomainC is junk for this problem.")
+
+        M = getattr(M, name[1])
+
         if len(elements) == 1: 
-            self.FS       = dolfinx.fem.functionspace(M.mesh,elements[0]) 
+            self.mixed    = False
+            self.FS       = dolfinx.fem.functionspace(M.mesh, elements[0]) 
             self.trial0   = ufl.TrialFunction(self.FS)
-            self.test0    = ufl.TrialFunction(self.FS)
-        if len(elements) >1: 
-            mixed_element = basix.ufl.mixed_element([elements[0],elements[1]])
-            self.FS       = dolfinx.fem.functionspace(M.mesh,mixed_elemet)
-            self.F0       = self.FS.sub(0).collapse()
-            self.F1       = self.FS.sub(1).collapse()
-            self.trial0   = ufl.TrialFunction(self.F0)
-            self.test0    = ufl.TrialFunction(self.F0)
-            self.trial1   = ufl.TrialFunction(self.F1)
-            self.test1    = ufl.TrialFunction(self.F1)
+            self.test0    = ufl.TestFunction(self.FS)
+            self.trial1   = None
+            self.test1    = None
+        else: 
+            self.mixed    = True
+            mixed_element = basix.ufl.mixed_element([elements[0], elements[1]])
+            self.FS       = dolfinx.fem.functionspace(M.mesh, mixed_element) # MA cristoiddio, perche' cazzo hanno messo FunctionSpace and functionspace come nomi, ma sono degli stronzi?
+            # 
+            self.F0       = self.FS.sub(0)
+            self.F1       = self.FS.sub(1)
+            # Define trial/test on mixed FS
+            trial         = ufl.TrialFunction(self.FS)
+            test          = ufl.TestFunction(self.FS)
+            self.trial0   = trial[0]
+            self.trial1   = trial[1]
+            self.test0    = test[0]
+            self.test1    = test[1]    
+         
         
-        return self                    
+
+        
 #------------------------------------------------------------------
 class Global_thermal(Problem):
-    def __init__(self,M:MESH, elements:tuple, name:list,S:Solution,pdb:PhaseDataBase):
+    def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
         super().__init__(M,elements,name)
 #-----------------------------------------------------------------
 class Global_pressure(Problem): 
-    def __init__(self,M:MESH, elements:tuple, name:list,S:Solution,pdb:PhaseDataBase):
+    def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
         super().__init__(M,elements,name)
 #-----------------------------------------------------------------
 class Wedge(Problem): 
-    def __init__(self,M:MESH, elements:tuple, name:list,S:Solution,pdb:PhaseDataBase):
+    def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
         super().__init__(M,elements,name)
+        M = getattr(M,name[1])
+        self.FSPT = dolfinx.fem.functionspace(M.mesh, elements[2])  # Needed for accounting the pressure. 
 #------------------------------------------------------------------
 class Slab(Problem): 
-    def __init__(self,M:MESH, elements:tuple, name:list,S:Solution,pdb:PhaseDataBase):
+    def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
         super().__init__(M,elements,name)
 #-------------------------------------------------------------------
 @timing_function
@@ -214,27 +242,115 @@ def solve_lithostatic_problem(S, pdb, sc, g, M ):
 
     return S  
 
-#---------------------------------------------------------------------------
-def solution_stokes_problem(Sol,M,ctrl,bc):
+
+def set_ups_problem():
+    from phase_db import PhaseDataBase
+    from phase_db import _generate_phase
+    from thermal_structure_ocean import compute_initial_LHS
+    from scal import Scal 
+    import scal as sc_f 
+    from numerical_control import IOControls,NumericalControls,ctrl_LHS
     
-    asl,Lsl,rsl,bcsl = form_stokes_variational_problem(D, S, ctrl, pdb)
-    awe,Lwe,rwe,bcwe = form_stokes_variational_problem(D, S, ctrl, pdb)
+    from create_mesh import unit_test_mesh
+    # Create scal 
+    sc = Scal(L=660e3,Temp = 1350,eta = 1e21, stress = 1e9)
+    
+    ioctrl = IOControls(test_name = 'Debug_test',
+                        path_save = '../Debug_mesh',
+                        sname = 'Experimental')
+    ioctrl.generate_io()
+    # Create mesh 
+    M = unit_test_mesh(ioctrl, sc)
+            
+    print_ph("[] - - - -> Creating numerical controls <- - - - []")
+    ctrl = NumericalControls()
+    
+    ctrl = sc_f._scaling_control_parameters(ctrl, sc)
+    
+    print_ph("[] - - - -> Phase Database <- - - - []")    
+        
+    # This function can be a canvas for the main solver update. 
+    # Define elements -> would be defined in the controls 
+
+    element_p           = basix.ufl.element("Lagrange","triangle", 1) 
+    
+    element_PT          = basix.ufl.element("Lagrange","triangle",2)
+    
+    element_V           = basix.ufl.element("Lagrange","triangle",2,shape=(2,))
+    
+    #===============    
+    # Define PhaseDataBase
+    pdb = PhaseDataBase(6)
+    # Slab
+    
+    pdb = _generate_phase(pdb, 1, rho0 = 3300 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)
+    # Oceanic Crust
+    
+    pdb = _generate_phase(pdb, 2, rho0 = 2900 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e21)
+    # Wedge
+    
+    pdb = _generate_phase(pdb, 3, rho0 = 3300 , option_rho = 0, option_rheology = 3, option_k = 0, option_Cp = 0, eta=1e21)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    # 
+    
+    pdb = _generate_phase(pdb, 4, rho0 = 3250 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e23)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    #
+    
+    pdb = _generate_phase(pdb, 5, rho0 = 2800 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e21)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    #
+    
+    pdb = _generate_phase(pdb, 6, rho0 = 2700 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e21)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    #
+    
+    pdb = sc_f._scaling_material_properties(pdb,sc)
+    # Define LHS 
+
+    lhs_ctrl = ctrl_LHS()
+
+    lhs_ctrl = sc_f._scale_parameters(lhs_ctrl, sc)
+    
+    lhs_ctrl = compute_initial_LHS(ctrl,lhs_ctrl, sc, pdb)  
+          
+    # Define Problem
+    
+    # Pressure 
+    
+    lithostatic_pressure_global = Global_pressure(M = M, name = ['pressure','domainG'], elements = (element_PT,                   ), pdb = pdb)
+    
+    wedge                       = Wedge          (M = M, name = ['stokes','domainB'  ], elements = (element_V,element_p,element_PT), pdb = pdb)
+    
+    slab                        = Slab           (M = M, name = ['stokes','domainA'  ], elements = (element_V,element_p           ), pdb = pdb)
+    
+    # Define Solution 
+    sol                         = Solution()
+    
+    sol.create_function(lithostatic_pressure_global,slab,wedge,[element_V,element_p])
+    
+    print_ph('Fuck')
+    # Update and set up variational problem
+    
+    # non-linear itearion betwee pressure/stk/temperature 
+    #===============
+    # -> [a] Solve Pressure: newton picard+newton
+    #        [/] interpolate solutions from global to local 
+    #    [b] Solve Slab if (it == 0 or time_step == 0) & vel_time == 1 (mix Picard & Newton)=> iterate picard till 1e-3 -> try newton  
+    #    [c] Solve Wedge if (it==0  or time_step == 0) & (rheo == nonlinear or vel_time == 1)
+    #        [/] interpolate solutions from local to global 
+    #    [d] Solve thermal problem -> steady state / time dependent
+    #    [e] Check residuum of PL,T,u(G),p(G) -> if variation of norm(dT,dPL,du(G),dp(G))<tol -> iteration finished 
+    # ==============         
+    #    [Output] : interpoalte solution variable DG1 -> save output -> Extract additional data 
+    #             : density,k,Cp,viscosity, strain rate, pressure 
+    #    [->done<-] Create relational database, {Here I need to do a decent job, for showing off my skills to potential hiring, like the manager of an obnoxious McDonald}
+    # -------------
+    
     
     
 
-        
-        
-        
-    return 0
+    
+    return 0 
 
-def form_stokes_variational_problem(D, S, ctrl, pdb):
-    
-    
-    
-    return a,L,r 
 
-def solve_linear_stokes(S): 
+
+if __name__ == '__main__': 
     
-    
-    
-    return S
+    set_ups_problem()

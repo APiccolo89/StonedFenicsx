@@ -12,7 +12,7 @@ import time as timing
 import scipy.linalg as la 
 import scipy.sparse as sps
 import scipy.sparse.linalg.dsolve as linsolve
-import src.compute_material_property as cmp
+import compute_material_property as cmp
 from numba import njit
 
 import matplotlib.pyplot as plt
