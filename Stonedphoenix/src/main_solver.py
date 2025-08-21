@@ -41,7 +41,7 @@ from dolfinx.fem import (Constant, Function, FunctionSpace, dirichletbc,
                          extract_function_spaces, form,
                          locate_dofs_topological, locate_dofs_geometrical)
 from dolfinx import default_real_type, la
-
+from solution import solve_lithostatic_problem
 
 
 
@@ -347,21 +347,6 @@ def set_slab_dirichlecht(ctrl, V, D, theta,sc):
     slab_facets    = D.facets.find(D.bc_dict['top_subduction'])
     X              = V.tabulate_dof_coordinates()
     dofs        = fem.locate_dofs_topological(V, fdim, slab_facets)
-    
-    # dofs on subspaces (entities = facet indices!)
-    dofs_in_x  = fem.locate_dofs_topological(V.sub(0), fdim, inflow_facets)
-    dofs_in_y  = fem.locate_dofs_topological(V.sub(1), fdim, inflow_facets)
-    dofs_out_x = fem.locate_dofs_topological(V.sub(0), fdim, outflow_facets)
-    dofs_out_y = fem.locate_dofs_topological(V.sub(1), fdim, outflow_facets)
-    dofs_s_x   = fem.locate_dofs_topological(V.sub(0), fdim, slab_facets)
-    dofs_s_y   = fem.locate_dofs_topological(V.sub(1), fdim, slab_facets)
-    
-    
-    # scalar BCs on subspaces
-    #bc_left_x   = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]), dofs_in_x,  V.sub(0))
-    #bc_left_y   = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[1]), dofs_in_y,  V.sub(1))
-    #bc_bottom_x = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]*np.cos(theta)), dofs_out_x, V.sub(0))
-    #bc_bottom_y = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]*np.sin(theta)), dofs_out_y, V.sub(1))
     
     #nx,ny = compute_normal(X,dofs)
     ds = ufl.Measure("ds", domain=mesh, subdomain_data=D.facets)
@@ -761,74 +746,6 @@ def initial_temperature_field(M, ctrl, lhs):
 
 #---------------------------------------------------------------------------
 
-@timing_function
-def set_lithostatic_problem(PL, T_o, tPL, TPL, pdb, sc, g, M ):
-    """
-    PL  : function
-    T_o : previous Temperature field
-    tPL : trial function for lithostatic pressure 
-    TPL : test function for lithostatic pressure
-    pdb : phase data base 
-    sc  : scaling 
-    g   : gravity vector 
-    M   : Mesh object 
-    --- 
-    Output: current lithostatic pressure. 
-    
-    To do: Improve the solver options and make it faster
-    create an utils function for timing. 
-    
-    """
-    print_ph("[] - - - -> Solving Lithostatic pressure problem <- - - - []")
-
-    
-    flag = 1 
-    fdim = M.mesh.topology.dim - 1    
-    top_facets   = M.mesh_Ftag.find(1)
-    top_dofs    = fem.locate_dofs_topological(M.Sol_SpaceT, M.mesh.topology.dim-1, top_facets)
-    bc = fem.dirichletbc(0.0, top_dofs, M.Sol_SpaceT)
-    
-    # -> yeah only rho counts here. 
-    if (np.all(pdb.option_rho) == 0):
-        flag = 0
-        bilinear = ufl.dot(ufl.grad(TPL), ufl.grad(tPL)) * ufl.dx
-        linear   = ufl.dot(ufl.grad(TPL), density_FX(pdb, T_o, PL, M.phase,M.mesh)*g) * ufl.dx
-        problem = fem.petsc.LinearProblem(bilinear, linear, bcs=[bc], petsc_options={"ksp_type": "preonly", "pc_type": "lu","pc_factor_mat_solver_type": "mumps"})
-        
-        PL = problem.solve()
-                
-    
-    if flag !=0: 
-        # Solve lithostatic pressure - Non linear 
-        F = ufl.dot(ufl.grad(PL), ufl.grad(TPL)) * ufl.dx - ufl.dot(ufl.grad(TPL), density_FX(pdb, T_o, PL, M.phase,M.mesh)*g) * ufl.dx
-
-        problem = fem.petsc.NonlinearProblem(F, PL, bcs=[bc])
-        solver = NewtonSolver(MPI.COMM_WORLD, problem)
-        solver.convergence_criterion = "incremental"
-        solver.rtol = 1e-5
-        solver.report = True
-        ksp = solver.krylov_solver
-        opts = PETSc.Options()
-        option_prefix = ksp.getOptionsPrefix()
-        opts[f"{option_prefix}ksp_type"] = "gmres"
-        opts[f"{option_prefix}ksp_rtol"] = 1.0e-5
-        ksp.setFromOptions()
-        n, converged = solver.solve(PL)
-    local_max = np.max(PL.x.array)
-    print_ph("[] - - - -> Solved <- - - - []")
-
-    # Global min and max using MPI reduction
-    global_max = M.comm.allreduce(local_max, op=MPI.MAX)
-    print_ph(f"// - - - /Global max lithostatic pressure is    : {global_max*sc.stress/1e9:.2f}[GPa]/")
-    print_ph("               _")
-    print_ph("               :")
-    print_ph("[] - - - -> Finished <- - - - []")
-    print_ph("               :")
-    print_ph("               _")
-    return PL 
-
-#---------------------------------------------------------------------------
-
 def set_steady_state_thermal_problem(PL, T_on, tPL, TPL, pdb, sc, g, M ):
     
     
@@ -924,20 +841,17 @@ def main_solver_steady_state(M, S, ctrl, pdb, sc, lhs ):
     P, _ = P0.collapse()  # Pressure function space
     #------
     u_global = fem.Function(V)  # Global velocity function
-    PL          = fem.Function(M.Sol_SpaceT)
     #------
     
     
-    T_o = initial_temperature_field(M, ctrl, lhs)
-    # -- Test and trial function for pressure and temperature 
-    tT =  ufl.TrialFunction(M.Sol_SpaceT); tPL = ufl.TrialFunction(M.Sol_SpaceT) 
-    TT = ufl.TestFunction(M.Sol_SpaceT)  ; TPL = ufl.TestFunction(M.Sol_SpaceT)
+    S.T_O = initial_temperature_field(M, ctrl, lhs)
+
     # -- 
     g = fem.Constant(M.mesh, PETSc.ScalarType([0.0, -ctrl.g]))    
     
     # Main Loop for the convergence -> check residuum of each subsystem 
     
-    PL       = set_lithostatic_problem(PL, T_o, tPL, TPL, pdb, sc, g, M )
+    S        = solve_lithostatic_problem(S, pdb, sc, g, M )
     
     u_slab   = set_Stokes_Slab(pdb,sc,M,ctrl)
     
@@ -945,7 +859,7 @@ def main_solver_steady_state(M, S, ctrl, pdb, sc, lhs ):
         
     u_wedge  = set_Stokes_Wedge(pdb,sc,M,ctrl)
 
-    u_wedge = interpolate_from_sub_to_main(u_global, u_wedge,V,M.domainB.solSTK.sub(0).collapse()[0],M.domainB.scell)
+    u_global = interpolate_from_sub_to_main(u_global, u_wedge,V,M.domainB.solSTK.sub(0).collapse()[0],M.domainB.scell)
     
 
     # interpolate the velocity field from the slab to the main mesh
@@ -1028,6 +942,7 @@ def unit_test():
     # call the lithostatic pressure 
     
     S   = Solution()
+    S.create_function(M)
     
     main_solver_steady_state(M, S, ctrl, pdb, sc, lhs_ctrl )
     

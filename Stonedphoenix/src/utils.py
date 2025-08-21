@@ -51,7 +51,7 @@ def get_discrete_colormap(n_colors, base_cmap='cmc.lipari'):
     return mcolors.ListedColormap(color_list, name=f'{base_cmap}_{n_colors}')
 #---------------------------------------------------------------------------
 
-def interpolate_from_sub_to_main(u_global, u_sub,VM,VSub,cells):
+def interpolate_from_sub_to_main(u_dest, u_start, cells,parent2child=0):
     """
     Interpolate the solution from the subdomain to the main domain.
     
@@ -62,9 +62,15 @@ def interpolate_from_sub_to_main(u_global, u_sub,VM,VSub,cells):
         V (FunctionSpace): The function space of the main domain.
     """
     from dolfinx                         import mesh, fem, io, nls, log
+    import numpy as np
+    if parent2child == 0: 
+        a = np.arange(len(cells))
+        b = cells
+    else: 
+        a = cells
+        b = np.arange(len(cells))
+    
+    
+    u_dest.interpolate(u_start,cells0=a,cells1=b)
 
-    interpolation_data = fem.create_interpolation_data(VM,VSub, cells, padding=1e-14)
-    
-    u_global.interpolate_nonmatching(u_sub, cells, interpolation_data=interpolation_data)
-    
-    return u_global
+    return u_dest
