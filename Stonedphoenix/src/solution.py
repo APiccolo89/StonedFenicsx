@@ -74,7 +74,8 @@ class Solver():
          
         
 class Problem(): 
-        name     : list 
+        name     : list                               # name of the problem, domain [global, domainA...]
+        mixed    : bool                               # is a mixed problem (e.g. Stokes problem has two function spaces: velocity and pressure)
         FS       : dolfinx.fem.function.FunctionSpace # Function space of the problem 
         F0       : dolfinx.fem.function.FunctionSpace # Function space of the subspace 
         F1       : dolfinx.fem.function.FunctionSpace # Function space of the subspace
@@ -86,7 +87,9 @@ class Problem():
         linearF  : ufl.form.Form                      # Linear form of the problem,
         type     : str                                # Linear/Non Linear -> decide on the phase database 
         dofs     : np.int32                           # List of array [[tag_bc, type,array_dofs],....]
+        bc       : list                               # List of dirichlecht bc 
         J        : ufl.form.Form                      # Jacobian in case non newtonian and newton solver 
+    # -- 
     def __init__(self, M:MESH, elements:touple, name:list)->self:
         """
         Arguments: 
@@ -106,25 +109,37 @@ class Problem():
         elif name[1] == 'domainC':
             printph('Are you sure? DomainC for this problem is basically junk for and is solved in thermal-pressure_lit -> stokes should not be used there')
         if len(elements) == 1: 
-            self.FS      = dolfinx.fem.functionspace(M.mesh,elements[0]) 
-            self.trial0  = ufl.TrialFunction(self.FS)
-            self.test0   = ufl.TrialFunction(self.FS)
+            self.FS       = dolfinx.fem.functionspace(M.mesh,elements[0]) 
+            self.trial0   = ufl.TrialFunction(self.FS)
+            self.test0    = ufl.TrialFunction(self.FS)
         if len(elements) >1: 
-            mixed_element = 
-            self.FS      = dolfinx.fem.functionspace(M.mesh,elements[0]) 
-
-                   
+            mixed_element = basix.ufl.mixed_element([elements[0],elements[1]])
+            self.FS       = dolfinx.fem.functionspace(M.mesh,mixed_elemet)
+            self.F0       = self.FS.sub(0).collapse()
+            self.F1       = self.FS.sub(1).collapse()
+            self.trial0   = ufl.TrialFunction(self.F0)
+            self.test0    = ufl.TrialFunction(self.F0)
+            self.trial1   = ufl.TrialFunction(self.F1)
+            self.test1    = ufl.TrialFunction(self.F1)
         
-        
-        
-
-            
-
-
-
-
-
-
+        return self                    
+#------------------------------------------------------------------
+class Global_thermal(Problem):
+    def __init__(self,M:MESH, elements:tuple, name:list,S:Solution,pdb:PhaseDataBase):
+        super().__init__(M,elements,name)
+#-----------------------------------------------------------------
+class Global_pressure(Problem): 
+    def __init__(self,M:MESH, elements:tuple, name:list,S:Solution,pdb:PhaseDataBase):
+        super().__init__(M,elements,name)
+#-----------------------------------------------------------------
+class Wedge(Problem): 
+    def __init__(self,M:MESH, elements:tuple, name:list,S:Solution,pdb:PhaseDataBase):
+        super().__init__(M,elements,name)
+#------------------------------------------------------------------
+class Slab(Problem): 
+    def __init__(self,M:MESH, elements:tuple, name:list,S:Solution,pdb:PhaseDataBase):
+        super().__init__(M,elements,name)
+#-------------------------------------------------------------------
 @timing_function
 def solve_lithostatic_problem(S, pdb, sc, g, M ):
     """
