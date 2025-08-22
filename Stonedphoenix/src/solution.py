@@ -79,33 +79,70 @@ class Solution():
 
         return self 
 #---------------------------------------------------------------------------
-class Solver():
-    """
-    Solver class: it is call for setting up the problem, 
-    """
-    
-    def __init__(self,Linear,NonLinear): 
-        self.Linear    = NonLinear
-        self.NonLinear = Linear 
-    
-     
-class Problem:
-    name     : list                               # name of the problem, domain [global, domainA...]
-    mixed    : bool                               # is a mixed problem (e.g. Stokes problem has two function spaces: velocity and pressure)
-    FS       : dolfinx.fem.FunctionSpace          # Function space of the problem 
-    F0       : dolfinx.fem.FunctionSpace | None   # Function space of the subspace 
-    F1       : dolfinx.fem.FunctionSpace | None   # Function space of the subspace
-    trial0   : ufl.Argument | None                # Trial 
-    trial1   : ufl.Argument | None                # Trial
-    test0    : ufl.Argument | None                # Test
-    test1    : ufl.Argument | None                # Test 
-    bilinearF: ufl.form.Form | None               # Bilinear form of the problem
-    linearF  : ufl.form.Form | None               # Linear form of the problem
-    typology : str | None                         # Linear/Non Linear
-    dofs     : np.ndarray | None                  # Boundary dofs
-    bc       : list                               # Dirichlet BC list
-    J        : ufl.form.Form | None               # Jacobian (for Newton)
+class Solvers():
+    pass
 
+
+class  ScalarSolver(Solvers):
+    """
+    class that store all the information for scalar like problems. Temperature and lithostatic pressure (potentially darcy like) are similar problem 
+    they diffuse and advect a scalar. 
+    --- 
+    So -> Solver are more or less the same, I can store a few things and update as a function of the needs. 
+    --- 
+    Solve function require the problem P -> and a decision between linear and non linear -> form are handled by p class, so I do not give a fuck in this class 
+    for now all the parameter will be default. 
+    """
+    def __init__(self,A ,b ,COMM, nl, J = None, r = None)
+        self.A = fem.petsc.create_matrix(fem.form(A)) # Store the sparsisity 
+        self.b = fem.petsc.create_matrix(fem.form(b)) # Store the vector
+        self.ksp = PETSc.KSP().create(COMM)           # Create the ksp object 
+        self.ksp.setOperators(self.A)                # Set Operator
+        self.ksp.ksp_type =  "gmres"
+        self.ksp_rtol = 1.0e-4
+        self.ksp_atol = 1e-3 
+        self.ksp.pc_type = "lu"
+        self.ksp.pc_factor_mat_solver_type = "mumps"
+        if nl == 1: 
+            self.J = fem.petsc.create_matrix(fem.form(J))
+            self.r = fem.petsc.create_vector(fem.form(r))
+            
+        else: 
+            self.J = None
+            self.r = None 
+    
+    
+
+
+#class SolverStokes(): 
+
+
+
+        
+        
+        
+        
+        
+        
+
+    
+#----------------------------------------------------------------------------     
+class Problem:
+    name      : list                               # name of the problem, domain [global, domainA...]
+    mixed     : bool                               # is a mixed problem (e.g. Stokes problem has two function spaces: velocity and pressure)
+    FS        : dolfinx.fem.FunctionSpace          # Function space of the problem 
+    F0        : dolfinx.fem.FunctionSpace | None   # Function space of the subspace 
+    F1        : dolfinx.fem.FunctionSpace | None   # Function space of the subspace
+    trial0    : ufl.Argument | None                # Trial 
+    trial1    : ufl.Argument | None                # Trial
+    test0     : ufl.Argument | None                # Test
+    test1     : ufl.Argument | None                # Test 
+    typology  : str | None                         # Linear/Non Linear
+    dofs      : np.ndarray | None                  # Boundary dofs
+    bc        : list                               # Dirichlet BC list
+    dx        : ufl.measure.Measure                # measure volumetric/surface 
+    ds        : ufl.measure.Measure                # measure surface/length 
+    solv      : Solvers
     # --
     def __init__(self, M: Mesh, elements: tuple, name: list):
         """
@@ -157,6 +194,100 @@ class Global_thermal(Problem):
 class Global_pressure(Problem): 
     def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
         super().__init__(M,elements,name)
+        if pdb.option_rho < 2: 
+            self.typology = 'LinearProblem'
+        else
+            self.typology = 'NonlinearProblem'
+
+        self.bilinearF, self.LinearF, self.ResidualF, self.J = set_the_form()
+
+    
+    def set_newton(p,D,T,p,g):
+        test   = self.test0                 # v
+        trial0 = self.trial0                # δp (TrialFunction) for Jacobian
+
+        a_lin = ufl.inner(ufl.grad(p), ufl.grad(test)) * self.dx
+        L     = ufl.inner(ufl.grad(test),
+                              density_FX(pdb, T, p, D.phase, Dmesh) * g) * self.dx
+        # Nonlinear residual: F(p; v) = ∫ ∇p·∇v dx - ∫ ∇v·(ρ(T, p) g) dx
+        F = a_lin - L
+        # Jacobian dF/dp in direction δp (trial0)
+        J = ufl.derivative(F, p, trial0)
+        
+        return F,J 
+    
+    
+    def set_linear_picard(p_k,T,D):
+        # Function that set linear form and linear picard for picard iteration
+        
+        rho_k = density_FX(pdb, T, p_k, D.phase, D.mesh)  # frozen
+        
+        # Linear operator with frozen coefficients
+        
+        a = ufl.inner(ufl.grad(self.trial0), ufl.grad(selt.test0)) * dx
+        
+        L = ufl.inner(ufl.grad(self.test0), rho_k * g) * dx
+        
+
+        return a, L
+
+    def Solve_the_Problem(self,it=0,ts=0,S,ctrl,pdb,M,g): 
+        
+        nl = 0 
+        p_k = S.PL.copy(deepcopy=True)  # Previous lithostatic pressure 
+        T   = S.T_O # -> will not eventually update 
+        
+        # If the problem is linear, p_k is not doing anything, it is there because I
+        # design the density function to receive in anycase a pressure, potentially I
+        # can use the multipledispach of python, which say ah density with pressure 
+        # density without pressure is equal to fuck. But seems a bit lame, and I do 
+        # not think that is a great improvement of the code. 
+        
+        a,L = self.set_linear_picard(p_k,T,getattr(M,'domainG'))
+        if self.typology == 'NonlinearProblem':
+            F,J = self.set_newton(p_k,D,T,p,g)
+            nl = 1 
+        else: 
+            F = None;J=None 
+
+        if it == 0 & ts == 0: 
+            self.solv = ScalarSolver(A,b,M.comm,nl,J,F)
+        
+        if nl == 0: 
+            S = self.solve_the_linear(S) 
+        else: 
+            S = self.solve_the_non_linear(S)
+
+        return S 
+    
+    def solve_the_linear(S,a,L):
+        
+        x = fem.Function(self.FS)
+        
+        self.A.zeroEntries()
+        fem.petsc.assemble_matrix(A,fem.form(a),self.bc)
+        self.A.assemble()
+        b.set(0.0)
+        fem.petsc.assemble_vector(b, L_form)
+        fem.petsc.apply_lifting(b, [fem.form(a)], [self.bc])
+        b.ghostUpdate(addv=fem.petsc.ScatterMode.ADD_VALUES,
+                  mode=fem.petsc.ScatterMode.REVERSE)
+        fem.petsc.set_bc(b, self.bc)
+        ksp.solve(b, x.vector)
+        x.x.scatter_forward()
+        self.PL = x.copy(deepcopy==True)
+        
+        return S 
+        
+        
+        
+        
+                
+        
+        
+        
+        
+        
 #-----------------------------------------------------------------
 class Wedge(Problem): 
     def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
