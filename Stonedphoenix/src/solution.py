@@ -93,16 +93,16 @@ class  ScalarSolver(Solvers):
     Solve function require the problem P -> and a decision between linear and non linear -> form are handled by p class, so I do not give a fuck in this class 
     for now all the parameter will be default. 
     """
-    def __init__(self,A ,b ,COMM, nl, J = None, r = None)
+    def __init__(self,A ,b ,COMM, nl, J = None, r = None):
         self.A = fem.petsc.create_matrix(fem.form(A)) # Store the sparsisity 
-        self.b = fem.petsc.create_matrix(fem.form(b)) # Store the vector
+        self.b = fem.petsc.create_vector(fem.form(b)) # Store the vector
         self.ksp = PETSc.KSP().create(COMM)           # Create the ksp object 
         self.ksp.setOperators(self.A)                # Set Operator
-        self.ksp.ksp_type =  "gmres"
-        self.ksp_rtol = 1.0e-4
-        self.ksp_atol = 1e-3 
-        self.ksp.pc_type = "lu"
-        self.ksp.pc_factor_mat_solver_type = "mumps"
+        self.ksp.setType("gmres")
+        self.ksp.setTolerances(rtol=1e-4, atol=1e-3)
+        self.pc = self.ksp.getPC()
+        self.pc.setType("lu")
+        self.pc.setFactorSolverType("mumps")
         if nl == 1: 
             self.J = fem.petsc.create_matrix(fem.form(J))
             self.r = fem.petsc.create_vector(fem.form(r))
@@ -140,7 +140,6 @@ class Problem:
     typology  : str | None                         # Linear/Non Linear
     dofs      : np.ndarray | None                  # Boundary dofs
     bc        : list                               # Dirichlet BC list
-    dx        : ufl.measure.Measure                # measure volumetric/surface 
     ds        : ufl.measure.Measure                # measure surface/length 
     solv      : Solvers
     # --
@@ -153,7 +152,6 @@ class Problem:
             name    : list ['problem_name', 'domain']
         """
         self.name = name 
-
         if name[1] not in ("domainA", "domainB", "domainC", "domainG"):
             raise NameError("Wrong domain name, check the spelling, in my case was it")
         elif name[1] == "domainC":
@@ -194,21 +192,27 @@ class Global_thermal(Problem):
 class Global_pressure(Problem): 
     def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
         super().__init__(M,elements,name)
-        if pdb.option_rho < 2: 
+        if np.all(pdb.option_rho<2):
             self.typology = 'LinearProblem'
-        else
+        else:
             self.typology = 'NonlinearProblem'
 
-        self.bilinearF, self.LinearF, self.ResidualF, self.J = set_the_form()
-
+        self.bc = [self.set_problem_bc(getattr(M,'domainG'))]
+    def set_problem_bc(self,M):
+         
+        fdim = 1    
+        top_facets   = M.facets.find(M.bc_dict['Top'])
+        top_dofs    = fem.locate_dofs_topological(self.FS, 1, top_facets)
+        bc = [fem.dirichletbc(0.0, top_dofs, self.FS)]
+        return bc  
     
-    def set_newton(p,D,T,p,g):
+    def set_newton(self,p,D,T,g):
         test   = self.test0                 # v
         trial0 = self.trial0                # δp (TrialFunction) for Jacobian
 
-        a_lin = ufl.inner(ufl.grad(p), ufl.grad(test)) * self.dx
+        a_lin = ufl.inner(ufl.grad(p), ufl.grad(test)) * ufl.dx
         L     = ufl.inner(ufl.grad(test),
-                              density_FX(pdb, T, p, D.phase, Dmesh) * g) * self.dx
+                              density_FX(pdb, T, p, D.phase, Dmesh) * g) * ufl.dx
         # Nonlinear residual: F(p; v) = ∫ ∇p·∇v dx - ∫ ∇v·(ρ(T, p) g) dx
         F = a_lin - L
         # Jacobian dF/dp in direction δp (trial0)
@@ -217,24 +221,24 @@ class Global_pressure(Problem):
         return F,J 
     
     
-    def set_linear_picard(p_k,T,D):
+    def set_linear_picard(self,p_k,T,D,pdb,g):
         # Function that set linear form and linear picard for picard iteration
         
         rho_k = density_FX(pdb, T, p_k, D.phase, D.mesh)  # frozen
         
         # Linear operator with frozen coefficients
         
-        a = ufl.inner(ufl.grad(self.trial0), ufl.grad(selt.test0)) * dx
+        a = ufl.inner(ufl.grad(self.trial0), ufl.grad(self.test0)) * ufl.dx
         
-        L = ufl.inner(ufl.grad(self.test0), rho_k * g) * dx
+        L = ufl.inner(ufl.grad(self.test0), rho_k * g) * ufl.dx
         
 
         return a, L
 
-    def Solve_the_Problem(self,it=0,ts=0,S,ctrl,pdb,M,g): 
+    def Solve_the_Problem(self,S,ctrl,pdb,M,g,it=0,ts=0): 
         
         nl = 0 
-        p_k = S.PL.copy(deepcopy=True)  # Previous lithostatic pressure 
+        p_k = S.PL.copy()  # Previous lithostatic pressure 
         T   = S.T_O # -> will not eventually update 
         
         # If the problem is linear, p_k is not doing anything, it is there because I
@@ -243,7 +247,8 @@ class Global_pressure(Problem):
         # density without pressure is equal to fuck. But seems a bit lame, and I do 
         # not think that is a great improvement of the code. 
         
-        a,L = self.set_linear_picard(p_k,T,getattr(M,'domainG'))
+        a,L = self.set_linear_picard(p_k,T,getattr(M,'domainG'),pdb,g)
+        
         if self.typology == 'NonlinearProblem':
             F,J = self.set_newton(p_k,D,T,p,g)
             nl = 1 
@@ -251,22 +256,23 @@ class Global_pressure(Problem):
             F = None;J=None 
 
         if it == 0 & ts == 0: 
-            self.solv = ScalarSolver(A,b,M.comm,nl,J,F)
+            self.solv = ScalarSolver(a,L,M.comm,nl,J,F)
         
         if nl == 0: 
-            S = self.solve_the_linear(S) 
+            S = self.solve_the_linear(S,a,L) 
         else: 
-            S = self.solve_the_non_linear(S)
+            S = self.solve_the_non_linear(S,ctrl,pdb)
 
         return S 
     
-    def solve_the_linear(S,a,L):
+    def solve_the_linear(self,S,a,L,isPicard=0,it=0,ts=0):
         
         x = fem.Function(self.FS)
-        
-        self.A.zeroEntries()
-        fem.petsc.assemble_matrix(A,fem.form(a),self.bc)
-        self.A.assemble()
+        if isPicard == 0 or it == 0 or ts == 0:
+            self.A.zeroEntries()
+            fem.petsc.assemble_matrix(A,fem.form(a),self.bc)
+            self.A.assemble()
+        # b -> can change as it is the part that depends on the pressure in case of nonlinearities
         b.set(0.0)
         fem.petsc.assemble_vector(b, L_form)
         fem.petsc.apply_lifting(b, [fem.form(a)], [self.bc])
@@ -275,13 +281,18 @@ class Global_pressure(Problem):
         fem.petsc.set_bc(b, self.bc)
         ksp.solve(b, x.vector)
         x.x.scatter_forward()
-        self.PL = x.copy(deepcopy==True)
         
-        return S 
+        if isPicard == 0: # if it is a picard iteration the function gives the function 
+            S.PL = x.copy(deepcopy==True)
+            return S 
+        else:
+            return x 
+    
+    def solve_the_non_linear():  
+        pass 
         
         
-        
-        
+
                 
         
         
@@ -451,12 +462,18 @@ def set_ups_problem():
     
     slab                        = Slab           (M = M, name = ['stokes','domainA'  ], elements = (element_V,element_p           ), pdb = pdb)
     
+    g = fem.Constant(M.domainG.mesh, PETSc.ScalarType([0.0, -ctrl.g]))    
+
     # Define Solution 
     sol                         = Solution()
     
     sol.create_function(lithostatic_pressure_global,slab,wedge,[element_V,element_p])
     
-    print_ph('Fuck')
+    lithostatic_pressure_global.Solve_the_Problem(sol,ctrl,pdb,M,g,it=0,ts=0)
+    
+    
+    
+    
     # Update and set up variational problem
     
     # non-linear itearion betwee pressure/stk/temperature 

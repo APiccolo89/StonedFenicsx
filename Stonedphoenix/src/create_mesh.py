@@ -76,6 +76,31 @@ Updated Branch: The mesh is created as a function of the slab geometry: first, t
                 that after the first working example would be worth to simplify the work flow. 
                 General rule: If I copy or take ispiration for pre-existing software I cite in the function where do I steal the idea. 
 """
+dict_surf = {
+    'sub_plate'         : 1,
+    'oceanic_crust'     : 2,
+    'wedge'             : 3,
+    'overriding_lm'     : 4,
+    'upper_crust'       : 5,
+    'lower_crust'       : 6,
+}
+
+dict_tag_lines = {
+    'Top'               : 1,
+    'Right_lit'         : 2,
+    'Right_wed'         : 3,
+    'Bottom_wed'        : 4,
+    'Bottom_sla'        : 5,
+    'Subduction_bot'    : 6,
+    'Left_inlet'        : 7,
+    'Subduction_top_lit': 8,
+    'Subduction_top_wed': 9,
+    'Oceanic'           : 10,
+    'Overriding_mantle' : 11,
+    'Crust_overplate'   : 12,
+    'LCrust_overplate'  : 13,
+}
+
 
 class geom_input():
     def __init__(self,
@@ -188,30 +213,7 @@ def from_line_to_point_coordinate(L,LG,GP):
     return p0, p1, coord_x, coord_y 
 
 
-dict_surf = {
-    'sub_plate'         : 1,
-    'oceanic_crust'     : 2,
-    'wedge'             : 3,
-    'overriding_lm'     : 4,
-    'upper_crust'       : 5,
-    'lower_crust'       : 6,
-}
 
-dict_tag_lines = {
-    'Top'               : 1,
-    'Right_lit'         : 2,
-    'Right_wed'         : 3,
-    'Bottom_wed'        : 4,
-    'Bottom_sla'        : 5,
-    'Subduction_bot'    : 6,
-    'Left_inlet'        : 7,
-    'Subduction_top_lit': 8,
-    'Subduction_top_wed': 9,
-    'Oceanic'           : 10,
-    'Overriding_mantle' : 11,
-    'Crust_overplate'   : 12,
-    'LCrust_overplate'  : 13,
-}
 
 def create_domain_A(mesh_model, CP, LC, g_input):
     """
