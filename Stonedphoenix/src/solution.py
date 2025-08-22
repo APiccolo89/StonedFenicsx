@@ -267,19 +267,19 @@ class Global_pressure(Problem):
     
     def solve_the_linear(self,S,a,L,isPicard=0,it=0,ts=0):
         
-        x = fem.Function(self.FS)
+        buf = fem.Function(self.FS)
+        x   = self.solv.b.copy()
         if isPicard == 0 or it == 0 or ts == 0:
-            self.A.zeroEntries()
-            fem.petsc.assemble_matrix(A,fem.form(a),self.bc)
-            self.A.assemble()
+            self.solv.A.zeroEntries()
+            fem.petsc.assemble_matrix(self.solv.A,fem.form(a),self.bc[0])
+            self.solv.A.assemble()
         # b -> can change as it is the part that depends on the pressure in case of nonlinearities
-        b.set(0.0)
-        fem.petsc.assemble_vector(b, L_form)
-        fem.petsc.apply_lifting(b, [fem.form(a)], [self.bc])
-        b.ghostUpdate(addv=fem.petsc.ScatterMode.ADD_VALUES,
-                  mode=fem.petsc.ScatterMode.REVERSE)
-        fem.petsc.set_bc(b, self.bc)
-        ksp.solve(b, x.vector)
+        self.solv.b.set(0.0)
+        fem.petsc.assemble_vector(self.solv.b, fem.form(L))
+        fem.petsc.apply_lifting(self.solv.b, [fem.form(a)], self.bc)
+        self.solv.b.ghostUpdate()
+        fem.petsc.set_bc(self.solv.b, self.bc[0])
+        self.solv.ksp.solve(self.solv.b, x)
         x.x.scatter_forward()
         
         if isPicard == 0: # if it is a picard iteration the function gives the function 
