@@ -326,7 +326,7 @@ class Global_pressure(Problem):
             
             it = it + 1 
             
-        # --- Newton => 
+        # --- Newton =>         
         F,J = self.set_newton(p_k,getattr(M,'domainG'),S.T_O,g,pdb)
         
         problem = fem.petsc.NonlinearProblem(F, p_k, bcs=self.bc[0], J=J)
@@ -343,7 +343,7 @@ class Global_pressure(Problem):
         S.PL.x.array[:] = p_k.x.array[:]
         local_max = np.max(p_k.x.array[:])
         global_max = M.comm.allreduce(local_max, op=MPI.MAX)
-        print_ph(f"// - - - /Global max lithostatic pressure is    : {global_max*sc.stress:.2f}[n.d.]/")
+        print_ph(f"// - - - /Global max lithostatic pressure is    : {global_max:.2f}[n.d.]/")
         
         time_B = timing.time()
         print_ph(f'// -- // --- Solution of Lithostatic pressure problem finished in {time_B-time_A:.2f} sec')
