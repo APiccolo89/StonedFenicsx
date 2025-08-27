@@ -24,6 +24,14 @@ def timing_function(fun):
             print(f"{fun.__name__} took {dt:.2f} sec")
         return result
     return wrapper
+
+def time_the_time(dt):
+    comm = MPI.COMM_WORLD 
+    global_dt = comm.allreduce(dt,op=MPI.MAX)
+    
+    return global_dt 
+
+    
 #---------------------------------------------------------------------------------------------------------
 def print_ph(string):
     

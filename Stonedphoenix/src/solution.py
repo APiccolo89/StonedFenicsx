@@ -15,10 +15,12 @@ import gmsh
 from ufl import exp, conditional, eq, as_ufl
 import scal as sc_f 
 import basix.ufl
-from utils import timing_function, print_ph
+from utils import timing_function, print_ph,time_the_time
 from compute_material_property import density_FX, heat_conductivity_FX, heat_capacity_FX, compute_viscosity_FX
 from create_mesh import Mesh 
 from phase_db import PhaseDataBase
+import time                          as timing
+
 
 #--------------------------------------------------------------------------------------------------------------
 class Solution():
@@ -206,13 +208,13 @@ class Global_pressure(Problem):
         bc = [fem.dirichletbc(0.0, top_dofs, self.FS)]
         return bc  
     
-    def set_newton(self,p,D,T,g):
+    def set_newton(self,p,D,T,g,pdb):
         test   = self.test0                 # v
         trial0 = self.trial0                # δp (TrialFunction) for Jacobian
 
         a_lin = ufl.inner(ufl.grad(p), ufl.grad(test)) * ufl.dx
         L     = ufl.inner(ufl.grad(test),
-                              density_FX(pdb, T, p, D.phase, Dmesh) * g) * ufl.dx
+                              density_FX(pdb, T, p, D.phase, D.mesh) * g) * ufl.dx
         # Nonlinear residual: F(p; v) = ∫ ∇p·∇v dx - ∫ ∇v·(ρ(T, p) g) dx
         F = a_lin - L
         # Jacobian dF/dp in direction δp (trial0)
@@ -221,14 +223,16 @@ class Global_pressure(Problem):
         return F,J 
     
     
-    def set_linear_picard(self,p_k,T,D,pdb,g):
+    def set_linear_picard(self,p_k,T,D,pdb,g, it=0):
         # Function that set linear form and linear picard for picard iteration
         
         rho_k = density_FX(pdb, T, p_k, D.phase, D.mesh)  # frozen
         
         # Linear operator with frozen coefficients
-        
-        a = ufl.inner(ufl.grad(self.trial0), ufl.grad(self.test0)) * ufl.dx
+        if it == 0: 
+            a = ufl.inner(ufl.grad(self.trial0), ufl.grad(self.test0)) * ufl.dx
+        else: 
+            a = None
         
         L = ufl.inner(ufl.grad(self.test0), rho_k * g) * ufl.dx
         
@@ -250,7 +254,7 @@ class Global_pressure(Problem):
         a,L = self.set_linear_picard(p_k,T,getattr(M,'domainG'),pdb,g)
         
         if self.typology == 'NonlinearProblem':
-            F,J = self.set_newton(p_k,D,T,p,g)
+            F,J = self.set_newton(p_k,getattr(M,'domainG'),T,g,pdb)
             nl = 1 
         else: 
             F = None;J=None 
@@ -261,7 +265,7 @@ class Global_pressure(Problem):
         if nl == 0: 
             S = self.solve_the_linear(S,a,L) 
         else: 
-            S = self.solve_the_non_linear(S,ctrl,pdb)
+            S = self.solve_the_non_linear(M,S,ctrl,pdb,g)
 
         return S 
     
@@ -269,7 +273,7 @@ class Global_pressure(Problem):
         
         buf = fem.Function(self.FS)
         x   = self.solv.b.copy()
-        if isPicard == 0 or it == 0 or ts == 0:
+        if it == 0 or ts == 0:
             self.solv.A.zeroEntries()
             fem.petsc.assemble_matrix(self.solv.A,fem.form(a),self.bc[0])
             self.solv.A.assemble()
@@ -280,23 +284,92 @@ class Global_pressure(Problem):
         self.solv.b.ghostUpdate()
         fem.petsc.set_bc(self.solv.b, self.bc[0])
         self.solv.ksp.solve(self.solv.b, x)
-        x.x.scatter_forward()
         
         if isPicard == 0: # if it is a picard iteration the function gives the function 
-            S.PL = x.copy(deepcopy==True)
+            S.PL.x.array[:] = x.array_r
             return S 
         else:
-            return x 
+            return x.array_r
     
-    def solve_the_non_linear():  
-        pass 
+    def solve_the_non_linear(self,M,S,ctrl,pdb,g):  
+        
+        tol = 1e-3  # Tolerance Picard  
+        max_it = 10  # Max iteration before Newton
+        isPicard = 1 # Flag for the linear solver. 
+        tol = 1.0 
+        p_k = S.PL.copy() 
+        p_k1 = S.PL.copy()
+        du   = S.PL.copy()
+        du2  = S.PL.copy()
+        it = 0 
+        time_A = timing.time()
+        while it < max_it and tol > 1e-3:
+            time_ita = timing.time()
+            
+            if it == 0:
+                A,L = self.set_linear_picard(p_k,S.T_O,getattr(M,'domainG'),pdb,g)
+            else: 
+                _,L = self.set_linear_picard(p_k,S.T_O,getattr(M,'domainG'),pdb,g,1)
+            
+            p_k1.x.array[:] = self.solve_the_linear(S,A,L,1,it,1) 
+            
+            # L2 norm 
+            du.x.array[:]  = p_k1.x.array[:] - p_k.x.array[:];du.x.scatter_forward()
+            du2.x.array[:] = p_k1.x.array[:] + p_k.x.array[:];du2.x.scatter_forward()
+            tol= L2_norm(du)/L2_norm(du2)
+            
+            time_itb = timing.time()
+            print_ph(f'[]   --->L_2 norm is {tol:.3e}, it_th {it:d} performed in {time_itb-time_ita:.2f} seconds')
+            
+            #update solution
+            p_k.x.array[:] = p_k1.x.array[:]*0.7 + p_k.x.array[:]*(1-0.7)
+            
+            it = it + 1 
+            
+        # --- Newton => 
+        F,J = self.set_newton(p_k,getattr(M,'domainG'),S.T_O,g,pdb)
+        
+        problem = fem.petsc.NonlinearProblem(F, p_k, bcs=self.bc[0], J=J)
+
+        # Newton solver
+        solver = NewtonSolver(MPI.COMM_WORLD, problem)
+        solver.convergence_criterion = "residual"
+        solver.rtol = 1e-8
+        solver.report = True
+        
+        n, converged = solver.solve(p_k)
+        print(f"[]    ---> Newton iterations: {n}, converged = {converged}")   
+        
+        S.PL.x.array[:] = p_k.x.array[:]
+        local_max = np.max(p_k.x.array[:])
+        global_max = M.comm.allreduce(local_max, op=MPI.MAX)
+        print_ph(f"// - - - /Global max lithostatic pressure is    : {global_max*sc.stress:.2f}[n.d.]/")
+        
+        time_B = timing.time()
+        print_ph(f'// -- // --- Solution of Lithostatic pressure problem finished in {time_B-time_A:.2f} sec')
+        print_ph(f'')
+
+        print_ph("               ")
+        print_ph("               _")
+        print_ph("               :")
+        print_ph("[] - - - -> Lithostatic <- - - - []")
+        print_ph("               :")
+        print_ph("               _")
+        print_ph("                ")
+
+        print_ph(f'')
+
+        
+        
+        return S  
         
         
 
                 
+
         
-        
-        
+def L2_norm(f):
+    return fem.assemble_scalar(fem.form(ufl.inner(f, f) * ufl.dx))**0.5       
         
         
 #-----------------------------------------------------------------
@@ -425,22 +498,22 @@ def set_ups_problem():
     pdb = PhaseDataBase(6)
     # Slab
     
-    pdb = _generate_phase(pdb, 1, rho0 = 3300 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)
+    pdb = _generate_phase(pdb, 1, rho0 = 3300 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)
     # Oceanic Crust
     
-    pdb = _generate_phase(pdb, 2, rho0 = 2900 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e21)
+    pdb = _generate_phase(pdb, 2, rho0 = 2900 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e21)
     # Wedge
     
-    pdb = _generate_phase(pdb, 3, rho0 = 3300 , option_rho = 0, option_rheology = 3, option_k = 0, option_Cp = 0, eta=1e21)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 3, rho0 = 3300 , option_rho = 3, option_rheology = 3, option_k = 0, option_Cp = 0, eta=1e21)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     # 
     
-    pdb = _generate_phase(pdb, 4, rho0 = 3250 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e23)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 4, rho0 = 3250 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e23)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     #
     
-    pdb = _generate_phase(pdb, 5, rho0 = 2800 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e21)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 5, rho0 = 2800 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e21)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     #
     
-    pdb = _generate_phase(pdb, 6, rho0 = 2700 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e21)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 6, rho0 = 2700 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e21)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     #
     
     pdb = sc_f._scaling_material_properties(pdb,sc)
