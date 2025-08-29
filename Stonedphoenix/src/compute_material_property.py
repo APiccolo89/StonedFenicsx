@@ -16,6 +16,8 @@ from ufl                             import exp, conditional, eq, as_ufl, Consta
 from mpi4py import MPI
 from petsc4py import PETSc
 from dolfinx import fem
+import ufl
+from ufl import *
 
 #---------------------------------------------------------------------------------
 def heat_conductivity_FX(pdb, T, p, phase, M):
@@ -144,19 +146,27 @@ def compute_viscosity_FX(e,T,P,pdb,phase,M):
     I use the minimum viscosity possible. The alternative is taking the average between eta_min and eta_av. So, 
     since I do not understand how I can easily integrate a full local iteration, I prefer to use the "wrong" composite method
     """    
+    def ufl_pow(u, v, eps=0):
+        return ufl.exp(v * ufl.ln(u + eps))
     
-    ph = np.int32(phase.x.array)
-    P0 = phase.function_space
+    def compute_eII(e):
+        e_II  = sqrt(0.5*inner(e, e) + 1e-15)    
+        return e_II
+    
+    P0    = M.solPh
+    e_II = compute_eII(e)
+    # If your phase IDs are available per cell for mesh0:
 
+    ph = np.int32(phase.x.array)
     
     # Gather material parameters as UFL expressions via indexing
-    Bdif    = fem.Function(P0)  ; Bdif.x.array[:]    =  pdb.Bdif[ph]
-    Bdis    = fem.Function(P0)  ; Bdis.x.array[:]    =  pdb.Bids[ph]
-    n       = fem.Function(P0)  ; n.x.array[:]       =  pdb.n[ph] 
-    Edif    = fem.Function(P0)  ; Edif.x.array[:]    =  pdb.Edif[ph]
-    Edis    = fem.Function(P0)  ; Edis.x.array[:]    =  pdb.Edis[ph]
-    Vdif    = fem.Function(P0)  ; Vdif.x.array[:]    =  pdb.Vdif[ph]
-    Vdis    = fem.Function(P0)  ; Vdis.x.array[:]    =  pdb.Vdis[ph]
+    Bdif    = fem.Function(P0,name = 'Bdif')  ; Bdif.x.array[:]    =  pdb.Bdif[ph]
+    Bdis    = fem.Function(P0,name = 'Bdis')  ; Bdis.x.array[:]    =  pdb.Bdis[ph]
+    n       = fem.Function(P0,name = 'n')     ; n.x.array[:]       =  pdb.n[ph]
+    Edif    = fem.Function(P0,name = 'Edif')  ; Edif.x.array[:]    =  pdb.Edif[ph]
+    Edis    = fem.Function(P0,name = 'Edis')  ; Edis.x.array[:]    =  pdb.Edis[ph]
+    Vdif    = fem.Function(P0,name = 'Vdif')  ; Vdif.x.array[:]    =  pdb.Vdif[ph]
+    Vdis    = fem.Function(P0,name = 'Vdis')  ; Vdis.x.array[:]    =  pdb.Vdis[ph]
 
     # In case the viscosity for the given phase is constant 
     eta_con     = fem.Function(P0) ; eta_con.x.array[:]     =  pdb.eta[ph]
@@ -167,16 +177,28 @@ def compute_viscosity_FX(e,T,P,pdb,phase,M):
     # strain indipendent  
     cdf = Bdif * exp((Edif + P * Vdif )/(pdb.R * T)) ; cds = Bdis * exp((Edis + P * Vdis)/(pdb.R * T))
     # compute tau guess
-    etads     = 0.5 * cds**(-1/n) * e**((1-n)/n)
+    n_co  = (1-n)/n
+    n_inv = 1/n 
+    # Se esiste un cazzo di inferno in culo a Satana ci vanno quelli che hanno generato 
+    # sto modo creativo di fare gli esponenti. 
+    etads     = 0.5 * cds**(-n_inv) * e_II**n_co
     etadf     = 0.5 * cdf**(-1)
     eta_av    = 1 / (1 / etads + 1/etadf + 1/pdb.eta_max)
     eta_df    = 1 / (1 / etadf + 1 / pdb.eta_max) 
     eta_ds    = 1 / (1 / etads + 1 / pdb.eta_max)
     
     # check if the option_eta -> constant or not, otherwise release the composite eta 
-    eta = conditional(
-        eq(opt_eta , 0), eta_con, conditional(eq(opt_eta , 1.0),eta_df, conditional(eq(opt_eta, 2.0), eta_ds, eta_av))
+    eta = ufl.conditional(
+        ufl.eq(opt_eta, 0.0), eta_con,
+        ufl.conditional(
+            ufl.eq(opt_eta, 1.0), eta_df,
+            ufl.conditional(
+                ufl.eq(opt_eta, 2.0), eta_ds,
+                eta_av
+            )
+        )
     )
+
 
     return eta
 

@@ -80,6 +80,7 @@ def dof_coords_on_facet(V, facet_tags, marker, component=None):
     coords = np.unique(coords, axis=0)
     return coords
 
+
 @timing_function    
 def block_direct_solver(a, a_p, L, bcs, V, Q, mesh, sc):
     """Solve the Stokes problem using blocked matrices and a direct
@@ -117,7 +118,6 @@ def block_direct_solver(a, a_p, L, bcs, V, Q, mesh, sc):
     p.x.array[: (len(x.array_r) - offset)] = x.array_r[offset:]
 
     # Compute the $L^2$ norms of the u and p vectors
-    norm_u, norm_p = la.norm(u.x), la.norm(p.x)
 
 
     return u,p
@@ -224,93 +224,7 @@ def nested_iterative_solver():
 
     return norm_u, norm_p
 
-def block_operators(a, a_p, L, bcs, V, Q):
-    """Return block operators and block RHS vector for the Stokes
-    problem"""
-    A = assemble_matrix_block(a, bcs=bcs); A.assemble()
-    P = assemble_matrix_block(a_p, bcs=bcs); P.assemble()
-    b = assemble_vector_block(L, a, bcs=bcs)
 
-    # nullspace vector [0_u; 1_p] locally
-    null_vec = A.createVecLeft()
-    nloc_u = V.dofmap.index_map.size_local * V.dofmap.index_map_bs
-    nloc_p = Q.dofmap.index_map.size_local
-    null_vec.array[:nloc_u]  = 0.0
-    null_vec.array[nloc_u:nloc_u+nloc_p] = 1.0
-    null_vec.normalize()
-    nsp = PETSc.NullSpace().create(vectors=[null_vec])
-    A.setNullSpace(nsp)
-
-    return A, P, b
-
-def block_iterative_solver(a, a_p, L, bcs, V, Q, msh, sc):
-    """Solve the Stokes problem using blocked matrices and an iterative
-    solver."""
-
-    # Assembler the operators and RHS vector
-    A, P, b = block_operators(a, a_p, L, bcs, V, Q)
-
-    # Build PETSc index sets for each field (global dof indices for each
-    # field)
-    V_map = V.dofmap.index_map
-    Q_map = Q.dofmap.index_map
-    bs_u  = V.dofmap.index_map_bs  # = mesh.dim for vector CG
-    nloc_u = V_map.size_local * bs_u
-    nloc_p = Q_map.size_local
-
-    # local starts in the *assembled block vector*
-    offset_u = 0
-    offset_p = nloc_u
-
-    is_u = PETSc.IS().createStride(nloc_u, offset_u, 1, comm=PETSc.COMM_SELF)
-    is_p = PETSc.IS().createStride(nloc_p, offset_p, 1, comm=PETSc.COMM_SELF)
-
-
-    # Create a MINRES Krylov solver and a block-diagonal preconditioner
-    # using PETSc's additive fieldsplit preconditioner
-    ksp = PETSc.KSP().create(msh.comm)
-    ksp.setOperators(A, P)
-    ksp.setTolerances(rtol=1e-10)
-    ksp.setType("minres")
-    ksp.getPC().setType("fieldsplit")
-    ksp.getPC().setFieldSplitType(PETSc.PC.CompositeType.ADDITIVE)
-    ksp.getPC().setFieldSplitIS(("u", is_u), ("p", is_p))
-
-    # Configure velocity and pressure sub-solvers
-    ksp_u, ksp_p = ksp.getPC().getFieldSplitSubKSP()
-    ksp_u.setType("preonly")
-    ksp_u.getPC().setType("gamg")
-    ksp_p.setType("preonly")
-    ksp_p.getPC().setType("jacobi")
-
-    # The matrix A combined the vector velocity and scalar pressure
-    # parts, hence has a block size of 1. Unlike the MatNest case, GAMG
-    # cannot infer the correct near-nullspace from the matrix block
-    # size. Therefore, we set block size on the top-left block of the
-    # preconditioner so that GAMG can infer the appropriate near
-    # nullspace.
-    ksp.getPC().setUp()
-    Pu, _ = ksp_u.getPC().getOperators()
-    Pu.setBlockSize(msh.topology.dim)
-
-    # Create a block vector (x) to store the full solution and solve
-    x = A.createVecRight()
-    ksp.solve(b, x)
-
-    xu = x.getSubVector(is_u)
-    xp = x.getSubVector(is_p)
-    u, p = fem.Function(V), fem.Function(Q)
-    
-    u.x.array[:] = xu.array_r
-    p.x.array[:] = xp.array_r
-    
-    u.name, p.name = "Velocity", "Pressure"
-    
-
-        
-
-
-    return  u, p
 
 
 def tau(eta, u):

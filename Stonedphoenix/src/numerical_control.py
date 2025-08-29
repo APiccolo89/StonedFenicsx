@@ -62,9 +62,9 @@ class NumericalControls:
                  v_s = np.array([5.0,0.0], dtype=np.float64),
                  steady_state = 1,
                  relax = 0.6,
-                 time_dependent_v=0,
-                 slab_bc=1,
-                 decoupling = 0):  # 1 moving wall, 0 pipe-like slab
+                 time_dependent_v = 0,
+                 slab_bc = 1, # BC: 0 -> pipe like , 1 moving wall slab
+                 decoupling = 0):  
 
         # Direct initialization of class attributes
         self.it_max           = it_max 
