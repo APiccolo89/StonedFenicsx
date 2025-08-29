@@ -81,10 +81,10 @@ def check_single_domain(expr):
         print("  -", nm, "on", dom.ufl_cargo() if dom else None)
 
     if len(doms) == 1:
-        print("✅ Expression is single-domain.")
+        print(" :P Expression is single-domain.")
         return True
     else:
-        print("❌ Expression involves multiple domains — rebuild coefficients on one mesh.")
+        print(" :( Expression involves multiple domains — rebuild coefficients on one mesh.")
         return False
 
 
