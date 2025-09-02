@@ -41,7 +41,7 @@ from dolfinx.fem import (Constant, Function, FunctionSpace, dirichletbc,
                          extract_function_spaces, form,
                          locate_dofs_topological, locate_dofs_geometrical)
 from dolfinx import default_real_type, la
-from solution import solve_lithostatic_problem
+
 
 
 
@@ -79,7 +79,6 @@ def dof_coords_on_facet(V, facet_tags, marker, component=None):
     # Often multiple DOFs share the same point on higher-order spaces; deduplicate if desired
     coords = np.unique(coords, axis=0)
     return coords
-
 
 @timing_function    
 def block_direct_solver(a, a_p, L, bcs, V, Q, mesh, sc):
@@ -224,7 +223,93 @@ def nested_iterative_solver():
 
     return norm_u, norm_p
 
+def block_operators(a, a_p, L, bcs, V, Q):
+    """Return block operators and block RHS vector for the Stokes
+    problem"""
+    A = assemble_matrix_block(a, bcs=bcs); A.assemble()
+    P = assemble_matrix_block(a_p, bcs=bcs); P.assemble()
+    b = assemble_vector_block(L, a, bcs=bcs)
 
+    # nullspace vector [0_u; 1_p] locally
+    null_vec = A.createVecLeft()
+    nloc_u = V.dofmap.index_map.size_local * V.dofmap.index_map_bs
+    nloc_p = Q.dofmap.index_map.size_local
+    null_vec.array[:nloc_u]  = 0.0
+    null_vec.array[nloc_u:nloc_u+nloc_p] = 1.0
+    null_vec.normalize()
+    nsp = PETSc.NullSpace().create(vectors=[null_vec])
+    A.setNullSpace(nsp)
+
+    return A, P, b
+
+def block_iterative_solver(a, a_p, L, bcs, V, Q, msh, sc):
+    """Solve the Stokes problem using blocked matrices and an iterative
+    solver."""
+
+    # Assembler the operators and RHS vector
+    A, P, b = block_operators(a, a_p, L, bcs, V, Q)
+
+    # Build PETSc index sets for each field (global dof indices for each
+    # field)
+    V_map = V.dofmap.index_map
+    Q_map = Q.dofmap.index_map
+    bs_u  = V.dofmap.index_map_bs  # = mesh.dim for vector CG
+    nloc_u = V_map.size_local * bs_u
+    nloc_p = Q_map.size_local
+
+    # local starts in the *assembled block vector*
+    offset_u = 0
+    offset_p = nloc_u
+
+    is_u = PETSc.IS().createStride(nloc_u, offset_u, 1, comm=PETSc.COMM_SELF)
+    is_p = PETSc.IS().createStride(nloc_p, offset_p, 1, comm=PETSc.COMM_SELF)
+
+
+    # Create a MINRES Krylov solver and a block-diagonal preconditioner
+    # using PETSc's additive fieldsplit preconditioner
+    ksp = PETSc.KSP().create(msh.comm)
+    ksp.setOperators(A, P)
+    ksp.setTolerances(rtol=1e-10)
+    ksp.setType("minres")
+    ksp.getPC().setType("fieldsplit")
+    ksp.getPC().setFieldSplitType(PETSc.PC.CompositeType.ADDITIVE)
+    ksp.getPC().setFieldSplitIS(("u", is_u), ("p", is_p))
+
+    # Configure velocity and pressure sub-solvers
+    ksp_u, ksp_p = ksp.getPC().getFieldSplitSubKSP()
+    ksp_u.setType("preonly")
+    ksp_u.getPC().setType("gamg")
+    ksp_p.setType("preonly")
+    ksp_p.getPC().setType("jacobi")
+
+    # The matrix A combined the vector velocity and scalar pressure
+    # parts, hence has a block size of 1. Unlike the MatNest case, GAMG
+    # cannot infer the correct near-nullspace from the matrix block
+    # size. Therefore, we set block size on the top-left block of the
+    # preconditioner so that GAMG can infer the appropriate near
+    # nullspace.
+    ksp.getPC().setUp()
+    Pu, _ = ksp_u.getPC().getOperators()
+    Pu.setBlockSize(msh.topology.dim)
+
+    # Create a block vector (x) to store the full solution and solve
+    x = A.createVecRight()
+    ksp.solve(b, x)
+
+    xu = x.getSubVector(is_u)
+    xp = x.getSubVector(is_p)
+    u, p = fem.Function(V), fem.Function(Q)
+    
+    u.x.array[:] = xu.array_r
+    p.x.array[:] = xp.array_r
+    
+    u.name, p.name = "Velocity", "Pressure"
+    
+
+        
+
+
+    return  u, p
 
 
 def tau(eta, u):
@@ -261,6 +346,21 @@ def set_slab_dirichlecht(ctrl, V, D, theta,sc):
     slab_facets    = D.facets.find(D.bc_dict['top_subduction'])
     X              = V.tabulate_dof_coordinates()
     dofs        = fem.locate_dofs_topological(V, fdim, slab_facets)
+    
+    # dofs on subspaces (entities = facet indices!)
+    dofs_in_x  = fem.locate_dofs_topological(V.sub(0), fdim, inflow_facets)
+    dofs_in_y  = fem.locate_dofs_topological(V.sub(1), fdim, inflow_facets)
+    dofs_out_x = fem.locate_dofs_topological(V.sub(0), fdim, outflow_facets)
+    dofs_out_y = fem.locate_dofs_topological(V.sub(1), fdim, outflow_facets)
+    dofs_s_x   = fem.locate_dofs_topological(V.sub(0), fdim, slab_facets)
+    dofs_s_y   = fem.locate_dofs_topological(V.sub(1), fdim, slab_facets)
+    
+    
+    # scalar BCs on subspaces
+    #bc_left_x   = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]), dofs_in_x,  V.sub(0))
+    #bc_left_y   = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[1]), dofs_in_y,  V.sub(1))
+    #bc_bottom_x = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]*np.cos(theta)), dofs_out_x, V.sub(0))
+    #bc_bottom_y = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]*np.sin(theta)), dofs_out_y, V.sub(1))
     
     #nx,ny = compute_normal(X,dofs)
     ds = ufl.Measure("ds", domain=mesh, subdomain_data=D.facets)
@@ -660,6 +760,74 @@ def initial_temperature_field(M, ctrl, lhs):
 
 #---------------------------------------------------------------------------
 
+@timing_function
+def set_lithostatic_problem(PL, T_o, tPL, TPL, pdb, sc, g, M ):
+    """
+    PL  : function
+    T_o : previous Temperature field
+    tPL : trial function for lithostatic pressure 
+    TPL : test function for lithostatic pressure
+    pdb : phase data base 
+    sc  : scaling 
+    g   : gravity vector 
+    M   : Mesh object 
+    --- 
+    Output: current lithostatic pressure. 
+    
+    To do: Improve the solver options and make it faster
+    create an utils function for timing. 
+    
+    """
+    print_ph("[] - - - -> Solving Lithostatic pressure problem <- - - - []")
+
+    
+    flag = 1 
+    fdim = M.mesh.topology.dim - 1    
+    top_facets   = M.mesh_Ftag.find(1)
+    top_dofs    = fem.locate_dofs_topological(M.Sol_SpaceT, M.mesh.topology.dim-1, top_facets)
+    bc = fem.dirichletbc(0.0, top_dofs, M.Sol_SpaceT)
+    
+    # -> yeah only rho counts here. 
+    if (np.all(pdb.option_rho) == 0):
+        flag = 0
+        bilinear = ufl.dot(ufl.grad(TPL), ufl.grad(tPL)) * ufl.dx
+        linear   = ufl.dot(ufl.grad(TPL), density_FX(pdb, T_o, PL, M.phase,M.mesh)*g) * ufl.dx
+        problem = fem.petsc.LinearProblem(bilinear, linear, bcs=[bc], petsc_options={"ksp_type": "preonly", "pc_type": "lu","pc_factor_mat_solver_type": "mumps"})
+        
+        PL = problem.solve()
+                
+    
+    if flag !=0: 
+        # Solve lithostatic pressure - Non linear 
+        F = ufl.dot(ufl.grad(PL), ufl.grad(TPL)) * ufl.dx - ufl.dot(ufl.grad(TPL), density_FX(pdb, T_o, PL, M.phase,M.mesh)*g) * ufl.dx
+
+        problem = fem.petsc.NonlinearProblem(F, PL, bcs=[bc])
+        solver = NewtonSolver(MPI.COMM_WORLD, problem)
+        solver.convergence_criterion = "incremental"
+        solver.rtol = 1e-5
+        solver.report = True
+        ksp = solver.krylov_solver
+        opts = PETSc.Options()
+        option_prefix = ksp.getOptionsPrefix()
+        opts[f"{option_prefix}ksp_type"] = "gmres"
+        opts[f"{option_prefix}ksp_rtol"] = 1.0e-5
+        ksp.setFromOptions()
+        n, converged = solver.solve(PL)
+    local_max = np.max(PL.x.array)
+    print_ph("[] - - - -> Solved <- - - - []")
+
+    # Global min and max using MPI reduction
+    global_max = M.comm.allreduce(local_max, op=MPI.MAX)
+    print_ph(f"// - - - /Global max lithostatic pressure is    : {global_max*sc.stress/1e9:.2f}[GPa]/")
+    print_ph("               _")
+    print_ph("               :")
+    print_ph("[] - - - -> Finished <- - - - []")
+    print_ph("               :")
+    print_ph("               _")
+    return PL 
+
+#---------------------------------------------------------------------------
+
 def set_steady_state_thermal_problem(PL, T_on, tPL, TPL, pdb, sc, g, M ):
     
     
@@ -670,6 +838,48 @@ def set_steady_state_thermal_problem(PL, T_on, tPL, TPL, pdb, sc, g, M ):
     F = adv + cond
     
     return F
+
+#---------------------------------------------------------------------------
+
+def strain_rate(vel):
+    
+    return ufl.sym(ufl.grad(vel))
+#---------------------------------------------------------------------------
+    
+def eps_II(vel):
+ 
+    e = strain_rate(vel)
+    
+    eII = ufl.sqrt(2 * ufl.inner(e,e)) 
+    
+    # Portion of the model do not have any strain rate, for avoiding blow up, I just put a fictitious low strain rate
+    
+    
+    return eII 
+#---------------------------------------------------------------------------
+
+def sigma(eta, u, p):
+    
+    sigma = 2 * eta * strain_rate(u) - p * ufl.Identity(2) 
+    
+    return sigma 
+
+
+#---------------------------------------------------------------------------
+def linear_stokes_solver(a, b, bcs, M):
+    
+    
+    
+    
+    return u,p 
+
+#---------------------------------------------------------------------------
+
+
+def set_dirichlet_inflow():
+    
+    return bc
+
 
 #---------------------------------------------------------------------------
 @timing_function
@@ -713,17 +923,20 @@ def main_solver_steady_state(M, S, ctrl, pdb, sc, lhs ):
     P, _ = P0.collapse()  # Pressure function space
     #------
     u_global = fem.Function(V)  # Global velocity function
+    PL          = fem.Function(M.Sol_SpaceT)
     #------
     
     
-    S.T_O = initial_temperature_field(M, ctrl, lhs)
-
+    T_o = initial_temperature_field(M, ctrl, lhs)
+    # -- Test and trial function for pressure and temperature 
+    tT =  ufl.TrialFunction(M.Sol_SpaceT); tPL = ufl.TrialFunction(M.Sol_SpaceT) 
+    TT = ufl.TestFunction(M.Sol_SpaceT)  ; TPL = ufl.TestFunction(M.Sol_SpaceT)
     # -- 
     g = fem.Constant(M.mesh, PETSc.ScalarType([0.0, -ctrl.g]))    
     
     # Main Loop for the convergence -> check residuum of each subsystem 
     
-    S        = solve_lithostatic_problem(S, pdb, sc, g, M )
+    PL       = set_lithostatic_problem(PL, T_o, tPL, TPL, pdb, sc, g, M )
     
     u_slab   = set_Stokes_Slab(pdb,sc,M,ctrl)
     
@@ -731,7 +944,7 @@ def main_solver_steady_state(M, S, ctrl, pdb, sc, lhs ):
         
     u_wedge  = set_Stokes_Wedge(pdb,sc,M,ctrl)
 
-    u_global = interpolate_from_sub_to_main(u_global, u_wedge,V,M.domainB.solSTK.sub(0).collapse()[0],M.domainB.scell)
+    u_wedge = interpolate_from_sub_to_main(u_global, u_wedge,V,M.domainB.solSTK.sub(0).collapse()[0],M.domainB.scell)
     
 
     # interpolate the velocity field from the slab to the main mesh
@@ -814,7 +1027,6 @@ def unit_test():
     # call the lithostatic pressure 
     
     S   = Solution()
-    S.create_function(M)
     
     main_solver_steady_state(M, S, ctrl, pdb, sc, lhs_ctrl )
     

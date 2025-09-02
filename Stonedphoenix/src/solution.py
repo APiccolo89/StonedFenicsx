@@ -33,12 +33,14 @@ to lazy to do it, but could be something that I can do after I have a full worki
 print yes|no 
 -> import a python code with global variable is it possible? 
 
-
+-> Apperently, following the Stokes tutorial, I was porting the generation of null space: it appears, that this trick, is not working together with null space
+-> Nitsche Boundary condition constraints the pressure, and the null space dislike it, apperently because the simmetry of the formulation is wrong, but this is black
+magic. 
 
 
 
 """
-direct_solver = 0 
+direct_solver = 1 
 
 
 def mesh_of(obj):
@@ -205,13 +207,10 @@ class SolverStokes():
             self.pc = self.ksp.getPC()
             self.pc.setType("lu")
             use_superlu = PETSc.IntType == np.int64
-            if PETSc.Sys().hasExternalPackage("mumps") and not use_superlu:
-                self.pc.setFactorSolverType("mumps")
-                self.pc.setFactorSetUpSolverType()
-                self.pc.getFactorMatrix().setMumpsIcntl(icntl=24, ival=1)
-                self.pc.getFactorMatrix().setMumpsIcntl(icntl=25, ival=0)
-            else:
-                self.pc.setFactorSolverType("superlu_dist")
+            self.pc.setFactorSolverType("mumps")
+            self.pc.setFactorSetUpSolverType()
+            self.pc.getFactorMatrix().setMumpsIcntl(icntl=24, ival=1)
+            self.pc.getFactorMatrix().setMumpsIcntl(icntl=25, ival=0)
 
 
         
@@ -224,13 +223,12 @@ class SolverStokes():
             self.set_block_operator(a,a_p,bcs,L,F0,F1)
             
             
-
+            offset_u = 0
+            offset_p = self.nloc_u
             # local starts in the *assembled block vector*
-            self.offset_u = 0
-            self.offset_p = self.nloc_u
 
-            self.is_u = PETSc.IS().createStride(self.nloc_u, self.offset_u, 1, comm=PETSc.COMM_SELF)
-            self.is_p = PETSc.IS().createStride(self.nloc_p, self.offset_p, 1, comm=PETSc.COMM_SELF)
+            self.is_u = PETSc.IS().createStride(self.nloc_u, offset_u, 1, comm=PETSc.COMM_SELF)
+            self.is_p = PETSc.IS().createStride(self.nloc_p, offset_p, 1, comm=PETSc.COMM_SELF)
             V_map = F0.dofmap.index_map
             Q_map = F1.dofmap.index_map
             bs_u  = F0.dofmap.index_map_bs  # = mesh.dim for vector CG
@@ -238,8 +236,8 @@ class SolverStokes():
             nloc_p = Q_map.size_local
 
             # local starts in the *assembled block vector*
-            offset_u = 0
-            offset_p = nloc_u
+
+
 
             self.is_u = PETSc.IS().createStride(nloc_u, offset_u, 1, comm=PETSc.COMM_SELF)
             self.is_p = PETSc.IS().createStride(nloc_p, offset_p, 1, comm=PETSc.COMM_SELF)
@@ -247,7 +245,7 @@ class SolverStokes():
             
             self.ksp = PETSc.KSP().create(COMM)
             self.ksp.setOperators(self.A, self.P)
-            self.ksp.setTolerances(rtol=1e-6)
+            self.ksp.setTolerances(rtol=1e-9)
             self.ksp.setType("minres")
             self.ksp.getPC().setType("fieldsplit")
             self.ksp.getPC().setFieldSplitType(PETSc.PC.CompositeType.ADDITIVE)
@@ -271,7 +269,7 @@ class SolverStokes():
             self.Pu.setBlockSize(2)
 
     def set_block_operator(self,a,a_p,bcs,L,F0,F1):
-            
+
         self.A = assemble_matrix_block(fem.form(a), bcs=bcs)   ; self.A.assemble()
         self.P = assemble_matrix_block(fem.form(a_p), bcs=bcs) ; self.P.assemble()
         self.b = assemble_vector_block(fem.form(L), a, bcs=bcs); self.b.assemble()
@@ -553,23 +551,20 @@ class Stokes_Problem(Problem):
         non linear when the temperature is involved. 
         """
         
-        # Linear 
-        e   = compute_strain_rate(u)   
-        eta = compute_viscosity_FX(e,T,PL,pdb,D.phase,D)
-        #
-        
-        a1  = ufl.inner(2*eta*ufl.sym(ufl.grad(self.trial0)), ufl.grad(self.test0)) * self.dx
-        if it == 0 or ts ==0 : # -> More or less only a_1 is the one that is updated 
-            a2       = - ufl.inner(ufl.div(self.test0), self.trial1) * self.dx
-            a3       = - ufl.inner(self.test1, ufl.div(self.trial0)) * self.dx
-            a_p0      = ufl.inner(self.test1, self.trial1) * self.dx
-            f         = fem.Constant(D.mesh, [0.0]*D.mesh.geometry.dim)
-            f2        = fem.Constant(D.mesh, 0.0)
-            L         = [ufl.inner(f, self.test0)*self.dx, ufl.inner(f2, self.test1)*self.dx]    
-        else: # if iteration is 0, no need to construct again the other part of the block operator 
-            a2 = None 
-            a3 = None
-            L  = None        
+        u, p  = self.trial0, self.trial1
+        v, q  = self.test0,  self.test1
+        dx    = ufl.dx
+
+        eta = fem.Constant(D.mesh, PETSc.ScalarType(float(pdb.eta[0])))
+
+        a1 = ufl.inner(2*eta*ufl.sym(ufl.grad(u)), ufl.sym(ufl.grad(v))) * dx
+        a2 = - ufl.inner(ufl.div(v), p) * dx             # build once
+        a3 = - ufl.inner(q, ufl.div(u)) * dx             # build once
+        a_p0 = ufl.inner(q, p) * dx                      # pressure mass (precond)
+
+        f  = fem.Constant(D.mesh, PETSc.ScalarType((0.0,)*D.mesh.geometry.dim))
+        f2 = fem.Constant(D.mesh, PETSc.ScalarType(0.0))
+        L  = fem.form([ufl.inner(f, v)*dx, ufl.inner(f2, q)*dx])    
     
         return a1, a2, a3 , L , a_p0       
 
@@ -605,8 +600,8 @@ class Slab(Stokes_Problem):
     def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
         super().__init__(M,elements,name)
     
-    def setdirichlecht(self,ctrl,D,it=0, ts = 0):
-        mesh = D.mesh 
+    def setdirichlecht(self,ctrl,D,theta,it=0, ts = 0):
+        mesh = self.F0.mesh 
         tdim = mesh.topology.dim
         fdim = tdim - 1
         
@@ -624,7 +619,7 @@ class Slab(Stokes_Problem):
                     n = ufl.FacetNormal(mesh)                    # exact facet normal in    weak   form
                     v_slab = float(1.0)  # slab velocity magnitude
 
-                    v_const = ufl.as_vector((1.0, 0.0))
+                    v_const = ufl.as_vector((ctrl.v_s[0], 0.0))
 
                     proj = ufl.Identity(mesh.geometry.dim) - ufl.outer(n, n)  # projector   onto  the  tangential plane
                     t = ufl.dot(proj, v_const)                     # tangential     velocity    vector on  slab
@@ -641,13 +636,13 @@ class Slab(Stokes_Problem):
                         petsc_options={
                         "ksp_type": "cg",
                         "pc_type": "jacobi",
-                        "ksp_rtol": 1e-12,
+                        "ksp_rtol": 1e-20,
                         }
                     ).solve()  # ut_h \in V
+                self.moving_wall.x.array[:] = self.moving_wall.x.array[:]*ctrl.v_s[0] 
 
                 dofs_s_x = fem.locate_dofs_topological(self.F0.sub(0), fdim, slab_facets)
                 dofs_s_y = fem.locate_dofs_topological(self.F0.sub(1), fdim, slab_facets)
-                self.moving_wall.x.array[:] = self.moving_wall.x.array[:]*ctrl.v_s[0]
 
                 bcx = fem.dirichletbc(self.moving_wall.sub(0), dofs_s_x)
                 bcy = fem.dirichletbc(self.moving_wall.sub(1), dofs_s_y)
@@ -660,10 +655,10 @@ class Slab(Stokes_Problem):
                 dofs_out_y = fem.locate_dofs_topological(self.F0.sub(1), fdim, outflow_facets)
                 
                 # scalar BCs on subspaces
-                bc_left_x   = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]), dofs_in_x,  V.sub(0))
-                bc_left_y   = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[1]), dofs_in_y,  V.sub(1))
-                bc_bottom_x = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]*np.cos(theta)),          dofs_out_x, V.sub(0))
-                bc_bottom_y = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]*np.sin(theta)),          dofs_out_y, V.sub(1))
+                bc_left_x   = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]), dofs_in_x,  self.F0.sub(0))
+                bc_left_y   = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[1]), dofs_in_y,    self.F0.sub(1))
+                bc_bottom_x = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]*np.cos(theta)),          dofs_out_x, self.F0.sub(0))
+                bc_bottom_y = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]*np.sin(theta)),          dofs_out_y, self.F0.sub(1))
                 
                 return [bc_left_x,bc_left_y,bc_bottom_x,bc_bottom_y]
                 
@@ -679,7 +674,7 @@ class Slab(Stokes_Problem):
         
         # Linear 
         e   = compute_strain_rate(S.u_slab)   
-        eta = compute_viscosity_FX(e,S.t_oslab,S.p_lslab,pdb,D.phase,D)
+        eta = pdb.eta[0]#compute_viscosity_FX(e,S.t_oslab,S.p_lslab,pdb,D.phase,D)
         
         n = ufl.FacetNormal(D.mesh)
         h = ufl.CellDiameter(D.mesh)
@@ -700,11 +695,32 @@ class Slab(Stokes_Problem):
         return a1, a2, a3 
     
     def Solve_the_Problem(self,S,ctrl,pdb,M,g,it=0,ts=0):
+        theta = M.g_input.theta_out_slab
         M = getattr(M,'domainA')
+        
+        
+        """
+        According to chatgpt, and I have already verified this notion before asking, 
+        I cannot create test and trial function from a previous instance. In case of mixed space
+        I need always to recreate on the spot, which is very annoying despite they are pretty much cheap 
+        in terms of computation. 
+        
+    
+        """
+        V_subs0 = self.FS.sub(0)
+        p_subs0 = self.FS.sub(1)
+        V_subs, _ = V_subs0.collapse()
+        p_subs, _ = p_subs0.collapse()
+    
+        self.trial0 = ufl.TrialFunction(V_subs)
+        self.test0 = ufl.TestFunction(V_subs)
+        self.trial1 = ufl.TrialFunction(p_subs)
+        self.test1 = ufl.TestFunction(p_subs)
         # Create the linear problem
         a1,a2,a3, L, a_p = self.set_linear_picard(S.u_slab,S.t_oslab,S.p_lslab,M,pdb,ctrl)
+
         # Create the dirichlecht boundary condition 
-        self.bc   = self.setdirichlecht(ctrl,M) 
+        self.bc   = self.setdirichlecht(ctrl,M,theta) 
         # Set Nietsche FS boundary condition 
         dS_top = M.bc_dict["top_subduction"]
         dS_bot = M.bc_dict["bot_subduction"]
@@ -712,16 +728,24 @@ class Slab(Stokes_Problem):
         a1,a2,a3 = self.compute_nitsche_FS(M, S, dS_bot, a1, a2 ,a3,pdb ,gamma=50.0)
         
         if ctrl.slab_bc == 0: 
-            a1,a2,a3 = self.compute_nitsche_FS(M, S, dS_top, a,pdb ,gamma=50.0)
+            a1,a2,a3 = self.compute_nitsche_FS(M, S, dS_top, a1, a2 ,a3,pdb ,gamma=50.0)
         
         # Slab problem is ALWAYS LINEAR
         
         a   = fem.form([[a1, a2],[a3, None]])
         a_p0  = fem.form([[a1, None],[None, a_p]])
-        
+
+        #block_direct_solver(a, a_p, L,  self.bc, self.F0, self.F1, M.mesh)
+
+        #u,p = block_iterative_solver(a, a_p0, L, self.bc, V_subs, p_subs, M.mesh,ctrl)
+
         self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,ctrl ,J = None, r = None,it = 0, ts = 0)
         
-        x = self.solv.A.createVecRight()
+        
+        if direct_solver==1:
+            x = self.solv.A.createVecLeft()
+        else:
+            x = self.solv.A.createVecRight()
         self.solv.ksp.solve(self.solv.b, x)
         if direct_solver == 0: 
             xu = x.getSubVector(self.solv.is_u)
@@ -741,89 +765,6 @@ class Slab(Stokes_Problem):
         return S 
     
         
-        
-
-            
-        
-        
-        
-        
-        
-        
-#-------------------------------------------------------------------
-@timing_function
-def solve_lithostatic_problem(S, pdb, sc, g, M ):
-    """
-    PL  : function
-    T_o : previous Temperature field
-
-    pdb : phase data base 
-    sc  : scaling 
-    g   : gravity vector 
-    M   : Mesh object 
-    --- 
-    Output: current lithostatic pressure. 
-    
-    To do: Improve the solver options and make it faster
-    create an utils function for timing. 
-    
-    """
-    print_ph("[] - - - -> Solving Lithostatic pressure problem <- - - - []")
-
-    tPL = ufl.TrialFunction(M.Sol_SpaceT)  
-    TPL = ufl.TestFunction(M.Sol_SpaceT)
-    
-    flag = 1 
-    fdim = M.mesh.topology.dim - 1    
-    top_facets   = M.mesh_Ftag.find(1)
-    top_dofs    = fem.locate_dofs_topological(M.Sol_SpaceT, M.mesh.topology.dim-1, top_facets)
-    bc = fem.dirichletbc(0.0, top_dofs, M.Sol_SpaceT)
-    
-    # -> yeah only rho counts here. 
-    if (np.all(pdb.option_rho) == 0):
-        flag = 0
-        bilinear = ufl.dot(ufl.grad(TPL), ufl.grad(tPL)) * self.dx
-        linear   = ufl.dot(ufl.grad(TPL), density_FX(pdb, S.T_O, S.PL, M.phase,M.mesh)*g) * self.dx
-        problem = fem.petsc.LinearProblem(bilinear, linear, bcs=[bc], petsc_options={"ksp_type": "preonly", "pc_type": "lu","pc_factor_mat_solver_type": "mumps"})
-        
-        S.PL = problem.solve()
-                
-    
-    if flag !=0: 
-        # Solve lithostatic pressure - Non linear 
-        F = ufl.dot(ufl.grad(S.PL), ufl.grad(TPL)) * self.dx - ufl.dot(ufl.grad(TPL), density_FX(pdb, S.T_O, S.PL, M.phase,M.mesh)*g) * self.dx
-
-        problem = fem.petsc.NonlinearProblem(F, S.PL, bcs=[bc])
-        solver = NewtonSolver(MPI.COMM_WORLD, problem)
-        solver.convergence_criterion = "incremental"
-        solver.rtol = 1e-4
-        solver.report = True
-        ksp = solver.krylov_solver
-        opts = PETSc.Options()
-        option_prefix = ksp.getOptionsPrefix()
-        opts[f"{option_prefix}ksp_type"] = "gmres"
-        opts[f"{option_prefix}ksp_rtol"] = 1.0e-4
-        ksp.setFromOptions()
-        n, converged = solver.solve(PL)
-    local_max = np.max(S.PL.x.array)
-
-    # Global min and max using MPI reduction
-    global_max = M.comm.allreduce(local_max, op=MPI.MAX)
-    print_ph(f"// - - - /Global max lithostatic pressure is    : {global_max*sc.stress/1e9:.2f}[GPa]/")
-    print_ph("               ")
-    print_ph("               _")
-    print_ph("               :")
-    print_ph("[] - - - -> Finished <- - - - []")
-    print_ph("               :")
-    print_ph("               _")
-    print_ph("                ")
-
-    from utils import interpolate_from_sub_to_main
-    
-    S.p_lwedge = interpolate_from_sub_to_main(S.p_lwedge,S.PL,M.domainB.scell,1)
-    S.p_lslab  = interpolate_from_sub_to_main(S.p_lslab,S.PL,M.domainA.scell,1)
-
-    return S  
 
 
 def set_ups_problem():
@@ -869,29 +810,29 @@ def set_ups_problem():
     pdb = _generate_phase(pdb, 1, rho0 = 3300 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)
     # Oceanic Crust
     
-    pdb = _generate_phase(pdb, 2, rho0 = 2900 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e21)
+    pdb = _generate_phase(pdb, 2, rho0 = 2900 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)
     # Wedge
     
-    pdb = _generate_phase(pdb, 3, rho0 = 3300 , option_rho = 3, option_rheology = 3, option_k = 0, option_Cp = 0, eta=1e21)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 3, rho0 = 3300 , option_rho = 3, option_rheology = 3, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     # 
     
-    pdb = _generate_phase(pdb, 4, rho0 = 3250 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e23)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 4, rho0 = 3250 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     #
     
-    pdb = _generate_phase(pdb, 5, rho0 = 2800 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e21)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 5, rho0 = 2800 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     #
     
-    pdb = _generate_phase(pdb, 6, rho0 = 2700 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e21)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 6, rho0 = 2700 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     #
     
     pdb = sc_f._scaling_material_properties(pdb,sc)
     # Define LHS 
 
-    lhs_ctrl = ctrl_LHS()
+    #lhs_ctrl = ctrl_LHS()
 
-    lhs_ctrl = sc_f._scale_parameters(lhs_ctrl, sc)
+    #lhs_ctrl = sc_f._scale_parameters(lhs_ctrl, sc)
     
-    lhs_ctrl = compute_initial_LHS(ctrl,lhs_ctrl, sc, pdb)  
+    #lhs_ctrl = compute_initial_LHS(ctrl,lhs_ctrl, sc, pdb)  
           
     # Define Problem
     
@@ -910,7 +851,7 @@ def set_ups_problem():
     
     sol.create_function(lithostatic_pressure_global,slab,wedge,[element_V,element_p])
     
-    lithostatic_pressure_global.Solve_the_Problem(sol,ctrl,pdb,M,g,it=0,ts=0)
+    #lithostatic_pressure_global.Solve_the_Problem(sol,ctrl,pdb,M,g,it=0,ts=0)
     
     slab.Solve_the_Problem(sol,ctrl,pdb,M,g,it=0,ts=0)
     
@@ -939,7 +880,159 @@ def set_ups_problem():
     
     return 0 
 
+def block_operators(a, a_p, L, bcs, V, Q):
+    """Return block operators and block RHS vector for the Stokes
+    problem"""
+    A = assemble_matrix_block(a, bcs=bcs); A.assemble()
+    P = assemble_matrix_block(a_p, bcs=[]); P.assemble()
+    b = assemble_vector_block(L, a, bcs=bcs)
 
+    # nullspace vector [0_u; 1_p] locally
+    null_vec = A.createVecLeft()
+    nloc_u = V.dofmap.index_map.size_local * V.dofmap.index_map_bs
+    nloc_p = Q.dofmap.index_map.size_local
+    null_vec.array[:nloc_u]  = 0.0
+    null_vec.array[nloc_u:nloc_u+nloc_p] = 1.0
+    null_vec.normalize()
+    nsp = PETSc.NullSpace().create(vectors=[null_vec])
+    A.setNullSpace(nsp)
+
+    return A, P, b
+
+def block_iterative_solver(a, a_p, L, bcs, V, Q, msh,ctrl):
+    """Solve the Stokes problem using blocked matrices and an iterative
+    solver."""
+
+    # Assembler the operators and RHS vector
+    A, P, b = block_operators(a, a_p, L, bcs, V, Q)
+
+    # Build PETSc index sets for each field (global dof indices for each
+    # field)
+    V_map = V.dofmap.index_map
+    Q_map = Q.dofmap.index_map
+    bs_u  = V.dofmap.index_map_bs  # = mesh.dim for vector CG
+    nloc_u = V_map.size_local * bs_u
+    nloc_p = Q_map.size_local
+
+    # local starts in the *assembled block vector*
+    offset_u = 0
+    offset_p = nloc_u
+
+    is_u = PETSc.IS().createStride(nloc_u, offset_u, 1, comm=PETSc.COMM_SELF)
+    is_p = PETSc.IS().createStride(nloc_p, offset_p, 1, comm=PETSc.COMM_SELF)
+
+
+    # Create a MINRES Krylov solver and a block-diagonal preconditioner
+    # using PETSc's additive fieldsplit preconditioner
+    ksp = PETSc.KSP().create(msh.comm)
+    ksp.setOperators(A, P)
+    ksp.setTolerances(rtol=1e-10)
+    ksp.setType("minres")
+    ksp.getPC().setType("fieldsplit")
+    ksp.getPC().setFieldSplitType(PETSc.PC.CompositeType.ADDITIVE)
+    ksp.getPC().setFieldSplitIS(("u", is_u), ("p", is_p))
+
+    # Configure velocity and pressure sub-solvers
+    ksp_u, ksp_p = ksp.getPC().getFieldSplitSubKSP()
+    ksp_u.setType("preonly")
+    ksp_u.getPC().setType("gamg")
+    ksp_p.setType("preonly")
+    ksp_p.getPC().setType("jacobi")
+
+    # The matrix A combined the vector velocity and scalar pressure
+    # parts, hence has a block size of 1. Unlike the MatNest case, GAMG
+    # cannot infer the correct near-nullspace from the matrix block
+    # size. Therefore, we set block size on the top-left block of the
+    # preconditioner so that GAMG can infer the appropriate near
+    # nullspace.
+    ksp.getPC().setUp()
+    Pu, _ = ksp_u.getPC().getOperators()
+    Pu.setBlockSize(msh.topology.dim)
+
+    # Create a block vector (x) to store the full solution and solve
+    x = A.createVecRight()
+    ksp.solve(b, x)
+
+    xu = x.getSubVector(is_u)
+    xp = x.getSubVector(is_p)
+    u, p = fem.Function(V), fem.Function(Q)
+    
+    u.x.array[:] = xu.array_r
+    p.x.array[:] = xp.array_r
+    
+    u.name, p.name = "Velocity", "Pressure"
+    
+
+        
+
+
+    return  u, p
+
+
+def tau(eta, u):
+    return 2 * eta * ufl.sym(ufl.grad(u))
+
+def compute_nitsche_FS(mesh, eta, tV, TV, tP, TP, dS, a1, a2, a3, gamma=100.0):
+    """
+    Compute the Nitsche free slip boundary condition for the slab problem.
+    This is a placeholder function and should be implemented with the actual Nitsche method.
+    """
+    n = ufl.FacetNormal(mesh)
+    h = ufl.CellDiameter(mesh)
+
+    a1 += (
+        - ufl.inner(tau(eta, tV), ufl.outer(ufl.dot(TV, n) * n, n)) * dS
+        - ufl.inner(ufl.outer(ufl.dot(tV, n) * n, n), tau(eta, TV)) * dS
+        + (2 * eta * gamma / h)
+        * ufl.inner(ufl.outer(ufl.dot(tV, n) * n, n), ufl.outer(TV, n))
+        * dS
+    )
+    a2 += ufl.inner(tP, ufl.dot(TV, n)) * dS
+    a3 += ufl.inner(TP, ufl.dot(tV, n)) * dS
+
+    return a1, a2, a3
+
+
+@timing_function    
+def block_direct_solver(a, a_p, L, bcs, V, Q, mesh):
+    """Solve the Stokes problem using blocked matrices and a direct
+    solver."""
+
+    # Assembler the block operator and RHS vector
+    A, _, b = block_operators(a, a_p, L, bcs, V, Q)
+
+    # Create a solver
+    ksp = PETSc.KSP().create(mesh.comm)
+    ksp.setOperators(A)
+    ksp.setType("preonly")
+
+    # Set the solver type to MUMPS (LU solver) and configure MUMPS to
+    # handle pressure nullspace
+    pc = ksp.getPC()
+    pc.setType("lu")
+    use_superlu = PETSc.IntType == np.int64
+    if PETSc.Sys().hasExternalPackage("mumps") and not use_superlu:
+        pc.setFactorSolverType("mumps")
+        pc.setFactorSetUpSolverType()
+        pc.getFactorMatrix().setMumpsIcntl(icntl=24, ival=1)
+        pc.getFactorMatrix().setMumpsIcntl(icntl=25, ival=0)
+    else:
+        pc.setFactorSolverType("superlu_dist")
+
+    # Create a block vector (x) to store the full solution, and solve
+    x = A.createVecLeft()
+    ksp.solve(b, x)
+
+    # Create Functions and scatter x solution
+    u, p = Function(V), Function(Q)
+    offset = V.dofmap.index_map.size_local * V.dofmap.index_map_bs
+    u.x.array[:offset] = x.array_r[:offset]
+    p.x.array[: (len(x.array_r) - offset)] = x.array_r[offset:]
+
+    # Compute the $L^2$ norms of the u and p vectors
+
+
+    return u,p
 
 if __name__ == '__main__': 
     
