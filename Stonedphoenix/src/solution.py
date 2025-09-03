@@ -62,6 +62,7 @@ def check_single_domain(expr):
     Inspect a UFL expression or Form and report all meshes/domains used.
     Returns True if all coefficients live on the same mesh, False otherwise.
     """
+    from ufl.algorithms import extract_coefficients
     # Collect domains
     if hasattr(expr, "integrals"):      # Form
         doms = {itg.ufl_domain() for itg in expr.integrals()}
@@ -88,6 +89,9 @@ def check_single_domain(expr):
     else:
         print(" :( Expression involves multiple domains — rebuild coefficients on one mesh.")
         return False
+
+#---------------------------------------------------------------------------
+
 
 
 #--------------------------------------------------------------------------------------------------------------
@@ -142,7 +146,7 @@ class Solution():
         self.T_O      = fem.Function(PG.FS) 
         self.T_N      = fem.Function(PG.FS)
         self.p_lwedge = fem.Function(PW.FSPT) # PW.SolPT -> It is the only part of this lovercraftian nightmare that needs to have temperature and pressure -> Viscosity depends pressure and temperature potentially
-        self.t_nwedge = fem.Function(PW.FSPT) # same stuff as before, again, this is a nightmare: why the fuck. 
+        self.t_owedge = fem.Function(PW.FSPT) # same stuff as before, again, this is a nightmare: why the fuck. 
         self.p_lslab = fem.Function(PS.FSPT) # PW.SolPT -> It is the only part of this lovercraftian nightmare that needs to have temperature and pressure -> Viscosity depends pressure and temperature potentially
         self.t_oslab = fem.Function(PS.FSPT)
         self.u_global, self.p_global = gives_Function(space_GL)
@@ -270,9 +274,9 @@ class SolverStokes():
 
     def set_block_operator(self,a,a_p,bcs,L,F0,F1):
 
-        self.A = assemble_matrix_block(fem.form(a), bcs=bcs)   ; self.A.assemble()
-        self.P = assemble_matrix_block(fem.form(a_p), bcs=bcs) ; self.P.assemble()
-        self.b = assemble_vector_block(fem.form(L), a, bcs=bcs); self.b.assemble()
+        self.A = assemble_matrix_block(a, bcs=bcs)   ; self.A.assemble()
+        self.P = assemble_matrix_block(a_p, bcs=bcs) ; self.P.assemble()
+        self.b = assemble_vector_block(L, a, bcs=bcs); self.b.assemble()
         self.null_vec = self.A.createVecLeft()
         self.nloc_u = F0.dofmap.index_map.size_local * F0.dofmap.index_map_bs
         self.nloc_p = F1.dofmap.index_map.size_local
@@ -357,6 +361,61 @@ class Problem:
 class Global_thermal(Problem):
     def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
         super().__init__(M,elements,name)
+        
+    @timing_function
+    def initial_temperature_field(self,M, ctrl, lhs, g_input):
+        from scipy.interpolate import griddata
+        from ufl import conditional, Or, eq
+        from functools import reduce
+        """
+        X    -:- Functionspace (i.e., an abstract stuff that represents all the possible solution for the given mesh and element type)
+        M    -:- Mesh object (i.e., a random container of utils related to the mesh)
+        ctrl -:- Control structure containing the information of the simulations 
+        lhs  -:- left side boundary condition controls. Separated from the control structure for avoiding clutter in the main ctrl  
+        ---- 
+        Function: Create a function out of the function space (T_i). From the function extract dofs, interpolate (initial) lhs all over. 
+        Then select the crustal+lithospheric marker, and overwrite the T_i with a linear geotherm. Simple. 
+        ----
+        output : T_i the initial temperature field.  
+            T_gr = (-M.g_input.lt_d-0)/(ctrl.Tmax-ctrl.Ttop)
+            T_gr = T_gr**(-1) 
+
+            bc_fun = fem.Function(X)
+            bc_fun.x.array[dofs_dirichlet] = ctrl.Ttop + T_gr * cd_dof[dofs_dirichlet,1]
+            bc_fun.x.scatter_forward()
+        """    
+        #- Create part of the thermal field: create function, extract dofs, 
+        X     = self.FS
+        T_i_A = fem.Function(X)
+        cd_dof = X.tabulate_dof_coordinates()
+        T_i_A.x.array[:] = griddata(-lhs.z, lhs.LHS, cd_dof[:,1], method='nearest')
+        T_i_A.x.scatter_forward() 
+        #- 
+        T_gr = (-g_input.lt_d-0)/(ctrl.Tmax-ctrl.Ttop)
+        T_gr = T_gr**(-1) 
+
+        T_expr = fem.Function(X)
+        ind_A = np.where(cd_dof[:,1] >= -g_input.lt_d)[0]
+        ind_B = np.where(cd_dof[:,1] < -g_input.lt_d)[0]
+        T_expr.x.array[ind_A] = ctrl.Ttop + T_gr * cd_dof[ind_A,1]
+        T_expr.x.array[ind_B] = ctrl.Tmax
+        T_expr.x.scatter_forward()
+
+
+        expr = conditional(
+            reduce(Or,[eq(M.phase, i) for i in [2, 3, 4, 5]]),
+            T_expr,
+            T_i_A
+        )
+
+        v = ufl.TestFunction(X)
+        u = ufl.TrialFunction(X)
+        T_i = fem.Function(X)
+        a = u * v * ufl.dx 
+        L = expr * v * ufl.dx
+        prb = fem.petsc.LinearProblem(a,L,u=T_i)
+        prb.solve()
+        return T_i 
 #-----------------------------------------------------------------
 class Global_pressure(Problem): 
     def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
@@ -544,7 +603,7 @@ class Stokes_Problem(Problem):
         pass
         
     
-    def set_linear_picard(self,u,T,PL,D,pdb,ctrl, a_p = None,it=0, ts = 0):
+    def set_linear_picard(self,u_slab,T,PL,D,pdb,ctrl,sc, a_p = None,it=0, ts = 0):
         
         """
         The problem is always LINEAR when depends on T/P -> Becomes fairly 
@@ -555,7 +614,9 @@ class Stokes_Problem(Problem):
         v, q  = self.test0,  self.test1
         dx    = ufl.dx
 
-        eta = fem.Constant(D.mesh, PETSc.ScalarType(float(pdb.eta[0])))
+        e = compute_strain_rate(u_slab)
+
+        eta = compute_viscosity_FX(e,T,PL,pdb,D.phase,D,sc)
 
         a1 = ufl.inner(2*eta*ufl.sym(ufl.grad(u)), ufl.sym(ufl.grad(v))) * dx
         a2 = - ufl.inner(ufl.div(v), p) * dx             # build once
@@ -567,11 +628,6 @@ class Stokes_Problem(Problem):
         L  = fem.form([ufl.inner(f, v)*dx, ufl.inner(f2, q)*dx])    
     
         return a1, a2, a3 , L , a_p0       
-
-#----------------------------------------------------------------------------
-
-
-
 
         
 #----------------------------------------------------------------------------          
@@ -590,11 +646,6 @@ def L2_norm_calculation(f):
     return fem.assemble_scalar(fem.form(ufl.inner(f, f) * ufl.dx))**0.5       
         
         
-#-----------------------------------------------------------------
-class Wedge(Stokes_Problem): 
-    def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
-        super().__init__(M,elements,name)
- # Needed for accounting the pressure. 
 #------------------------------------------------------------------
 class Slab(Stokes_Problem): 
     def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
@@ -663,7 +714,7 @@ class Slab(Stokes_Problem):
                 return [bc_left_x,bc_left_y,bc_bottom_x,bc_bottom_y]
                 
     
-    def compute_nitsche_FS(self,D, S, dS, a1,a2,a3,pdb ,gamma,it = 0):
+    def compute_nitsche_FS(self,D, S, dS, a1,a2,a3,pdb,gamma,sc,it = 0):
         """
         Compute the Nitsche free slip boundary condition for the slab problem.
         This is a placeholder function and should be implemented with the actual Nitsche    method.
@@ -674,7 +725,7 @@ class Slab(Stokes_Problem):
         
         # Linear 
         e   = compute_strain_rate(S.u_slab)   
-        eta = pdb.eta[0]#compute_viscosity_FX(e,S.t_oslab,S.p_lslab,pdb,D.phase,D)
+        eta = compute_viscosity_FX(e,S.t_oslab,S.p_lslab,pdb,D.phase,D,sc)
         
         n = ufl.FacetNormal(D.mesh)
         h = ufl.CellDiameter(D.mesh)
@@ -694,7 +745,7 @@ class Slab(Stokes_Problem):
             a3 += 0 
         return a1, a2, a3 
     
-    def Solve_the_Problem(self,S,ctrl,pdb,M,g,it=0,ts=0):
+    def Solve_the_Problem(self,S,ctrl,pdb,M,g,sc,it=0,ts=0):
         theta = M.g_input.theta_out_slab
         M = getattr(M,'domainA')
         
@@ -717,7 +768,7 @@ class Slab(Stokes_Problem):
         self.trial1 = ufl.TrialFunction(p_subs)
         self.test1 = ufl.TestFunction(p_subs)
         # Create the linear problem
-        a1,a2,a3, L, a_p = self.set_linear_picard(S.u_slab,S.t_oslab,S.p_lslab,M,pdb,ctrl)
+        a1,a2,a3, L, a_p = self.set_linear_picard(S.u_slab,S.t_oslab,S.p_lslab,M,pdb,ctrl,sc)
 
         # Create the dirichlecht boundary condition 
         self.bc   = self.setdirichlecht(ctrl,M,theta) 
@@ -725,19 +776,16 @@ class Slab(Stokes_Problem):
         dS_top = M.bc_dict["top_subduction"]
         dS_bot = M.bc_dict["bot_subduction"]
         # 1 Extract ds 
-        a1,a2,a3 = self.compute_nitsche_FS(M, S, dS_bot, a1, a2 ,a3,pdb ,gamma=50.0)
+        a1,a2,a3 = self.compute_nitsche_FS(M, S, dS_bot, a1, a2 ,a3,pdb ,50.0,sc)
         
         if ctrl.slab_bc == 0: 
-            a1,a2,a3 = self.compute_nitsche_FS(M, S, dS_top, a1, a2 ,a3,pdb ,gamma=50.0)
+            a1,a2,a3 = self.compute_nitsche_FS(M, S, dS_top, a1, a2 ,a3,pdb ,50.0,sc)
         
         # Slab problem is ALWAYS LINEAR
         
         a   = fem.form([[a1, a2],[a3, None]])
         a_p0  = fem.form([[a1, None],[None, a_p]])
 
-        #block_direct_solver(a, a_p, L,  self.bc, self.F0, self.F1, M.mesh)
-
-        #u,p = block_iterative_solver(a, a_p0, L, self.bc, V_subs, p_subs, M.mesh,ctrl)
 
         self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,ctrl ,J = None, r = None,it = 0, ts = 0)
         
@@ -764,8 +812,255 @@ class Slab(Stokes_Problem):
 
         return S 
     
+#---------------------------------------------------------------------------------------------------       
+class Wedge(Stokes_Problem): 
+    def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
+        super().__init__(M,elements,name)
+    
+    def setdirichlecht(self,ctrl,D,theta,V,it=0, ts = 0):
+        mesh = V.mesh 
+        tdim = mesh.topology.dim
+        fdim = tdim - 1
+        
+    
+        # facet ids
+        overriding_facet = D.facets.find(D.bc_dict['overriding'])
+        slab_facets      = D.facets.find(D.bc_dict['slab'])
+        
+            
+        # Compute this crap only once @ the beginning of the simulation 
+
+
+        noslip = np.zeros(mesh.geometry.dim, dtype=PETSc.ScalarType)
+        dofs_over = fem.locate_dofs_topological(V, fdim, D.facets.find(D.bc_dict['overriding']))
+
+        bc_overriding = fem.dirichletbc(noslip, dofs_over, V)
+        
+        
+        #------------------------------------------------------------------------
+        dofs        = fem.locate_dofs_topological(V, fdim, slab_facets)
+
+        n = ufl.FacetNormal(mesh)                    # exact facet normal in    weak   form
+        v_slab = float(1.0)  # slab velocity magnitude
+
+        v_const = ufl.as_vector((ctrl.v_s[0], 0.0))
+
+        proj = ufl.Identity(mesh.geometry.dim) - ufl.outer(n, n)  # projector   onto  the  tangential plane
+        t = ufl.dot(proj, v_const)                     # tangential     velocity    vector on  slab
+        t_hat = t / ufl.sqrt(ufl.inner(t, t))    
+        v_project = v_slab * t_hat  # projected tangential velocity vector on   slab
+        self.moving_wall_wedge = fem.Function(V)
+        w = self.trial0
+        v = self.test0
+        a = ufl.inner(w, v) * self.ds(D.bc_dict['slab'])        #  boundary     mass    matrix (vector)
+        L = ufl.inner(v_project, v) * self.ds(D.bc_dict['slab'])
+
+        self.moving_wall_wedge = fem.petsc.LinearProblem(
+            a, L,
+            petsc_options={
+            "ksp_type": "cg",
+            "pc_type": "jacobi",
+            "ksp_rtol": 1e-20,
+            }
+        ).solve()  # ut_h \in V
+            # Introducing the coupling depth velocity increasing
+            
+            #alpha_decoupling = 1/(1+np.exp(0.1*(z-lit)))
+            
+            
+                
+        self.moving_wall_wedge.x.array[:] = self.moving_wall_wedge.x.array[:]*ctrl.v_s[0] 
+
+        dofs_s_x = fem.locate_dofs_topological(V.sub(0), fdim,slab_facets)
+        dofs_s_y = fem.locate_dofs_topological(V.sub(1), fdim,slab_facets)
+
+        bcx = fem.dirichletbc(self.moving_wall_wedge.sub(0), dofs_s_x)
+        bcy = fem.dirichletbc(self.moving_wall_wedge.sub(1), dofs_s_y)
+        
+    
+        return [bcx, bcy, bc_overriding]
+                
+    
+    def compute_nitsche_traction(self,D, S, dS, a1,a2,a3,pdb ,gamma,it = 0):
+        # Place holder for eventual traction boundary condition 
+        """
+        In case I want to introduce the feedback between thermal evolution and density 
+        I will introduce this boundary condition. The material properties will be computed 
+        as a function of the lithostatic pressure 
+        
+        
+        
+        """
+
+
+        return a1, a2, a3 
+    
+    def Solve_the_Problem(self,S,ctrl,pdb,M,g,sc,it=0,ts=0):
+        theta = M.g_input.theta_out_slab
+        M = getattr(M,'domainB')
         
 
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+
+        # Example: each rank has some local IDs
+        local_ids = np.int32(M.phase.x.array[:])
+
+        # Gather arrays from all processes
+        all_ids = comm.allgather(local_ids)
+
+        # Root (or all, since allgather) concatenates
+        all_ids = np.concatenate(all_ids)
+
+        # Compute global unique IDs
+        unique_ids = np.unique(all_ids)
+
+        non_linear = False 
+        
+        for i in range(np.shape(unique_ids)[0]): 
+            if pdb.option_eta[unique_ids[i]] > 1: 
+                non_linear = True
+                break
+    
+            
+
+
+
+
+        
+        """
+        According to chatgpt, and I have already verified this notion before asking, 
+        I cannot create test and trial function from a previous instance. In case of mixed space
+        I need always to recreate on the spot, which is very annoying despite they are pretty much cheap 
+        in terms of computation. 
+        
+    
+        """
+        V_subs0 = self.FS.sub(0)
+        p_subs0 = self.FS.sub(1)
+        V_subs, _ = V_subs0.collapse()
+        p_subs, _ = p_subs0.collapse()
+    
+        self.trial0 = ufl.TrialFunction(V_subs)
+        self.test0 = ufl.TestFunction(V_subs)
+        self.trial1 = ufl.TrialFunction(p_subs)
+        self.test1 = ufl.TestFunction(p_subs)
+    
+
+        # Create the linear problem
+        a1,a2,a3, L, a_p = self.set_linear_picard(S.u_wedge,S.t_owedge,S.p_lwedge,M,pdb,ctrl,sc)
+
+        # Create the dirichlecht boundary condition 
+        self.bc   = self.setdirichlecht(ctrl,M,theta,V_subs) 
+        
+        # Form the system 
+        a   = [[a1, a2],[a3, None]]
+        a_p0  = [[a1, None],[None, a_p]]
+        
+        time_A = timing.time()
+
+        
+        if non_linear == False: 
+            S = self.solve_linear_picard(fem.form(a),fem.forum(a_p0),fem.form(L))
+
+        else: 
+            u_k   = S.u_wedge.copy()
+            p_k   = S.p_wedge.copy()
+            du0   = S.u_wedge.copy()
+            dp0   = S.p_wedge.copy()
+            du1   = S.u_wedge.copy()
+            dp1   = S.p_wedge.copy()
+            
+            res  = 1.0 
+            it   = 0 
+            while (res > 1e-4) or it < 10: 
+                time_ita = timing.time()
+                if it>0: 
+                    a1,_,_, _,_ = self.set_linear_picard(u_k,S.t_owedge,S.p_lwedge,M,pdb,ctrl,sc)
+                    a[0][0] = a1 
+                    a       = fem.form(a)
+                    a_p0[0][0] = a1 
+                    a_p0       = fem.form(a_p0)
+                
+                S = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl, S,it)
+                
+                
+                du0.x.array[:]  = S.u_wedge.x.array[:] - u_k.x.array[:];du0.x.scatter_forward()
+                
+                du1.x.array[:] = S.u_wedge.x.array[:] + u_k.x.array[:];du1.x.scatter_forward()
+                
+                dp0.x.array[:]  = S.p_wedge.x.array[:] - p_k.x.array[:];dp0.x.scatter_forward()
+                
+                dp1.x.array[:] = S.p_wedge.x.array[:] + p_k.x.array[:];dp1.x.scatter_forward()
+        
+
+                
+                tol_u = L2_norm_calculation(du0)/L2_norm_calculation(du1)
+                
+                tol_p = L2_norm_calculation(dp0)/L2_norm_calculation(dp1)
+                                
+                res   = np.sqrt(tol_u**2+tol_p**2)
+                
+                u_k.x.array[:] = 0.8*S.u_wedge.x.array[:] + (1-0.8)*u_k.x.array[:]
+                p_k.x.array[:] = 0.8*S.p_wedge.x.array[:] + (1-0.8)*p_k.x.array[:]
+
+                time_itb = timing.time()
+
+                print_ph(f'[]   --->Wedge L_2 norm is {res:.3e}, it_th {it:d}performed in {time_itb-time_ita:.2f} seconds')
+                it = it+1 
+        
+
+        time_B = timing.time()
+        print_ph(f'// -- // --- Solution of Wedge in {time_B-time_A:.2f} sec')
+        print_ph(f'')
+
+        print_ph("               ")
+        print_ph("               _")
+        print_ph("               :")
+        print_ph("[] - - - -> Lithostatic <- - - - []")
+        print_ph("               :")
+        print_ph("               _")
+        print_ph("                ")
+
+        print_ph(f'')
+
+ 
+        
+
+        
+
+
+        return S 
+    
+    def solve_linear_picard(self,a,a_p0,L,ctrl, S,it=0,ts=0):
+            
+
+        self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,ctrl ,J = None, r = None,it = 0, ts = 0)
+        
+        
+        if direct_solver==1:
+            x = self.solv.A.createVecLeft()
+        else:
+            x = self.solv.A.createVecRight()
+        self.solv.ksp.solve(self.solv.b, x)
+        if direct_solver == 0: 
+            xu = x.getSubVector(self.solv.is_u)
+            xp = x.getSubVector(self.solv.is_p)
+            u, p = fem.Function(self.F0), fem.Function(self.F1)
+    
+            u.x.array[:] = xu.array_r
+            p.x.array[:] = xp.array_r
+            S.u_wedge.x.array[:] = u.x.array[:]
+            S.p_wedge.x.array[:] = p.x.array[:]
+        else: 
+            S.u_wedge.x.array[:self.solv.offset] = x.array_r[:self.solv.offset]
+            S.p_wedge.x.array[: (len(x.array_r) - self.solv.offset)] = x.array_r[self.solv.offset:]
+        
+
+
+        return S 
+    
+#------------------------------------------------------------------------------------------------------------
 
 def set_ups_problem():
     from phase_db import PhaseDataBase
@@ -813,7 +1108,7 @@ def set_ups_problem():
     pdb = _generate_phase(pdb, 2, rho0 = 2900 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)
     # Wedge
     
-    pdb = _generate_phase(pdb, 3, rho0 = 3300 , option_rho = 3, option_rheology = 3, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 3, rho0 = 3300 , option_rho = 3, option_rheology = 3, option_k = 0, option_Cp = 0, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     # 
     
     pdb = _generate_phase(pdb, 4, rho0 = 3250 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
@@ -828,15 +1123,17 @@ def set_ups_problem():
     pdb = sc_f._scaling_material_properties(pdb,sc)
     # Define LHS 
 
-    #lhs_ctrl = ctrl_LHS()
+    lhs_ctrl = ctrl_LHS()
 
-    #lhs_ctrl = sc_f._scale_parameters(lhs_ctrl, sc)
+    lhs_ctrl = sc_f._scale_parameters(lhs_ctrl, sc)
     
-    #lhs_ctrl = compute_initial_LHS(ctrl,lhs_ctrl, sc, pdb)  
+    lhs_ctrl = compute_initial_LHS(ctrl,lhs_ctrl, sc, pdb)  
           
     # Define Problem
     
     # Pressure 
+    
+    energy_global               = Global_thermal (M = M, name = ['energy','domainG']  , elements = (element_PT,                   ), pdb = pdb)
     
     lithostatic_pressure_global = Global_pressure(M = M, name = ['pressure','domainG'], elements = (element_PT,                   ), pdb = pdb)
     
@@ -848,13 +1145,24 @@ def set_ups_problem():
 
     # Define Solution 
     sol                         = Solution()
-    
+     
     sol.create_function(lithostatic_pressure_global,slab,wedge,[element_V,element_p])
     
-    #lithostatic_pressure_global.Solve_the_Problem(sol,ctrl,pdb,M,g,it=0,ts=0)
+    sol.T_O = energy_global.initial_temperature_field(M.domainG, ctrl, lhs_ctrl,M.g_input)
+
+    lithostatic_pressure_global.Solve_the_Problem(sol,ctrl,pdb,M,g,it=0,ts=0)
     
-    slab.Solve_the_Problem(sol,ctrl,pdb,M,g,it=0,ts=0)
+    # Interpolate from global to wedge/slab
+    from utils import interpolate_from_sub_to_main
     
+    sol.t_owedge = interpolate_from_sub_to_main(sol.t_owedge,sol.T_O, M.domainB.cell_par,1)
+    sol.p_lwedge = interpolate_from_sub_to_main(sol.p_lwedge,sol.PL, M.domainB.cell_par,1)
+
+    
+    slab.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it=0,ts=0)
+    
+    wedge.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it=0,ts=0)
+
     
     
     # Update and set up variational problem

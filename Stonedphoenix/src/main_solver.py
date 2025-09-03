@@ -702,63 +702,7 @@ def compute_boundary_flux(u,M,boundary_id):
     flux_local = fem.assemble_scalar(fem.form(flux_form))
     flux = mesh.comm.allreduce(flux_local, op=MPI.SUM)
     return flux
-#---------------------------------------------------------------------------
-@timing_function
-def initial_temperature_field(M, ctrl, lhs):
-    from scipy.interpolate import griddata
-    from ufl import conditional, Or, eq
-    from functools import reduce
-    """
-    X    -:- Functionspace (i.e., an abstract stuff that represents all the possible solution for the given mesh and element type)
-    M    -:- Mesh object (i.e., a random container of utils related to the mesh)
-    ctrl -:- Control structure containing the information of the simulations 
-    lhs  -:- left side boundary condition controls. Separated from the control structure for avoiding clutter in the main ctrl  
-    ---- 
-    Function: Create a function out of the function space (T_i). From the function extract dofs, interpolate (initial) lhs all over. 
-    Then select the crustal+lithospheric marker, and overwrite the T_i with a linear geotherm. Simple. 
-    ----
-    output : T_i the initial temperature field.  
-        T_gr = (-M.g_input.lt_d-0)/(ctrl.Tmax-ctrl.Ttop)
-        T_gr = T_gr**(-1) 
-        
-        bc_fun = fem.Function(X)
-        bc_fun.x.array[dofs_dirichlet] = ctrl.Ttop + T_gr * cd_dof[dofs_dirichlet,1]
-        bc_fun.x.scatter_forward()
-    """    
-    #- Create part of the thermal field: create function, extract dofs, 
-    X     = M.Sol_SpaceT 
-    T_i_A = fem.Function(X)
-    cd_dof = X.tabulate_dof_coordinates()
-    T_i_A.x.array[:] = griddata(-lhs.z, lhs.LHS, cd_dof[:,1], method='nearest')
-    T_i_A.x.scatter_forward() 
-    #- 
-    T_gr = (-M.g_input.lt_d-0)/(ctrl.Tmax-ctrl.Ttop)
-    T_gr = T_gr**(-1) 
-    
-    T_expr = fem.Function(X)
-    ind_A = np.where(cd_dof[:,1] >= -M.g_input.lt_d)[0]
-    ind_B = np.where(cd_dof[:,1] < -M.g_input.lt_d)[0]
-    T_expr.x.array[ind_A] = ctrl.Ttop + T_gr * cd_dof[ind_A,1]
-    T_expr.x.array[ind_B] = ctrl.Tmax
-    T_expr.x.scatter_forward()
-        
 
-    expr = conditional(
-        reduce(Or,[eq(M.phase, i) for i in [2, 3, 4, 5]]),
-        T_expr,
-        T_i_A
-    )
-    
-    v = ufl.TestFunction(X)
-    u = ufl.TrialFunction(X)
-    T_i = fem.Function(X)
-    a = u * v * ufl.dx 
-    L = expr * v * ufl.dx
-    prb = fem.petsc.LinearProblem(a,L,u=T_i)
-    prb.solve()
-    return T_i 
-
-#---------------------------------------------------------------------------
 
 @timing_function
 def set_lithostatic_problem(PL, T_o, tPL, TPL, pdb, sc, g, M ):

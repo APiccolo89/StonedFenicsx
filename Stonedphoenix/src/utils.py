@@ -69,8 +69,9 @@ def interpolate_from_sub_to_main(u_dest, u_start, cells,parent2child=0):
         M (Mesh): The mesh of the main domain.
         V (FunctionSpace): The function space of the main domain.
     """
-    from dolfinx                         import mesh, fem, io, nls, log
+    from dolfinx                         import mesh
     import numpy as np
+    
     if parent2child == 0: 
         a = np.arange(len(cells))
         b = cells

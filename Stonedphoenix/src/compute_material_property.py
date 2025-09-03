@@ -19,6 +19,40 @@ from dolfinx import fem
 import ufl
 from ufl import *
 
+
+def evaluate_material_property(expr,P0):
+    from scipy.interpolate import griddata
+    from ufl import conditional, Or, eq
+    from functools import reduce
+    """
+    X    -:- Functionspace (i.e., an abstract stuff that represents all the possible solution for the given mesh and element type)
+    M    -:- Mesh object (i.e., a random container of utils related to the mesh)
+    ctrl -:- Control structure containing the information of the simulations 
+    lhs  -:- left side boundary condition controls. Separated from the control structure for avoiding clutter in the main ctrl  
+    ---- 
+    Function: Create a function out of the function space (T_i). From the function extract dofs, interpolate (initial) lhs all over. 
+    Then select the crustal+lithospheric marker, and overwrite the T_i with a linear geotherm. Simple. 
+    ----
+    output : T_i the initial temperature field.  
+        T_gr = (-M.g_input.lt_d-0)/(ctrl.Tmax-ctrl.Ttop)
+        T_gr = T_gr**(-1) 
+        bc_fun = fem.Function(X)
+        bc_fun.x.array[dofs_dirichlet] = ctrl.Ttop + T_gr * cd_dof[dofs_dirichlet,1]
+        bc_fun.x.scatter_forward()
+    """    
+    #- CreatP0he thermal field: create function, extract dofs, 
+    X     = P0
+    prop_f = fem.Function(X)
+
+    v = ufl.TestFunction(X)
+    u = ufl.TrialFunction(X)
+    a = u * v * ufl.dx 
+    L = expr * v * ufl.dx
+    prb = fem.petsc.LinearProblem(a,L,u=prop_f)
+    prb.solve()
+    return prop_f
+
+
 #---------------------------------------------------------------------------------
 def heat_conductivity_FX(pdb, T, p, phase, M):
     
@@ -140,7 +174,7 @@ def density_FX(pdb, T, p, phase, M):
 
     return rho 
 #-----------------------------------
-def compute_viscosity_FX(e,T,P,pdb,phase,M):
+def compute_viscosity_FX(e,T_in,P_in,pdb,phase,M,sc):
     """
     It is wrong, but frequently used: it does not change too much by the end the prediction. 
     I use the minimum viscosity possible. The alternative is taking the average between eta_min and eta_av. So, 
@@ -156,6 +190,12 @@ def compute_viscosity_FX(e,T,P,pdb,phase,M):
     P0    = M.solPh
     e_II = compute_eII(e)
     # If your phase IDs are available per cell for mesh0:
+    
+    # UNFORTUNATELY I AM STUPID and i do not have any idea how to scale the energies such that it would be easier to handle. Since the scale of force and legth is self-consistently related to mass, i do not know how to deal with the fucking useless mol in the energy of activation 
+    T = T_in.copy()
+    P = P_in.copy()
+    T.x.array[:] = T.x.array[:]*sc.Temp  ;T.x.scatter_forward()
+    P.x.array[:] = P.x.array[:]*sc.stress;P.x.scatter_forward()
 
     ph = np.int32(phase.x.array)
     
@@ -175,7 +215,7 @@ def compute_viscosity_FX(e,T,P,pdb,phase,M):
     # Eta max 
     Bd_max  = 1 / 2 / pdb.eta_max
     # strain indipendent  
-    cdf = Bdif * exp((Edif + P * Vdif )/(pdb.R * T)) ; cds = Bdis * exp((Edis + P * Vdis)/(pdb.R * T))
+    cdf = Bdif * exp(-(Edif + P * Vdif )/(pdb.R * T)) ; cds = Bdis * exp(-(Edis + P * Vdis)/(pdb.R * T))
     # compute tau guess
     n_co  = (1-n)/n
     n_inv = 1/n 

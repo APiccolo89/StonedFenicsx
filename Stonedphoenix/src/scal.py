@@ -75,7 +75,9 @@ def _scaling_material_properties(pdb,sc:Scal):
     scal_Bdif   = (sc.stress*sc.T)**(-1)
     pdb.Bdif   /= scal_Bdif 
     pdb.Bdis   /= scal_Bdsl
+    
 
+    
     # Scal the heat capacity 
     scal_c1     = sc.Energy/sc.M/sc.Temp**(0.5) 
     scal_c2     = (sc.Energy*sc.Temp)/sc.M
