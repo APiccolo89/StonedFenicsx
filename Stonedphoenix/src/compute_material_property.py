@@ -61,9 +61,9 @@ def heat_conductivity_FX(pdb, T, p, phase, M):
     # Gather material parameters as UFL expressions via indexing
     """
     """
-    k0      = fem.Function(P0)  ; k0.x.array[:]    =  pdb.rho0[ph]
-    a       = fem.Function(P0)  ; a.x.array[:]     =  pdb.alpha0[ph]
-    n       = fem.Function(P0)  ; n.x.array[:]     =  pdb.Kb[ph]
+    k0      = fem.Function(P0)  ; k0.x.array[:]    =  pdb.k0[ph]
+    a       = fem.Function(P0)  ; a.x.array[:]     =  pdb.a[ph]
+    n       = fem.Function(P0)  ; n.x.array[:]     =  pdb.k_n[ph]
     
     kr0     = fem.Function(P0)  ; kr0.x.array[:]     =  pdb.k_d[ph,0]
     kr1     = fem.Function(P0)  ; kr1.x.array[:]     =  pdb.k_d[ph,1]

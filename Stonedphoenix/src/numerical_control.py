@@ -7,7 +7,7 @@ from typing import Tuple, List
 from typing import Optional
 from numba import njit, prange
 
-
+dict_temp_prob = {'Transient':0,'Steady_state':1}
 dict_k = {'base': 0,
            'T_hof_Mckenzie2005': 1,
            'T_Xu_2004':2,

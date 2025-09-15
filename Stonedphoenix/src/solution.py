@@ -21,6 +21,7 @@ from create_mesh import Mesh
 from phase_db import PhaseDataBase
 import time                          as timing
 from dolfinx.fem.petsc import assemble_matrix_block, assemble_vector_block
+from numerical_control import NumericalControls, ctrl_LHS, IOControls
 
 
 """
@@ -40,7 +41,7 @@ magic.
 
 
 """
-direct_solver = 1 
+direct_solver = 1
 
 
 def mesh_of(obj):
@@ -359,8 +360,267 @@ class Problem:
         
 #------------------------------------------------------------------
 class Global_thermal(Problem):
-    def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
+    def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase,ctrl:NumericalControls):
         super().__init__(M,elements,name)
+                
+        self.steady_state = ctrl.steady_state
+        
+        if np.all(pdb.option_rho<2) and np.all(pdb.option_k==0) and np.all(pdb.option_Cp==0):
+            self.typology = 'LinearProblem'
+        else:
+            self.typology = 'NonlinearProblem'
+        
+    def create_bc_temp(self,M:Mesh,ctrl:NumericalControls,lhs,u_global,it,ts=0):
+        from scipy.interpolate import griddata   
+        cd_dof = self.FS.tabulate_dof_coordinates()
+        fdim     = M.mesh.topology.dim - 1    
+        # This part can be done only once -> bc dofs are constant 
+        if ts == 0 and it == 0:
+            facets                 = M.facets.find(M.bc_dict['Top'])    
+            dofs_top               = fem.locate_dofs_topological(self.FS, M.mesh.topology.dim-1, facets)
+            # -> Probably I need to use some parallel shit here 
+            self.bc_top            = fem.dirichletbc(ctrl.Ttop, dofs_top, self.FS) 
+            facets                 = M.facets.find(M.bc_dict['Left_inlet'])    
+            dofs_left              = fem.locate_dofs_topological(self.FS, M.mesh.topology.dim-1, facets)
+            
+            # Create suitable function space for the problem
+            T_bc_L = fem.Function(self.FS)
+            # Extract z and lhs 
+            z   = - lhs.z
+            LHS = lhs.LHS 
+            # Extract coordinate dofs
+            # Interpolate temperature field: 
+            T_bc_L.x.array[:] = griddata(z, LHS, cd_dof[:,1], method='nearest')
+            T_bc_L.x.scatter_forward()
+            self.bc_left = fem.dirichletbc(T_bc_L, dofs_left)
+            
+
+            facets                 = M.facets.find(M.bc_dict['Right_lit'])                        
+            dofs_right_lit        = fem.locate_dofs_topological(self.FS, M.mesh.topology.dim-1, facets)
+
+            cd_dof_b = cd_dof[dofs_right_lit]
+    
+            T_gr = (np.min(cd_dof_b[:,1])-0)/(ctrl.Tmax-ctrl.Ttop)
+            T_gr = T_gr**(-1) 
+        
+            bc_fun = fem.Function(self.FS)
+            bc_fun.x.array[dofs_right_lit] = ctrl.Ttop + T_gr * cd_dof[dofs_right_lit,1]
+            bc_fun.x.scatter_forward()
+        
+            self.bc_right_lit = fem.dirichletbc(bc_fun, dofs_right_lit)
+
+        facets                 = M.facets.find(M.bc_dict['Right_wed'])                        
+        dofs_right_wed        = fem.locate_dofs_topological(self.FS, M.mesh.topology.dim-1, facets)
+        h_vel  = u_global.sub(0) # index 1 = y-direction (2D)
+        vel_T  = fem.Function(self.FS)
+        vel_T.interpolate(h_vel)
+        vel_bc = vel_T.x.array[dofs_right_wed]
+        ind_z = np.where((vel_bc <= 0.0))
+        dofs_vel = dofs_right_wed[ind_z[0]]        
+        
+        self.bc_right_wed = fem.dirichletbc(ctrl.Tmax, dofs_vel,self.FS)
+
+        facets                 = M.facets.find(M.bc_dict['Bottom_wed'])                        
+        dofs_bot_wed        = fem.locate_dofs_topological(self.FS, M.mesh.topology.dim-1, facets)
+        h_vel       = u_global.sub(0) # index 1 = y-direction (2D)   
+        v_vel       = u_global.sub(1) # index 1 = y-direction (2D)
+        vel_T  = fem.Function(self.FS)
+        vel_T.interpolate(v_vel)
+        vel_bc = vel_T.x.array[dofs_bot_wed]
+        ind_z = np.where(vel_bc >= 0.0)
+        dofs_vel = dofs_bot_wed[ind_z[0]]                
+        
+        self.bc_bot_wed = fem.dirichletbc(ctrl.Tmax, dofs_vel,self.FS)
+        
+        bc = [self.bc_top, self.bc_left, self.bc_right_lit, self.bc_right_wed,self.bc_bot_wed]
+
+        
+        
+        return bc 
+        
+    #------------------------------------------------------------------
+    def set_newton_SS(self,p,D,T,u_global,pdb):
+        test   = self.test0                 # v
+        trial0 = self.trial0                # δp (TrialFunction) for Jacobian
+
+
+        rho_k = density_FX(pdb, T, p, D.phase, D.mesh)  # frozen
+        
+        k_k = density_FX(pdb, T, p, D.phase, D.mesh)  # frozen
+        
+        Cp_k = heat_capacity_FX(pdb, T,  D.phase, D.mesh)  # frozen
+
+
+        f    = fem.Constant(D.mesh, 0.0)  # source term
+        
+        dx  = self.dx
+        # Linear operator with frozen coefficients
+            
+        diff = ufl.inner(k_k * ufl.grad(T), ufl.grad(self.test0)) * dx
+        adv  = rho_k *Cp_k *ufl.dot(u_global, ufl.grad(T)) * self.test0 * dx
+
+        a_lin = diff + adv
+        L     = f * self.test0 * dx   
+        # Nonlinear residual: F(p; v) = ∫ ∇p·∇v dx - ∫ ∇v·(ρ(T, p) g) dx
+        F = a_lin - L
+        # Jacobian dF/dp in direction δp (trial0)
+        J = ufl.derivative(F, T, trial0)
+        
+        return F,J 
+    
+    #------------------------------------------------------------------
+
+    def set_linear_picard_SS(self,p_k,T,u_global,D,pdb, it=0):
+        # Function that set linear form and linear picard for picard iteration
+        
+        rho_k = density_FX(pdb, T, p_k, D.phase, D.mesh)  # frozen
+        
+        k_k = heat_conductivity_FX(pdb, T, p_k, D.phase, D.mesh)  # frozen
+        
+        Cp_k = heat_capacity_FX(pdb, T, D.phase, D.mesh)  # frozen
+
+        f    = fem.Constant(D.mesh, 0.0)  # source term
+        
+        dx  = self.dx
+        # Linear operator with frozen coefficients
+        if it == 0: 
+            
+            diff = ufl.inner(k_k * ufl.grad(self.trial0), ufl.grad(self.test0)) * dx
+            adv  = rho_k * Cp_k *ufl.dot(u_global, ufl.grad(self.trial0)) * self.test0 * dx
+            
+            a = fem.form(diff + adv)
+            L = fem.form(f * self.test0 * dx )      
+        else: 
+            a = None
+                
+
+        return a, L
+    #------------------------------------------------------------------
+
+    def Solve_the_Problem_SS(self,S,ctrl,pdb,M,lhs,it=0,ts=0): 
+        
+        nl = 0 
+        p_k = S.PL.copy()  # Previous lithostatic pressure 
+        T   = S.T_O # -> will not eventually update 
+        
+        
+        a,L = self.set_linear_picard_SS(p_k,T,S.u_global,getattr(M,'domainG'),pdb)
+        
+        self.bc = self.create_bc_temp(getattr(M,'domainG'),ctrl,lhs,S.u_global,it)
+        
+        if self.typology == 'NonlinearProblem':
+            F,J = self.set_newton_SS(p_k,getattr(M,'domainG'),T,S.u_global,pdb)
+            nl = 1 
+        else: 
+            F = None;J=None 
+
+        if it == 0 & ts == 0: 
+            self.solv = ScalarSolver(a,L,M.comm,nl,J,F)
+        
+        if nl == 0: 
+            S = self.solve_the_linear(S,a,L) 
+        else: 
+            S = self.solve_the_non_linear_SS(M,S,ctrl,pdb)
+
+        return S 
+    #------------------------------------------------------------------
+    
+    def solve_the_linear(self,S,a,L,isPicard=0,it=0,ts=0):
+        
+        buf = fem.Function(self.FS)
+        x   = self.solv.b.copy()
+        if it == 0 or ts == 0:
+            self.solv.A.zeroEntries()
+            fem.petsc.assemble_matrix(self.solv.A,fem.form(a),self.bc)
+            self.solv.A.assemble()
+        # b -> can change as it is the part that depends on the pressure in case of nonlinearities
+        self.solv.b.set(0.0)
+        fem.petsc.assemble_vector(self.solv.b, fem.form(L))
+        fem.petsc.apply_lifting(self.solv.b, [fem.form(a)], [self.bc])
+        self.solv.b.ghostUpdate()
+        fem.petsc.set_bc(self.solv.b, self.bc)
+        self.solv.ksp.solve(self.solv.b, x)
+        
+        if isPicard == 0: # if it is a picard iteration the function gives the function 
+            S.T_O.x.array[:] = x.array_r
+            return S 
+        else:
+            return x.array_r
+
+    def solve_the_non_linear_SS(self,M,S,ctrl,pdb,it=0):  
+        
+        tol = 1e-3  # Tolerance Picard  
+        max_it = 20  # Max iteration before Newton
+        isPicard = 1 # Flag for the linear solver. 
+        tol = 1.0 
+        T_k = S.T_O.copy() 
+        T_k1 = S.T_O.copy()
+        du   = S.PL.copy()
+        du2  = S.PL.copy()
+        it_inner = 0 
+        time_A = timing.time()
+        while it_inner < max_it and tol > 1e-5:
+            time_ita = timing.time()
+            
+            A,L = self.set_linear_picard_SS(S.PL,T_k,S.u_global,getattr(M,'domainG'),pdb)
+            
+            T_k1.x.array[:] = self.solve_the_linear(S,A,L,1,it,1) 
+            
+            # L2 norm 
+            du.x.array[:]  = T_k1.x.array[:] - T_k.x.array[:];du.x.scatter_forward()
+            du2.x.array[:] = T_k1.x.array[:] + T_k.x.array[:];du2.x.scatter_forward()
+            tol= L2_norm_calculation(du)/L2_norm_calculation(du2)
+            
+            time_itb = timing.time()
+            print_ph(f'       []   --->L_2 norm is {tol:.3e}, it_th {it:d} performed in {time_itb-time_ita:.2f} seconds')
+            
+            #update solution
+            T_k.x.array[:] = T_k1.x.array[:]*0.7 + T_k.x.array[:]*(1-0.7)
+            
+            it_inner = it_inner + 1 
+            
+        # --- Newton =>         
+        F,J = self.set_newton_SS(S.PL,getattr(M,'domainG'),T_k1,S.u_global,pdb)
+        
+        problem = fem.petsc.NonlinearProblem(F, T_k1, bcs=self.bc, J=J)
+
+        # Newton solver
+        solver = NewtonSolver(MPI.COMM_WORLD, problem)
+        solver.convergence_criterion = "residual"
+        solver.rtol = 1e-6
+        solver.report = True
+        
+        n, converged = solver.solve(T_k1)
+        print(f"[]    ---> Newton iterations: {n}, converged = {converged}")   
+        
+        S.T_O.x.array[:] = T_k1.x.array[:]
+        local_max = np.max(T_k1.x.array[:])
+        local_min = np.min(T_k1.x.array[:])
+
+        global_max = M.comm.allreduce(local_max, op=MPI.MAX)
+        global_min = M.comm.allreduce(local_min, op=MPI.MIN)
+
+        print_ph(f"//          /Global min/Max Temperature is    : {global_min:.2f}, {global_max:.2f}[n.d.]/")
+        
+        time_B = timing.time()
+        print_ph(f'//         /Temperature in {time_B-time_A:.2f} sec')
+        print_ph(f'')
+
+        print_ph("               ")
+        print_ph("               _")
+        print_ph("               :")
+        print_ph("[] - - - -> Temperature <- - - - []")
+        print_ph("               :")
+        print_ph("               _")
+        print_ph("                ")
+
+        print_ph(f'')
+
+        
+        
+        return S  
+    
+    #------------------------------------------------------------------
         
     @timing_function
     def initial_temperature_field(self,M, ctrl, lhs, g_input):
@@ -961,7 +1221,7 @@ class Wedge(Stokes_Problem):
 
         
         if non_linear == False: 
-            S = self.solve_linear_picard(fem.form(a),fem.forum(a_p0),fem.form(L))
+            S = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl, S)
 
         else: 
             u_k   = S.u_wedge.copy()
@@ -973,7 +1233,7 @@ class Wedge(Stokes_Problem):
             
             res  = 1.0 
             it   = 0 
-            while (res > 1e-4) or it < 10: 
+            while (res > 1e-4) and it < 10: 
                 time_ita = timing.time()
                 if it>0: 
                     a1,_,_, _,_ = self.set_linear_picard(u_k,S.t_owedge,S.p_lwedge,M,pdb,ctrl,sc)
@@ -1017,7 +1277,7 @@ class Wedge(Stokes_Problem):
         print_ph("               ")
         print_ph("               _")
         print_ph("               :")
-        print_ph("[] - - - -> Lithostatic <- - - - []")
+        print_ph("[] - - - -> Wedge <- - - - []")
         print_ph("               :")
         print_ph("               _")
         print_ph("                ")
@@ -1068,9 +1328,12 @@ def set_ups_problem():
     from thermal_structure_ocean import compute_initial_LHS
     from scal import Scal 
     import scal as sc_f 
-    from numerical_control import IOControls,NumericalControls,ctrl_LHS
     
     from create_mesh import unit_test_mesh
+    
+    
+    
+    #==================== Create Mesh and IOControl ====================
     # Create scal 
     sc = Scal(L=660e3,Temp = 1350,eta = 1e21, stress = 1e9)
     
@@ -1096,28 +1359,32 @@ def set_ups_problem():
     element_PT          = basix.ufl.element("Lagrange","triangle",2)
     
     element_V           = basix.ufl.element("Lagrange","triangle",2,shape=(2,))
+
+    #==================== Phase Parameter ====================
+
+
+
     
-    #===============    
     # Define PhaseDataBase
     pdb = PhaseDataBase(6)
     # Slab
     
-    pdb = _generate_phase(pdb, 1, rho0 = 3300 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)
+    pdb = _generate_phase(pdb, 1, rho0 = 3300 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)
     # Oceanic Crust
     
-    pdb = _generate_phase(pdb, 2, rho0 = 2900 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)
+    pdb = _generate_phase(pdb, 2, rho0 = 2900 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)
     # Wedge
     
-    pdb = _generate_phase(pdb, 3, rho0 = 3300 , option_rho = 3, option_rheology = 3, option_k = 0, option_Cp = 0, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 3, rho0 = 3300 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl',eta = 1e19)
     # 
     
-    pdb = _generate_phase(pdb, 4, rho0 = 3250 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 4, rho0 = 3250 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     #
     
-    pdb = _generate_phase(pdb, 5, rho0 = 2800 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 5, rho0 = 2800 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     #
     
-    pdb = _generate_phase(pdb, 6, rho0 = 2700 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 6, rho0 = 2700 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     #
     
     pdb = sc_f._scaling_material_properties(pdb,sc)
@@ -1133,13 +1400,13 @@ def set_ups_problem():
     
     # Pressure 
     
-    energy_global               = Global_thermal (M = M, name = ['energy','domainG']  , elements = (element_PT,                   ), pdb = pdb)
+    energy_global               = Global_thermal (M = M, name = ['energy','domainG']  , elements = (element_PT,                   ), pdb = pdb, ctrl = ctrl)
     
-    lithostatic_pressure_global = Global_pressure(M = M, name = ['pressure','domainG'], elements = (element_PT,                   ), pdb = pdb)
+    lithostatic_pressure_global = Global_pressure(M = M, name = ['pressure','domainG'], elements = (element_PT,                     ), pdb = pdb                                ) 
     
-    wedge                       = Wedge          (M = M, name = ['stokes','domainB'  ], elements = (element_V,element_p,element_PT), pdb = pdb)
+    wedge                       = Wedge          (M = M, name = ['stokes','domainB'  ], elements = (element_V,element_p,element_PT  ), pdb = pdb                                )
     
-    slab                        = Slab           (M = M, name = ['stokes','domainA'  ], elements = (element_V,element_p,element_PT), pdb = pdb)
+    slab                        = Slab           (M = M, name = ['stokes','domainA'  ], elements = (element_V,element_p,element_PT  ), pdb = pdb                                )
     
     g = fem.Constant(M.domainG.mesh, PETSc.ScalarType([0.0, -ctrl.g]))    
 
@@ -1164,6 +1431,10 @@ def set_ups_problem():
     wedge.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it=0,ts=0)
 
     
+    sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_wedge, M.domainB.cell_par)
+    sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_slab, M.domainA.cell_par)
+    
+    energy_global.Solve_the_Problem_SS(sol,ctrl,pdb,M,lhs_ctrl)
     
     # Update and set up variational problem
     
