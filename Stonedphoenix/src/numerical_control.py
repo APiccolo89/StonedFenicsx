@@ -34,6 +34,8 @@ dict_rheology = {'default':0,
 # Numba JIT class spec definition
 spec = [('it_max', int64),
     ('tol', float64),
+    ('tol_innerPic', float64),
+    ('tol_innerNew', float64),
     ('relax', float64),
     ('Tmax', float64),
     ('Ttop', float64),
@@ -51,7 +53,7 @@ spec = [('it_max', int64),
 @jitclass(spec)
 class NumericalControls:
     def __init__(self,
-                 it_max=100,
+                 it_max=20,
                  tol=1e-8,
                  Ttop=0.0,
                  Tmax=1300,
@@ -64,7 +66,9 @@ class NumericalControls:
                  relax = 0.6,
                  time_dependent_v = 0,
                  slab_bc = 1, # BC: 0 -> pipe like , 1 moving wall slab
-                 decoupling = 0):  
+                 decoupling = 0,
+                 tol_innerPic = 1e-4,
+                 tol_innerNew = 1e-7):  
 
         # Direct initialization of class attributes
         self.it_max           = it_max 
@@ -80,6 +84,8 @@ class NumericalControls:
         self.steady_state     = steady_state
         self.slab_bc          = 1 # 1 moving wall, 0 pipe-like slab 
         self.decoupling       = decoupling # 1 decoupled, 0 coupled
+        self.tol_innerPic    = tol_innerPic
+        self.tol_innerNew    = tol_innerNew
     
 
 class IOControls():

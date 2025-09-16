@@ -22,6 +22,7 @@ from phase_db import PhaseDataBase
 import time                          as timing
 from dolfinx.fem.petsc import assemble_matrix_block, assemble_vector_block
 from numerical_control import NumericalControls, ctrl_LHS, IOControls
+from utils import interpolate_from_sub_to_main
 
 
 """
@@ -517,10 +518,20 @@ class Global_thermal(Problem):
         if it == 0 & ts == 0: 
             self.solv = ScalarSolver(a,L,M.comm,nl,J,F)
         
+        print_ph(f'. // -- // --- Temperature problem [GLOBAL] // -- // --->')
+        
+        time_A = timing.time()
+
         if nl == 0: 
             S = self.solve_the_linear(S,a,L) 
         else: 
             S = self.solve_the_non_linear_SS(M,S,ctrl,pdb)
+        
+        time_B = timing.time()
+        
+        print_ph(f'. // -- // --- Solution of Temperature  in {time_B-time_A:.2f} sec // -- // --->')
+
+
 
         return S 
     #------------------------------------------------------------------
@@ -559,6 +570,8 @@ class Global_thermal(Problem):
         du2  = S.PL.copy()
         it_inner = 0 
         time_A = timing.time()
+        print_ph(f'              [//] Picard iterations for the non linear temperature problem')
+
         while it_inner < max_it and tol > 1e-5:
             time_ita = timing.time()
             
@@ -572,7 +585,7 @@ class Global_thermal(Problem):
             tol= L2_norm_calculation(du)/L2_norm_calculation(du2)
             
             time_itb = timing.time()
-            print_ph(f'       []   --->L_2 norm is {tol:.3e}, it_th {it:d} performed in {time_itb-time_ita:.2f} seconds')
+            print_ph(f'              []Temperature L_2 norm is {tol:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
             
             #update solution
             T_k.x.array[:] = T_k1.x.array[:]*0.7 + T_k.x.array[:]*(1-0.7)
@@ -590,29 +603,11 @@ class Global_thermal(Problem):
         solver.rtol = 1e-6
         solver.report = True
         
-        n, converged = solver.solve(T_k1)
-        print(f"[]    ---> Newton iterations: {n}, converged = {converged}")   
+        #n, converged = solver.solve(T_k1)
         
         S.T_O.x.array[:] = T_k1.x.array[:]
-        local_max = np.max(T_k1.x.array[:])
-        local_min = np.min(T_k1.x.array[:])
 
-        global_max = M.comm.allreduce(local_max, op=MPI.MAX)
-        global_min = M.comm.allreduce(local_min, op=MPI.MIN)
 
-        print_ph(f"//          /Global min/Max Temperature is    : {global_min:.2f}, {global_max:.2f}[n.d.]/")
-        
-        time_B = timing.time()
-        print_ph(f'//         /Temperature in {time_B-time_A:.2f} sec')
-        print_ph(f'')
-
-        print_ph("               ")
-        print_ph("               _")
-        print_ph("               :")
-        print_ph("[] - - - -> Temperature <- - - - []")
-        print_ph("               :")
-        print_ph("               _")
-        print_ph("                ")
 
         print_ph(f'')
 
@@ -725,7 +720,7 @@ class Global_pressure(Problem):
 
         return a, L
 
-    def Solve_the_Problem(self,S,ctrl,pdb,M,g,it=0,ts=0): 
+    def Solve_the_Problem(self,S,ctrl,pdb,M,g,it_outer=0,ts=0): 
         
         nl = 0 
         p_k = S.PL.copy()  # Previous lithostatic pressure 
@@ -745,13 +740,23 @@ class Global_pressure(Problem):
         else: 
             F = None;J=None 
 
-        if it == 0 & ts == 0: 
+        if it_outer == 0 & ts == 0: 
             self.solv = ScalarSolver(a,L,M.comm,nl,J,F)
+        
+        print_ph(f'. // -- // --- LITHOSTATIC PROBLEM [GLOBAL] // -- // --- > ')
+
+        time_A = timing.time()
+
         
         if nl == 0: 
             S = self.solve_the_linear(S,a,L) 
         else: 
             S = self.solve_the_non_linear(M,S,ctrl,pdb,g)
+
+        time_B = timing.time()
+
+        print_ph(f'. // -- // --- Solution of Lithostatic pressure problem finished in {time_B-time_A:.2f} sec // -- // --->')
+        print_ph(f'')
 
         return S 
     
@@ -780,24 +785,27 @@ class Global_pressure(Problem):
     def solve_the_non_linear(self,M,S,ctrl,pdb,g):  
         
         tol = 1e-3  # Tolerance Picard  
-        max_it = 10  # Max iteration before Newton
         isPicard = 1 # Flag for the linear solver. 
         tol = 1.0 
         p_k = S.PL.copy() 
         p_k1 = S.PL.copy()
         du   = S.PL.copy()
         du2  = S.PL.copy()
-        it = 0 
-        time_A = timing.time()
-        while it < max_it and tol > 1e-3:
+        it_inner = 0 
+        
+        
+        print_ph(f'              [//] Picard iterations for the non linear lithostatic pressure problem')
+
+        
+        while it_inner < ctrl.it_max and tol > ctrl.tol_innerPic:
             time_ita = timing.time()
             
-            if it == 0:
+            if it_inner == 0:
                 A,L = self.set_linear_picard(p_k,S.T_O,getattr(M,'domainG'),pdb,g)
             else: 
                 _,L = self.set_linear_picard(p_k,S.T_O,getattr(M,'domainG'),pdb,g,1)
             
-            p_k1.x.array[:] = self.solve_the_linear(S,A,L,1,it,1) 
+            p_k1.x.array[:] = self.solve_the_linear(S,A,L,1,it_inner,1) 
             
             # L2 norm 
             du.x.array[:]  = p_k1.x.array[:] - p_k.x.array[:];du.x.scatter_forward()
@@ -805,13 +813,15 @@ class Global_pressure(Problem):
             tol= L2_norm_calculation(du)/L2_norm_calculation(du2)
             
             time_itb = timing.time()
-            print_ph(f'[]   --->L_2 norm is {tol:.3e}, it_th {it:d} performed in {time_itb-time_ita:.2f} seconds')
+            print_ph(f'              []L_2 norm is {tol:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
             
             #update solution
             p_k.x.array[:] = p_k1.x.array[:]*0.7 + p_k.x.array[:]*(1-0.7)
             
-            it = it + 1 
-            
+            it_inner = it_inner + 1 
+        
+        print_ph(f'              [//] Newton iterations for the non linear lithostatic pressure problem')
+
         # --- Newton =>         
         F,J = self.set_newton(p_k,getattr(M,'domainG'),S.T_O,g,pdb)
         
@@ -820,31 +830,14 @@ class Global_pressure(Problem):
         # Newton solver
         solver = NewtonSolver(MPI.COMM_WORLD, problem)
         solver.convergence_criterion = "residual"
-        solver.rtol = 1e-8
+        solver.rtol = ctrl.tol_innerNew
         solver.report = True
         
         n, converged = solver.solve(p_k)
-        print(f"[]    ---> Newton iterations: {n}, converged = {converged}")   
+        print(f"              []Newton iterations: {n}, converged = {converged}")   
         
         S.PL.x.array[:] = p_k.x.array[:]
-        local_max = np.max(p_k.x.array[:])
-        global_max = M.comm.allreduce(local_max, op=MPI.MAX)
-        print_ph(f"// - - - /Global max lithostatic pressure is    : {global_max:.2f}[n.d.]/")
-        
-        time_B = timing.time()
-        print_ph(f'// -- // --- Solution of Lithostatic pressure problem finished in {time_B-time_A:.2f} sec')
-        print_ph(f'')
-
-        print_ph("               ")
-        print_ph("               _")
-        print_ph("               :")
-        print_ph("[] - - - -> Lithostatic <- - - - []")
-        print_ph("               :")
-        print_ph("               _")
-        print_ph("                ")
-
-        print_ph(f'')
-
+      
         
         
         return S  
@@ -898,6 +891,7 @@ def compute_strain_rate(u):
     return e  
 
 def compute_eII(e):
+    from ufl import inner, sqrt
     e_II  = sqrt(0.5*inner(e, e) + 1e-15)    
     return e_II
 #---------------------------------------------------------------------------
@@ -1049,7 +1043,8 @@ class Slab(Stokes_Problem):
 
         self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,ctrl ,J = None, r = None,it = 0, ts = 0)
         
-        
+        print_ph(f'// -- // --- SLAB STOKES PROBLEM // -- // --->')    
+        time_A = timing.time()    
         if direct_solver==1:
             x = self.solv.A.createVecLeft()
         else:
@@ -1069,6 +1064,9 @@ class Slab(Stokes_Problem):
             S.p_slab.x.array[: (len(x.array_r) - self.solv.offset)] = x.array_r[self.solv.offset:]
         
 
+        time_B = timing.time()
+        print_ph(f'// -- // --- Solution of Stokes problem in {time_B-time_A:.2f} sec // -- // --->')
+        print_ph(f'')
 
         return S 
     
@@ -1076,6 +1074,37 @@ class Slab(Stokes_Problem):
 class Wedge(Stokes_Problem): 
     def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
         super().__init__(M,elements,name)
+        
+        M = getattr(M,'domainB')
+
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+
+        # Example: each rank has some local IDs
+        local_ids = np.int32(M.phase.x.array[:])
+
+        # Gather arrays from all processes
+        all_ids = comm.allgather(local_ids)
+
+        # Root (or all, since allgather) concatenates
+        all_ids = np.concatenate(all_ids)
+
+        # Compute global unique IDs
+        unique_ids = np.unique(all_ids)
+
+        non_linear = False 
+        
+        for i in range(np.shape(unique_ids)[0]): 
+            if pdb.option_eta[unique_ids[i]] > 1: 
+                non_linear = True
+                break
+            
+        if non_linear == True:
+            self.typology = 'NonlinearProblem'
+        else:
+            self.typology = 'LinearProblem'
+            
+            
     
     def setdirichlecht(self,ctrl,D,theta,V,it=0, ts = 0):
         mesh = V.mesh 
@@ -1158,34 +1187,6 @@ class Wedge(Stokes_Problem):
     def Solve_the_Problem(self,S,ctrl,pdb,M,g,sc,it=0,ts=0):
         theta = M.g_input.theta_out_slab
         M = getattr(M,'domainB')
-        
-
-        comm = MPI.COMM_WORLD
-        rank = comm.Get_rank()
-
-        # Example: each rank has some local IDs
-        local_ids = np.int32(M.phase.x.array[:])
-
-        # Gather arrays from all processes
-        all_ids = comm.allgather(local_ids)
-
-        # Root (or all, since allgather) concatenates
-        all_ids = np.concatenate(all_ids)
-
-        # Compute global unique IDs
-        unique_ids = np.unique(all_ids)
-
-        non_linear = False 
-        
-        for i in range(np.shape(unique_ids)[0]): 
-            if pdb.option_eta[unique_ids[i]] > 1: 
-                non_linear = True
-                break
-    
-            
-
-
-
 
         
         """
@@ -1216,14 +1217,19 @@ class Wedge(Stokes_Problem):
         # Form the system 
         a   = [[a1, a2],[a3, None]]
         a_p0  = [[a1, None],[None, a_p]]
+
+        print_ph(f'. // -- // --- STOKES PROBLEM [WEDGE] // -- // --- > ')
+
         
         time_A = timing.time()
 
         
-        if non_linear == False: 
+        if self.typology == 'LinearProblem': 
             S = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl, S)
 
         else: 
+            print_ph(f'              [//] Picard iterations for the non linear lithostatic pressure problem')
+
             u_k   = S.u_wedge.copy()
             p_k   = S.p_wedge.copy()
             du0   = S.u_wedge.copy()
@@ -1232,10 +1238,10 @@ class Wedge(Stokes_Problem):
             dp1   = S.p_wedge.copy()
             
             res  = 1.0 
-            it   = 0 
-            while (res > 1e-4) and it < 10: 
+            it_inner   = 0 
+            while (res > ctrl.tol_innerPic) and it_inner < ctrl.it_max: 
                 time_ita = timing.time()
-                if it>0: 
+                if it_inner>0: 
                     a1,_,_, _,_ = self.set_linear_picard(u_k,S.t_owedge,S.p_lwedge,M,pdb,ctrl,sc)
                     a[0][0] = a1 
                     a       = fem.form(a)
@@ -1261,28 +1267,20 @@ class Wedge(Stokes_Problem):
                                 
                 res   = np.sqrt(tol_u**2+tol_p**2)
                 
-                u_k.x.array[:] = 0.8*S.u_wedge.x.array[:] + (1-0.8)*u_k.x.array[:]
-                p_k.x.array[:] = 0.8*S.p_wedge.x.array[:] + (1-0.8)*p_k.x.array[:]
+                u_k.x.array[:] = ctrl.relax*S.u_wedge.x.array[:] + (1-ctrl.relax)*u_k.x.array[:]
+                p_k.x.array[:] = ctrl.relax*S.p_wedge.x.array[:] + (1-ctrl.relax)*p_k.x.array[:]
 
                 time_itb = timing.time()
 
-                print_ph(f'[]   --->Wedge L_2 norm is {res:.3e}, it_th {it:d}performed in {time_itb-time_ita:.2f} seconds')
-                it = it+1 
+                print_ph(f'              []Wedge L_2 norm is {res:.3e}, it_th {it_inner:d}performed in {time_itb-time_ita:.2f} seconds')
+                it_inner = it_inner+1 
         
 
         time_B = timing.time()
-        print_ph(f'// -- // --- Solution of Wedge in {time_B-time_A:.2f} sec')
+        print_ph(f'. // -- // --- Solution of Wedge in {time_B-time_A:.2f} sec // -- // --- >')
         print_ph(f'')
 
-        print_ph("               ")
-        print_ph("               _")
-        print_ph("               :")
-        print_ph("[] - - - -> Wedge <- - - - []")
-        print_ph("               :")
-        print_ph("               _")
-        print_ph("                ")
 
-        print_ph(f'')
 
  
         
@@ -1321,7 +1319,7 @@ class Wedge(Stokes_Problem):
         return S 
     
 #------------------------------------------------------------------------------------------------------------
-
+# Soon -> Steady state thermal solver 
 def set_ups_problem():
     from phase_db import PhaseDataBase
     from phase_db import _generate_phase
@@ -1332,7 +1330,8 @@ def set_ups_problem():
     from create_mesh import unit_test_mesh
     
     
-    
+    print_ph(f'// -- // --- Steady State temperature // -- // --- > ')
+
     #==================== Create Mesh and IOControl ====================
     # Create scal 
     sc = Scal(L=660e3,Temp = 1350,eta = 1e21, stress = 1e9)
@@ -1362,29 +1361,26 @@ def set_ups_problem():
 
     #==================== Phase Parameter ====================
 
-
-
-    
     # Define PhaseDataBase
     pdb = PhaseDataBase(6)
     # Slab
     
-    pdb = _generate_phase(pdb, 1, rho0 = 3300 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)
+    pdb = _generate_phase(pdb, 1, rho0 = 3300 , option_rho = 3, option_rheology = 0, option_k = 2, option_Cp = 1, eta=1e22)
     # Oceanic Crust
     
-    pdb = _generate_phase(pdb, 2, rho0 = 2900 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)
+    pdb = _generate_phase(pdb, 2, rho0 = 2900 , option_rho = 3, option_rheology = 0, option_k = 2, option_Cp = 1, eta=1e22)
     # Wedge
     
-    pdb = _generate_phase(pdb, 3, rho0 = 3300 , option_rho = 3, option_rheology = 0, option_k = 0, option_Cp = 0, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl',eta = 1e19)
+    pdb = _generate_phase(pdb, 3, rho0 = 3300 , option_rho = 3, option_rheology = 3, option_k = 2, option_Cp = 1, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl',eta = 1e19)
     # 
     
-    pdb = _generate_phase(pdb, 4, rho0 = 3250 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 4, rho0 = 3250 , option_rho = 3, option_rheology = 0, option_k = 2, option_Cp = 1, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     #
     
-    pdb = _generate_phase(pdb, 5, rho0 = 2800 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 5, rho0 = 2800 , option_rho = 3, option_rheology = 0, option_k = 2, option_Cp = 1, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     #
     
-    pdb = _generate_phase(pdb, 6, rho0 = 2700 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 6, rho0 = 2700 , option_rho = 3, option_rheology = 0, option_k = 2, option_Cp = 1, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     #
     
     pdb = sc_f._scaling_material_properties(pdb,sc)
@@ -1417,25 +1413,278 @@ def set_ups_problem():
     
     sol.T_O = energy_global.initial_temperature_field(M.domainG, ctrl, lhs_ctrl,M.g_input)
 
-    lithostatic_pressure_global.Solve_the_Problem(sol,ctrl,pdb,M,g,it=0,ts=0)
+
+    it_outer = 0 
+
+    res = 1.0
+
+    while it_outer < ctrl.it_max and res > ctrl.tol: 
+        
+        time_A_outer = timing.time()
+        # Copy the old solution for the residuum computation 
+        
+        Told        = sol.T_O.copy()
+        PLold       = sol.PL.copy()
+        u_globalold = sol.u_global.copy()
+        p_globalold = sol.p_global.copy()
+        
+        
+        # Solve lithostatic pressure problem
+        if lithostatic_pressure_global.typology == 'NonlinearProblem' or it_outer == 0:  
+            lithostatic_pressure_global.Solve_the_Problem(sol,ctrl,pdb,M,g,it_outer,ts=0)
+
+        # Interpolate from global to wedge/slab
+
+        sol.t_owedge = interpolate_from_sub_to_main(sol.t_owedge,sol.T_O, M.domainB.cell_par,1)
+        sol.p_lwedge = interpolate_from_sub_to_main(sol.p_lwedge,sol.PL, M.domainB.cell_par,1)
+
+        if it_outer == 0: 
+            slab.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it = it_outer,ts=0)
+
+        if wedge.typology == 'NonlinearProblem' or it_outer == 0:  
+            wedge.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it = it_outer,ts=0)
+
+
+        # Interpolate from wedge/slab to global
+        sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_wedge, M.domainB.cell_par)
+        sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_slab, M.domainA.cell_par)
+        
+        sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_wedge, M.domainB.cell_par)
+        sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_slab, M.domainA.cell_par)
+        
+        
+        energy_global.Solve_the_Problem_SS(sol,ctrl,pdb,M,lhs_ctrl)
+        
+        # Compute residuum 
+        res = compute_residuum_outer(sol,Told,PLold,u_globalold,p_globalold,it_outer,sc, time_A_outer)
+        
+        print_output(sol,M.domainG,pdb,ioctrl,it_outer,sc)
+
+        it_outer = it_outer + 1
+        
+        
+        
     
-    # Interpolate from global to wedge/slab
-    from utils import interpolate_from_sub_to_main
-    
-    sol.t_owedge = interpolate_from_sub_to_main(sol.t_owedge,sol.T_O, M.domainB.cell_par,1)
-    sol.p_lwedge = interpolate_from_sub_to_main(sol.p_lwedge,sol.PL, M.domainB.cell_par,1)
+
 
     
-    slab.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it=0,ts=0)
+    return 0 
+
+
+def compute_residuum(a,b):
+    dx = a.copy()
     
-    wedge.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it=0,ts=0)
+    dx1 = a.copy()
+    
+    dx.x.array[:]  = b.x.array[:] - a.x.array[:];dx.x.scatter_forward()
+    
+    dx1.x.array[:]  = b.x.array[:] + a.x.array[:];dx1.x.scatter_forward()
+    
+    
+    res = L2_norm_calculation(dx)/L2_norm_calculation(dx1)
+    
+    return res
+
+def min_max_array(a, vel = False):
+    
+    if vel == True: 
+        a1 = a.sub(0).collapse()
+        a2 = a.sub(1).collapse()
+        array = np.sqrt(a1.x.array[:]**2 + a2.x.array[:]**2)
+    else: 
+        array = a.x.array[:]
+    
+    local_min = np.min(array[:])
+    local_max = np.max(array[:])
+    
+    global_min = a.function_space.mesh.comm.allreduce(local_min, op=MPI.MIN)
+    global_max = a.function_space.mesh.comm.allreduce(local_max, op=MPI.MAX)
+    
+    return np.array([global_min, global_max],dtype=np.float64)
+
+
+def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA):
+    # Prepare the variables 
 
     
-    sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_wedge, M.domainB.cell_par)
-    sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_slab, M.domainA.cell_par)
     
-    energy_global.Solve_the_Problem_SS(sol,ctrl,pdb,M,lhs_ctrl)
     
+    res_u = compute_residuum(sol.u_global,u)
+    res_p = compute_residuum(sol.p_global,p)
+    res_T = compute_residuum(sol.T_O,T)
+    res_PL= compute_residuum(sol.PL,PL)
+    
+    minMaxU = min_max_array(sol.u_global, vel=True)
+    minMaxP = min_max_array(sol.p_global)
+    minMaxT = min_max_array(sol.T_O)
+    minMaxPL= min_max_array(sol.PL)
+    
+    # scal back 
+    
+    minMaxU = minMaxU*(sc.L/sc.T)*sc.scale_vel 
+    minMaxP = minMaxP*sc.stress/1e9 
+    minMaxT = minMaxT*sc.Temp -273.15
+    minMaxPL= minMaxPL*sc.stress/1e9
+    
+    
+    res_total = np.sqrt(res_u**2+res_p**2+res_T**2)
+    
+    time_B_outer = timing.time()
+
+    print_ph(f'')
+    print_ph(f'// -- // --- Outer iteration {it_outer:d} with tolerance {res_total:.3e}, in {time_B_outer-tA:.1f} sec // -- // --->')
+    print_ph(f'             []Res velocity       =  {res_u:.3e} [n.d.], max= {minMaxU[1]:.3e}, min= {minMaxU[0]:.3e} [cm/yr]')
+    print_ph(f'             []Res Temperature    =  {res_T:.3e} [n.d.], max= {minMaxT[1]:.2f}, min= {minMaxT[0]:.2f} [C]')
+    print_ph(f'             []Res pressure       =  {res_p:.3e} [n.d.], max= {minMaxP[1]:.3e}, min= {minMaxP[0]:.3e} [GPa]')
+    print_ph(f'             []Res lithostatic    =  {res_PL:.3e}[n.d.], max= {minMaxPL[1]:.3e}, min= {minMaxPL[0]:.3e} [GPa]')
+    print_ph(f'// -- // --- =============================================// -- // --->')
+    print_ph(f'')
+
+    
+    
+    
+    
+    return res_total 
+
+
+def print_output(S,D,pdb,ioctrl,it_outer,sc,ts=0):
+    from compute_material_property import evaluate_material_property  
+    import os
+    from dolfinx.io import XDMFFile
+    import basix  
+    
+    mesh = D.mesh
+    
+    if MPI.COMM_WORLD.rank == 0:
+        pt_save = ioctrl.path_save
+        if not os.path.exists(pt_save):
+            os.makedirs(pt_save)
+        pt_save = os.path.join(pt_save, ioctrl.sname)
+        if not os.path.exists(pt_save):
+            os.makedirs(pt_save)    
+    file_name = os.path.join(pt_save,'it_%04d'%(it_outer))
+    element_ve = basix.ufl.element("Lagrange", "triangle", 1, shape=(mesh.geometry.dim,   ))
+    element_te = basix.ufl.element("Lagrange", "triangle", 1, shape=(mesh.geometry.dim**2,))
+    element_sc = basix.ufl.element("Lagrange", "triangle", 1)
+
+
+    # Prepare variable and spaces 
+    vel_triangular = fem.functionspace(mesh,element_ve)
+    stress_triangular = fem.functionspace(mesh,element_te)
+    temp_triangular = fem.functionspace(mesh,element_sc)
+    pres_triangular = fem.functionspace(mesh,element_sc)
+    
+    # Velocity 
+    u_T = fem.Function(vel_triangular)
+    u_T.name = "Velocity"
+    u_T.interpolate(S.u_global)
+    u_T.x.array[:] = u_T.x.array[:]*(sc.L/sc.T)/sc.scale_vel
+    u_T.x.scatter_forward()
+    
+    # Pressure
+    p2 = fem.Function(pres_triangular)
+    p2.name = "Pressure"
+    p2.interpolate(S.p_global)
+    p2.x.array[:] = p2.x.array[:]*sc.stress 
+    p2.x.scatter_forward()  
+    
+    # Temperature
+    T2 = fem.Function(temp_triangular)
+    T2.name = "Temperature"
+    T2.interpolate(S.T_O)
+    T2.x.array[:] = T2.x.array[:]*sc.Temp - 273.15
+    T2.x.scatter_forward()  
+    
+    # Lithostatic pressure
+    PL2 = fem.Function(pres_triangular)
+    PL2.name = "Lithostatic_Pressure"
+    PL2.interpolate(S.PL)
+    PL2.x.array[:] = PL2.x.array[:]*sc.stress 
+    PL2.x.scatter_forward()
+    
+    
+    # density 
+    rho = density_FX(pdb,S.T_O,S.PL,D.phase,D)
+    rho2 = evaluate_material_property(rho,temp_triangular)
+    rho2.name = "Density"
+    rho2.x.array[:] = rho2.x.array[:]*sc.rho
+    rho2.x.scatter_forward()
+    
+    # Cp 
+    Cp = heat_capacity_FX(pdb,S.T_O,D.phase,D)
+    Cp2 = evaluate_material_property(Cp,temp_triangular)
+    Cp2.name = "Cp"
+    Cp2.x.array[:] = Cp2.x.array[:]*sc.Cp
+    Cp2.x.scatter_forward()
+    
+    # k 
+    k = heat_conductivity_FX(pdb,S.T_O,S.PL,D.phase,D)
+    k2 = evaluate_material_property(k,temp_triangular)
+    k2.name = "Heat_Conductivity"
+    k2.x.array[:] = k2.x.array[:]*sc.k
+    k2.x.scatter_forward()
+    
+    
+    # kappa 
+    kappa2 = fem.Function(temp_triangular)
+    kappa2.name = "Thermal_Diffusivity"
+    kappa2.x.array[:] = k2.x.array[:]/(rho2.x.array[:]*Cp2.x.array[:])
+    kappa2.x.scatter_forward()
+    
+    # strain rate 
+    e = compute_strain_rate(S.u_global)
+    eII = compute_eII(e)
+    eII2 = evaluate_material_property(eII,temp_triangular)
+
+    e_T = fem.Function(temp_triangular)
+    e_T.name = "Strain_rate second invariant"
+    e_T.interpolate(eII2)
+    e_T.x.array[:] = e_T.x.array[:]/sc.T
+    e_T.x.scatter_forward()
+    
+    # viscosity (e,S.t_oslab,S.p_lslab,pdb,D.phase,D,sc)
+    eta = compute_viscosity_FX(e_T,S.T_O,S.PL,pdb,D.phase,D,sc)
+    eta2 = evaluate_material_property(eta,temp_triangular)
+    eta2.name = "Viscosity"
+    eta2.x.array[:] = eta2.x.array[:]*sc.eta
+    eta2.x.scatter_forward()
+    
+        
+    
+    
+    with XDMFFile(MPI.COMM_WORLD, "%s.xdmf"%file_name, "w") as ufile_xdmf:
+
+
+        ufile_xdmf.write_mesh(mesh)
+        ufile_xdmf.write_function(u_T)
+        ufile_xdmf.write_function(p2)
+        ufile_xdmf.write_function(T2)
+        ufile_xdmf.write_function(PL2)
+        ufile_xdmf.write_function(rho2)
+        ufile_xdmf.write_function(Cp2)
+        ufile_xdmf.write_function(k2)
+        ufile_xdmf.write_function(kappa2)
+        ufile_xdmf.write_function(e_T)
+        ufile_xdmf.write_function(eta2)
+    
+    
+    
+    
+    
+    
+    
+    return 0
+
+
+if __name__ == '__main__': 
+    
+    set_ups_problem()
+    
+    
+    
+    
+    
+
     # Update and set up variational problem
     
     # non-linear itearion betwee pressure/stk/temperature 
@@ -1455,10 +1704,3 @@ def set_ups_problem():
     
     
     
-
-    
-    return 0 
-
-if __name__ == '__main__': 
-    
-    set_ups_problem()
