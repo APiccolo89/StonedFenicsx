@@ -553,7 +553,7 @@ class Global_thermal(Problem):
         self.solv.ksp.solve(self.solv.b, x)
         
         if isPicard == 0: # if it is a picard iteration the function gives the function 
-            S.T_O.x.array[:] = x.array
+            S.T_O.x.array[:] = x.array_r
             S.T_O.x.scatter_forward()
             return S 
         else:
@@ -763,7 +763,7 @@ class Global_pressure(Problem):
 
         return S 
     
-    def solve_the_linear(self,S,a,L,isPicard=0,it=0,ts=0):
+    def solve_the_linear(self,S,a,L,function_fen,isPicard=0,it=0,ts=0):
         
         buf = fem.Function(self.FS)
         x   = self.solv.b.copy()
@@ -777,14 +777,15 @@ class Global_pressure(Problem):
         fem.petsc.apply_lifting(self.solv.b, [fem.form(a)], self.bc)
         self.solv.b.ghostUpdate()
         fem.petsc.set_bc(self.solv.b, self.bc[0])
-        self.solv.ksp.solve(self.solv.b, x)
+        self.solv.ksp.solve(self.solv.b, function_fen.x.petsc_vec)
+        function_fen.x.scatter_forward()
+        
         
         if isPicard == 0: # if it is a picard iteration the function gives the function 
-            x.copy(result=S.PL.x.petsc_vec)
-            S.PL.x.scatter_forward()
-            return S 
+            S.PL = function_fen 
+            return S
         else:
-            return x
+            return function_fen
     
     def solve_the_non_linear(self,M,S,ctrl,pdb,g):  
         
@@ -809,10 +810,8 @@ class Global_pressure(Problem):
             else: 
                 _,L = self.set_linear_picard(p_k,S.T_O,getattr(M,'domainG'),pdb,g,1)
             
-            x = self.solve_the_linear(S,A,L,1,it_inner,1) 
+            p_k1 = self.solve_the_linear(S,A,L,p_k1,1,it_inner,1) 
 
-            x.copy(result=p_k1.x.petsc_vec)
-            p_k1.x.scatter_forward()
             # L2 norm 
             du.x.array[:]  = p_k1.x.array[:] - p_k.x.array[:];du.x.scatter_forward()
             du2.x.array[:] = p_k1.x.array[:] + p_k.x.array[:];du2.x.scatter_forward()
@@ -1061,8 +1060,8 @@ class Slab(Stokes_Problem):
             xp = x.getSubVector(self.solv.is_p)
             u, p = fem.Function(self.F0), fem.Function(self.F1)
     
-            u.x.array[:] = xu.array
-            p.x.array[:] = xp.array
+            u.x.array[:] = xu.array_r
+            p.x.array[:] = xp.array_r
             p.x.scatter_forward()
             u.x.scatter_forward()
             S.u_slab.x.array[:] = u.x.array[:]
@@ -1070,8 +1069,8 @@ class Slab(Stokes_Problem):
             S.u_slab.x.scatter_forward()
             S.p_slab.x.scatter_forward()
         else: 
-            S.u_slab.x.array[:self.solv.offset] = x.array[:self.solv.offset]
-            S.p_slab.x.array[: (len(x.array_r) - self.solv.offset)] = x.array[self.solv.offset:]
+            S.u_slab.x.array[:self.solv.offset] = x.array_r[:self.solv.offset]
+            S.p_slab.x.array[: (len(x.array_r) - self.solv.offset)] = x.array_r[self.solv.offset:]
             S.u_slab.x.scatter_forward()
             S.p_slab.x.scatter_forward()
         
@@ -1318,8 +1317,8 @@ class Wedge(Stokes_Problem):
             xp = x.getSubVector(self.solv.is_p)
     
 
-            S.u_wedge.x.array[:] = xu.array[:]
-            S.p_wedge.x.array[:] = xp.array[:]
+            S.u_wedge.x.array[:] = xu.array_r[:]
+            S.p_wedge.x.array[:] = xp.array_r[:]
             S.u_wedge.x.scatter_forward()
             S.p_wedge.x.scatter_forward()
         else: 
@@ -1431,6 +1430,7 @@ def set_ups_problem():
     it_outer = 0 
 
     res = 1.0
+    ctrl.it_max = 1
 
     while it_outer < ctrl.it_max and res > ctrl.tol: 
         
@@ -1446,37 +1446,37 @@ def set_ups_problem():
         # Solve lithostatic pressure problem
         if lithostatic_pressure_global.typology == 'NonlinearProblem' or it_outer == 0:  
             lithostatic_pressure_global.Solve_the_Problem(sol,ctrl,pdb,M,g,it_outer,ts=0)
-
-        # Interpolate from global to wedge/slab
-
-        sol.t_owedge = interpolate_from_sub_to_main(sol.t_owedge,sol.T_O, M.domainB.cell_par,1)
-        sol.p_lwedge = interpolate_from_sub_to_main(sol.p_lwedge,sol.PL, M.domainB.cell_par,1)
-
-        if it_outer == 0: 
-            slab.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it = it_outer,ts=0)
-
-        if wedge.typology == 'NonlinearProblem' or it_outer == 0:  
-            wedge.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it = it_outer,ts=0)
-
-
-        # Interpolate from wedge/slab to global
-        sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_wedge, M.domainB.cell_par)
-        sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_slab, M.domainA.cell_par)
-        
-        sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_wedge, M.domainB.cell_par)
-        sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_slab, M.domainA.cell_par)
-        
-        
-        energy_global.Solve_the_Problem_SS(sol,ctrl,pdb,M,lhs_ctrl,M.g_input,it = it_outer, ts = 0)
-        
-        # Compute residuum 
-        res = compute_residuum_outer(sol,Told,PLold,u_globalold,p_globalold,it_outer,sc, time_A_outer)
-        
-        print_output(sol,M.domainG,pdb,ioctrl,it_outer,sc)
-
-        it_outer = it_outer + 1
-        
-        
+#
+#        # Interpolate from global to wedge/slab
+#
+#        sol.t_owedge = interpolate_from_sub_to_main(sol.t_owedge,sol.T_O, M.domainB.cell_par,1)
+#        sol.p_lwedge = interpolate_from_sub_to_main(sol.p_lwedge,sol.PL, M.domainB.cell_par,1)
+#
+#        if it_outer == 0: 
+#            slab.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it = it_outer,ts=0)
+#
+#        if wedge.typology == 'NonlinearProblem' or it_outer == 0:  
+#            wedge.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it = it_outer,ts=0)
+#
+#
+#        # Interpolate from wedge/slab to global
+#        sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_wedge, M.domainB.cell_par)
+#        sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_slab, M.domainA.cell_par)
+#        
+#        sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_wedge, M.domainB.cell_par)
+#        sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_slab, M.domainA.cell_par)
+#        
+#        
+#        energy_global.Solve_the_Problem_SS(sol,ctrl,pdb,M,lhs_ctrl,M.g_input,it = it_outer, ts = 0)
+#        
+#        # Compute residuum 
+#        res = compute_residuum_outer(sol,Told,PLold,u_globalold,p_globalold,it_outer,sc, time_A_outer)
+#        
+#        print_output(sol,M.domainG,pdb,ioctrl,it_outer,sc)
+#
+#        it_outer = it_outer + 1
+#        
+#        
         
     
 
