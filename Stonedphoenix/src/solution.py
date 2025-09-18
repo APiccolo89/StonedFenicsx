@@ -42,8 +42,11 @@ magic.
 
 
 """
-direct_solver = 1
 
+fig2 = plt.figure()
+fig1 = plt.figure()
+direct_solver = 1
+DEBUG = 1
 
 def mesh_of(obj):
     if hasattr(obj, "function_space"):    # Function
@@ -416,10 +419,16 @@ class Global_thermal(Problem):
         vel_T  = fem.Function(self.FS)
         vel_T.interpolate(h_vel)
         vel_bc = vel_T.x.array[dofs_right_wed]
-        ind_z = np.where((vel_bc <= 0.0))
+        ind_z = np.where((vel_bc < 0.0))
         dofs_vel = dofs_right_wed[ind_z[0]]        
         
         self.bc_right_wed = fem.dirichletbc(ctrl.Tmax, dofs_vel,self.FS)
+        
+        if DEBUG == 1: 
+            fig1.gca().scatter(self.FS.tabulate_dof_coordinates()[dofs_vel,0],self.FS.tabulate_dof_coordinates()[dofs_vel,1])
+            fig1.gca().scatter(self.FS.tabulate_dof_coordinates()[dofs_right_wed,0],self.FS.tabulate_dof_coordinates()[dofs_right_wed,1],c='k',s=0.01)
+            fig2.gca().scatter(self.FS.tabulate_dof_coordinates()[dofs_vel,1],vel_T.x.array[dofs_vel],s=1)
+            fig2.gca().scatter(self.FS.tabulate_dof_coordinates()[dofs_right_wed,1],vel_T.x.array[dofs_right_wed],c='k',s=0.01)
 
         facets                 = M.facets.find(M.bc_dict['Bottom_wed'])                        
         dofs_bot_wed        = fem.locate_dofs_topological(self.FS, M.mesh.topology.dim-1, facets)
@@ -428,7 +437,7 @@ class Global_thermal(Problem):
         vel_T  = fem.Function(self.FS)
         vel_T.interpolate(v_vel)
         vel_bc = vel_T.x.array[dofs_bot_wed]
-        ind_z = np.where(vel_bc >= 0.0)
+        ind_z = np.where(vel_bc > 0.0)
         dofs_vel = dofs_bot_wed[ind_z[0]]                
         
         self.bc_bot_wed = fem.dirichletbc(ctrl.Tmax, dofs_vel,self.FS)
@@ -523,7 +532,7 @@ class Global_thermal(Problem):
         time_A = timing.time()
 
         if nl == 0: 
-            S = self.solve_the_linear(S,a,L) 
+            S = self.solve_the_linear(S,a,L,S.T_O) 
         else: 
             S = self.solve_the_non_linear_SS(M,S,ctrl,pdb)
         
@@ -536,7 +545,7 @@ class Global_thermal(Problem):
         return S 
     #------------------------------------------------------------------
     
-    def solve_the_linear(self,S,a,L,isPicard=0,it=0,ts=0):
+    def solve_the_linear(self,S,a,L,fen_function,isPicard=0,it=0,ts=0):
         
         buf = fem.Function(self.FS)
         x   = self.solv.b.copy()
@@ -550,14 +559,14 @@ class Global_thermal(Problem):
         fem.petsc.apply_lifting(self.solv.b, [fem.form(a)], [self.bc])
         self.solv.b.ghostUpdate()
         fem.petsc.set_bc(self.solv.b, self.bc)
-        self.solv.ksp.solve(self.solv.b, x)
+        self.solv.ksp.solve(self.solv.b, fen_function.x.petsc_vec)
         
         if isPicard == 0: # if it is a picard iteration the function gives the function 
-            S.T_O.x.array[:] = x.array_r
+            S.T_O = fen_function
             S.T_O.x.scatter_forward()
             return S 
         else:
-            return x
+            return fen_function
 
     def solve_the_non_linear_SS(self,M,S,ctrl,pdb,it=0):  
         
@@ -578,10 +587,8 @@ class Global_thermal(Problem):
             
             A,L = self.set_linear_picard_SS(S.PL,T_k,S.u_global,getattr(M,'domainG'),pdb)
             
-            x_T = self.solve_the_linear(S,A,L,1,it,1)
-            x_T.copy(result=T_k1.x.petsc_vec)
+            T_k1 = self.solve_the_linear(S,A,L,T_k1,1,it,1)
             T_k1.x.scatter_forward()
-            
             # L2 norm 
             du.x.array[:]  = T_k1.x.array[:] - T_k.x.array[:];du.x.scatter_forward()
             du2.x.array[:] = T_k1.x.array[:] + T_k.x.array[:];du2.x.scatter_forward()
@@ -673,7 +680,7 @@ class Global_thermal(Problem):
         L = expr * v * ufl.dx
         prb = fem.petsc.LinearProblem(a,L,u=T_i)
         prb.solve()
-        return T_i 
+        return T_expr 
 #-----------------------------------------------------------------
 class Global_pressure(Problem): 
     def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
@@ -752,7 +759,7 @@ class Global_pressure(Problem):
 
         
         if nl == 0: 
-            S = self.solve_the_linear(S,a,L) 
+            S = self.solve_the_linear(S,a,L,S.PL) 
         else: 
             S = self.solve_the_non_linear(M,S,ctrl,pdb,g)
 
@@ -835,11 +842,11 @@ class Global_pressure(Problem):
         # Newton solver
         solver = NewtonSolver(MPI.COMM_WORLD, problem)
         solver.convergence_criterion = "residual"
-        solver.rtol = ctrl.tol_innerNew
-        solver.report = True
+        #solver.rtol = ctrl.tol_innerNew
+        #solver.report = True
         
-        n, converged = solver.solve(p_k)
-        print(f"              []Newton iterations: {n}, converged = {converged}")   
+        #n, converged = solver.solve(p_k)
+        #print(f"              []Newton iterations: {n}, converged = {converged}")   
         
         S.PL.x.array[:] = p_k.x.array[:]
       
@@ -859,7 +866,39 @@ class Stokes_Problem(Problem):
         # Place holder -> Not finding useful tutorial for newton 
      
         pass
+    
+    def compute_residuum_stokes(self,u_new,p_new,D,T,PL,pdb,sc,it=0):
         
+        e = compute_strain_rate(u_new)
+        
+        f  = fem.Constant(D.mesh, PETSc.ScalarType((0.0,)*D.mesh.geometry.dim))
+
+        V = self.FS.sub(0).collapse()[0]
+        Q = self.FS.sub(1).collapse()[0]
+
+        v = ufl.TestFunction(V)
+        q = ufl.TestFunction(Q)
+        
+        eta_new = compute_viscosity_FX(e,T,PL,pdb,D.phase,D,sc)
+        
+        dx   = ufl.dx
+        
+        F1 = (ufl.inner(2*eta_new*ufl.sym(ufl.grad(u_new)), ufl.sym(ufl.grad(v))) * dx \
+             - ufl.inner(p_new, ufl.div(v)) * dx \
+             - ufl.inner(f, v) * dx) 
+        F2 = ufl.inner(q, ufl.div(u_new)) * dx 
+        
+        R  = fem.petsc.assemble_vector(fem.form(F1))
+        R2 = fem.petsc.assemble_vector(fem.form(F2))
+        rmom = R.norm()
+        rdiv = R2.norm() 
+        if self.bc:
+            fem.petsc.set_bc(R, self.bc)
+        
+    
+        divuL2 = (fem.assemble_scalar(fem.form(ufl.inner(ufl.div(u_new), ufl.div(u_new))*dx)))**0.5
+        
+        return rmom, rdiv, divuL2 
     
     def set_linear_picard(self,u_slab,T,PL,D,pdb,ctrl,sc, a_p = None,it=0, ts = 0):
         
@@ -1270,7 +1309,8 @@ class Wedge(Stokes_Problem):
                 
                 dp1.x.array[:] = S.p_wedge.x.array[:] + p_k.x.array[:];dp1.x.scatter_forward()
         
-
+                rmom, rdiv, divuL2 = self.compute_residuum_stokes(S.u_wedge,S.p_wedge,M,S.t_owedge,S.p_lwedge,pdb,sc)
+        
                 
                 tol_u = L2_norm_calculation(du0)/L2_norm_calculation(du1)
                 
@@ -1283,7 +1323,9 @@ class Wedge(Stokes_Problem):
 
                 time_itb = timing.time()
 
-                print_ph(f'              []Wedge L_2 norm is {res:.3e}, it_th {it_inner:d}performed in {time_itb-time_ita:.2f} seconds')
+                print_ph(f'              []Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d}performed in {time_itb-time_ita:.2f} seconds')
+                print_ph(f'                                 [?] Res mom {rmom:.3e}, Res div {rdiv:.3e}')
+
                 it_inner = it_inner+1 
         
 
@@ -1321,6 +1363,9 @@ class Wedge(Stokes_Problem):
             S.p_wedge.x.array[:] = xp.array_r[:]
             S.u_wedge.x.scatter_forward()
             S.p_wedge.x.scatter_forward()
+            
+
+            
         else: 
             S.u_wedge.x.array[:self.solv.offset] = x.array[:self.solv.offset]
             S.p_wedge.x.array[: (len(x.array_r) - self.solv.offset)] = x.array[self.solv.offset:]
@@ -1329,10 +1374,13 @@ class Wedge(Stokes_Problem):
         
 
 
+
         return S 
     
 #------------------------------------------------------------------------------------------------------------
 # Soon -> Steady state thermal solver 
+
+@timing_function
 def set_ups_problem():
     from phase_db import PhaseDataBase
     from phase_db import _generate_phase
@@ -1349,9 +1397,9 @@ def set_ups_problem():
     # Create scal 
     sc = Scal(L=660e3,Temp = 1350,eta = 1e21, stress = 1e9)
     
-    ioctrl = IOControls(test_name = 'Debug_test',
+    ioctrl = IOControls(test_name = 'Van_Keken',
                         path_save = '../Debug_mesh',
-                        sname = 'Experimental')
+                        sname = 'Van_Keken')
     ioctrl.generate_io()
     # Create mesh 
     M = unit_test_mesh(ioctrl, sc)
@@ -1381,19 +1429,19 @@ def set_ups_problem():
     pdb = _generate_phase(pdb, 1, rho0 = 3300 , option_rho = 3, option_rheology = 0, option_k = 2, option_Cp = 1, eta=1e22)
     # Oceanic Crust
     
-    pdb = _generate_phase(pdb, 2, rho0 = 2900 , option_rho = 3, option_rheology = 0, option_k = 2, option_Cp = 1, eta=1e22)
+    pdb = _generate_phase(pdb, 2, rho0 = 3300 , option_rho = 3, option_rheology = 0, option_k = 2, option_Cp = 1, eta=1e22)
     # Wedge
     
     pdb = _generate_phase(pdb, 3, rho0 = 3300 , option_rho = 3, option_rheology = 3, option_k = 2, option_Cp = 1, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl',eta = 1e19)
     # 
     
-    pdb = _generate_phase(pdb, 4, rho0 = 3250 , option_rho = 3, option_rheology = 0, option_k = 2, option_Cp = 1, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 4, rho0 = 3300 , option_rho = 3, option_rheology = 0, option_k = 2, option_Cp = 1, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     #
     
-    pdb = _generate_phase(pdb, 5, rho0 = 2800 , option_rho = 3, option_rheology = 0, option_k = 2, option_Cp = 1, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 5, rho0 = 3300 , option_rho = 3, option_rheology = 0, option_k = 2, option_Cp = 1, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     #
     
-    pdb = _generate_phase(pdb, 6, rho0 = 2700 , option_rho = 3, option_rheology = 0, option_k = 2, option_Cp = 1, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 6, rho0 = 3300 , option_rho = 3, option_rheology = 0, option_k = 2, option_Cp = 1, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     #
     
     pdb = sc_f._scaling_material_properties(pdb,sc)
@@ -1430,7 +1478,6 @@ def set_ups_problem():
     it_outer = 0 
 
     res = 1.0
-    ctrl.it_max = 1
 
     while it_outer < ctrl.it_max and res > ctrl.tol: 
         
@@ -1446,38 +1493,37 @@ def set_ups_problem():
         # Solve lithostatic pressure problem
         if lithostatic_pressure_global.typology == 'NonlinearProblem' or it_outer == 0:  
             lithostatic_pressure_global.Solve_the_Problem(sol,ctrl,pdb,M,g,it_outer,ts=0)
-#
-#        # Interpolate from global to wedge/slab
-#
-#        sol.t_owedge = interpolate_from_sub_to_main(sol.t_owedge,sol.T_O, M.domainB.cell_par,1)
-#        sol.p_lwedge = interpolate_from_sub_to_main(sol.p_lwedge,sol.PL, M.domainB.cell_par,1)
-#
-#        if it_outer == 0: 
-#            slab.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it = it_outer,ts=0)
-#
-#        if wedge.typology == 'NonlinearProblem' or it_outer == 0:  
-#            wedge.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it = it_outer,ts=0)
-#
-#
-#        # Interpolate from wedge/slab to global
-#        sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_wedge, M.domainB.cell_par)
-#        sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_slab, M.domainA.cell_par)
-#        
-#        sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_wedge, M.domainB.cell_par)
-#        sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_slab, M.domainA.cell_par)
-#        
-#        
-#        energy_global.Solve_the_Problem_SS(sol,ctrl,pdb,M,lhs_ctrl,M.g_input,it = it_outer, ts = 0)
-#        
-#        # Compute residuum 
-#        res = compute_residuum_outer(sol,Told,PLold,u_globalold,p_globalold,it_outer,sc, time_A_outer)
-#        
-#        print_output(sol,M.domainG,pdb,ioctrl,it_outer,sc)
-#
-#        it_outer = it_outer + 1
-#        
-#        
+
+        # Interpolate from global to wedge/slab
+
+        sol.t_owedge = interpolate_from_sub_to_main(sol.t_owedge,sol.T_O, M.domainB.cell_par,1)
+        sol.p_lwedge = interpolate_from_sub_to_main(sol.p_lwedge,sol.PL, M.domainB.cell_par,1)
+
+        if it_outer == 0: 
+            slab.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it = it_outer,ts=0)
+
+        if wedge.typology == 'NonlinearProblem' or it_outer == 0:  
+            wedge.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it = it_outer,ts=0)
+
+
+        # Interpolate from wedge/slab to global
+        sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_wedge, M.domainB.cell_par)
+        sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_slab, M.domainA.cell_par)
         
+        sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_wedge, M.domainB.cell_par)
+        sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_slab, M.domainA.cell_par)
+        
+        
+        energy_global.Solve_the_Problem_SS(sol,ctrl,pdb,M,lhs_ctrl,M.g_input,it = it_outer, ts = 0)
+        
+        # Compute residuum 
+        res = compute_residuum_outer(sol,Told,PLold,u_globalold,p_globalold,it_outer,sc, time_A_outer)
+        print_output(sol,M.domainG,pdb,ioctrl,it_outer,sc)
+
+        it_outer = it_outer + 1
+        
+        
+       
     
 
 
@@ -1569,13 +1615,13 @@ def print_output(S,D,pdb,ioctrl,it_outer,sc,ts=0):
     
     mesh = D.mesh
     
-    if MPI.COMM_WORLD.rank == 0:
-        pt_save = ioctrl.path_save
-        if not os.path.exists(pt_save):
-            os.makedirs(pt_save)
-        pt_save = os.path.join(pt_save, ioctrl.sname)
-        if not os.path.exists(pt_save):
-            os.makedirs(pt_save)    
+    
+    pt_save = ioctrl.path_save
+    if not os.path.exists(pt_save):
+        os.makedirs(pt_save)
+    pt_save = os.path.join(pt_save, ioctrl.sname)
+    if not os.path.exists(pt_save):
+        os.makedirs(pt_save)    
     file_name = os.path.join(pt_save,'it_%04d'%(it_outer))
     element_ve = basix.ufl.element("Lagrange", "triangle", 1, shape=(mesh.geometry.dim,   ))
     element_te = basix.ufl.element("Lagrange", "triangle", 1, shape=(mesh.geometry.dim**2,))
@@ -1682,9 +1728,7 @@ def print_output(S,D,pdb,ioctrl,it_outer,sc,ts=0):
         ufile_xdmf.write_function(eta2)
     
     
-    
-    
-    
+
     
     
     return 0
@@ -1693,6 +1737,8 @@ def print_output(S,D,pdb,ioctrl,it_outer,sc,ts=0):
 if __name__ == '__main__': 
     
     set_ups_problem()
+    
+    a = 1
     
     
     

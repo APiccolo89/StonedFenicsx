@@ -13,15 +13,15 @@ class Slab():
         self.trench = trench
         self.theta_0   = theta_0*np.pi/180
         self.theta_max = theta_max*np.pi/180
-        self.num_segment = num_segment
+        self.num_segment = 10
         self.y_min = y_min/1e3 # convert to km to lazy to change a few stuff here
-        self.slab_mid = np.zeros((num_segment+1,2))
-        self.slab_top = np.zeros((num_segment+1,2))
-        self.slab_bot = np.zeros((num_segment+1,2))
-        self.theta_mean = np.zeros(num_segment+1)
+        self.slab_mid = np.zeros((self.num_segment+1,2))
+        self.slab_top = np.zeros((self.num_segment+1,2))
+        self.slab_bot = np.zeros((self.num_segment+1,2))
+        self.theta_mean = np.zeros(self.num_segment+1)
         self.flag_constant_theta = flag_constant_theta
-        self.normal_vector = np.zeros((num_segment+1,2)) # normal vector
-        self.tangent_vector = np.zeros((num_segment+1,2)) # tangent vector
+        self.normal_vector = np.zeros((self.num_segment+1,2)) # normal vector
+        self.tangent_vector = np.zeros((self.num_segment+1,2)) # tangent vector
     def compute_bending_angle(self,l: float):
         
         """

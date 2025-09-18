@@ -54,9 +54,9 @@ spec = [('it_max', int64),
 class NumericalControls:
     def __init__(self,
                  it_max=20,
-                 tol=1e-8,
+                 tol=1e-4,
                  Ttop=0.0,
-                 Tmax=1300,
+                 Tmax=1300.0,
                  g=9.81, 
                  time_max = 20, 
                  pressure_scaling=1e22/1000e3,
@@ -67,7 +67,7 @@ class NumericalControls:
                  time_dependent_v = 0,
                  slab_bc = 1, # BC: 0 -> pipe like , 1 moving wall slab
                  decoupling = 0,
-                 tol_innerPic = 1e-4,
+                 tol_innerPic = 1e-3,
                  tol_innerNew = 1e-7):  
 
         # Direct initialization of class attributes

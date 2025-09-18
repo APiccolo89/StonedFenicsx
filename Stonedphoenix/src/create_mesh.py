@@ -106,7 +106,7 @@ class geom_input():
     def __init__(self,
                  x = np.array([0.,1000e3]),
                  y = np.array([-660e3,0.]),
-                 cr=35e3,
+                 cr=20e3,
                  ocr=6e3,
                  lit_mt=30e3,
                  lc = 0.5,
@@ -438,12 +438,24 @@ def create_gmesh(ioctrl):
     min_y           = g_input.y[0]                # Min domain y direction
     # Set up slab top surface a
     Data_Real = False; S = []
-    van_keken = 0
+    van_keken = 1
     if (Data_Real==False) & (isinstance(S, Slab)== False):
         if van_keken == 1: 
-            S = Slab(D0 = 100.0, L0 = 800.0, Lb = 800, trench = 0.0,theta_0=5, theta_max = 30.0, num_segment=100,flag_constant_theta=True,y_min=min_y)
+            min_x           =0.0 # The beginning of the model is the trench of the slab
+            max_x           = 660e3                 # Max domain x direction
+            max_y           = 0.0
+            min_y           = -600.0e3               # Min domain y direction            
+            g_input.x[0]   = min_x
+            g_input.x[1]   = max_x
+            g_input.y[1]   = max_y
+            g_input.y[0]   = min_y
+        
+            S = Slab(D0 = 100.0, L0 = 800.0, Lb = 800, trench = 0.0,theta_0=5, theta_max = 45.0, num_segment=100,flag_constant_theta=True,y_min=min_y)
+            
         else: 
             S = Slab(D0 = 100.0, L0 = 800.0, Lb = 800, trench = 0.0,theta_0=1.0, theta_max = 30.0, num_segment=100,flag_constant_theta=False,y_min=min_y)
+            g_input.x[1] = np.max(slab_x)+200e3
+
 
         for a in dir(S):
             if (not a.startswith('__')):
@@ -455,7 +467,6 @@ def create_gmesh(ioctrl):
 
     # Create the subduction interfaces using either the real data set, or the slab class
     slab_x, slab_y, bot_x, bot_y,oc_cx,oc_cy = fmm.function_create_slab_channel(Data_Real,g_input,SP=S)
-    g_input.x[1] = np.max(slab_x)+200e3
     min_x           = g_input.x[0] # The beginning of the model is the trench of the slab
     max_x           = g_input.x[1]          
     ind_oc_lc = np.where(slab_y == -g_input.cr*(1-g_input.lc))[0][0]
