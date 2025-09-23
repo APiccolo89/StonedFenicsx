@@ -23,6 +23,7 @@ import time                          as timing
 from dolfinx.fem.petsc import assemble_matrix_block, assemble_vector_block
 from numerical_control import NumericalControls, ctrl_LHS, IOControls
 from utils import interpolate_from_sub_to_main
+from scal import Scal
 
 
 """
@@ -202,7 +203,21 @@ class SolverStokes():
             self.set_iterative_solver(a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0)    
     
     
-    def set_direct_solver(self,a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0):
+    def set_direct_solver(self,
+                          a,
+                          a_p,
+                          L,
+                          COMM, 
+                          nl,
+                          bcs,
+                          F0,
+                          F1, 
+                          ctrl,
+                          J = None, 
+                          r = None,
+                          it = 0, 
+                          ts = 0):
+        
         if it == 0 or ts == 0:
             self.set_block_operator(a, a_p, bcs, L, F0, F1)
 
@@ -390,7 +405,7 @@ class Global_thermal(Problem):
             # Create suitable function space for the problem
             T_bc_L = fem.Function(self.FS)
             # Extract z and lhs 
-            z   = - lhs.z
+            z   = lhs.z
             LHS = lhs.LHS 
             # Extract coordinate dofs
             # Interpolate temperature field: 
@@ -936,7 +951,7 @@ def compute_strain_rate(u):
 
 def compute_eII(e):
     from ufl import inner, sqrt
-    e_II  = sqrt(0.5*inner(e, e) + 1e-15)    
+    e_II  = sqrt(0.5*inner(e, e))    
     return e_II
 #---------------------------------------------------------------------------
         
@@ -1426,22 +1441,22 @@ def set_ups_problem():
     pdb = PhaseDataBase(6)
     # Slab
     
-    pdb = _generate_phase(pdb, 1, rho0 = 3300 , option_rho = 3, option_rheology = 0, option_k = 2, option_Cp = 1, eta=1e22)
+    pdb = _generate_phase(pdb, 1, rho0 = 3300 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)
     # Oceanic Crust
     
-    pdb = _generate_phase(pdb, 2, rho0 = 3300 , option_rho = 3, option_rheology = 0, option_k = 2, option_Cp = 1, eta=1e22)
+    pdb = _generate_phase(pdb, 2, rho0 = 3300 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)
     # Wedge
     
-    pdb = _generate_phase(pdb, 3, rho0 = 3300 , option_rho = 3, option_rheology = 3, option_k = 2, option_Cp = 1, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl',eta = 1e19)
+    pdb = _generate_phase(pdb, 3, rho0 = 3300 , option_rho = 0, option_rheology = 3, option_k = 0, option_Cp = 0, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl',eta = 1e19)
     # 
     
-    pdb = _generate_phase(pdb, 4, rho0 = 3300 , option_rho = 3, option_rheology = 0, option_k = 2, option_Cp = 1, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 4, rho0 = 3300 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     #
     
-    pdb = _generate_phase(pdb, 5, rho0 = 3300 , option_rho = 3, option_rheology = 0, option_k = 2, option_Cp = 1, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 5, rho0 = 3300 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     #
     
-    pdb = _generate_phase(pdb, 6, rho0 = 3300 , option_rho = 3, option_rheology = 0, option_k = 2, option_Cp = 1, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    pdb = _generate_phase(pdb, 6, rho0 = 3300 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
     #
     
     pdb = sc_f._scaling_material_properties(pdb,sc)
@@ -1519,6 +1534,7 @@ def set_ups_problem():
         # Compute residuum 
         res = compute_residuum_outer(sol,Told,PLold,u_globalold,p_globalold,it_outer,sc, time_A_outer)
         print_output(sol,M.domainG,pdb,ioctrl,it_outer,sc)
+        A,B,C =_benchmark_van_keken(sol,1,3,sc)
 
         it_outer = it_outer + 1
         
@@ -1529,6 +1545,106 @@ def set_ups_problem():
 
     
     return 0 
+
+
+
+@timing_function
+def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb:PhaseDataBase, ioctrl:IOControls, sc:Scal):
+    from phase_db import PhaseDataBase
+    from phase_db import _generate_phase
+    from thermal_structure_ocean import compute_initial_LHS
+    from scal import Scal 
+    import scal as sc_f 
+    
+    from create_mesh import unit_test_mesh
+    
+    
+    print_ph(f'// -- // --- Steady State temperature // -- // --- > ')
+
+    element_p           = M.element_p#basix.ufl.element("Lagrange","triangle", 1) 
+    
+    element_PT          = M.element_PT#basix.ufl.element("Lagrange","triangle",2)
+    
+    element_V           = M.element_V#basix.ufl.element("Lagrange","triangle",2,shape=(2,))
+
+    #==================== Phase Parameter ====================
+    lhs_ctrl = compute_initial_LHS(ctrl,lhs_ctrl, sc, pdb)  
+          
+    # Define Problem
+    
+    # Pressure 
+    
+    energy_global               = Global_thermal (M = M, name = ['energy','domainG']  , elements = (element_PT,                   ), pdb = pdb, ctrl = ctrl)
+    
+    lithostatic_pressure_global = Global_pressure(M = M, name = ['pressure','domainG'], elements = (element_PT,                     ), pdb = pdb                                ) 
+    
+    wedge                       = Wedge          (M = M, name = ['stokes','domainB'  ], elements = (element_V,element_p,element_PT  ), pdb = pdb                                )
+    
+    slab                        = Slab           (M = M, name = ['stokes','domainA'  ], elements = (element_V,element_p,element_PT  ), pdb = pdb                                )
+    
+    g = fem.Constant(M.domainG.mesh, PETSc.ScalarType([0.0, -ctrl.g]))    
+
+    # Define Solution 
+    sol                         = Solution()
+     
+    sol.create_function(lithostatic_pressure_global,slab,wedge,[element_V,element_p])
+    
+    sol.T_O = energy_global.initial_temperature_field(M.domainG, ctrl, lhs_ctrl,M.g_input)
+
+    it_outer = 0 
+
+    res = 1.0
+
+    while it_outer < ctrl.it_max and res > ctrl.tol: 
+        
+        time_A_outer = timing.time()
+        # Copy the old solution for the residuum computation 
+        
+        Told        = sol.T_O.copy()
+        PLold       = sol.PL.copy()
+        u_globalold = sol.u_global.copy()
+        p_globalold = sol.p_global.copy()
+        
+        
+        # Solve lithostatic pressure problem
+        if lithostatic_pressure_global.typology == 'NonlinearProblem' or it_outer == 0:  
+            lithostatic_pressure_global.Solve_the_Problem(sol,ctrl,pdb,M,g,it_outer,ts=0)
+
+        # Interpolate from global to wedge/slab
+
+        sol.t_owedge = interpolate_from_sub_to_main(sol.t_owedge,sol.T_O, M.domainB.cell_par,1)
+        sol.p_lwedge = interpolate_from_sub_to_main(sol.p_lwedge,sol.PL, M.domainB.cell_par,1)
+
+        if it_outer == 0: 
+            slab.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it = it_outer,ts=0)
+
+        if wedge.typology == 'NonlinearProblem' or it_outer == 0:  
+            wedge.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it = it_outer,ts=0)
+
+
+        # Interpolate from wedge/slab to global
+        sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_wedge, M.domainB.cell_par)
+        sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_slab, M.domainA.cell_par)
+        
+        sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_wedge, M.domainB.cell_par)
+        sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_slab, M.domainA.cell_par)
+        
+        
+        energy_global.Solve_the_Problem_SS(sol,ctrl,pdb,M,lhs_ctrl,M.g_input,it = it_outer, ts = 0)
+        
+        # Compute residuum 
+        res = compute_residuum_outer(sol,Told,PLold,u_globalold,p_globalold,it_outer,sc, time_A_outer)
+        print_output(sol,M.domainG,pdb,ioctrl,it_outer,sc)
+        A,B,C =_benchmark_van_keken(sol,1,3,sc)
+
+        it_outer = it_outer + 1
+        
+        
+       
+    
+    return 0 
+
+
 
 
 def compute_residuum(a,b):
@@ -1700,6 +1816,7 @@ def print_output(S,D,pdb,ioctrl,it_outer,sc,ts=0):
     e_T.name = "Strain_rate second invariant"
     e_T.interpolate(eII2)
     e_T.x.array[:] = e_T.x.array[:]/sc.T
+    e_T.x.array[e_T.x.array[:]<=0.0] = 1e-20
     e_T.x.scatter_forward()
     
     # viscosity (e,S.t_oslab,S.p_lslab,pdb,D.phase,D,sc)
@@ -1727,12 +1844,130 @@ def print_output(S,D,pdb,ioctrl,it_outer,sc,ts=0):
         ufile_xdmf.write_function(e_T)
         ufile_xdmf.write_function(eta2)
     
-    
 
     
     
     return 0
 
+
+
+def _benchmark_van_keken(S,b_vk,case,sc):
+    from scipy.interpolate import griddata
+    # Regular grid interpolation 
+    if b_vk != 1: 
+        return 0 
+    T = S.T_O.copy()
+
+    XG = S.T_O.function_space.tabulate_dof_coordinates() 
+    x_g = np.array([np.min(XG[:,0]),np.max(XG[:,0])],dtype=np.float64)*sc.L
+    y_g = np.array([np.min(XG[:,1]),np.max(XG[:,1])],dtype=np.float64)*sc.L
+    nx   = 111 
+    ny   = 101
+    idx0 = 10 #(11 in van keken)
+    idy0 = ny-11 
+    idx1 = 36-1 
+    idy1 = ny-36
+
+    xx   = np.linspace(x_g[0],x_g[1],num=nx)
+    yy   = np.linspace(y_g[0],y_g[1],num=ny)
+    T_g  = np.zeros([nx,ny],dtype=np.float64)
+    X,Y  = np.meshgrid(xx,yy)
+    xt,yt = XG[:,0]*sc.L, XG[:,1]*sc.L
+    p     = np.zeros((len(xt),2),dtype=np.float64)
+    p[:,0] = xt 
+    p[:,1] = yt
+    T_g   = griddata(p,T.x.array[:]*sc.Temp,(X, Y), method='nearest')-273.15
+    T_g = T_g.transpose()
+    T = 0
+    co = 0
+    x_s=[]
+    y_s=[] 
+    T2 = []
+    c = 0
+    X_S = []
+    Y_S = []
+    i_X = 10
+    for i in range(36):
+            T = T+(T_g[i,ny-1-i])**2
+            x_s.append(xx[i])
+            y_s.append(yy[ny-1-i])
+            if (i<21) & (i>8):
+                l_index = np.arange(ny-(i+1),ny-10)
+                if len(l_index) == 0:
+                    l_index_1st = np.arange(9,21)
+                    for j in range(len(l_index_1st)):
+                        T2.append(T_g[l_index_1st[j],ny-(i+1)]**2)
+                        X_S.append(xx[l_index_1st[j]])
+                        Y_S.append(yy[ny-(i+1)])
+                        c = c + 1
+                for j in range(len(l_index)):
+                    T2.append(T_g[i,l_index[j]]**2)
+                    X_S.append(xx[i])
+                    Y_S.append(yy[int(l_index[j])])
+                    c = c + 1
+                
+            co = co+1 
+    
+    T_11_11 = T_g[idx0,idy0]
+              
+    T_ln = np.sqrt(T/co) 
+    T_ln2 = np.sqrt(np.sum(T2)/c)
+
+    data_1c = np.array([
+    [397.55, 505.70, 850.50],
+    [391.57, 511.09, 852.43],
+    [387.78, 503.10, 852.97],
+    [387.84, 503.13, 852.92],
+    [389.39, 503.04, 851.68],
+    [388.73, 504.03, 854.99]
+    ])
+
+    data_2a = np.array([
+    [570.30, 614.09, 1007.31],
+    [580.52, 606.94, 1002.85],
+    [580.66, 607.11, 1003.20],
+    [577.59, 607.52, 1002.15],
+    [581.30, 607.26, 1003.35]
+    ])
+
+    data_2b = np.array([
+    [550.17, 593.48, 994.11],
+    [551.60, 608.85, 984.08],
+    [582.65, 604.51, 998.71],
+    [583.36, 605.11, 1000.01],
+    [574.84, 603.80, 995.24],
+    [583.11, 604.96, 1000.05]
+    ])
+
+    if case    == 0: 
+        data   = data_1c 
+    elif case  == 1:
+        data = data_2a
+    elif case==3 or case ==2 or case == 4: 
+        data = data_2b 
+    else: 
+        data = data_1c*0.
+    
+    print( '------------------------------------------------------------------' )
+    print( ':::====> T(11,11) = %.2f [deg C], average value VanK2008 = %.2f [deg C] +/- %.2f;m/M = %.2f/%.2f [deg C]'%( T_11_11, np.mean(data[:,0]), np.std(data[:,0]),np.min(data[:,0]),np.max(data[:,0]) ) )
+    print( ':::====> L2_A     = %.2f [deg C], average value VanK2008 = %.2f [deg C] +/- %.2f;m/M = %.2f/%.2f [deg C]'%( T_ln, np.mean(data[:,1]), np.std(data[:,1]) ,np.min(data[:,1]),np.max(data[:,1]) ) )
+    print( ':::====> L2_B     = %.2f [deg C], average value VanK2008 = %.2f [deg C] +/- %.2f;;m/M = %.2f/%.2f[deg C]'%( T_ln2, np.mean(data[:,2]), np.std(data[:,2]),np.min(data[:,2]),np.max(data[:,2]) ) )
+    print( ':::L2_A = T along the slab surface from 0 to -210 km' )
+    print( ':::L2_B = T wedge norm from -54 to -110 km ' )
+    print( ':::=> From grid to downsampled grid -> nearest interpolation' )
+    print( '------------------------------------------------------------------' )
+    fg = plt.figure()
+    ax = fg.gca()
+    levels = [0,200,400,600,800,1000,1200,1350]
+    a=ax.contourf(xx,yy,T_g.transpose(),levels=levels,cmap='cmc.lipari');plt.colorbar(a)
+    ax.scatter(x_s,y_s,s=10,c='r',marker='d')
+    ax.scatter(xx[10],yy[ny-11],s=40,marker='s',c='k')
+    ax.scatter(X_S,Y_S,s=1,c='w')
+    
+    A = [T_11_11,np.mean(data[:,0]), np.std(data[:,0])]
+    B = [ T_ln, np.mean(data[:,1]), np.std(data[:,1])]
+    C = [T_ln2, np.mean(data[:,2]), np.std(data[:,2])]
+    return A,B,C
 
 if __name__ == '__main__': 
     

@@ -304,7 +304,7 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
         lhs.z[:] = -z[:] 
         lhs.LHS[:] = T_lhs[:]
 
-        return lhs
+        return lhs,[],[]
 
          
     Told = (np.ones((nz))*ctrl.Tmax)
@@ -410,7 +410,7 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
     # Current age index
     current_age_index = np.where(t[0] == lhs.c_age_plate)[0][0]
     lhs.LHS[:] = temperature[current_age_index]
-    lhs.z[:] = z
+    lhs.z[:] = - z
 
     return lhs, t, temperature
 
@@ -418,8 +418,11 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
 @timing_function
 def compute_initial_LHS(ctrl,lhs,scal,pdb):
     
-    
-    lhs,t, temperature = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb)
+    if lhs.van_keken == 0:
+        lhs,t, temperature = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb)
+    else:
+        lhs,_,_ = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb)
+        return lhs
     
     
     

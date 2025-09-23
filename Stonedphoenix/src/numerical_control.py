@@ -47,7 +47,8 @@ spec = [('it_max', int64),
     ('time_max', float64),
     ('steady_state',int64),# Assuming this is a NumPy array
     ('slab_bc',int64),# Assuming this is a NumPy array
-    ('decoupling',int64), # 1 decoupled, 0 coupled
+    ('decoupling',int64),
+    ('van_keken',int64)# 1 decoupled, 0 coupled
 ]
 
 @jitclass(spec)
@@ -58,7 +59,7 @@ class NumericalControls:
                  Ttop=0.0,
                  Tmax=1300.0,
                  g=9.81, 
-                 time_max = 20, 
+                 time_max = 30, 
                  pressure_scaling=1e22/1000e3,
                  slab_age=0.0,
                  v_s = np.array([5.0,0.0], dtype=np.float64),
@@ -67,8 +68,9 @@ class NumericalControls:
                  time_dependent_v = 0,
                  slab_bc = 1, # BC: 0 -> pipe like , 1 moving wall slab
                  decoupling = 0,
-                 tol_innerPic = 1e-3,
-                 tol_innerNew = 1e-7):  
+                 tol_innerPic = 1e-4,
+                 tol_innerNew = 1e-7,
+                 van_keken = 0):  
 
         # Direct initialization of class attributes
         self.it_max           = it_max 
@@ -84,8 +86,10 @@ class NumericalControls:
         self.steady_state     = steady_state
         self.slab_bc          = 1 # 1 moving wall, 0 pipe-like slab 
         self.decoupling       = decoupling # 1 decoupled, 0 coupled
-        self.tol_innerPic    = tol_innerPic
-        self.tol_innerNew    = tol_innerNew
+        self.tol_innerPic     = tol_innerPic
+        self.tol_innerNew     = tol_innerNew
+        self.van_keken        = van_keken # 1 Van Keken benchmark, 2 diffusion only, 3 composite
+        
     
 
 class IOControls():
@@ -147,7 +151,7 @@ class ctrl_LHS:
         c_age_var=(30.0, 60.0),  # variation in plate age
         t_res=1000,           # temporal resolution
         recalculate=0,        # flag for recomputation
-        van_keken=0,          # benchmark flag
+        van_keken=1,          # benchmark flag
         d_RHS=-50e3,
         z_min= 140e3# distance for RHS term
     ):
@@ -177,88 +181,3 @@ class ctrl_LHS:
 
     
     
-
-
-main_bc_spec = [('Top_t',int32),
-            ('Top_v',float64[:]),
-            ('Bot_t',int32),
-            ('Bot_v',float64[:]),
-            ('Lef_t',int32),
-            ('Lef_v',float64[:]),
-            ('Rig_t',int32),
-            ('Rig_v',float64[:]),
-            ('Fea_on',int32)]
-
-@jitclass(main_bc_spec)
-class main_bc:
-     def __init__(self,
-                  Top_t = 0,
-                  Top_v = np.array([273.15,0.0],dtype=np.float64),
-                  Bot_t = 0,
-                  Bot_v = np.array([1573.15,0.0],dtype=np.float64),
-                  Lef_t = 1,
-                  Lef_v = np.array([-1.0,0.0],dtype=np.float64),
-                  Rig_t = 1,
-                  Rig_v = np.array([-1.0,0.0],dtype=np.float64),
-                  Fea_on = 1,
-                  ): 
-        self.Top_t = Top_t
-        self.Top_v = Top_v
-        self.Bot_t = Bot_t
-        self.Bot_v = Bot_v
-        self.Lef_t = Lef_t
-        self.Lef_v = Lef_v
-        self.Rig_t = Rig_t
-        self.Rig_v = Rig_v
-        self.Fea_on = Fea_on
-
-@dataclass
-class bc_controls():
-    Stokes: main_bc
-    Energy: main_bc
-    def __init__(self,
-                 BC_STOKES,
-                 BC_ENERGY):
-
-        self.energy_dic = {'Isothermal':0,
-                               'NoFlux':1,
-                               'Open':2,
-                               'Gaussian':3}
-        self.stokes_dic = {'DoNothing':0,
-                            'NoSlip':1,
-                            'FreeSlip':2,
-                            'Traction_lit':3}
-        self.Energy = self.fill_class(BC_ENERGY,0)
-        self.Stokes = self.fill_class(BC_STOKES,1)
-    def fill_class(self,BC,type):
-        if type == 0:
-            print(':::: Filling Energy Boundary condition specification')
-            dict_type = self.energy_dic
-        else: 
-            print(':::: Filling Stokes Boundary condition specification')
-            dict_type = self.stokes_dic
-
-        BC_com = main_bc()
-
-        Top = BC[0][:]
-        BC_com.Top_t = dict_type[Top[1]]
-        BC_com.Top_v = np.array(Top[2][:])
-        Bot = BC[1][:]
-        BC_com.Bot_t = dict_type[Bot[1]]
-        BC_com.Bot_v = Bot[2][:]
-        Lef = BC[2][:]
-        BC_com.Lef_t = dict_type[Lef[1]]
-        BC_com.Lef_v = np.array(Lef[2][:])
-        Rig = BC[3][:]
-        BC_com.Rig_t = dict_type[Rig[1]]
-        BC_com.Rig_v = np.array(Rig[2][:])
-        if BC[4][0] == 'Feature_on':
-            BC_com.Fea_on = 1
-        else: 
-            BC_com.Fea_on = 0 
-        
-        print(':::: Fertig ::: : .')
-
-        return BC_com
-
-

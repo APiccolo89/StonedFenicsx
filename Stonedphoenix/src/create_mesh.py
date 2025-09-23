@@ -110,7 +110,7 @@ class geom_input():
                  ocr=6e3,
                  lit_mt=30e3,
                  lc = 0.5,
-                 wc = 1.5e3,
+                 wc = 2.0e3,
                  slab_tk = 130e3, 
                  decoupling = 100e3):
         self.x                 = x               # main grid coordinate
@@ -120,10 +120,10 @@ class geom_input():
         self.ocr               = ocr             # oceanic crust
         self.lit_mt            = lit_mt          # lithosperic mantle  
         self.lc                = lc              # lower crust ratio 
-        self.wc                = wc*2              # weak zone 
+        self.wc                = wc              # weak zone 
         self.lt_d              = (cr+lit_mt)     # total lithosphere thickness
         self.decoupling        = decoupling      # decoupling depth -> i.e. where the weak zone is prolonged 
-        self.resolution_normal = wc*3  # To Do
+        self.resolution_normal = wc  # To Do
         self.theta_out_slab    = []
     
     def dimensionless_ginput(self,sc):
@@ -164,6 +164,9 @@ class Mesh():
         self.comm            : mpi4py.MPI.Intracomm
         self.rank            : int
         self.size            : int 
+        self.element_p       : ufl.FiniteElement   
+        self.element_PT      : ufl.FiniteElement
+        self.element_V       : ufl.FiniteElement
  
  
 @dataclass
@@ -189,7 +192,7 @@ class Domain:
     phase: dolfinx.fem.Function = None
         
 
-def create_mesh(mesh, cell_type, prune_z=False):
+def create_mesh_fenicsx(mesh, cell_type, prune_z=False):
     """
     mesh, cell_type, remove z 
     source: Dokken tutorial generating mesh 
@@ -414,7 +417,7 @@ def create_gmsh(sx,        # subduction x
     return mesh_model 
 
 #----------------------------------------------------------------------------------------------------------------------
-def create_gmesh(ioctrl):
+def create_gmesh(ioctrl,g_input,ctrl):
     """_summary_: The function is composed by three part: -> create points, create lines, loop 
     ->-> 
     Args:
@@ -431,14 +434,14 @@ def create_gmesh(ioctrl):
     import Function_make_mesh as fmm 
 
 
-    g_input = geom_input()
+
     min_x           = g_input.x[0] # The beginning of the model is the trench of the slab
     max_x           = g_input.x[1]                 # Max domain x direction
     max_y           = g_input.y[1] 
     min_y           = g_input.y[0]                # Min domain y direction
     # Set up slab top surface a
     Data_Real = False; S = []
-    van_keken = 1
+    van_keken = ctrl.van_keken
     if (Data_Real==False) & (isinstance(S, Slab)== False):
         if van_keken == 1: 
             min_x           =0.0 # The beginning of the model is the trench of the slab
@@ -454,7 +457,6 @@ def create_gmesh(ioctrl):
             
         else: 
             S = Slab(D0 = 100.0, L0 = 800.0, Lb = 800, trench = 0.0,theta_0=1.0, theta_max = 30.0, num_segment=100,flag_constant_theta=False,y_min=min_y)
-            g_input.x[1] = np.max(slab_x)+200e3
 
 
         for a in dir(S):
@@ -467,6 +469,11 @@ def create_gmesh(ioctrl):
 
     # Create the subduction interfaces using either the real data set, or the slab class
     slab_x, slab_y, bot_x, bot_y,oc_cx,oc_cy = fmm.function_create_slab_channel(Data_Real,g_input,SP=S)
+    if slab_x[-1]>g_input.x[1]:
+        print_ph('Shortcoming: the slab is out of the domain, please increase the domain size, I add 60 km to the domain along x direction, fear not')
+        g_input.x[1] = slab_x[-1]+60e3
+        max_x        = g_input.x[1]
+        
     min_x           = g_input.x[0] # The beginning of the model is the trench of the slab
     max_x           = g_input.x[1]          
     ind_oc_lc = np.where(slab_y == -g_input.cr*(1-g_input.lc))[0][0]
@@ -692,8 +699,8 @@ def read_mesh(ioctrl,sc):
         msh = meshio.read(mesh_name)
 
         # Create and save one file for the mesh, and one file for the facets
-        triangle_mesh = create_mesh(msh, "triangle", prune_z=True)
-        line_mesh = create_mesh(msh, "line", prune_z=True)
+        triangle_mesh = create_mesh_fenicsx(msh, "triangle", prune_z=True)
+        line_mesh = create_mesh_fenicsx(msh, "line", prune_z=True)
         meshio.write("mesh.xdmf", triangle_mesh)
         meshio.write("mt.xdmf", line_mesh)
         
@@ -763,10 +770,7 @@ def unit_test_mesh(ioctrl, sc):
     
     print_ph("[] - - - -> Creating mesh <- - - - []")
 
-    
-    
-    g_input = geom_input() 
-    
+        
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()  # 0, 1, ..., size-1
     size = comm.Get_size()  # total number of MPI processes
@@ -790,7 +794,29 @@ def unit_test_mesh(ioctrl, sc):
     
 #------------------------------------------------------------------------------------------------
 
+def create_mesh(ioctrl, sc, g_input,ctrl):
+    import numpy as np 
+    import sys, os
+    sys.path.append(os.path.abspath("src"))
+    from numerical_control import IOControls
+    
 
+        
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()  # 0, 1, ..., size-1
+    size = comm.Get_size()  # total number of MPI processes
+    
+    if rank == 0: 
+        g_input = create_gmesh(ioctrl,g_input,ctrl)
+    
+    M = create_mesh_object(mesh,sc,ioctrl, g_input)
+    M.comm = comm 
+    M.rank = rank 
+    M.size = size 
+
+
+    return M
+    
 #------------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
