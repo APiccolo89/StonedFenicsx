@@ -49,6 +49,7 @@ def StonedFenicsx():
     #---------------------------------------------------------------------------------------------------------
     
     import input as IP
+
     
     # Numerical controls
     ctrl = NumericalControls(g = IP.g,
@@ -58,7 +59,7 @@ def StonedFenicsx():
                             time_dependent_v = IP.time_dependent_v,
                             steady_state = IP.steady_state,
                             slab_bc = IP.slab_bc,
-                            decoupling = IP.decoupling,
+                            decoupling = IP.decoupling_ctrl,
                             tol_innerPic = IP.tol_innerPic,
                             tol_innerNew = IP.tol_innerNew,
                             van_keken = IP.van_keken)
@@ -84,7 +85,8 @@ def StonedFenicsx():
                           option_rho = IP.Phase1.option_rho, 
                           option_rheology = IP.Phase1.option_rheology, 
                           option_k = IP.Phase1.option_k, option_Cp = IP.Phase1.option_Cp, 
-                          eta=IP.Phase1.eta)
+                          eta=IP.Phase1.eta,
+                          radio = IP.Phase1.radio)
     # Phase 2
     Pdb = _generate_phase(Pdb,
                           2,
@@ -93,7 +95,8 @@ def StonedFenicsx():
                           option_rheology = IP.Phase2.option_rheology,
                           option_k = IP.Phase2.option_k, 
                           option_Cp = IP.Phase2.option_Cp, 
-                          eta=IP.Phase2.eta)
+                          eta=IP.Phase2.eta,
+                          radio = IP.Phase2.radio)
     # Phase 3
     Pdb = _generate_phase(Pdb, 
                           3, 
@@ -104,7 +107,8 @@ def StonedFenicsx():
                           option_Cp = IP.Phase3.option_Cp, 
                           name_diffusion=IP.Phase3.name_diffusion, 
                           name_dislocation=IP.Phase3.name_dislocation,
-                          eta = IP.Phase3.eta)
+                          eta = IP.Phase3.eta,
+                          radio = IP.Phase3.radio)
     # Phase 4
     Pdb = _generate_phase(Pdb, 
                           4, 
@@ -113,7 +117,8 @@ def StonedFenicsx():
                           option_rheology = IP.Phase4.option_rheology,
                           option_k = IP.Phase4.option_k, 
                           option_Cp = IP.Phase4.option_Cp, 
-                          eta=IP.Phase4.eta)
+                          eta=IP.Phase4.eta,
+                          radio = IP.Phase4.radio)
     # Phase 5
     Pdb = _generate_phase(Pdb, 
                           5, 
@@ -122,7 +127,8 @@ def StonedFenicsx():
                           option_rheology = IP.Phase5.option_rheology,
                           option_k = IP.Phase5.option_k, 
                           option_Cp = IP.Phase5.option_Cp, 
-                          eta=IP.Phase5.eta)
+                          eta=IP.Phase5.eta,
+                          radio = IP.Phase5.radio)
     # Phase 6
     Pdb = _generate_phase(Pdb, 
                           6, 
@@ -131,7 +137,8 @@ def StonedFenicsx():
                           option_rheology = IP.Phase6.option_rheology,
                           option_k = IP.Phase6.option_k, 
                           option_Cp = IP.Phase6.option_Cp, 
-                          eta=IP.Phase6.eta)
+                          eta=IP.Phase6.eta,
+                          radio = IP.Phase6.radio)
     # ---
     # Create mesh 
     g_input = geom_input(x = np.asarray(IP.x),

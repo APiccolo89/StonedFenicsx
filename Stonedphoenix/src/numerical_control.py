@@ -48,7 +48,8 @@ spec = [('it_max', int64),
     ('steady_state',int64),# Assuming this is a NumPy array
     ('slab_bc',int64),# Assuming this is a NumPy array
     ('decoupling',int64),
-    ('van_keken',int64)# 1 decoupled, 0 coupled
+    ('van_keken',int64),
+    ('linear_decoupling',int64)# 1 decoupled, 0 coupled
 ]
 
 @jitclass(spec)
@@ -67,10 +68,11 @@ class NumericalControls:
                  relax = 0.6,
                  time_dependent_v = 0,
                  slab_bc = 1, # BC: 0 -> pipe like , 1 moving wall slab
-                 decoupling = 0,
+                 decoupling = 1,
                  tol_innerPic = 1e-4,
                  tol_innerNew = 1e-7,
-                 van_keken = 0):  
+                 van_keken = 0,
+                 linear_decoupling = 3):  
 
         # Direct initialization of class attributes
         self.it_max           = it_max 
@@ -89,6 +91,7 @@ class NumericalControls:
         self.tol_innerPic     = tol_innerPic
         self.tol_innerNew     = tol_innerNew
         self.van_keken        = van_keken # 1 Van Keken benchmark, 2 diffusion only, 3 composite
+        self.linear_decoupling = linear_decoupling # 1 linear decoupling, 0 nonlinear decoupling
         
     
 

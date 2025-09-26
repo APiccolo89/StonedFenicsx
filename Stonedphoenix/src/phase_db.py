@@ -191,6 +191,9 @@ spec_phase = [
     ("Kb", float64[:]),          # Bulk modulus [Pa]
     ("rho0", float64[:]),        # Reference density [kg/m^3]
     ("option_rho", int32[:]),    # Option for density calculation
+    
+    # radiogenic heat
+    ("radio",float64[:]), 
 
     ("id", int32[:]),              # phase number
     
@@ -262,6 +265,7 @@ class PhaseDataBase:
     
         # Radiative heat transfer 
         self.option_k   = np.zeros(number_phases, dtype=np.int32)                 # Option for heat conductivity calculation
+        self.radio      = np.zeros(number_phases, dtype=np.float64)               # Radiogenic
 
         
         # Density parameters 
@@ -291,7 +295,8 @@ def _generate_phase(PD:PhaseDataBase,
                     option_rheology:float  = 0,
                     option_Cp:int          = 0,
                     option_k:int           = 0,
-                    option_rho:int         = 0  )     -> PhaseDataBase:
+                    option_rho:int         = 0,
+                    radio:float = 0.0)     -> PhaseDataBase:
     """
     Generate phase: 
     id : phase id number [0->n] 
@@ -343,7 +348,7 @@ def _generate_phase(PD:PhaseDataBase,
     PD.eta[id] = eta
     PD.option_eta[id] = option_rheology
     
-    
+    PD.radio[id] = radio 
     # Heat capacity
     if option_Cp == 0:
         # constant heat capacity 

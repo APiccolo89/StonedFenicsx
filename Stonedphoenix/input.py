@@ -21,25 +21,25 @@ resolution_normal = 2.0e3  # To Do
 it_max           = 20 
 tol              = 1e-5 
 relax            = 0.9
-Tmax             = 1300.0
+Tmax             = 1350.0
 Ttop             = 0.0 
 g                = 9.81 
 v_s              = [5.0,0.0]  # Convert cm/yr to m/s
-slab_age         = 50e6 
+slab_age         = 80e6 
 time_max         = 20e6
 time_dependent_v = 0
 steady_state     = 1
 slab_bc          = 1 # 1 moving wall, 0 pipe-like slab 
-decoupling       = decoupling # 1 decoupled, 0 coupled
 tol_innerPic    = 1e-4
 tol_innerNew    = 1e-7
-case_VanKeken   = 1 # 1 Van Keken benchmark, 2 diffusion only, 3 composite 
+case_VanKeken   = 0 # 1 Van Keken benchmark, 2 diffusion only, 3 composite 
+decoupling_ctrl = 1 
 #---------------------------------------------------------------------------------------------------------
 # input/output control
 #---------------------------------------------------------------------------------------------------------
-test_name = 'VanKeken_50Ma_5cm_slab_1300C_20Myr'
+test_name = 'Experiment_1'
 path_save = '/Users/wlnw570/Work/Leeds/Output/Stonedphoenix/Benchmark'
-sname = 'VanKeken_50Ma_5cm_slab_1300C'
+sname = test_name
 #---------------------------------------------------------------------------------------------------------
 # Scaling parameters
 #---------------------------------------------------------------------------------------------------------
@@ -54,7 +54,7 @@ nz = 108
 end_time = 180.0
 dt = 0.001
 recalculate = 1
-van_keken = 1
+van_keken = 0
 c_age_plate = 50 
 #---------------------------------------------------------------------------------------------------------
 # Phase properties
@@ -66,11 +66,18 @@ Phase1.option_rho = 0
 Phase1.option_rheology = 0  
 Phase1.option_k = 0
 Phase1.option_Cp = 0
+Phase1.radio    = 0.066e-6
 Phase1.eta = 1e22
 #---------------------------------------------------------------------------------------------------------
-Phase2 = Phase1
+Phase2 = Phase()
 Phase2.name = 'Oceanic_Crust'
 Phase2.rho0 = 3300.0
+Phase2.option_rho = 0
+Phase2.option_rheology = 0  
+Phase2.option_k = 0
+Phase2.option_Cp = 0
+Phase2.radio    = 0.066e-6
+Phase2.eta = 1e22
 #---------------------------------------------------------------------------------------------------------
 Phase3 = Phase()
 Phase3.name = 'Wedge'
@@ -79,6 +86,8 @@ Phase3.option_rho = 0
 Phase3.option_rheology = 3  
 Phase3.option_k = 0
 Phase3.option_Cp = 0
+Phase3.radio    = 0.066e-6
+
 Phase3.name_diffusion = 'Van_Keken_diff'
 Phase3.name_dislocation = 'Van_Keken_disl'
 Phase3.eta = 1e19
@@ -89,6 +98,7 @@ Phase4.rho0 = 3300.0
 Phase4.option_rho = 0
 Phase4.option_rheology = 0  
 Phase4.option_k = 0
+Phase4.radio    = 0.066e-6
 Phase4.option_Cp = 0
 Phase4.eta = 1e22
 #---------------------------------------------------------------------------------------------------------
@@ -100,6 +110,8 @@ Phase5.option_rheology = 0
 Phase5.option_k = 0
 Phase5.option_Cp = 0
 Phase5.eta = 1e22
+Phase5.radio    = 0.066e-6
+
 #---------------------------------------------------------------------------------------------------------
 Phase6 = Phase()
 Phase6.name = 'Lower_Crust'
@@ -109,6 +121,8 @@ Phase6.option_rheology = 0
 Phase6.option_k = 0
 Phase6.option_Cp = 0
 Phase6.eta = 1e22
+Phase6.radio    = 0.066e-6
+
 #---------------------------------------------------------------------------------------------------------
 element_p = basix.ufl.element("Lagrange","triangle", 1) 
 element_PT = basix.ufl.element("Lagrange","triangle",2)

@@ -408,7 +408,7 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
     temperature[:,-z<-120e3/scal.L] = ctrl.Tmax
 
     # Current age index
-    current_age_index = np.where(t[0] == lhs.c_age_plate)[0][0]
+    current_age_index = np.where(t[0] >= lhs.c_age_plate)[0][0]
     lhs.LHS[:] = temperature[current_age_index]
     lhs.z[:] = - z
 

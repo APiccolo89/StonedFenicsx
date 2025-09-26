@@ -16,7 +16,8 @@ from ufl import exp, conditional, eq, as_ufl
 import scal as sc_f 
 import basix.ufl
 from utils import timing_function, print_ph,time_the_time
-from compute_material_property import density_FX, heat_conductivity_FX, heat_capacity_FX, compute_viscosity_FX
+from compute_material_property import density_FX, heat_conductivity_FX, heat_capacity_FX, compute_viscosity_FX, compute_radiogenic 
+
 from create_mesh import Mesh 
 from phase_db import PhaseDataBase
 import time                          as timing
@@ -308,12 +309,49 @@ class SolverStokes():
 
         
         
+#-------------------------------------------------------------------------       
+def decoupling_function(z,fun,ctrl,D,g_input):
+    """
+    
+    
+    
+    """
+    
+    dc = g_input.decoupling
+    lit = g_input.lt_d
+    dc = dc/g_input.decoupling
+    lit = lit/g_input.decoupling
+    z2 = np.abs(z)/g_input.decoupling
+    trans = g_input.transition/g_input.decoupling
+    
+    if ctrl.linear_decoupling == 1:
+        fun.x.array[z < - g_input.lit_d] = 0.0
+        ind = np.where((z >= - g_input.lt_d) & (z <= - g_input.decoupling))
+        fun.x.array[ind] = (z[ind] - g_input.lit_d)/(g_input.decoupling - g_input.lt_d)
+        fun.x.array[z > - g_input.decoupling] = 1.0
+        fun.x.scatter_forward()
+    
+    elif ctrl.linear_decoupling == 2 :   
+
+        z2 = np.abs(z)/g_input.decoupling
+        zm = (dc + lit)/2
+        k = 15.0
+        fun.x.array[:] = 1-1.0 / (1 + np.exp(-k *(z2-zm)))
+        fun.x.scatter_forward()
         
-        
-        
+    else: 
+        fun.x.array[:] = 1-0.5 * ((1+0.2)+(1-0.2)*np.tanh((z2-dc)/(trans/4)))
+    
         
 
+   
+   
+   
     
+    return fun
+        
+        
+         
 #----------------------------------------------------------------------------     
 class Problem:
     name      : list                               # name of the problem, domain [global, domainA...]
@@ -457,13 +495,35 @@ class Global_thermal(Problem):
         
         self.bc_bot_wed = fem.dirichletbc(ctrl.Tmax, dofs_vel,self.FS)
         
-        bc = [self.bc_top, self.bc_left, self.bc_right_lit, self.bc_right_wed,self.bc_bot_wed]
+        bc = [self.bc_top, self.bc_left,  self.bc_right_wed,self.bc_bot_wed, self.bc_right_lit]
 
         
         
         return bc 
         
     #------------------------------------------------------------------
+    def compute_shear_heating(self,ctrl,S,D,g_input):
+        
+        facets1                = D.facets.find(D.bc_dict['Subduction_top_lit'])
+        facets2                = D.facets.find(D.bc_dict['Subduction_top_wed'])
+        
+        facet_seismogenic = np.unique(np.concatenate((facets1,facets2)))
+        dofs              = fem.locate_dofs_topological(self.FS, D.mesh.topology.dim-1, facet_seismogenic)
+        
+        heat_source = fem.Function(self.FS)
+        heat_source.x.array[:] = 0.0   
+        heat_source.x.scatter_forward()
+        shear_heating = heat_source.copy()
+        Z = self.FS.tabulate_dof_coordinates()[:,1]
+        shear_heating = decoupling_function(Z,shear_heating,ctrl,D,g_input)
+        shear_heating.x.array[:] = shear_heating.x.array[:] * S.PL.x.array[:] * ctrl.v_s[0] * 0.06
+        heat_source.x.array[dofs] = shear_heating.x.array[dofs]
+        
+        return heat_source
+        
+        
+            
+    
     def set_newton_SS(self,p,D,T,u_global,pdb):
         test   = self.test0                 # v
         trial0 = self.trial0                # δp (TrialFunction) for Jacobian
@@ -494,6 +554,13 @@ class Global_thermal(Problem):
         return F,J 
     
     #------------------------------------------------------------------
+    def compute_energy_source(self,D,pdb):
+        source = self.shear_heating.copy()
+        source = compute_radiogenic(pdb, source, D.phase, D.mesh)
+        self.energy_source = source.copy()
+
+    #--
+
 
     def set_linear_picard_SS(self,p_k,T,u_global,D,pdb, it=0):
         # Function that set linear form and linear picard for picard iteration
@@ -504,7 +571,8 @@ class Global_thermal(Problem):
         
         Cp_k = heat_capacity_FX(pdb, T, D.phase, D.mesh)  # frozen
 
-        f    = fem.Constant(D.mesh, 0.0)  # source term
+
+        f    = self.energy_source  # source term
         
         dx  = self.dx
         # Linear operator with frozen coefficients
@@ -528,11 +596,12 @@ class Global_thermal(Problem):
         p_k = S.PL.copy()  # Previous lithostatic pressure 
         T   = S.T_O # -> will not eventually update 
         
+        self.shear_heating = self.compute_shear_heating(ctrl,S,getattr(M,'domainG'),geom)
+        self.compute_energy_source(getattr(M,'domainG'),pdb)
         
         a,L = self.set_linear_picard_SS(p_k,T,S.u_global,getattr(M,'domainG'),pdb)
         
         self.bc = self.create_bc_temp(getattr(M,'domainG'),ctrl,geom,lhs,S.u_global,it)
-        
         if self.typology == 'NonlinearProblem':
             F,J = self.set_newton_SS(p_k,getattr(M,'domainG'),T,S.u_global,pdb)
             nl = 1 
@@ -978,31 +1047,31 @@ class Slab(Stokes_Problem):
             if ctrl.slab_bc == 1: # moving wall slab bc 
                 # Compute this crap only once @ the beginning of the simulation 
                 if it == 0 and ts == 0:
-                    dofs        = fem.locate_dofs_topological(self.F0, fdim, slab_facets)
+                        dofs        = fem.locate_dofs_topological(self.F0, fdim, slab_facets)
 
-                    n = ufl.FacetNormal(mesh)                    # exact facet normal in    weak   form
-                    v_slab = float(1.0)  # slab velocity magnitude
+                        n = ufl.FacetNormal(mesh)                    # exact facet normal in    weak   form
+                        v_slab = float(1.0)  # slab velocity magnitude
 
-                    v_const = ufl.as_vector((ctrl.v_s[0], 0.0))
+                        v_const = ufl.as_vector((ctrl.v_s[0], 0.0))
 
-                    proj = ufl.Identity(mesh.geometry.dim) - ufl.outer(n, n)  # projector   onto  the  tangential plane
-                    t = ufl.dot(proj, v_const)                     # tangential     velocity    vector on  slab
-                    t_hat = t / ufl.sqrt(ufl.inner(t, t))    
-                    v_project = v_slab * t_hat  # projected tangential velocity vector on   slab
-                    self.moving_wall = fem.Function(self.F0)
-                    w = self.trial0
-                    v = self.test0
-                    a = ufl.inner(w, v) * self.ds(D.bc_dict['top_subduction'])        #  boundary     mass    matrix (vector)
-                    L = ufl.inner(v_project, v) * self.ds(D.bc_dict['top_subduction'])
+                        proj = ufl.Identity(mesh.geometry.dim) - ufl.outer(n, n)  # projector   onto  the  tangential plane
+                        t = ufl.dot(proj, v_const)                     # tangential     velocity    vector on  slab
+                        t_hat = t / ufl.sqrt(ufl.inner(t, t))    
+                        v_project = v_slab * t_hat  # projected tangential velocity vector on   slab
+                        self.moving_wall = fem.Function(self.F0)
+                        w = self.trial0
+                        v = self.test0
+                        a = ufl.inner(w, v) * self.ds(D.bc_dict['top_subduction'])        #  boundary     mass    matrix (vector)
+                        L = ufl.inner(v_project, v) * self.ds(D.bc_dict['top_subduction'])
 
-                    self.moving_wall = fem.petsc.LinearProblem(
-                        a, L,
-                        petsc_options={
-                        "ksp_type": "cg",
-                        "pc_type": "jacobi",
-                        "ksp_rtol": 1e-20,
-                        }
-                    ).solve()  # ut_h \in V
+                        self.moving_wall = fem.petsc.LinearProblem(
+                            a, L,
+                            petsc_options={
+                            "ksp_type": "cg",
+                            "pc_type": "jacobi",
+                            "ksp_rtol": 1e-20,
+                            }
+                        ).solve()  # ut_h \in V
                 self.moving_wall.x.array[:] = self.moving_wall.x.array[:]*ctrl.v_s[0] 
 
                 dofs_s_x = fem.locate_dofs_topological(self.F0.sub(0), fdim, slab_facets)
@@ -1171,7 +1240,7 @@ class Wedge(Stokes_Problem):
             
             
     
-    def setdirichlecht(self,ctrl,D,theta,V,it=0, ts = 0):
+    def setdirichlecht(self,ctrl,D,theta,V,g_input,it=0, ts = 0):
         mesh = V.mesh 
         tdim = mesh.topology.dim
         fdim = tdim - 1
@@ -1203,27 +1272,45 @@ class Wedge(Stokes_Problem):
         t = ufl.dot(proj, v_const)                     # tangential     velocity    vector on  slab
         t_hat = t / ufl.sqrt(ufl.inner(t, t))    
         v_project = v_slab * t_hat  # projected tangential velocity vector on   slab
-        self.moving_wall_wedge = fem.Function(V)
+        moving_wall_wedge = fem.Function(V)
         w = self.trial0
         v = self.test0
-        a = ufl.inner(w, v) * self.ds(D.bc_dict['slab'])        #  boundary     mass    matrix (vector)
-        L = ufl.inner(v_project, v) * self.ds(D.bc_dict['slab'])
+        
 
-        self.moving_wall_wedge = fem.petsc.LinearProblem(
+              
+        a = ufl.inner(w, v) * self.ds(D.bc_dict['slab'])        #  boundary     mass    matrix (vector)
+        
+        if ctrl.decoupling == 1:
+            scaling = fem.Function(self.FSPT)
+            scaling = decoupling_function(self.FSPT.tabulate_dof_coordinates()[:,1],scaling,ctrl,D,g_input)  
+            scaling.x.array[:] = 1-scaling.x.array[:]
+            scaling.x.scatter_forward()
+            L = ufl.inner(v_project * scaling, v) * self.ds(D.bc_dict['slab'])
+        else: 
+            L = ufl.inner(v_project, v) * self.ds(D.bc_dict['slab'])
+
+        moving_wall_wedge = fem.petsc.LinearProblem(
             a, L,
             petsc_options={
             "ksp_type": "cg",
             "pc_type": "jacobi",
             "ksp_rtol": 1e-20,
             }
-        ).solve()  # ut_h \in V
+        ).solve()
+        
+
+
+            
+        
+        
+            # ut_h \in V
             # Introducing the coupling depth velocity increasing
             
             #alpha_decoupling = 1/(1+np.exp(0.1*(z-lit)))
             
             
-                
-        self.moving_wall_wedge.x.array[:] = self.moving_wall_wedge.x.array[:]*ctrl.v_s[0] 
+        self.moving_wall_wedge = moving_wall_wedge.copy()
+        self.moving_wall_wedge.x.array[:] = moving_wall_wedge.x.array[:]*ctrl.v_s[0] 
 
         dofs_s_x = fem.locate_dofs_topological(V.sub(0), fdim,slab_facets)
         dofs_s_y = fem.locate_dofs_topological(V.sub(1), fdim,slab_facets)
@@ -1249,7 +1336,7 @@ class Wedge(Stokes_Problem):
 
         return a1, a2, a3 
     
-    def Solve_the_Problem(self,S,ctrl,pdb,M,g,sc,it=0,ts=0):
+    def Solve_the_Problem(self,S,ctrl,pdb,M,g,sc,g_input,it=0,ts=0):
         theta = M.g_input.theta_out_slab
         M = getattr(M,'domainB')
 
@@ -1277,7 +1364,7 @@ class Wedge(Stokes_Problem):
         a1,a2,a3, L, a_p = self.set_linear_picard(S.u_wedge,S.t_owedge,S.p_lwedge,M,pdb,ctrl,sc)
 
         # Create the dirichlecht boundary condition 
-        self.bc   = self.setdirichlecht(ctrl,M,theta,V_subs) 
+        self.bc   = self.setdirichlecht(ctrl,M,theta,V_subs,g_input) 
         
         # Form the system 
         a   = [[a1, a2],[a3, None]]
@@ -1518,7 +1605,7 @@ def set_ups_problem():
             slab.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it = it_outer,ts=0)
 
         if wedge.typology == 'NonlinearProblem' or it_outer == 0:  
-            wedge.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it = it_outer,ts=0)
+            wedge.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,g_input,it = it_outer,ts=0)
 
 
         # Interpolate from wedge/slab to global
@@ -1619,7 +1706,7 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
             slab.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it = it_outer,ts=0)
 
         if wedge.typology == 'NonlinearProblem' or it_outer == 0:  
-            wedge.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it = it_outer,ts=0)
+            wedge.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,M.g_input,it = it_outer,ts=0)
 
 
         # Interpolate from wedge/slab to global
@@ -1639,8 +1726,12 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
 
         it_outer = it_outer + 1
         
-        
-       
+    # Destroy KSP
+    energy_global.solv.ksp.destroy()
+    lithostatic_pressure_global.solv.ksp.destroy()
+    slab.solv.ksp.destroy()
+    wedge.solv.ksp.destroy()
+    # Ahaha! 
     
     return 0 
 

@@ -90,6 +90,20 @@ def heat_capacity_FX(pdb, T, phase, M):
     C_p = Cp0 + Cp1 * (T**(-0.5)) + Cp3 * (T**(-3.))
 
     return C_p
+  
+def compute_radiogenic(pdb, hs, phase, M): 
+    ph      = np.int32(phase.x.array)
+    P0      = phase.function_space
+                
+    Hr       = fem.Function(P0)  ; Hr.x.array[:]     =   pdb.radio[ph] 
+    Hr.x.scatter_forward()
+
+    Hrf       = fem.Function(hs.function_space) 
+    Hrf.interpolate(Hr)
+    
+    hs.x.array[:]       = hs.x.array[:] + Hrf.x.array[:] 
+    hs.x.scatter_forward()
+    return hs 
     
 #---------------------------------------------------------------------------------
 @njit

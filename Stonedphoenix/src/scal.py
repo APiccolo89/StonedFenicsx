@@ -101,6 +101,9 @@ def _scaling_material_properties(pdb,sc:Scal):
     pdb.alpha1 /= 1/sc.Temp**2 
     pdb.Kb     /= sc.stress 
     pdb.rho0   /= sc.rho 
+    scal_radio = sc.Watt/sc.L**3 
+    
+    pdb.radio  /= scal_radio 
     
     if MPI.COMM_WORLD.rank == 0: 
     

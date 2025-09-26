@@ -8,7 +8,7 @@ from Function_make_mesh import Class_Points
 from Function_make_mesh import Class_Line
 from Function_make_mesh import create_loop
 from Function_make_mesh import find_line_index
-from numerical_control import IOControls
+from numerical_control import IOControls, NumericalControls
 
 import numpy as np
 import gmsh 
@@ -125,6 +125,7 @@ class geom_input():
         self.decoupling        = decoupling      # decoupling depth -> i.e. where the weak zone is prolonged 
         self.resolution_normal = wc  # To Do
         self.theta_out_slab    = []
+        self.transition        = 10e3
     
     def dimensionless_ginput(self,sc):
         self.x                 /= sc.L               # main grid coordinate
@@ -136,6 +137,7 @@ class geom_input():
         self.lt_d              /= sc.L    # total lithosphere thickness
         self.decoupling        /= sc.L      # decoupling depth -> i.e. where the weak zone is prolonged 
         self.resolution_normal /= sc.L  # To Do
+        self.transition        /= sc.L
         
         return self 
         
@@ -456,7 +458,7 @@ def create_gmesh(ioctrl,g_input,ctrl):
             S = Slab(D0 = 100.0, L0 = 800.0, Lb = 800, trench = 0.0,theta_0=5, theta_max = 45.0, num_segment=100,flag_constant_theta=True,y_min=min_y)
             
         else: 
-            S = Slab(D0 = 100.0, L0 = 800.0, Lb = 800, trench = 0.0,theta_0=1.0, theta_max = 30.0, num_segment=100,flag_constant_theta=False,y_min=min_y)
+            S = Slab(D0 = 100.0, L0 = 800.0, Lb = 800, trench = 0.0,theta_0=1.0, theta_max = 45.0, num_segment=100,flag_constant_theta=False,y_min=min_y)
 
 
         for a in dir(S):
@@ -709,6 +711,13 @@ def read_mesh(ioctrl,sc):
 
     return mesh, cell_markers, facet_markers
 #-----------------------------------------------------------------------------------------------------
+def create_shear_heating_interface(mesh,cell_markers, facet_markers):
+    
+    new = facet_markers.find(9)  # Find the facet with tag 9 -> subduction top wedge
+    
+    return new_facet
+
+#------------------------------------------------------------------------------------------------------
 @timing_function
 def create_mesh_object(mesh,sc,ioctrl,g_input):    
     
@@ -726,6 +735,12 @@ def create_mesh_object(mesh,sc,ioctrl,g_input):
 
     # Correct the phase: 
     phase.x.array[:] -= 1 # Rather necessary remember to put plus one once you publish it 
+
+    #-- Create additional facet for the shear heating. Since this hell is requiring a lot of useless work, 
+    #-- I need to create a yet another ad hoc function for this. 
+    
+    
+
 
     # -- 
     domainG = Domain(
@@ -762,7 +777,7 @@ def create_mesh_object(mesh,sc,ioctrl,g_input):
 
 
 #------------------------------------------------------------------------------------------------------
-def unit_test_mesh(ioctrl, sc):
+def unit_test_mesh(ioctrl, sc,g_input,ctrl):
     import numpy as np 
     import sys, os
     sys.path.append(os.path.abspath("src"))
@@ -776,7 +791,7 @@ def unit_test_mesh(ioctrl, sc):
     size = comm.Get_size()  # total number of MPI processes
     
     if rank == 0: 
-        g_input = create_gmesh(ioctrl)
+        g_input = create_gmesh(ioctrl,g_input,ctrl)
     
     M = create_mesh_object(mesh,sc,ioctrl, g_input)
     M.comm = comm 
@@ -821,6 +836,7 @@ def create_mesh(ioctrl, sc, g_input,ctrl):
 
 if __name__ == '__main__':
     
+    
     ioctrl = IOControls(test_name = 'Debug_test',
                         path_save = '../Debug_mesh',
                         sname = 'Experimental')
@@ -828,7 +844,20 @@ if __name__ == '__main__':
     
     sc = sc_f.Scal(L=660e3, Temp = 1350, eta = 1e21, stress = 1e9)
     
-    M = unit_test_mesh(ioctrl,sc)
+    g_input = geom_input(x = np.array([0.,660e3]),
+                         y = np.array([-600e3,0.]),
+                         cr=20e3,
+                         ocr=6e3,
+                         lit_mt=30e3,
+                         lc = 0.5,
+                         wc = 2.0e3,
+                         slab_tk = 130e3, 
+                         decoupling = 100e3)
+    
+    ctrl = NumericalControls()
+    ctrl.van_keken = 1
+    
+    M = unit_test_mesh(ioctrl,sc, g_input,ctrl)
     
     
     
