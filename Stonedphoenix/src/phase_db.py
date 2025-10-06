@@ -170,7 +170,6 @@ spec_phase = [
     ("option_eta", int32[:]),# Option for viscosity calculation
 
     # Heat capacity
-    ("Cp", float64[:]),      # Constant heat capacity [J/kg/K]
     ("C0", float64[:]),      # Cp coefficient [J/mol/K]
     ("C1", float64[:]),      # Cp coefficient [J/mol/K^0.5]
     ("C2", float64[:]),      # Cp coefficient [J·K/mol]
@@ -178,7 +177,6 @@ spec_phase = [
     ("option_Cp", int32[:]), # Option for Cp calculation
 
     # Thermal conductivity
-    ("k", float64[:]),       # Constant thermal conductivity [W/m/K]
     ("k0", float64[:]),      # Reference thermal conductivity [W/m/K]
     ("a", float64[:]),       # Pressure-dependent coefficient [1/Pa]
     ("k_n", float64[:]),       # Pressure-dependent coefficient [1/Pa]
@@ -193,7 +191,12 @@ spec_phase = [
     ("Kb", float64[:]),          # Bulk modulus [Pa]
     ("rho0", float64[:]),        # Reference density [kg/m^3]
     ("option_rho", int32[:]),    # Option for density calculation
+    
+    # radiogenic heat
+    ("radio",float64[:]), 
 
+    ("id", int32[:]),              # phase number
+    
     # Constants
     ("Tref", float64),      # Reference temperature [K]
     ("Pref", float64),      # Reference pressure [Pa]
@@ -203,16 +206,18 @@ spec_phase = [
     ("eta_min",float64),    # minimum viscosity [Pas]
     ("eta_max",float64),    # max viscosity [Pas]
     ("eta_def",float64),    # default viscosity [Pas]
+    ("friction_angle",float64)
 ]   
 
 #-----------------------------------------------------------------------------------------------------------
-
 @jitclass(spec_phase)
 class PhaseDataBase:
-    def __init__(self, number_phases):
+    def __init__(self, number_phases,friction_angle):
         # Initialize individual fields as arrays
         if number_phases>8: 
             raise ValueError("The number of phases should not exceed 7")
+        
+
         
         self.Tref        = 298.15  # Reference temperature [K]
         self.Pref        = 1e5     # Reference pressure [Pa]
@@ -222,7 +227,8 @@ class PhaseDataBase:
         self.eta_def     = 1e21    # Default viscosity [Pas]
         self.T_Scal      = 1.      # Default temperature scale
         self.P_Scal      = 1.      # Default Pressure scale 
-        
+        self.friction_angle = friction_angle
+        self.id          = np.zeros(number_phases, dtype=np.int32)
         # Explanation: For testing the pressure and t scal are set to be 1.0 -> so, the software is not performing any 
         # scaling operation. 
         # -> When the property are automatically scaled these value will be update automatically. 
@@ -243,7 +249,6 @@ class PhaseDataBase:
         self.option_eta = np.zeros(number_phases, dtype=np.int32)                 # Option for viscosity calculation
 
         # Thermal properties
-        self.Cp         = np.zeros(number_phases, dtype=np.float64)               # Heat capacity [J/kg K] {In case of constant heat capacity}
         self.C0         = np.zeros(number_phases, dtype=np.float64)               # Reference heat capacity [J/mol/K]
         self.C1         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [J/mol/K^0.5]  -> CONVERTED INTO J/kg/K^0.5       
         self.C2         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [(J*K)/mol]    -> CONVERTED INTO J/kg/K^2
@@ -251,7 +256,6 @@ class PhaseDataBase:
         self.option_Cp  = np.zeros(number_phases, dtype=np.int32)                 # Option for heat capacity calculation
         
         # Thermal conductivity 
-        self.k          = np.zeros(number_phases, dtype=np.float64)               # Heat conductivity [W/m/K] {In case of constant heat conductivity}
         self.k0         = np.zeros(number_phases, dtype=np.float64)               # Reference heat conductivity [W/m/K]
         self.a          = np.zeros(number_phases, dtype=np.float64)               # Thermal expansivity [1/Pa]
         self.k_n        = np.zeros(number_phases, dtype=np.float64)               # exponent
@@ -262,6 +266,7 @@ class PhaseDataBase:
     
         # Radiative heat transfer 
         self.option_k   = np.zeros(number_phases, dtype=np.int32)                 # Option for heat conductivity calculation
+        self.radio      = np.zeros(number_phases, dtype=np.float64)               # Radiogenic
 
         
         # Density parameters 
@@ -270,6 +275,7 @@ class PhaseDataBase:
         self.Kb         = np.zeros(number_phases, dtype=np.float64)               # Bulk modulus [Pa]                
         self.rho0       = np.zeros(number_phases, dtype=np.float64)               # Reference density [kg/m^3] {In case of constant density}
         self.option_rho = np.zeros(number_phases, dtype=np.int32)                 # Option for density calculation
+        
 
 #-----------------------------------------------------------------------------------------------------------
 def _generate_phase(PD:PhaseDataBase,
@@ -283,14 +289,15 @@ def _generate_phase(PD:PhaseDataBase,
                     Edis:float             = -1e23,
                     Vdis:float             = -1e23, 
                     Bdis:float             = -1e23, 
-                    Cp:float               = 1171.52,
-                    k:float                = 3.138,
-                    rho:float              = 3300,
+                    Cp:float               = 1250,
+                    k:float                = 3.0,
+                    rho0:float              = 3300,
                     eta:float              = -1e23,
                     option_rheology:float  = 0,
                     option_Cp:int          = 0,
                     option_k:int           = 0,
-                    option_rho:int         = 0  )     -> PhaseDataBase:
+                    option_rho:int         = 0,
+                    radio:float = 0.0)     -> PhaseDataBase:
     """
     Generate phase: 
     id : phase id number [0->n] 
@@ -310,6 +317,8 @@ def _generate_phase(PD:PhaseDataBase,
     rho : density 
     => output -> update the id_th phase_db 
     """
+    PD.id[id-1] = id 
+    id = id - 1 
     if name_diffusion != 'constant':
         A = _check_rheological(name_diffusion)
         PD.Edif[id] = A.E 
@@ -340,11 +349,11 @@ def _generate_phase(PD:PhaseDataBase,
     PD.eta[id] = eta
     PD.option_eta[id] = option_rheology
     
-    
+    PD.radio[id] = radio 
     # Heat capacity
     if option_Cp == 0:
         # constant heat capacity 
-        PD.Cp[id] = Cp
+        PD.C0[id] = Cp
     elif option_Cp > 0 and option_Cp < 7:
         # Compute the material the effective material property 
         PD.C0[id],PD.C1[id],PD.C2[id],PD.C3[id] = release_heat_capacity_parameters(option_Cp)
@@ -354,7 +363,7 @@ def _generate_phase(PD:PhaseDataBase,
     # Heat Conductivity
     if option_k == 0:
         # constant heat conductivity 
-        PD.k[id] = k
+        PD.k0[id] = k
     elif option_k != 0:
         # Compute the material the effective material property 
         PD.k0[id],PD.a[id],PD.k_n[id]  = release_heat_conductivity_parameters(option_k)
@@ -368,10 +377,10 @@ def _generate_phase(PD:PhaseDataBase,
     PD.option_k[id]   = option_k    
     
     # Density
-    PD.alpha0[id]      = 2.832e-5
+    PD.alpha0[id]     = 2.832e-5
     PD.alpha1[id]     = 3.79e-8 
     PD.Kb[id]         = (2*100e9*(1+0.25))/(3*(1-0.25*2))  # Bulk modulus [Pa]
-    PD.rho0[id]       = rho
+    PD.rho0[id]       = rho0
     
     PD.option_rho[id] = option_rho
     

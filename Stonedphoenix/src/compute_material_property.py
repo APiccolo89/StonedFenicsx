@@ -4,21 +4,109 @@
 # import all the constants and defined model setup parameters 
 
 # modules
-import numpy as np
-import matplotlib.pyplot as plt
-import time as timing
-import scipy.linalg as la 
-import scipy.sparse as sps
-import scipy.sparse.linalg.dsolve as linsolve
-from numba import njit
-from numba import jit, prange
-from scipy.optimize import bisect
+import numpy                         as np
+import matplotlib.pyplot             as plt
+import time                          as timing
+
+import scipy.sparse.linalg.dsolve    as linsolve
+from numba                           import njit
+from numba                           import jit, prange
+from scipy.optimize                  import bisect
+from ufl                             import exp, conditional, eq, as_ufl, Constant
+from mpi4py import MPI
+from petsc4py import PETSc
+from dolfinx import fem
+import ufl
+from ufl import *
+
+
+def evaluate_material_property(expr,P0):
+    from scipy.interpolate import griddata
+    from ufl import conditional, Or, eq
+    from functools import reduce
+    """
+    X    -:- Functionspace (i.e., an abstract stuff that represents all the possible solution for the given mesh and element type)
+    M    -:- Mesh object (i.e., a random container of utils related to the mesh)
+    ctrl -:- Control structure containing the information of the simulations 
+    lhs  -:- left side boundary condition controls. Separated from the control structure for avoiding clutter in the main ctrl  
+    ---- 
+    Function: Create a function out of the function space (T_i). From the function extract dofs, interpolate (initial) lhs all over. 
+    Then select the crustal+lithospheric marker, and overwrite the T_i with a linear geotherm. Simple. 
+    ----
+    output : T_i the initial temperature field.  
+        T_gr = (-M.g_input.lt_d-0)/(ctrl.Tmax-ctrl.Ttop)
+        T_gr = T_gr**(-1) 
+        bc_fun = fem.Function(X)
+        bc_fun.x.array[dofs_dirichlet] = ctrl.Ttop + T_gr * cd_dof[dofs_dirichlet,1]
+        bc_fun.x.scatter_forward()
+    """    
+    #- CreatP0he thermal field: create function, extract dofs, 
+    X     = P0
+    prop_f = fem.Function(X)
+
+    v = ufl.TestFunction(X)
+    u = ufl.TrialFunction(X)
+    a = u * v * ufl.dx 
+    L = expr * v * ufl.dx
+    prb = fem.petsc.LinearProblem(a,L,u=prop_f)
+    prb.solve()
+    return prop_f
+
 
 #---------------------------------------------------------------------------------
+def heat_conductivity_FX(pdb, T, p, phase, M):
+    
+    ph      = np.int32(phase.x.array)
+    P0      = phase.function_space
+    # Gather material parameters as UFL expressions via indexing
+    """
+    """
+    k0      = fem.Function(P0)  ; k0.x.array[:]    =  pdb.k0[ph]
+    a       = fem.Function(P0)  ; a.x.array[:]     =  pdb.a[ph]
+    n       = fem.Function(P0)  ; n.x.array[:]     =  pdb.k_n[ph]
+    
+    kr0     = fem.Function(P0)  ; kr0.x.array[:]     =  pdb.k_d[ph,0]
+    kr1     = fem.Function(P0)  ; kr1.x.array[:]     =  pdb.k_d[ph,1]
+    kr2     = fem.Function(P0)  ; kr2.x.array[:]     =  pdb.k_d[ph,2]
+    kr3     = fem.Function(P0)  ; kr3.x.array[:]     =  pdb.k_d[ph,3]
 
+    
+    k_rad   = kr0 * T**0 + kr1 * T**1 + kr2 * T**2 + kr3 * T**3 
+    
+    k       = (k0 + a * p) * (pdb.Tref/T)**n + k_rad
+    
+    
+    return k 
+# --------------------------------------------------------------------------------------
+def heat_capacity_FX(pdb, T, phase, M): 
+    ph      = np.int32(phase.x.array)
+    P0      = phase.function_space
+            
+    Cp0       = fem.Function(P0)  ; Cp0.x.array[:]     =   pdb.C0[ph]
+    Cp1       = fem.Function(P0)  ; Cp1.x.array[:]     =  pdb.C1[ph]
+    Cp3       = fem.Function(P0)  ; Cp3.x.array[:]     =  pdb.C3[ph]
 
+    
+    C_p = Cp0 + Cp1 * (T**(-0.5)) + Cp3 * (T**(-3.))
+
+    return C_p
+  
+def compute_radiogenic(pdb, hs, phase, M): 
+    ph      = np.int32(phase.x.array)
+    P0      = phase.function_space
+                
+    Hr       = fem.Function(P0)  ; Hr.x.array[:]     =   pdb.radio[ph] 
+    Hr.x.scatter_forward()
+
+    Hrf       = fem.Function(hs.function_space) 
+    Hrf.interpolate(Hr)
+    
+    hs.x.array[:]       = hs.x.array[:] + Hrf.x.array[:] 
+    hs.x.scatter_forward()
+    return hs 
+    
 #---------------------------------------------------------------------------------
-#@njit
+@njit
 def heat_conductivity(pdb,T,p,ph):    
     
     if pdb.option_k[ph] == 0:
@@ -45,18 +133,15 @@ def heat_conductivity(pdb,T,p,ph):
     return k 
 #---------------------------------------------------------------------------------
 
-#@njit
-def heat_capacity(pdb,T,p,ph):
-    if (pdb.option_Cp[ph] == 0): 
-        # constant vriables 
-        C_p = pdb.C_p[ph]
-    else:
-        C_p = pdb.C0[ph] + pdb.C1[ph] * (T**(-0.5)) + pdb.C3[ph] * (T**(-3.))
+@njit
+def heat_capacity(pdb,T,ph):
+
+    C_p = pdb.C0[ph] + pdb.C1[ph] * (T**(-0.5)) + pdb.C3[ph] * (T**(-3.))
 
         
     return C_p
 #---------------------------------------------------------------------------------
-#@njit
+@njit
 def density(pdb,T,p,ph):
     rho_0 = pdb.rho0[ph] 
     
@@ -73,8 +158,107 @@ def density(pdb,T,p,ph):
     
     return rho
 
-#----------------------------------------------------------------------------------
+#-----
+def density_FX(pdb, T, p, phase, M):
+    """
+    Compute density as a UFL expression, FEniCSx-compatible.
+    """
+    # Again: apperently the phase field is converted into numpy 64. First I need to extract the array, then, I need to convert into int32 
+    ph = np.int32(phase.x.array)
+    P0 = phase.function_space
+    # Gather material parameters as UFL expressions via indexing
+    rho0    = fem.Function(P0)  ; rho0.x.array[:]    =  pdb.rho0[ph]
+    alpha0  = fem.Function(P0)  ; alpha0.x.array[:]  =  pdb.alpha0[ph]
+    alpha1  = fem.Function(P0)  ; alpha1.x.array[:]  =  pdb.alpha1[ph] 
+    Kb      = fem.Function(P0)  ; Kb.x.array[:]      =  pdb.Kb[ph]
+    opt_rho = fem.Function(P0)  ; opt_rho.x.array[:] =  pdb.option_rho[ph]
 
+    # Base density (with temperature dependence)
+    temp_term = - (alpha0 * (T - pdb.Tref) + (alpha1 / 2.0) * (T**2 - pdb.Tref**2))
+    rho_temp = rho0 * exp(temp_term)
+
+    # Add pressure dependence if needed
+    rho = conditional(
+        eq(opt_rho, 0), rho0,
+        conditional(
+            eq(opt_rho, 1), rho_temp,
+            rho_temp * exp(p / Kb)
+        )
+    )
+
+    return rho 
+#-----------------------------------
+def compute_viscosity_FX(e,T_in,P_in,pdb,phase,M,sc):
+    """
+    It is wrong, but frequently used: it does not change too much by the end the prediction. 
+    I use the minimum viscosity possible. The alternative is taking the average between eta_min and eta_av. So, 
+    since I do not understand how I can easily integrate a full local iteration, I prefer to use the "wrong" composite method
+    """    
+    def ufl_pow(u, v, eps=0):
+        return ufl.exp(v * ufl.ln(u + eps))
+    
+    def compute_eII(e):
+        e_II  = sqrt(0.5*inner(e, e) + 1e-15)    
+        return e_II
+    
+    P0    = M.solPh
+    e_II = compute_eII(e)
+    # If your phase IDs are available per cell for mesh0:
+    
+    # UNFORTUNATELY I AM STUPID and i do not have any idea how to scale the energies such that it would be easier to handle. Since the scale of force and legth is self-consistently related to mass, i do not know how to deal with the fucking useless mol in the energy of activation 
+    T = T_in.copy()
+    P = P_in.copy()
+    T.x.array[:] = T.x.array[:]*sc.Temp  ;T.x.scatter_forward()
+    P.x.array[:] = P.x.array[:]*sc.stress;P.x.scatter_forward()
+
+    ph = np.int32(phase.x.array)
+    
+    # Gather material parameters as UFL expressions via indexing
+    Bdif    = fem.Function(P0,name = 'Bdif')  ; Bdif.x.array[:]    =  pdb.Bdif[ph]
+    Bdis    = fem.Function(P0,name = 'Bdis')  ; Bdis.x.array[:]    =  pdb.Bdis[ph]
+    n       = fem.Function(P0,name = 'n')     ; n.x.array[:]       =  pdb.n[ph]
+    Edif    = fem.Function(P0,name = 'Edif')  ; Edif.x.array[:]    =  pdb.Edif[ph]
+    Edis    = fem.Function(P0,name = 'Edis')  ; Edis.x.array[:]    =  pdb.Edis[ph]
+    Vdif    = fem.Function(P0,name = 'Vdif')  ; Vdif.x.array[:]    =  pdb.Vdif[ph]
+    Vdis    = fem.Function(P0,name = 'Vdis')  ; Vdis.x.array[:]    =  pdb.Vdis[ph]
+
+    # In case the viscosity for the given phase is constant 
+    eta_con     = fem.Function(P0) ; eta_con.x.array[:]     =  pdb.eta[ph]
+    # Option for eta for a given marker number ph 
+    opt_eta = fem.Function(P0)  ; opt_eta.x.array[:] =  pdb.option_eta[ph]
+    # Eta max 
+    Bd_max  = 1 / 2 / pdb.eta_max
+    # strain indipendent  
+    cdf = Bdif * exp(-(Edif + P * Vdif )/(pdb.R * T)) ; cds = Bdis * exp(-(Edis + P * Vdis)/(pdb.R * T))
+    # compute tau guess
+    n_co  = (1-n)/n
+    n_inv = 1/n 
+    # Se esiste un cazzo di inferno in culo a Satana ci vanno quelli che hanno generato 
+    # sto modo creativo di fare gli esponenti. 
+    etads     = 0.5 * cds**(-n_inv) * e_II**n_co
+    etadf     = 0.5 * cdf**(-1)
+    eta_av    = 1 / (1 / etads + 1/etadf + 1/pdb.eta_max)
+    eta_df    = 1 / (1 / etadf + 1 / pdb.eta_max) 
+    eta_ds    = 1 / (1 / etads + 1 / pdb.eta_max)
+    
+    # check if the option_eta -> constant or not, otherwise release the composite eta 
+    eta = ufl.conditional(
+        ufl.eq(opt_eta, 0.0), eta_con,
+        ufl.conditional(
+            ufl.eq(opt_eta, 1.0), eta_df,
+            ufl.conditional(
+                ufl.eq(opt_eta, 2.0), eta_ds,
+                eta_av
+            )
+        )
+    )
+
+
+    return eta
+
+
+
+#-----------------------------------------------------------------------------------
 #@njit
 def compute_viscosity(e,T,P,B,n,E,V,R):
 
@@ -148,6 +332,33 @@ def viscosity(exx:float,eyy:float,exy:float,T:float,P:float,p_data,it:int,ph:int
         val,tau = point_iteration(eta_max,eta_min,e,T,P,Bdif,Edif,Vdif,Bdis,n,Edis,Vdis,R)
           
     return val
+#---------------------------------------------------------------------------------
+# Strain Partitioning 
+def strain_partitioning(e:float,T:float,P:float,p_data,ph:int):#,imat):
+    ck = 0
+    
+    
+    rheo_type = p_data.option_eta[ph]
+    eta_max   = p_data.eta_max
+    eta_min   = p_data.eta_min
+    Bdif = p_data.Bdif[ph]
+    Edif = p_data.Edif[ph]
+    Vdif = p_data.Vdif[ph]
+
+    R    = p_data.R
+    Bdis = p_data.Bdis[ph]
+    Edis = p_data.Edis[ph]
+    Vdis = p_data.Vdis[ph]
+    n    = p_data.n[ph]
+    T =  T 
+    P =  P
+
+    e_pl,e_dis, tau = point_iteration2(eta_max,eta_min,e,T,P,Bdif,Edif,Vdif,Bdis,n,Edis,Vdis,R,p_data.friction_angle)
+          
+    return e_pl,e_dis, tau
+
+
+
 #---------------------------------------------------------------------------------
 
 #@njit
@@ -275,7 +486,52 @@ def point_iteration(eta_max: float,
     return eta, tau_total
 #---------------------------------------------------------------------------------
 
+# Main point_iteration function
+#@njit
+def point_iteration2(eta_max: float,
+                    eta_min: float,
+                    e: float,
+                    T: float,
+                    P: float,
+                    Bdif: float,
+                    Edif: float,
+                    Vdif: float,
+                    Bdis: float,
+                    n: float,
+                    Edis: float,
+                    Vdis: float,
+                    R: float,
+                    phi: float) -> float:
+    """
+    Optimized point-wise iteration to compute viscosity, real stress.
+    """
 
+    # Precompute constant values to avoid repeated calculations
+    B_max = 1 / (2 * eta_max)
+    compliance_disl = Bdis * np.exp(-(Edis+P*Vdis) / (R * T))
+    compliance_diff = Bdif * np.exp(-(Edif+P*Vdif) / (R * T))
+    tau_lim = 10e6*np.cos(5*pi/180)+np.sin(phi)*P
+    # Find tau_guess using custom bisection method
+    tau_min, tau_max = _find_tau_guess(compliance_diff, compliance_disl, n, eta_max, e)
+    if tau_min >= tau_lim:
+        tau = tau_lim
+    elif abs(tau_max - tau_min) / (tau_max + tau_min) < 1e-6:
+        tau = (tau_min + tau_max) / 2
+    else:
+        tol = 1e-12
+        max_iter = 100
+        tau = bisection_method(tau_min, tau_max, tol, max_iter, compliance_disl, compliance_diff, B_max, e, n)
+
+
+    # Compute the viscosity and real stress
+    e_diff = compliance_diff * tau
+    e_dis = compliance_disl * tau ** n
+    e_max = B_max * tau
+    e_pl  = e-(e_diff+e_dis+e_max) 
+    e_vs = e_diff+e_dis+e_max 
+    
+
+    return e_pl, e_vs, tau
 
 
 
@@ -582,6 +838,168 @@ from pathlib import Path
 folder_path = Path("your_folder_name")
 folder_path.mkdir(parents=True, exist_ok=True)
 """
+
+def _frictional_alternative(pt_save):
+    import numpy as np 
+    import sys, os
+    sys.path.append(os.path.abspath("src"))
+    from phase_db import PhaseDataBase 
+    from phase_db import _generate_phase
+    from scal import Scal
+    from scal import _scaling_material_properties
+    from scipy import special 
+
+    plt.rcParams.update({
+    "text.usetex": True,
+    "font.family": "serif",       # serif = Computer Modern
+    "font.serif": ["Computer Modern Roman"],
+    "axes.labelsize": 14,
+    "font.size": 12,
+    "legend.fontsize": 12,
+    "xtick.labelsize": 12,
+    "ytick.labelsize": 12,
+    })
+    
+    
+    z           = np.linspace(0,300e3,300)
+    rho         = 3000.0
+    Pl          = 9.81*rho*z     
+    Cp          = 1250
+    k           = 3.0
+    kappa       = k/rho/Cp 
+    t           = 50e6*365.25*24*60*60
+    T           = 20+(1350-20) * special.erf(z /2 /np.sqrt(t * kappa))+273.15
+    
+    lit   = 50e3
+    dec   = 100e3 
+    creep = 40e3 
+       
+    sub_channel = 1e3 
+
+    
+    jtanh       = np.zeros(len(z))
+    m           = (lit+dec)/2
+    ls          = (dec-m)
+    jtanh       = 1-0.5 * ((1)+(1)*np.tanh((z-m)/(ls/4)))
+    
+    jfl         = np.zeros(len(z))
+    jfl[z<lit]  = 1.0 
+    jfl[z>=lit] = 1+(z[z>=lit]-lit)/(lit-dec)
+    jfl[z>dec]  = 0.0
+    
+    frl           = np.zeros(len(z))
+    frl[z<creep]  = 1.0 
+    frl[z>=creep] = 1+(z[z>=creep]-creep)/(creep-dec)
+    frl[z>dec]    = 0 
+    
+    frtan      = np.zeros(len(z))
+    m          = (creep+dec)/2
+    ls         = 2*(dec-m)
+    frtan      = 1-0.5 * ((1)+(1)*np.tanh((z-m)/(ls/4)))
+    
+
+    
+    v_slab = 5.0/100/365.25/24/60/60
+     
+    
+    
+    
+    
+    # Model Van Keken: From what I do understand from these war criminals 
+    
+    friction_coef = 0.6
+    
+    
+    
+    frictional_heatVK  = frtan * v_slab * Pl * friction_coef # Van Keken (apperently) do not use a jump function but a weird mostruosity with an arbitrary creep depth
+    frictional_heatHob = jtanh * v_slab * Pl * friction_coef # Hobson uses only the jump function
+    
+    strain_rate = (v_slab * jfl)/sub_channel # Compute the strain rate 
+           
+    pdb = PhaseDataBase(1,atan(friction_coef))
+    pdb = _generate_phase(pdb,0,option_rho = 2,option_rheology = 4, option_k = 3, option_Cp = 3,eta=1e21,name_diffusion='Hirth_Wet_Olivine_diff',name_dislocation='Hirth_Wet_Olivine_disl')
+
+    e_pl = np.zeros(len(z)); e_vs = np.zeros(len(z));tau = np.zeros(len(z))
+
+    for i in range(len(z)):
+       e_pl[i],e_vs[i],tau[i] = strain_partitioning(strain_rate[i],T[i],Pl[i],pdb,0)
+       if np.log10(e_pl[i]) < -20: 
+            e_pl[i] = 0.0
+       elif np.log10(e_vs[i]) < -20:  
+           e_vs[i] = 0.0
+
+    eplr = e_pl/strain_rate ; evsr = e_vs/strain_rate 
+    
+    frictional_heatinga = (e_pl * Pl + e_vs * tau)*sub_channel 
+
+    frictional_heatingb = (e_pl * Pl * friction_coef+ e_vs * tau)*sub_channel 
+    frictional_heating2  = eplr * Pl * v_slab * jfl * friction_coef + evsr * tau * strain_rate * sub_channel 
+    
+
+    fig = plt.figure()
+    ax0 = plt.gca()
+    ax0.plot(frictional_heatHob,-z/1e3,c='forestgreen',linestyle=':',linewidth=1.0, label = 'Van Keken 2018')
+    ax0.plot(frictional_heatVK,-z/1e3,c='firebrick',linestyle='-.',linewidth=1.0, label = 'Hobson and May 2025')
+    #ax0.plot(strain_rate,-z/1e3,c='forestgreen',linewidth=1.0)
+    ax0.set_xlabel(r'Frictional heat flux $\frac{W}{m^2}$')
+    ax0.set_ylabel(r'Depth $[km]$')
+    ax0.legend()
+    ax0.set_xscale('linear')
+    ax0.set_ylim([-100,0.0])
+
+
+    
+    
+    fig = plt.figure()
+    ax0 = plt.gca()
+    ax0.plot(e_pl,-z/1e3,c='k',linestyle=':',linewidth=0.8, label=r'$\dot{\varepsilon}_{pl}$')
+    ax0.plot(e_vs,-z/1e3,c='r',linestyle='-.',linewidth=0.8,label=r'$\dot{\varepsilon}_{vs}$')
+    ax1 = ax0.twiny()
+    ax1.plot(tau/1e6,-z/1e3,c='b',linewidth=1.0,label=r'$\tau$ [MPa]')
+    #ax0.plot(strain_rate,-z/1e3,c='forestgreen',linewidth=1.0)
+    ax1.set_xlabel(r'${\tau}$ [MPa]')
+    ax0.set_xlabel(r'$\dot{\varepsilon}_{II}$ [$\frac{1}{s}$]')
+    ax0.set_ylabel(r'Depth $[km]$')
+    ax0.legend()
+    ax1.legend()
+    ax0.set_xscale('log')
+    ax0.set_ylim([-100,0.0])
+
+    
+    fig = plt.figure()
+    ax0 = plt.gca()
+    ax0.plot(frictional_heatinga,-z/1e3,c='k',linestyle=':',linewidth=0.8, label=r'$f_{1a}(T,P,\varepsilon)$')
+    ax0.plot(frictional_heatingb,-z/1e3,c='k',linestyle=':',linewidth=0.8, label=r'$f_{1b}(T,P,\varepsilon)$')
+    ax0.plot(frictional_heating2,-z/1e3,c='r',linestyle='-.',linewidth=0.8,label=r'$f_2(T,P,\varepsilon)$')
+    #ax1 = ax0.twiny()
+    #ax1.plot(tau/1e6,-z/1e3,c='b',linewidth=1.0,label=r'$\tau$ [MPa]')
+    #ax0.plot(strain_rate,-z/1e3,c='forestgreen',linewidth=1.0)
+    #ax1.set_xlabel(r'${\tau}$ [MPa]')
+    ax0.set_xlabel(r'Frictional heat flux $\frac{W}{m^2}$')
+    ax0.set_ylabel(r'Depth $[km]$')
+    ax0.legend()
+    #ax1.legend()
+    ax0.set_ylim([-100,0.0])
+
+    fig = plt.figure()
+    ax0 = plt.gca()
+    ax0.plot(frictional_heatingb,-z/1e3,c='k',linestyle='-.',linewidth=1.0, label=r'$f_{1a}(T,P,\varepsilon)$')
+    ax0.plot(frictional_heating2,-z/1e3,c='b',linestyle='-.',linewidth=1.0,label=r'$f_2(T,P,\varepsilon)$')
+    ax0.plot(frictional_heatHob,-z/1e3,c='forestgreen',linestyle=':',linewidth=1.0, label = 'Van Keken 2018')
+    ax0.plot(frictional_heatVK,-z/1e3,c='firebrick',linestyle=':',linewidth=1.0, label = 'Hobson and May 2025')
+    #ax1 = ax0.twiny()
+    #ax1.plot(tau/1e6,-z/1e3,c='b',linewidth=1.0,label=r'$\tau$ [MPa]')
+    #ax0.plot(strain_rate,-z/1e3,c='forestgreen',linewidth=1.0)
+    #ax1.set_xlabel(r'${\tau}$ [MPa]')
+    ax0.set_xlabel(r'Frictional heat flux $\frac{W}{m^2}$')
+    ax0.set_ylabel(r'Depth $[km]$')
+    ax0.legend()
+    #ax1.legend()
+    ax0.set_ylim([-100,0.0])    
+    
+        
+
+    print('bla')
     
 
 
@@ -589,17 +1007,25 @@ folder_path.mkdir(parents=True, exist_ok=True)
 
 if __name__ == '__main__':
     
-    import os 
+    import numpy as np 
+    import sys, os
+    sys.path.append(os.path.abspath("src"))
+    from phase_db import PhaseDataBase 
+    from phase_db import _generate_phase
+    from scal import Scal
+    from scal import _scaling_material_properties
+    from scipy import special 
     
-    pt_save = '../debug'
+    pt_save = '../../debug'
     
     if not os.path.exists(pt_save): 
         os.makedirs(pt_save)   
-         
+
+    _frictional_alternative(pt_save)
+    
     #rho_dim,k_dim,Cp_dim = unit_test_thermal_properties(pt_save)
     
     #unit_test_thermal_properties_scaling(pt_save,rho_dim,k_dim,Cp_dim)
     
-    eta_dim = unit_test_viscosity(pt_save)
 
 

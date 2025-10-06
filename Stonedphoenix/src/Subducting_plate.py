@@ -1,7 +1,7 @@
 import numpy as np
 
 class Slab():
-    def __init__(self,num_segment=[],theta_0=[],theta_max=[],D0=[],L0=[],Lb=[],y_min=[],dl = 5 ,trench=0.0,flag_constant_theta:bool=False):
+    def __init__(self,num_segment=[],theta_0=[],theta_max=[],D0=[],L0=[],Lb=[],y_min=[],dl = 10 ,trench=0.0,flag_constant_theta:bool=False):
         """
         Class containing the information of the subducting plate
         
@@ -13,15 +13,15 @@ class Slab():
         self.trench = trench
         self.theta_0   = theta_0*np.pi/180
         self.theta_max = theta_max*np.pi/180
-        self.num_segment = num_segment
+        self.num_segment = 10
         self.y_min = y_min/1e3 # convert to km to lazy to change a few stuff here
-        self.slab_mid = np.zeros((num_segment+1,2))
-        self.slab_top = np.zeros((num_segment+1,2))
-        self.slab_bot = np.zeros((num_segment+1,2))
-        self.theta_mean = np.zeros(num_segment+1)
+        self.slab_mid = np.zeros((self.num_segment+1,2))
+        self.slab_top = np.zeros((self.num_segment+1,2))
+        self.slab_bot = np.zeros((self.num_segment+1,2))
+        self.theta_mean = np.zeros(self.num_segment+1)
         self.flag_constant_theta = flag_constant_theta
-        self.normal_vector = np.zeros((num_segment+1,2)) # normal vector
-        self.tangent_vector = np.zeros((num_segment+1,2)) # tangent vector
+        self.normal_vector = np.zeros((self.num_segment+1,2)) # normal vector
+        self.tangent_vector = np.zeros((self.num_segment+1,2)) # tangent vector
     def compute_bending_angle(self,l: float):
         
         """
@@ -105,7 +105,7 @@ class Slab():
 
         
         
-            if self.y_min != []: 
+            if self.y_min != -1e23: 
                 x = self.slab_top[it+1,1]
                 statement = x > self.y_min
                 if statement == False:
@@ -117,7 +117,7 @@ class Slab():
 
             l = ln
 
-            if self.y_min == []:
+            if self.y_min == -1e23:
                 statement = it < self.num_segment 
 
 
