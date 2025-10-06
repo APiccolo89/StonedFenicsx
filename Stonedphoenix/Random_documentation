@@ -1,0 +1,44 @@
+Bene, allora, dopo aver penato ho visto che ci sono alcuni problemi con i plot: 
+-> non funzionano molto bene le funzioni vtk and xdmf e quindi e' meglio evitarle
+-> la soluzione e' usare un approccio molto spartano: 
+  -> sincronizzare i processori, costruire connetivita' e poi, salvare i dati, potrebbe non essere la soluzione piu' ottimale, ma hey: 
+     a. usare le funzioni dal codice di Anton
+     b. usare anche le mie routine, alla fine, non cambia una beata mazza 
+=== 
+Altre riflessioni a margine: le ufl -> per le funzioni bisogna creare delle function -> l'approccio un campo delle proprieta' materiale e' utile, pero', a quanto pare, 
+non vengono selezionati uno alla volta. Non so come spiegarlo in maniera efficace: 
+ entri nella funzione density_FX -> quello che mi immaginavo e' che ci entra con una sola T,P,fase -> e poi calcolasse la densita' corrispondente. Invece, quello che fa e' produrre direttamente 
+ l'interita' dell'array. Anche se, devo dire, dovrei vedere se e' possibile farlo funzionare in altri modi. 
+
+
+ fun (pdb,P,T,ph): 
+ ----> Pr = pdb.Pr[int(ph)] -> ph e' l'intero array
+      -> da qui la necessita' di fare dei function space, perche' moltiplico array e constanti 
+    
+     -> Quindi l'estrazione delle proprieta' richiede un po' di memoria -> dovrei quantificare 
+     e' meglio salvare ste proprieta' o calcolarle dentro una funzione per poi lasciarle cancellare? 
+    
+    
+    rho0    = fem.Function(P0)  ; rho0.x.array[:]    =  pdb.rho0[ph]
+    alpha0  = fem.Function(P0)  ; alpha0.x.array[:]  =  pdb.alpha0[ph]
+    alpha1  = fem.Function(P0)  ; alpha1.x.array[:]  =  pdb.alpha1[ph] 
+    Kb      = fem.Function(P0)  ; Kb.x.array[:]      =  pdb.Kb[ph]
+    opt_rho = fem.Function(P0)  ; opt_rho.x.array[:] =  pdb.option_rho[ph]
+
+===== Domani: 
+Temperatura e Output function conceptualisation. 
+
+
+Ci sono un po' di problemi concettuali. Oggi ho fatto una funzione per la viscosita'. Sfortunatamente, non avendo familiarita' 
+con ufl e sarcazzi vari, ho optato per una scelta pragmatica per quanto riguarda la viscosita': uso la media armonica. 
+1. La media armonica e' la viscosita' minima possibile del sistema in serie: dislocation+diffusion+max_viscosity 
+-> La viscosita' corretta rispetto ad un modello in serie e' quello di ripartire la deformazione tra i vari meccanismi, e poi, calcolare lo stress che 
+minimizza la differenza con lo strain rate dato in pasto alla funzione. Apparentemente e' un inferno farlo con ufl, o meglio, non ho esempi
+che mi permettano di capire come fare una funzione con ufl. 
+2. L'alternativa e' calcolare la viscosita' sullo stress guess: 
+tau_guess = (2 * eta_av * eII + 2 * eta_min * eII)/2 -> eta = tau_guess/2/e 
+Anche in questo caso e' scorretto, ma almeno non prendo la viscosita' minima possibile. 
+
+== 
+Bisogna calcolare le condizioni a contorno. Devo resuscitare un po' alcune funzionalita' del vecchio codice e costruire delle classi che contengano queste informazioni. 
+ 

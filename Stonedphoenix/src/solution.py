@@ -1,0 +1,2148 @@
+import numpy as np
+import gmsh 
+
+import ufl
+import meshio
+from mpi4py import MPI
+from petsc4py import PETSc
+import dolfinx 
+from dolfinx import mesh, fem, io, nls, log
+from dolfinx.fem.petsc import NonlinearProblem
+from dolfinx.nls.petsc import NewtonSolver
+import matplotlib.pyplot as plt
+from dolfinx.io import XDMFFile, gmshio
+import gmsh 
+from ufl import exp, conditional, eq, as_ufl
+import scal as sc_f 
+import basix.ufl
+from utils import timing_function, print_ph,time_the_time
+from compute_material_property import density_FX, heat_conductivity_FX, heat_capacity_FX, compute_viscosity_FX, compute_radiogenic 
+
+from create_mesh import Mesh 
+from phase_db import PhaseDataBase
+import time                          as timing
+from dolfinx.fem.petsc import assemble_matrix_block, assemble_vector_block
+from numerical_control import NumericalControls, ctrl_LHS, IOControls
+from utils import interpolate_from_sub_to_main
+from scal import Scal
+
+
+"""
+Lame explanation: So, my idea is to conceive everything in a set of problems, without creating ad hoc classes for the wedge, subduction and so on
+yes by the end I do, but at least I create problem class that solves stokes/scalar problems. Most of the surrounding stuff (controls/phase) are set, 
+[Problem]=> uses Solver for solving a piece of the domain or the whole domain -> to increase the modularity I can introduce a class for the BC, but, 
+to lazy to do it, but could be something that I can do after I have a full working code. 
+
+=> Global Variables 
+print yes|no 
+-> import a python code with global variable is it possible? 
+
+-> Apperently, following the Stokes tutorial, I was porting the generation of null space: it appears, that this trick, is not working together with null space
+-> Nitsche Boundary condition constraints the pressure, and the null space dislike it, apperently because the simmetry of the formulation is wrong, but this is black
+magic. 
+
+
+
+"""
+
+fig2 = plt.figure()
+fig1 = plt.figure()
+direct_solver = 1
+DEBUG = 1
+
+def mesh_of(obj):
+    if hasattr(obj, "function_space"):    # Function
+        return obj.function_space.mesh
+    if hasattr(obj, "mesh"):              # FunctionSpace
+        return obj.mesh
+    if hasattr(obj, "ufl_domain"):        # Constant
+        dom = obj.ufl_domain()
+        return dom.ufl_cargo() if dom else None
+    if hasattr(obj, "ufl_domains"):       # UFL expr
+        ds = obj.ufl_domains()
+        if len(ds) == 1:
+            return list(ds)[0].ufl_cargo()
+    return None
+
+def check_single_domain(expr):
+    """
+    Inspect a UFL expression or Form and report all meshes/domains used.
+    Returns True if all coefficients live on the same mesh, False otherwise.
+    """
+    from ufl.algorithms import extract_coefficients
+    # Collect domains
+    if hasattr(expr, "integrals"):      # Form
+        doms = {itg.ufl_domain() for itg in expr.integrals()}
+        kind = "Form"
+    else:                               # Expression
+        doms = set(expr.ufl_domains())
+        kind = "Expr"
+
+    print(f"[{kind}] domains referenced ({len(doms)}):")
+    for d in doms:
+        print("  -", d, "cargo:", d.ufl_cargo() if d else None)
+
+    # Collect coefficients
+    coeffs = list(extract_coefficients(expr))
+    print(f"Coefficients used ({len(coeffs)}):")
+    for c in coeffs:
+        nm = getattr(c, "name", None) or repr(c)
+        dom = getattr(c, "ufl_domain", lambda: None)()
+        print("  -", nm, "on", dom.ufl_cargo() if dom else None)
+
+    if len(doms) == 1:
+        print(" :P Expression is single-domain.")
+        return True
+    else:
+        print(" :( Expression involves multiple domains — rebuild coefficients on one mesh.")
+        return False
+
+#---------------------------------------------------------------------------
+
+
+
+#--------------------------------------------------------------------------------------------------------------
+class Solution():
+    def __init__(self):
+        self.PL       : dolfinx.fem.function.Function 
+        self.T_O      : dolfinx.fem.function.Function 
+        self.T_N      : dolfinx.fem.function.Function 
+        self.u_global : dolfinx.fem.function.Function
+        self.u_wedge  : dolfinx.fem.function.Function
+        self.p_lwedge : dolfinx.fem.function.Function
+        self.t_owedge : dolfinx.fem.function.Function
+        self.p_lslab  : dolfinx.fem.function.Function
+        self.t_oslab  : dolfinx.fem.function.Function
+        self.u_slab   : dolfinx.fem.function.Function
+        self.p_global : dolfinx.fem.function.Function 
+        self.p_wedge  : dolfinx.fem.function.Function 
+        self.p_slab   : dolfinx.fem.function.Function
+        
+        
+    def create_function(self,PG,PS,PW,elements): 
+        """
+        ======
+        I am pretty pissed off about this problem: it is impossible to have a generalised approach that can be flexible 
+        whoever had this diabolical idea, should be granted with a damnatio memoriae. So, inevitable, this class must 
+        be modified as a function of the problem at hand.
+        
+        Argument: 
+        PG : Global Problem 
+        PS : Slab Problem
+        PW : Wedge Problem
+        
+        -> update the solution functions that will be used later on. 
+        
+        =======
+        """
+        mixed_element = basix.ufl.mixed_element([elements[0], elements[1]])
+
+        space_GL = fem.functionspace(PG.FS.mesh,mixed_element) # PORCO DIO 
+        
+        
+        def gives_Function(space):
+            Va = space.sub(0)
+            Pa = space.sub(1)
+            V,_  = Va.collapse()
+            P,_  = Pa.collapse()
+            a = fem.Function(V)
+            b = fem.Function(P)
+            return a,b 
+        
+        self.PL       = fem.Function(PG.FS) # Thermal and Pressure problems share the same functional space -> Need to enforce this bullshit 
+        self.T_O      = fem.Function(PG.FS) 
+        self.T_N      = fem.Function(PG.FS)
+        self.p_lwedge = fem.Function(PW.FSPT) # PW.SolPT -> It is the only part of this lovercraftian nightmare that needs to have temperature and pressure -> Viscosity depends pressure and temperature potentially
+        self.t_owedge = fem.Function(PW.FSPT) # same stuff as before, again, this is a nightmare: why the fuck. 
+        self.p_lslab = fem.Function(PS.FSPT) # PW.SolPT -> It is the only part of this lovercraftian nightmare that needs to have temperature and pressure -> Viscosity depends pressure and temperature potentially
+        self.t_oslab = fem.Function(PS.FSPT)
+        self.u_global, self.p_global = gives_Function(space_GL)
+        self.u_slab  , self.p_slab   = gives_Function(PS.FS)
+        self.u_wedge , self.p_wedge  = gives_Function(PW.FS)
+
+        return self 
+#---------------------------------------------------------------------------
+class Solvers():
+    pass
+
+
+class  ScalarSolver(Solvers):
+    """
+    class that store all the information for scalar like problems. Temperature and lithostatic pressure (potentially darcy like) are similar problem 
+    they diffuse and advect a scalar. 
+    --- 
+    So -> Solver are more or less the same, I can store a few things and update as a function of the needs. 
+    --- 
+    Solve function require the problem P -> and a decision between linear and non linear -> form are handled by p class, so I do not give a fuck in this class 
+    for now all the parameter will be default. 
+    """
+    def __init__(self,A ,b ,COMM, nl, J = None, r = None):
+        self.A = fem.petsc.create_matrix(fem.form(A)) # Store the sparsisity 
+        self.b = fem.petsc.create_vector(fem.form(b)) # Store the vector
+        self.ksp = PETSc.KSP().create(COMM)           # Create the ksp object 
+        self.ksp.setOperators(self.A)                # Set Operator
+        self.ksp.setType("gmres")
+        self.ksp.setTolerances(rtol=1e-4, atol=1e-3)
+        self.pc = self.ksp.getPC()
+        self.pc.setType("lu")
+        self.pc.setFactorSolverType("mumps")
+        if nl == 1: 
+            self.J = fem.petsc.create_matrix(fem.form(J))
+            self.r = fem.petsc.create_vector(fem.form(r))
+            
+        else: 
+            self.J = None
+            self.r = None 
+    
+class SolverStokes(): 
+    
+    def __init__(self,a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0):
+        if direct_solver == 1: 
+            self.set_direct_solver(a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0)
+            self.offset = F0.dofmap.index_map.size_local * F0.dofmap.index_map_bs
+        elif direct_solver ==0: 
+            self.set_iterative_solver(a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0)    
+    
+    
+    def set_direct_solver(self,
+                          a,
+                          a_p,
+                          L,
+                          COMM, 
+                          nl,
+                          bcs,
+                          F0,
+                          F1, 
+                          ctrl,
+                          J = None, 
+                          r = None,
+                          it = 0, 
+                          ts = 0):
+        
+        if it == 0 or ts == 0:
+            self.set_block_operator(a, a_p, bcs, L, F0, F1)
+
+            # Create a solver
+            self.ksp = PETSc.KSP().create(COMM)
+            self.ksp.setOperators(self.A)
+            self.ksp.setType("preonly")
+
+            # Set the solver type to MUMPS (LU solver) and configure MUMPS to
+            # handle pressure nullspace
+            self.pc = self.ksp.getPC()
+            self.pc.setType("lu")
+            use_superlu = PETSc.IntType == np.int64
+            self.pc.setFactorSolverType("mumps")
+            self.pc.setFactorSetUpSolverType()
+            self.pc.getFactorMatrix().setMumpsIcntl(icntl=24, ival=1)
+            self.pc.getFactorMatrix().setMumpsIcntl(icntl=25, ival=0)
+
+
+        
+    
+    
+    def set_iterative_solver(self,a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0): 
+        #Return block operators and block RHS vector for the Stokes problem'
+        # nullspace vector [0_u; 1_p] locally
+        if it == 0 or ts == 0:
+            self.set_block_operator(a,a_p,bcs,L,F0,F1)
+            
+            
+            offset_u = 0
+            offset_p = self.nloc_u
+            # local starts in the *assembled block vector*
+
+            self.is_u = PETSc.IS().createStride(self.nloc_u, offset_u, 1, comm=PETSc.COMM_SELF)
+            self.is_p = PETSc.IS().createStride(self.nloc_p, offset_p, 1, comm=PETSc.COMM_SELF)
+            V_map = F0.dofmap.index_map
+            Q_map = F1.dofmap.index_map
+            bs_u  = F0.dofmap.index_map_bs  # = mesh.dim for vector CG
+            nloc_u = V_map.size_local * bs_u
+            nloc_p = Q_map.size_local
+
+            # local starts in the *assembled block vector*
+
+
+
+            self.is_u = PETSc.IS().createStride(nloc_u, offset_u, 1, comm=PETSc.COMM_SELF)
+            self.is_p = PETSc.IS().createStride(nloc_p, offset_p, 1, comm=PETSc.COMM_SELF)
+            
+            
+            self.ksp = PETSc.KSP().create(COMM)
+            self.ksp.setOperators(self.A, self.P)
+            self.ksp.setTolerances(rtol=1e-9)
+            self.ksp.setType("minres")
+            self.ksp.getPC().setType("fieldsplit")
+            self.ksp.getPC().setFieldSplitType(PETSc.PC.CompositeType.ADDITIVE)
+            self.ksp.getPC().setFieldSplitIS(("u", self.is_u), ("p", self.is_p))
+
+            # Configure velocity and pressure sub-solvers
+            self.ksp_u, self.ksp_p = self.ksp.getPC().getFieldSplitSubKSP()
+            self.ksp_u.setType("preonly")
+            self.ksp_u.getPC().setType("gamg")
+            self.ksp_p.setType("preonly")
+            self.ksp_p.getPC().setType("jacobi")
+
+            # The matrix A combined the vector velocity and scalar pressure
+            # parts, hence has a block size of 1. Unlike the MatNest case, GAMG
+            # cannot infer the correct near-nullspace from the matrix block
+            # size. Therefore, we set block size on the top-left block of the
+            # preconditioner so that GAMG can infer the appropriate near
+            # nullspace.
+            self.ksp.getPC().setUp()
+            self.Pu, _ = self.ksp_u.getPC().getOperators()
+            self.Pu.setBlockSize(2)
+
+    def set_block_operator(self,a,a_p,bcs,L,F0,F1):
+
+        self.A = assemble_matrix_block(a, bcs=bcs)   ; self.A.assemble()
+        self.P = assemble_matrix_block(a_p, bcs=bcs) ; self.P.assemble()
+        self.b = assemble_vector_block(L, a, bcs=bcs); self.b.assemble()
+        self.null_vec = self.A.createVecLeft()
+        self.nloc_u = F0.dofmap.index_map.size_local * F0.dofmap.index_map_bs
+        self.nloc_p = F1.dofmap.index_map.size_local
+        self.null_vec.array[:self.nloc_u]  = 0.0
+        self.null_vec.array[self.nloc_u:self.nloc_u+self.nloc_p] = 1.0
+        self.null_vec.normalize()
+        self.nsp = PETSc.NullSpace().create(vectors=[self.null_vec])
+        self.A.setNullSpace(self.nsp)
+
+        
+        
+#-------------------------------------------------------------------------       
+def decoupling_function(z,fun,ctrl,D,g_input):
+    """
+    
+    
+    
+    """
+    
+    dc = g_input.decoupling
+    lit = g_input.lt_d
+    dc = dc/g_input.decoupling
+    lit = lit/g_input.decoupling
+    z2 = np.abs(z)/g_input.decoupling
+    
+    if ctrl.model_decoupling == 1:
+        fun.x.array[z2 < lit] = 1
+        ind = np.where((z2 >=lit) & (z2 < dc))
+        fun.x.array[ind] = 1-(lit -z2[ind])/(lit-dc)
+        fun.x.array[z > dc] = 0.0
+        fun.x.scatter_forward()
+    else: 
+        m     = (lit+dc)/2
+        trans = dc-m
+        fun.x.array[:] = 1-0.5 * ((1)+(1)*np.tanh((z2-m)/(trans/4)))
+    
+    
+    return fun
+        
+#----------------------------------------------------------------------------
+def efficiency_function(z,fun,ctrl,D,g_input):
+    """
+    
+    
+    
+    """
+    
+    dc = g_input.decoupling
+    creep = g_input.creep
+    dc = dc/g_input.decoupling
+    creep = creep/g_input.decoupling
+    z2 = np.abs(z)/g_input.decoupling
+    
+    if ctrl.model_shear == 1:
+        fun.x.array[z2 < creep] = 1
+        ind = np.where((z2 >=creep) & (z2 < dc))
+        fun.x.array[ind] = 1-(creep -z2[ind])/(creep-dc)
+        fun.x.array[z > dc] = 0.0
+        fun.x.scatter_forward()
+        
+    else: 
+
+        m          = (creep+dc)/2
+        trans         = (dc-m)
+        fun.x.array[:] = 1-0.5 * ((1)+(1)*np.tanh((z2-m)/(trans/4)))
+   
+   
+   
+    
+    return fun       
+         
+#----------------------------------------------------------------------------     
+class Problem:
+    name      : list                               # name of the problem, domain [global, domainA...]
+    mixed     : bool                               # is a mixed problem (e.g. Stokes problem has two function spaces: velocity and pressure)
+    FS        : dolfinx.fem.FunctionSpace          # Function space of the problem 
+    F0        : dolfinx.fem.FunctionSpace | None   # Function space of the subspace 
+    F1        : dolfinx.fem.FunctionSpace | None   # Function space of the subspace
+    trial0    : ufl.Argument | None                # Trial 
+    trial1    : ufl.Argument | None                # Trial
+    test0     : ufl.Argument | None                # Test
+    test1     : ufl.Argument | None                # Test 
+    typology  : str | None                         # Linear/Non Linear
+    dofs      : np.ndarray | None                  # Boundary dofs
+    bc        : list                               # Dirichlet BC list
+    ds        : ufl.measure.Measure                # measure surface/length 
+    dx        : ufl.measure.Measure
+    solv      : Solvers
+    # --
+    def __init__(self, M: Mesh, elements: tuple, name: list):
+        """
+        Arguments: 
+            M       : the mesh object 
+            elements: tuple containing the elements.
+                      If >1 -> assumes mixed problem
+            name    : list ['problem_name', 'domain']
+        """
+        self.name = name 
+        if name[1] not in ("domainA", "domainB", "domainC", "domainG"):
+            raise NameError("Wrong domain name, check the spelling, in my case was it")
+        elif name[1] == "domainC":
+            print("Are you sure? DomainC is junk for this problem.")
+
+        M = getattr(M, name[1])
+
+        if len(elements) == 1: 
+            self.mixed    = False
+            self.FS       = dolfinx.fem.functionspace(M.mesh, elements[0]) 
+            self.trial0   = ufl.TrialFunction(self.FS)
+            self.test0    = ufl.TestFunction(self.FS)
+            self.trial1   = None
+            self.test1    = None
+        else: 
+            self.mixed    = True
+            mixed_element = basix.ufl.mixed_element([elements[0], elements[1]])
+            self.FS       = dolfinx.fem.functionspace(M.mesh, mixed_element) # MA cristoiddio, perche' cazzo hanno messo FunctionSpace and functionspace come nomi, ma sono degli stronzi?
+            # 
+            self.F0,_       = self.FS.sub(0).collapse()
+            self.F1,_       = self.FS.sub(1).collapse()
+            # Define trial/test on mixed FS
+            trial         = ufl.TrialFunction(self.FS)
+            test          = ufl.TestFunction(self.FS)
+            self.trial0   = ufl.TrialFunction(self.FS.sub(0).collapse()[0])
+            self.trial1   = ufl.TrialFunction(self.FS.sub(1).collapse()[0])
+            self.test0    = ufl.TestFunction(self.FS.sub(0).collapse()[0])
+            self.test1    = ufl.TestFunction(self.FS.sub(1).collapse()[0])
+        
+        self.dx       = ufl.Measure("dx", domain=M.mesh)
+        self.ds       = ufl.Measure("ds", domain=M.mesh, subdomain_data=M.facets) # Exterior -> for boundary external 
+        self.dS       = ufl.Measure("dS", domain=M.mesh, subdomain_data=M.facets) # Interior -> for boundary integral inside
+ 
+        
+
+        
+#------------------------------------------------------------------
+class Global_thermal(Problem):
+    def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase,ctrl:NumericalControls):
+        super().__init__(M,elements,name)
+                
+        self.steady_state = ctrl.steady_state
+        
+        if np.all(pdb.option_rho<2) and np.all(pdb.option_k==0) and np.all(pdb.option_Cp==0):
+            self.typology = 'LinearProblem'
+        else:
+            self.typology = 'NonlinearProblem'
+        
+    def create_bc_temp(self,M:Mesh,ctrl:NumericalControls,geom,lhs,u_global,it,ts=0):
+        from scipy.interpolate import griddata   
+        cd_dof = self.FS.tabulate_dof_coordinates()
+        fdim     = M.mesh.topology.dim - 1    
+        # This part can be done only once -> bc dofs are constant 
+        if ts == 0 and it == 0:
+            facets                 = M.facets.find(M.bc_dict['Top'])    
+            dofs_top               = fem.locate_dofs_topological(self.FS, M.mesh.topology.dim-1, facets)
+            # -> Probably I need to use some parallel shit here 
+            self.bc_top            = fem.dirichletbc(ctrl.Ttop, dofs_top, self.FS) 
+            facets                 = M.facets.find(M.bc_dict['Left_inlet'])    
+            dofs_left              = fem.locate_dofs_topological(self.FS, M.mesh.topology.dim-1, facets)
+            
+            # Create suitable function space for the problem
+            T_bc_L = fem.Function(self.FS)
+            # Extract z and lhs 
+            z   = lhs.z
+            LHS = lhs.LHS 
+            # Extract coordinate dofs
+            # Interpolate temperature field: 
+            T_bc_L.x.array[:] = griddata(z, LHS, cd_dof[:,1], method='nearest')
+            T_bc_L.x.scatter_forward()
+            self.bc_left = fem.dirichletbc(T_bc_L, dofs_left)
+            
+
+            facets                 = M.facets.find(M.bc_dict['Right_lit'])                        
+            dofs_right_lit        = fem.locate_dofs_topological(self.FS, M.mesh.topology.dim-1, facets)
+
+            cd_dof_b = cd_dof[dofs_right_lit]
+    
+            T_gr = (-geom.lt_d-0)/(ctrl.Tmax-ctrl.Ttop)
+            T_gr = T_gr**(-1) 
+        
+            bc_fun = fem.Function(self.FS)
+            bc_fun.x.array[dofs_right_lit] = ctrl.Ttop + T_gr * cd_dof[dofs_right_lit,1]
+            bc_fun.x.scatter_forward()
+        
+            self.bc_right_lit = fem.dirichletbc(bc_fun, dofs_right_lit)
+
+        facets                 = M.facets.find(M.bc_dict['Right_wed'])                        
+        dofs_right_wed        = fem.locate_dofs_topological(self.FS, M.mesh.topology.dim-1, facets)
+        h_vel  = u_global.sub(0) # index 1 = y-direction (2D)
+        vel_T  = fem.Function(self.FS)
+        vel_T.interpolate(h_vel)
+        vel_bc = vel_T.x.array[dofs_right_wed]
+        ind_z = np.where((vel_bc < 0.0))
+        dofs_vel = dofs_right_wed[ind_z[0]]        
+        
+        self.bc_right_wed = fem.dirichletbc(ctrl.Tmax, dofs_vel,self.FS)
+        
+        if DEBUG == 1: 
+            fig1.gca().scatter(self.FS.tabulate_dof_coordinates()[dofs_vel,0],self.FS.tabulate_dof_coordinates()[dofs_vel,1])
+            fig1.gca().scatter(self.FS.tabulate_dof_coordinates()[dofs_right_wed,0],self.FS.tabulate_dof_coordinates()[dofs_right_wed,1],c='k',s=0.01)
+            fig2.gca().scatter(self.FS.tabulate_dof_coordinates()[dofs_vel,1],vel_T.x.array[dofs_vel],s=1)
+            fig2.gca().scatter(self.FS.tabulate_dof_coordinates()[dofs_right_wed,1],vel_T.x.array[dofs_right_wed],c='k',s=0.01)
+
+        facets                 = M.facets.find(M.bc_dict['Bottom_wed'])                        
+        dofs_bot_wed        = fem.locate_dofs_topological(self.FS, M.mesh.topology.dim-1, facets)
+        h_vel       = u_global.sub(0) # index 1 = y-direction (2D)   
+        v_vel       = u_global.sub(1) # index 1 = y-direction (2D)
+        vel_T  = fem.Function(self.FS)
+        vel_T.interpolate(v_vel)
+        vel_bc = vel_T.x.array[dofs_bot_wed]
+        ind_z = np.where(vel_bc > 0.0)
+        dofs_vel = dofs_bot_wed[ind_z[0]]                
+        
+        self.bc_bot_wed = fem.dirichletbc(ctrl.Tmax, dofs_vel,self.FS)
+        
+        bc = [self.bc_top, self.bc_left,  self.bc_right_wed,self.bc_bot_wed, self.bc_right_lit]
+
+        
+        
+        return bc 
+        
+    #------------------------------------------------------------------
+    def compute_shear_heating(self,ctrl,phi,S,D,g_input):
+        """
+        Apperently the sociopath the devise this method, uses a delta function to describe 
+        the interface frictional heating. 
+        -> [A] => Shear heating becomes a ufl expression. So happy about it 
+        
+        """
+        
+        if ctrl.decoupling == 1 and ctrl.model_shear >0: 
+            facets1                = D.facets.find(D.bc_dict['Subduction_top_lit'])
+            facets2                = D.facets.find(D.bc_dict['Subduction_top_wed'])
+        
+            facet_seismogenic = np.unique(np.concatenate((facets1,facets2)))
+            dofs              = fem.locate_dofs_topological(self.FS, D.mesh.topology.dim-1, facet_seismogenic)
+        
+            heat_source = fem.Function(self.FS)
+            heat_source.x.array[:] = 0.0   
+            heat_source.x.scatter_forward()
+        
+            decoupling    = heat_source.copy()
+            efficiency    = heat_source.copy()
+            Z = self.FS.tabulate_dof_coordinates()[:,1]
+            decoupling = decoupling_function(Z,decoupling,ctrl,D,g_input)
+            efficiency = efficiency_function(Z,efficiency,ctrl,D,g_input)
+            sh         = decoupling * efficiency
+            expression = sh * ufl.avg(S.PL) * ctrl.v_s[0] * phi * ufl.avg(self.test0) * (self.dS(D.bc_dict['Subduction_top_lit']) +self.dS(D.bc_dict['Subduction_top_wed']))
+            
+            return expression
+
+        else:
+            return 0.0 
+        
+        
+        
+            
+    
+    def set_newton_SS(self,p,D,T,u_global,pdb):
+        test   = self.test0                 # v
+        trial0 = self.trial0                # δp (TrialFunction) for Jacobian
+
+
+        rho_k = density_FX(pdb, T, p, D.phase, D.mesh)  # frozen
+        
+        k_k = density_FX(pdb, T, p, D.phase, D.mesh)  # frozen
+        
+        Cp_k = heat_capacity_FX(pdb, T,  D.phase, D.mesh)  # frozen
+
+
+        f    = fem.Constant(D.mesh, 0.0)  # source term
+        
+        dx  = self.dx
+        # Linear operator with frozen coefficients
+            
+        diff = ufl.inner(k_k * ufl.grad(T), ufl.grad(self.test0)) * dx
+        adv  = rho_k *Cp_k *ufl.dot(u_global, ufl.grad(T)) * self.test0 * dx
+
+        a_lin = diff + adv
+        L     = f * self.test0 * dx   
+        # Nonlinear residual: F(p; v) = ∫ ∇p·∇v dx - ∫ ∇v·(ρ(T, p) g) dx
+        F = a_lin - L
+        # Jacobian dF/dp in direction δp (trial0)
+        J = ufl.derivative(F, T, trial0)
+        
+        return F,J 
+    
+    #------------------------------------------------------------------
+    def compute_energy_source(self,D,pdb):
+        source = fem.Function(self.FS)
+        source = compute_radiogenic(pdb, source, D.phase, D.mesh)
+        self.energy_source = source.copy()
+
+    #--
+
+
+    def set_linear_picard_SS(self,p_k,T,u_global,D,pdb, it=0):
+        # Function that set linear form and linear picard for picard iteration
+        
+        rho_k = density_FX(pdb, T, p_k, D.phase, D.mesh)  # frozen
+        
+        k_k = heat_conductivity_FX(pdb, T, p_k, D.phase, D.mesh)  # frozen
+        
+        Cp_k = heat_capacity_FX(pdb, T, D.phase, D.mesh)  # frozen
+
+
+        f    = self.energy_source# source term
+        
+        dx  = self.dx
+        # Linear operator with frozen coefficients
+        if it == 0: 
+            
+            diff = ufl.inner(k_k * ufl.grad(self.trial0), ufl.grad(self.test0)) * dx
+            adv  = rho_k * Cp_k *ufl.dot(u_global, ufl.grad(self.trial0)) * self.test0 * dx
+            
+            a = fem.form(diff + adv)
+            L = fem.form(f * self.test0 * dx + self.shear_heating)      
+        else: 
+            a = None
+                
+
+        return a, L
+    #------------------------------------------------------------------
+
+    def Solve_the_Problem_SS(self,S,ctrl,pdb,M,lhs,geom,it=0,ts=0): 
+        
+        nl = 0 
+        p_k = S.PL.copy()  # Previous lithostatic pressure 
+        T   = S.T_O # -> will not eventually update 
+
+        if it == 0:         
+            self.shear_heating = self.compute_shear_heating(ctrl,pdb.friction_angle, S,getattr(M,'domainG'),geom)
+            self.compute_energy_source(getattr(M,'domainG'),pdb)
+        
+        a,L = self.set_linear_picard_SS(p_k,T,S.u_global,getattr(M,'domainG'),pdb)
+        
+        self.bc = self.create_bc_temp(getattr(M,'domainG'),ctrl,geom,lhs,S.u_global,it)
+        if self.typology == 'NonlinearProblem':
+            F,J = self.set_newton_SS(p_k,getattr(M,'domainG'),T,S.u_global,pdb)
+            nl = 1 
+        else: 
+            F = None;J=None 
+
+        if it == 0 & ts == 0: 
+            self.solv = ScalarSolver(a,L,M.comm,nl,J,F)
+        
+        print_ph(f'. // -- // --- Temperature problem [GLOBAL] // -- // --->')
+        
+        time_A = timing.time()
+
+        if nl == 0: 
+            S = self.solve_the_linear(S,a,L,S.T_O) 
+        else: 
+            S = self.solve_the_non_linear_SS(M,S,ctrl,pdb)
+        
+        time_B = timing.time()
+        
+        print_ph(f'. // -- // --- Solution of Temperature  in {time_B-time_A:.2f} sec // -- // --->')
+
+
+
+        return S 
+    #------------------------------------------------------------------
+    
+    def solve_the_linear(self,S,a,L,fen_function,isPicard=0,it=0,ts=0):
+        
+        buf = fem.Function(self.FS)
+        x   = self.solv.b.copy()
+        if it == 0 or ts == 0:
+            self.solv.A.zeroEntries()
+            fem.petsc.assemble_matrix(self.solv.A,fem.form(a),self.bc)
+            self.solv.A.assemble()
+        # b -> can change as it is the part that depends on the pressure in case of nonlinearities
+        self.solv.b.set(0.0)
+        fem.petsc.assemble_vector(self.solv.b, fem.form(L))
+        fem.petsc.apply_lifting(self.solv.b, [fem.form(a)], [self.bc])
+        self.solv.b.ghostUpdate()
+        fem.petsc.set_bc(self.solv.b, self.bc)
+        self.solv.ksp.solve(self.solv.b, fen_function.x.petsc_vec)
+        
+        if isPicard == 0: # if it is a picard iteration the function gives the function 
+            S.T_O = fen_function
+            S.T_O.x.scatter_forward()
+            return S 
+        else:
+            return fen_function
+
+    def solve_the_non_linear_SS(self,M,S,ctrl,pdb,it=0):  
+        
+        tol = 1e-3  # Tolerance Picard  
+        max_it = 20  # Max iteration before Newton
+        isPicard = 1 # Flag for the linear solver. 
+        tol = 1.0 
+        T_k = S.T_O.copy() 
+        T_k1 = S.T_O.copy()
+        du   = S.PL.copy()
+        du2  = S.PL.copy()
+        it_inner = 0 
+        time_A = timing.time()
+        print_ph(f'              [//] Picard iterations for the non linear temperature problem')
+
+        while it_inner < max_it and tol > 1e-5:
+            time_ita = timing.time()
+            
+            A,L = self.set_linear_picard_SS(S.PL,T_k,S.u_global,getattr(M,'domainG'),pdb)
+            
+            T_k1 = self.solve_the_linear(S,A,L,T_k1,1,it,1)
+            T_k1.x.scatter_forward()
+            # L2 norm 
+            du.x.array[:]  = T_k1.x.array[:] - T_k.x.array[:];du.x.scatter_forward()
+            du2.x.array[:] = T_k1.x.array[:] + T_k.x.array[:];du2.x.scatter_forward()
+            tol= L2_norm_calculation(du)/L2_norm_calculation(du2)
+            
+            time_itb = timing.time()
+            print_ph(f'              []Temperature L_2 norm is {tol:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
+            
+            #update solution
+            T_k.x.array[:] = T_k1.x.array[:]*0.7 + T_k.x.array[:]*(1-0.7)
+            
+            it_inner = it_inner + 1 
+            
+        # --- Newton =>         
+        F,J = self.set_newton_SS(S.PL,getattr(M,'domainG'),T_k1,S.u_global,pdb)
+        
+        problem = fem.petsc.NonlinearProblem(F, T_k1, bcs=self.bc, J=J)
+
+        # Newton solver
+        solver = NewtonSolver(MPI.COMM_WORLD, problem)
+        solver.convergence_criterion = "residual"
+        solver.rtol = 1e-6
+        solver.report = True
+        
+        #n, converged = solver.solve(T_k1)
+        
+        S.T_O.x.array[:] = T_k1.x.array[:]
+
+
+
+        print_ph(f'')
+
+        
+        
+        return S  
+    
+    #------------------------------------------------------------------
+        
+    @timing_function
+    def initial_temperature_field(self,M, ctrl, lhs, g_input):
+        from scipy.interpolate import griddata
+        from ufl import conditional, Or, eq
+        from functools import reduce
+        """
+        X    -:- Functionspace (i.e., an abstract stuff that represents all the possible solution for the given mesh and element type)
+        M    -:- Mesh object (i.e., a random container of utils related to the mesh)
+        ctrl -:- Control structure containing the information of the simulations 
+        lhs  -:- left side boundary condition controls. Separated from the control structure for avoiding clutter in the main ctrl  
+        ---- 
+        Function: Create a function out of the function space (T_i). From the function extract dofs, interpolate (initial) lhs all over. 
+        Then select the crustal+lithospheric marker, and overwrite the T_i with a linear geotherm. Simple. 
+        ----
+        output : T_i the initial temperature field.  
+            T_gr = (-M.g_input.lt_d-0)/(ctrl.Tmax-ctrl.Ttop)
+            T_gr = T_gr**(-1) 
+
+            bc_fun = fem.Function(X)
+            bc_fun.x.array[dofs_dirichlet] = ctrl.Ttop + T_gr * cd_dof[dofs_dirichlet,1]
+            bc_fun.x.scatter_forward()
+        """    
+        #- Create part of the thermal field: create function, extract dofs, 
+        X     = self.FS
+        T_i_A = fem.Function(X)
+        cd_dof = X.tabulate_dof_coordinates()
+        T_i_A.x.array[:] = griddata(-lhs.z, lhs.LHS, cd_dof[:,1], method='nearest')
+        T_i_A.x.scatter_forward() 
+        #- 
+        T_gr = (-g_input.lt_d-0)/(ctrl.Tmax-ctrl.Ttop)
+        T_gr = T_gr**(-1) 
+
+        T_expr = fem.Function(X)
+        ind_A = np.where(cd_dof[:,1] >= -g_input.lt_d)[0]
+        ind_B = np.where(cd_dof[:,1] < -g_input.lt_d)[0]
+        T_expr.x.array[ind_A] = ctrl.Ttop + T_gr * cd_dof[ind_A,1]
+        T_expr.x.array[ind_B] = ctrl.Tmax
+        T_expr.x.scatter_forward()
+
+
+        expr = conditional(
+            reduce(Or,[eq(M.phase, i) for i in [2, 3, 4, 5]]),
+            T_expr,
+            T_i_A
+        )
+
+        v = ufl.TestFunction(X)
+        u = ufl.TrialFunction(X)
+        T_i = fem.Function(X)
+        a = u * v * ufl.dx 
+        L = expr * v * ufl.dx
+        prb = fem.petsc.LinearProblem(a,L,u=T_i)
+        prb.solve()
+        return T_expr 
+#-----------------------------------------------------------------
+class Global_pressure(Problem): 
+    def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
+        super().__init__(M,elements,name)
+        if np.all(pdb.option_rho<2):
+            self.typology = 'LinearProblem'
+        else:
+            self.typology = 'NonlinearProblem'
+
+        self.bc = [self.set_problem_bc(getattr(M,'domainG'))]
+    def set_problem_bc(self,M):
+         
+        fdim = 1    
+        top_facets   = M.facets.find(M.bc_dict['Top'])
+        top_dofs    = fem.locate_dofs_topological(self.FS, 1, top_facets)
+        bc = [fem.dirichletbc(0.0, top_dofs, self.FS)]
+        return bc  
+    
+    def set_newton(self,p,D,T,g,pdb):
+        test   = self.test0                 # v
+        trial0 = self.trial0                # δp (TrialFunction) for Jacobian
+
+        a_lin = ufl.inner(ufl.grad(p), ufl.grad(test)) * self.dx
+        L     = ufl.inner(ufl.grad(test),
+                              density_FX(pdb, T, p, D.phase, D.mesh) * g) * self.dx
+        # Nonlinear residual: F(p; v) = ∫ ∇p·∇v dx - ∫ ∇v·(ρ(T, p) g) dx
+        F = a_lin - L
+        # Jacobian dF/dp in direction δp (trial0)
+        J = ufl.derivative(F, p, trial0)
+        
+        return F,J 
+    
+    
+    def set_linear_picard(self,p_k,T,D,pdb,g, it=0):
+        # Function that set linear form and linear picard for picard iteration
+        
+        rho_k = density_FX(pdb, T, p_k, D.phase, D.mesh)  # frozen
+        
+        # Linear operator with frozen coefficients
+        if it == 0: 
+            a = ufl.inner(ufl.grad(self.trial0), ufl.grad(self.test0)) * self.dx
+        else: 
+            a = None
+        
+        L = ufl.inner(ufl.grad(self.test0), rho_k * g) * self.dx
+        
+
+        return a, L
+
+    def Solve_the_Problem(self,S,ctrl,pdb,M,g,it_outer=0,ts=0): 
+        
+        nl = 0 
+        p_k = S.PL.copy()  # Previous lithostatic pressure 
+        T   = S.T_O # -> will not eventually update 
+        
+        # If the problem is linear, p_k is not doing anything, it is there because I
+        # design the density function to receive in anycase a pressure, potentially I
+        # can use the multipledispach of python, which say ah density with pressure 
+        # density without pressure is equal to fuck. But seems a bit lame, and I do 
+        # not think that is a great improvement of the code. 
+        
+        a,L = self.set_linear_picard(p_k,T,getattr(M,'domainG'),pdb,g)
+        
+        if self.typology == 'NonlinearProblem':
+            F,J = self.set_newton(p_k,getattr(M,'domainG'),T,g,pdb)
+            nl = 1 
+        else: 
+            F = None;J=None 
+
+        if it_outer == 0 & ts == 0: 
+            self.solv = ScalarSolver(a,L,M.comm,nl,J,F)
+        
+        print_ph(f'. // -- // --- LITHOSTATIC PROBLEM [GLOBAL] // -- // --- > ')
+
+        time_A = timing.time()
+
+        
+        if nl == 0: 
+            S = self.solve_the_linear(S,a,L,S.PL) 
+        else: 
+            S = self.solve_the_non_linear(M,S,ctrl,pdb,g)
+
+        time_B = timing.time()
+
+        print_ph(f'. // -- // --- Solution of Lithostatic pressure problem finished in {time_B-time_A:.2f} sec // -- // --->')
+        print_ph(f'')
+
+        return S 
+    
+    def solve_the_linear(self,S,a,L,function_fen,isPicard=0,it=0,ts=0):
+        
+        buf = fem.Function(self.FS)
+        x   = self.solv.b.copy()
+        if it == 0 or ts == 0:
+            self.solv.A.zeroEntries()
+            fem.petsc.assemble_matrix(self.solv.A,fem.form(a),self.bc[0])
+            self.solv.A.assemble()
+        # b -> can change as it is the part that depends on the pressure in case of nonlinearities
+        self.solv.b.set(0.0)
+        fem.petsc.assemble_vector(self.solv.b, fem.form(L))
+        fem.petsc.apply_lifting(self.solv.b, [fem.form(a)], self.bc)
+        self.solv.b.ghostUpdate()
+        fem.petsc.set_bc(self.solv.b, self.bc[0])
+        self.solv.ksp.solve(self.solv.b, function_fen.x.petsc_vec)
+        function_fen.x.scatter_forward()
+        
+        
+        if isPicard == 0: # if it is a picard iteration the function gives the function 
+            S.PL = function_fen 
+            return S
+        else:
+            return function_fen
+    
+    def solve_the_non_linear(self,M,S,ctrl,pdb,g):  
+        
+        tol = 1e-3  # Tolerance Picard  
+        isPicard = 1 # Flag for the linear solver. 
+        tol = 1.0 
+        p_k = S.PL.copy() 
+        p_k1 = S.PL.copy()
+        du   = S.PL.copy()
+        du2  = S.PL.copy()
+        it_inner = 0 
+        
+        
+        print_ph(f'              [//] Picard iterations for the non linear lithostatic pressure problem')
+
+        
+        while it_inner < ctrl.it_max and tol > ctrl.tol_innerPic:
+            time_ita = timing.time()
+            
+            if it_inner == 0:
+                A,L = self.set_linear_picard(p_k,S.T_O,getattr(M,'domainG'),pdb,g)
+            else: 
+                _,L = self.set_linear_picard(p_k,S.T_O,getattr(M,'domainG'),pdb,g,1)
+            
+            p_k1 = self.solve_the_linear(S,A,L,p_k1,1,it_inner,1) 
+
+            # L2 norm 
+            du.x.array[:]  = p_k1.x.array[:] - p_k.x.array[:];du.x.scatter_forward()
+            du2.x.array[:] = p_k1.x.array[:] + p_k.x.array[:];du2.x.scatter_forward()
+            tol= L2_norm_calculation(du)/L2_norm_calculation(du2)
+            
+            time_itb = timing.time()
+            print_ph(f'              []L_2 norm is {tol:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
+            
+            #update solution
+            p_k.x.array[:] = p_k1.x.array[:]*0.7 + p_k.x.array[:]*(1-0.7)
+            
+            it_inner = it_inner + 1 
+        
+        print_ph(f'              [//] Newton iterations for the non linear lithostatic pressure problem')
+
+        # --- Newton =>         
+        F,J = self.set_newton(p_k,getattr(M,'domainG'),S.T_O,g,pdb)
+        
+        problem = fem.petsc.NonlinearProblem(F, p_k, bcs=self.bc[0], J=J)
+
+        # Newton solver
+        solver = NewtonSolver(MPI.COMM_WORLD, problem)
+        solver.convergence_criterion = "residual"
+        #solver.rtol = ctrl.tol_innerNew
+        #solver.report = True
+        
+        #n, converged = solver.solve(p_k)
+        #print(f"              []Newton iterations: {n}, converged = {converged}")   
+        
+        S.PL.x.array[:] = p_k.x.array[:]
+      
+        
+        
+        return S  
+        
+        
+#-----------------------------------------------------------------
+class Stokes_Problem(Problem):
+    def __init__(self,M,elements,name):
+        super().__init__(M,elements,name)       
+        M = getattr(M,name[1])
+        self.FSPT = dolfinx.fem.functionspace(M.mesh, elements[2]) 
+        
+    def set_newton():
+        # Place holder -> Not finding useful tutorial for newton 
+     
+        pass
+    
+    def compute_residuum_stokes(self,u_new,p_new,D,T,PL,pdb,sc,it=0):
+        
+        e = compute_strain_rate(u_new)
+        
+        f  = fem.Constant(D.mesh, PETSc.ScalarType((0.0,)*D.mesh.geometry.dim))
+
+        V = self.FS.sub(0).collapse()[0]
+        Q = self.FS.sub(1).collapse()[0]
+
+        v = ufl.TestFunction(V)
+        q = ufl.TestFunction(Q)
+        
+        eta_new = compute_viscosity_FX(e,T,PL,pdb,D.phase,D,sc)
+        
+        dx   = ufl.dx
+        
+        F1 = (ufl.inner(2*eta_new*ufl.sym(ufl.grad(u_new)), ufl.sym(ufl.grad(v))) * dx \
+             - ufl.inner(p_new, ufl.div(v)) * dx \
+             - ufl.inner(f, v) * dx) 
+        F2 = ufl.inner(q, ufl.div(u_new)) * dx 
+        
+        R  = fem.petsc.assemble_vector(fem.form(F1))
+        R2 = fem.petsc.assemble_vector(fem.form(F2))
+        rmom = R.norm()
+        rdiv = R2.norm() 
+        if self.bc:
+            fem.petsc.set_bc(R, self.bc)
+        
+    
+        divuL2 = (fem.assemble_scalar(fem.form(ufl.inner(ufl.div(u_new), ufl.div(u_new))*dx)))**0.5
+        
+        return rmom, rdiv, divuL2 
+    
+    def set_linear_picard(self,u_slab,T,PL,D,pdb,ctrl,sc, a_p = None,it=0, ts = 0):
+        
+        """
+        The problem is always LINEAR when depends on T/P -> Becomes fairly 
+        non linear when the temperature is involved. 
+        """
+        
+        u, p  = self.trial0, self.trial1
+        v, q  = self.test0,  self.test1
+        dx    = ufl.dx
+
+        e = compute_strain_rate(u_slab)
+
+        eta = compute_viscosity_FX(e,T,PL,pdb,D.phase,D,sc)
+
+        a1 = ufl.inner(2*eta*ufl.sym(ufl.grad(u)), ufl.sym(ufl.grad(v))) * dx
+        a2 = - ufl.inner(ufl.div(v), p) * dx             # build once
+        a3 = - ufl.inner(q, ufl.div(u)) * dx             # build once
+        a_p0 = ufl.inner(q, p) * dx                      # pressure mass (precond)
+
+        f  = fem.Constant(D.mesh, PETSc.ScalarType((0.0,)*D.mesh.geometry.dim))
+        f2 = fem.Constant(D.mesh, PETSc.ScalarType(0.0))
+        L  = fem.form([ufl.inner(f, v)*dx, ufl.inner(f2, q)*dx])    
+    
+        return a1, a2, a3 , L , a_p0       
+
+        
+#----------------------------------------------------------------------------          
+def compute_strain_rate(u):
+    
+    e = ufl.sym(ufl.grad(u))
+    
+    return e  
+
+def compute_eII(e):
+    from ufl import inner, sqrt
+    e_II  = sqrt(0.5*inner(e, e))    
+    return e_II
+#---------------------------------------------------------------------------
+        
+def L2_norm_calculation(f):
+    return fem.assemble_scalar(fem.form(ufl.inner(f, f) * ufl.dx))**0.5       
+        
+        
+#------------------------------------------------------------------
+class Slab(Stokes_Problem): 
+    def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
+        super().__init__(M,elements,name)
+    
+    def setdirichlecht(self,ctrl,D,theta,it=0, ts = 0):
+        mesh = self.F0.mesh 
+        tdim = mesh.topology.dim
+        fdim = tdim - 1
+        
+        # facet ids
+        inflow_facets  = D.facets.find(D.bc_dict['inflow'])
+        outflow_facets = D.facets.find(D.bc_dict['outflow'])
+        slab_facets    = D.facets.find(D.bc_dict['top_subduction'])
+        
+        if (it == 0 or ts == 0 ):
+            if ctrl.slab_bc == 1: # moving wall slab bc 
+                # Compute this crap only once @ the beginning of the simulation 
+                if it == 0 and ts == 0:
+                        dofs        = fem.locate_dofs_topological(self.F0, fdim, slab_facets)
+
+                        n = ufl.FacetNormal(mesh)                    # exact facet normal in    weak   form
+                        v_slab = float(1.0)  # slab velocity magnitude
+
+                        v_const = ufl.as_vector((ctrl.v_s[0], 0.0))
+
+                        proj = ufl.Identity(mesh.geometry.dim) - ufl.outer(n, n)  # projector   onto  the  tangential plane
+                        t = ufl.dot(proj, v_const)                     # tangential     velocity    vector on  slab
+                        t_hat = t / ufl.sqrt(ufl.inner(t, t))    
+                        v_project = v_slab * t_hat  # projected tangential velocity vector on   slab
+                        self.moving_wall = fem.Function(self.F0)
+                        w = self.trial0
+                        v = self.test0
+                        a = ufl.inner(w, v) * self.ds(D.bc_dict['top_subduction'])        #  boundary     mass    matrix (vector)
+                        L = ufl.inner(v_project, v) * self.ds(D.bc_dict['top_subduction'])
+
+                        self.moving_wall = fem.petsc.LinearProblem(
+                            a, L,
+                            petsc_options={
+                            "ksp_type": "cg",
+                            "pc_type": "jacobi",
+                            "ksp_rtol": 1e-20,
+                            }
+                        ).solve()  # ut_h \in V
+                self.moving_wall.x.array[:] = self.moving_wall.x.array[:]*ctrl.v_s[0] 
+
+                dofs_s_x = fem.locate_dofs_topological(self.F0.sub(0), fdim, slab_facets)
+                dofs_s_y = fem.locate_dofs_topological(self.F0.sub(1), fdim, slab_facets)
+
+                bcx = fem.dirichletbc(self.moving_wall.sub(0), dofs_s_x)
+                bcy = fem.dirichletbc(self.moving_wall.sub(1), dofs_s_y)
+                return [bcx,bcy]
+            else:
+                # Pipe like boundary condition  {dirichlect bottom top and free slip in the boundaries applied with nietsche method.}
+                dofs_in_x  = fem.locate_dofs_topological(self.F0.sub(0), fdim, inflow_facets)
+                dofs_in_y  = fem.locate_dofs_topological(self.F0.sub(1), fdim, inflow_facets)
+                dofs_out_x = fem.locate_dofs_topological(self.F0.sub(0), fdim, outflow_facets)
+                dofs_out_y = fem.locate_dofs_topological(self.F0.sub(1), fdim, outflow_facets)
+                
+                # scalar BCs on subspaces
+                bc_left_x   = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]), dofs_in_x,  self.F0.sub(0))
+                bc_left_y   = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[1]), dofs_in_y,    self.F0.sub(1))
+                bc_bottom_x = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]*np.cos(theta)),          dofs_out_x, self.F0.sub(0))
+                bc_bottom_y = fem.dirichletbc(PETSc.ScalarType(ctrl.v_s[0]*np.sin(theta)),          dofs_out_y, self.F0.sub(1))
+                
+                return [bc_left_x,bc_left_y,bc_bottom_x,bc_bottom_y]
+                
+    
+    def compute_nitsche_FS(self,D, S, dS, a1,a2,a3,pdb,gamma,sc,it = 0):
+        """
+        Compute the Nitsche free slip boundary condition for the slab problem.
+        This is a placeholder function and should be implemented with the actual Nitsche    method.
+        """
+        def tau(eta, u):
+            return 2 * eta * ufl.sym(ufl.grad(u))
+        
+        
+        # Linear 
+        e   = compute_strain_rate(S.u_slab)   
+        eta = compute_viscosity_FX(e,S.t_oslab,S.p_lslab,pdb,D.phase,D,sc)
+        
+        n = ufl.FacetNormal(D.mesh)
+        h = ufl.CellDiameter(D.mesh)
+
+        a1 += (
+            - ufl.inner(tau(eta, self.trial0), ufl.outer(ufl.dot(self.test0, n) * n, n)) * self.ds(dS)
+            - ufl.inner(ufl.outer(ufl.dot(self.trial0, n) * n, n), tau(eta, self.test0)) * self.ds(dS)
+            + (2 * eta * gamma / h)
+            * ufl.inner(ufl.outer(ufl.dot(self.trial0, n) * n, n), ufl.outer(self.test0, n))
+            * self.ds(dS)
+        )
+        if it == 0:
+            a2 += ufl.inner(self.trial1, ufl.dot(self.test0, n)) * self.ds(dS)
+            a3 += ufl.inner(self.test1, ufl.dot(self.trial0, n)) * self.ds(dS)
+        else:
+            a2 += 0 
+            a3 += 0 
+        return a1, a2, a3 
+    
+    def Solve_the_Problem(self,S,ctrl,pdb,M,g,sc,it=0,ts=0):
+        theta = M.g_input.theta_out_slab
+        M = getattr(M,'domainA')
+        
+        
+        """
+        According to chatgpt, and I have already verified this notion before asking, 
+        I cannot create test and trial function from a previous instance. In case of mixed space
+        I need always to recreate on the spot, which is very annoying despite they are pretty much cheap 
+        in terms of computation. 
+        
+    
+        """
+        V_subs0 = self.FS.sub(0)
+        p_subs0 = self.FS.sub(1)
+        V_subs, _ = V_subs0.collapse()
+        p_subs, _ = p_subs0.collapse()
+    
+        self.trial0 = ufl.TrialFunction(V_subs)
+        self.test0 = ufl.TestFunction(V_subs)
+        self.trial1 = ufl.TrialFunction(p_subs)
+        self.test1 = ufl.TestFunction(p_subs)
+        # Create the linear problem
+        a1,a2,a3, L, a_p = self.set_linear_picard(S.u_slab,S.t_oslab,S.p_lslab,M,pdb,ctrl,sc)
+
+        # Create the dirichlecht boundary condition 
+        self.bc   = self.setdirichlecht(ctrl,M,theta) 
+        # Set Nietsche FS boundary condition 
+        dS_top = M.bc_dict["top_subduction"]
+        dS_bot = M.bc_dict["bot_subduction"]
+        # 1 Extract ds 
+        a1,a2,a3 = self.compute_nitsche_FS(M, S, dS_bot, a1, a2 ,a3,pdb ,50.0,sc)
+        
+        if ctrl.slab_bc == 0: 
+            a1,a2,a3 = self.compute_nitsche_FS(M, S, dS_top, a1, a2 ,a3,pdb ,50.0,sc)
+        
+        # Slab problem is ALWAYS LINEAR
+        
+        a   = fem.form([[a1, a2],[a3, None]])
+        a_p0  = fem.form([[a1, None],[None, a_p]])
+
+
+        self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,ctrl ,J = None, r = None,it = 0, ts = 0)
+        
+        print_ph(f'// -- // --- SLAB STOKES PROBLEM // -- // --->')    
+        time_A = timing.time()    
+        if direct_solver==1:
+            x = self.solv.A.createVecLeft()
+        else:
+            x = self.solv.A.createVecRight()
+        self.solv.ksp.solve(self.solv.b, x)
+        if direct_solver == 0: 
+            xu = x.getSubVector(self.solv.is_u)
+            xp = x.getSubVector(self.solv.is_p)
+            u, p = fem.Function(self.F0), fem.Function(self.F1)
+    
+            u.x.array[:] = xu.array_r
+            p.x.array[:] = xp.array_r
+            p.x.scatter_forward()
+            u.x.scatter_forward()
+            S.u_slab.x.array[:] = u.x.array[:]
+            S.p_slab.x.array[:] = p.x.array[:]
+            S.u_slab.x.scatter_forward()
+            S.p_slab.x.scatter_forward()
+        else: 
+            S.u_slab.x.array[:self.solv.offset] = x.array_r[:self.solv.offset]
+            S.p_slab.x.array[: (len(x.array_r) - self.solv.offset)] = x.array_r[self.solv.offset:]
+            S.u_slab.x.scatter_forward()
+            S.p_slab.x.scatter_forward()
+        
+
+        time_B = timing.time()
+        print_ph(f'// -- // --- Solution of Stokes problem in {time_B-time_A:.2f} sec // -- // --->')
+        print_ph(f'')
+
+        return S 
+    
+#---------------------------------------------------------------------------------------------------       
+class Wedge(Stokes_Problem): 
+    def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
+        super().__init__(M,elements,name)
+        
+        M = getattr(M,'domainB')
+
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+
+        # Example: each rank has some local IDs
+        local_ids = np.int32(M.phase.x.array[:])
+
+        # Gather arrays from all processes
+        all_ids = comm.allgather(local_ids)
+
+        # Root (or all, since allgather) concatenates
+        all_ids = np.concatenate(all_ids)
+
+        # Compute global unique IDs
+        unique_ids = np.unique(all_ids)
+
+        non_linear = False 
+        
+        for i in range(np.shape(unique_ids)[0]): 
+            if pdb.option_eta[unique_ids[i]] > 0: 
+                non_linear = True
+                break
+            
+        if non_linear == True:
+            self.typology = 'NonlinearProblem'
+        else:
+            self.typology = 'LinearProblem'
+        
+        
+            
+    
+    def setdirichlecht(self,ctrl,D,theta,V,g_input,it=0, ts = 0):
+        mesh = V.mesh 
+        tdim = mesh.topology.dim
+        fdim = tdim - 1
+        
+    
+        # facet ids
+        overriding_facet = D.facets.find(D.bc_dict['overriding'])
+        slab_facets      = D.facets.find(D.bc_dict['slab'])
+        
+            
+        # Compute this crap only once @ the beginning of the simulation 
+
+
+        noslip = np.zeros(mesh.geometry.dim, dtype=PETSc.ScalarType)
+        dofs_over = fem.locate_dofs_topological(V, fdim, D.facets.find(D.bc_dict['overriding']))
+
+        bc_overriding = fem.dirichletbc(noslip, dofs_over, V)
+        
+        
+        #------------------------------------------------------------------------
+        dofs        = fem.locate_dofs_topological(V, fdim, slab_facets)
+
+        n = ufl.FacetNormal(mesh)                    # exact facet normal in    weak   form
+        v_slab = float(1.0)  # slab velocity magnitude
+
+        v_const = ufl.as_vector((ctrl.v_s[0], 0.0))
+
+        proj = ufl.Identity(mesh.geometry.dim) - ufl.outer(n, n)  # projector   onto  the  tangential plane
+        t = ufl.dot(proj, v_const)                     # tangential     velocity    vector on  slab
+        t_hat = t / ufl.sqrt(ufl.inner(t, t))    
+        v_project = v_slab * t_hat  # projected tangential velocity vector on   slab
+        moving_wall_wedge = fem.Function(V)
+        w = self.trial0
+        v = self.test0
+        
+
+              
+        a = ufl.inner(w, v) * self.ds(D.bc_dict['slab'])        #  boundary     mass    matrix (vector)
+        
+        if ctrl.decoupling == 1:
+            scaling = fem.Function(self.FSPT)
+            scaling = decoupling_function(self.FSPT.tabulate_dof_coordinates()[:,1],scaling,ctrl,D,g_input)  
+            scaling.x.array[:] = 1-scaling.x.array[:]
+            scaling.x.scatter_forward()
+            L = ufl.inner(v_project * scaling, v) * self.ds(D.bc_dict['slab'])
+        else: 
+            L = ufl.inner(v_project, v) * self.ds(D.bc_dict['slab'])
+
+        moving_wall_wedge = fem.petsc.LinearProblem(
+            a, L,
+            petsc_options={
+            "ksp_type": "cg",
+            "pc_type": "jacobi",
+            "ksp_rtol": 1e-20,
+            }
+        ).solve()
+        
+
+
+            
+        
+        
+            # ut_h \in V
+            # Introducing the coupling depth velocity increasing
+            
+            #alpha_decoupling = 1/(1+np.exp(0.1*(z-lit)))
+            
+            
+        self.moving_wall_wedge = moving_wall_wedge.copy()
+        self.moving_wall_wedge.x.array[:] = moving_wall_wedge.x.array[:]*ctrl.v_s[0] 
+
+        dofs_s_x = fem.locate_dofs_topological(V.sub(0), fdim,slab_facets)
+        dofs_s_y = fem.locate_dofs_topological(V.sub(1), fdim,slab_facets)
+
+        bcx = fem.dirichletbc(self.moving_wall_wedge.sub(0), dofs_s_x)
+        bcy = fem.dirichletbc(self.moving_wall_wedge.sub(1), dofs_s_y)
+        
+    
+        return [bcx, bcy, bc_overriding]
+                
+    
+    def compute_nitsche_traction(self,D, S, dS, a1,a2,a3,pdb ,gamma,it = 0):
+        # Place holder for eventual traction boundary condition 
+        """
+        In case I want to introduce the feedback between thermal evolution and density 
+        I will introduce this boundary condition. The material properties will be computed 
+        as a function of the lithostatic pressure 
+        
+        
+        
+        """
+
+
+        return a1, a2, a3 
+    
+    def Solve_the_Problem(self,S,ctrl,pdb,M,g,sc,g_input,it=0,ts=0):
+        theta = M.g_input.theta_out_slab
+        M = getattr(M,'domainB')
+
+        
+        """
+        According to chatgpt, and I have already verified this notion before asking, 
+        I cannot create test and trial function from a previous instance. In case of mixed space
+        I need always to recreate on the spot, which is very annoying despite they are pretty much cheap 
+        in terms of computation. 
+        
+    
+        """
+        V_subs0 = self.FS.sub(0)
+        p_subs0 = self.FS.sub(1)
+        V_subs, _ = V_subs0.collapse()
+        p_subs, _ = p_subs0.collapse()
+    
+        self.trial0 = ufl.TrialFunction(V_subs)
+        self.test0 = ufl.TestFunction(V_subs)
+        self.trial1 = ufl.TrialFunction(p_subs)
+        self.test1 = ufl.TestFunction(p_subs)
+    
+
+        # Create the linear problem
+        a1,a2,a3, L, a_p = self.set_linear_picard(S.u_wedge,S.t_owedge,S.p_lwedge,M,pdb,ctrl,sc)
+
+        # Create the dirichlecht boundary condition 
+        self.bc   = self.setdirichlecht(ctrl,M,theta,V_subs,g_input) 
+        
+        # Form the system 
+        a   = [[a1, a2],[a3, None]]
+        a_p0  = [[a1, None],[None, a_p]]
+
+        print_ph(f'. // -- // --- STOKES PROBLEM [WEDGE] // -- // --- > ')
+
+        
+        time_A = timing.time()
+
+        
+        if self.typology == 'LinearProblem': 
+            S = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl, S)
+
+        else: 
+            print_ph(f'              [//] Picard iterations for the non linear lithostatic pressure problem')
+
+            u_k   = S.u_wedge.copy()
+            p_k   = S.p_wedge.copy()
+            du0   = S.u_wedge.copy()
+            dp0   = S.p_wedge.copy()
+            du1   = S.u_wedge.copy()
+            dp1   = S.p_wedge.copy()
+            
+            res  = 1.0 
+            it_inner   = 0 
+            while (res > ctrl.tol_innerPic) and it_inner < ctrl.it_max: 
+                time_ita = timing.time()
+                if it_inner>0: 
+                    a1,_,_, _,_ = self.set_linear_picard(u_k,S.t_owedge,S.p_lwedge,M,pdb,ctrl,sc)
+                    a[0][0] = a1 
+                    a       = fem.form(a)
+                    a_p0[0][0] = a1 
+                    a_p0       = fem.form(a_p0)
+                
+                S = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl, S,it)
+                
+                
+                du0.x.array[:]  = S.u_wedge.x.array[:] - u_k.x.array[:];du0.x.scatter_forward()
+                
+                du1.x.array[:] = S.u_wedge.x.array[:] + u_k.x.array[:];du1.x.scatter_forward()
+                
+                dp0.x.array[:]  = S.p_wedge.x.array[:] - p_k.x.array[:];dp0.x.scatter_forward()
+                
+                dp1.x.array[:] = S.p_wedge.x.array[:] + p_k.x.array[:];dp1.x.scatter_forward()
+        
+                rmom, rdiv, divuL2 = self.compute_residuum_stokes(S.u_wedge,S.p_wedge,M,S.t_owedge,S.p_lwedge,pdb,sc)
+        
+                
+                tol_u = L2_norm_calculation(du0)/L2_norm_calculation(du1)
+                
+                tol_p = L2_norm_calculation(dp0)/L2_norm_calculation(dp1)
+                                
+                res   = np.sqrt(tol_u**2+tol_p**2)
+                
+                u_k.x.array[:] = ctrl.relax*S.u_wedge.x.array[:] + (1-ctrl.relax)*u_k.x.array[:]
+                p_k.x.array[:] = ctrl.relax*S.p_wedge.x.array[:] + (1-ctrl.relax)*p_k.x.array[:]
+
+                time_itb = timing.time()
+
+                print_ph(f'              []Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d}performed in {time_itb-time_ita:.2f} seconds')
+                print_ph(f'                                 [?] Res mom {rmom:.3e}, Res div {rdiv:.3e}')
+
+                it_inner = it_inner+1 
+        
+
+        time_B = timing.time()
+        print_ph(f'. // -- // --- Solution of Wedge in {time_B-time_A:.2f} sec // -- // --- >')
+        print_ph(f'')
+
+
+
+ 
+        
+
+        
+
+
+        return S 
+    
+    def solve_linear_picard(self,a,a_p0,L,ctrl, S,it=0,ts=0):
+            
+
+        self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,ctrl ,J = None, r = None,it = 0, ts = 0)
+        
+        
+        if direct_solver==1:
+            x = self.solv.A.createVecLeft()
+        else:
+            x = self.solv.A.createVecRight()
+        self.solv.ksp.solve(self.solv.b, x)
+        if direct_solver == 0: 
+            xu = x.getSubVector(self.solv.is_u)
+            xp = x.getSubVector(self.solv.is_p)
+    
+
+            S.u_wedge.x.array[:] = xu.array_r[:]
+            S.p_wedge.x.array[:] = xp.array_r[:]
+            S.u_wedge.x.scatter_forward()
+            S.p_wedge.x.scatter_forward()
+            
+
+            
+        else: 
+            S.u_wedge.x.array[:self.solv.offset] = x.array[:self.solv.offset]
+            S.p_wedge.x.array[: (len(x.array_r) - self.solv.offset)] = x.array[self.solv.offset:]
+            S.u_wedge.x.scatter_forward()
+            S.p_wedge.x.scatter_forward()
+        
+
+
+
+        return S 
+    
+#------------------------------------------------------------------------------------------------------------
+# Soon -> Steady state thermal solver 
+
+@timing_function
+def set_ups_problem():
+    from phase_db import PhaseDataBase
+    from phase_db import _generate_phase
+    from thermal_structure_ocean import compute_initial_LHS
+    from scal import Scal 
+    import scal as sc_f 
+    
+    from create_mesh import unit_test_mesh
+    
+    
+    print_ph(f'// -- // --- Steady State temperature // -- // --- > ')
+
+    #==================== Create Mesh and IOControl ====================
+    # Create scal 
+    sc = Scal(L=660e3,Temp = 1350,eta = 1e21, stress = 1e9)
+    
+    ioctrl = IOControls(test_name = 'Van_Keken',
+                        path_save = '../Debug_mesh',
+                        sname = 'Van_Keken')
+    ioctrl.generate_io()
+    # Create mesh 
+    M = unit_test_mesh(ioctrl, sc)
+            
+    print_ph("[] - - - -> Creating numerical controls <- - - - []")
+    ctrl = NumericalControls()
+    
+    ctrl = sc_f._scaling_control_parameters(ctrl, sc)
+    
+    print_ph("[] - - - -> Phase Database <- - - - []")    
+        
+    # This function can be a canvas for the main solver update. 
+    # Define elements -> would be defined in the controls 
+
+    element_p           = basix.ufl.element("Lagrange","triangle", 1) 
+    
+    element_PT          = basix.ufl.element("Lagrange","triangle",2)
+    
+    element_V           = basix.ufl.element("Lagrange","triangle",2,shape=(2,))
+
+    #==================== Phase Parameter ====================
+
+    # Define PhaseDataBase
+    pdb = PhaseDataBase(6)
+    # Slab
+    
+    pdb = _generate_phase(pdb, 1, rho0 = 3300 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)
+    # Oceanic Crust
+    
+    pdb = _generate_phase(pdb, 2, rho0 = 3300 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)
+    # Wedge
+    
+    pdb = _generate_phase(pdb, 3, rho0 = 3300 , option_rho = 0, option_rheology = 3, option_k = 0, option_Cp = 0, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl',eta = 1e19)
+    # 
+    
+    pdb = _generate_phase(pdb, 4, rho0 = 3300 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    #
+    
+    pdb = _generate_phase(pdb, 5, rho0 = 3300 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    #
+    
+    pdb = _generate_phase(pdb, 6, rho0 = 3300 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
+    #
+    
+    pdb = sc_f._scaling_material_properties(pdb,sc)
+    # Define LHS 
+
+    lhs_ctrl = ctrl_LHS()
+
+    lhs_ctrl = sc_f._scale_parameters(lhs_ctrl, sc)
+    
+    lhs_ctrl = compute_initial_LHS(ctrl,lhs_ctrl, sc, pdb)  
+          
+    # Define Problem
+    
+    # Pressure 
+    
+    energy_global               = Global_thermal (M = M, name = ['energy','domainG']  , elements = (element_PT,                   ), pdb = pdb, ctrl = ctrl)
+    
+    lithostatic_pressure_global = Global_pressure(M = M, name = ['pressure','domainG'], elements = (element_PT,                     ), pdb = pdb                                ) 
+    
+    wedge                       = Wedge          (M = M, name = ['stokes','domainB'  ], elements = (element_V,element_p,element_PT  ), pdb = pdb                                )
+    
+    slab                        = Slab           (M = M, name = ['stokes','domainA'  ], elements = (element_V,element_p,element_PT  ), pdb = pdb                                )
+    
+    g = fem.Constant(M.domainG.mesh, PETSc.ScalarType([0.0, -ctrl.g]))    
+
+    # Define Solution 
+    sol                         = Solution()
+     
+    sol.create_function(lithostatic_pressure_global,slab,wedge,[element_V,element_p])
+    
+    sol.T_O = energy_global.initial_temperature_field(M.domainG, ctrl, lhs_ctrl,M.g_input)
+
+
+    it_outer = 0 
+
+    res = 1.0
+
+    while it_outer < ctrl.it_max and res > ctrl.tol: 
+        
+        time_A_outer = timing.time()
+        # Copy the old solution for the residuum computation 
+        
+        Told        = sol.T_O.copy()
+        PLold       = sol.PL.copy()
+        u_globalold = sol.u_global.copy()
+        p_globalold = sol.p_global.copy()
+        
+        
+        # Solve lithostatic pressure problem
+        if lithostatic_pressure_global.typology == 'NonlinearProblem' or it_outer == 0:  
+            lithostatic_pressure_global.Solve_the_Problem(sol,ctrl,pdb,M,g,it_outer,ts=0)
+
+        # Interpolate from global to wedge/slab
+
+        sol.t_owedge = interpolate_from_sub_to_main(sol.t_owedge,sol.T_O, M.domainB.cell_par,1)
+        sol.p_lwedge = interpolate_from_sub_to_main(sol.p_lwedge,sol.PL, M.domainB.cell_par,1)
+
+        if it_outer == 0: 
+            slab.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it = it_outer,ts=0)
+
+        if wedge.typology == 'NonlinearProblem' or it_outer == 0:  
+            wedge.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,g_input,it = it_outer,ts=0)
+
+
+        # Interpolate from wedge/slab to global
+        sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_wedge, M.domainB.cell_par)
+        sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_slab, M.domainA.cell_par)
+        
+        sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_wedge, M.domainB.cell_par)
+        sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_slab, M.domainA.cell_par)
+        
+        
+        energy_global.Solve_the_Problem_SS(sol,ctrl,pdb,M,lhs_ctrl,M.g_input,it = it_outer, ts = 0)
+        
+        # Compute residuum 
+        res = compute_residuum_outer(sol,Told,PLold,u_globalold,p_globalold,it_outer,sc, time_A_outer)
+        print_output(sol,M.domainG,pdb,ioctrl,it_outer,sc)
+        A,B,C =_benchmark_van_keken(sol,1,3,sc)
+
+        it_outer = it_outer + 1
+        
+        
+       
+    
+
+
+    
+    return 0 
+
+
+
+@timing_function
+def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb:PhaseDataBase, ioctrl:IOControls, sc:Scal):
+    from phase_db import PhaseDataBase
+    from phase_db import _generate_phase
+    from thermal_structure_ocean import compute_initial_LHS
+    from scal import Scal 
+    import scal as sc_f 
+    
+    from create_mesh import unit_test_mesh
+    
+    
+    print_ph(f'// -- // --- Steady State temperature // -- // --- > ')
+
+    element_p           = M.element_p#basix.ufl.element("Lagrange","triangle", 1) 
+    
+    element_PT          = M.element_PT#basix.ufl.element("Lagrange","triangle",2)
+    
+    element_V           = M.element_V#basix.ufl.element("Lagrange","triangle",2,shape=(2,))
+
+    #==================== Phase Parameter ====================
+    lhs_ctrl = compute_initial_LHS(ctrl,lhs_ctrl, sc, pdb)  
+          
+    # Define Problem
+    
+    # Pressure 
+    
+    energy_global               = Global_thermal (M = M, name = ['energy','domainG']  , elements = (element_PT,                   ), pdb = pdb, ctrl = ctrl)
+    
+    lithostatic_pressure_global = Global_pressure(M = M, name = ['pressure','domainG'], elements = (element_PT,                     ), pdb = pdb                                ) 
+    
+    wedge                       = Wedge          (M = M, name = ['stokes','domainB'  ], elements = (element_V,element_p,element_PT  ), pdb = pdb                                )
+    
+    slab                        = Slab           (M = M, name = ['stokes','domainA'  ], elements = (element_V,element_p,element_PT  ), pdb = pdb                                )
+    
+    g = fem.Constant(M.domainG.mesh, PETSc.ScalarType([0.0, -ctrl.g]))    
+
+    # Define Solution 
+    sol                         = Solution()
+     
+    sol.create_function(lithostatic_pressure_global,slab,wedge,[element_V,element_p])
+    
+    sol.T_O = energy_global.initial_temperature_field(M.domainG, ctrl, lhs_ctrl,M.g_input)
+
+    it_outer = 0 
+
+    res = 1.0
+
+    while it_outer < ctrl.it_max and res > ctrl.tol: 
+        
+        time_A_outer = timing.time()
+        # Copy the old solution for the residuum computation 
+        
+        Told        = sol.T_O.copy()
+        PLold       = sol.PL.copy()
+        u_globalold = sol.u_global.copy()
+        p_globalold = sol.p_global.copy()
+        
+        
+        # Solve lithostatic pressure problem
+        if lithostatic_pressure_global.typology == 'NonlinearProblem' or it_outer == 0:  
+            lithostatic_pressure_global.Solve_the_Problem(sol,ctrl,pdb,M,g,it_outer,ts=0)
+
+        # Interpolate from global to wedge/slab
+
+        sol.t_owedge = interpolate_from_sub_to_main(sol.t_owedge,sol.T_O, M.domainB.cell_par,1)
+        sol.p_lwedge = interpolate_from_sub_to_main(sol.p_lwedge,sol.PL, M.domainB.cell_par,1)
+
+        if it_outer == 0: 
+            slab.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it = it_outer,ts=0)
+
+        if wedge.typology == 'NonlinearProblem' or it_outer == 0:  
+            wedge.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,M.g_input,it = it_outer,ts=0)
+
+
+        # Interpolate from wedge/slab to global
+        sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_wedge, M.domainB.cell_par)
+        sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_slab, M.domainA.cell_par)
+        
+        sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_wedge, M.domainB.cell_par)
+        sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_slab, M.domainA.cell_par)
+        
+        
+        energy_global.Solve_the_Problem_SS(sol,ctrl,pdb,M,lhs_ctrl,M.g_input,it = it_outer, ts = 0)
+        
+        # Compute residuum 
+        res = compute_residuum_outer(sol,Told,PLold,u_globalold,p_globalold,it_outer,sc, time_A_outer)
+        print_output(sol,M.domainG,pdb,ioctrl,it_outer,sc)
+        A,B,C =_benchmark_van_keken(sol,1,ctrl.van_keken_case,sc)
+
+        it_outer = it_outer + 1
+        
+    # Destroy KSP
+    energy_global.solv.ksp.destroy()
+    lithostatic_pressure_global.solv.ksp.destroy()
+    slab.solv.ksp.destroy()
+    wedge.solv.ksp.destroy()
+    # Ahaha! 
+    
+    return 0 
+
+
+
+
+def compute_residuum(a,b):
+    dx = a.copy()
+    
+    dx1 = a.copy()
+    
+    dx.x.array[:]  = b.x.array[:] - a.x.array[:];dx.x.scatter_forward()
+    
+    dx1.x.array[:]  = b.x.array[:] + a.x.array[:];dx1.x.scatter_forward()
+    
+    
+    res = L2_norm_calculation(dx)/L2_norm_calculation(dx1)
+    
+    return res
+
+def min_max_array(a, vel = False):
+    
+    if vel == True: 
+        a1 = a.sub(0).collapse()
+        a2 = a.sub(1).collapse()
+        array = np.sqrt(a1.x.array[:]**2 + a2.x.array[:]**2)
+    else: 
+        array = a.x.array[:]
+    
+    local_min = np.min(array[:])
+    local_max = np.max(array[:])
+    
+    global_min = a.function_space.mesh.comm.allreduce(local_min, op=MPI.MIN)
+    global_max = a.function_space.mesh.comm.allreduce(local_max, op=MPI.MAX)
+    
+    return np.array([global_min, global_max],dtype=np.float64)
+
+
+def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA):
+    # Prepare the variables 
+
+    
+    
+    
+    res_u = compute_residuum(sol.u_global,u)
+    res_p = compute_residuum(sol.p_global,p)
+    res_T = compute_residuum(sol.T_O,T)
+    res_PL= compute_residuum(sol.PL,PL)
+    
+    minMaxU = min_max_array(sol.u_global, vel=True)
+    minMaxP = min_max_array(sol.p_global)
+    minMaxT = min_max_array(sol.T_O)
+    minMaxPL= min_max_array(sol.PL)
+    
+    # scal back 
+    
+    minMaxU = minMaxU*(sc.L/sc.T)*sc.scale_vel 
+    minMaxP = minMaxP*sc.stress/1e9 
+    minMaxT = minMaxT*sc.Temp -273.15
+    minMaxPL= minMaxPL*sc.stress/1e9
+    
+    
+    res_total = np.sqrt(res_u**2+res_p**2+res_T**2)
+    
+    time_B_outer = timing.time()
+
+    print_ph(f'')
+    print_ph(f'// -- // --- Outer iteration {it_outer:d} with tolerance {res_total:.3e}, in {time_B_outer-tA:.1f} sec // -- // --->')
+    print_ph(f'             []Res velocity       =  {res_u:.3e} [n.d.], max= {minMaxU[1]:.3e}, min= {minMaxU[0]:.3e} [cm/yr]')
+    print_ph(f'             []Res Temperature    =  {res_T:.3e} [n.d.], max= {minMaxT[1]:.2f}, min= {minMaxT[0]:.2f} [C]')
+    print_ph(f'             []Res pressure       =  {res_p:.3e} [n.d.], max= {minMaxP[1]:.3e}, min= {minMaxP[0]:.3e} [GPa]')
+    print_ph(f'             []Res lithostatic    =  {res_PL:.3e}[n.d.], max= {minMaxPL[1]:.3e}, min= {minMaxPL[0]:.3e} [GPa]')
+    print_ph(f'// -- // --- =============================================// -- // --->')
+    print_ph(f'')
+
+    
+    
+    
+    
+    return res_total 
+
+
+def print_output(S,D,pdb,ioctrl,it_outer,sc,ts=0):
+    from compute_material_property import evaluate_material_property  
+    import os
+    from dolfinx.io import XDMFFile
+    import basix  
+    
+    mesh = D.mesh
+    
+    
+    pt_save = ioctrl.path_save
+    if not os.path.exists(pt_save):
+        os.makedirs(pt_save)
+    pt_save = os.path.join(pt_save, ioctrl.sname)
+    if not os.path.exists(pt_save):
+        os.makedirs(pt_save)    
+    file_name = os.path.join(pt_save,'it_%04d'%(it_outer))
+    element_ve = basix.ufl.element("Lagrange", "triangle", 1, shape=(mesh.geometry.dim,   ))
+    element_te = basix.ufl.element("Lagrange", "triangle", 1, shape=(mesh.geometry.dim**2,))
+    element_sc = basix.ufl.element("Lagrange", "triangle", 1)
+
+
+    # Prepare variable and spaces 
+    vel_triangular = fem.functionspace(mesh,element_ve)
+    stress_triangular = fem.functionspace(mesh,element_te)
+    temp_triangular = fem.functionspace(mesh,element_sc)
+    pres_triangular = fem.functionspace(mesh,element_sc)
+    
+    # Velocity 
+    u_T = fem.Function(vel_triangular)
+    u_T.name = "Velocity  [cm/yr]"
+    u_T.interpolate(S.u_global)
+    u_T.x.array[:] = u_T.x.array[:]*(sc.L/sc.T)/sc.scale_vel
+    u_T.x.scatter_forward()
+    
+    # Pressure
+    p2 = fem.Function(pres_triangular)
+    p2.name = "Pressure  [GPa]"
+    p2.interpolate(S.p_global)
+    p2.x.array[:] = p2.x.array[:]*sc.stress/1e9 
+    p2.x.scatter_forward()  
+    
+    # Temperature
+    T2 = fem.Function(temp_triangular)
+    T2.name = "Temperature  [degC]"
+    T2.interpolate(S.T_O)
+    T2.x.array[:] = T2.x.array[:]*sc.Temp - 273.15
+    T2.x.scatter_forward()  
+    
+    # Lithostatic pressure
+    PL2 = fem.Function(pres_triangular)
+    PL2.name = "Lit Pres  [GPa]"
+    PL2.interpolate(S.PL)
+    PL2.x.array[:] = PL2.x.array[:]*sc.stress/1e9
+    PL2.x.scatter_forward()
+    
+    
+    # density 
+    rho = density_FX(pdb,S.T_O,S.PL,D.phase,D)
+    rho2 = evaluate_material_property(rho,temp_triangular)
+    rho2.name = "Density  [kg/m3]"
+    rho2.x.array[:] = rho2.x.array[:]*sc.rho
+    rho2.x.scatter_forward()
+    
+    # Cp 
+    Cp = heat_capacity_FX(pdb,S.T_O,D.phase,D)
+    Cp2 = evaluate_material_property(Cp,temp_triangular)
+    Cp2.name = "Cp  [J/kg]"
+    Cp2.x.array[:] = Cp2.x.array[:]*sc.Cp
+    Cp2.x.scatter_forward()
+    
+    # k 
+    k = heat_conductivity_FX(pdb,S.T_O,S.PL,D.phase,D)
+    k2 = evaluate_material_property(k,temp_triangular)
+    k2.name = "k  [W/m/k]"
+    k2.x.array[:] = k2.x.array[:]*sc.k
+    k2.x.scatter_forward()
+    
+    
+    # kappa 
+    kappa2 = fem.Function(temp_triangular)
+    kappa2.name = "kappa  [m2/s]"
+    kappa2.x.array[:] = k2.x.array[:]/(rho2.x.array[:]*Cp2.x.array[:])
+    kappa2.x.scatter_forward()
+    
+    # strain rate 
+    e = compute_strain_rate(S.u_global)
+    eII = compute_eII(e)
+    eII2 = evaluate_material_property(eII,temp_triangular)
+
+    e_T = fem.Function(temp_triangular)
+    e_T.name = "e_II  [1/s]"
+    e_T.interpolate(eII2)
+    e_T.x.array[:] = e_T.x.array[:]/sc.T
+    e_T.x.array[e_T.x.array[:]<=0.0] = 1e-20
+    e_T.x.scatter_forward()
+    
+    # viscosity (e,S.t_oslab,S.p_lslab,pdb,D.phase,D,sc)
+    eta = compute_viscosity_FX(e_T,S.T_O,S.PL,pdb,D.phase,D,sc)
+    eta2 = evaluate_material_property(eta,temp_triangular)
+    eta2.name = "eta  [Pa s]"
+    eta2.x.array[:] = eta2.x.array[:]*sc.eta
+    eta2.x.scatter_forward()
+    
+    # heat flux 
+    q_expr = - (k2 * ufl.grad(T2)*1/sc.L)  
+    flux   = fem.Function(vel_triangular)
+    flux.name ='q  [W/m2]'
+    v = ufl.TestFunction(vel_triangular)
+    w = ufl.TrialFunction(vel_triangular)
+    a = ufl.inner(w,v) * ufl.dx
+    L = ufl.inner(q_expr,v) * ufl.dx
+    A = fem.petsc.assemble_matrix(fem.form(a))
+    A.assemble()
+    b = fem.petsc.assemble_vector(fem.form(L))
+
+    solver = PETSc.KSP().create(mesh.comm)
+    solver.setOperators(A)
+    solver.setType(PETSc.KSP.Type.CG)
+    solver.getPC().setType(PETSc.PC.Type.JACOBI)
+    solver.setFromOptions()
+    solver.solve(b, flux.x.petsc_vec)
+    flux.x.scatter_forward()
+    
+
+    
+    
+    with XDMFFile(MPI.COMM_WORLD, "%s.xdmf"%file_name, "w") as ufile_xdmf:
+
+        coord = mesh.geometry.x.copy()
+        mesh.geometry.x[:] *= sc.L/1e3
+        ufile_xdmf.write_mesh(mesh)
+        ufile_xdmf.write_function(u_T)
+        ufile_xdmf.write_function(p2)
+        ufile_xdmf.write_function(T2)
+        ufile_xdmf.write_function(PL2)
+        ufile_xdmf.write_function(rho2)
+        ufile_xdmf.write_function(Cp2)
+        ufile_xdmf.write_function(k2)
+        ufile_xdmf.write_function(kappa2)
+        ufile_xdmf.write_function(e_T)
+        ufile_xdmf.write_function(eta2)
+        ufile_xdmf.write_function(flux)
+        mesh.geometry.x[:] = coord
+    
+
+    
+    
+    return 0
+
+
+
+def _benchmark_van_keken(S,b_vk,case,sc):
+    from scipy.interpolate import griddata
+    # Regular grid interpolation 
+    if b_vk != 1: 
+        return 0 
+    T = S.T_O.copy()
+
+    XG = S.T_O.function_space.tabulate_dof_coordinates() 
+    x_g = np.array([np.min(XG[:,0]),np.max(XG[:,0])],dtype=np.float64)*sc.L
+    y_g = np.array([np.min(XG[:,1]),np.max(XG[:,1])],dtype=np.float64)*sc.L
+    nx   = 111 
+    ny   = 101
+    idx0 = 10 #(11 in van keken)
+    idy0 = ny-11 
+    idx1 = 36-1 
+    idy1 = ny-36
+
+    xx   = np.linspace(x_g[0],x_g[1],num=nx)
+    yy   = np.linspace(y_g[0],y_g[1],num=ny)
+    T_g  = np.zeros([nx,ny],dtype=np.float64)
+    X,Y  = np.meshgrid(xx,yy)
+    xt,yt = XG[:,0]*sc.L, XG[:,1]*sc.L
+    p     = np.zeros((len(xt),2),dtype=np.float64)
+    p[:,0] = xt 
+    p[:,1] = yt
+    T_g   = griddata(p,T.x.array[:]*sc.Temp,(X, Y), method='nearest')-273.15
+    T_g = T_g.transpose()
+    T = 0
+    co = 0
+    x_s=[]
+    y_s=[] 
+    T2 = []
+    c = 0
+    X_S = []
+    Y_S = []
+    i_X = 10
+    for i in range(36):
+            T = T+(T_g[i,ny-1-i])**2
+            x_s.append(xx[i])
+            y_s.append(yy[ny-1-i])
+            if (i<21) & (i>8):
+                l_index = np.arange(ny-(i+1),ny-10)
+                if len(l_index) == 0:
+                    l_index_1st = np.arange(9,21)
+                    for j in range(len(l_index_1st)):
+                        T2.append(T_g[l_index_1st[j],ny-(i+1)]**2)
+                        X_S.append(xx[l_index_1st[j]])
+                        Y_S.append(yy[ny-(i+1)])
+                        c = c + 1
+                for j in range(len(l_index)):
+                    T2.append(T_g[i,l_index[j]]**2)
+                    X_S.append(xx[i])
+                    Y_S.append(yy[int(l_index[j])])
+                    c = c + 1
+                
+            co = co+1 
+    
+    T_11_11 = T_g[idx0,idy0]
+              
+    T_ln = np.sqrt(T/co) 
+    T_ln2 = np.sqrt(np.sum(T2)/c)
+
+    data_1c = np.array([
+    [397.55, 505.70, 850.50],
+    [391.57, 511.09, 852.43],
+    [387.78, 503.10, 852.97],
+    [387.84, 503.13, 852.92],
+    [389.39, 503.04, 851.68],
+    [388.73, 504.03, 854.99]
+    ])
+
+    data_2a = np.array([
+    [570.30, 614.09, 1007.31],
+    [580.52, 606.94, 1002.85],
+    [580.66, 607.11, 1003.20],
+    [577.59, 607.52, 1002.15],
+    [581.30, 607.26, 1003.35]
+    ])
+
+    data_2b = np.array([
+    [550.17, 593.48, 994.11],
+    [551.60, 608.85, 984.08],
+    [582.65, 604.51, 998.71],
+    [583.36, 605.11, 1000.01],
+    [574.84, 603.80, 995.24],
+    [583.11, 604.96, 1000.05]
+    ])
+
+    if case    == 0: 
+        data   = data_1c 
+    elif case  == 1:
+        data = data_2a
+    elif case== 2 : 
+        data = data_2b 
+    else: 
+        data = data_1c*0.
+    
+    print( '------------------------------------------------------------------' )
+    print( ':::====> T(11,11) = %.2f [deg C], average value VanK2008 = %.2f [deg C] +/- %.2f;m/M = %.2f/%.2f [deg C]'%( T_11_11, np.mean(data[:,0]), np.std(data[:,0]),np.min(data[:,0]),np.max(data[:,0]) ) )
+    print( ':::====> L2_A     = %.2f [deg C], average value VanK2008 = %.2f [deg C] +/- %.2f;m/M = %.2f/%.2f [deg C]'%( T_ln, np.mean(data[:,1]), np.std(data[:,1]) ,np.min(data[:,1]),np.max(data[:,1]) ) )
+    print( ':::====> L2_B     = %.2f [deg C], average value VanK2008 = %.2f [deg C] +/- %.2f;;m/M = %.2f/%.2f[deg C]'%( T_ln2, np.mean(data[:,2]), np.std(data[:,2]),np.min(data[:,2]),np.max(data[:,2]) ) )
+    print( ':::L2_A = T along the slab surface from 0 to -210 km' )
+    print( ':::L2_B = T wedge norm from -54 to -110 km ' )
+    print( ':::=> From grid to downsampled grid -> nearest interpolation' )
+    print( '------------------------------------------------------------------' )
+    fg = plt.figure()
+    ax = fg.gca()
+    levels = [0,200,400,600,800,1000,1200,1350]
+    a=ax.contourf(xx,yy,T_g.transpose(),levels=levels,cmap='cmc.lipari');plt.colorbar(a)
+    ax.scatter(x_s,y_s,s=10,c='r',marker='d')
+    ax.scatter(xx[10],yy[ny-11],s=40,marker='s',c='k')
+    ax.scatter(X_S,Y_S,s=1,c='w')
+    
+    A = [T_11_11,np.mean(data[:,0]), np.std(data[:,0])]
+    B = [ T_ln, np.mean(data[:,1]), np.std(data[:,1])]
+    C = [T_ln2, np.mean(data[:,2]), np.std(data[:,2])]
+    return A,B,C
+
+if __name__ == '__main__': 
+    
+    set_ups_problem()
+    
+    a = 1
+    
+    
+    
+    
+    
+
+    # Update and set up variational problem
+    
+    # non-linear itearion betwee pressure/stk/temperature 
+    #===============
+    # -> [a] Solve Pressure: newton picard+newton
+    #        [/] interpolate solutions from global to local 
+    #    [b] Solve Slab if (it == 0 or time_step == 0) & vel_time == 1 (mix Picard & Newton)=> iterate picard till 1e-3 -> try newton  
+    #    [c] Solve Wedge if (it==0  or time_step == 0) & (rheo == nonlinear or vel_time == 1)
+    #        [/] interpolate solutions from local to global 
+    #    [d] Solve thermal problem -> steady state / time dependent
+    #    [e] Check residuum of PL,T,u(G),p(G) -> if variation of norm(dT,dPL,du(G),dp(G))<tol -> iteration finished 
+    # ==============         
+    #    [Output] : interpoalte solution variable DG1 -> save output -> Extract additional data 
+    #             : density,k,Cp,viscosity, strain rate, pressure 
+    #    [->done<-] Create relational database, {Here I need to do a decent job, for showing off my skills to potential hiring, like the manager of an obnoxious McDonald}
+    # -------------
+    
+    
+    
