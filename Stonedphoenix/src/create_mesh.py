@@ -112,7 +112,8 @@ class geom_input():
                  lc = 0.5,
                  wc = 2.0e3,
                  slab_tk = 130e3, 
-                 decoupling = 100e3):
+                 decoupling = 100e3,
+                 creep      = 40e3):
         self.x                 = x               # main grid coordinate
         self.y                 = y   
         self.slab_tk           = slab_tk
@@ -125,7 +126,7 @@ class geom_input():
         self.decoupling        = decoupling      # decoupling depth -> i.e. where the weak zone is prolonged 
         self.resolution_normal = wc  # To Do
         self.theta_out_slab    = []
-        self.transition        = 10e3
+        self.creep             = creep
     
     def dimensionless_ginput(self,sc):
         self.x                 /= sc.L               # main grid coordinate
@@ -137,7 +138,7 @@ class geom_input():
         self.lt_d              /= sc.L    # total lithosphere thickness
         self.decoupling        /= sc.L      # decoupling depth -> i.e. where the weak zone is prolonged 
         self.resolution_normal /= sc.L  # To Do
-        self.transition        /= sc.L
+        self.creep             /= sc.L
         
         return self 
         

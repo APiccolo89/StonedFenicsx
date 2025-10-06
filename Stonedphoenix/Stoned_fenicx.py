@@ -52,17 +52,20 @@ def StonedFenicsx():
 
     
     # Numerical controls
-    ctrl = NumericalControls(g = IP.g,
-                            v_s = np.asarray(IP.v_s),
-                            slab_age = IP.slab_age,
-                            time_max = IP.time_max,
+    ctrl = NumericalControls(g               = IP.g,
+                            v_s              = np.asarray(IP.v_s),
+                            slab_age         = IP.slab_age,
+                            time_max         = IP.time_max,
                             time_dependent_v = IP.time_dependent_v,
-                            steady_state = IP.steady_state,
-                            slab_bc = IP.slab_bc,
-                            decoupling = IP.decoupling_ctrl,
-                            tol_innerPic = IP.tol_innerPic,
-                            tol_innerNew = IP.tol_innerNew,
-                            van_keken = IP.van_keken)
+                            steady_state     = IP.steady_state,
+                            slab_bc          = IP.slab_bc,
+                            decoupling       = IP.decoupling_ctrl,
+                            tol_innerPic     = IP.tol_innerPic,
+                            tol_innerNew     = IP.tol_innerNew,
+                            van_keken        = IP.van_keken,
+                            van_keken_case   = IP.van_keken_case,
+                            model_decoupling = IP.model_decoupling,
+                            model_shear      = IP.model_shear)
     # IO controls
     io_ctrl = IOControls(test_name = IP.test_name,
                         path_save = IP.path_save,
@@ -79,7 +82,7 @@ def StonedFenicsx():
                     c_age_plate = IP.c_age_plate)
                            
     # Phase properties
-    Pdb = PhaseDataBase(6)
+    Pdb = PhaseDataBase(6,IP.friction_angle)
     # Phase 1
     Pdb = _generate_phase(Pdb, 1, rho0 = IP.Phase1.rho0 , 
                           option_rho = IP.Phase1.option_rho, 

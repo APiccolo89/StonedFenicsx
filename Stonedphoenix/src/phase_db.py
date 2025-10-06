@@ -206,13 +206,13 @@ spec_phase = [
     ("eta_min",float64),    # minimum viscosity [Pas]
     ("eta_max",float64),    # max viscosity [Pas]
     ("eta_def",float64),    # default viscosity [Pas]
-    
+    ("friction_angle",float64)
 ]   
 
 #-----------------------------------------------------------------------------------------------------------
 @jitclass(spec_phase)
 class PhaseDataBase:
-    def __init__(self, number_phases):
+    def __init__(self, number_phases,friction_angle):
         # Initialize individual fields as arrays
         if number_phases>8: 
             raise ValueError("The number of phases should not exceed 7")
@@ -227,6 +227,7 @@ class PhaseDataBase:
         self.eta_def     = 1e21    # Default viscosity [Pas]
         self.T_Scal      = 1.      # Default temperature scale
         self.P_Scal      = 1.      # Default Pressure scale 
+        self.friction_angle = friction_angle
         self.id          = np.zeros(number_phases, dtype=np.int32)
         # Explanation: For testing the pressure and t scal are set to be 1.0 -> so, the software is not performing any 
         # scaling operation. 
@@ -288,7 +289,7 @@ def _generate_phase(PD:PhaseDataBase,
                     Edis:float             = -1e23,
                     Vdis:float             = -1e23, 
                     Bdis:float             = -1e23, 
-                    Cp:float               = 1050,
+                    Cp:float               = 1250,
                     k:float                = 3.0,
                     rho0:float              = 3300,
                     eta:float              = -1e23,

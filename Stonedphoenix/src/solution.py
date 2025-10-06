@@ -322,35 +322,52 @@ def decoupling_function(z,fun,ctrl,D,g_input):
     dc = dc/g_input.decoupling
     lit = lit/g_input.decoupling
     z2 = np.abs(z)/g_input.decoupling
-    trans = g_input.transition/g_input.decoupling
     
-    if ctrl.linear_decoupling == 1:
-        fun.x.array[z < - g_input.lit_d] = 0.0
-        ind = np.where((z >= - g_input.lt_d) & (z <= - g_input.decoupling))
-        fun.x.array[ind] = (z[ind] - g_input.lit_d)/(g_input.decoupling - g_input.lt_d)
-        fun.x.array[z > - g_input.decoupling] = 1.0
+    if ctrl.model_decoupling == 1:
+        fun.x.array[z2 < lit] = 1
+        ind = np.where((z2 >=lit) & (z2 < dc))
+        fun.x.array[ind] = 1-(lit -z2[ind])/(lit-dc)
+        fun.x.array[z > dc] = 0.0
         fun.x.scatter_forward()
-    
-    elif ctrl.linear_decoupling == 2 :   
-
-        z2 = np.abs(z)/g_input.decoupling
-        zm = (dc + lit)/2
-        k = 15.0
-        fun.x.array[:] = 1-1.0 / (1 + np.exp(-k *(z2-zm)))
-        fun.x.scatter_forward()
-        
     else: 
-        fun.x.array[:] = 1-0.5 * ((1+0.2)+(1-0.2)*np.tanh((z2-dc)/(trans/4)))
+        m     = (lit+dc)/2
+        trans = dc-m
+        fun.x.array[:] = 1-0.5 * ((1)+(1)*np.tanh((z2-m)/(trans/4)))
     
-        
-
-   
-   
-   
     
     return fun
         
+#----------------------------------------------------------------------------
+def efficiency_function(z,fun,ctrl,D,g_input):
+    """
+    
+    
+    
+    """
+    
+    dc = g_input.decoupling
+    creep = g_input.creep
+    dc = dc/g_input.decoupling
+    creep = creep/g_input.decoupling
+    z2 = np.abs(z)/g_input.decoupling
+    
+    if ctrl.model_shear == 1:
+        fun.x.array[z2 < creep] = 1
+        ind = np.where((z2 >=creep) & (z2 < dc))
+        fun.x.array[ind] = 1-(creep -z2[ind])/(creep-dc)
+        fun.x.array[z > dc] = 0.0
+        fun.x.scatter_forward()
         
+    else: 
+
+        m          = (creep+dc)/2
+        trans         = (dc-m)
+        fun.x.array[:] = 1-0.5 * ((1)+(1)*np.tanh((z2-m)/(trans/4)))
+   
+   
+   
+    
+    return fun       
          
 #----------------------------------------------------------------------------     
 class Problem:
@@ -502,24 +519,38 @@ class Global_thermal(Problem):
         return bc 
         
     #------------------------------------------------------------------
-    def compute_shear_heating(self,ctrl,S,D,g_input):
+    def compute_shear_heating(self,ctrl,phi,S,D,g_input):
+        """
+        Apperently the sociopath the devise this method, uses a delta function to describe 
+        the interface frictional heating. 
+        -> [A] => Shear heating becomes a ufl expression. So happy about it 
         
-        facets1                = D.facets.find(D.bc_dict['Subduction_top_lit'])
-        facets2                = D.facets.find(D.bc_dict['Subduction_top_wed'])
+        """
         
-        facet_seismogenic = np.unique(np.concatenate((facets1,facets2)))
-        dofs              = fem.locate_dofs_topological(self.FS, D.mesh.topology.dim-1, facet_seismogenic)
+        if ctrl.decoupling == 1 and ctrl.model_shear >0: 
+            facets1                = D.facets.find(D.bc_dict['Subduction_top_lit'])
+            facets2                = D.facets.find(D.bc_dict['Subduction_top_wed'])
         
-        heat_source = fem.Function(self.FS)
-        heat_source.x.array[:] = 0.0   
-        heat_source.x.scatter_forward()
-        shear_heating = heat_source.copy()
-        Z = self.FS.tabulate_dof_coordinates()[:,1]
-        shear_heating = decoupling_function(Z,shear_heating,ctrl,D,g_input)
-        shear_heating.x.array[:] = shear_heating.x.array[:] * S.PL.x.array[:] * ctrl.v_s[0] * 0.06
-        heat_source.x.array[dofs] = shear_heating.x.array[dofs]
+            facet_seismogenic = np.unique(np.concatenate((facets1,facets2)))
+            dofs              = fem.locate_dofs_topological(self.FS, D.mesh.topology.dim-1, facet_seismogenic)
         
-        return heat_source
+            heat_source = fem.Function(self.FS)
+            heat_source.x.array[:] = 0.0   
+            heat_source.x.scatter_forward()
+        
+            decoupling    = heat_source.copy()
+            efficiency    = heat_source.copy()
+            Z = self.FS.tabulate_dof_coordinates()[:,1]
+            decoupling = decoupling_function(Z,decoupling,ctrl,D,g_input)
+            efficiency = efficiency_function(Z,efficiency,ctrl,D,g_input)
+            sh         = decoupling * efficiency
+            expression = sh * ufl.avg(S.PL) * ctrl.v_s[0] * phi * ufl.avg(self.test0) * (self.dS(D.bc_dict['Subduction_top_lit']) +self.dS(D.bc_dict['Subduction_top_wed']))
+            
+            return expression
+
+        else:
+            return 0.0 
+        
         
         
             
@@ -555,7 +586,7 @@ class Global_thermal(Problem):
     
     #------------------------------------------------------------------
     def compute_energy_source(self,D,pdb):
-        source = self.shear_heating.copy()
+        source = fem.Function(self.FS)
         source = compute_radiogenic(pdb, source, D.phase, D.mesh)
         self.energy_source = source.copy()
 
@@ -572,7 +603,7 @@ class Global_thermal(Problem):
         Cp_k = heat_capacity_FX(pdb, T, D.phase, D.mesh)  # frozen
 
 
-        f    = self.energy_source  # source term
+        f    = self.energy_source# source term
         
         dx  = self.dx
         # Linear operator with frozen coefficients
@@ -582,7 +613,7 @@ class Global_thermal(Problem):
             adv  = rho_k * Cp_k *ufl.dot(u_global, ufl.grad(self.trial0)) * self.test0 * dx
             
             a = fem.form(diff + adv)
-            L = fem.form(f * self.test0 * dx )      
+            L = fem.form(f * self.test0 * dx + self.shear_heating)      
         else: 
             a = None
                 
@@ -595,9 +626,10 @@ class Global_thermal(Problem):
         nl = 0 
         p_k = S.PL.copy()  # Previous lithostatic pressure 
         T   = S.T_O # -> will not eventually update 
-        
-        self.shear_heating = self.compute_shear_heating(ctrl,S,getattr(M,'domainG'),geom)
-        self.compute_energy_source(getattr(M,'domainG'),pdb)
+
+        if it == 0:         
+            self.shear_heating = self.compute_shear_heating(ctrl,pdb.friction_angle, S,getattr(M,'domainG'),geom)
+            self.compute_energy_source(getattr(M,'domainG'),pdb)
         
         a,L = self.set_linear_picard_SS(p_k,T,S.u_global,getattr(M,'domainG'),pdb)
         
@@ -1229,7 +1261,7 @@ class Wedge(Stokes_Problem):
         non_linear = False 
         
         for i in range(np.shape(unique_ids)[0]): 
-            if pdb.option_eta[unique_ids[i]] > 1: 
+            if pdb.option_eta[unique_ids[i]] > 0: 
                 non_linear = True
                 break
             
@@ -1237,7 +1269,8 @@ class Wedge(Stokes_Problem):
             self.typology = 'NonlinearProblem'
         else:
             self.typology = 'LinearProblem'
-            
+        
+        
             
     
     def setdirichlecht(self,ctrl,D,theta,V,g_input,it=0, ts = 0):
@@ -1722,7 +1755,7 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
         # Compute residuum 
         res = compute_residuum_outer(sol,Told,PLold,u_globalold,p_globalold,it_outer,sc, time_A_outer)
         print_output(sol,M.domainG,pdb,ioctrl,it_outer,sc)
-        A,B,C =_benchmark_van_keken(sol,1,3,sc)
+        A,B,C =_benchmark_van_keken(sol,1,ctrl.van_keken_case,sc)
 
         it_outer = it_outer + 1
         
@@ -1843,58 +1876,58 @@ def print_output(S,D,pdb,ioctrl,it_outer,sc,ts=0):
     
     # Velocity 
     u_T = fem.Function(vel_triangular)
-    u_T.name = "Velocity"
+    u_T.name = "Velocity  [cm/yr]"
     u_T.interpolate(S.u_global)
     u_T.x.array[:] = u_T.x.array[:]*(sc.L/sc.T)/sc.scale_vel
     u_T.x.scatter_forward()
     
     # Pressure
     p2 = fem.Function(pres_triangular)
-    p2.name = "Pressure"
+    p2.name = "Pressure  [GPa]"
     p2.interpolate(S.p_global)
-    p2.x.array[:] = p2.x.array[:]*sc.stress 
+    p2.x.array[:] = p2.x.array[:]*sc.stress/1e9 
     p2.x.scatter_forward()  
     
     # Temperature
     T2 = fem.Function(temp_triangular)
-    T2.name = "Temperature"
+    T2.name = "Temperature  [degC]"
     T2.interpolate(S.T_O)
     T2.x.array[:] = T2.x.array[:]*sc.Temp - 273.15
     T2.x.scatter_forward()  
     
     # Lithostatic pressure
     PL2 = fem.Function(pres_triangular)
-    PL2.name = "Lithostatic_Pressure"
+    PL2.name = "Lit Pres  [GPa]"
     PL2.interpolate(S.PL)
-    PL2.x.array[:] = PL2.x.array[:]*sc.stress 
+    PL2.x.array[:] = PL2.x.array[:]*sc.stress/1e9
     PL2.x.scatter_forward()
     
     
     # density 
     rho = density_FX(pdb,S.T_O,S.PL,D.phase,D)
     rho2 = evaluate_material_property(rho,temp_triangular)
-    rho2.name = "Density"
+    rho2.name = "Density  [kg/m3]"
     rho2.x.array[:] = rho2.x.array[:]*sc.rho
     rho2.x.scatter_forward()
     
     # Cp 
     Cp = heat_capacity_FX(pdb,S.T_O,D.phase,D)
     Cp2 = evaluate_material_property(Cp,temp_triangular)
-    Cp2.name = "Cp"
+    Cp2.name = "Cp  [J/kg]"
     Cp2.x.array[:] = Cp2.x.array[:]*sc.Cp
     Cp2.x.scatter_forward()
     
     # k 
     k = heat_conductivity_FX(pdb,S.T_O,S.PL,D.phase,D)
     k2 = evaluate_material_property(k,temp_triangular)
-    k2.name = "Heat_Conductivity"
+    k2.name = "k  [W/m/k]"
     k2.x.array[:] = k2.x.array[:]*sc.k
     k2.x.scatter_forward()
     
     
     # kappa 
     kappa2 = fem.Function(temp_triangular)
-    kappa2.name = "Thermal_Diffusivity"
+    kappa2.name = "kappa  [m2/s]"
     kappa2.x.array[:] = k2.x.array[:]/(rho2.x.array[:]*Cp2.x.array[:])
     kappa2.x.scatter_forward()
     
@@ -1904,7 +1937,7 @@ def print_output(S,D,pdb,ioctrl,it_outer,sc,ts=0):
     eII2 = evaluate_material_property(eII,temp_triangular)
 
     e_T = fem.Function(temp_triangular)
-    e_T.name = "Strain_rate second invariant"
+    e_T.name = "e_II  [1/s]"
     e_T.interpolate(eII2)
     e_T.x.array[:] = e_T.x.array[:]/sc.T
     e_T.x.array[e_T.x.array[:]<=0.0] = 1e-20
@@ -1913,16 +1946,37 @@ def print_output(S,D,pdb,ioctrl,it_outer,sc,ts=0):
     # viscosity (e,S.t_oslab,S.p_lslab,pdb,D.phase,D,sc)
     eta = compute_viscosity_FX(e_T,S.T_O,S.PL,pdb,D.phase,D,sc)
     eta2 = evaluate_material_property(eta,temp_triangular)
-    eta2.name = "Viscosity"
+    eta2.name = "eta  [Pa s]"
     eta2.x.array[:] = eta2.x.array[:]*sc.eta
     eta2.x.scatter_forward()
     
-        
+    # heat flux 
+    q_expr = - (k2 * ufl.grad(T2)*1/sc.L)  
+    flux   = fem.Function(vel_triangular)
+    flux.name ='q  [W/m2]'
+    v = ufl.TestFunction(vel_triangular)
+    w = ufl.TrialFunction(vel_triangular)
+    a = ufl.inner(w,v) * ufl.dx
+    L = ufl.inner(q_expr,v) * ufl.dx
+    A = fem.petsc.assemble_matrix(fem.form(a))
+    A.assemble()
+    b = fem.petsc.assemble_vector(fem.form(L))
+
+    solver = PETSc.KSP().create(mesh.comm)
+    solver.setOperators(A)
+    solver.setType(PETSc.KSP.Type.CG)
+    solver.getPC().setType(PETSc.PC.Type.JACOBI)
+    solver.setFromOptions()
+    solver.solve(b, flux.x.petsc_vec)
+    flux.x.scatter_forward()
+    
+
     
     
     with XDMFFile(MPI.COMM_WORLD, "%s.xdmf"%file_name, "w") as ufile_xdmf:
 
-
+        coord = mesh.geometry.x.copy()
+        mesh.geometry.x[:] *= sc.L/1e3
         ufile_xdmf.write_mesh(mesh)
         ufile_xdmf.write_function(u_T)
         ufile_xdmf.write_function(p2)
@@ -1934,6 +1988,8 @@ def print_output(S,D,pdb,ioctrl,it_outer,sc,ts=0):
         ufile_xdmf.write_function(kappa2)
         ufile_xdmf.write_function(e_T)
         ufile_xdmf.write_function(eta2)
+        ufile_xdmf.write_function(flux)
+        mesh.geometry.x[:] = coord
     
 
     
@@ -2034,7 +2090,7 @@ def _benchmark_van_keken(S,b_vk,case,sc):
         data   = data_1c 
     elif case  == 1:
         data = data_2a
-    elif case==3 or case ==2 or case == 4: 
+    elif case== 2 : 
         data = data_2b 
     else: 
         data = data_1c*0.

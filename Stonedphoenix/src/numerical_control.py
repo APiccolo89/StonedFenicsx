@@ -49,7 +49,9 @@ spec = [('it_max', int64),
     ('slab_bc',int64),# Assuming this is a NumPy array
     ('decoupling',int64),
     ('van_keken',int64),
-    ('linear_decoupling',int64)# 1 decoupled, 0 coupled
+    ('van_keken_case',int64),
+    ('model_decoupling',int64),
+    ('model_shear',int64),# 1 decoupled, 0 coupled
 ]
 
 @jitclass(spec)
@@ -72,26 +74,30 @@ class NumericalControls:
                  tol_innerPic = 1e-4,
                  tol_innerNew = 1e-7,
                  van_keken = 0,
-                 linear_decoupling = 3):  
+                 van_keken_case = 0,
+                 model_shear = 3, # 0 -> inactive/ 0 / linear 1/ tanh model 2
+                 model_decoupling = 1):  # 0 -> inactive / linear 
 
         # Direct initialization of class attributes
-        self.it_max           = it_max 
-        self.tol              = tol 
-        self.relax            = relax
-        self.Tmax             = Tmax + 273.15
-        self.Ttop             = Ttop + 273.15
-        self.g                = g 
-        self.v_s              = v_s  # Convert cm/yr to m/s
-        self.slab_age         = slab_age
-        self.time_max         = time_max
-        self.time_dependent_v = time_dependent_v
-        self.steady_state     = steady_state
-        self.slab_bc          = 1 # 1 moving wall, 0 pipe-like slab 
-        self.decoupling       = decoupling # 1 decoupled, 0 coupled
-        self.tol_innerPic     = tol_innerPic
-        self.tol_innerNew     = tol_innerNew
-        self.van_keken        = van_keken # 1 Van Keken benchmark, 2 diffusion only, 3 composite
-        self.linear_decoupling = linear_decoupling # 1 linear decoupling, 0 nonlinear decoupling
+        self.it_max            = it_max 
+        self.tol               = tol 
+        self.relax             = relax
+        self.Tmax              = Tmax + 273.15
+        self.Ttop              = Ttop + 273.15
+        self.g                 = g 
+        self.v_s               = v_s  # Convert cm/yr to m/s
+        self.slab_age          = slab_age
+        self.time_max          = time_max
+        self.time_dependent_v  = time_dependent_v
+        self.steady_state      = steady_state
+        self.slab_bc           = 1 # 1 moving wall, 0 pipe-like slab 
+        self.decoupling        = decoupling # 1 decoupled, 0 coupled
+        self.tol_innerPic      = tol_innerPic
+        self.tol_innerNew      = tol_innerNew
+        self.van_keken         = van_keken # 
+        self.van_keken_case    = van_keken_case # 
+        self.model_decoupling  = model_decoupling 
+        self.model_shear       = model_shear# 1 linear decoupling, 0 nonlinear decoupling
         
     
 

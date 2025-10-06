@@ -333,6 +333,33 @@ def viscosity(exx:float,eyy:float,exy:float,T:float,P:float,p_data,it:int,ph:int
           
     return val
 #---------------------------------------------------------------------------------
+# Strain Partitioning 
+def strain_partitioning(e:float,T:float,P:float,p_data,ph:int):#,imat):
+    ck = 0
+    
+    
+    rheo_type = p_data.option_eta[ph]
+    eta_max   = p_data.eta_max
+    eta_min   = p_data.eta_min
+    Bdif = p_data.Bdif[ph]
+    Edif = p_data.Edif[ph]
+    Vdif = p_data.Vdif[ph]
+
+    R    = p_data.R
+    Bdis = p_data.Bdis[ph]
+    Edis = p_data.Edis[ph]
+    Vdis = p_data.Vdis[ph]
+    n    = p_data.n[ph]
+    T =  T 
+    P =  P
+
+    e_pl,e_dis, tau = point_iteration2(eta_max,eta_min,e,T,P,Bdif,Edif,Vdif,Bdis,n,Edis,Vdis,R,p_data.friction_angle)
+          
+    return e_pl,e_dis, tau
+
+
+
+#---------------------------------------------------------------------------------
 
 #@njit
 def _find_tau_guess(cdf,cds,n,eta_max,e):
@@ -459,7 +486,52 @@ def point_iteration(eta_max: float,
     return eta, tau_total
 #---------------------------------------------------------------------------------
 
+# Main point_iteration function
+#@njit
+def point_iteration2(eta_max: float,
+                    eta_min: float,
+                    e: float,
+                    T: float,
+                    P: float,
+                    Bdif: float,
+                    Edif: float,
+                    Vdif: float,
+                    Bdis: float,
+                    n: float,
+                    Edis: float,
+                    Vdis: float,
+                    R: float,
+                    phi: float) -> float:
+    """
+    Optimized point-wise iteration to compute viscosity, real stress.
+    """
 
+    # Precompute constant values to avoid repeated calculations
+    B_max = 1 / (2 * eta_max)
+    compliance_disl = Bdis * np.exp(-(Edis+P*Vdis) / (R * T))
+    compliance_diff = Bdif * np.exp(-(Edif+P*Vdif) / (R * T))
+    tau_lim = 10e6*np.cos(5*pi/180)+np.sin(phi)*P
+    # Find tau_guess using custom bisection method
+    tau_min, tau_max = _find_tau_guess(compliance_diff, compliance_disl, n, eta_max, e)
+    if tau_min >= tau_lim:
+        tau = tau_lim
+    elif abs(tau_max - tau_min) / (tau_max + tau_min) < 1e-6:
+        tau = (tau_min + tau_max) / 2
+    else:
+        tol = 1e-12
+        max_iter = 100
+        tau = bisection_method(tau_min, tau_max, tol, max_iter, compliance_disl, compliance_diff, B_max, e, n)
+
+
+    # Compute the viscosity and real stress
+    e_diff = compliance_diff * tau
+    e_dis = compliance_disl * tau ** n
+    e_max = B_max * tau
+    e_pl  = e-(e_diff+e_dis+e_max) 
+    e_vs = e_diff+e_dis+e_max 
+    
+
+    return e_pl, e_vs, tau
 
 
 
@@ -766,6 +838,168 @@ from pathlib import Path
 folder_path = Path("your_folder_name")
 folder_path.mkdir(parents=True, exist_ok=True)
 """
+
+def _frictional_alternative(pt_save):
+    import numpy as np 
+    import sys, os
+    sys.path.append(os.path.abspath("src"))
+    from phase_db import PhaseDataBase 
+    from phase_db import _generate_phase
+    from scal import Scal
+    from scal import _scaling_material_properties
+    from scipy import special 
+
+    plt.rcParams.update({
+    "text.usetex": True,
+    "font.family": "serif",       # serif = Computer Modern
+    "font.serif": ["Computer Modern Roman"],
+    "axes.labelsize": 14,
+    "font.size": 12,
+    "legend.fontsize": 12,
+    "xtick.labelsize": 12,
+    "ytick.labelsize": 12,
+    })
+    
+    
+    z           = np.linspace(0,300e3,300)
+    rho         = 3000.0
+    Pl          = 9.81*rho*z     
+    Cp          = 1250
+    k           = 3.0
+    kappa       = k/rho/Cp 
+    t           = 50e6*365.25*24*60*60
+    T           = 20+(1350-20) * special.erf(z /2 /np.sqrt(t * kappa))+273.15
+    
+    lit   = 50e3
+    dec   = 100e3 
+    creep = 40e3 
+       
+    sub_channel = 1e3 
+
+    
+    jtanh       = np.zeros(len(z))
+    m           = (lit+dec)/2
+    ls          = (dec-m)
+    jtanh       = 1-0.5 * ((1)+(1)*np.tanh((z-m)/(ls/4)))
+    
+    jfl         = np.zeros(len(z))
+    jfl[z<lit]  = 1.0 
+    jfl[z>=lit] = 1+(z[z>=lit]-lit)/(lit-dec)
+    jfl[z>dec]  = 0.0
+    
+    frl           = np.zeros(len(z))
+    frl[z<creep]  = 1.0 
+    frl[z>=creep] = 1+(z[z>=creep]-creep)/(creep-dec)
+    frl[z>dec]    = 0 
+    
+    frtan      = np.zeros(len(z))
+    m          = (creep+dec)/2
+    ls         = 2*(dec-m)
+    frtan      = 1-0.5 * ((1)+(1)*np.tanh((z-m)/(ls/4)))
+    
+
+    
+    v_slab = 5.0/100/365.25/24/60/60
+     
+    
+    
+    
+    
+    # Model Van Keken: From what I do understand from these war criminals 
+    
+    friction_coef = 0.6
+    
+    
+    
+    frictional_heatVK  = frtan * v_slab * Pl * friction_coef # Van Keken (apperently) do not use a jump function but a weird mostruosity with an arbitrary creep depth
+    frictional_heatHob = jtanh * v_slab * Pl * friction_coef # Hobson uses only the jump function
+    
+    strain_rate = (v_slab * jfl)/sub_channel # Compute the strain rate 
+           
+    pdb = PhaseDataBase(1,atan(friction_coef))
+    pdb = _generate_phase(pdb,0,option_rho = 2,option_rheology = 4, option_k = 3, option_Cp = 3,eta=1e21,name_diffusion='Hirth_Wet_Olivine_diff',name_dislocation='Hirth_Wet_Olivine_disl')
+
+    e_pl = np.zeros(len(z)); e_vs = np.zeros(len(z));tau = np.zeros(len(z))
+
+    for i in range(len(z)):
+       e_pl[i],e_vs[i],tau[i] = strain_partitioning(strain_rate[i],T[i],Pl[i],pdb,0)
+       if np.log10(e_pl[i]) < -20: 
+            e_pl[i] = 0.0
+       elif np.log10(e_vs[i]) < -20:  
+           e_vs[i] = 0.0
+
+    eplr = e_pl/strain_rate ; evsr = e_vs/strain_rate 
+    
+    frictional_heatinga = (e_pl * Pl + e_vs * tau)*sub_channel 
+
+    frictional_heatingb = (e_pl * Pl * friction_coef+ e_vs * tau)*sub_channel 
+    frictional_heating2  = eplr * Pl * v_slab * jfl * friction_coef + evsr * tau * strain_rate * sub_channel 
+    
+
+    fig = plt.figure()
+    ax0 = plt.gca()
+    ax0.plot(frictional_heatHob,-z/1e3,c='forestgreen',linestyle=':',linewidth=1.0, label = 'Van Keken 2018')
+    ax0.plot(frictional_heatVK,-z/1e3,c='firebrick',linestyle='-.',linewidth=1.0, label = 'Hobson and May 2025')
+    #ax0.plot(strain_rate,-z/1e3,c='forestgreen',linewidth=1.0)
+    ax0.set_xlabel(r'Frictional heat flux $\frac{W}{m^2}$')
+    ax0.set_ylabel(r'Depth $[km]$')
+    ax0.legend()
+    ax0.set_xscale('linear')
+    ax0.set_ylim([-100,0.0])
+
+
+    
+    
+    fig = plt.figure()
+    ax0 = plt.gca()
+    ax0.plot(e_pl,-z/1e3,c='k',linestyle=':',linewidth=0.8, label=r'$\dot{\varepsilon}_{pl}$')
+    ax0.plot(e_vs,-z/1e3,c='r',linestyle='-.',linewidth=0.8,label=r'$\dot{\varepsilon}_{vs}$')
+    ax1 = ax0.twiny()
+    ax1.plot(tau/1e6,-z/1e3,c='b',linewidth=1.0,label=r'$\tau$ [MPa]')
+    #ax0.plot(strain_rate,-z/1e3,c='forestgreen',linewidth=1.0)
+    ax1.set_xlabel(r'${\tau}$ [MPa]')
+    ax0.set_xlabel(r'$\dot{\varepsilon}_{II}$ [$\frac{1}{s}$]')
+    ax0.set_ylabel(r'Depth $[km]$')
+    ax0.legend()
+    ax1.legend()
+    ax0.set_xscale('log')
+    ax0.set_ylim([-100,0.0])
+
+    
+    fig = plt.figure()
+    ax0 = plt.gca()
+    ax0.plot(frictional_heatinga,-z/1e3,c='k',linestyle=':',linewidth=0.8, label=r'$f_{1a}(T,P,\varepsilon)$')
+    ax0.plot(frictional_heatingb,-z/1e3,c='k',linestyle=':',linewidth=0.8, label=r'$f_{1b}(T,P,\varepsilon)$')
+    ax0.plot(frictional_heating2,-z/1e3,c='r',linestyle='-.',linewidth=0.8,label=r'$f_2(T,P,\varepsilon)$')
+    #ax1 = ax0.twiny()
+    #ax1.plot(tau/1e6,-z/1e3,c='b',linewidth=1.0,label=r'$\tau$ [MPa]')
+    #ax0.plot(strain_rate,-z/1e3,c='forestgreen',linewidth=1.0)
+    #ax1.set_xlabel(r'${\tau}$ [MPa]')
+    ax0.set_xlabel(r'Frictional heat flux $\frac{W}{m^2}$')
+    ax0.set_ylabel(r'Depth $[km]$')
+    ax0.legend()
+    #ax1.legend()
+    ax0.set_ylim([-100,0.0])
+
+    fig = plt.figure()
+    ax0 = plt.gca()
+    ax0.plot(frictional_heatingb,-z/1e3,c='k',linestyle='-.',linewidth=1.0, label=r'$f_{1a}(T,P,\varepsilon)$')
+    ax0.plot(frictional_heating2,-z/1e3,c='b',linestyle='-.',linewidth=1.0,label=r'$f_2(T,P,\varepsilon)$')
+    ax0.plot(frictional_heatHob,-z/1e3,c='forestgreen',linestyle=':',linewidth=1.0, label = 'Van Keken 2018')
+    ax0.plot(frictional_heatVK,-z/1e3,c='firebrick',linestyle=':',linewidth=1.0, label = 'Hobson and May 2025')
+    #ax1 = ax0.twiny()
+    #ax1.plot(tau/1e6,-z/1e3,c='b',linewidth=1.0,label=r'$\tau$ [MPa]')
+    #ax0.plot(strain_rate,-z/1e3,c='forestgreen',linewidth=1.0)
+    #ax1.set_xlabel(r'${\tau}$ [MPa]')
+    ax0.set_xlabel(r'Frictional heat flux $\frac{W}{m^2}$')
+    ax0.set_ylabel(r'Depth $[km]$')
+    ax0.legend()
+    #ax1.legend()
+    ax0.set_ylim([-100,0.0])    
+    
+        
+
+    print('bla')
     
 
 
@@ -773,17 +1007,25 @@ folder_path.mkdir(parents=True, exist_ok=True)
 
 if __name__ == '__main__':
     
-    import os 
+    import numpy as np 
+    import sys, os
+    sys.path.append(os.path.abspath("src"))
+    from phase_db import PhaseDataBase 
+    from phase_db import _generate_phase
+    from scal import Scal
+    from scal import _scaling_material_properties
+    from scipy import special 
     
-    pt_save = '../debug'
+    pt_save = '../../debug'
     
     if not os.path.exists(pt_save): 
         os.makedirs(pt_save)   
-         
+
+    _frictional_alternative(pt_save)
+    
     #rho_dim,k_dim,Cp_dim = unit_test_thermal_properties(pt_save)
     
     #unit_test_thermal_properties_scaling(pt_save,rho_dim,k_dim,Cp_dim)
     
-    eta_dim = unit_test_viscosity(pt_save)
 
 
