@@ -35,13 +35,17 @@ tol_innerNew      = 1e-5
 van_keken_case    = 3 # 1 Van Keken benchmark, When these flag are activated -> default value in all phases -> 3300  
                     # 2 diffusion only, 
                     # 3 composite 
-decoupling_ctrl   = 1 
-model_decoupling  = 2 # 0 inactive/linear==1/tanh2 Shear heating must be active together with decoupling_ctrl, but decoupling can be active without shear heating 
-model_shear       = 2 # Model -> linear = 1, tanh=2
+                    # 4 Iterative 
+decoupling_ctrl   = 1
+model_shear       = 'SelfConsistent' # 'SelfConsistent
+phase_wz          = 7
+
+
+friction_angle   = 5 
 #---------------------------------------------------------------------------------------------------------
 # input/output control
 #---------------------------------------------------------------------------------------------------------
-test_name = 'case_hs4_hr0_r3'
+test_name = 'case_Hobson'
 path_save = '/Users/wlnw570/Work/Leeds/Output/Stonedphoenix/Benchmark_van_Keken'
 sname = test_name
 #---------------------------------------------------------------------------------------------------------
@@ -63,7 +67,6 @@ c_age_plate = 50.0
 #---------------------------------------------------------------------------------------------------------
 # Phase properties
 # ---------------------------------------------------------------------------------------------------------
-friction_angle = 0.06
 Phase1 = Phase()
 Phase1.name = 'Slab_Mantle'
 Phase1.rho0 = 3300.0
@@ -128,6 +131,12 @@ Phase6.option_Cp = 0
 Phase6.eta = 1e22
 Phase6.radio    = 0.17e-6* 0.0
 
+
+Phase7 = Phase()
+Phase7.name = 'WeakZone'
+Phase7.option_rheology = 3  
+Phase7.name_diffusion = 'Van_Keken_diff'
+Phase7.name_dislocation = 'Van_Keken_disl'
 #---------------------------------------------------------------------------------------------------------
 element_p = basix.ufl.element("Lagrange","triangle", 1) 
 element_PT = basix.ufl.element("Lagrange","triangle",2)
@@ -202,11 +211,17 @@ if van_keken != 0:
     Phase6 = Phase()
     Phase6.name = 'Lower_Crust'
     Phase6.rho0 = rho
-    Phase6.option_rho = 0
+    Phase6.option_rho = option_rho
     Phase6.option_rheology = 0
-    Phase6.option_k = 0
-    Phase6.option_Cp = 0
+    Phase6.option_k = option_k
+    Phase6.option_Cp = option_Cp
     Phase6.eta = 1e21
     Phase6.radio    = 0.17e-6 * HR
+    
+    Phase7 = Phase()
+    Phase7.name = 'WeakZone'
+    Phase7.option_rheology = 3  
 
+    Phase7.name_diffusion = 'Van_Keken_diff'
+    Phase7.name_dislocation = 'Van_Keken_disl'
     #---------------------------------------------------------------------------------------------------------

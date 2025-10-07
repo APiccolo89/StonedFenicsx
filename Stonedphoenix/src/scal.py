@@ -63,6 +63,7 @@ def _scaling_material_properties(pdb,sc:Scal):
     pdb.Pref    /= sc.stress
     pdb.T_Scal   = sc.Temp 
     pdb.P_Scal   = sc.stress 
+    pdb.cohesion /= sc.stress 
     
     # Viscosity
     pdb.eta     /= sc.eta 
@@ -138,6 +139,7 @@ def _scaling_control_parameters(ctrl,scal):
     ctrl.Tmax /= scal.Temp 
     ctrl.v_s   = (ctrl.v_s * scal.scale_vel)/(scal.L/scal.T)
     ctrl.g     = ctrl.g / (scal.L/scal.T**2)
+    ctrl.wz_tk = ctrl.wz_tk / scal.L 
     
     
     return ctrl  
