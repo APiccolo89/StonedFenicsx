@@ -43,8 +43,13 @@ from src.scal                     import _scale_parameters
 from src.scal                        import _scaling_material_properties
 from src.solution                    import steady_state_solution
 
+dict_options = {'Linear':1,
+                'SelfConsistent':2}
+
+
+
 def StonedFenicsx():
-        #---------------------------------------------------------------------------------------------------------
+    #---------------------------------------------------------------------------------------------------------
     # Input parameters 
     #---------------------------------------------------------------------------------------------------------
     
@@ -64,8 +69,8 @@ def StonedFenicsx():
                             tol_innerNew     = IP.tol_innerNew,
                             van_keken        = IP.van_keken,
                             van_keken_case   = IP.van_keken_case,
-                            model_decoupling = IP.model_decoupling,
-                            model_shear      = IP.model_shear)
+                            model_shear      = dict_options[IP.model_shear],
+                            phase_wz         = IP.phase_wz)
     # IO controls
     io_ctrl = IOControls(test_name = IP.test_name,
                         path_save = IP.path_save,
@@ -82,7 +87,7 @@ def StonedFenicsx():
                     c_age_plate = IP.c_age_plate)
                            
     # Phase properties
-    Pdb = PhaseDataBase(6,IP.friction_angle)
+    Pdb = PhaseDataBase(7,IP.friction_angle*np.pi/180)
     # Phase 1
     Pdb = _generate_phase(Pdb, 1, rho0 = IP.Phase1.rho0 , 
                           option_rho = IP.Phase1.option_rho, 
@@ -142,6 +147,12 @@ def StonedFenicsx():
                           option_Cp = IP.Phase6.option_Cp, 
                           eta=IP.Phase6.eta,
                           radio = IP.Phase6.radio)
+        # Phase 3
+    Pdb = _generate_phase(Pdb, 
+                          7, 
+                          option_rheology = IP.Phase7.option_rheology,
+                          name_diffusion=IP.Phase7.name_diffusion, 
+                          name_dislocation=IP.Phase7.name_dislocation)
     # ---
     # Create mesh 
     g_input = geom_input(x = np.asarray(IP.x),
