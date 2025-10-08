@@ -241,6 +241,8 @@ def compute_viscosity_FX(e,T_in,P_in,pdb,phase,M,sc):
     eta_df    = 1 / (1 / etadf + 1 / pdb.eta_max) 
     eta_ds    = 1 / (1 / etads + 1 / pdb.eta_max)
     
+    
+    
     # check if the option_eta -> constant or not, otherwise release the composite eta 
     eta = ufl.conditional(
         ufl.eq(opt_eta, 0.0), eta_con,
@@ -256,7 +258,70 @@ def compute_viscosity_FX(e,T_in,P_in,pdb,phase,M,sc):
 
     return eta
 
+def compute_plastic_strain(e_II,T_in,P_in,pdb,ph,phwz,sc):
+    """
+    It is wrong, but frequently used: it does not change too much by the end the prediction. 
+    I use the minimum viscosity possible. The alternative is taking the average between eta_min and eta_av. So, 
+    since I do not understand how I can easily integrate a full local iteration, I prefer to use the "wrong" composite method
+    """    
 
+    e_II = e_II + 1e-15
+    
+    
+    # If your phase IDs are available per cell for mesh0:
+    
+    # UNFORTUNATELY I AM STUPID and i do not have any idea how to scale the energies such that it would be easier to handle. Since the scale of force and legth is self-consistently related to mass, i do not know how to deal with the fucking useless mol in the energy of activation 
+    T = T_in.copy()
+    P = P_in.copy()
+    T.x.array[:] = T.x.array[:]*sc.Temp  ;T.x.scatter_forward()
+    P.x.array[:] = P.x.array[:]*sc.stress;P.x.scatter_forward()
+    P0    = T.function_space
+    
+    # Gather material parameters as UFL expressions via indexing
+    Bdif    = fem.Function(P0,name = 'Bdif')  ; Bdif.x.array[:]    =  pdb.Bdif[phwz]
+    Bdis    = fem.Function(P0,name = 'Bdis')  ; Bdis.x.array[:]    =  pdb.Bdis[phwz]
+    n       = fem.Function(P0,name = 'n')     ; n.x.array[:]       =  pdb.n[phwz]
+    Edif    = fem.Function(P0,name = 'Edif')  ; Edif.x.array[:]    =  pdb.Edif[phwz]
+    Edis    = fem.Function(P0,name = 'Edis')  ; Edis.x.array[:]    =  pdb.Edis[phwz]
+    Vdif    = fem.Function(P0,name = 'Vdif')  ; Vdif.x.array[:]    =  pdb.Vdif[phwz]
+    Vdis    = fem.Function(P0,name = 'Vdis')  ; Vdis.x.array[:]    =  pdb.Vdis[phwz]
+    
+
+
+    # In case the viscosity for the given phase is constant 
+    eta_con     = fem.Function(P0) ; eta_con.x.array[:]     =  pdb.eta[phwz]
+    # Option for eta for a given marker number ph 
+    opt_eta = fem.Function(P0)  ; opt_eta.x.array[:] =  pdb.option_eta[phwz]
+    # Eta max 
+    Bd_max  = 1 / 2 / pdb.eta_max
+    # strain indipendent  
+    cdf = Bdif * exp(-(Edif + P * Vdif )/(pdb.R * T)) ; cds = Bdis * exp(-(Edis + P * Vdis)/(pdb.R * T))
+    # compute tau guess
+    n_co  = (1-n)/n
+    n_inv = 1/n 
+    # Se esiste un cazzo di inferno in culo a Satana ci vanno quelli che hanno generato 
+    # sto modo creativo di fare gli esponenti. 
+    etads     = 0.5 * cds**(-n_inv) * e_II**n_co
+    etadf     = 0.5 * cdf**(-1)
+    eta_av    = 1 / (1 / etads + 1/etadf + 1/pdb.eta_max)
+    
+    # -> Compute the tau lim 
+    tau_lim  = pdb.cohesion * cos(pdb.friction_angle) + P_in * sin (pdb.friction_angle)
+    
+    tau_vis  = 2 * eta_av * e_II
+    
+    
+    # check if the option_eta -> constant or not, otherwise release the composite eta 
+    
+    tau_eff = ufl.conditional(tau_vis > tau_lim, tau_lim, tau_vis)
+
+    e_plr2    = (e_II - (tau_eff / 2 /eta_av)) / e_II
+    
+    
+    e_plr = ufl.conditional(e_plr2 < 0.0, 0.0, e_plr2)
+
+
+    return e_plr, tau_eff
 
 #-----------------------------------------------------------------------------------
 #@njit
@@ -875,71 +940,54 @@ def _frictional_alternative(pt_save):
     creep = 40e3 
        
     sub_channel = 1e3 
-
+    sub_channel2 = np.linspace(500,10e3,1000)
     
     jtanh       = np.zeros(len(z))
     m           = (lit+dec)/2
     ls          = (dec-m)
-    jtanh       = 1-0.5 * ((1)+(1)*np.tanh((z-m)/(ls/4)))
+    jtanh       = 1-0.5 * ((1)+(1)*np.tanh((z-dec)/(ls/4)))
     
-    jfl         = np.zeros(len(z))
-    jfl[z<lit]  = 1.0 
-    jfl[z>=lit] = 1+(z[z>=lit]-lit)/(lit-dec)
-    jfl[z>dec]  = 0.0
-    
-    frl           = np.zeros(len(z))
-    frl[z<creep]  = 1.0 
-    frl[z>=creep] = 1+(z[z>=creep]-creep)/(creep-dec)
-    frl[z>dec]    = 0 
-    
-    frtan      = np.zeros(len(z))
-    m          = (creep+dec)/2
-    ls         = 2*(dec-m)
-    frtan      = 1-0.5 * ((1)+(1)*np.tanh((z-m)/(ls/4)))
-    
+    v_slab = 1.0/100/365.25/24/60/60
 
-    
-    v_slab = 5.0/100/365.25/24/60/60
-     
-    
-    
-    
-    
+
     # Model Van Keken: From what I do understand from these war criminals 
     
-    friction_coef = 0.6
-    
-    
-    
-    frictional_heatVK  = frtan * v_slab * Pl * friction_coef # Van Keken (apperently) do not use a jump function but a weird mostruosity with an arbitrary creep depth
+    friction_coef = 0.06
+        
     frictional_heatHob = jtanh * v_slab * Pl * friction_coef # Hobson uses only the jump function
     
-    strain_rate = (v_slab * jfl)/sub_channel # Compute the strain rate 
            
     pdb = PhaseDataBase(1,atan(friction_coef))
     pdb = _generate_phase(pdb,0,option_rho = 2,option_rheology = 4, option_k = 3, option_Cp = 3,eta=1e21,name_diffusion='Hirth_Wet_Olivine_diff',name_dislocation='Hirth_Wet_Olivine_disl')
 
-    e_pl = np.zeros(len(z)); e_vs = np.zeros(len(z));tau = np.zeros(len(z))
+    e_pl = np.zeros([len(z),len(sub_channel2)]); e_vs = np.zeros([len(z),len(sub_channel2)]);tau = np.zeros([len(z),len(sub_channel2)])
+    eplr = np.zeros([len(z),len(sub_channel2)]); evsr = np.zeros([len(z),len(sub_channel2)]);frictional_heating2=np.zeros([len(z),len(sub_channel2)])
+    max_depth_plastic = np.zeros(len(sub_channel2))
+    for k in range(len(sub_channel2)):
+        strain_rate = (v_slab * jtanh)/sub_channel2[k] # Compute the strain rate 
+        
+        for i in range(len(z)):
+           e_pl[i,k],e_vs[i,k],tau[i,k] = strain_partitioning(strain_rate[i],T[i],Pl[i],pdb,0)
+           if np.log10(e_pl[i,k]) < -20: 
+                e_pl[i,k] = 0.0
+           elif np.log10(e_vs[i,k]) < -20:  
+               e_vs[i,k] = 0.0
+        
 
-    for i in range(len(z)):
-       e_pl[i],e_vs[i],tau[i] = strain_partitioning(strain_rate[i],T[i],Pl[i],pdb,0)
-       if np.log10(e_pl[i]) < -20: 
-            e_pl[i] = 0.0
-       elif np.log10(e_vs[i]) < -20:  
-           e_vs[i] = 0.0
+        eplr[:,k] = e_pl[:,k]/strain_rate ; evsr[:,k] = e_vs[:,k]/strain_rate 
+        frictional_heating2[:,k]  = eplr[:,k] * Pl * v_slab * jtanh * friction_coef #+ evsr[:,k] * tau[:,k] * strain_rate * sub_channel2[k] 
+        a = np.where(frictional_heating2[:,k]==np.nanmax(frictional_heating2[:,k]))[0][0]
+        max_depth_plastic[k] = z[a]
 
-    eplr = e_pl/strain_rate ; evsr = e_vs/strain_rate 
+
+
     
-    frictional_heatinga = (e_pl * Pl + e_vs * tau)*sub_channel 
 
-    frictional_heatingb = (e_pl * Pl * friction_coef+ e_vs * tau)*sub_channel 
-    frictional_heating2  = eplr * Pl * v_slab * jfl * friction_coef + evsr * tau * strain_rate * sub_channel 
     
 
     fig = plt.figure()
     ax0 = plt.gca()
     ax0.plot(frictional_heatHob,-z/1e3,c='forestgreen',linestyle=':',linewidth=1.0, label = 'Van Keken 2018')
-    ax0.plot(frictional_heatVK,-z/1e3,c='firebrick',linestyle='-.',linewidth=1.0, label = 'Hobson and May 2025')
     #ax0.plot(strain_rate,-z/1e3,c='forestgreen',linewidth=1.0)
     ax0.set_xlabel(r'Frictional heat flux $\frac{W}{m^2}$')
     ax0.set_ylabel(r'Depth $[km]$')
@@ -968,8 +1016,6 @@ def _frictional_alternative(pt_save):
     
     fig = plt.figure()
     ax0 = plt.gca()
-    ax0.plot(frictional_heatinga,-z/1e3,c='k',linestyle=':',linewidth=0.8, label=r'$f_{1a}(T,P,\varepsilon)$')
-    ax0.plot(frictional_heatingb,-z/1e3,c='k',linestyle=':',linewidth=0.8, label=r'$f_{1b}(T,P,\varepsilon)$')
     ax0.plot(frictional_heating2,-z/1e3,c='r',linestyle='-.',linewidth=0.8,label=r'$f_2(T,P,\varepsilon)$')
     #ax1 = ax0.twiny()
     #ax1.plot(tau/1e6,-z/1e3,c='b',linewidth=1.0,label=r'$\tau$ [MPa]')
@@ -983,10 +1029,8 @@ def _frictional_alternative(pt_save):
 
     fig = plt.figure()
     ax0 = plt.gca()
-    ax0.plot(frictional_heatingb,-z/1e3,c='k',linestyle='-.',linewidth=1.0, label=r'$f_{1a}(T,P,\varepsilon)$')
     ax0.plot(frictional_heating2,-z/1e3,c='b',linestyle='-.',linewidth=1.0,label=r'$f_2(T,P,\varepsilon)$')
-    ax0.plot(frictional_heatHob,-z/1e3,c='forestgreen',linestyle=':',linewidth=1.0, label = 'Van Keken 2018')
-    ax0.plot(frictional_heatVK,-z/1e3,c='firebrick',linestyle=':',linewidth=1.0, label = 'Hobson and May 2025')
+    ax0.plot(frictional_heatHob,-z/1e3,c='forestgreen',linestyle=':',linewidth=1.0, label = 'Hobson and May 2025')
     #ax1 = ax0.twiny()
     #ax1.plot(tau/1e6,-z/1e3,c='b',linewidth=1.0,label=r'$\tau$ [MPa]')
     #ax0.plot(strain_rate,-z/1e3,c='forestgreen',linewidth=1.0)

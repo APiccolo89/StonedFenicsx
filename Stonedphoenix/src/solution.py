@@ -99,6 +99,9 @@ def check_single_domain(expr):
 
 #---------------------------------------------------------------------------
 
+    
+    
+    
 
 
 #--------------------------------------------------------------------------------------------------------------
@@ -310,8 +313,14 @@ class SolverStokes():
         
         
 #-------------------------------------------------------------------------       
-def decoupling_function(z,fun,ctrl,D,g_input):
+def decoupling_function(z,fun,g_input):
     """
+    Function explanation: 
+    [a]: z depth coordinate 
+    [b]: fun a function 
+    [c]: ctrl => deprecated 
+    [d]: D => deprecated 
+    [e]: g_input -> still here, geometric parameters
     
     
     
@@ -322,53 +331,15 @@ def decoupling_function(z,fun,ctrl,D,g_input):
     dc = dc/g_input.decoupling
     lit = lit/g_input.decoupling
     z2 = np.abs(z)/g_input.decoupling
+    trans = g_input.trans/g_input.decoupling
     
-    if ctrl.model_decoupling == 1:
-        fun.x.array[z2 < lit] = 1
-        ind = np.where((z2 >=lit) & (z2 < dc))
-        fun.x.array[ind] = 1-(lit -z2[ind])/(lit-dc)
-        fun.x.array[z > dc] = 0.0
-        fun.x.scatter_forward()
-    else: 
-        m     = (lit+dc)/2
-        trans = dc-m
-        fun.x.array[:] = 1-0.5 * ((1)+(1)*np.tanh((z2-m)/(trans/4)))
+
+    fun.x.array[:] = 1-0.5 * ((1)+(1)*np.tanh((z2-dc)/(trans/4)))
     
     
     return fun
         
-#----------------------------------------------------------------------------
-def efficiency_function(z,fun,ctrl,D,g_input):
-    """
-    
-    
-    
-    """
-    
-    dc = g_input.decoupling
-    creep = g_input.creep
-    dc = dc/g_input.decoupling
-    creep = creep/g_input.decoupling
-    z2 = np.abs(z)/g_input.decoupling
-    
-    if ctrl.model_shear == 1:
-        fun.x.array[z2 < creep] = 1
-        ind = np.where((z2 >=creep) & (z2 < dc))
-        fun.x.array[ind] = 1-(creep -z2[ind])/(creep-dc)
-        fun.x.array[z > dc] = 0.0
-        fun.x.scatter_forward()
-        
-    else: 
 
-        m          = (creep+dc)/2
-        trans         = (dc-m)
-        fun.x.array[:] = 1-0.5 * ((1)+(1)*np.tanh((z2-m)/(trans/4)))
-   
-   
-   
-    
-    return fun       
-         
 #----------------------------------------------------------------------------     
 class Problem:
     name      : list                               # name of the problem, domain [global, domainA...]
@@ -493,12 +464,6 @@ class Global_thermal(Problem):
         dofs_vel = dofs_right_wed[ind_z[0]]        
         
         self.bc_right_wed = fem.dirichletbc(ctrl.Tmax, dofs_vel,self.FS)
-        
-        if DEBUG == 1: 
-            fig1.gca().scatter(self.FS.tabulate_dof_coordinates()[dofs_vel,0],self.FS.tabulate_dof_coordinates()[dofs_vel,1])
-            fig1.gca().scatter(self.FS.tabulate_dof_coordinates()[dofs_right_wed,0],self.FS.tabulate_dof_coordinates()[dofs_right_wed,1],c='k',s=0.01)
-            fig2.gca().scatter(self.FS.tabulate_dof_coordinates()[dofs_vel,1],vel_T.x.array[dofs_vel],s=1)
-            fig2.gca().scatter(self.FS.tabulate_dof_coordinates()[dofs_right_wed,1],vel_T.x.array[dofs_right_wed],c='k',s=0.01)
 
         facets                 = M.facets.find(M.bc_dict['Bottom_wed'])                        
         dofs_bot_wed        = fem.locate_dofs_topological(self.FS, M.mesh.topology.dim-1, facets)
@@ -519,7 +484,7 @@ class Global_thermal(Problem):
         return bc 
         
     #------------------------------------------------------------------
-    def compute_shear_heating(self,ctrl,phi,S,D,g_input):
+    def compute_shear_heating(self,ctrl,pdb,S,D,g_input,sc):
         """
         Apperently the sociopath the devise this method, uses a delta function to describe 
         the interface frictional heating. 
@@ -541,10 +506,16 @@ class Global_thermal(Problem):
             decoupling    = heat_source.copy()
             efficiency    = heat_source.copy()
             Z = self.FS.tabulate_dof_coordinates()[:,1]
-            decoupling = decoupling_function(Z,decoupling,ctrl,D,g_input)
-            efficiency = efficiency_function(Z,efficiency,ctrl,D,g_input)
-            sh         = decoupling * efficiency
-            expression = sh * ufl.avg(S.PL) * ctrl.v_s[0] * phi * ufl.avg(self.test0) * (self.dS(D.bc_dict['Subduction_top_lit']) +self.dS(D.bc_dict['Subduction_top_wed']))
+            decoupling = decoupling_function(Z,decoupling,g_input)
+            if ctrl.model_shear==2:
+                # compute the plastic strain rate ratio and viscous shear heating strain rate 
+                # Place holder function
+                expression = self.compute_friction_shear_expression(pdb,ctrl,D,S.T_O,S.PL,ctrl.v_s[0],decoupling,sc,dofs) * ufl.avg(self.test0) * (self.dS(D.bc_dict['Subduction_top_lit']) +self.dS(D.bc_dict['Subduction_top_wed']))
+                qfr = self.compute_friction_shear_expression(pdb,ctrl,D,S.T_O,S.PL,ctrl.v_s[0],decoupling,sc,dofs)
+
+            else:  
+                phi = np.tan(pdb.friction_angle)
+                expression = decoupling * ufl.avg(S.PL) * ctrl.v_s[0] * phi * ufl.avg(self.test0) * (self.dS(D.bc_dict['Subduction_top_lit']) +self.dS(D.bc_dict['Subduction_top_wed']))
             
             return expression
 
@@ -552,7 +523,23 @@ class Global_thermal(Problem):
             return 0.0 
         
         
-        
+    def compute_friction_shear_expression(self,pdb,ctrl,D,T,P,vs,decoupling,sc,dofs):
+
+        from compute_material_property import compute_plastic_strain
+
+        e_II = (vs * decoupling * 1 /ctrl.wz_tk)/2  # Second invariant strain rate
+
+        # -> compute the plastic strain rate
+
+        e_pl, tau = compute_plastic_strain(e_II,T,P,pdb,D.phase,ctrl.phase_wz-1,sc)
+
+        e_vs = 1 - e_pl 
+
+        phi = ufl.tan(pdb.friction_angle)
+
+        friction = (e_pl * vs * decoupling * phi * P + e_vs * e_II * tau * ctrl.wz_tk) 
+
+        return friction 
             
     
     def set_newton_SS(self,p,D,T,u_global,pdb):
@@ -621,14 +608,14 @@ class Global_thermal(Problem):
         return a, L
     #------------------------------------------------------------------
 
-    def Solve_the_Problem_SS(self,S,ctrl,pdb,M,lhs,geom,it=0,ts=0): 
+    def Solve_the_Problem_SS(self,S,ctrl,pdb,M,lhs,geom,sc,it=0,ts=0): 
         
         nl = 0 
         p_k = S.PL.copy()  # Previous lithostatic pressure 
         T   = S.T_O # -> will not eventually update 
 
         if it == 0:         
-            self.shear_heating = self.compute_shear_heating(ctrl,pdb.friction_angle, S,getattr(M,'domainG'),geom)
+            self.shear_heating = self.compute_shear_heating(ctrl,pdb, S,getattr(M,'domainG'),geom,sc)
             self.compute_energy_source(getattr(M,'domainG'),pdb)
         
         a,L = self.set_linear_picard_SS(p_k,T,S.u_global,getattr(M,'domainG'),pdb)
@@ -1315,7 +1302,7 @@ class Wedge(Stokes_Problem):
         
         if ctrl.decoupling == 1:
             scaling = fem.Function(self.FSPT)
-            scaling = decoupling_function(self.FSPT.tabulate_dof_coordinates()[:,1],scaling,ctrl,D,g_input)  
+            scaling = decoupling_function(self.FSPT.tabulate_dof_coordinates()[:,1],scaling,g_input)  
             scaling.x.array[:] = 1-scaling.x.array[:]
             scaling.x.scatter_forward()
             L = ufl.inner(v_project * scaling, v) * self.ds(D.bc_dict['slab'])
@@ -1750,7 +1737,7 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
         sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_slab, M.domainA.cell_par)
         
         
-        energy_global.Solve_the_Problem_SS(sol,ctrl,pdb,M,lhs_ctrl,M.g_input,it = it_outer, ts = 0)
+        energy_global.Solve_the_Problem_SS(sol,ctrl,pdb,M,lhs_ctrl,M.g_input,sc,it = it_outer, ts = 0)
         
         # Compute residuum 
         res = compute_residuum_outer(sol,Told,PLold,u_globalold,p_globalold,it_outer,sc, time_A_outer)
