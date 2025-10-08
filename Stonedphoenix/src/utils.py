@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from functools import wraps
 import cmcrameri as cmc
+import numpy as np 
 # Util performance 
 #---------------------------------------------------------------------------------------------------------
 def timing_function(fun):
@@ -257,6 +258,77 @@ def logistic_function_decoupling():
     fu2[z>=zt] = 1-(zt-z[z>=zt])/(zt-z0)
     vel = 0.5 * ((1+0.01)+(1-0.01)*np.tanh((z-z0)/(10e3/4)))
     return 0
+
+def gather_vector(v): 
+    
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+
+    # Suppose v is fem.Function(V) (not the UFL test function!)
+    v.x.scatter_forward()  # update ghosts from owners
+
+    # Get number of owned dofs (exclude ghosts)
+    imap = v.function_space.dofmap.index_map
+    n_owned = imap.size_local
+
+    # Slice only owned part
+    lv = np.asarray(v.x.array[:n_owned], dtype=np.float64)  # ensure dtype/contiguous
+
+    # Gather element counts on root
+    sizes = comm.gather(lv.size, root=0)
+
+    if rank == 0:
+        counts = np.asarray(sizes, dtype='i')
+        displs = np.insert(np.cumsum(counts[:-1]), 0, 0).astype('i')
+        gv = np.empty(int(counts.sum()), dtype=np.float64)
+    else:
+        counts = None
+        displs = None
+        gv = None
+
+    # Gather variable-length arrays; only root provides recv buffers/metadata
+    comm.Gatherv(lv, (gv, counts, displs, MPI.DOUBLE), root=0)
+
+    if rank == 0:
+
+        return lv 
+
+def gather_coordinates(V):
+    """
+    Gather DOF coordinates for a dolfinx FunctionSpace V to rank 0.
+    Returns an (ndofs_global, gdim) array on rank 0, else None.
+    """
+    comm  = V.mesh.comm
+    gdim  = V.mesh.geometry.dim
+
+    # Local coordinates (shape: n_local_total x gdim). Slice to owned DOFs only.
+    coords_local = V.tabulate_dof_coordinates()
+    n_owned = V.dofmap.index_map.size_local
+    coords_owned = coords_local[:n_owned, :]
+
+    # Flatten to 1D buffer for Gatherv
+    sendbuf = np.ascontiguousarray(coords_owned.ravel(), dtype=np.float64)
+
+    # Gather row counts, then convert to element counts by * gdim
+    rows_local = coords_owned.shape[0]
+    rows_counts = comm.gather(rows_local, root=0)
+
+    if comm.rank == 0:
+        elem_counts = np.asarray(rows_counts, dtype='i') * gdim           # elements, not bytes
+        elem_displs = np.insert(np.cumsum(elem_counts[:-1]), 0, 0).astype('i')
+        recvbuf = np.empty(int(elem_counts.sum()), dtype=np.float64)
+    else:
+        elem_counts = None
+        elem_displs = None
+        recvbuf = None
+
+    # Gather – use MPI.DOUBLE (not a NumPy dtype)
+    comm.Gatherv(sendbuf, (recvbuf, elem_counts, elem_displs, MPI.DOUBLE), root=0)
+
+    if comm.rank == 0:
+        return recvbuf.reshape(-1, gdim)
+    else:
+        return None
 
 
 if __name__ == '__main__':

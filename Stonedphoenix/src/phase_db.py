@@ -206,7 +206,8 @@ spec_phase = [
     ("eta_min",float64),    # minimum viscosity [Pas]
     ("eta_max",float64),    # max viscosity [Pas]
     ("eta_def",float64),    # default viscosity [Pas]
-    ("friction_angle",float64)
+    ("friction_angle",float64),
+    ('cohesion',float64)
 ]   
 
 #-----------------------------------------------------------------------------------------------------------
@@ -229,6 +230,7 @@ class PhaseDataBase:
         self.P_Scal      = 1.      # Default Pressure scale 
         self.friction_angle = friction_angle
         self.id          = np.zeros(number_phases, dtype=np.int32)
+        self.cohesion    = 10e6 
         # Explanation: For testing the pressure and t scal are set to be 1.0 -> so, the software is not performing any 
         # scaling operation. 
         # -> When the property are automatically scaled these value will be update automatically. 

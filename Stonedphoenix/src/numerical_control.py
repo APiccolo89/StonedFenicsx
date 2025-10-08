@@ -50,8 +50,9 @@ spec = [('it_max', int64),
     ('decoupling',int64),
     ('van_keken',int64),
     ('van_keken_case',int64),
-    ('model_decoupling',int64),
     ('model_shear',int64),# 1 decoupled, 0 coupled
+    ('phase_wz',int64),
+    ('wz_tk',float64)
 ]
 
 @jitclass(spec)
@@ -76,7 +77,8 @@ class NumericalControls:
                  van_keken = 0,
                  van_keken_case = 0,
                  model_shear = 3, # 0 -> inactive/ 0 / linear 1/ tanh model 2
-                 model_decoupling = 1):  # 0 -> inactive / linear 
+                 phase_wz = 7,
+                 wz_tk = 1000e3):  # 0 -> inactive / linear 
 
         # Direct initialization of class attributes
         self.it_max            = it_max 
@@ -96,8 +98,9 @@ class NumericalControls:
         self.tol_innerNew      = tol_innerNew
         self.van_keken         = van_keken # 
         self.van_keken_case    = van_keken_case # 
-        self.model_decoupling  = model_decoupling 
         self.model_shear       = model_shear# 1 linear decoupling, 0 nonlinear decoupling
+        self.phase_wz          = phase_wz
+        self.wz_tk             = wz_tk
         
     
 
