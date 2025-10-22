@@ -1742,8 +1742,17 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
         # Compute residuum 
         res = compute_residuum_outer(sol,Told,PLold,u_globalold,p_globalold,it_outer,sc, time_A_outer)
         print_output(sol,M.domainG,pdb,ioctrl,it_outer,sc)
-        A,B,C =_benchmark_van_keken(sol,1,ctrl.van_keken_case,sc)
+        if ctrl.van_keken == 1: 
+            A,B,C =_benchmark_van_keken(sol,1,ctrl.van_keken_case,ioctrl,sc)
 
+        # Save the top slab temperature and the bottom slab temperature (moho)
+        
+        top, moho = extract_slab_top_moho(S,D,ctrl_io)
+
+        # Create h5 database systematic 
+        
+        #
+        
         it_outer = it_outer + 1
         
     # Destroy KSP
@@ -1756,6 +1765,18 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
     return 0 
 
 
+def extract_slab_top_moho(S,D,ctrl_io):
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    return top,moho
 
 
 def compute_residuum(a,b):
@@ -1985,122 +2006,134 @@ def print_output(S,D,pdb,ioctrl,it_outer,sc,ts=0):
 
 
 
-def _benchmark_van_keken(S,b_vk,case,sc):
+def _benchmark_van_keken(S,b_vk,case,ctrl_io,sc):
     from scipy.interpolate import griddata
-    # Regular grid interpolation 
-    if b_vk != 1: 
-        return 0 
-    T = S.T_O.copy()
+    from utils import gather_vector,gather_coordinates
+    
+    comm = MPI.COMM_WORLD
+    # Suppose u is your Function
+    # u = fem.Function(V)
 
-    XG = S.T_O.function_space.tabulate_dof_coordinates() 
-    x_g = np.array([np.min(XG[:,0]),np.max(XG[:,0])],dtype=np.float64)*sc.L
-    y_g = np.array([np.min(XG[:,1]),np.max(XG[:,1])],dtype=np.float64)*sc.L
-    nx   = 111 
-    ny   = 101
-    idx0 = 10 #(11 in van keken)
-    idy0 = ny-11 
-    idx1 = 36-1 
-    idy1 = ny-36
+    lT = S.T_O.copy()#gather_vector(S.T_O.copy())
+    mpi_comm = lT.function_space.mesh.comm
+    array = lT.x.array
 
-    xx   = np.linspace(x_g[0],x_g[1],num=nx)
-    yy   = np.linspace(y_g[0],y_g[1],num=ny)
-    T_g  = np.zeros([nx,ny],dtype=np.float64)
-    X,Y  = np.meshgrid(xx,yy)
-    xt,yt = XG[:,0]*sc.L, XG[:,1]*sc.L
-    p     = np.zeros((len(xt),2),dtype=np.float64)
-    p[:,0] = xt 
-    p[:,1] = yt
-    T_g   = griddata(p,T.x.array[:]*sc.Temp,(X, Y), method='nearest')-273.15
-    T_g = T_g.transpose()
-    T = 0
-    co = 0
-    x_s=[]
-    y_s=[] 
-    T2 = []
-    c = 0
-    X_S = []
-    Y_S = []
-    i_X = 10
-    for i in range(36):
-            T = T+(T_g[i,ny-1-i])**2
-            x_s.append(xx[i])
-            y_s.append(yy[ny-1-i])
-            if (i<21) & (i>8):
-                l_index = np.arange(ny-(i+1),ny-10)
-                if len(l_index) == 0:
-                    l_index_1st = np.arange(9,21)
-                    for j in range(len(l_index_1st)):
-                        T2.append(T_g[l_index_1st[j],ny-(i+1)]**2)
-                        X_S.append(xx[l_index_1st[j]])
-                        Y_S.append(yy[ny-(i+1)])
+    # gather solution from all processes on proc 0
+    gT = mpi_comm.gather(array, root=0)
+    
+    XGl = S.T_O.function_space.tabulate_dof_coordinates()#gather_coordinates(S.T_O.function_space)
+    x  = XGl[:,0]
+    y  = XGl[:,1]
+    X_G = mpi_comm.gather(x,root=0)
+    Y_G = mpi_comm.gather(y,root=0)
+    
+    if comm.rank == 0:
+        XG = np.zeros([len(X_G[0]),2])
+        XG[:,0] = X_G[0]
+        XG[:,1] = Y_G[0] 
+
+        T = gT[0]       
+        x_g = np.array([np.min(XG[:,0]),np.max(XG[:,0])],dtype=np.float64)*sc.L
+        y_g = np.array([np.min(XG[:,1]),np.max(XG[:,1])],dtype=np.float64)*sc.L
+        nx   = 111 
+        ny   = 101
+        idx0 = 10 #(11 in van keken)
+        idy0 = ny-11 
+        idx1 = 36-1 
+        idy1 = ny-36
+
+        xx   = np.linspace(x_g[0],x_g[1],num=nx)
+        yy   = np.linspace(y_g[0],y_g[1],num=ny)
+        T_g  = np.zeros([nx,ny],dtype=np.float64)
+        X,Y  = np.meshgrid(xx,yy)
+        xt,yt = XG[:,0]*sc.L, XG[:,1]*sc.L
+        p     = np.zeros((len(xt),2),dtype=np.float64)
+        p[:,0] = xt 
+        p[:,1] = yt
+        T_g   = griddata(p,T*sc.Temp,(X, Y), method='nearest')-273.15
+        T_g = T_g.transpose()
+        T = 0
+        co = 0
+        x_s=[]
+        y_s=[] 
+        T2 = []
+        c = 0
+        X_S = []
+        Y_S = []
+        i_X = 10
+        for i in range(36):
+                T = T+(T_g[i,ny-1-i])**2
+                x_s.append(xx[i])
+                y_s.append(yy[ny-1-i])
+                if (i<21) & (i>8):
+                    l_index = np.arange(ny-(i+1),ny-10)
+                    if len(l_index) == 0:
+                        l_index_1st = np.arange(9,21)
+                        for j in range(len(l_index_1st)):
+                            T2.append(T_g[l_index_1st[j],ny-(i+1)]**2)
+                            X_S.append(xx[l_index_1st[j]])
+                            Y_S.append(yy[ny-(i+1)])
+                            c = c + 1
+                    for j in range(len(l_index)):
+                        T2.append(T_g[i,l_index[j]]**2)
+                        X_S.append(xx[i])
+                        Y_S.append(yy[int(l_index[j])])
                         c = c + 1
-                for j in range(len(l_index)):
-                    T2.append(T_g[i,l_index[j]]**2)
-                    X_S.append(xx[i])
-                    Y_S.append(yy[int(l_index[j])])
-                    c = c + 1
-                
-            co = co+1 
-    
-    T_11_11 = T_g[idx0,idy0]
-              
-    T_ln = np.sqrt(T/co) 
-    T_ln2 = np.sqrt(np.sum(T2)/c)
 
-    data_1c = np.array([
-    [397.55, 505.70, 850.50],
-    [391.57, 511.09, 852.43],
-    [387.78, 503.10, 852.97],
-    [387.84, 503.13, 852.92],
-    [389.39, 503.04, 851.68],
-    [388.73, 504.03, 854.99]
-    ])
+                co = co+1 
 
-    data_2a = np.array([
-    [570.30, 614.09, 1007.31],
-    [580.52, 606.94, 1002.85],
-    [580.66, 607.11, 1003.20],
-    [577.59, 607.52, 1002.15],
-    [581.30, 607.26, 1003.35]
-    ])
+        T_11_11 = T_g[idx0,idy0]
 
-    data_2b = np.array([
-    [550.17, 593.48, 994.11],
-    [551.60, 608.85, 984.08],
-    [582.65, 604.51, 998.71],
-    [583.36, 605.11, 1000.01],
-    [574.84, 603.80, 995.24],
-    [583.11, 604.96, 1000.05]
-    ])
+        T_ln = np.sqrt(T/co) 
+        T_ln2 = np.sqrt(np.sum(T2)/c)
 
-    if case    == 0: 
-        data   = data_1c 
-    elif case  == 1:
-        data = data_2a
-    elif case== 2 : 
-        data = data_2b 
-    else: 
-        data = data_1c*0.
-    
-    print( '------------------------------------------------------------------' )
-    print( ':::====> T(11,11) = %.2f [deg C], average value VanK2008 = %.2f [deg C] +/- %.2f;m/M = %.2f/%.2f [deg C]'%( T_11_11, np.mean(data[:,0]), np.std(data[:,0]),np.min(data[:,0]),np.max(data[:,0]) ) )
-    print( ':::====> L2_A     = %.2f [deg C], average value VanK2008 = %.2f [deg C] +/- %.2f;m/M = %.2f/%.2f [deg C]'%( T_ln, np.mean(data[:,1]), np.std(data[:,1]) ,np.min(data[:,1]),np.max(data[:,1]) ) )
-    print( ':::====> L2_B     = %.2f [deg C], average value VanK2008 = %.2f [deg C] +/- %.2f;;m/M = %.2f/%.2f[deg C]'%( T_ln2, np.mean(data[:,2]), np.std(data[:,2]),np.min(data[:,2]),np.max(data[:,2]) ) )
-    print( ':::L2_A = T along the slab surface from 0 to -210 km' )
-    print( ':::L2_B = T wedge norm from -54 to -110 km ' )
-    print( ':::=> From grid to downsampled grid -> nearest interpolation' )
-    print( '------------------------------------------------------------------' )
-    fg = plt.figure()
-    ax = fg.gca()
-    levels = [0,200,400,600,800,1000,1200,1350]
-    a=ax.contourf(xx,yy,T_g.transpose(),levels=levels,cmap='cmc.lipari');plt.colorbar(a)
-    ax.scatter(x_s,y_s,s=10,c='r',marker='d')
-    ax.scatter(xx[10],yy[ny-11],s=40,marker='s',c='k')
-    ax.scatter(X_S,Y_S,s=1,c='w')
-    
-    A = [T_11_11,np.mean(data[:,0]), np.std(data[:,0])]
-    B = [ T_ln, np.mean(data[:,1]), np.std(data[:,1])]
-    C = [T_ln2, np.mean(data[:,2]), np.std(data[:,2])]
+        data_1c = np.array([
+        [397.55, 505.70, 850.50],
+        [391.57, 511.09, 852.43],
+        [387.78, 503.10, 852.97],
+        [387.84, 503.13, 852.92],
+        [389.39, 503.04, 851.68],
+        [388.73, 504.03, 854.99]
+        ])
+
+        data_2a = np.array([
+        [570.30, 614.09, 1007.31],
+        [580.52, 606.94, 1002.85],
+        [580.66, 607.11, 1003.20],
+        [577.59, 607.52, 1002.15],
+        [581.30, 607.26, 1003.35]
+        ])
+
+        data_2b = np.array([
+        [550.17, 593.48, 994.11],
+        [551.60, 608.85, 984.08],
+        [582.65, 604.51, 998.71],
+        [583.36, 605.11, 1000.01],
+        [574.84, 603.80, 995.24],
+        [583.11, 604.96, 1000.05]
+        ])
+
+        if case    == 0: 
+            data   = data_1c 
+        elif case  == 1:
+            data = data_2a
+        elif case== 2 : 
+            data = data_2b 
+        else: 
+            data = data_1c*0.
+
+        print( '------------------------------------------------------------------' )
+        print( ':::====> T(11,11) = %.2f [deg C], average value VanK2008 = %.2f [deg C] +/- %.2f;m/M = %.2f/%.2f [deg C]'%( T_11_11, np.mean(data[:,0]), np.std(data[:,0]),np.min(data[:,0]),np.max(data[:,0]) ) )
+        print( ':::====> L2_A     = %.2f [deg C], average value VanK2008 = %.2f [deg C] +/- %.2f;m/M = %.2f/%.2f [deg C]'%( T_ln, np.mean(data[:,1]), np.std(data[:,1]) ,np.min(data[:,1]),np.max(data[:,1]) ) )
+        print( ':::====> L2_B     = %.2f [deg C], average value VanK2008 = %.2f [deg C] +/- %.2f;;m/M = %.2f/%.2f[deg C]'%( T_ln2, np.mean(data[:,2]), np.std(data[:,2]),np.min(data[:,2]),np.max(data[:,2]) ) )
+        print( ':::L2_A = T along the slab surface from 0 to -210 km' )
+        print( ':::L2_B = T wedge norm from -54 to -110 km ' )
+        print( ':::=> From grid to downsampled grid -> nearest interpolation' )
+        print( '------------------------------------------------------------------' )
+        # place holder for the save database 
+        
+
+
     return A,B,C
 
 if __name__ == '__main__': 

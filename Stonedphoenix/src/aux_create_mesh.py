@@ -1,75 +1,167 @@
 
 import numpy as np
-
+import gmsh 
+from scal import Scal 
 import matplotlib.pyplot as plt
-# TO DO -> create template classes for points, lines, loop lines, surfaces & physical objects. This would guarantee a certain flexibility and a more organised work flow
-# For instance, some function in the writing.geo file are pretty redundant, and can be improved. 
+from dataclasses import dataclass, field
+from dolfinx import mesh, fem, io, nls, log
+import matplotlib.pyplot as plt
+from dolfinx.io import XDMFFile, gmshio
+from ufl import exp, conditional, eq, as_ufl
+import basix.ufl
+from utils import timing_function, print_ph
+import dolfinx
+from dolfinx.mesh import create_submesh
+from numpy.typing import NDArray
+
+# --- Index 
+'''
+DICTIONARIES:
+dict_surf
+dict_tag_lines
+CLASS: 
+Mesh [Important]
+Domain[Important]
+Geom_input[Important]
+Class_Points[Secondary] => Used in create_mesh
+Class_Line[Secondary]   => Used in create_mesh
+FUNCTION: 
+
+'''
 
 
-def create_loop(l_list,mesh_model,tag):
-    a = []
-    
-    for i in range(len(l_list)):
+
+#---------------------------------------------------------
+
+dict_surf = {
+    'sub_plate'         : 1,
+    'oceanic_crust'     : 2,
+    'wedge'             : 3,
+    'overriding_lm'     : 4,
+    'upper_crust'       : 5,
+    'lower_crust'       : 6,
+}
+#---------------------------------------------------------
+
+
+dict_tag_lines = {
+    'Top'               : 1,
+    'Right_lit'         : 2,
+    'Right_wed'         : 3,
+    'Bottom_wed'        : 4,
+    'Bottom_sla'        : 5,
+    'Subduction_bot'    : 6,
+    'Left_inlet'        : 7,
+    'Subduction_top_lit': 8,
+    'Subduction_top_wed': 9,
+    'Oceanic'           : 10,
+    'Overriding_mantle' : 11,
+    'Crust_overplate'   : 12,
+    'LCrust_overplate'  : 13,
+}
+
+
+
+#------------------------------------------------------------------------------------------------
+
+class Mesh(): 
+    def __init__(self) :
+
+        " Class where to store the information of the meshes"
+
+        self.g_input         : geom_input                            # Geometric input
+        self.domainG         : Domain                                # 
+        self.domainA         : Domain
+        self.domainB         : Domain
+        self.domainC         : Domain
+        self.comm            : mpi4py.MPI.Intracomm
+        self.rank            : int
+        self.size            : int 
+        self.element_p       : ufl.FiniteElement   
+        self.element_PT      : ufl.FiniteElement
+        self.element_V       : ufl.FiniteElement
+ 
+ 
+@dataclass
+class Domain:
+    """
+    Domain stores the mesh and associated data:
+      - cell_par, node_par: parent relationships (if global mesh has submeshes)
+      - facets: tagged facets (boundary features)
+      - Tagcells: tagged cells (markers)
+      - bc_dict: dictionary of boundary condition tags/names
+      - solPh: function space for material properties
+      - phase: material phase function
+      # Admit: corrected with chatgpt, yeah, I am lazy
+    """
+    hierarchy: str = "Parent"
+    mesh: dolfinx.mesh.Mesh = None
+    cell_par: np.ndarray = field(default_factory=lambda: np.array([], dtype=np.int32))
+    node_par: np.ndarray = field(default_factory=lambda: np.array([], dtype=np.int32))
+    facets: dolfinx.mesh.MeshTags = None
+    Tagcells: dolfinx.mesh.MeshTags = None
+    bc_dict: dict = field(default_factory=dict)
+    solPh: dolfinx.fem.FunctionSpace = None
+    phase: dolfinx.fem.Function = None
         
-        if isinstance(l_list[i], (int, np.integer)): 
-            val = [l_list[i]]
-        else: 
-            val = l_list[i]
+
+
+
+#-------------------------------------------------------------------------------------------------
+class Geom_input():
+    def __init__(
+        self,
+        x: NDArray[np.float64] = np.array([0.0, 1000e3]),
+        y: NDArray[np.float64] = np.array([-660e3, 0.0]),
+        cr: float = 20e3,
+        ocr: float = 6e3,
+        lit_mt: float = 30e3,
+        lc: float = 0.5,
+        wc: float = 2.0e3,
+        slab_tk: float = 130e3,
+        decoupling: float = 100e3,
+        trans: float = 10e3) -> None:
+         
+        self.x                 = x               # main grid coordinate
+        self.y                 = y   
+        self.slab_tk           = slab_tk
+        self.cr                = cr              # crust 
+        self.ocr               = ocr             # oceanic crust
+        self.lit_mt            = lit_mt          # lithosperic mantle  
+        self.lc                = lc              # lower crust ratio 
+        self.wc                = wc              # weak zone 
+        self.lt_d              = (cr+lit_mt)     # total lithosphere thickness
+        self.decoupling        = decoupling      # decoupling depth -> i.e. where the weak zone is prolonged 
+        self.resolution_normal = wc  # To Do
+        self.theta_out_slab    = []
+        self.trans             = trans
     
-        a.extend(val)
+    def dimensionless_ginput(self,sc:Scal):
+        self.x                 /= sc.L               # main grid coordinate
+        self.y                 /= sc.L   
+        self.cr                /= sc.L              # crust 
+        self.ocr               /= sc.L             # oceanic crust
+        self.lit_mt            /= sc.L          # lithosperic mantle  
+        self.wc                /= sc.L             # weak zone 
+        self.lt_d              /= sc.L    # total lithosphere thickness
+        self.decoupling        /= sc.L      # decoupling depth -> i.e. where the weak zone is prolonged 
+        self.resolution_normal /= sc.L  # To Do
+        self.trans             /= sc.L
         
-    
-    mesh_model.geo.addCurveLoop(a,tag) # Left side of the subudction zone
-   
-    return mesh_model
-
-
-def find_line_index(Lin_ar,point,d):
-    
-    for i in range(len(Lin_ar[0,:])-1):
-        # Select pint of the given line
-        p0 = np.int32(Lin_ar[0,i])
-
-        p1 = np.int32(Lin_ar[1,i])
-        # find the index of the point 
-        ip0 = np.where(p0==np.int32(point[2,:]))
-        ip = np.where(p1==np.int32(point[2,:]))
-        # Check wheter or not the coordinate z is the one. 
-        z1 = point[1,ip]
-        if z1 == -d: 
-            X = [point[0,ip0],point[0,ip]]
-            Y = [point[1,ip0],point[1,ip]]
-
-            index = i+1 
-            break    
-    
-    
-    return index 
-
-
-def find_tag_line(coord,x,dir):
-    if dir == 'x':
-        a = 0 
-    else:
-        a = 1 
-    
-    i = np.where(coord[a,:]==-x)
-    i = i[0][0];i = coord[2,i]
-    
-    return np.int32(i)                 
-
-
+        return self 
+        
+#-----------------------------------------------------------------------------------------------------------------
 class Class_Points():
     def update_points      (self,
-                            mesh_model,
-                            sx,
-                            sy,
-                            bx,
-                            by,
-                            oc_cx,
-                            oc_cy,
-                            g_input,
-                            fp):
+                            mesh_model:gmsh.model,
+                            sx        :float,
+                            sy        :float,
+                            bx        :float,
+                            by        :float,
+                            oc_cx     :float | None,
+                            oc_cy     :float | None,
+                            g_input   :Geom_input,
+                            fp        : float | None) -> gmsh.model:
         """
         To Do Friday: document this function
 
@@ -86,7 +178,10 @@ class Class_Points():
 
         self.max_tag_s,  self.tag_subduction, self.coord_sub,     mesh_model     = _create_points(mesh_model, sx,    sy,    g_input.wc, 0)
         self.max_tag_bots,  self.tag_bottom,    self.coord_bottom, mesh_model     = _create_points(mesh_model, bx,    by,    g_input.wc, self.max_tag_s)
-        self.max_tag_oc, self.tag_oc,         self.coord_ocean,   mesh_model     = _create_points(mesh_model, oc_cx, oc_cy, g_input.wc, self.max_tag_bots)
+        if g_input.ocr != 0.0: 
+            self.max_tag_oc, self.tag_oc,         self.coord_ocean,   mesh_model     = _create_points(mesh_model, oc_cx, oc_cy, g_input.wc, self.max_tag_bots)
+        else: 
+            self.max_tag_oc = self.max_tag_bots; self.coord_ocean  = None
         # -- Here are the points at the boundary of the model. The size of the model is defined earlier, and subduction zone is modified as such to comply the main geometrical input, 
         # I used subduction points because they define a few important point. 
 
@@ -95,17 +190,32 @@ class Class_Points():
         self.max_tag_c, self.tag_right_c_l, self.coord_lr,  mesh_model            = _create_points(mesh_model,   g_input.x[1], -g_input.lt_d, g_input.wc,  self.max_tag_b,  True)
         self.max_tag_d, self.tag_right_c_t, self.coord_top, mesh_model            = _create_points(mesh_model,   g_input.x[1],  g_input.y[1],         g_input.wc,  self.max_tag_c,  True)
 
-         
-        self.max_tag_e, self.tag_right_c_cr, self.coord_crust,    mesh_model  = _create_points(mesh_model,  g_input.x[1], -g_input.cr,                g_input.wc, self.max_tag_d, True)
-        if g_input.lc !=0: 
-                self.max_tag_f, self.tag_right_c_lcr,  self.coord_lcr, mesh_model = _create_points(mesh_model,  g_input.x[1], -g_input.cr*(1-g_input.lc), g_input.wc, self.max_tag_e, True)
+        if g_input.cr != 0.0:
+            self.max_tag_e, self.tag_right_c_cr, self.coord_crust,    mesh_model  = _create_points(mesh_model,  g_input.x[1], -g_input.cr,                g_input.wc, self.max_tag_d, True)
+            if g_input.lc !=0: 
+                    self.max_tag_f, self.tag_right_c_lcr,  self.coord_lcr, mesh_model = _create_points(mesh_model,  g_input.x[1], -g_input.cr*(1-g_input.lc), g_input.wc, self.max_tag_e, True)
+            else: 
+                self.coord_lcr = None
+        else: 
+            self.coord_lcr = None ; self.coord_crust = None
 
-        self.global_points = np.hstack([self.coord_sub, self.coord_bottom, self.coord_ocean, self.coord_bc, self.coord_lr, self.coord_top, self.coord_crust, self.coord_lcr])
+        # Thank Chatgpt 
+        arr = [self.coord_sub, self.coord_bottom, self.coord_ocean, self.coord_bc, self.coord_lr, self.coord_top, self.coord_crust, self.coord_lcr]
+        arrays = [a for a in arr if a is not None]
 
+        self.global_points = np.hstack(arrays)
+
+
+        
+        
         return mesh_model
+#-----------------------------------------------------------------------------------------------------------------
  
 class Class_Line():
-    def update_lines(self, mesh_model, CP, g_input):
+    def update_lines(self, 
+                     mesh_model:gmsh.model, 
+                     CP:Class_Points, 
+                     g_input:Geom_input):
         
         # Top Boundary      
         p_list                                                    = [CP.tag_subduction[0], CP.tag_right_c_t[0]]
@@ -178,9 +288,59 @@ class Class_Line():
         
         
         return mesh_model
+                
+#-----------------------------------------------------------------------------------------------------------------
+def create_loop(l_list,mesh_model,tag):
+    a = []
+    
+    for i in range(len(l_list)):
         
+        if isinstance(l_list[i], (int, np.integer)): 
+            val = [l_list[i]]
+        else: 
+            val = l_list[i]
+    
+        a.extend(val)
         
+    
+    mesh_model.geo.addCurveLoop(a,tag) # Left side of the subudction zone
+   
+    return mesh_model
+#-----------------------------------------------------------------------------------------------------------------
+def find_line_index(Lin_ar,point,d):
+    
+    for i in range(len(Lin_ar[0,:])-1):
+        # Select pint of the given line
+        p0 = np.int32(Lin_ar[0,i])
 
+        p1 = np.int32(Lin_ar[1,i])
+        # find the index of the point 
+        ip0 = np.where(p0==np.int32(point[2,:]))
+        ip = np.where(p1==np.int32(point[2,:]))
+        # Check wheter or not the coordinate z is the one. 
+        z1 = point[1,ip]
+        if z1 == -d: 
+            X = [point[0,ip0],point[0,ip]]
+            Y = [point[1,ip0],point[1,ip]]
+
+            index = i+1 
+            break    
+    
+    
+    return index 
+
+#-----------------------------------------------------------------------------------------------------------------
+
+def find_tag_line(coord,x,dir):
+    if dir == 'x':
+        a = 0 
+    else:
+        a = 1 
+    
+    i = np.where(coord[a,:]==-x)
+    i = i[0][0];i = coord[2,i]
+    
+    return np.int32(i)                 
 
 
 def function_create_slab_channel(data_real:bool,c_phase,SP=[],fname=[]): 
@@ -233,7 +393,10 @@ def function_create_slab_channel(data_real:bool,c_phase,SP=[],fname=[]):
         
     # Create the channel using the subduction interface as guide
     #cx,cy = function_create_subduction_channel(ax,ay,theta_mean,c_phase)
-    ox,oy = function_create_oceanic_crust(ax,ay,theta_mean,c_phase.ocr)
+    if c_phase.ocr != 0.0:
+        ox,oy = function_create_oceanic_crust(ax,ay,theta_mean,c_phase.ocr)
+    else: 
+        ox = None; oy = None 
     # Correct the slab surface and find the extra node
     ax,ay,theta_mean = find_extra_node(ax,ay,theta_mean,c_phase)
     # Correct the subduction channel as well finding the extranode 
@@ -246,6 +409,7 @@ def function_create_slab_channel(data_real:bool,c_phase,SP=[],fname=[]):
 
     return ax,ay,bx,by,ox,oy
 
+#-----------------------------------------------------------------------------------------------------------------
 
 def function_create_subduction_channel(sx,sy,th,c_phase):
     wc = c_phase.wc
@@ -305,6 +469,7 @@ def function_create_oceanic_crust(sx,sy,th,olt):
 
     return cx_n,cy_n
 
+#-----------------------------------------------------------------------------------------------------------------
 
 
 def function_create_subduction_bottom(sx,sy,th,lt):
@@ -332,7 +497,8 @@ def function_create_subduction_bottom(sx,sy,th,lt):
 
     return cx_n,cy_n
     
-    
+#-----------------------------------------------------------------------------------------------------------------
+  
 def _find_e_node(ax,ay,t,lt,flag=False):
     if lt == 0.0 and flag == False: 
     
@@ -358,6 +524,7 @@ def _find_e_node(ax,ay,t,lt,flag=False):
     
     return index_extra_node,t_ex
 
+#-----------------------------------------------------------------------------------------------------------------
 
 def _correct_(ax,ay,index_extra_node,lt,t,tex):
     
@@ -375,6 +542,7 @@ def _correct_(ax,ay,index_extra_node,lt,t,tex):
     
     return ax,ay,t 
     
+#-----------------------------------------------------------------------------------------------------------------
 
 def find_extra_node(ax:float,ay:float,t:float,c_phase):
 
@@ -507,3 +675,8 @@ def _create_lines(mesh_model,previous, tag_p,flag=False):
     max_tag = np.max(tag_l)
     
     return max_tag,tag_l,lines,mesh_model
+
+# End File ----
+#-----------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------
