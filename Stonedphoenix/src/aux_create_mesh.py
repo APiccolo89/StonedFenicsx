@@ -309,7 +309,9 @@ class Class_Line():
         return mesh_model
                 
 #-----------------------------------------------------------------------------------------------------------------
-def create_loop(l_list,mesh_model,tag):
+def create_loop(l_list:list,
+                mesh_model:gmsh.model,
+                tag:int) -> gmsh.model:
     a = []
     
     for i in range(len(l_list)):
@@ -326,7 +328,9 @@ def create_loop(l_list,mesh_model,tag):
    
     return mesh_model
 #-----------------------------------------------------------------------------------------------------------------
-def find_line_index(Lin_ar,point,d):
+def find_line_index(Lin_ar:NDArray,
+                    point:NDArray,
+                    d:float) -> int:
     
     for i in range(len(Lin_ar[0,:])-1):
         # Select pint of the given line
@@ -350,7 +354,9 @@ def find_line_index(Lin_ar,point,d):
 
 #-----------------------------------------------------------------------------------------------------------------
 
-def find_tag_line(coord,x,dir):
+def find_tag_line(coord:NDArray,
+                  x:float,
+                  dir:str) -> int:
     if dir == 'x':
         a = 0 
     else:
@@ -362,7 +368,7 @@ def find_tag_line(coord,x,dir):
     return np.int32(i)                 
 
 
-def function_create_slab_channel(data_real:bool,c_phase,SP=[],fname=[]): 
+def function_create_slab_channel(data_real:bool,c_phase:Geom_input,SP=[],fname=[]): 
 
     """
     Input: 
@@ -430,7 +436,10 @@ def function_create_slab_channel(data_real:bool,c_phase,SP=[],fname=[]):
 
 #-----------------------------------------------------------------------------------------------------------------
 
-def function_create_subduction_channel(sx,sy,th,c_phase):
+def function_create_subduction_channel(sx:NDArray,
+                                       sy:NDArray,
+                                       th:float,
+                                       c_phase:Geom_input):
     wc = c_phase.wc
     cx = np.zeros([np.amax(sx.shape),1])
     cy = np.zeros([np.amax(sx.shape),1])
@@ -463,7 +472,10 @@ def function_create_subduction_channel(sx,sy,th,c_phase):
     return cx,cy
 
 
-def function_create_oceanic_crust(sx,sy,th,olt):
+def function_create_oceanic_crust(sx:NDArray[np.float64],
+                                  sy:NDArray[np.float64],
+                                  th:float,
+                                  olt:float):
 
     cx = np.zeros([np.amax(sx.shape),1])
     cy = np.zeros([np.amax(sx.shape),1])
@@ -491,7 +503,10 @@ def function_create_oceanic_crust(sx,sy,th,olt):
 #-----------------------------------------------------------------------------------------------------------------
 
 
-def function_create_subduction_bottom(sx,sy,th,lt):
+def function_create_subduction_bottom(sx:NDArray[np.float64],
+                                      sy:NDArray[np.float64],
+                                      th:float,
+                                      lt:float):
 
     cx = np.zeros([np.amax(sx.shape),1])
     cy = np.zeros([np.amax(sx.shape),1])
@@ -518,7 +533,7 @@ def function_create_subduction_bottom(sx,sy,th,lt):
     
 #-----------------------------------------------------------------------------------------------------------------
   
-def _find_e_node(ax,ay,t,lt,flag=False):
+def _find_e_node(ax:NDArray[np.float64],ay:NDArray[np.float64],t:NDArray[np.float64],lt:float,flag=False):
     if lt == 0.0 and flag == False: 
     
         return [],[]
@@ -547,7 +562,12 @@ def _find_e_node(ax,ay,t,lt,flag=False):
 
 #-----------------------------------------------------------------------------------------------------------------
 
-def _correct_(ax,ay,index_extra_node,lt,t,tex):
+def _correct_(ax:NDArray[np.float64],
+              ay:NDArray[np.float64],
+              index_extra_node:int,
+              lt:float,
+              t:NDArray[np.float64],
+              tex:float):
     
     if index_extra_node == []:
         return ax,ay,t
@@ -565,7 +585,7 @@ def _correct_(ax,ay,index_extra_node,lt,t,tex):
     
 #-----------------------------------------------------------------------------------------------------------------
 
-def find_extra_node(ax:float,ay:float,t:float,c_phase):
+def find_extra_node(ax:NDArray[np.float64],ay:NDArray[np.float64],t:NDArray[np.float64],c_phase:Geom_input):
 
     #-- Find nodes 
     e_node_uc,t_ex1 = _find_e_node(ax,ay,t,c_phase.cr*(1-c_phase.lc))
@@ -587,7 +607,7 @@ def find_extra_node(ax:float,ay:float,t:float,c_phase):
     return ax,ay,t
 
 
-def correct_channel(cx,cy,sx,sy,c_phase):
+def correct_channel(cx:NDArray[np.float64],cy:NDArray[np.float64],sx:NDArray[np.float64],sy:NDArray[np.float64],c_phase:Geom_input):
     nr_channel_points = np.amax(cx.shape)
     #-- Find nodes 
     ' Dovevo alternare le cazzo di funzioni, ho perso 5-7 ore del mio tempo, per fortuna non ho il cancro, altrimenti che gioia' 
