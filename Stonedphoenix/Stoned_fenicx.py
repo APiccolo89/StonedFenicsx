@@ -23,23 +23,23 @@ import os
 #---------------------------------------------------------------------------------------------------------
 # My modules 
 #---------------------------------------------------------------------------------------------------------
-from src.create_mesh                  import create_mesh as cm 
-from src.solution                     import Solution as sol 
-from src.phase_db                     import PhaseDataBase 
-from src.numerical_control            import ctrl_LHS 
-from src.utils                        import print_ph
-from src.utils                        import timing_function
-from src.utils                        import time_the_time
-from src.utils                        import get_discrete_colormap
-from src.phase_db                     import _generate_phase
+from src.create_mesh                 import create_mesh as cm 
+from src.solution                    import Solution as sol 
+from src.phase_db                    import PhaseDataBase 
+from src.numerical_control           import ctrl_LHS 
+from src.utils                       import print_ph
+from src.utils                       import timing_function
+from src.utils                       import time_the_time
+from src.utils                       import get_discrete_colormap
+from src.phase_db                    import _generate_phase
 from src.scal                        import Scal
 from src.scal                        import _scaling_material_properties
 from src.numerical_control           import NumericalControls
 from src.numerical_control           import IOControls
-from src.create_mesh                  import Mesh
-from src.create_mesh                  import geom_input
-from src.scal                      import _scaling_control_parameters
-from src.scal                     import _scale_parameters
+from src.create_mesh                 import Mesh
+from src.create_mesh                 import Geom_input
+from src.scal                        import _scaling_control_parameters
+from src.scal                        import _scale_parameters
 from src.scal                        import _scaling_material_properties
 from src.solution                    import steady_state_solution
 
@@ -155,7 +155,7 @@ def StonedFenicsx():
                           name_dislocation=IP.Phase7.name_dislocation)
     # ---
     # Create mesh 
-    g_input = geom_input(x = np.asarray(IP.x),
+    g_input = Geom_input(x = np.asarray(IP.x),
                  y = np.array(IP.y),
                  cr=IP.cr,
                  ocr=IP.ocr,

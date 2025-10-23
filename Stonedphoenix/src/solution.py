@@ -1743,11 +1743,12 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
         res = compute_residuum_outer(sol,Told,PLold,u_globalold,p_globalold,it_outer,sc, time_A_outer)
         print_output(sol,M.domainG,pdb,ioctrl,it_outer,sc)
         if ctrl.van_keken == 1: 
-            A,B,C =_benchmark_van_keken(sol,1,ctrl.van_keken_case,ioctrl,sc)
+           
+            _benchmark_van_keken(sol,1,ctrl.van_keken_case,ioctrl,sc)
 
         # Save the top slab temperature and the bottom slab temperature (moho)
         
-        top, moho = extract_slab_top_moho(S,D,ctrl_io)
+        #top, moho = extract_slab_top_moho(S,D,ctrl_io)
 
         # Create h5 database systematic 
         
@@ -2134,7 +2135,7 @@ def _benchmark_van_keken(S,b_vk,case,ctrl_io,sc):
         
 
 
-    return A,B,C
+    return 0
 
 if __name__ == '__main__': 
     
