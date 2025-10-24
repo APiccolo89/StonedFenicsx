@@ -67,8 +67,17 @@ dict_tag_lines = {
 class Mesh(): 
     def __init__(self) :
 
-        " Class where to store the information of the meshes"
-
+        ''' g_input: Geometric input parameters,
+            domainG: Global domain
+            domainA: Subduction zone domain
+            domainB: Wedge domain
+            domainC: Overriding plate domain
+            rank: MPI rank
+            size: MPI size
+            element_p: Finite element for pressure
+            element_PT: Finite element for temperature
+            element_V: Finite element for velocity
+        '''
         self.g_input         : geom_input                            # Geometric input
         self.domainG         : Domain                                # 
         self.domainA         : Domain
@@ -218,7 +227,7 @@ class Class_Line():
     def update_lines(self, 
                      mesh_model:gmsh.model, 
                      CP:Class_Points, 
-                     g_input:Geom_input):
+                     g_input:Geom_input)-> gmsh.model:
         
         # Top Boundary      
         p_list                                                    = [CP.tag_subduction[0], CP.tag_right_c_t[0]]
@@ -368,7 +377,10 @@ def find_tag_line(coord:NDArray,
     return np.int32(i)                 
 
 
-def function_create_slab_channel(data_real:bool,c_phase:Geom_input,SP=[],fname=[]): 
+def function_create_slab_channel(data_real:bool,
+                                 c_phase:Geom_input,
+                                 SP=[],
+                                 fname=[])-> tuple[NDArray[np.float64],NDArray[np.float64],NDArray[np.float64],NDArray[np.float64],NDArray[np.float64] | None,NDArray[np.float64] | None]: 
 
     """
     Input: 
@@ -439,7 +451,7 @@ def function_create_slab_channel(data_real:bool,c_phase:Geom_input,SP=[],fname=[
 def function_create_subduction_channel(sx:NDArray,
                                        sy:NDArray,
                                        th:float,
-                                       c_phase:Geom_input):
+                                       c_phase:Geom_input)->tuple[NDArray[np.float64],NDArray[np.float64]]:
     wc = c_phase.wc
     cx = np.zeros([np.amax(sx.shape),1])
     cy = np.zeros([np.amax(sx.shape),1])
@@ -506,7 +518,7 @@ def function_create_oceanic_crust(sx:NDArray[np.float64],
 def function_create_subduction_bottom(sx:NDArray[np.float64],
                                       sy:NDArray[np.float64],
                                       th:float,
-                                      lt:float):
+                                      lt:float)->tuple[NDArray[np.float64],NDArray[np.float64]]:
 
     cx = np.zeros([np.amax(sx.shape),1])
     cy = np.zeros([np.amax(sx.shape),1])
@@ -567,7 +579,7 @@ def _correct_(ax:NDArray[np.float64],
               index_extra_node:int,
               lt:float,
               t:NDArray[np.float64],
-              tex:float):
+              tex:float)->tuple[NDArray[np.float64],NDArray[np.float64],NDArray[np.float64]]:
     
     if index_extra_node == []:
         return ax,ay,t
@@ -585,7 +597,10 @@ def _correct_(ax:NDArray[np.float64],
     
 #-----------------------------------------------------------------------------------------------------------------
 
-def find_extra_node(ax:NDArray[np.float64],ay:NDArray[np.float64],t:NDArray[np.float64],c_phase:Geom_input):
+def find_extra_node(ax:NDArray[np.float64],
+                    ay:NDArray[np.float64],
+                    t:NDArray[np.float64],
+                    c_phase:Geom_input)->tuple[NDArray[np.float64],NDArray[np.float64],NDArray[np.float64]]:
 
     #-- Find nodes 
     e_node_uc,t_ex1 = _find_e_node(ax,ay,t,c_phase.cr*(1-c_phase.lc))
@@ -607,7 +622,11 @@ def find_extra_node(ax:NDArray[np.float64],ay:NDArray[np.float64],t:NDArray[np.f
     return ax,ay,t
 
 
-def correct_channel(cx:NDArray[np.float64],cy:NDArray[np.float64],sx:NDArray[np.float64],sy:NDArray[np.float64],c_phase:Geom_input):
+def correct_channel(cx:NDArray[np.float64],
+                    cy:NDArray[np.float64],
+                    sx:NDArray[np.float64],
+                    sy:NDArray[np.float64],
+                    c_phase:Geom_input)->tuple[NDArray[np.float64],NDArray[np.float64],float,float]:
     nr_channel_points = np.amax(cx.shape)
     #-- Find nodes 
     ' Dovevo alternare le cazzo di funzioni, ho perso 5-7 ore del mio tempo, per fortuna non ho il cancro, altrimenti che gioia' 
@@ -693,7 +712,10 @@ def _create_points(mesh,                                            # I am not a
 
 #------------------------------------------------------------------------------------------------------------------------------
 
-def _create_lines(mesh_model,previous, tag_p,flag=False):
+def _create_lines(mesh_model:gmsh.model,
+                  previous:int,
+                  tag_p:list,
+                  flag=False)-> tuple[int, list, NDArray[np.int32], gmsh.model]:
     
     len_p = len(tag_p)-1
     tag_l = []

@@ -31,6 +31,7 @@ from utils import timing_function, print_ph
 import dolfinx
 from dolfinx.mesh import create_submesh
 from aux_create_mesh import Mesh, Domain, Class_Points, Class_Line, Geom_input, dict_tag_lines, dict_surf
+from numpy.typing import NDArray
 
 
 def debug_plot(target,global_line,global_point,color):
@@ -77,7 +78,9 @@ Updated Branch: The mesh is created as a function of the slab geometry: first, t
                 General rule: If I copy or take ispiration for pre-existing software I cite in the function where do I steal the idea. 
 """
 
-def assign_phases(dict_surf, cell_tags,phase):
+def assign_phases(dict_surf:dict, 
+                  cell_tags:int,
+                  phase:dolfinx.fem.Function)->dolfinx.fem.Function:
     """Assigns phase tags to the mesh based on the provided surface tags."""
     for tag, value in dict_surf.items():
         indices = cell_tags.find(value) 
@@ -100,7 +103,7 @@ def create_mesh_fenicsx(mesh, cell_type, prune_z=False):
     return out_mesh
 
 
-def from_line_to_point_coordinate(L,LG,GP):
+def from_line_to_point_coordinate(L:int,LG:NDArray[np.int64],GP:NDArray[np.float64])->tuple[int,int,float,float]:
     p0   = LG[0,L-1]
     p1   = LG[1,L-1]
 

@@ -14,7 +14,7 @@ lc                = 0.0              # lower crust ratio
 wc                = 2.0e3              # weak zone 
 lt_d              = (cr+lit_mt)     # total lithosphere thickness
 decoupling        = 100e3      # decoupling depth -> i.e. where the weak zone is prolonged 
-resolution_normal = 1.5e3  # To Do
+resolution_normal = 2.0e3  # To Do
 #---------------------------------------------------------------------------------------------------------
 # Numerical Controls 
 #---------------------------------------------------------------------------------------------------------
@@ -32,7 +32,7 @@ steady_state      = 1
 slab_bc           = 1 # 1 moving wall, 0 pipe-like slab 
 tol_innerPic      = 1e-3
 tol_innerNew      = 1e-5
-van_keken_case    = 0 # 1 Van Keken benchmark, When these flag are activated -> default value in all phases -> 3300  
+van_keken_case    = 2 # 1 Van Keken benchmark, When these flag are activated -> default value in all phases -> 3300  
                     # 2 diffusion only, 
                     # 3 composite 
                     # 4 Iterative 
