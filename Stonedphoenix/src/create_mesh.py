@@ -3,14 +3,14 @@
 import os 
 import sys
 sys.path.append(os.path.abspath("src"))
-import Function_make_mesh 
-from Function_make_mesh import Class_Points
-from Function_make_mesh import Class_Line
-from Function_make_mesh import create_loop
-from Function_make_mesh import find_line_index
+from aux_create_mesh import Class_Points
+from aux_create_mesh import Class_Line
+from aux_create_mesh import create_loop
+from aux_create_mesh import find_line_index
 from numerical_control import IOControls, NumericalControls
 
 import numpy as np
+
 import gmsh 
 
 import ufl
@@ -30,7 +30,9 @@ import basix.ufl
 from utils import timing_function, print_ph
 import dolfinx
 from dolfinx.mesh import create_submesh
-from dataclasses import dataclass, field
+from aux_create_mesh import Mesh, Domain, Class_Points, Class_Line, Geom_input, dict_tag_lines, dict_surf
+from numpy.typing import NDArray
+
 
 def debug_plot(target,global_line,global_point,color):
     for i in range(len(target)):
@@ -44,7 +46,6 @@ def debug_plot(target,global_line,global_point,color):
         
 
 
-# dictionary for surface and phase. 
 """
 Updated Branch: The mesh is created as a function of the slab geometry: first, the slab geometry is either defined by an input file (To do) 
                 or by the class that I introduced that create a slab geometry as a function of lambda function (to do this particular feature). 
@@ -76,76 +77,10 @@ Updated Branch: The mesh is created as a function of the slab geometry: first, t
                 that after the first working example would be worth to simplify the work flow. 
                 General rule: If I copy or take ispiration for pre-existing software I cite in the function where do I steal the idea. 
 """
-dict_surf = {
-    'sub_plate'         : 1,
-    'oceanic_crust'     : 2,
-    'wedge'             : 3,
-    'overriding_lm'     : 4,
-    'upper_crust'       : 5,
-    'lower_crust'       : 6,
-}
 
-dict_tag_lines = {
-    'Top'               : 1,
-    'Right_lit'         : 2,
-    'Right_wed'         : 3,
-    'Bottom_wed'        : 4,
-    'Bottom_sla'        : 5,
-    'Subduction_bot'    : 6,
-    'Left_inlet'        : 7,
-    'Subduction_top_lit': 8,
-    'Subduction_top_wed': 9,
-    'Oceanic'           : 10,
-    'Overriding_mantle' : 11,
-    'Crust_overplate'   : 12,
-    'LCrust_overplate'  : 13,
-}
-
-
-class geom_input():
-    def __init__(self,
-                 x = np.array([0.,1000e3]),
-                 y = np.array([-660e3,0.]),
-                 cr=20e3,
-                 ocr=6e3,
-                 lit_mt=30e3,
-                 lc = 0.5,
-                 wc = 2.0e3,
-                 slab_tk = 130e3, 
-                 decoupling = 100e3,
-                 trans      = 10e3):
-        self.x                 = x               # main grid coordinate
-        self.y                 = y   
-        self.slab_tk           = slab_tk
-        self.cr                = cr              # crust 
-        self.ocr               = ocr             # oceanic crust
-        self.lit_mt            = lit_mt          # lithosperic mantle  
-        self.lc                = lc              # lower crust ratio 
-        self.wc                = wc              # weak zone 
-        self.lt_d              = (cr+lit_mt)     # total lithosphere thickness
-        self.decoupling        = decoupling      # decoupling depth -> i.e. where the weak zone is prolonged 
-        self.resolution_normal = wc  # To Do
-        self.theta_out_slab    = []
-        self.trans             = trans
-    
-    def dimensionless_ginput(self,sc):
-        self.x                 /= sc.L               # main grid coordinate
-        self.y                 /= sc.L   
-        self.cr                /= sc.L              # crust 
-        self.ocr               /= sc.L             # oceanic crust
-        self.lit_mt            /= sc.L          # lithosperic mantle  
-        self.wc                /= sc.L             # weak zone 
-        self.lt_d              /= sc.L    # total lithosphere thickness
-        self.decoupling        /= sc.L      # decoupling depth -> i.e. where the weak zone is prolonged 
-        self.resolution_normal /= sc.L  # To Do
-        self.trans             /= sc.L
-        
-        return self 
-        
-        
-
-
-def assign_phases(dict_surf, cell_tags,phase):
+def assign_phases(dict_surf:dict, 
+                  cell_tags:int,
+                  phase:dolfinx.fem.Function)->dolfinx.fem.Function:
     """Assigns phase tags to the mesh based on the provided surface tags."""
     for tag, value in dict_surf.items():
         indices = cell_tags.find(value) 
@@ -153,47 +88,6 @@ def assign_phases(dict_surf, cell_tags,phase):
     
     return phase 
 
-
-class Mesh(): 
-    def __init__(self) :
-
-        " Class where to store the information of the meshes"
-
-        self.g_input         : geom_input                            # Geometric input
-        self.domainG         : Domain                                # 
-        self.domainA         : Domain
-        self.domainB         : Domain
-        self.domainC         : Domain
-        self.comm            : mpi4py.MPI.Intracomm
-        self.rank            : int
-        self.size            : int 
-        self.element_p       : ufl.FiniteElement   
-        self.element_PT      : ufl.FiniteElement
-        self.element_V       : ufl.FiniteElement
- 
- 
-@dataclass
-class Domain:
-    """
-    Domain stores the mesh and associated data:
-      - cell_par, node_par: parent relationships (if global mesh has submeshes)
-      - facets: tagged facets (boundary features)
-      - Tagcells: tagged cells (markers)
-      - bc_dict: dictionary of boundary condition tags/names
-      - solPh: function space for material properties
-      - phase: material phase function
-      # Admit: corrected with chatgpt, yeah, I am lazy
-    """
-    hierarchy: str = "Parent"
-    mesh: dolfinx.mesh.Mesh = None
-    cell_par: np.ndarray = field(default_factory=lambda: np.array([], dtype=np.int32))
-    node_par: np.ndarray = field(default_factory=lambda: np.array([], dtype=np.int32))
-    facets: dolfinx.mesh.MeshTags = None
-    Tagcells: dolfinx.mesh.MeshTags = None
-    bc_dict: dict = field(default_factory=dict)
-    solPh: dolfinx.fem.FunctionSpace = None
-    phase: dolfinx.fem.Function = None
-        
 
 def create_mesh_fenicsx(mesh, cell_type, prune_z=False):
     """
@@ -209,7 +103,7 @@ def create_mesh_fenicsx(mesh, cell_type, prune_z=False):
     return out_mesh
 
 
-def from_line_to_point_coordinate(L,LG,GP):
+def from_line_to_point_coordinate(L:int,LG:NDArray[np.int64],GP:NDArray[np.float64])->tuple[int,int,float,float]:
     p0   = LG[0,L-1]
     p1   = LG[1,L-1]
 
@@ -230,13 +124,20 @@ def create_domain_A(mesh_model, CP, LC, g_input):
     -> [the sign of the line depends on the order of the points, but I could not be arsed enough to create a function
     to recognise it]
     """
-    l_list     = [LC.lines_oc[2,:],-LC.lines_B[2,-1],-LC.lines_BS[2,::-1], LC.lines_L[2,0]]
-    mesh_model = create_loop(l_list, mesh_model, 10)
+    if g_input.ocr != 0.0:
+        
+        l_list     = [LC.lines_oc[2,:],-LC.lines_B[2,-1],-LC.lines_BS[2,::-1], LC.lines_L[2,0]]
+        mesh_model = create_loop(l_list, mesh_model, 10)
 
-    # Oceanic crust  
-    l_list     = [LC.lines_S[2,:], LC.lines_B[2,1], -LC.lines_oc[2,::-1],  -LC.lines_L[2,-1]]
-    mesh_model = create_loop(l_list, mesh_model, 15)
-    print('Finished to generate the curved loop for domain A [subducting plate]')
+        # Oceanic crust  
+        l_list     = [LC.lines_S[2,:], LC.lines_B[2,1], -LC.lines_oc[2,::-1],  -LC.lines_L[2,-1]]
+        mesh_model = create_loop(l_list, mesh_model, 15)
+    else:
+        l_list     = [LC.lines_S[2,:],LC.lines_B[2,-1],-LC.lines_BS[2,::-1], -LC.lines_L[2,0]]  
+        mesh_model = create_loop(l_list, mesh_model, 15)
+        
+        
+    print('Finished to generate the curved loop for domain A [Subducting plate]')
 
     return mesh_model
 
@@ -265,16 +166,19 @@ def create_domain_C(mesh_model, CP, LC, g_input):
 
     if g_input.cr !=0:
             
-        index_a    = find_line_index(LC.lines_S,CP.coord_sub,g_input.cr)
-        index_b    = find_line_index(LC.lines_S,CP.coord_sub,g_input.lt_d)-1
-        buf_array = LC.lines_S[2,index_a:index_b+1]
-        buf_array = -buf_array[::-1]
-        
-        l_list     = [-LC.lines_R[2,2],-LC.lines_L_ov[2,:],buf_array,LC.lines_cr[2,:]]
-        mesh_model = create_loop(l_list, mesh_model, 25)
+
 
         
         if g_input.lc !=0:
+            
+            index_a    = find_line_index(LC.lines_S,CP.coord_sub,g_input.cr)
+            index_b    = find_line_index(LC.lines_S,CP.coord_sub,g_input.lt_d)-1
+            buf_array = LC.lines_S[2,index_a:index_b+1]
+            buf_array = -buf_array[::-1]
+        
+            l_list     = [-LC.lines_R[2,2],-LC.lines_L_ov[2,:],buf_array,LC.lines_cr[2,:]]
+            mesh_model = create_loop(l_list, mesh_model, 25)
+            
             index_a    = find_line_index(LC.lines_S,CP.coord_sub,(1-g_input.lc)*g_input.cr)
             index_b    = find_line_index(LC.lines_S,CP.coord_sub,g_input.cr)-1
 
@@ -282,7 +186,7 @@ def create_domain_C(mesh_model, CP, LC, g_input):
             buf_array = buf_array[::-1]
             
             l_list = [-LC.lines_R[2,1],-LC.lines_cr[2,:],buf_array,LC.lines_lcr[2,:]]
-            mesh_model = create_loop(l_list, mesh_model, 30)
+            mesh_model = create_loop(l_list, mesh_model, 35)
 
 
             index_a    = 0
@@ -291,7 +195,30 @@ def create_domain_C(mesh_model, CP, LC, g_input):
             buf_array = buf_array[::-1]
 
             l_list = [LC.lines_R[2,0],-LC.lines_lcr[2,:],buf_array,LC.lines_T[2,:]]
-            mesh_model = create_loop(l_list, mesh_model, 35)
+            mesh_model = create_loop(l_list, mesh_model, 30)
+        else:
+            index_a    = find_line_index(LC.lines_S,CP.coord_sub,g_input.cr)
+            index_b    = find_line_index(LC.lines_S,CP.coord_sub,g_input.lt_d)-1
+            buf_array = LC.lines_S[2,index_a:index_b+1]
+            buf_array = -buf_array[::-1]
+        
+            l_list     = [-LC.lines_R[2,1],-LC.lines_L_ov[2,:],buf_array,LC.lines_cr[2,:]]
+            mesh_model = create_loop(l_list, mesh_model, 25)
+            
+            index_a    = 0
+            index_b    = find_line_index(LC.lines_S, CP.coord_sub,g_input.cr)-1
+            buf_array = -LC.lines_S[2,index_a:index_b+1]
+            buf_array = buf_array[::-1]
+
+            l_list = [LC.lines_R[2,0],-LC.lines_cr[2,:],buf_array,LC.lines_T[2,:]]
+            mesh_model = create_loop(l_list, mesh_model, 30)
+    else:   
+        index    = find_line_index(LC.lines_S,CP.coord_sub,g_input.lt_d)-1
+        buf_array = LC.lines_S[2,0:index+1]
+        buf_array = -buf_array[::-1]
+        
+        l_list     = [-LC.lines_R[2,0],-LC.lines_L_ov[2,:],buf_array,LC.lines_T[2,:]]
+        mesh_model = create_loop(l_list, mesh_model, 25)
 
     print('Finished to generate the curved loop for domain C [Crust]')
     return mesh_model
@@ -346,12 +273,11 @@ def create_physical_line(CP,LC, g_input,mesh_model):
 
     
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
-    mesh_model.addPhysicalGroup(1, LC.tag_L_oc,    tag=dict_tag_lines['Oceanic'])
+    if g_input.ocr != 0.0:
+        mesh_model.addPhysicalGroup(1, LC.tag_L_oc,    tag=dict_tag_lines['Oceanic'])
   
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+        mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    gmsh.model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
     mesh_model.addPhysicalGroup(1, LC.tag_L_ov,    tag=dict_tag_lines['Overriding_mantle'])
 
@@ -374,8 +300,7 @@ def create_gmsh(sx,        # subduction x
                 bsy,       # bottom subduction y 
                 oc_cx,     # oceanic cx 
                 oc_cy,     # oceanic cu
-                g_input,
-                fp):  # geometry input class 
+                g_input):  # geometry input class 
     
     # -> USE GMSH FUNCTION 
     gmsh.initialize()
@@ -384,7 +309,7 @@ def create_gmsh(sx,        # subduction x
     mesh_model = gmsh.model()
 
     CP = Class_Points()
-    mesh_model = CP.update_points(mesh_model,sx,sy,bsx,bsy,oc_cx,oc_cy,g_input,fp)
+    mesh_model = CP.update_points(mesh_model,sx,sy,bsx,bsy,oc_cx,oc_cy,g_input)
 
     LC = Class_Line()
     mesh_model = LC.update_lines(mesh_model, CP, g_input)
@@ -399,28 +324,39 @@ def create_gmsh(sx,        # subduction x
     # Wedge 
     
     
-    Left_side_of_subduction_surf   = gmsh.model.geo.addPlaneSurface([10],tag=100) # Left side of the subudction zone
-    Oceanic_Crust_surf             = gmsh.model.geo.addPlaneSurface([15],tag=150) # Left side of the subudction zone
+    if g_input.ocr != 0.0:
+        Left_side_of_subduction_surf   = gmsh.model.geo.addPlaneSurface([10],tag=100) # Left side of the subudction zone
+        Oceanic_Crust_surf             = gmsh.model.geo.addPlaneSurface([15],tag=150) # Left side of the subudction zone
+    else:
+        Left_side_of_subduction_surf   = gmsh.model.geo.addPlaneSurface([15],tag=150) # Left side of the subudction zone
     Wedge                          = gmsh.model.geo.addPlaneSurface([20],tag=200) # Right side of the subudction zone    
     Lithhospheric_Mantle_surf      = gmsh.model.geo.addPlaneSurface([25],tag=250) # Right mantle
-    Crust_LC_surf                  = gmsh.model.geo.addPlaneSurface([30],tag=300) # Crust LC
-    Crust_UC_surf                  = gmsh.model.geo.addPlaneSurface([35],tag=350) # Crust LC
+    if g_input.cr !=0:
+        Crust_UC_surf                  = gmsh.model.geo.addPlaneSurface([30],tag=300) # Crust LC
+        if g_input.lc !=0:
+            Crust_LC_surf                  = gmsh.model.geo.addPlaneSurface([35],tag=350) # Crust LC
+    
 
     
     mesh_model.geo.synchronize()
 
     mesh_model.addPhysicalGroup(2, [Left_side_of_subduction_surf],  tag=dict_surf['sub_plate'])
-    mesh_model.addPhysicalGroup(2, [Oceanic_Crust_surf],            tag=dict_surf['oceanic_crust'])
+    if g_input.ocr != 0.0:
+        mesh_model.addPhysicalGroup(2, [Oceanic_Crust_surf],            tag=dict_surf['oceanic_crust'])
     mesh_model.addPhysicalGroup(2, [Wedge],                         tag=dict_surf['wedge'])
     mesh_model.addPhysicalGroup(2, [Lithhospheric_Mantle_surf],     tag=dict_surf['overriding_lm'])
-    mesh_model.addPhysicalGroup(2, [Crust_LC_surf],                 tag=dict_surf['lower_crust'])
-    mesh_model.addPhysicalGroup(2, [Crust_UC_surf],                 tag=dict_surf['upper_crust'])
+    if g_input.cr !=0:
+        mesh_model.addPhysicalGroup(2, [Crust_UC_surf],                 tag=dict_surf['upper_crust'])
+        if g_input.lc !=0:
+            mesh_model.addPhysicalGroup(2, [Crust_LC_surf],                 tag=dict_surf['lower_crust'])
 
 
     return mesh_model 
 
 #----------------------------------------------------------------------------------------------------------------------
-def create_gmesh(ioctrl,g_input,ctrl):
+def create_gmesh(ioctrl   :IOControls,
+                 g_input  :Geom_input,
+                 ctrl     :NumericalControls):
     """_summary_: The function is composed by three part: -> create points, create lines, loop 
     ->-> 
     Args:
@@ -434,11 +370,11 @@ def create_gmesh(ioctrl,g_input,ctrl):
 
     import gmsh 
     from   Subducting_plate import Slab
-    import Function_make_mesh as fmm 
+    import aux_create_mesh as fmm 
 
 
 
-    min_x           = g_input.x[0] # The beginning of the model is the trench of the slab
+    min_x           = g_input.x[0]        # The beginning of the model is the trench of the slab
     max_x           = g_input.x[1]                 # Max domain x direction
     max_y           = g_input.y[1] 
     min_y           = g_input.y[0]                # Min domain y direction
@@ -479,27 +415,20 @@ def create_gmesh(ioctrl,g_input,ctrl):
         
     min_x           = g_input.x[0] # The beginning of the model is the trench of the slab
     max_x           = g_input.x[1]          
-    ind_oc_lc = np.where(slab_y == -g_input.cr*(1-g_input.lc))[0][0]
-    ind_oc_cr = np.where(slab_y == -g_input.cr)[0][0]
+    if g_input.cr != 0:
+        ind_oc_cr = np.where(slab_y == -g_input.cr)[0][0]
+        if g_input.lc !=0:     
+            ind_oc_cr = np.where(slab_y == -g_input.cr)[0][0]
+        else: 
+            ind_oc_lc = []
+    else: 
+        ind_oc_cr = []
+        ind_oc_lc = []
+        
     ind_oc_lt = np.where(slab_y == -g_input.lt_d)[0][0]
     
     
-    fundamental_points = np.array([[slab_x[0],    slab_y[0]],                       # Point A [left corner global model] 
-                                  [oc_cx[0],     oc_cy[1]],                        # Point B [oceanic crust]
-                                  [bot_x[0],     bot_y[1]],                        # Point C [bottom lithosphere]
-                                  [bot_x[-1],    bot_y[-1]],                       # Point D [bottom right node]
-                                  [oc_cx[-1],    oc_cy[-1]],                       # Point E [bottom oceanic crust]
-                                  [slab_x[-1],   slab_y[-1]],                      # Point F [slab top]
-                                  [g_input.x[1], g_input.y[0]],                    # Point G
-                                  [g_input.x[1], -g_input.lt_d],                   # Point H 
-                                  [g_input.x[1], -g_input.cr],                     # Point I
-                                  [g_input.x[1], -g_input.cr*(1-g_input.lc)],      # Point L 
-                                  [g_input.x[1], -g_input.y[1]],                   # Point M 
-                                  [oc_cx[ind_oc_lc],oc_cy[ind_oc_lc]],             # Point N
-                                  [oc_cx[ind_oc_cr],oc_cy[ind_oc_cr]],            # Point O
-                                  [oc_cx[ind_oc_lt],oc_cy[ind_oc_lt]]],dtype = np.float64) #           # Point P 
-    
-    mesh_model = create_gmsh(slab_x,slab_y,bot_x,bot_y,oc_cx,oc_cy,g_input,fundamental_points) 
+    mesh_model = create_gmsh(slab_x,slab_y,bot_x,bot_y,oc_cx,oc_cy,g_input) 
 
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
     theta = np.arctan2((slab_y[-1]-slab_y[-2]),(slab_x[-1]-slab_x[-2]))
@@ -798,13 +727,6 @@ def unit_test_mesh(ioctrl, sc,g_input,ctrl):
     M.comm = comm 
     M.rank = rank 
     M.size = size 
-    print_ph("")
-    print_ph("               _")
-    print_ph("               :")
-    print_ph("[] - - - -> Finished <- - - - []")
-    print_ph("               :")
-    print_ph("               _")    
-    print_ph("")
 
     return M
     
@@ -845,7 +767,7 @@ if __name__ == '__main__':
     
     sc = sc_f.Scal(L=660e3, Temp = 1350, eta = 1e21, stress = 1e9)
     
-    g_input = geom_input(x = np.array([0.,660e3]),
+    g_input = Geom_input(x = np.array([0.,660e3]),
                          y = np.array([-600e3,0.]),
                          cr=20e3,
                          ocr=6e3,

@@ -7,10 +7,10 @@ class Phase():
 x                 = [0, 660e3]               # main grid coordinate
 y                 = [-600e3,0.0]   
 slab_tk           = 130e3                   # slab thickness
-cr                = 35e3              # crust 
-ocr               = 6e3             # oceanic crust
-lit_mt            = 15e3          # lithosperic mantle  
-lc                = 0.5              # lower crust ratio 
+cr                = 0e3              # crust 
+ocr               = 0e3             # oceanic crust
+lit_mt            = 50e3          # lithosperic mantle  
+lc                = 0.0              # lower crust ratio 
 wc                = 2.0e3              # weak zone 
 lt_d              = (cr+lit_mt)     # total lithosphere thickness
 decoupling        = 100e3      # decoupling depth -> i.e. where the weak zone is prolonged 
@@ -32,16 +32,16 @@ steady_state      = 1
 slab_bc           = 1 # 1 moving wall, 0 pipe-like slab 
 tol_innerPic      = 1e-3
 tol_innerNew      = 1e-5
-van_keken_case    = 3 # 1 Van Keken benchmark, When these flag are activated -> default value in all phases -> 3300  
+van_keken_case    = 2 # 1 Van Keken benchmark, When these flag are activated -> default value in all phases -> 3300  
                     # 2 diffusion only, 
                     # 3 composite 
                     # 4 Iterative 
-decoupling_ctrl   = 1
+decoupling_ctrl   = 0
 model_shear       = 'SelfConsistent' # 'SelfConsistent
 phase_wz          = 7
 
 
-friction_angle   = 5 
+friction_angle   = 0.0 
 #---------------------------------------------------------------------------------------------------------
 # input/output control
 #---------------------------------------------------------------------------------------------------------
