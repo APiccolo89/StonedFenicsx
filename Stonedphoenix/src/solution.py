@@ -25,6 +25,8 @@ from dolfinx.fem.petsc import assemble_matrix_block, assemble_vector_block
 from numerical_control import NumericalControls, ctrl_LHS, IOControls
 from utils import interpolate_from_sub_to_main
 from scal import Scal
+from output import OUTPUT
+from utils import compute_eII,compute_strain_rate
 
 
 """
@@ -192,13 +194,9 @@ class  ScalarSolver(Solvers):
         self.pc = self.ksp.getPC()
         self.pc.setType("lu")
         self.pc.setFactorSolverType("mumps")
-        if nl == 1: 
-            self.J = fem.petsc.create_matrix(fem.form(J))
-            self.r = fem.petsc.create_vector(fem.form(r))
-            
-        else: 
-            self.J = None
-            self.r = None 
+
+        self.J = None
+        self.r = None 
     
 class SolverStokes(): 
     
@@ -728,10 +726,8 @@ class Global_thermal(Problem):
         
         self.bc = self.create_bc_temp(getattr(M,'domainG'),ctrl,geom,lhs,S.u_global,it)
         if self.typology == 'NonlinearProblem':
-            F,J = self.set_newton_SS(p_k,getattr(M,'domainG'),T,S.u_global,pdb)
             nl = 1 
-        else: 
-            F = None;J=None 
+        F = None;J=None 
 
         if it == 0 & ts == 0: 
             self.solv = ScalarSolver(a,L,M.comm,nl,J,F)
@@ -743,7 +739,7 @@ class Global_thermal(Problem):
         if nl == 0: 
             S.T_N = self.solve_the_linear(S,a,L,S.T_O) 
         else: 
-            S.T_N = self.solve_the_non_linear_TD(M,S,T_prev,ctrl,pdb)
+            S = self.solve_the_non_linear_TD(M,S,ctrl,pdb)
         
         time_B = timing.time()
         
@@ -831,7 +827,7 @@ class Global_thermal(Problem):
         
         return S  
 
-    def solve_the_non_linear_TD(self,M,S,T_prev,ctrl,pdb,it=0):  
+    def solve_the_non_linear_TD(self,M,S,ctrl,pdb,it=0):  
         
         tol = 1e-3  # Tolerance Picard  
         max_it = 20  # Max iteration before Newton
@@ -851,9 +847,9 @@ class Global_thermal(Problem):
             
             if it_inner ==0:
 
-                A,L = self.set_linear_picard_TD(S.PL,T_k,T_prev,S.u_global,getattr(M,'domainG'),pdb,ctrl.dt)
+                A,L = self.set_linear_picard_TD(S.PL,T_k,S.T_O,S.u_global,getattr(M,'domainG'),pdb,ctrl.dt)
             else:
-                A,L = self.set_linear_picard_TD(S.PL,T_k,T_prev,S.u_global,getattr(M,'domainG'),pdb,ctrl.dt,it_inner)
+                A,_ = self.set_linear_picard_TD(S.PL,T_k,T_prev,S.u_global,getattr(M,'domainG'),pdb,ctrl.dt,it_inner)
             
             T_k1 = self.solve_the_linear(S,A,L,T_k1,1,it,1)
             T_k1.x.scatter_forward()
@@ -872,7 +868,8 @@ class Global_thermal(Problem):
             
         # --- Newton =>         
         
-        S.T_O.x.array[:] = T_k1.x.array[:]
+        S.T_N.x.array[:] = T_k1.x.array[:]
+        S.T_N.x.scatter_forward()
 
 
 
@@ -880,7 +877,7 @@ class Global_thermal(Problem):
 
         
         
-        return S  
+        return S
 
     
     #------------------------------------------------------------------
@@ -1185,18 +1182,7 @@ class Stokes_Problem(Problem):
         return a1, a2, a3 , L , a_p0       
 
         
-#----------------------------------------------------------------------------          
-def compute_strain_rate(u):
-    
-    e = ufl.sym(ufl.grad(u))
-    
-    return e  
 
-def compute_eII(e):
-    from ufl import inner, sqrt
-    e_II  = sqrt(0.5*inner(e, e))    
-    return e_II
-#---------------------------------------------------------------------------
         
 def L2_norm_calculation(f):
     return fem.assemble_scalar(fem.form(ufl.inner(f, f) * ufl.dx))**0.5       
@@ -1813,7 +1799,10 @@ def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, p
     ts = 0 
     time = 0.0
     dt   = ctrl.dt
-    
+    sol.T_O = sol.T_N.copy()
+    output = OUTPUT(M.domainG.mesh, ioctrl, ctrl, sc)
+    save = 0 
+    dt_save =ctrl.dt
     while time<ctrl.time_max:
         time_A_ts = timing.time()
 
@@ -1822,14 +1811,13 @@ def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, p
         res = 1.0
 
         # Update old temperature 
-        sol.T_O = sol.T_N.copy()
         
         while it_outer < ctrl.it_max and res > 1e-2: 
 
             time_A_outer = timing.time()
             # Copy the old solution for the residuum computation 
 
-            Tit_outer        = sol.T_N.copy()
+            Tit_outer        = sol.T_O.copy()
             PLold            = sol.PL.copy()
             u_globalold      = sol.u_global.copy()
             p_globalold      = sol.p_global.copy()
@@ -1861,7 +1849,7 @@ def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, p
             sol =energy_global.Solve_the_Problem_TD(sol,ctrl,pdb,M,lhs_ctrl,M.g_input,sc,it = it_outer, ts = ts) 
 
             # Compute residuum 
-            res = compute_residuum_outer(sol,Tit_outer,PLold,u_globalold,p_globalold,it_outer,sc, time_A_outer)
+            res = compute_residuum_outerTD(sol,Tit_outer,PLold,u_globalold,p_globalold,it_outer,sc, time_A_outer)
 
 
             it_outer = it_outer + 1
@@ -1877,15 +1865,24 @@ def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, p
         # 
         time_B_ts = timing.time()
 
-        print_ph(f'=========== Timestep {ts:d} t = {time*sc.T/sc.scale_Myr2sec:.3f}, in {time_B_ts-time_A_ts:.1f} sec // -- // --->')
+        print_ph(f'=========== Timestep {ts:d} t = {time*sc.T/sc.scale_Myr2sec:.3f} [Myr], in {time_B_ts-time_A_ts:.1f} sec // -- // --->')
         
-        time = time + dt
         ts = ts + 1 
-
-        print_output(sol,M.domainG,pdb,ioctrl,ts,sc,ctrl)
-
+        time = time + dt
+        
         
             
+         
+        
+        
+        if (ts == 1) or (ts==0) or np.floor(time/dt_save) != save: 
+            output.print_output(sol,M.domainG,pdb,ioctrl,sc,ctrl,ts=ts,time=time*sc.T/sc.scale_Myr2sec)
+            save  = np.floor(time/dt_save)
+        sol.T_O = sol.T_N.copy()
+        
+
+    output.close()
+        
     # Destroy KSP
     energy_global.solv.ksp.destroy()
     lithostatic_pressure_global.solv.ksp.destroy()
@@ -2008,7 +2005,7 @@ def compute_residuum_outerTD(sol,T,PL,u,p,it_outer,sc,tA):
     
     res_u = compute_residuum(sol.u_global,u)
     res_p = compute_residuum(sol.p_global,p)
-    res_T = compute_residuum(sol.T_O,T)
+    res_T = compute_residuum(sol.T_N,T)
     res_PL= compute_residuum(sol.PL,PL)
     
     minMaxU = min_max_array(sol.u_global, vel=True)
@@ -2152,14 +2149,14 @@ def print_output(S,D,pdb,ioctrl,it_outer,sc,ctrl,ts=0):
     e_T.name = "e_II  [1/s]"
     e_T.interpolate(eII2)
     e_T.x.array[:] = e_T.x.array[:]/sc.T
-    e_T.x.array[e_T.x.array[:]<=0.0] = 1e-20
+    e_T.x.array[e_T.x.array[:]<=1e-22] = 1e-20
     e_T.x.scatter_forward()
     
     # viscosity (e,S.t_oslab,S.p_lslab,pdb,D.phase,D,sc)
     eta = compute_viscosity_FX(e_T,S.T_O,S.PL,pdb,D.phase,D,sc)
     eta2 = evaluate_material_property(eta,temp_triangular)
     eta2.name = "eta  [Pa s]"
-    eta2.x.array[:] = eta2.x.array[:]*sc.eta
+    eta2.x.array[:] = np.abs(eta2.x.array[:])*sc.eta
     eta2.x.scatter_forward()
     
     # heat flux 
