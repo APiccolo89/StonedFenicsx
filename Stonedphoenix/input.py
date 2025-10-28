@@ -25,27 +25,30 @@ Tmax              = 1300.0
 Ttop              = 0.0 
 g                 = 9.81 
 v_s               = [5.0,0.0]  # Convert cm/yr to m/s
-slab_age          = 50e6 
-time_max          = 20e6
+slab_age          = 50
+time_max          = 20
 time_dependent_v  = 0
-steady_state      = 1
+steady_state      = 0
 slab_bc           = 1 # 1 moving wall, 0 pipe-like slab 
-tol_innerPic      = 1e-3
+tol_innerPic      = 1e-2
 tol_innerNew      = 1e-5
-van_keken_case    = 2 # 1 Van Keken benchmark, When these flag are activated -> default value in all phases -> 3300  
+van_keken_case    = 0 # 1 Van Keken benchmark, When these flag are activated -> default value in all phases -> 3300  
                     # 2 diffusion only, 
                     # 3 composite 
                     # 4 Iterative 
 decoupling_ctrl   = 0
 model_shear       = 'SelfConsistent' # 'SelfConsistent
 phase_wz          = 7
+time_dependent    = 1 
+dt_sim               = 50000/1e6 # in Myr
+
 
 
 friction_angle   = 0.0 
 #---------------------------------------------------------------------------------------------------------
 # input/output control
 #---------------------------------------------------------------------------------------------------------
-test_name = 'case_Hobson'
+test_name = 'case_Hobson_time_dependent'
 path_save = '/Users/wlnw570/Work/Leeds/Output/Stonedphoenix/Benchmark_van_Keken'
 sname = test_name
 #---------------------------------------------------------------------------------------------------------

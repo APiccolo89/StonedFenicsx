@@ -40,7 +40,10 @@ print yes|no
 -> Apperently, following the Stokes tutorial, I was porting the generation of null space: it appears, that this trick, is not working together with null space
 -> Nitsche Boundary condition constraints the pressure, and the null space dislike it, apperently because the simmetry of the formulation is wrong, but this is black
 magic. 
+ta  = fem.Function(P0, name="ta")        # target Function
+expr = fem.Expression(rho, P0.element.interpolation_points())
 
+ta.interpolate(expr)    
 
 
 """
@@ -608,6 +611,70 @@ class Global_thermal(Problem):
         return a, L
     #------------------------------------------------------------------
 
+    def set_linear_picard_TD(self,
+                             p_k,     # lithostatic pressure current time step 
+                             T_N,     # Temperature at new time step {new temperature guess}
+                             T_O,     # Temperature at old time step
+                             u_global,# velocity field 
+                             D,       # domain
+                             pdb,     # phase database
+                             dt,      # time step
+                             it=0):   # picard iteration 
+        # Function that set linear form and linear picard for picard iteration
+        # Crank Nicolson scheme 
+        # a - > New temperature 
+        # L - > Old temperature
+        # -> Source term is assumed constant in time and do not vary between the timesteps 
+        
+        rho_k = density_FX(pdb, T_N, p_k, D.phase, D.mesh)  # frozen
+        
+        k_k = heat_conductivity_FX(pdb, T_N, p_k, D.phase, D.mesh)  # frozen
+        
+        Cp_k = heat_capacity_FX(pdb, T_N, D.phase, D.mesh)  # frozen
+        
+        rho_k0 = density_FX(pdb, T_O, p_k, D.phase, D.mesh)  # frozen
+        
+        k_k0 = heat_conductivity_FX(pdb, T_O, p_k, D.phase, D.mesh)  # frozen
+        
+        Cp_k0 = heat_capacity_FX(pdb, T_O, D.phase, D.mesh)  # frozen
+                
+        rhocp        =  (rho_k * Cp_k)
+
+        rhocp_old    =  (rho_k0 * Cp_k0)
+        
+        dx  = self.dx
+        
+        f    = self.energy_source * self.test0 * dx + self.shear_heating # source term {energy_source is radiogenic heating compute before hand, shear heating is frictional heating already a form}
+
+
+        # Linear operator with frozen coefficients
+
+        
+        # a -> New temperature 
+        diff_new = ( 1 / 2 ) * ufl.inner(k_k * ufl.grad(self.trial0), ufl.grad(self.test0)) * dx
+        
+        adv_new  = (rhocp / 2 )* ufl.dot(u_global, ufl.grad(self.trial0)) * self.test0 * dx
+        
+        mass_new = (rhocp / dt) * self.trial0 * self.test0 * dx
+        
+        a = fem.form(diff_new + adv_new + mass_new)
+                
+        if it == 0: 
+            
+            adv_old =  - (rhocp_old / 2 ) * ufl.dot(u_global, ufl.grad(T_O)) * self.test0 * dx
+
+            diff_old =  - ( 1 / 2 ) * ufl.inner(k_k0 * ufl.grad(T_O), ufl.grad(self.test0)) * dx
+            
+            mass_old =  (rhocp_old / dt) * T_O * self.test0 * dx
+            
+            L = fem.form(diff_old + adv_old + f + mass_old)
+            
+            return a, L
+
+        else: 
+            return a, None
+    #------------------------------------------------------------------
+
     def Solve_the_Problem_SS(self,S,ctrl,pdb,M,lhs,geom,sc,it=0,ts=0): 
         
         nl = 0 
@@ -648,14 +715,51 @@ class Global_thermal(Problem):
         return S 
     #------------------------------------------------------------------
     
+    def Solve_the_Problem_TD(self,S,ctrl,pdb,M,lhs,geom,sc,it=0,ts=0): 
+        
+        nl = 0 
+        p_k = S.PL.copy()  # Previous lithostatic pressure 
+
+        if it == 0:         
+            self.shear_heating = self.compute_shear_heating(ctrl,pdb, S,getattr(M,'domainG'),geom,sc)
+            self.compute_energy_source(getattr(M,'domainG'),pdb)
+        
+        a,L = self.set_linear_picard_TD(p_k,S.T_N,S.T_O,S.u_global,getattr(M,'domainG'),pdb,ctrl.dt)
+        
+        self.bc = self.create_bc_temp(getattr(M,'domainG'),ctrl,geom,lhs,S.u_global,it)
+        if self.typology == 'NonlinearProblem':
+            F,J = self.set_newton_SS(p_k,getattr(M,'domainG'),T,S.u_global,pdb)
+            nl = 1 
+        else: 
+            F = None;J=None 
+
+        if it == 0 & ts == 0: 
+            self.solv = ScalarSolver(a,L,M.comm,nl,J,F)
+        
+        print_ph(f'. // -- // --- Temperature problem [GLOBAL] // -- // --->')
+        
+        time_A = timing.time()
+
+        if nl == 0: 
+            S.T_N = self.solve_the_linear(S,a,L,S.T_O) 
+        else: 
+            S.T_N = self.solve_the_non_linear_TD(M,S,T_prev,ctrl,pdb)
+        
+        time_B = timing.time()
+        
+        print_ph(f'. // -- // --- Solution of Temperature  in {time_B-time_A:.2f} sec // -- // --->')
+
+
+
+        return S 
+    
     def solve_the_linear(self,S,a,L,fen_function,isPicard=0,it=0,ts=0):
         
         buf = fem.Function(self.FS)
         x   = self.solv.b.copy()
-        if it == 0 or ts == 0:
-            self.solv.A.zeroEntries()
-            fem.petsc.assemble_matrix(self.solv.A,fem.form(a),self.bc)
-            self.solv.A.assemble()
+        self.solv.A.zeroEntries()
+        fem.petsc.assemble_matrix(self.solv.A,fem.form(a),self.bc)
+        self.solv.A.assemble()
         # b -> can change as it is the part that depends on the pressure in case of nonlinearities
         self.solv.b.set(0.0)
         fem.petsc.assemble_vector(self.solv.b, fem.form(L))
@@ -665,9 +769,8 @@ class Global_thermal(Problem):
         self.solv.ksp.solve(self.solv.b, fen_function.x.petsc_vec)
         
         if isPicard == 0: # if it is a picard iteration the function gives the function 
-            S.T_O = fen_function
-            S.T_O.x.scatter_forward()
-            return S 
+            fen_function.x.scatter_forward()
+            return fen_function 
         else:
             return fen_function
 
@@ -727,6 +830,58 @@ class Global_thermal(Problem):
         
         
         return S  
+
+    def solve_the_non_linear_TD(self,M,S,T_prev,ctrl,pdb,it=0):  
+        
+        tol = 1e-3  # Tolerance Picard  
+        max_it = 20  # Max iteration before Newton
+        isPicard = 1 # Flag for the linear solver. 
+        tol = 1.0 
+        T_O = S.T_O.copy()
+        T_k = S.T_O.copy() 
+        T_k1 = S.T_O.copy()
+        du   = S.PL.copy()
+        du2  = S.PL.copy()
+        it_inner = 0 
+        time_A = timing.time()
+        print_ph(f'              [//] Picard iterations for the non linear temperature problem')
+
+        while it_inner < max_it and tol > 1e-2:
+            time_ita = timing.time()
+            
+            if it_inner ==0:
+
+                A,L = self.set_linear_picard_TD(S.PL,T_k,T_prev,S.u_global,getattr(M,'domainG'),pdb,ctrl.dt)
+            else:
+                A,L = self.set_linear_picard_TD(S.PL,T_k,T_prev,S.u_global,getattr(M,'domainG'),pdb,ctrl.dt,it_inner)
+            
+            T_k1 = self.solve_the_linear(S,A,L,T_k1,1,it,1)
+            T_k1.x.scatter_forward()
+            # L2 norm 
+            du.x.array[:]  = T_k1.x.array[:] - T_k.x.array[:];du.x.scatter_forward()
+            du2.x.array[:] = T_k1.x.array[:] + T_k.x.array[:];du2.x.scatter_forward()
+            tol= L2_norm_calculation(du)/L2_norm_calculation(du2)
+            
+            time_itb = timing.time()
+            print_ph(f'              []Temperature L_2 norm is {tol:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
+            
+            #update solution
+            T_k.x.array[:] = T_k1.x.array[:]*0.7 + T_k.x.array[:]*(1-0.7)
+            
+            it_inner = it_inner + 1 
+            
+        # --- Newton =>         
+        
+        S.T_O.x.array[:] = T_k1.x.array[:]
+
+
+
+        print_ph(f'')
+
+        
+        
+        return S  
+
     
     #------------------------------------------------------------------
         
@@ -1500,163 +1655,8 @@ class Wedge(Stokes_Problem):
         return S 
     
 #------------------------------------------------------------------------------------------------------------
-# Soon -> Steady state thermal solver 
-
 @timing_function
-def set_ups_problem():
-    from phase_db import PhaseDataBase
-    from phase_db import _generate_phase
-    from thermal_structure_ocean import compute_initial_LHS
-    from scal import Scal 
-    import scal as sc_f 
-    
-    from create_mesh import unit_test_mesh
-    
-    
-    print_ph(f'// -- // --- Steady State temperature // -- // --- > ')
-
-    #==================== Create Mesh and IOControl ====================
-    # Create scal 
-    sc = Scal(L=660e3,Temp = 1350,eta = 1e21, stress = 1e9)
-    
-    ioctrl = IOControls(test_name = 'Van_Keken',
-                        path_save = '../Debug_mesh',
-                        sname = 'Van_Keken')
-    ioctrl.generate_io()
-    # Create mesh 
-    M = unit_test_mesh(ioctrl, sc)
-            
-    print_ph("[] - - - -> Creating numerical controls <- - - - []")
-    ctrl = NumericalControls()
-    
-    ctrl = sc_f._scaling_control_parameters(ctrl, sc)
-    
-    print_ph("[] - - - -> Phase Database <- - - - []")    
-        
-    # This function can be a canvas for the main solver update. 
-    # Define elements -> would be defined in the controls 
-
-    element_p           = basix.ufl.element("Lagrange","triangle", 1) 
-    
-    element_PT          = basix.ufl.element("Lagrange","triangle",2)
-    
-    element_V           = basix.ufl.element("Lagrange","triangle",2,shape=(2,))
-
-    #==================== Phase Parameter ====================
-
-    # Define PhaseDataBase
-    pdb = PhaseDataBase(6)
-    # Slab
-    
-    pdb = _generate_phase(pdb, 1, rho0 = 3300 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)
-    # Oceanic Crust
-    
-    pdb = _generate_phase(pdb, 2, rho0 = 3300 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)
-    # Wedge
-    
-    pdb = _generate_phase(pdb, 3, rho0 = 3300 , option_rho = 0, option_rheology = 3, option_k = 0, option_Cp = 0, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl',eta = 1e19)
-    # 
-    
-    pdb = _generate_phase(pdb, 4, rho0 = 3300 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
-    #
-    
-    pdb = _generate_phase(pdb, 5, rho0 = 3300 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
-    #
-    
-    pdb = _generate_phase(pdb, 6, rho0 = 3300 , option_rho = 0, option_rheology = 0, option_k = 0, option_Cp = 0, eta=1e22)#, name_diffusion='Van_Keken_diff', name_dislocation='Van_Keken_disl')
-    #
-    
-    pdb = sc_f._scaling_material_properties(pdb,sc)
-    # Define LHS 
-
-    lhs_ctrl = ctrl_LHS()
-
-    lhs_ctrl = sc_f._scale_parameters(lhs_ctrl, sc)
-    
-    lhs_ctrl = compute_initial_LHS(ctrl,lhs_ctrl, sc, pdb)  
-          
-    # Define Problem
-    
-    # Pressure 
-    
-    energy_global               = Global_thermal (M = M, name = ['energy','domainG']  , elements = (element_PT,                   ), pdb = pdb, ctrl = ctrl)
-    
-    lithostatic_pressure_global = Global_pressure(M = M, name = ['pressure','domainG'], elements = (element_PT,                     ), pdb = pdb                                ) 
-    
-    wedge                       = Wedge          (M = M, name = ['stokes','domainB'  ], elements = (element_V,element_p,element_PT  ), pdb = pdb                                )
-    
-    slab                        = Slab           (M = M, name = ['stokes','domainA'  ], elements = (element_V,element_p,element_PT  ), pdb = pdb                                )
-    
-    g = fem.Constant(M.domainG.mesh, PETSc.ScalarType([0.0, -ctrl.g]))    
-
-    # Define Solution 
-    sol                         = Solution()
-     
-    sol.create_function(lithostatic_pressure_global,slab,wedge,[element_V,element_p])
-    
-    sol.T_O = energy_global.initial_temperature_field(M.domainG, ctrl, lhs_ctrl,M.g_input)
-
-
-    it_outer = 0 
-
-    res = 1.0
-
-    while it_outer < ctrl.it_max and res > ctrl.tol: 
-        
-        time_A_outer = timing.time()
-        # Copy the old solution for the residuum computation 
-        
-        Told        = sol.T_O.copy()
-        PLold       = sol.PL.copy()
-        u_globalold = sol.u_global.copy()
-        p_globalold = sol.p_global.copy()
-        
-        
-        # Solve lithostatic pressure problem
-        if lithostatic_pressure_global.typology == 'NonlinearProblem' or it_outer == 0:  
-            lithostatic_pressure_global.Solve_the_Problem(sol,ctrl,pdb,M,g,it_outer,ts=0)
-
-        # Interpolate from global to wedge/slab
-
-        sol.t_owedge = interpolate_from_sub_to_main(sol.t_owedge,sol.T_O, M.domainB.cell_par,1)
-        sol.p_lwedge = interpolate_from_sub_to_main(sol.p_lwedge,sol.PL, M.domainB.cell_par,1)
-
-        if it_outer == 0: 
-            slab.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it = it_outer,ts=0)
-
-        if wedge.typology == 'NonlinearProblem' or it_outer == 0:  
-            wedge.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,g_input,it = it_outer,ts=0)
-
-
-        # Interpolate from wedge/slab to global
-        sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_wedge, M.domainB.cell_par)
-        sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_slab, M.domainA.cell_par)
-        
-        sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_wedge, M.domainB.cell_par)
-        sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_slab, M.domainA.cell_par)
-        
-        
-        energy_global.Solve_the_Problem_SS(sol,ctrl,pdb,M,lhs_ctrl,M.g_input,it = it_outer, ts = 0)
-        
-        # Compute residuum 
-        res = compute_residuum_outer(sol,Told,PLold,u_globalold,p_globalold,it_outer,sc, time_A_outer)
-        print_output(sol,M.domainG,pdb,ioctrl,it_outer,sc)
-        A,B,C =_benchmark_van_keken(sol,1,3,sc)
-
-        it_outer = it_outer + 1
-        
-        
-       
-    
-
-
-    
-    return 0 
-
-
-
-@timing_function
-def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb:PhaseDataBase, ioctrl:IOControls, sc:Scal):
+def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb:PhaseDataBase, ioctrl:IOControls, sc:Scal)-> int:
     from phase_db import PhaseDataBase
     from phase_db import _generate_phase
     from thermal_structure_ocean import compute_initial_LHS
@@ -1765,6 +1765,151 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
     
     return 0 
 
+def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb:PhaseDataBase, ioctrl:IOControls, sc:Scal):
+    from phase_db import PhaseDataBase
+    from phase_db import _generate_phase
+    from thermal_structure_ocean import compute_initial_LHS
+    from scal import Scal 
+    import scal as sc_f 
+    
+    from create_mesh import unit_test_mesh
+    
+    
+    print_ph(f'// -- // --- Time dependent temperature // -- // --- > ')
+
+    element_p           = M.element_p#basix.ufl.element("Lagrange","triangle", 1) 
+    
+    element_PT          = M.element_PT#basix.ufl.element("Lagrange","triangle",2)
+    
+    element_V           = M.element_V#basix.ufl.element("Lagrange","triangle",2,shape=(2,))
+
+    #==================== Phase Parameter ====================
+    lhs_ctrl = compute_initial_LHS(ctrl,lhs_ctrl, sc, pdb)  
+          
+    # Define Problem
+    
+    # Pressure 
+    
+    energy_global               = Global_thermal (M = M, name = ['energy','domainG']  , elements = (element_PT,                   )  ,  pdb = pdb, ctrl = ctrl                  )
+    
+    lithostatic_pressure_global = Global_pressure(M = M, name = ['pressure','domainG'], elements = (element_PT,                     ), pdb = pdb                                ) 
+    
+    wedge                       = Wedge          (M = M, name = ['stokes','domainB'  ], elements = (element_V,element_p,element_PT  ), pdb = pdb                                )
+    
+    slab                        = Slab           (M = M, name = ['stokes','domainA'  ], elements = (element_V,element_p,element_PT  ), pdb = pdb                                )
+    
+    g = fem.Constant(M.domainG.mesh, PETSc.ScalarType([0.0, -ctrl.g]))    
+
+    # Define Solution 
+    sol                         = Solution()
+     
+    sol.create_function(lithostatic_pressure_global,slab,wedge,[element_V,element_p])
+    
+    # Initial temperature field
+    sol.T_O = energy_global.initial_temperature_field(M.domainG, ctrl, lhs_ctrl,M.g_input)
+    # Initial new temperature guess
+    sol.T_N = sol.T_O.copy()
+    
+    ts = 0 
+    time = 0.0
+    dt   = ctrl.dt
+    
+    while time<ctrl.time_max:
+        time_A_ts = timing.time()
+
+        it_outer = 0 
+
+        res = 1.0
+
+        # Update old temperature 
+        sol.T_O = sol.T_N.copy()
+        
+        while it_outer < ctrl.it_max and res > 1e-2: 
+
+            time_A_outer = timing.time()
+            # Copy the old solution for the residuum computation 
+
+            Tit_outer        = sol.T_N.copy()
+            PLold            = sol.PL.copy()
+            u_globalold      = sol.u_global.copy()
+            p_globalold      = sol.p_global.copy()
+
+
+            # Solve lithostatic pressure problem
+            if lithostatic_pressure_global.typology == 'NonlinearProblem' or it_outer == 0:  
+                lithostatic_pressure_global.Solve_the_Problem(sol,ctrl,pdb,M,g,it_outer,ts=0)
+
+            # Interpolate from global to wedge/slab
+
+            sol.t_owedge = interpolate_from_sub_to_main(sol.t_owedge,sol.T_O, M.domainB.cell_par,1)
+            sol.p_lwedge = interpolate_from_sub_to_main(sol.p_lwedge,sol.PL, M.domainB.cell_par,1)
+
+            if it_outer == 0 and ts == 0 : #or vel0 != velc: 
+                slab.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it = it_outer,ts=0)
+
+            if wedge.typology == 'NonlinearProblem' or it_outer == 0: #or vel0 != velc:  
+                wedge.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,M.g_input,it = it_outer,ts=0)
+
+
+            # Interpolate from wedge/slab to global
+            sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_wedge, M.domainB.cell_par)
+            sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_slab, M.domainA.cell_par)
+
+            sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_wedge, M.domainB.cell_par)
+            sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_slab, M.domainA.cell_par)
+
+            sol =energy_global.Solve_the_Problem_TD(sol,ctrl,pdb,M,lhs_ctrl,M.g_input,sc,it = it_outer, ts = ts) 
+
+            # Compute residuum 
+            res = compute_residuum_outer(sol,Tit_outer,PLold,u_globalold,p_globalold,it_outer,sc, time_A_outer)
+
+
+            it_outer = it_outer + 1
+        
+        # Compute new dt 
+        
+        #dt = compute_new_timestep(sol, M, ctrl, sc, dt)
+        
+        # Compute slab velocity 
+        
+        # Compute new plate age 
+        
+        # 
+        time_B_ts = timing.time()
+
+        print_ph(f'=========== Timestep {ts:d} t = {time*sc.T/sc.scale_Myr2sec:.3f}, in {time_B_ts-time_A_ts:.1f} sec // -- // --->')
+        
+        time = time + dt
+        ts = ts + 1 
+
+        print_output(sol,M.domainG,pdb,ioctrl,ts,sc,ctrl)
+
+        
+            
+    # Destroy KSP
+    energy_global.solv.ksp.destroy()
+    lithostatic_pressure_global.solv.ksp.destroy()
+    slab.solv.ksp.destroy()
+    wedge.solv.ksp.destroy()
+    # Ahaha! 
+    
+    return 0 
+
+
+def compute_new_timestep(sol:Solution,M:Mesh, ctrl:NumericalControls, sc:Scal, dt_old):
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    return dt
 
 def extract_slab_top_moho(S,D,ctrl_io):
     
@@ -1841,12 +1986,12 @@ def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA):
     time_B_outer = timing.time()
 
     print_ph(f'')
-    print_ph(f'// -- // --- Outer iteration {it_outer:d} with tolerance {res_total:.3e}, in {time_B_outer-tA:.1f} sec // -- // --->')
+    print_ph(f'             Outer iteration {it_outer:d} with tolerance {res_total:.3e}, in {time_B_outer-tA:.1f} sec // -- // --->')
     print_ph(f'             []Res velocity       =  {res_u:.3e} [n.d.], max= {minMaxU[1]:.3e}, min= {minMaxU[0]:.3e} [cm/yr]')
     print_ph(f'             []Res Temperature    =  {res_T:.3e} [n.d.], max= {minMaxT[1]:.2f}, min= {minMaxT[0]:.2f} [C]')
     print_ph(f'             []Res pressure       =  {res_p:.3e} [n.d.], max= {minMaxP[1]:.3e}, min= {minMaxP[0]:.3e} [GPa]')
     print_ph(f'             []Res lithostatic    =  {res_PL:.3e}[n.d.], max= {minMaxPL[1]:.3e}, min= {minMaxPL[0]:.3e} [GPa]')
-    print_ph(f'// -- // --- =============================================// -- // --->')
+    print_ph(f'              =============================================// -- // --->')
     print_ph(f'')
 
     
@@ -1855,8 +2000,49 @@ def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA):
     
     return res_total 
 
+def compute_residuum_outerTD(sol,T,PL,u,p,it_outer,sc,tA):
+    # Prepare the variables 
 
-def print_output(S,D,pdb,ioctrl,it_outer,sc,ts=0):
+    
+    
+    
+    res_u = compute_residuum(sol.u_global,u)
+    res_p = compute_residuum(sol.p_global,p)
+    res_T = compute_residuum(sol.T_O,T)
+    res_PL= compute_residuum(sol.PL,PL)
+    
+    minMaxU = min_max_array(sol.u_global, vel=True)
+    minMaxP = min_max_array(sol.p_global)
+    minMaxT = min_max_array(sol.T_N)
+    minMaxPL= min_max_array(sol.PL)
+    
+    # scal back 
+    
+    minMaxU = minMaxU*(sc.L/sc.T)*sc.scale_vel 
+    minMaxP = minMaxP*sc.stress/1e9 
+    minMaxT = minMaxT*sc.Temp -273.15
+    minMaxPL= minMaxPL*sc.stress/1e9
+    
+    
+    res_total = np.sqrt(res_u**2+res_p**2+res_T**2)
+    
+    time_B_outer = timing.time()
+
+    print_ph(f'')
+    print_ph(f'             Outer iteration {it_outer:d} with tolerance {res_total:.3e}, in {time_B_outer-tA:.1f} sec // -- // --->')
+    print_ph(f'             []Res velocity       =  {res_u:.3e} [n.d.], max= {minMaxU[1]:.3e}, min= {minMaxU[0]:.3e} [cm/yr]')
+    print_ph(f'             []Res Temperature    =  {res_T:.3e} [n.d.], max= {minMaxT[1]:.2f}, min= {minMaxT[0]:.2f} [C]')
+    print_ph(f'             []Res pressure       =  {res_p:.3e} [n.d.], max= {minMaxP[1]:.3e}, min= {minMaxP[0]:.3e} [GPa]')
+    print_ph(f'             []Res lithostatic    =  {res_PL:.3e}[n.d.], max= {minMaxPL[1]:.3e}, min= {minMaxPL[0]:.3e} [GPa]')
+    print_ph(f'              =============================================// -- // --->')
+    print_ph(f'')
+
+    
+    
+    
+    
+    return res_total 
+def print_output(S,D,pdb,ioctrl,it_outer,sc,ctrl,ts=0):
     from compute_material_property import evaluate_material_property  
     import os
     from dolfinx.io import XDMFFile
@@ -1868,10 +2054,15 @@ def print_output(S,D,pdb,ioctrl,it_outer,sc,ts=0):
     pt_save = ioctrl.path_save
     if not os.path.exists(pt_save):
         os.makedirs(pt_save)
+    
     pt_save = os.path.join(pt_save, ioctrl.sname)
     if not os.path.exists(pt_save):
         os.makedirs(pt_save)    
-    file_name = os.path.join(pt_save,'it_%04d'%(it_outer))
+    
+    if ctrl.steady_state == 0:
+        file_name = os.path.join(pt_save,'ts_%04d'%(it_outer))
+    else:
+        file_name = os.path.join(pt_save,'it_%04d'%(it_outer))
     element_ve = basix.ufl.element("Lagrange", "triangle", 1, shape=(mesh.geometry.dim,   ))
     element_te = basix.ufl.element("Lagrange", "triangle", 1, shape=(mesh.geometry.dim**2,))
     element_sc = basix.ufl.element("Lagrange", "triangle", 1)
@@ -1900,10 +2091,22 @@ def print_output(S,D,pdb,ioctrl,it_outer,sc,ts=0):
     # Temperature
     T2 = fem.Function(temp_triangular)
     T2.name = "Temperature  [degC]"
-    T2.interpolate(S.T_O)
+    if ctrl.steady_state == 1:
+        T2.interpolate(S.T_O)
+    else:
+        T2.interpolate(S.T_N)
     T2.x.array[:] = T2.x.array[:]*sc.Temp - 273.15
     T2.x.scatter_forward()  
     
+    if ctrl.steady_state == 0:
+        dT = fem.Function(temp_triangular)
+        dT.name = "dT  [degC]"
+        a = S.T_N.copy()
+        a.x.array[:] = a.x.array[:]-S.T_O.x.array[:]
+        a.x.scatter_forward() 
+        dT.interpolate(a)
+        dT.x.array[:] = dT.x.array[:]*sc.Temp
+        dT.x.scatter_forward()
     # Lithostatic pressure
     PL2 = fem.Function(pres_triangular)
     PL2.name = "Lit Pres  [GPa]"
@@ -1998,6 +2201,8 @@ def print_output(S,D,pdb,ioctrl,it_outer,sc,ts=0):
         ufile_xdmf.write_function(e_T)
         ufile_xdmf.write_function(eta2)
         ufile_xdmf.write_function(flux)
+        if ctrl.steady_state == 0:
+            ufile_xdmf.write_function(dT)
         mesh.geometry.x[:] = coord
     
 
@@ -2139,7 +2344,6 @@ def _benchmark_van_keken(S,b_vk,case,ctrl_io,sc):
 
 if __name__ == '__main__': 
     
-    set_ups_problem()
     
     a = 1
     

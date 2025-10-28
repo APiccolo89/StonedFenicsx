@@ -41,7 +41,7 @@ from src.create_mesh                 import Geom_input
 from src.scal                        import _scaling_control_parameters
 from src.scal                        import _scale_parameters
 from src.scal                        import _scaling_material_properties
-from src.solution                    import steady_state_solution
+from src.solution                    import steady_state_solution,time_dependent_solution
 
 dict_options = {'Linear':1,
                 'SelfConsistent':2}
@@ -70,7 +70,8 @@ def StonedFenicsx():
                             van_keken        = IP.van_keken,
                             van_keken_case   = IP.van_keken_case,
                             model_shear      = dict_options[IP.model_shear],
-                            phase_wz         = IP.phase_wz)
+                            phase_wz         = IP.phase_wz,
+                            dt = IP.dt_sim)
     # IO controls
     io_ctrl = IOControls(test_name = IP.test_name,
                         path_save = IP.path_save,
@@ -181,7 +182,8 @@ def StonedFenicsx():
     if ctrl.steady_state == 1:
         steady_state_solution(M, ctrl, lhs, Pdb, io_ctrl, sc)
     else:
-        print_ph('Time dependent solution not yet implemented')
+        time_dependent_solution(M, ctrl, lhs, Pdb, io_ctrl, sc)
+
          
     # Create mesh
     return 0    
