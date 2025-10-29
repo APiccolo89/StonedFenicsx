@@ -7,7 +7,7 @@ from typing import Tuple, List
 from typing import Optional
 from numba import njit, prange
 from mpi4py                          import MPI
-from utils import timing_function, print_ph
+from .utils import timing_function, print_ph
 
 
 data_scal = [('L',float64),

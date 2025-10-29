@@ -12,12 +12,12 @@ import time as timing
 import scipy.linalg as la 
 import scipy.sparse as sps
 import scipy.sparse.linalg.dsolve as linsolve
-import compute_material_property as cmp
+from .compute_material_property import heat_capacity,heat_conductivity,density
 from numba import njit
 
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
-from utils import timing_function, print_ph
+from .utils import timing_function, print_ph
 
 start       = timing.time()
 zeros       = np.zeros
@@ -38,7 +38,7 @@ def _compute_lithostatic_pressure(nz,ph,g,dz,T,pdb):
     res = 1.0
     while res>1e-6:
         for i in range(0,nz):
-            rho = cmp.density(pdb,T[i],lit_p_o[i],ph[i])
+            rho = density(pdb,T[i],lit_p_o[i],ph[i])
             rhog = rho*g
             if i == 0:
                 lit_p[i] = 0.0
@@ -63,10 +63,10 @@ def _compute_Cp_k_rho(ph,pdb,Cp,k,rho,T,lit_p,ind_z):
     it = len(T)
 
     for i in range(it):
-        k[i]   = cmp.heat_conductivity(pdb,T[i],lit_p[i],ph[i])
-        Cp[i]  = cmp.heat_capacity(pdb,T[i],ph[i])
+        k[i]   = heat_conductivity(pdb,T[i],lit_p[i],ph[i])
+        Cp[i]  = heat_capacity(pdb,T[i],ph[i])
 
-        rho[i] = cmp.density(pdb,T[i],lit_p[i],ph[i])
+        rho[i] = density(pdb,T[i],lit_p[i],ph[i])
 
     return Cp,k,rho
 #-----------------------------------------------------------------------------------------
@@ -234,21 +234,21 @@ def build_coefficient_matrix(A,
 
                     # B - correction that represents the second term on the right-hand side on the equation 
 
-                    rho_A =  cmp.density(pdb,TO[j],lit_p[j],ph[j])
-                    Cp_A  = cmp.heat_capacity(pdb,TO[j],ph[j])
+                    rho_A =  density(pdb,TO[j],lit_p[j],ph[j])
+                    Cp_A  = heat_capacity(pdb,TO[j],ph[j])
 
            
                     if step == 0:
                         
-                        rho_B = cmp.density(pdb,TO[j],lit_p[j],ph[j])
-                        Cp_B = cmp.heat_capacity(pdb,TO[j],ph[j])
+                        rho_B = density(pdb,TO[j],lit_p[j],ph[j])
+                        Cp_B = heat_capacity(pdb,TO[j],ph[j])
 
                         # B - predictor step 
                         B[j] = -TO[j] * ( rho_A * Cp_A - rho_B * Cp_B) / (rho_A * Cp_A)
 
                     elif step == 1: 
-                        rho_B = cmp.density(pdb,TPr[j],lit_p[j],ph[j])
-                        Cp_B = cmp.heat_capacity(pdb,TPr[j],ph[j])
+                        rho_B = density(pdb,TPr[j],lit_p[j],ph[j])
+                        Cp_B = heat_capacity(pdb,TPr[j],ph[j])
 
                         # B - corrector step 
 

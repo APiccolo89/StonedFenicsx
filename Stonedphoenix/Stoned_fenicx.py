@@ -53,8 +53,28 @@ def StonedFenicsx():
     # Input parameters 
     #---------------------------------------------------------------------------------------------------------
     
-    import input as IP
+    import argparse
+    import importlib.util
+    parser = argparse.ArgumentParser(
+        description="Run simulation with a given input path."
+    )
+    parser.add_argument(
+        "input_path",
+        type=str,
+        help="Path to the input file or directory."
+    )
 
+    args = parser.parse_args()
+    input_path = args.input_path
+    
+    module_name = os.path.splitext(os.path.basename(input_path))[0]  # e.g. "input_case"
+
+    spec = importlib.util.spec_from_file_location(module_name, input_path)
+    IP = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(IP)
+    print(f"Loaded {module_name} from {input_path}")
+    print(IP)
+    print(IP.test_name)
     
     # Numerical controls
     ctrl = NumericalControls(g               = IP.g,
@@ -187,6 +207,10 @@ def StonedFenicsx():
          
     # Create mesh
     return 0    
+
+
+
+
 
  
 if __name__ == '__main__': 

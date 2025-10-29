@@ -13,20 +13,19 @@ import matplotlib.pyplot as plt
 from dolfinx.io import XDMFFile, gmshio
 import gmsh 
 from ufl import exp, conditional, eq, as_ufl
-import scal as sc_f 
 import basix.ufl
-from utils import timing_function, print_ph,time_the_time
-from compute_material_property import density_FX, heat_conductivity_FX, heat_capacity_FX, compute_viscosity_FX, compute_radiogenic 
+from .utils import timing_function, print_ph,time_the_time
+from .compute_material_property import density_FX, heat_conductivity_FX, heat_capacity_FX, compute_viscosity_FX, compute_radiogenic 
 
-from create_mesh import Mesh 
-from phase_db import PhaseDataBase
+from .create_mesh import Mesh 
+from .phase_db import PhaseDataBase
 import time                          as timing
 from dolfinx.fem.petsc import assemble_matrix_block, assemble_vector_block
-from numerical_control import NumericalControls, ctrl_LHS, IOControls
-from utils import interpolate_from_sub_to_main
-from scal import Scal
-from output import OUTPUT
-from utils import compute_eII,compute_strain_rate
+from .numerical_control import NumericalControls, ctrl_LHS, IOControls
+from .utils import interpolate_from_sub_to_main
+from .scal import Scal
+from .output import OUTPUT
+from .utils import compute_eII,compute_strain_rate
 
 
 """
@@ -528,7 +527,7 @@ class Global_thermal(Problem):
         
     def compute_friction_shear_expression(self,pdb,ctrl,D,T,P,vs,decoupling,sc,dofs):
 
-        from compute_material_property import compute_plastic_strain
+        from .compute_material_property import compute_plastic_strain
 
         e_II = (vs * decoupling * 1 /ctrl.wz_tk)/2  # Second invariant strain rate
 
@@ -1649,13 +1648,11 @@ class Wedge(Stokes_Problem):
 #------------------------------------------------------------------------------------------------------------
 @timing_function
 def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb:PhaseDataBase, ioctrl:IOControls, sc:Scal)-> int:
-    from phase_db import PhaseDataBase
-    from phase_db import _generate_phase
-    from thermal_structure_ocean import compute_initial_LHS
-    from scal import Scal 
-    import scal as sc_f 
+    from .phase_db import PhaseDataBase
+    from .phase_db import _generate_phase
+    from .thermal_structure_ocean import compute_initial_LHS
+    from .scal import Scal 
     
-    from create_mesh import unit_test_mesh
     
     
     print_ph(f'// -- // --- Steady State temperature // -- // --- > ')
@@ -1758,13 +1755,11 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
     return 0 
 
 def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb:PhaseDataBase, ioctrl:IOControls, sc:Scal):
-    from phase_db import PhaseDataBase
-    from phase_db import _generate_phase
-    from thermal_structure_ocean import compute_initial_LHS
-    from scal import Scal 
-    import scal as sc_f 
+    from .phase_db import PhaseDataBase
+    from .phase_db import _generate_phase
+    from .thermal_structure_ocean import compute_initial_LHS
+    from .scal import Scal 
     
-    from create_mesh import unit_test_mesh
     
     
     print_ph(f'// -- // --- Time dependent temperature // -- // --- > ')
@@ -1844,7 +1839,6 @@ def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, p
             if wedge.typology == 'NonlinearProblem' or it_outer == 0: #or vel0 != velc:  
                 wedge.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,M.g_input,it = it_outer,ts=0)
 
-            print_ph(f'Interpolating from sub to main domains...')
 
             # Interpolate from wedge/slab to global
             sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_wedge, M.domainB.cell_par)
@@ -1852,7 +1846,6 @@ def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, p
 
             sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_wedge, M.domainB.cell_par)
             sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_slab, M.domainA.cell_par)
-            print_ph(f'           Done.')
 
             sol =energy_global.Solve_the_Problem_TD(sol,ctrl,pdb,M,lhs_ctrl,M.g_input,sc,it = it_outer, ts = ts) 
 

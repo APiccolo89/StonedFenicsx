@@ -6,9 +6,9 @@
 from dolfinx import fem
 from mpi4py import MPI
 import ufl
-from compute_material_property import density_FX,heat_capacity_FX,heat_conductivity_FX
-from compute_material_property import compute_viscosity_FX
-from utils import compute_strain_rate,compute_eII
+from .compute_material_property import density_FX,heat_capacity_FX,heat_conductivity_FX
+from .compute_material_property import compute_viscosity_FX
+from .utils import compute_strain_rate,compute_eII
 import os
 from dolfinx.io import XDMFFile
 import numpy as np
@@ -71,7 +71,7 @@ class OUTPUT():
                      ,time=0.0,        # current time
                      ts=0):            # time step counter
         
-        from compute_material_property import evaluate_material_property  
+        from .compute_material_property import evaluate_material_property  
         import os
         from dolfinx.io import XDMFFile
         import basix  

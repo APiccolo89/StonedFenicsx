@@ -1,7 +1,7 @@
 
 import numpy as np
 import gmsh 
-from scal import Scal 
+from .scal import Scal 
 import matplotlib.pyplot as plt
 from dataclasses import dataclass, field
 from dolfinx import mesh, fem, io, nls, log
@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from dolfinx.io import XDMFFile, gmshio
 from ufl import exp, conditional, eq, as_ufl
 import basix.ufl
-from utils import timing_function, print_ph
+from .utils import timing_function, print_ph
 import dolfinx
 from dolfinx.mesh import create_submesh
 from numpy.typing import NDArray
