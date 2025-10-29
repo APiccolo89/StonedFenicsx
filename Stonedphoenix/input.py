@@ -7,13 +7,13 @@ class Phase():
 x                 = [0, 660e3]               # main grid coordinate
 y                 = [-600e3,0.0]   
 slab_tk           = 130e3                   # slab thickness
-cr                = 0e3              # crust 
-ocr               = 0e3             # oceanic crust
-lit_mt            = 50e3          # lithosperic mantle  
-lc                = 0.0              # lower crust ratio 
+cr                = 30e3              # crust 
+ocr               = 7e3             # oceanic crust
+lit_mt            = 20e3          # lithosperic mantle  
+lc                = 0.3              # lower crust ratio 
 wc                = 2.0e3              # weak zone 
 lt_d              = (cr+lit_mt)     # total lithosphere thickness
-decoupling        = 100e3      # decoupling depth -> i.e. where the weak zone is prolonged 
+decoupling        = 80e3      # decoupling depth -> i.e. where the weak zone is prolonged 
 resolution_normal = 2.0e3  # To Do
 #---------------------------------------------------------------------------------------------------------
 # Numerical Controls 
@@ -32,7 +32,7 @@ steady_state      = 0
 slab_bc           = 1 # 1 moving wall, 0 pipe-like slab 
 tol_innerPic      = 1e-2
 tol_innerNew      = 1e-5
-van_keken_case    = 1 # 1 Van Keken benchmark, When these flag are activated -> default value in all phases -> 3300  
+van_keken_case    = 2 # 1 Van Keken benchmark, When these flag are activated -> default value in all phases -> 3300  
                     # 2 diffusion only, 
                     # 3 composite 
                     # 4 Iterative 
@@ -40,16 +40,16 @@ decoupling_ctrl   = 1
 model_shear       = 'SelfConsistent' # 'SelfConsistent
 phase_wz          = 7
 time_dependent    = 1 
-dt_sim               = 10000/1e6 # in Myr
+dt_sim               = 15000/1e6 # in Myr
 
 
 
-friction_angle   = 0.0 
+friction_angle   = 15.0 
 #---------------------------------------------------------------------------------------------------------
 # input/output control
 #---------------------------------------------------------------------------------------------------------
-test_name = 'case_Hobson_time_dependent_experiment'
-path_save = '/Users/wlnw570/Work/Leeds/Output/Stonedphoenix/Benchmark_van_Keken'
+test_name = 'case_Hobson_time_dependent_experiment2'
+path_save = '/Users/wlnw570/Work/Leeds/Output/Stonedphoenix/curved'
 sname = test_name
 #---------------------------------------------------------------------------------------------------------
 # Scaling parameters
@@ -65,7 +65,7 @@ nz = 108
 end_time = 180.0
 dt = 0.001
 recalculate = 1
-van_keken = 1
+van_keken = 0
 c_age_plate = 50.0 
 #---------------------------------------------------------------------------------------------------------
 # Phase properties
@@ -73,30 +73,30 @@ c_age_plate = 50.0
 Phase1 = Phase()
 Phase1.name = 'Slab_Mantle'
 Phase1.rho0 = 3300.0
-Phase1.option_rho = 0
+Phase1.option_rho = 3
 Phase1.option_rheology = 0  
-Phase1.option_k = 0
-Phase1.option_Cp = 0
+Phase1.option_k = 3
+Phase1.option_Cp = 1
 Phase1.radio    = 0.066e-6 * 0.0
 Phase1.eta = 1e22
 #---------------------------------------------------------------------------------------------------------
 Phase2 = Phase()
 Phase2.name = 'Oceanic_Crust'
 Phase2.rho0 = 2900.0
-Phase2.option_rho = 0
+Phase2.option_rho = 3
 Phase2.option_rheology = 0  
-Phase2.option_k =0
-Phase2.option_Cp = 0
+Phase2.option_k =2
+Phase2.option_Cp = 1
 Phase2.radio    = 0.25e-6* 0.0
 Phase2.eta = 1e22
 #---------------------------------------------------------------------------------------------------------
 Phase3 = Phase()
 Phase3.name = 'Wedge'
 Phase3.rho0 = 3300.0
-Phase3.option_rho = 0
+Phase3.option_rho = 3
 Phase3.option_rheology = 0 
-Phase3.option_k = 0
-Phase3.option_Cp = 0
+Phase3.option_k = 2
+Phase3.option_Cp = 1
 Phase3.radio    = 0.066e-6* 0.0
 
 Phase3.name_diffusion = 'Van_Keken_diff'
@@ -106,20 +106,20 @@ Phase3.eta = 1e21
 Phase4 = Phase()
 Phase4.name = 'Continental_Mantle'
 Phase4.rho0 = 3300.0
-Phase4.option_rho = 0
+Phase4.option_rho = 3
 Phase4.option_rheology = 0  
-Phase4.option_k = 0
+Phase4.option_k = 2
 Phase4.radio    = 0.066e-6* 0.0
-Phase4.option_Cp = 0
+Phase4.option_Cp = 1
 Phase4.eta = 1e22
 #---------------------------------------------------------------------------------------------------------
 Phase5 = Phase()
 Phase5.name = 'Continental_Crust'
 Phase5.rho0 = 2700.0
-Phase5.option_rho = 0
+Phase5.option_rho = 3
 Phase5.option_rheology = 0  
-Phase5.option_k = 0
-Phase5.option_Cp = 0
+Phase5.option_k = 2
+Phase5.option_Cp = 1
 Phase5.eta = 1e22
 Phase5.radio    = 2.00e-6* 0.0
 
@@ -127,10 +127,10 @@ Phase5.radio    = 2.00e-6* 0.0
 Phase6 = Phase()
 Phase6.name = 'Lower_Crust'
 Phase6.rho0 = 2900.0
-Phase6.option_rho = 0
+Phase6.option_rho = 2
 Phase6.option_rheology = 0
-Phase6.option_k = 0
-Phase6.option_Cp = 0
+Phase6.option_k = 2
+Phase6.option_Cp = 1
 Phase6.eta = 1e22
 Phase6.radio    = 0.17e-6* 0.0
 

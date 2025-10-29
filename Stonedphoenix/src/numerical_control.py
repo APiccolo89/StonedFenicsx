@@ -111,11 +111,13 @@ class NumericalControls:
     
 
 class IOControls():
-    def __init__(self, test_name='', path_save='', sname=''):
+    def __init__(self, test_name:str = '', path_save:str = '', sname:str ='',ts_out:int = 10, dt_out:float = 1e6):
         self.test_name = test_name
         self.path_save = path_save
         self.sname = sname
         self.path_test = os.path.join(self.path_save,self.test_name)
+        self.ts_out = ts_out
+        self.dt_out = dt_out
 
     def generate_io(self):
         """

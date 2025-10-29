@@ -492,14 +492,15 @@ class Global_thermal(Problem):
         -> [A] => Shear heating becomes a ufl expression. So happy about it 
         
         """
-        
+
         if ctrl.decoupling == 1 and ctrl.model_shear >0: 
             facets1                = D.facets.find(D.bc_dict['Subduction_top_lit'])
             facets2                = D.facets.find(D.bc_dict['Subduction_top_wed'])
-        
+
             facet_seismogenic = np.unique(np.concatenate((facets1,facets2)))
+
             dofs              = fem.locate_dofs_topological(self.FS, D.mesh.topology.dim-1, facet_seismogenic)
-        
+
             heat_source = fem.Function(self.FS)
             heat_source.x.array[:] = 0.0   
             heat_source.x.scatter_forward()
@@ -508,6 +509,7 @@ class Global_thermal(Problem):
             efficiency    = heat_source.copy()
             Z = self.FS.tabulate_dof_coordinates()[:,1]
             decoupling = decoupling_function(Z,decoupling,g_input)
+
             if ctrl.model_shear==2:
                 # compute the plastic strain rate ratio and viscous shear heating strain rate 
                 # Place holder function
@@ -517,7 +519,7 @@ class Global_thermal(Problem):
             else:  
                 phi = np.tan(pdb.friction_angle)
                 expression = decoupling * ufl.avg(S.PL) * ctrl.v_s[0] * phi * ufl.avg(self.test0) * (self.dS(D.bc_dict['Subduction_top_lit']) +self.dS(D.bc_dict['Subduction_top_wed']))
-            
+
             return expression
 
         else:
@@ -714,16 +716,19 @@ class Global_thermal(Problem):
     #------------------------------------------------------------------
     
     def Solve_the_Problem_TD(self,S,ctrl,pdb,M,lhs,geom,sc,it=0,ts=0): 
-        
+
         nl = 0 
         p_k = S.PL.copy()  # Previous lithostatic pressure 
 
-        if it == 0:         
+
+
+        if it == 0:
+         
             self.shear_heating = self.compute_shear_heating(ctrl,pdb, S,getattr(M,'domainG'),geom,sc)
             self.compute_energy_source(getattr(M,'domainG'),pdb)
-        
+
         a,L = self.set_linear_picard_TD(p_k,S.T_N,S.T_O,S.u_global,getattr(M,'domainG'),pdb,ctrl.dt)
-        
+
         self.bc = self.create_bc_temp(getattr(M,'domainG'),ctrl,geom,lhs,S.u_global,it)
         if self.typology == 'NonlinearProblem':
             nl = 1 
@@ -732,6 +737,7 @@ class Global_thermal(Problem):
         if it == 0 & ts == 0: 
             self.solv = ScalarSolver(a,L,M.comm,nl,J,F)
         
+
         print_ph(f'. // -- // --- Temperature problem [GLOBAL] // -- // --->')
         
         time_A = timing.time()
@@ -1802,7 +1808,7 @@ def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, p
     sol.T_O = sol.T_N.copy()
     output = OUTPUT(M.domainG.mesh, ioctrl, ctrl, sc)
     save = 0 
-    dt_save =ctrl.dt
+    dt_save = 0.5*sc.scale_Myr2sec/sc.T  # Save every 0.5 Myr
     while time<ctrl.time_max:
         time_A_ts = timing.time()
 
@@ -1838,6 +1844,7 @@ def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, p
             if wedge.typology == 'NonlinearProblem' or it_outer == 0: #or vel0 != velc:  
                 wedge.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,M.g_input,it = it_outer,ts=0)
 
+            print_ph(f'Interpolating from sub to main domains...')
 
             # Interpolate from wedge/slab to global
             sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_wedge, M.domainB.cell_par)
@@ -1845,6 +1852,7 @@ def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, p
 
             sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_wedge, M.domainB.cell_par)
             sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_slab, M.domainA.cell_par)
+            print_ph(f'           Done.')
 
             sol =energy_global.Solve_the_Problem_TD(sol,ctrl,pdb,M,lhs_ctrl,M.g_input,sc,it = it_outer, ts = ts) 
 
@@ -2339,32 +2347,3 @@ def _benchmark_van_keken(S,b_vk,case,ctrl_io,sc):
 
     return 0
 
-if __name__ == '__main__': 
-    
-    
-    a = 1
-    
-    
-    
-    
-    
-
-    # Update and set up variational problem
-    
-    # non-linear itearion betwee pressure/stk/temperature 
-    #===============
-    # -> [a] Solve Pressure: newton picard+newton
-    #        [/] interpolate solutions from global to local 
-    #    [b] Solve Slab if (it == 0 or time_step == 0) & vel_time == 1 (mix Picard & Newton)=> iterate picard till 1e-3 -> try newton  
-    #    [c] Solve Wedge if (it==0  or time_step == 0) & (rheo == nonlinear or vel_time == 1)
-    #        [/] interpolate solutions from local to global 
-    #    [d] Solve thermal problem -> steady state / time dependent
-    #    [e] Check residuum of PL,T,u(G),p(G) -> if variation of norm(dT,dPL,du(G),dp(G))<tol -> iteration finished 
-    # ==============         
-    #    [Output] : interpoalte solution variable DG1 -> save output -> Extract additional data 
-    #             : density,k,Cp,viscosity, strain rate, pressure 
-    #    [->done<-] Create relational database, {Here I need to do a decent job, for showing off my skills to potential hiring, like the manager of an obnoxious McDonald}
-    # -------------
-    
-    
-    
