@@ -45,3 +45,4 @@ Stonedphoenix/src/__pycache__/Subducting_plate.cpython-313.pyc
 *.h5
 *.xdmf
 .DS_Store
+Stonedphoenix/.vscode/launch.json
