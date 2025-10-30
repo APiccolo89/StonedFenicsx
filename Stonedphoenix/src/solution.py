@@ -445,7 +445,7 @@ class Global_thermal(Problem):
 
             cd_dof_b = cd_dof[dofs_right_lit]
     
-            T_gr = (-geom.lt_d-0)/(ctrl.Tmax-ctrl.Ttop)
+            T_gr = (-geom.lab_d-0)/(ctrl.Tmax-ctrl.Ttop)
             T_gr = T_gr**(-1) 
         
             bc_fun = fem.Function(self.FS)
@@ -460,7 +460,7 @@ class Global_thermal(Problem):
         vel_T  = fem.Function(self.FS)
         vel_T.interpolate(h_vel)
         vel_bc = vel_T.x.array[dofs_right_wed]
-        ind_z = np.where((vel_bc < 0.0))
+        ind_z = np.where((vel_bc < 0.0) & (cd_dof[dofs_right_wed,1]<=-geom.lab_d))
         dofs_vel = dofs_right_wed[ind_z[0]]        
         
         self.bc_right_wed = fem.dirichletbc(ctrl.Tmax, dofs_vel,self.FS)
@@ -472,7 +472,7 @@ class Global_thermal(Problem):
         vel_T  = fem.Function(self.FS)
         vel_T.interpolate(v_vel)
         vel_bc = vel_T.x.array[dofs_bot_wed]
-        ind_z = np.where(vel_bc > 0.0)
+        ind_z = np.where((vel_bc > 0.0))
         dofs_vel = dofs_bot_wed[ind_z[0]]                
         
         self.bc_bot_wed = fem.dirichletbc(ctrl.Tmax, dofs_vel,self.FS)
@@ -513,7 +513,6 @@ class Global_thermal(Problem):
                 # compute the plastic strain rate ratio and viscous shear heating strain rate 
                 # Place holder function
                 expression = self.compute_friction_shear_expression(pdb,ctrl,D,S.T_O,S.PL,ctrl.v_s[0],decoupling,sc,dofs) * ufl.avg(self.test0) * (self.dS(D.bc_dict['Subduction_top_lit']) +self.dS(D.bc_dict['Subduction_top_wed']))
-                qfr = self.compute_friction_shear_expression(pdb,ctrl,D,S.T_O,S.PL,ctrl.v_s[0],decoupling,sc,dofs)
 
             else:  
                 phi = np.tan(pdb.friction_angle)
@@ -579,8 +578,7 @@ class Global_thermal(Problem):
         source = compute_radiogenic(pdb, source, D.phase, D.mesh)
         self.energy_source = source.copy()
 
-    #--
-
+    #------------------------------------------------------------------
 
     def set_linear_picard_SS(self,p_k,T,u_global,D,pdb, it=0):
         # Function that set linear form and linear picard for picard iteration
@@ -884,7 +882,6 @@ class Global_thermal(Problem):
         
         return S
 
-    
     #------------------------------------------------------------------
         
     @timing_function
@@ -913,19 +910,20 @@ class Global_thermal(Problem):
         X     = self.FS
         T_i_A = fem.Function(X)
         cd_dof = X.tabulate_dof_coordinates()
-        T_i_A.x.array[:] = griddata(-lhs.z, lhs.LHS, cd_dof[:,1], method='nearest')
+        T_i_A.x.array[:] = griddata(lhs.z, lhs.LHS, cd_dof[:,1], method='nearest')
         T_i_A.x.scatter_forward() 
         #- 
-        T_gr = (-g_input.lt_d-0)/(ctrl.Tmax-ctrl.Ttop)
+        T_gr = (-g_input.lab_d-0)/(ctrl.Tmax-ctrl.Ttop)
         T_gr = T_gr**(-1) 
 
         T_expr = fem.Function(X)
-        ind_A = np.where(cd_dof[:,1] >= -g_input.lt_d)[0]
-        ind_B = np.where(cd_dof[:,1] < -g_input.lt_d)[0]
+        ind_A = np.where(cd_dof[:,1] >= -g_input.lab_d)[0]
+        ind_B = np.where(cd_dof[:,1] < -g_input.lab_d)[0]
         T_expr.x.array[ind_A] = ctrl.Ttop + T_gr * cd_dof[ind_A,1]
         T_expr.x.array[ind_B] = ctrl.Tmax
         T_expr.x.scatter_forward()
 
+        T_i = fem.Function(X)
 
         expr = conditional(
             reduce(Or,[eq(M.phase, i) for i in [2, 3, 4, 5]]),
@@ -933,14 +931,10 @@ class Global_thermal(Problem):
             T_i_A
         )
 
-        v = ufl.TestFunction(X)
-        u = ufl.TrialFunction(X)
-        T_i = fem.Function(X)
-        a = u * v * ufl.dx 
-        L = expr * v * ufl.dx
-        prb = fem.petsc.LinearProblem(a,L,u=T_i)
-        prb.solve()
-        return T_expr 
+        T_i.interpolate(fem.Expression(expr, X.element.interpolation_points()))
+    
+    
+        return T_i 
 #-----------------------------------------------------------------
 class Global_pressure(Problem): 
     def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
