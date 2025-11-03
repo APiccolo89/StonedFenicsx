@@ -528,17 +528,17 @@ class Global_thermal(Problem):
 
         from .compute_material_property import compute_plastic_strain
 
-        e_II = (vs * decoupling * 1 /ctrl.wz_tk)/2  # Second invariant strain rate
+        e_II_fr = (vs * decoupling * 1 /ctrl.wz_tk)/2  # Second invariant strain rate
 
         # -> compute the plastic strain rate
 
-        e_pl, tau = compute_plastic_strain(e_II,T,P,pdb,D.phase,ctrl.phase_wz-1,sc)
+        e_pl, tau = compute_plastic_strain(e_II_fr,T,P,pdb,D.phase,ctrl.phase_wz-1,sc)
 
         e_vs = 1 - e_pl 
 
         phi = ufl.tan(pdb.friction_angle)
 
-        friction = (e_pl * vs * decoupling * phi * P + e_vs * e_II * tau * ctrl.wz_tk) 
+        friction = (e_pl * vs * decoupling * phi * P + e_vs * e_II_fr * tau * ctrl.wz_tk) 
 
         return friction 
             
