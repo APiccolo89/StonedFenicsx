@@ -7,13 +7,14 @@ class Phase():
 x                 = [0, 660e3]               # main grid coordinate
 y                 = [-600e3,0.0]   
 slab_tk           = 130e3                   # slab thickness
-cr                = 0e3              # crust 
-ocr               = 0e3             # oceanic crust
-lit_mt            = 50e3          # lithosperic mantle  
-lc                = 0.0              # lower crust ratio 
+cr                = 30e3              # crust 
+ocr               = 7e3             # oceanic crust
+lit_mt            = 20e3          # lithosperic mantle  
+lc                = 0.3              # lower crust ratio 
 wc                = 2.0e3              # weak zone 
 lt_d              = (cr+lit_mt)     # total lithosphere thickness
-decoupling        = 100e3      # decoupling depth -> i.e. where the weak zone is prolonged 
+lab_d             = 100e3 
+decoupling        = 80e3      # decoupling depth -> i.e. where the weak zone is prolonged 
 resolution_normal = 2.0e3  # To Do
 #---------------------------------------------------------------------------------------------------------
 # Numerical Controls 
@@ -25,28 +26,29 @@ Tmax              = 1300.0
 Ttop              = 0.0 
 g                 = 9.81 
 v_s               = [5.0,0.0]  # Convert cm/yr to m/s
-slab_age          = 50e6 
-time_max          = 20e6
+slab_age          = 50
+time_max          = 20
 time_dependent_v  = 0
-steady_state      = 1
+steady_state      = 0
 slab_bc           = 1 # 1 moving wall, 0 pipe-like slab 
-tol_innerPic      = 1e-3
+tol_innerPic      = 1e-2
 tol_innerNew      = 1e-5
 van_keken_case    = 2 # 1 Van Keken benchmark, When these flag are activated -> default value in all phases -> 3300  
                     # 2 diffusion only, 
                     # 3 composite 
                     # 4 Iterative 
-decoupling_ctrl   = 0
+decoupling_ctrl   = 1
 model_shear       = 'SelfConsistent' # 'SelfConsistent
 phase_wz          = 7
+time_dependent    = 1 
+dt_sim               = 15000/1e6 # in Myr
 
-
-friction_angle   = 0.0 
+friction_angle   = 5.0 
 #---------------------------------------------------------------------------------------------------------
 # input/output control
 #---------------------------------------------------------------------------------------------------------
-test_name = 'case_Hobson'
-path_save = '/Users/wlnw570/Work/Leeds/Output/Stonedphoenix/Benchmark_van_Keken'
+test_name = 'case_Hobson_time_dependent_experiment2'
+path_save = '/Users/wlnw570/Work/Leeds/Output/Stonedphoenix/curved'
 sname = test_name
 #---------------------------------------------------------------------------------------------------------
 # Scaling parameters
@@ -62,8 +64,9 @@ nz = 108
 end_time = 180.0
 dt = 0.001
 recalculate = 1
-van_keken = 1
+van_keken = 0
 c_age_plate = 50.0 
+flag_radio = 1.0 
 #---------------------------------------------------------------------------------------------------------
 # Phase properties
 # ---------------------------------------------------------------------------------------------------------
@@ -72,9 +75,9 @@ Phase1.name = 'Slab_Mantle'
 Phase1.rho0 = 3300.0
 Phase1.option_rho = 3
 Phase1.option_rheology = 0  
-Phase1.option_k = 2
-Phase1.option_Cp = 2
-Phase1.radio    = 0.066e-6 * 0.0
+Phase1.option_k = 3
+Phase1.option_Cp = 1
+Phase1.radio    = 0.066e-6 * flag_radio
 Phase1.eta = 1e22
 #---------------------------------------------------------------------------------------------------------
 Phase2 = Phase()
@@ -83,18 +86,18 @@ Phase2.rho0 = 2900.0
 Phase2.option_rho = 3
 Phase2.option_rheology = 0  
 Phase2.option_k =2
-Phase2.option_Cp = 2
-Phase2.radio    = 0.25e-6* 0.0
+Phase2.option_Cp = 1
+Phase2.radio    = 0.25e-6 * flag_radio
 Phase2.eta = 1e22
 #---------------------------------------------------------------------------------------------------------
 Phase3 = Phase()
 Phase3.name = 'Wedge'
 Phase3.rho0 = 3300.0
 Phase3.option_rho = 3
-Phase3.option_rheology = 3  
+Phase3.option_rheology = 2 
 Phase3.option_k = 2
-Phase3.option_Cp = 2
-Phase3.radio    = 0.066e-6* 0.0
+Phase3.option_Cp = 1
+Phase3.radio    = 0.066e-6 * flag_radio
 
 Phase3.name_diffusion = 'Van_Keken_diff'
 Phase3.name_dislocation = 'Van_Keken_disl'
@@ -106,8 +109,8 @@ Phase4.rho0 = 3300.0
 Phase4.option_rho = 3
 Phase4.option_rheology = 0  
 Phase4.option_k = 2
-Phase4.radio    = 0.066e-6* 0.0
-Phase4.option_Cp = 2
+Phase4.radio    = 0.066e-6 * flag_radio
+Phase4.option_Cp = 1
 Phase4.eta = 1e22
 #---------------------------------------------------------------------------------------------------------
 Phase5 = Phase()
@@ -116,20 +119,20 @@ Phase5.rho0 = 2700.0
 Phase5.option_rho = 3
 Phase5.option_rheology = 0  
 Phase5.option_k = 2
-Phase5.option_Cp = 2
+Phase5.option_Cp = 1
 Phase5.eta = 1e22
-Phase5.radio    = 2.00e-6* 0.0
+Phase5.radio    = 2.00e-6 * flag_radio
 
 #---------------------------------------------------------------------------------------------------------
 Phase6 = Phase()
 Phase6.name = 'Lower_Crust'
 Phase6.rho0 = 2900.0
-Phase6.option_rho = 3
+Phase6.option_rho = 2
 Phase6.option_rheology = 0
-Phase6.option_k = 0
-Phase6.option_Cp = 0
+Phase6.option_k = 2
+Phase6.option_Cp = 1
 Phase6.eta = 1e22
-Phase6.radio    = 0.17e-6* 0.0
+Phase6.radio    = 0.17e-6 * flag_radio
 
 
 Phase7 = Phase()
@@ -144,10 +147,10 @@ element_V = basix.ufl.element("Lagrange","triangle",2,shape=(2,))
 #---------------------------------------------------------------------------------------------------------
 if van_keken != 0:
     rho        = 3300.0 
-    option_k   = 0 
-    option_Cp  = 0
-    option_k   = 0
-    option_rho = 0
+    option_k   = 2 
+    option_Cp  = 1
+    option_k   = 2
+    option_rho = 3
     option_eta = van_keken_case
     HR = 0.0 
     

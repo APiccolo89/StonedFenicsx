@@ -2,12 +2,11 @@
 
 import os 
 import sys
-sys.path.append(os.path.abspath("src"))
-from aux_create_mesh import Class_Points
-from aux_create_mesh import Class_Line
-from aux_create_mesh import create_loop
-from aux_create_mesh import find_line_index
-from numerical_control import IOControls, NumericalControls
+from .aux_create_mesh import Class_Points
+from .aux_create_mesh import Class_Line
+from .aux_create_mesh import create_loop
+from .aux_create_mesh import find_line_index
+from .numerical_control import IOControls, NumericalControls
 
 import numpy as np
 
@@ -25,12 +24,12 @@ import matplotlib.pyplot as plt
 from dolfinx.io import XDMFFile, gmshio
 import gmsh 
 from ufl import exp, conditional, eq, as_ufl
-import scal as sc_f 
+from .scal import _scaling_mesh,Scal
 import basix.ufl
-from utils import timing_function, print_ph
+from .utils import timing_function, print_ph
 import dolfinx
 from dolfinx.mesh import create_submesh
-from aux_create_mesh import Mesh, Domain, Class_Points, Class_Line, Geom_input, dict_tag_lines, dict_surf
+from .aux_create_mesh import Mesh, Domain, Class_Points, Class_Line, Geom_input, dict_tag_lines, dict_surf
 from numpy.typing import NDArray
 
 
@@ -369,8 +368,8 @@ def create_gmesh(ioctrl   :IOControls,
     
 
     import gmsh 
-    from   Subducting_plate import Slab
-    import aux_create_mesh as fmm 
+    from   .Subducting_plate import Slab
+    from  .aux_create_mesh import function_create_slab_channel 
 
 
 
@@ -407,7 +406,7 @@ def create_gmesh(ioctrl   :IOControls,
        # Max domain x direction
 
     # Create the subduction interfaces using either the real data set, or the slab class
-    slab_x, slab_y, bot_x, bot_y,oc_cx,oc_cy = fmm.function_create_slab_channel(Data_Real,g_input,SP=S)
+    slab_x, slab_y, bot_x, bot_y,oc_cx,oc_cy = function_create_slab_channel(Data_Real,g_input,SP=S)
     if slab_x[-1]>g_input.x[1]:
         print_ph('Shortcoming: the slab is out of the domain, please increase the domain size, I add 60 km to the domain along x direction, fear not')
         g_input.x[1] = slab_x[-1]+60e3
@@ -637,7 +636,7 @@ def read_mesh(ioctrl,sc):
         meshio.write("mt.xdmf", line_mesh)
         
         
-    mesh = sc_f._scaling_mesh(mesh,sc)
+    mesh = _scaling_mesh(mesh,sc)
 
     return mesh, cell_markers, facet_markers
 #-----------------------------------------------------------------------------------------------------
@@ -736,7 +735,7 @@ def create_mesh(ioctrl, sc, g_input,ctrl):
     import numpy as np 
     import sys, os
     sys.path.append(os.path.abspath("src"))
-    from numerical_control import IOControls
+    from .numerical_control import IOControls
     
 
         
@@ -765,7 +764,7 @@ if __name__ == '__main__':
                         sname = 'Experimental')
     ioctrl.generate_io()
     
-    sc = sc_f.Scal(L=660e3, Temp = 1350, eta = 1e21, stress = 1e9)
+    sc = Scal(L=660e3, Temp = 1350, eta = 1e21, stress = 1e9)
     
     g_input = Geom_input(x = np.array([0.,660e3]),
                          y = np.array([-600e3,0.]),

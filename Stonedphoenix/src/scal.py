@@ -7,7 +7,7 @@ from typing import Tuple, List
 from typing import Optional
 from numba import njit, prange
 from mpi4py                          import MPI
-from utils import timing_function, print_ph
+from .utils import timing_function, print_ph
 
 
 data_scal = [('L',float64),
@@ -140,8 +140,10 @@ def _scaling_control_parameters(ctrl,scal):
     ctrl.v_s   = (ctrl.v_s * scal.scale_vel)/(scal.L/scal.T)
     ctrl.g     = ctrl.g / (scal.L/scal.T**2)
     ctrl.wz_tk = ctrl.wz_tk / scal.L 
-    
-    
+    ctrl.slab_age = ctrl.slab_age * (scal.scale_Myr2sec/scal.T)
+    ctrl.time_max = ctrl.time_max * (scal.scale_Myr2sec/scal.T) 
+    ctrl.dt       = ctrl.dt * (scal.scale_Myr2sec/scal.T)
+
     return ctrl  
     
     

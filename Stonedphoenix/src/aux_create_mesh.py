@@ -1,7 +1,7 @@
 
 import numpy as np
 import gmsh 
-from scal import Scal 
+from .scal import Scal 
 import matplotlib.pyplot as plt
 from dataclasses import dataclass, field
 from dolfinx import mesh, fem, io, nls, log
@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from dolfinx.io import XDMFFile, gmshio
 from ufl import exp, conditional, eq, as_ufl
 import basix.ufl
-from utils import timing_function, print_ph
+from .utils import timing_function, print_ph
 import dolfinx
 from dolfinx.mesh import create_submesh
 from numpy.typing import NDArray
@@ -133,7 +133,8 @@ class Geom_input():
         wc: float = 2.0e3,
         slab_tk: float = 130e3,
         decoupling: float = 100e3,
-        trans: float = 10e3) -> None:
+        trans: float = 10e3,
+        lab_d: float = 0.0e3) -> None:
          
         self.x                 = x               # main grid coordinate
         self.y                 = y   
@@ -148,6 +149,10 @@ class Geom_input():
         self.resolution_normal = wc  # To Do
         self.theta_out_slab    = []
         self.trans             = trans
+        if lab_d == 0.0:
+            self.lab_d         = self.lt_d
+        else:
+            self.lab_d         = lab_d
     
     def dimensionless_ginput(self,sc:Scal):
         self.x                 /= sc.L               # main grid coordinate
@@ -160,6 +165,7 @@ class Geom_input():
         self.decoupling        /= sc.L      # decoupling depth -> i.e. where the weak zone is prolonged 
         self.resolution_normal /= sc.L  # To Do
         self.trans             /= sc.L
+        self.lab_d             /= sc.L
         
         return self 
         

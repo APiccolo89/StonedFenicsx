@@ -331,5 +331,21 @@ def gather_coordinates(V):
         return None
 
 
+#----------------------------------------------------------------------------          
+def compute_strain_rate(u):
+    
+    e = ufl.sym(ufl.grad(u))
+    
+    return e  
+#---------------------------------------------------------------------------
+
+def compute_eII(e):
+    from ufl import inner, sqrt
+    e_II  = sqrt(0.5*inner(e, e))    
+    return e_II
+#---------------------------------------------------------------------------
+
+
+
 if __name__ == '__main__':
     logistic_function_decoupling()
