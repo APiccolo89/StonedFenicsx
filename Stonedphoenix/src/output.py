@@ -46,7 +46,7 @@ class OUTPUT():
         # for transient we keep XDMF files open across timesteps
         if ctrl.steady_state == 0:
             self.xdmf_main = XDMFFile(comm,
-                                      os.path.join(self.pt_save, "timeseries_all.xdmf"),
+                                      os.path.join(self.pt_save, "time_dependent.xdmf"),
                                       "w")
             # write mesh once
             coord = mesh.geometry.x.copy()
@@ -77,7 +77,7 @@ class OUTPUT():
         import basix  
 
         if ctrl.steady_state == 1:
-            file_name = os.path.join(self.pt_save,'it_%04d'%(it_outer))
+            file_name = os.path.join(self.pt_save,'Steady_stateit_%04d'%(it_outer))
 
 
 
