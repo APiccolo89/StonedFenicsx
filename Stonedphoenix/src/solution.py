@@ -1727,7 +1727,7 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
         
         # Compute residuum 
         res = compute_residuum_outer(sol,Told,PLold,u_globalold,p_globalold,it_outer,sc, time_A_outer)
-        print_output(sol,M.domainG,pdb,ioctrl,it_outer,sc)
+
         if ctrl.van_keken == 1: 
            
             _benchmark_van_keken(sol,1,ctrl.van_keken_case,ioctrl,sc)
@@ -1743,7 +1743,7 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
         
     
     
-    output.print_output(sol,M.domainG,pdb,ioctrl,sc,ctrl,ts=ts,time=time*sc.T/sc.scale_Myr2sec)
+    output.print_output(sol,M.domainG,pdb,ioctrl,sc,ctrl,ts=it_outer)
     # Destroy KSP
     energy_global.solv.ksp.destroy()
     lithostatic_pressure_global.solv.ksp.destroy()
@@ -1752,7 +1752,7 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
     # Ahaha! 
     
     return 0 
-
+#------------------------------------------------------------------------------------------------------------
 def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb:PhaseDataBase, ioctrl:IOControls, sc:Scal):
     from .phase_db import PhaseDataBase
     from .phase_db import _generate_phase
@@ -1869,11 +1869,6 @@ def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, p
         
         ts = ts + 1 
         time = time + dt
-        
-        
-            
-         
-        
         
         if (ts == 1) or (ts==0) or np.floor(time/dt_save) != save: 
             output.print_output(sol,M.domainG,pdb,ioctrl,sc,ctrl,ts=ts,time=time*sc.T/sc.scale_Myr2sec)
