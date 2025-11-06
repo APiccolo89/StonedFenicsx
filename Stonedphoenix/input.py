@@ -43,7 +43,7 @@ phase_wz          = 7
 time_dependent    = 1 
 dt_sim               = 15000/1e6 # in Myr
 
-friction_angle   = 5.0 
+friction_angle   = 1.0 
 #---------------------------------------------------------------------------------------------------------
 # input/output control
 #---------------------------------------------------------------------------------------------------------
@@ -66,7 +66,7 @@ dt = 0.001
 recalculate = 1
 van_keken = 0
 c_age_plate = 50.0 
-flag_radio = 1.0 
+flag_radio = 0.0 
 #---------------------------------------------------------------------------------------------------------
 # Phase properties
 # ---------------------------------------------------------------------------------------------------------
@@ -138,8 +138,8 @@ Phase6.radio    = 0.17e-6 * flag_radio
 Phase7 = Phase()
 Phase7.name = 'WeakZone'
 Phase7.option_rheology = 3  
-Phase7.name_diffusion = 'Van_Keken_diff'
-Phase7.name_dislocation = 'Van_Keken_disl'
+Phase7.name_diffusion = 'Hirth_Wet_Olivine_diff'
+Phase7.name_dislocation = 'Hirth_Wet_Olivine_disl'
 #---------------------------------------------------------------------------------------------------------
 element_p = basix.ufl.element("Lagrange","triangle", 1) 
 element_PT = basix.ufl.element("Lagrange","triangle",2)
