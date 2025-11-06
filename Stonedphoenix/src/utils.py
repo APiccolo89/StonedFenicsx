@@ -22,7 +22,15 @@ def timing_function(fun):
         dt = time_B - time_A
         global_dt = comm.allreduce(dt, op=MPI.MAX)
         if comm.rank == 0:
-            print(f"{fun.__name__} took {dt:.2f} sec")
+            if dt > 60.0:
+                m, s = divmod(seconds, 60)
+                print(f".  {fun.__name__} took {m:.2f} min and {s:.2f} sec")
+            if dt > 3600.0:
+                m, s = divmod(seconds, 60)
+                h, m = divmod(m, 60)
+                print(f".  {fun.__name__} took {dt/3600:.2f} hr, {m:.2f} min and {s:.2f} sec")
+            else:
+                print(f".  {fun.__name__} took {dt:.2f} sec")
         return result
     return wrapper
 

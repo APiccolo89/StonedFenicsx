@@ -1684,6 +1684,9 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
     it_outer = 0 
 
     res = 1.0
+    
+    output = OUTPUT(M.domainG.mesh, ioctrl, ctrl, sc)
+
 
     while it_outer < ctrl.it_max and res > ctrl.tol: 
         
@@ -1735,10 +1738,12 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
 
         # Create h5 database systematic 
         
-        #
-        
+            
         it_outer = it_outer + 1
         
+    
+    
+    output.print_output(sol,M.domainG,pdb,ioctrl,sc,ctrl,ts=ts,time=time*sc.T/sc.scale_Myr2sec)
     # Destroy KSP
     energy_global.solv.ksp.destroy()
     lithostatic_pressure_global.solv.ksp.destroy()
@@ -1887,34 +1892,7 @@ def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, p
     
     return 0 
 
-
-def compute_new_timestep(sol:Solution,M:Mesh, ctrl:NumericalControls, sc:Scal, dt_old):
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    return dt
-
-def extract_slab_top_moho(S,D,ctrl_io):
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    return top,moho
+#------------------------------------------------------------------------------------------------------------
 
 
 def compute_residuum(a,b):
@@ -1930,6 +1908,8 @@ def compute_residuum(a,b):
     res = L2_norm_calculation(dx)/L2_norm_calculation(dx1)
     
     return res
+
+#------------------------------------------------------------------------------------------------------------
 
 def min_max_array(a, vel = False):
     
@@ -1948,7 +1928,7 @@ def min_max_array(a, vel = False):
     
     return np.array([global_min, global_max],dtype=np.float64)
 
-
+#------------------------------------------------------------------------------------------------------------
 def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA):
     # Prepare the variables 
 
@@ -1991,7 +1971,7 @@ def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA):
     
     
     return res_total 
-
+#------------------------------------------------------------------------------------------------------------
 def compute_residuum_outerTD(sol,T,PL,u,p,it_outer,sc,tA):
     # Prepare the variables 
 
@@ -2034,303 +2014,8 @@ def compute_residuum_outerTD(sol,T,PL,u,p,it_outer,sc,tA):
     
     
     return res_total 
-def print_output(S,D,pdb,ioctrl,it_outer,sc,ctrl,ts=0):
-    from compute_material_property import evaluate_material_property  
-    import os
-    from dolfinx.io import XDMFFile
-    import basix  
-    
-    mesh = D.mesh
-    
-    
-    pt_save = ioctrl.path_save
-    if not os.path.exists(pt_save):
-        os.makedirs(pt_save)
-    
-    pt_save = os.path.join(pt_save, ioctrl.sname)
-    if not os.path.exists(pt_save):
-        os.makedirs(pt_save)    
-    
-    if ctrl.steady_state == 0:
-        file_name = os.path.join(pt_save,'ts_%04d'%(it_outer))
-    else:
-        file_name = os.path.join(pt_save,'it_%04d'%(it_outer))
-    element_ve = basix.ufl.element("Lagrange", "triangle", 1, shape=(mesh.geometry.dim,   ))
-    element_te = basix.ufl.element("Lagrange", "triangle", 1, shape=(mesh.geometry.dim**2,))
-    element_sc = basix.ufl.element("Lagrange", "triangle", 1)
+
+#------------------------------------------------------------------------------------------------------------
 
 
-    # Prepare variable and spaces 
-    vel_triangular = fem.functionspace(mesh,element_ve)
-    stress_triangular = fem.functionspace(mesh,element_te)
-    temp_triangular = fem.functionspace(mesh,element_sc)
-    pres_triangular = fem.functionspace(mesh,element_sc)
-    
-    # Velocity 
-    u_T = fem.Function(vel_triangular)
-    u_T.name = "Velocity  [cm/yr]"
-    u_T.interpolate(S.u_global)
-    u_T.x.array[:] = u_T.x.array[:]*(sc.L/sc.T)/sc.scale_vel
-    u_T.x.scatter_forward()
-    
-    # Pressure
-    p2 = fem.Function(pres_triangular)
-    p2.name = "Pressure  [GPa]"
-    p2.interpolate(S.p_global)
-    p2.x.array[:] = p2.x.array[:]*sc.stress/1e9 
-    p2.x.scatter_forward()  
-    
-    # Temperature
-    T2 = fem.Function(temp_triangular)
-    T2.name = "Temperature  [degC]"
-    if ctrl.steady_state == 1:
-        T2.interpolate(S.T_O)
-    else:
-        T2.interpolate(S.T_N)
-    T2.x.array[:] = T2.x.array[:]*sc.Temp - 273.15
-    T2.x.scatter_forward()  
-    
-    if ctrl.steady_state == 0:
-        dT = fem.Function(temp_triangular)
-        dT.name = "dT  [degC]"
-        a = S.T_N.copy()
-        a.x.array[:] = a.x.array[:]-S.T_O.x.array[:]
-        a.x.scatter_forward() 
-        dT.interpolate(a)
-        dT.x.array[:] = dT.x.array[:]*sc.Temp
-        dT.x.scatter_forward()
-    # Lithostatic pressure
-    PL2 = fem.Function(pres_triangular)
-    PL2.name = "Lit Pres  [GPa]"
-    PL2.interpolate(S.PL)
-    PL2.x.array[:] = PL2.x.array[:]*sc.stress/1e9
-    PL2.x.scatter_forward()
-    
-    
-    # density 
-    rho = density_FX(pdb,S.T_O,S.PL,D.phase,D)
-    rho2 = evaluate_material_property(rho,temp_triangular)
-    rho2.name = "Density  [kg/m3]"
-    rho2.x.array[:] = rho2.x.array[:]*sc.rho
-    rho2.x.scatter_forward()
-    
-    # Cp 
-    Cp = heat_capacity_FX(pdb,S.T_O,D.phase,D)
-    Cp2 = evaluate_material_property(Cp,temp_triangular)
-    Cp2.name = "Cp  [J/kg]"
-    Cp2.x.array[:] = Cp2.x.array[:]*sc.Cp
-    Cp2.x.scatter_forward()
-    
-    # k 
-    k = heat_conductivity_FX(pdb,S.T_O,S.PL,D.phase,D)
-    k2 = evaluate_material_property(k,temp_triangular)
-    k2.name = "k  [W/m/k]"
-    k2.x.array[:] = k2.x.array[:]*sc.k
-    k2.x.scatter_forward()
-    
-    
-    # kappa 
-    kappa2 = fem.Function(temp_triangular)
-    kappa2.name = "kappa  [m2/s]"
-    kappa2.x.array[:] = k2.x.array[:]/(rho2.x.array[:]*Cp2.x.array[:])
-    kappa2.x.scatter_forward()
-    
-    # strain rate 
-    e = compute_strain_rate(S.u_global)
-    eII = compute_eII(e)
-    eII2 = evaluate_material_property(eII,temp_triangular)
-
-    e_T = fem.Function(temp_triangular)
-    e_T.name = "e_II  [1/s]"
-    e_T.interpolate(eII2)
-    e_T.x.array[:] = e_T.x.array[:]/sc.T
-    e_T.x.array[e_T.x.array[:]<=1e-22] = 1e-20
-    e_T.x.scatter_forward()
-    
-    # viscosity (e,S.t_oslab,S.p_lslab,pdb,D.phase,D,sc)
-    eta = compute_viscosity_FX(e_T,S.T_O,S.PL,pdb,D.phase,D,sc)
-    eta2 = evaluate_material_property(eta,temp_triangular)
-    eta2.name = "eta  [Pa s]"
-    eta2.x.array[:] = np.abs(eta2.x.array[:])*sc.eta
-    eta2.x.scatter_forward()
-    
-    # heat flux 
-    q_expr = - (k2 * ufl.grad(T2)*1/sc.L)  
-    flux   = fem.Function(vel_triangular)
-    flux.name ='q  [W/m2]'
-    v = ufl.TestFunction(vel_triangular)
-    w = ufl.TrialFunction(vel_triangular)
-    a = ufl.inner(w,v) * ufl.dx
-    L = ufl.inner(q_expr,v) * ufl.dx
-    A = fem.petsc.assemble_matrix(fem.form(a))
-    A.assemble()
-    b = fem.petsc.assemble_vector(fem.form(L))
-
-    solver = PETSc.KSP().create(mesh.comm)
-    solver.setOperators(A)
-    solver.setType(PETSc.KSP.Type.CG)
-    solver.getPC().setType(PETSc.PC.Type.JACOBI)
-    solver.setFromOptions()
-    solver.solve(b, flux.x.petsc_vec)
-    flux.x.scatter_forward()
-    
-
-    
-    
-    with XDMFFile(MPI.COMM_WORLD, "%s.xdmf"%file_name, "w") as ufile_xdmf:
-
-        coord = mesh.geometry.x.copy()
-        mesh.geometry.x[:] *= sc.L/1e3
-        ufile_xdmf.write_mesh(mesh)
-        ufile_xdmf.write_function(u_T)
-        ufile_xdmf.write_function(p2)
-        ufile_xdmf.write_function(T2)
-        ufile_xdmf.write_function(PL2)
-        ufile_xdmf.write_function(rho2)
-        ufile_xdmf.write_function(Cp2)
-        ufile_xdmf.write_function(k2)
-        ufile_xdmf.write_function(kappa2)
-        ufile_xdmf.write_function(e_T)
-        ufile_xdmf.write_function(eta2)
-        ufile_xdmf.write_function(flux)
-        if ctrl.steady_state == 0:
-            ufile_xdmf.write_function(dT)
-        mesh.geometry.x[:] = coord
-    
-
-    
-    
-    return 0
-
-
-
-def _benchmark_van_keken(S,b_vk,case,ctrl_io,sc):
-    from scipy.interpolate import griddata
-    from utils import gather_vector,gather_coordinates
-    
-    comm = MPI.COMM_WORLD
-    # Suppose u is your Function
-    # u = fem.Function(V)
-
-    lT = S.T_O.copy()#gather_vector(S.T_O.copy())
-    mpi_comm = lT.function_space.mesh.comm
-    array = lT.x.array
-
-    # gather solution from all processes on proc 0
-    gT = mpi_comm.gather(array, root=0)
-    
-    XGl = S.T_O.function_space.tabulate_dof_coordinates()#gather_coordinates(S.T_O.function_space)
-    x  = XGl[:,0]
-    y  = XGl[:,1]
-    X_G = mpi_comm.gather(x,root=0)
-    Y_G = mpi_comm.gather(y,root=0)
-    
-    if comm.rank == 0:
-        XG = np.zeros([len(X_G[0]),2])
-        XG[:,0] = X_G[0]
-        XG[:,1] = Y_G[0] 
-
-        T = gT[0]       
-        x_g = np.array([np.min(XG[:,0]),np.max(XG[:,0])],dtype=np.float64)*sc.L
-        y_g = np.array([np.min(XG[:,1]),np.max(XG[:,1])],dtype=np.float64)*sc.L
-        nx   = 111 
-        ny   = 101
-        idx0 = 10 #(11 in van keken)
-        idy0 = ny-11 
-        idx1 = 36-1 
-        idy1 = ny-36
-
-        xx   = np.linspace(x_g[0],x_g[1],num=nx)
-        yy   = np.linspace(y_g[0],y_g[1],num=ny)
-        T_g  = np.zeros([nx,ny],dtype=np.float64)
-        X,Y  = np.meshgrid(xx,yy)
-        xt,yt = XG[:,0]*sc.L, XG[:,1]*sc.L
-        p     = np.zeros((len(xt),2),dtype=np.float64)
-        p[:,0] = xt 
-        p[:,1] = yt
-        T_g   = griddata(p,T*sc.Temp,(X, Y), method='nearest')-273.15
-        T_g = T_g.transpose()
-        T = 0
-        co = 0
-        x_s=[]
-        y_s=[] 
-        T2 = []
-        c = 0
-        X_S = []
-        Y_S = []
-        i_X = 10
-        for i in range(36):
-                T = T+(T_g[i,ny-1-i])**2
-                x_s.append(xx[i])
-                y_s.append(yy[ny-1-i])
-                if (i<21) & (i>8):
-                    l_index = np.arange(ny-(i+1),ny-10)
-                    if len(l_index) == 0:
-                        l_index_1st = np.arange(9,21)
-                        for j in range(len(l_index_1st)):
-                            T2.append(T_g[l_index_1st[j],ny-(i+1)]**2)
-                            X_S.append(xx[l_index_1st[j]])
-                            Y_S.append(yy[ny-(i+1)])
-                            c = c + 1
-                    for j in range(len(l_index)):
-                        T2.append(T_g[i,l_index[j]]**2)
-                        X_S.append(xx[i])
-                        Y_S.append(yy[int(l_index[j])])
-                        c = c + 1
-
-                co = co+1 
-
-        T_11_11 = T_g[idx0,idy0]
-
-        T_ln = np.sqrt(T/co) 
-        T_ln2 = np.sqrt(np.sum(T2)/c)
-
-        data_1c = np.array([
-        [397.55, 505.70, 850.50],
-        [391.57, 511.09, 852.43],
-        [387.78, 503.10, 852.97],
-        [387.84, 503.13, 852.92],
-        [389.39, 503.04, 851.68],
-        [388.73, 504.03, 854.99]
-        ])
-
-        data_2a = np.array([
-        [570.30, 614.09, 1007.31],
-        [580.52, 606.94, 1002.85],
-        [580.66, 607.11, 1003.20],
-        [577.59, 607.52, 1002.15],
-        [581.30, 607.26, 1003.35]
-        ])
-
-        data_2b = np.array([
-        [550.17, 593.48, 994.11],
-        [551.60, 608.85, 984.08],
-        [582.65, 604.51, 998.71],
-        [583.36, 605.11, 1000.01],
-        [574.84, 603.80, 995.24],
-        [583.11, 604.96, 1000.05]
-        ])
-
-        if case    == 0: 
-            data   = data_1c 
-        elif case  == 1:
-            data = data_2a
-        elif case== 2 : 
-            data = data_2b 
-        else: 
-            data = data_1c*0.
-
-        print( '------------------------------------------------------------------' )
-        print( ':::====> T(11,11) = %.2f [deg C], average value VanK2008 = %.2f [deg C] +/- %.2f;m/M = %.2f/%.2f [deg C]'%( T_11_11, np.mean(data[:,0]), np.std(data[:,0]),np.min(data[:,0]),np.max(data[:,0]) ) )
-        print( ':::====> L2_A     = %.2f [deg C], average value VanK2008 = %.2f [deg C] +/- %.2f;m/M = %.2f/%.2f [deg C]'%( T_ln, np.mean(data[:,1]), np.std(data[:,1]) ,np.min(data[:,1]),np.max(data[:,1]) ) )
-        print( ':::====> L2_B     = %.2f [deg C], average value VanK2008 = %.2f [deg C] +/- %.2f;;m/M = %.2f/%.2f[deg C]'%( T_ln2, np.mean(data[:,2]), np.std(data[:,2]),np.min(data[:,2]),np.max(data[:,2]) ) )
-        print( ':::L2_A = T along the slab surface from 0 to -210 km' )
-        print( ':::L2_B = T wedge norm from -54 to -110 km ' )
-        print( ':::=> From grid to downsampled grid -> nearest interpolation' )
-        print( '------------------------------------------------------------------' )
-        # place holder for the save database 
-        
-
-
-    return 0
 
