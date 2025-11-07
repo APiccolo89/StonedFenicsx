@@ -194,6 +194,7 @@ class OUTPUT():
         
         # Line Tag for the mesh and post_processing 
         tag = fem.Function(self.temp_V)
+        tag.name = 'MeshTAG'
         marker_unique = np.unique(D.facets.values)
         for i in range(len(marker_unique)):
             facet_indices = D.facets.find(marker_unique[i])   # numpy array of facet ids

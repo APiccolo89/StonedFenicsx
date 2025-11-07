@@ -24,6 +24,12 @@ class MeshData():
         
         self.polygon, self.ar     = self.create_polygon()
         
+        
+        
+        self.subduction_arr     = 
+        self.crust_array        = 
+        
+        
         fl.close()
        
         
@@ -256,9 +262,9 @@ if __name__ == "__main__":
         os.makedirs(path_2_save)
     
     td_file = '%s/timeseries_all.h5'%(path_2_test)
-    ss_file = '%s/time_dependent_output.vtu'
+    ss_file = '%s/Steady_stateit_0000.h5'
     time_td = 10.0  # Time in Myr to compare
-    M_data = MeshData(td_file)
+    M_data = MeshData(ss_file)
     
     
     compare_SS_TD(ss_file, td_file, time_td, M_data, path_2_save)
