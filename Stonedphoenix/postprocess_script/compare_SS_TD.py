@@ -8,9 +8,9 @@ import os
 import cmcrameri
 
 class MeshData(): 
-    def __init__(self,f:h5py.File):
+    def __init__(self,f:str,f1:str):
         # Extract mesh geometry 
-        fl = h5py.File(td_file, 'r')
+        fl = h5py.File(f, 'r')
 
         X                        = np.array(fl['/Mesh/mesh/geometry'])
         
@@ -26,11 +26,20 @@ class MeshData():
         
         
         
-        self.subduction_arr     = 
-        self.crust_array        = 
+        #self.subduction_arr     = 
+        #self.crust_array        = 
         
         
         fl.close()
+        fl = h5py.File(f1, 'r')
+        ar_point = np.array(fl['Function/MeshTAG/0']) 
+        ind = np.where(ar_point!=0.0)
+        ind = ind[0]
+        self.mesh_tag = ar_point.flatten()
+        
+        fl.close()
+        
+
        
         
     def create_polygon(self):
@@ -225,7 +234,7 @@ def compare_SS_TD(ss_file:str, td_file:str, time_td, M_data:MeshData,path_2_save
     """
     
     
-    f = h5py.File(td_file, 'r')
+    f = h5py.File(ss_file, 'r')
     field = 'Function/Temperature  [degC]'
     times = list(f[field].keys())
     time_list = [float(s.replace("_", ".")) for s in times]
@@ -256,15 +265,16 @@ def compare_SS_TD(ss_file:str, td_file:str, time_td, M_data:MeshData,path_2_save
 
 
 if __name__ == "__main__":
-    path_2_test = '/Users/wlnw570/Work/Leeds/Output/Stonedphoenix/curved/case_Hobson_time_dependent_experiment'
+    path_2_test = '/Users/wlnw570/Work/Leeds/Output/Stonedphoenix/curved/case_Hobson_time_dependent_experiment2'
     path_2_save = '/Users/wlnw570/Work/Leeds/Output/Stonedphoenix/curved/case_Hobson_time_dependent_experiment2/pic'
     if not os.path.isdir(path_2_save):
         os.makedirs(path_2_save)
     
     td_file = '%s/timeseries_all.h5'%(path_2_test)
-    ss_file = '%s/Steady_stateit_0000.h5'
+    ss_file = '%s/Steady_state.h5'%(path_2_test)
+    ms_tag  = '%s/MeshTag.h5'%(path_2_test)
     time_td = 10.0  # Time in Myr to compare
-    M_data = MeshData(ss_file)
+    M_data = MeshData(ss_file,ms_tag)
     
     
     compare_SS_TD(ss_file, td_file, time_td, M_data, path_2_save)

@@ -77,7 +77,9 @@ class OUTPUT():
         import basix  
 
         if ctrl.steady_state == 1:
-            file_name = os.path.join(self.pt_save,'Steady_stateit_%04d'%(it_outer))
+            file_name = os.path.join(self.pt_save,'Steady_state')
+            
+        file_name2 = os.path.join(self.pt_save,'MeshTag')
 
 
 
@@ -238,10 +240,15 @@ class OUTPUT():
                 ufile_xdmf.write_function(e_T  )
                 ufile_xdmf.write_function(eta2 )
                 ufile_xdmf.write_function(flux )
-                ufile_xdmf.write_function(tag )
                 D.mesh.geometry.x[:] = coord
-
-
+        if ts == 0 or ts == 1: 
+            with XDMFFile(MPI.COMM_WORLD, "%s.xdmf"%file_name2, "w") as ufile_xdmf:
+            
+                coord = D.mesh.geometry.x.copy()
+                D.mesh.geometry.x[:] *= sc.L/1e3
+                ufile_xdmf.write_mesh(D.mesh)
+                ufile_xdmf.write_function(tag)
+                D.mesh.geometry.x[:] = coord
 
 
         return 0
