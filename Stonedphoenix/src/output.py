@@ -191,7 +191,16 @@ class OUTPUT():
         solver.setFromOptions()
         solver.solve(b, flux.x.petsc_vec)
         flux.x.scatter_forward()
-
+        
+        # Line Tag for the mesh and post_processing 
+        tag = fem.Function(self.temp_V)
+        marker_unique = np.unique(D.facets.values)
+        for i in range(len(marker_unique)):
+            facet_indices = D.facets.find(marker_unique[i])   # numpy array of facet ids
+            dofs = fem.locate_dofs_topological(self.temp_V, 1, facet_indices)
+            tag.x.array[dofs] = marker_unique[i]
+            tag.x.scatter_forward()
+        
 
         if ctrl.steady_state == 0:
             # transient: append to ongoing XDMF with time
@@ -209,6 +218,7 @@ class OUTPUT():
             self.xdmf_main.write_function(e_T,    time)
             self.xdmf_main.write_function(eta2,   time)
             self.xdmf_main.write_function(flux,   time)
+            self.xdmf_main.write_function(tag,    time)
         else:
             with XDMFFile(MPI.COMM_WORLD, "%s.xdmf"%file_name, "w") as ufile_xdmf:
 
@@ -227,6 +237,7 @@ class OUTPUT():
                 ufile_xdmf.write_function(e_T  )
                 ufile_xdmf.write_function(eta2 )
                 ufile_xdmf.write_function(flux )
+                ufile_xdmf.write_function(tag )
                 D.mesh.geometry.x[:] = coord
 
 

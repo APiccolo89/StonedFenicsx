@@ -629,11 +629,22 @@ def read_mesh(ioctrl,sc):
         mesh_name = os.path.join(ioctrl.path_save,'%s.msh'%ioctrl.sname)
         msh = meshio.read(mesh_name)
 
+        
+        pt_save = ioctrl.path_save
+        if not os.path.exists(pt_save):
+            os.makedirs(pt_save)
+    
+        pt_save = os.path.join(pt_save, ioctrl.sname)
+        if not os.path.exists(pt_save):
+            os.makedirs(pt_save)    
+        
+
+
         # Create and save one file for the mesh, and one file for the facets
         triangle_mesh = create_mesh_fenicsx(msh, "triangle", prune_z=True)
         line_mesh = create_mesh_fenicsx(msh, "line", prune_z=True)
-        meshio.write("mesh.xdmf", triangle_mesh)
-        meshio.write("mt.xdmf", line_mesh)
+        meshio.write("%s/mesh.xdmf"%pt_save, triangle_mesh)
+        meshio.write("%s/mt.xdmf"%pt_save, line_mesh)
         
         
     mesh = _scaling_mesh(mesh,sc)
