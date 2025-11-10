@@ -147,9 +147,353 @@ class MeshData():
         ar =  scontains_xy(polygon,self.Xi,self.Yi)
 
         return polygon, ar 
-        
+
+def arrowed_spines(fig, ax):
+
+    xmin, xmax = ax.get_xlim() 
+    ymin, ymax = ax.get_ylim()
+
+    # removing the default axis on all sides:
+    for side in ['bottom','right','top','left']:
+        ax.spines[side].set_visible(False)
+
+    # removing the axis ticks
+    #plt.xticks([]) # labels 
+    #plt.yticks([])
+    #ax.xaxis.set_ticks_position('none') # tick markers
+    #ax.yaxis.set_ticks_position('none')
+
+    # get width and height of axes object to compute 
+    # matching arrowhead length and width
+    dps = fig.dpi_scale_trans.inverted()
+    bbox = ax.get_window_extent().transformed(dps)
+    width, height = bbox.width, bbox.height
+
+    # manual arrowhead width and length
+    hw = 1./20.*(ymax-ymin) 
+    hl = 1./20.*(xmax-xmin)
+    lw = 1. # axis line width
+    ohg = 0.3 # arrow overhang
+
+    # compute matching arrowhead length and width
+    yhw = hw/(ymax-ymin)*(xmax-xmin)* height/width 
+    yhl = hl/(xmax-xmin)*(ymax-ymin)* width/height
+
+    # draw x and y axis
+    ax.arrow(xmin, 0, xmax-xmin, 0., fc='k', ec='k', lw = lw, 
+             head_width=hw, head_length=hl, overhang = ohg, 
+             length_includes_head= True, clip_on = False) 
+
+    ax.arrow(0, ymax, 0., ymin-ymax, fc='k', ec='k', lw = lw, 
+             head_width=yhw, head_length=yhl, overhang = ohg, 
+             length_includes_head= True, clip_on = False)
+    return ax
+
+
+
+def interpolate_field(field,M_Data): 
+    """_summary_
+
+    Args:
+        field (float): field to interpolate into a regulard grid 
+        M_Data (MeshData): data containing mesh information 
+
+    Returns:
+        field_i (float): interpolated field on regular grid 
+        -> filtered such that only valuues inside the polygon are kept 
+    """
+    
+    from scipy.interpolate import griddata
+
+    field = field.flatten()
+    # Interpolate field on regulard grid 
+    field_i = griddata(M_data.X, field, (M_data.Xi, M_data.Yi), method='linear', fill_value=np.nan)
+    # Filter the data
+    field_i[M_data.ar==False] = np.nan
+    
+    return field_i
+
+def compare_heatfluxes(path2save:str,
+                        time_string:str,
+                        ipic:int,
+                        qsx:float,
+                        qsy:float,
+                        qsm:float,
+                        qtdx:float,
+                        qtdy:float,
+                        qtdm:float,
+                        M_data:MeshData):
+    
+    def modify_ax(ax,fg):
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_linewidth(1.5)
+        ax.spines['left'].set_linewidth(1.5)
+        ax.spines['top'].set_color('black')
+        ax.spines['left'].set_color('black')
+        ax.xaxis.set_ticks_position('top')
+        ax.yaxis.set_ticks_position('left')
+        ax.tick_params(direction='in', which='both', length=6, width=1, colors='black', grid_color='black', grid_alpha=0.5)
+        ax.tick_params(axis='x', direction='in', which='both', bottom=False, top=True)
+        ax.tick_params(axis='y', direction='in', which='both', left=True, right=False)
+        #ax = arrowed_spines(fg, ax)
+        return ax 
+
             
+    from matplotlib import pyplot as plt
+    
+    plt.rcParams.update({
+        "text.usetex": True,           # Use LaTeX for all text
+        "font.family": "serif",        # Or 'sans-serif'
+        "font.serif": ["Computer Modern"],   # LaTeX default
+        "axes.unicode_minus": False,
+        })    
+    
+    ind_top  = ((M_data.mesh_tag==8.0) | (M_data.mesh_tag == 9.0)) & (M_data.X[:,1]>=-100.0)  
+    z        = M_data.X[:,1]
+    z_pl     = z[ind_top]
+    sort     = np.argsort(z_pl)
+    z_pl     = z_pl[sort]
+    qsx      = qsx[ind_top][sort]
+    qsy      = qsy[ind_top][sort]
+    qsm      = qsm[ind_top][sort]
+    qtdx     = qtdx[ind_top][sort]
+    qtdy     = qtdy[ind_top][sort]
+    qtdm     = qtdm[ind_top][sort]
+      
+    fname = os.path.join(path2save, 'Heatflux_comparison')
+    
+    if not os.path.isdir(fname):
+        os.makedirs(fname)
+    
+    figure_name = f'Figure_{ipic:03d}.png'  
+    
+    fig = plt.figure(figsize=(10,6))
+    
+    bx = 0.1 
+    by = 0.1
+    
+    dx = 0.05   
+    
+    sx = 0.25
+    sy = 0.7
+    
+    ax0 = fig.add_axes([bx, by, sx, sy])
+    ax1 = fig.add_axes([bx+sx+dx, by, sx, sy])
+    ax2 = fig.add_axes([bx+2.0*(sx+dx), by, sx, sy])
+    
+    ax0.plot(qsx,  z_pl,c='forestgreen',label=r'$q_x^{\infty}$ Slab'                    ,linewidth=1.0, linestyle='-.')
+    ax0.plot(qtdx, z_pl,c='firebrick',label=r'$q_x(t)$ Slab'     ,linewidth=1.2                )
+    ax1.plot(qsy,  z_pl,c='forestgreen',label=r'$q_y^{\infty}$ Slab',linewidth=1.0,linestyle='-.'                )
+    ax1.plot(qtdy, z_pl,c='firebrick',label=r'$q_y(t)$ Slab',        linewidth=1.2)
+    ax2.plot(qsm,  z_pl,c='forestgreen',label=r'$|q|^{\infty}$ Slab',linewidth=1.0,linestyle='-.'                )
+    ax2.plot(qtdm, z_pl,c='firebrick',label=r'$|q|(t)$ Slab',        linewidth=1.2)
+    ax0.set_xlabel(r'$q_x$ [W/m$^2$]', fontsize=12)
+    ax0.set_ylabel('Depth [km]', fontsize=12)
+    ax1.set_yticklabels([])
+    ax2.set_yticklabels([])
+    ax1.set_xlabel(r'$q_y$ [W/m$^2$]', fontsize=12)
+    ax2.set_xlabel(r'$|q|$ [W/m$^2$]', fontsize=12)
+    ax0 = modify_ax(ax0,fig)
+    ax1 = modify_ax(ax1,fig)
+    ax2 = modify_ax(ax2,fig)
+    ax0.legend(fontsize=8, loc='lower left', frameon=False)
+    ax1.legend(fontsize=8, loc='lower left', frameon=False)
+    ax2.legend(fontsize=8, loc='lower left', frameon=False)
+    ax0.xaxis.set_label_position("top")
+    ax1.xaxis.set_label_position("top")
+    ax2.xaxis.set_label_position("top")
+    ax0.grid(True, linestyle='-.', linewidth=0.2)
+    ax1.grid(True, linestyle='-.', linewidth=0.2)
+    ax2.grid(True, linestyle='-.', linewidth=0.2)
+    props = dict(boxstyle='round', facecolor='black', alpha=0.5)
+    ax0.text(0.9, 1.15, '[a]', transform=ax0.transAxes, fontsize=8,
+        verticalalignment='top', bbox=props,color='white')
+    ax1.text(0.9, 1.15,'[b]', transform=ax1.transAxes, fontsize=8,
+        verticalalignment='top', bbox=props,color='white')
+    ax2.text(0.9, 1.15, '[c]', transform=ax2.transAxes, fontsize=8,
+        verticalalignment='top', bbox=props,color='white')
+    ax0.text(0.1, 1.15, time_string, transform=ax0.transAxes, fontsize=10,
+        verticalalignment='top', bbox=props,color='white')
+    fig.savefig(os.path.join(fname, figure_name))
+    
+    
+    return 0 
+
+def compare_slab_surface(path2save:str,
+                        time_string:str,
+                        ipic:int,
+                        Ts:float,
+                        Ttd:float,
+                        M_data:MeshData):
+    from matplotlib import pyplot as plt
+    
+    plt.rcParams.update({
+    "text.usetex": True,           # Use LaTeX for all text
+    "font.family": "serif",        # Or 'sans-serif'
+    "font.serif": ["Computer Modern"],   # LaTeX default
+    "axes.unicode_minus": False,
+    })
+    
+    
+    def modify_ax(ax,fg):
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_linewidth(1.5)
+        ax.spines['left'].set_linewidth(1.5)
+        ax.spines['top'].set_color('black')
+        ax.spines['left'].set_color('black')
+        ax.xaxis.set_ticks_position('top')
+        ax.yaxis.set_ticks_position('left')
+        ax.tick_params(direction='in', which='both', length=6, width=1, colors='black', grid_color='black', grid_alpha=0.5)
+        ax.tick_params(axis='x', direction='in', which='both', bottom=False, top=True)
+        ax.tick_params(axis='y', direction='in', which='both', left=True, right=False)
+        #ax = arrowed_spines(fg, ax)
         
+        return ax 
+    
+    fname = os.path.join(path2save, 'Slab_surface_comparison')
+    if not os.path.isdir(fname):
+        os.makedirs(fname)
+    figure_name = f'Figure_{ipic:03d}.png'
+    
+    # Select the indices corresponding to the slab surface and oceanic crust
+    z = M_data.X[:,1]
+    
+    ind_top  = (M_data.mesh_tag==8.0)| (M_data.mesh_tag==9.0)
+    
+    ind_ocr  = (M_data.mesh_tag==10.0)
+
+    Ts_slab  = Ts[ind_top]
+    
+    Ts_ocmoh = Ts[ind_ocr]
+    
+    Ttd_slab = Ttd[ind_top]
+    
+    Ttd_ocmoh= Ttd[ind_ocr]
+
+    z_s = z[ind_top]
+    
+    z_ocmoh = z[ind_ocr]
+    
+    ts = np.argsort(z_s)
+    
+    z_s = z_s[ts]
+    
+    Ts_slab = Ts_slab[ts]
+    
+    Ttd_slab = Ttd_slab[ts]
+    
+    tocmoh = np.argsort(z_ocmoh)
+    
+    z_ocmoh = z_ocmoh[tocmoh]
+    
+    Ts_ocmoh = Ts_ocmoh[tocmoh]
+    
+    Ttd_ocmoh = Ttd_ocmoh[tocmoh]
+    
+    import matplotlib.pyplot as plt
+    
+    fig = plt.figure(figsize=(10,6))
+    
+    bx = 0.08 
+    
+    by = 0.04
+    
+    dy = 0.08 
+    
+    dx = 0.01 
+    
+    sx = 0.40
+    
+    sy = 0.4 
+    
+    ax0 = fig.add_axes([bx, by+sy+dy, sx, sy])
+    
+    ax1 = fig.add_axes([bx+sx+dx, by+sy+dy, sx, sy])
+    
+    ax2 = fig.add_axes([bx, by, sx, sy])
+    
+    ax3 = fig.add_axes([bx+sx+dx, by, sx, sy])
+    
+    ax0.plot(Ts_slab, z_s,c='forestgreen',label=r'$T^{\infty}$ Slab'                    ,linewidth=1.0, linestyle='-.')
+    
+    ax0.plot(Ttd_slab, z_s,c='firebrick',label=r'$T(t)$ Slab'     ,linewidth=1.2                )
+    
+    ax1.plot(Ts_ocmoh, z_ocmoh,c='forestgreen',label=r'$T^{\infty}$ Moho',linewidth=1.0,linestyle='-.'                )
+    
+    ax1.plot(Ttd_ocmoh, z_ocmoh,c='firebrick',label=r'$T(t)$ Moho',        linewidth=1.2)
+    
+    ax0.set_xlabel(r'T [$^{\circ} C$]', fontsize=12)
+    
+    ax0.set_ylabel('Depth [km]', fontsize=12)
+    
+    ax1.set_yticklabels([])
+    
+    ax3.set_yticklabels([])
+    
+    ax1.set_xlabel(r'T [$^{\circ} C$]', fontsize=12)
+    
+    ax2.plot(Ts_slab - Ttd_slab, z_s,c='darkblue',linewidth=1.2)
+    
+    ax2.set_xlabel(r'T$^{\infty}$ - T$(t)$ [$^{\circ}C$]', fontsize=12)
+
+    ax2.set_ylabel('Depth [km]', fontsize=12)
+    
+    ax3.plot(Ts_ocmoh - Ttd_ocmoh, z_ocmoh,c='darkblue',linewidth=1.2)
+        
+    ax3.set_xlabel(r'T$^{\infty}$ - T$(t)$ [$^{\circ}C$]', fontsize=12)
+    
+    ax0 = modify_ax(ax0,fig)
+    
+    ax1 = modify_ax(ax1,fig)
+    
+    ax2 = modify_ax(ax2,fig)
+    
+    ax3 = modify_ax(ax3,fig)
+    
+    ax0.legend(fontsize=8, loc='lower left', frameon=False)
+    ax1.legend(fontsize=8, loc='lower left', frameon=False)
+
+    
+    ax0.xaxis.set_label_position("top")
+    
+    ax1.xaxis.set_label_position("top")
+    
+    ax2.xaxis.set_label_position("top")
+    
+    ax3.xaxis.set_label_position("top")
+    
+    ax0.grid(True, linestyle='-.', linewidth=0.2)
+    
+    ax1.grid(True, linestyle='-.', linewidth=0.2)
+
+    ax2.grid(True, linestyle='-.', linewidth=0.2)
+    
+    ax3.grid(True, linestyle='-.', linewidth=0.2)
+    
+    
+    
+    
+    props = dict(boxstyle='round', facecolor='black', alpha=0.5)
+    
+    
+    ax0.text(0.9, 1.15, '[a]', transform=ax0.transAxes, fontsize=8,
+        verticalalignment='top', bbox=props,color='white')
+    ax1.text(0.9, 1.15,'[b]', transform=ax1.transAxes, fontsize=8,
+        verticalalignment='top', bbox=props,color='white')
+    ax2.text(0.9, 1.15, '[c]', transform=ax2.transAxes, fontsize=8,
+        verticalalignment='top', bbox=props,color='white')
+    ax3.text(0.9, 1.15, '[d]', transform=ax3.transAxes, fontsize=8,
+        verticalalignment='top', bbox=props,color='white')
+ 
+    ax0.text(0.1, 1.15, time_string, transform=ax0.transAxes, fontsize=10,
+        verticalalignment='top', bbox=props,color='white')
+ 
+    fig.savefig(os.path.join(fname, figure_name))
+
+    return 0
+         
         
         
         
@@ -160,8 +504,7 @@ def create_figure(path2save:str,
                   vmax:float, 
                   cmap: str, 
                   title: str,
-                  Xi:float, 
-                  Yi:float, 
+                  M_data:MeshData,
                   field:float, 
                   n_level:int,
                   name_fig:str,
@@ -189,20 +532,25 @@ def create_figure(path2save:str,
         ax.tick_params(axis='y', direction='in', which='both', left=True, right=False)
         return ax
 
-
+    xs = M_data.X[(M_data.mesh_tag==8.0) | (M_data.mesh_tag == 9.0),0]
+    ys = M_data.X[(M_data.mesh_tag==8.0) | (M_data.mesh_tag == 9.0),1]
+    sort = np.argsort(xs)
+    x = [xs[sort], ys[sort]]
+    
     pt_save = os.path.join(path2save,name_fig)
     if not os.path.isdir(pt_save):
         os.makedirs(pt_save)
         
     figure_name = f'Figure_{ipic:03d}.png'
         
-    fname = os.path.join(pt_save, )
+    fname = os.path.join(pt_save, figure_name)
     fig, ax0 = plt.subplots(figsize=(10, 6))
     ax0 = modify_ax(ax0)
     ax0.set_title(time_string, fontsize=16)
     ax0.set_xlabel('Distance [km]', fontsize=14)
     ax0.set_ylabel('Depth [km]', fontsize=14)
-    p0 = ax0.contourf(Xi, Yi, field, levels=n_level, cmap=cmap, vmin=vmin, vmax=vmax)
+    p0 = ax0.contourf(M_data.Xi, M_data.Yi, field, levels=n_level, cmap=cmap, vmin=vmin, vmax=vmax)
+    p1 = ax0.plot(x[0],x[1],c='w',linewidth=1.0)
     cbar = plt.colorbar(p0, ax=ax0, orientation='vertical', pad=0.02)
     cbar.set_label(label=title, fontsize=14)
     cbar.ax.tick_params(labelsize=12)
@@ -234,25 +582,93 @@ def compare_SS_TD(ss_file:str, td_file:str, time_td, M_data:MeshData,path_2_save
     """
     
     
-    f = h5py.File(ss_file, 'r')
+    f = h5py.File(td_file, 'r')
     field = 'Function/Temperature  [degC]'
     times = list(f[field].keys())
     time_list = [float(s.replace("_", ".")) for s in times]
     time_sort = np.argsort(time_list)
     time_list = [time_list[i] for i in time_sort]
     times = [times[i] for i in time_sort]
+    
+    fs = h5py.File(ss_file, 'r')
+    field = 'Function/Temperature  [degC]'
+    TS = np.array(fs[field+'/0'])
+    
+    
 
-    from scipy.interpolate import griddata
+
     # Load steady state file    
-    ipic = 0 
+    T_S = interpolate_field(TS,M_data)
+
+    
+    ipic     = 0 
+
+    # CREATE FIGURE FOR STEADY STATE
+    time_str = r'T = $\infty$'
+    
+    create_figure(path_2_save,time_str,20,1300,'cmc.lipari',r'Temperature [$^{\circ}C$]', M_data,T_S, 20, 'TSS',ipic,)
+
+    # Extract Steady state heat fluxes
+    qS = np.array(fs['Function/q  [W/m2]/0'])
+    
+    qSx = qS[:,0]
+    
+    qSy = qS[:,1]
+    
+    qSm = np.sqrt(qSx**2 + qSy**2)
+    
+    qsxi = interpolate_field(qSx,M_data)
+    
+    qsyi = interpolate_field(qSy,M_data)
+    
+    qsmi = interpolate_field(qSm,M_data)
+    
+    
+    
+    
     for i in times:
         t = time_list[ipic]
+        
         time_str = f'Time = {t:.3f} Myr'
+        
         T = np.array(f[field+'/'+i])
-        T_i = griddata(M_data.X, T, (M_data.Xi, M_data.Yi), method='linear', fill_value=np.nan)
-        T_i = T_i[:,:,0]
-        T_i[M_data.ar==False] = np.nan
-        create_figure(path_2_save,time_str,20,1300,'cmc.lipari',r'Temperature [$^{\circ}C$]', M_data.Xi, M_data.Yi,T_i, 20, 'T',ipic)
+        
+        dT = TS-T 
+        
+        vmin_dt = -200.0
+        
+        vmax_dt = np.floor(np.max(dT))
+        
+        dT_i = interpolate_field(dT,M_data)
+        
+        T_i  = interpolate_field(T,M_data)
+
+        create_figure(path_2_save,time_str,20,1300,'cmc.lipari',r'Temperature [$^{\circ}C$]', M_data,T_i, 20, 'T',ipic)
+        
+        create_figure(path_2_save,time_str,vmin_dt,vmax_dt,'cmc.vik',r'T$^{\infty}$-T$(t)$ [$^{\circ}C$]', M_data,dT_i, 20, 'dT',ipic)
+        
+        compare_slab_surface(path_2_save,
+                            time_str,
+                            ipic,
+                            TS,
+                            T,
+                            M_data)    
+        
+        qtd = np.array(f['Function/q  [W/m2]/'+i])
+        qTdx = qtd[:,0]
+        qTdy = qtd[:,1]
+        qTdm = np.sqrt(qTdx**2 + qTdy**2)  
+        compare_heatfluxes(path_2_save,
+                           time_str,
+                           ipic,
+                           qSx,
+                           qSy,
+                           qSm,
+                           qTdx,
+                           qTdy,
+                           qTdm,
+                           M_data)
+        
         ipic = ipic + 1 
         
     
@@ -265,12 +681,12 @@ def compare_SS_TD(ss_file:str, td_file:str, time_td, M_data:MeshData,path_2_save
 
 
 if __name__ == "__main__":
-    path_2_test = '/Users/wlnw570/Work/Leeds/Output/Stonedphoenix/curved/case_Hobson_time_dependent_experiment2'
-    path_2_save = '/Users/wlnw570/Work/Leeds/Output/Stonedphoenix/curved/case_Hobson_time_dependent_experiment2/pic'
+    path_2_test = '/Users/wlnw570/Work/Leeds/Output/Stonedphoenix/curved/case_Hobson_time_dependent_experiment_low2'
+    path_2_save = '/Users/wlnw570/Work/Leeds/Output/Stonedphoenix/curved/case_Hobson_time_dependent_experiment_low2/pic'
     if not os.path.isdir(path_2_save):
         os.makedirs(path_2_save)
     
-    td_file = '%s/timeseries_all.h5'%(path_2_test)
+    td_file = '%s/time_dependent.h5'%(path_2_test)
     ss_file = '%s/Steady_state.h5'%(path_2_test)
     ms_tag  = '%s/MeshTag.h5'%(path_2_test)
     time_td = 10.0  # Time in Myr to compare
