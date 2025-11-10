@@ -63,9 +63,16 @@ def StonedFenicsx():
         type=str,
         help="Path to the input file or directory."
     )
+    parser.add_argument(
+        "Steady_state",
+        type=int,
+        help="Path to the input file or directory."
+    )
 
     args = parser.parse_args()
     input_path = args.input_path
+    steady_state = args.Steady_state
+    
     
     module_name = os.path.splitext(os.path.basename(input_path))[0]  # e.g. "input_case"
 
@@ -82,7 +89,7 @@ def StonedFenicsx():
                             slab_age         = IP.slab_age,
                             time_max         = IP.time_max,
                             time_dependent_v = IP.time_dependent_v,
-                            steady_state     = IP.steady_state,
+                            steady_state     = steady_state,
                             slab_bc          = IP.slab_bc,
                             decoupling       = IP.decoupling_ctrl,
                             tol_innerPic     = IP.tol_innerPic,

@@ -1753,6 +1753,8 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
     
     return 0 
 #------------------------------------------------------------------------------------------------------------
+
+@timing_function
 def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb:PhaseDataBase, ioctrl:IOControls, sc:Scal):
     from .phase_db import PhaseDataBase
     from .phase_db import _generate_phase
@@ -1812,7 +1814,7 @@ def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, p
 
         # Update old temperature 
         
-        while it_outer < ctrl.it_max and res > 1e-2: 
+        while it_outer < ctrl.it_max and res > 1e-3: 
 
             time_A_outer = timing.time()
             # Copy the old solution for the residuum computation 
