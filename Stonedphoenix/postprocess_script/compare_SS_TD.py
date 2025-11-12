@@ -681,8 +681,8 @@ def compare_SS_TD(ss_file:str, td_file:str, time_td, M_data:MeshData,path_2_save
 
 
 if __name__ == "__main__":
-    path_2_test = '/Users/wlnw570/Work/Leeds/Output/Stonedphoenix/curved/case_Hobson_time_dependent_experiment_low2'
-    path_2_save = '/Users/wlnw570/Work/Leeds/Output/Stonedphoenix/curved/case_Hobson_time_dependent_experiment_low2/pic'
+    path_2_test = '/Users/wlnw570/Work/Leeds/Tests/T5/Output'
+    path_2_save = '/Users/wlnw570/Work/Leeds/Tests/Results/T5'
     if not os.path.isdir(path_2_save):
         os.makedirs(path_2_save)
     
