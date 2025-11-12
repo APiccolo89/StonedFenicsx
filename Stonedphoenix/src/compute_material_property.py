@@ -114,7 +114,7 @@ def heat_conductivity(pdb,T,p,ph):
         
         k =pdb.k0[ph]
     
-    elif pdb.option_k[ph] >1: 
+    elif pdb.option_k[ph] >=1: 
         
         k = (pdb.k0[ph] + pdb.a[ph] * p) * (pdb.Tref/T)**pdb.k_n[ph]
         
