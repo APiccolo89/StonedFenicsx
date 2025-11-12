@@ -58,7 +58,7 @@ def _compute_lithostatic_pressure(nz,ph,g,dz,T,pdb):
 # first, we need to build M and D
 # M and D are different in the predictor and corrector step 
 #-----------------------------------------------------------------------------------------
-@njit
+#@njit
 def _compute_Cp_k_rho(ph,pdb,Cp,k,rho,T,lit_p,ind_z):
     it = len(T)
 
@@ -70,7 +70,7 @@ def _compute_Cp_k_rho(ph,pdb,Cp,k,rho,T,lit_p,ind_z):
 
     return Cp,k,rho
 #-----------------------------------------------------------------------------------------
-@njit
+#@njit
 def build_coefficient_matrix(A,
                              B,
                              D,

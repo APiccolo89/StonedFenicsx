@@ -55,24 +55,28 @@ def StonedFenicsx():
     
     import argparse
     import importlib.util
-    parser = argparse.ArgumentParser(
-        description="Run simulation with a given input path."
-    )
-    parser.add_argument(
-        "input_path",
-        type=str,
-        help="Path to the input file or directory."
-    )
-    parser.add_argument(
-        "Steady_state",
-        type=int,
-        help="Path to the input file or directory."
-    )
-
-    args = parser.parse_args()
-    input_path = args.input_path
-    steady_state = args.Steady_state
     
+    try:
+        parser = argparse.ArgumentParser(
+            description="Run simulation with a given input path."
+        )
+        parser.add_argument(
+            "input_path",
+            type=str,
+            help="Path to the input file or directory."
+        )
+        parser.add_argument(
+            "Steady_state",
+            type=int,
+            help="Path to the input file or directory."
+        )
+
+        args = parser.parse_args()
+        input_path = args.input_path
+        steady_state = args.Steady_state
+    except: 
+        input_path = "../../Tests/T3/input.py"
+        steady_state = 1
     
     module_name = os.path.splitext(os.path.basename(input_path))[0]  # e.g. "input_case"
 
