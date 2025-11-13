@@ -1,5 +1,10 @@
 # StonedFenicsx
 
+<p align="center">
+  <img src="./postprocess_script/example.png" width="400">
+</p>
+
+
 Kynematic thermal numerical code for describing slab temperature evolution
 
 ---
@@ -90,8 +95,8 @@ $$
 
 where: 
 - $\dot{\varepsilon}_{\mathrm{max}}= \frac{1}{2 \eta_{\mathrm{max}}}\cdot \tau^{G}$
-- $\dot{\varepsilon}_{\mathrm{dis}}=B_{\mathrm{dis}} \cdot \tau^{n,G} \cdot \exp{-\frac{E_{\mathrm{dis}} + P \cdot V_{\mathrm{dis}}}{R \cdot T}}$
-- $\dot{\varepsilon}_{\mathrm{dif}}=B_{\mathrm{dif}} \cdot \tau^{G} \cdot \exp{-\frac{E_{\mathrm{dif}} + P \cdot V_{\mathrm{dif}}}{R \cdot T}}$
+- $\dot{\varepsilon}_{\mathrm{dis}}=B_{\mathrm{dis}} \cdot \tau^{n,G} \cdot \exp{\frac{E_{\mathrm{dis}} + P \cdot V_{\mathrm{dis}}}{R \cdot T}}$
+- $\dot{\varepsilon}_{\mathrm{dif}}=B_{\mathrm{dif}} \cdot \tau^{G} \cdot \exp{\frac{E_{\mathrm{dif}} + P \cdot V_{\mathrm{dif}}}{R \cdot T}}$
 
 This approach is the most correct, as the harmonic average viscosity underestimate the viscosity. It will be implemented in the future. 
 

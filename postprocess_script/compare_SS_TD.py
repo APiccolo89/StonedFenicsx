@@ -535,8 +535,20 @@ def create_figure(path2save:str,
     xs = M_data.X[(M_data.mesh_tag==8.0) | (M_data.mesh_tag == 9.0),0]
     ys = M_data.X[(M_data.mesh_tag==8.0) | (M_data.mesh_tag == 9.0),1]
     sort = np.argsort(xs)
-    x = [xs[sort], ys[sort]]
     
+    x_s  = [xs[sort], ys[sort]]
+    
+    xor = M_data.X[(M_data.mesh_tag==11.0),0]
+    yor = M_data.X[(M_data.mesh_tag==11.0),1]
+    sort = np.argsort(xor)
+    
+    x_or  = [xor[sort], yor[sort]]
+    
+    xbt = M_data.X[(M_data.mesh_tag==6.0),0]
+    ybt = M_data.X[(M_data.mesh_tag==6.0),1]
+    sort = np.argsort(xbt)
+    
+    x_bt  = [xbt[sort], ybt[sort]]
     pt_save = os.path.join(path2save,name_fig)
     if not os.path.isdir(pt_save):
         os.makedirs(pt_save)
@@ -550,13 +562,16 @@ def create_figure(path2save:str,
     ax0.set_xlabel('Distance [km]', fontsize=14)
     ax0.set_ylabel('Depth [km]', fontsize=14)
     p0 = ax0.contourf(M_data.Xi, M_data.Yi, field, levels=n_level, cmap=cmap, vmin=vmin, vmax=vmax)
-    p1 = ax0.plot(x[0],x[1],c='w',linewidth=1.0)
+    p1 = ax0.plot(x_s[0],x_s[1],c='w',linewidth=1.0)
+    p2 = ax0.plot(x_or[0],x_or[1],c='w',linewidth=1.0)
+    p3 = ax0.plot(x_bt[0],x_bt[1],c='k',linewidth=1.2)
     cbar = plt.colorbar(p0, ax=ax0, orientation='vertical', pad=0.02)
     cbar.set_label(label=title, fontsize=14)
     cbar.ax.tick_params(labelsize=12)
     cbar.set_ticks(np.linspace(vmin, vmax, 5))
     cbar.set_ticklabels([f'{val:.0f}' for val in np.linspace(vmin, vmax, 5)])
     fig.savefig(fname)
+    plt.close(fig)
     
     return 0 
 
@@ -681,8 +696,8 @@ def compare_SS_TD(ss_file:str, td_file:str, time_td, M_data:MeshData,path_2_save
 
 
 if __name__ == "__main__":
-    path_2_test = '/Users/wlnw570/Work/Leeds/Tests/T5/Output'
-    path_2_save = '/Users/wlnw570/Work/Leeds/Tests/Results/T5'
+    path_2_test = '/Users/wlnw570/Work/Leeds/Tests/T1/Output'
+    path_2_save = '/Users/wlnw570/Work/Leeds/Tests/Results/T1'
     if not os.path.isdir(path_2_save):
         os.makedirs(path_2_save)
     
