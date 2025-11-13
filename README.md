@@ -23,16 +23,20 @@ Kynematic thermal numerical code for describing slab temperature evolution
 Stonedfenicsx is a numerical code that solves the continuity, momentum and energy conservation equation using FEM. The numerical model is fully driven by the kynematic boundary condition. The media 
 is incompressible, and the momentum equation does not have any gravitational momentum source. The strong form of the mechanical equation is: 
 
-- \textbf{Mass conservation}: $\nabla \cdot u = 0$ 
+- **Mass conservation**: $\nabla \cdot u = 0$ 
     - $u$: velocity field 
-- \textbf{Momentum conservation}: $\nabla \cdot \mathbf \tau + \nabla \cdot P = 0$
-    - $\tau$ deviatoric stress: $\tau = 2 \cdot \eta_{\mathrm{eff}} \cdot \dot{\mathbf{\varepsilon}}$
-        - $\dot{\mathbf{\varepsilon}}$ deviatoric strain tensor: $\dot{\mathbf{\varepsilon}} = \frac{1}{2} \cdot (\nabla u + \nabla u ^{T}) $
-        - $\eta_{\mathrm{eff}}$ effective viscosity: $\eta_{\mathrm{eff}} = f(T,P,\dot{\mathbf{\varepsilon}}_{II})$
-            -  $\dot{\mathbf{\varepsilon}}_{II}$: deviatoric strain rate second invariant $\dot{\mathbf{\varepsilon}}_{II} = \sqrt{ \frac{1}{2} \cdot \dot{\mathbf{\varepsilon}} : \dot{\mathbf{\varepsilon}}}$ 
+- **Momentum conservation**: $\nabla \cdot \mathbf \tau + \nabla \cdot P = 0$
+    - $\tau$: *deviatoric stress*: $\tau = 2 \cdot \eta_{\mathrm{eff}} \cdot \dot{\mathbf{\varepsilon}}$
+        - $\dot{\mathbf{\varepsilon}}$: *deviatoric strain tensor*: $\dot{\mathbf{\varepsilon}} = \frac{1}{2} \cdot (\nabla u + \nabla u ^{T}) $
+        - $\eta_{\mathrm{eff}}$: *effective viscosity* : $\eta_{\mathrm{eff}} = f(T,P,\dot{\mathbf{\varepsilon}}_{II})$
+            - $\dot{\mathbf{\varepsilon}}_{II}$: *deviatoric strain rate second invariant* : $\dot{\mathbf{\varepsilon}}_{II} = \sqrt{ \frac{1}{2} \cdot (\dot{\mathbf{\varepsilon}} : \dot{\mathbf{\varepsilon}})}$ 
 
 The resolution of these equations gives a velocity and pressure field. Pressure depends on the velocity field, and without the gravitational momentum source is not reliable for computing the material properties. The effective
 viscosity ($\eta_{\mathrm{eff}}$) can depend on the temperature, pressure and strain rate second invariant. 
+
+The code solves both the steady-state and time-dependent conservation of energy. 
+- **Steady-state energy conservation equation**:   $\nabla \cdot (k \cdot \nabla \cdot T) + \rho \cdot C_p \cdot \nabla \cdot T + H= 0$
+- **Time-dependent energy conservation equation**: $\rho \cdot C_p \cdot \frac{\partial T}{\partial t} + \rho \cdot C_p \cdot \nabla \cdot T + \nabla \cdot (k \cdot \nabla \cdot T)  + H = 0 $
 
 
 ---
