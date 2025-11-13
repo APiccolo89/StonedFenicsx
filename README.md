@@ -49,6 +49,36 @@ The material properties required to solve both the steady-state and time-depende
 
 This equation gives as results a lithostatic pressure field that can be used to compute the material property as a function of depth. 
 
+### Material Properties 
+
+#### Rheological Model 
+
+Viscosity can be *linear* and *non-linear*. Linear viscosity can be either constant or depend on temperature, and pressure. Non linear viscosity depends on strain rate, pressure and temperature. Rocks flow is a consequence of microcrystalline processes such as diffusion and dislocation creep. The effective viscosity of rocks is given by the combination of diffusion and dislocation creep. 
+
+The general form of the rheological law is: 
+
+$$
+\eta= \frac{1}{2} B^{-\frac{1}{n}} \cdot d ^{-m} \cdot \dot{\varepsilon}^{\frac{1-n}{n}} \cdot \exp{\frac{E + P\cdot V}{n \codot R \cdot T}} 
+$$
+
+- $B$ is the preexponential constant $[Pa ^ {-n} s]$
+- $d$ is the grain size $[m]$
+- $m$ is the grain size exponent. $m=0$ for dislocation creep. 
+- $n$ is the stress exponent. $n=1$ for diffusion creep. 
+- $E$ is the activation energy $[kJ/mol]$. 
+- $V$ is the activation volume $[cm/mol]$.
+- $R$ is the gas constant      $[kJ/mol/K]$.
+
+The effective viscosity for a given strain rate, pressure and temperature can be computed as the harmonic average of the diffusion (*dif*) and dislocation (*dis*) viscosities: 
+
+
+
+Diffusion and dislocation creep exponentially depend on temperature, thus, as a function of the temperature field, it is expected significant variation of viscosity ($> 10$ order of magnitude) especially for geodynamic applications. To improve the numerical stability, it is necessary to introduce a cap viscosity: $\eta_{max}$ and then combine with the effecitve viscosity yielding this formulation: 
+
+$$
+\eta_{\mathrm{eff}} = \left(\frac{1}{\eta_{\mathrm{dif}}+\frac{1}{\eta_{\mathrm{dis}}+ \frac{1}{\eta_{\mathrm{max}}}\right)^{-1}
+$$
+
 ---
 
 ## Installation
