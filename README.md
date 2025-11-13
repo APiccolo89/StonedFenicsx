@@ -39,12 +39,12 @@ The code solves both the steady-state and time-dependent conservation of energy.
 - **Time-dependent energy conservation equation**: $\rho \cdot C_p \cdot \frac{\partial T}{\partial t} + \rho \cdot C_p \cdot \nabla \cdot T + \nabla \cdot (k \cdot \nabla \cdot T)  + H = 0 $
   - $k$   : *Heat conductivity* [W m/ K ]: $k = f(P,T)$ 
   - $C_p$ : *Heat capacity*     [kJ/kg/K]: $C_p = f(T)$ 
-  - $\rho$: *Density*            [$kg/m^3$]: $\rho = f(P,T)$       
+  - $\rho$: *Density*            $[kg/m^3]$: $\rho = f(P,T)$       
   - $t$   : *time* 
 
 The material properties required to solve both the steady-state and time-dependent equations can depends on temperature and pressure. Pressure depends on the velocity field, and without the gravitational momentum source is not reliable for computing the material properties. To compute the pressure and temperature dependent material properties, it is necessary to introduce a lithostatic pressure field. The lithostatic pressure field is computed following *Jourdon et al, 2022* [1]. The strong form for solving the lithostatic pressure field (i.e., steady state stokes) is: 
 
-- **Lithostatic Pressure**: $\nabla \cdot \nabla \left P^{L}\right - \nabla \cdot \left(\rho g\right \right) = 0$
+- **Lithostatic Pressure**: $\nabla \cdot \nabla \left( P^{L}\right) - \nabla \cdot \left(\rho g\right \right) = 0$
     - g: *gravity acceleration* 
 
 This equation gives as results a lithostatic pressure field that can be used to compute the material property as a function of depth. 
@@ -58,7 +58,7 @@ Viscosity can be *linear* and *non-linear*. Linear viscosity can be either const
 The general form of the rheological law is: 
 
 $$
-\eta= \frac{1}{2} B^{-\frac{1}{n}} \cdot d ^{-m} \cdot \dot{\varepsilon}^{\frac{1-n}{n}} \cdot \exp{\frac{E + P\cdot V}{n \codot R \cdot T}} 
+\eta= \frac{1}{2} B^{-\frac{1}{n}} \cdot d ^{-m} \cdot \dot{\varepsilon}_{II}^{\frac{1-n}{n}} \cdot \exp{\frac{E + P\cdot V}{n \codot R \cdot T}} 
 $$
 
 - $B$ is the preexponential constant $[Pa ^ {-n} s]$
@@ -78,6 +78,19 @@ Diffusion and dislocation creep exponentially depend on temperature, thus, as a 
 $$
 \eta_{\mathrm{eff}} = \left(\frac{1}{\eta_{\mathrm{dif}}+\frac{1}{\eta_{\mathrm{dis}}+ \frac{1}{\eta_{\mathrm{max}}}\right)^{-1}
 $$
+
+In the future, this model will be substitute with the local iteration approach. The local iteration approach rely on finding the strain rate partitioning between maximum, diffusion and dislocation creep. This approach requires an iterative scheme that finds the stress that satisfies the following equation: 
+
+$$
+\dot{\varepsilon}_{II} - \dot{\varepsilon}_{\mathrm{max}} - \dot{\varepsilon}_{\mathrm{dif}} - \dot{\varepsilon}_{\mathrm{dis}} = 0  
+$$
+
+where: 
+- $\dot{\varepsilon}_{\mathrm{max}}=\frac{1}{2 \eta_{\mathrm{max}}}\cdot \tau^{G}$
+- $\dot{\varepsilon}_{\mathrm{dis}}=B_{\mathrm{dis}}\cdot \tau^{n,G} \cdot \exp{-\frac{E_{\mathrm{dis}} + P \cdot V_{\mathrm{dis}}}{R \cdot T}}$
+- $\dot{\varepsilon}_{\mathrm{dif}}=B_{\mathrm{dif}}\cdot \tau^{G} \cdot \exp{-\frac{E_{\mathrm{dif}} + P \cdot V_{\mathrm{dif}}}{R \cdot T}}$
+
+This approach is the most correct, as the harmonic average viscosity underestimate the viscosity. 
 
 ---
 
