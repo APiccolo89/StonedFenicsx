@@ -30,7 +30,9 @@ is incompressible, and the momentum equation does not have any gravitational mom
     - $\tau$: *deviatoric stress*: $\tau = 2 \cdot \eta_{\mathrm{eff}} \cdot \dot{\mathbf{\varepsilon}}$
         - $\dot{\mathbf{\varepsilon}}$: *deviatoric strain tensor*: $\dot{\mathbf{\varepsilon}} = \frac{1}{2} \cdot (\nabla u + \nabla u ^{T}) $
         - $\eta_{\mathrm{eff}}$: *effective viscosity* : $\eta_{\mathrm{eff}} = f(T,P,\dot{\mathbf{\varepsilon}}_{II})$
-            - $\dot{\varepsilon}_{II}$: *deviatoric strain rate second invariant*
+        - $\dot{\varepsilon}_{II}$: *deviatoric strain rate second invariant*: $\dot{\varepsilon}_{II} = \sqrt{\frac{1}{2} \cdot \mathbf{\dot{\varepsilon}}:\mathbf{\dot{\varepsilon}}}$
+
+
 The resolution of these equations gives a velocity and pressure field. The effective
 viscosity ($\eta_{\mathrm{eff}}$) can depend on the temperature, pressure and strain rate second invariant. 
 
@@ -44,8 +46,8 @@ The code solves both the steady-state and time-dependent conservation of energy.
 
 The material properties required to solve both the steady-state and time-dependent equations can depends on temperature and pressure. Pressure depends on the velocity field, and without the gravitational momentum source is not reliable for computing the material properties. To compute the pressure and temperature dependent material properties, it is necessary to introduce a lithostatic pressure field. The lithostatic pressure field is computed following *Jourdon et al, 2022* [1]. The strong form for solving the lithostatic pressure field (i.e., steady state stokes) is: 
 
-- **Lithostatic Pressure**: $\nabla \cdot \nabla \left( P^{L}\right) - \nabla \cdot \left(\rho g\right \right) = 0$
-    - g: *gravity acceleration* 
+- **Lithostatic Pressure**: $\nabla \cdot \nabla \left( P^{L}\right) - \nabla \cdot \left(\rho g \right) = 0$
+    - g: *gravity acceleration vector* 
 
 This equation gives as results a lithostatic pressure field that can be used to compute the material property as a function of depth. 
 
@@ -58,7 +60,7 @@ Viscosity can be *linear* and *non-linear*. Linear viscosity can be either const
 The general form of the rheological law is: 
 
 $$
-\eta= \frac{1}{2} B^{-\frac{1}{n}} \cdot d ^{-m} \cdot \dot{\varepsilon}_{II}^{\frac{1-n}{n}} \cdot \exp{\frac{E + P\cdot V}{n \codot R \cdot T}} 
+\eta= \frac{1}{2} B^{-\frac{1}{n}} \cdot d ^{-m} \cdot \dot{\varepsilon}_{II}^{\frac{1-n}{n}} \cdot \exp{\frac{E + P\cdot V}{n \cdot R \cdot T}} 
 $$
 
 - $B$ is the preexponential constant $[Pa ^ {-n} s]$
@@ -76,21 +78,61 @@ The effective viscosity for a given strain rate, pressure and temperature can be
 Diffusion and dislocation creep exponentially depend on temperature, thus, as a function of the temperature field, it is expected significant variation of viscosity ($> 10$ order of magnitude) especially for geodynamic applications. To improve the numerical stability, it is necessary to introduce a cap viscosity: $\eta_{max}$ and then combine with the effecitve viscosity yielding this formulation: 
 
 $$
-\eta_{\mathrm{eff}} = \left(\frac{1}{\eta_{\mathrm{dif}}+\frac{1}{\eta_{\mathrm{dis}}+ \frac{1}{\eta_{\mathrm{max}}}\right)^{-1}
+\eta_{\mathrm{eff}} = \left( \frac{1}{\eta_{\mathrm{dif}}}+\frac{1}{\eta_{\mathrm{dis}}}+ \frac{1}{\eta_{\mathrm{max}}}\right)^{-1}
 $$
 
-In the future, this model will be substitute with the local iteration approach. The local iteration approach rely on finding the strain rate partitioning between maximum, diffusion and dislocation creep. This approach requires an iterative scheme that finds the stress that satisfies the following equation: 
+In the future, this model will be substitute with the local iteration approach. The local iteration approach rely on finding the strain rate partitioning between maximum, diffusion and dislocation creep. This approach requires an iterative scheme that finds the stress ($\tau^{G}$) that satisfies the following equation: 
 
 $$
 \dot{\varepsilon}_{II} - \dot{\varepsilon}_{\mathrm{max}} - \dot{\varepsilon}_{\mathrm{dif}} - \dot{\varepsilon}_{\mathrm{dis}} = 0  
 $$
 
 where: 
-- $\dot{\varepsilon}_{\mathrm{max}}=\frac{1}{2 \eta_{\mathrm{max}}}\cdot \tau^{G}$
-- $\dot{\varepsilon}_{\mathrm{dis}}=B_{\mathrm{dis}}\cdot \tau^{n,G} \cdot \exp{-\frac{E_{\mathrm{dis}} + P \cdot V_{\mathrm{dis}}}{R \cdot T}}$
-- $\dot{\varepsilon}_{\mathrm{dif}}=B_{\mathrm{dif}}\cdot \tau^{G} \cdot \exp{-\frac{E_{\mathrm{dif}} + P \cdot V_{\mathrm{dif}}}{R \cdot T}}$
+- $\dot{\varepsilon}_{\mathrm{max}}= \frac{1}{2 \eta_{\mathrm{max}}}\cdot \tau^{G}$
+- $\dot{\varepsilon}_{\mathrm{dis}}=B_{\mathrm{dis}} \cdot \tau^{n,G} \cdot \exp{-\frac{E_{\mathrm{dis}} + P \cdot V_{\mathrm{dis}}}{R \cdot T}}$
+- $\dot{\varepsilon}_{\mathrm{dif}}=B_{\mathrm{dif}} \cdot \tau^{G} \cdot \exp{-\frac{E_{\mathrm{dif}} + P \cdot V_{\mathrm{dif}}}{R \cdot T}}$
 
-This approach is the most correct, as the harmonic average viscosity underestimate the viscosity. 
+This approach is the most correct, as the harmonic average viscosity underestimate the viscosity. It will be implemented in the future. 
+
+### Density 
+
+Density is computed as a function of pressure, temperature and a reference density: 
+
+$$
+\rho = \rho_0 \exp(cf_T)\exp(cf_P) 
+$$
+where 
+- $cf_T = (\alpha_0 * (T - T_{0}) + (\frac{\alpha_1}{2}) * (T^2 - T_0^2))$
+    - $\alpha_0$ $[1/K]$ and $\alpha_1$ $[1/K^2]$ are constants. 
+- $cf_P = P \cdot \beta $
+    - $\beta$ is the compressibility $[\frac{1}{Pa}]$ 
+
+### Heat conductivity 
+
+Heat conductivity is parametrised following (Hofmei...): 
+$$
+k = \left(k_0 + a \cdot P \right) \cdot \left(\frac{T_0}{T}\right)^{\gamma} + k_{rad}
+$$
+
+where: 
+- $k_0$ is a reference heat conductivity $[W m / K]$
+- $a$   is an empirical constant $[W m / K / Pa]$
+- $\gamma$ is an empirical constant 
+- $k_{rad}$ is the radiative conductivity: $k_{rad} = \sum^{3}_{m} d_m \cdot T^{m}$. 
+
+### Heat Capacity 
+
+Heat capacity is computed using the following equations: 
+
+$$
+Cp = Cp_0 + Cp_1 \cdot T^{-0.5} + Cp_2 * T ^{-3}
+$$
+
+where
+- $Cp_{0,1,2}$ are constant $[kJ/kg/K^{1,0.5,2}]$ 
+
+
+
 
 ---
 
