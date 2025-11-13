@@ -30,8 +30,7 @@ is incompressible, and the momentum equation does not have any gravitational mom
     - $\tau$: *deviatoric stress*: $\tau = 2 \cdot \eta_{\mathrm{eff}} \cdot \dot{\mathbf{\varepsilon}}$
         - $\dot{\mathbf{\varepsilon}}$: *deviatoric strain tensor*: $\dot{\mathbf{\varepsilon}} = \frac{1}{2} \cdot (\nabla u + \nabla u ^{T}) $
         - $\eta_{\mathrm{eff}}$: *effective viscosity* : $\eta_{\mathrm{eff}} = f(T,P,\dot{\mathbf{\varepsilon}}_{II})$
-            - $\dot{\varepsilon}_{II}$: *deviatoric strain rate second invariant*: $\dot{\varepsilon}_{II} = \sqrt{\frac{1}{2} \left( \dot{\varepsilon} : \dot{\varepsilon} \right)}$
-
+            - $\dot{\varepsilon}_{II}$: *deviatoric strain rate second invariant*
 The resolution of these equations gives a velocity and pressure field. The effective
 viscosity ($\eta_{\mathrm{eff}}$) can depend on the temperature, pressure and strain rate second invariant. 
 
@@ -41,11 +40,11 @@ The code solves both the steady-state and time-dependent conservation of energy.
   - $k$   : *Heat conductivity* [W m/ K ]: $k = f(P,T)$ 
   - $C_p$ : *Heat capacity*     [kJ/kg/K]: $C_p = f(T)$ 
   - $\rho$: *Density*            [$kg/m^3$]: $\rho = f(P,T)$       
-  - $t$   : * time * 
+  - $t$   : *time* 
 
 The material properties required to solve both the steady-state and time-dependent equations can depends on temperature and pressure. Pressure depends on the velocity field, and without the gravitational momentum source is not reliable for computing the material properties. To compute the pressure and temperature dependent material properties, it is necessary to introduce a lithostatic pressure field. The lithostatic pressure field is computed following *Jourdon et al, 2022* [1]. The strong form for solving the lithostatic pressure field (i.e., steady state stokes) is: 
 
-- **Lithostatic Pressure**: $\nabla \cdot \nabla \left P^{L}\right - \nabla \cdot \left(\rho g\right ) = 0$
+- **Lithostatic Pressure**: $\nabla \cdot \nabla \left P^{L}\right - \nabla \cdot \left(\rho g\right \right) = 0$
     - g: *gravity acceleration* 
 
 This equation gives as results a lithostatic pressure field that can be used to compute the material property as a function of depth. 
