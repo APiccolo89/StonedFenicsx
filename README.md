@@ -43,6 +43,7 @@ The code solves both the steady-state and time-dependent conservation of energy.
   - $C_p$ : *Heat capacity*     [kJ/kg/K]: $C_p = f(T)$ 
   - $\rho$: *Density*            $[kg/m^3]$: $\rho = f(P,T)$       
   - $t$   : *time* 
+  - $H$   : *source term* $[W/m^3]$. Radiogenic heat production or/and shear heating. 
 
 The material properties required to solve both the steady-state and time-dependent equations can depends on temperature and pressure. Pressure depends on the velocity field, and without the gravitational momentum source is not reliable for computing the material properties. To compute the pressure and temperature dependent material properties, it is necessary to introduce a lithostatic pressure field. The lithostatic pressure field is computed following *Jourdon et al, 2022* [1]. The strong form for solving the lithostatic pressure field (i.e., steady state stokes) is: 
 
