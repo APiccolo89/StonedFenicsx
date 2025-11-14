@@ -549,6 +549,9 @@ def create_figure(path2save:str,
     sort = np.argsort(xbt)
     
     x_bt  = [xbt[sort], ybt[sort]]
+    
+    
+    
     pt_save = os.path.join(path2save,name_fig)
     if not os.path.isdir(pt_save):
         os.makedirs(pt_save)
@@ -562,8 +565,8 @@ def create_figure(path2save:str,
     ax0.set_xlabel('Distance [km]', fontsize=14)
     ax0.set_ylabel('Depth [km]', fontsize=14)
     p0 = ax0.contourf(M_data.Xi, M_data.Yi, field, levels=n_level, cmap=cmap, vmin=vmin, vmax=vmax)
-    p1 = ax0.plot(x_s[0],x_s[1],c='w',linewidth=1.0)
-    p2 = ax0.plot(x_or[0],x_or[1],c='w',linewidth=1.0)
+    p1 = ax0.plot(x_s[0],x_s[1],c='w',linewidth=1.2)
+    p2 = ax0.plot(x_or[0],x_or[1],c='w',linewidth=1.2)
     p3 = ax0.plot(x_bt[0],x_bt[1],c='k',linewidth=1.2)
     cbar = plt.colorbar(p0, ax=ax0, orientation='vertical', pad=0.02)
     cbar.set_label(label=title, fontsize=14)
@@ -650,7 +653,7 @@ def compare_SS_TD(ss_file:str, td_file:str, time_td, M_data:MeshData,path_2_save
         
         dT = TS-T 
         
-        vmin_dt = -200.0
+        vmin_dt = np.floor(np.min(dT))
         
         vmax_dt = np.floor(np.max(dT))
         
@@ -696,8 +699,8 @@ def compare_SS_TD(ss_file:str, td_file:str, time_td, M_data:MeshData,path_2_save
 
 
 if __name__ == "__main__":
-    path_2_test = '/Users/wlnw570/Work/Leeds/Tests/T1/Output'
-    path_2_save = '/Users/wlnw570/Work/Leeds/Tests/Results/T1'
+    path_2_test = '/Users/wlnw570/Work/Leeds/Tests/T3/Output'
+    path_2_save = '/Users/wlnw570/Work/Leeds/Tests/Results/T3'
     if not os.path.isdir(path_2_save):
         os.makedirs(path_2_save)
     

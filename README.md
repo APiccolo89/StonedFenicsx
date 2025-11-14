@@ -24,7 +24,9 @@ Kynematic thermal numerical code for describing slab temperature evolution
 ## Introduction
 
 ---
-## Numerical Methods
+## Methods
+
+### Equations  
 
 Stonedfenicsx is a numerical code that solves the continuity, momentum and energy conservation equation using FEM. The numerical model is fully driven by the kynematic boundary condition. The media 
 is incompressible, and the momentum equation does not have any gravitational momentum source. The strong form of the mechanical equation is: 
@@ -57,6 +59,10 @@ The material properties required to solve both the steady-state and time-depende
 
 This equation gives as results a lithostatic pressure field that can be used to compute the material property as a function of depth. 
 
+## Numerical methods 
+
+The continuum mechanics equations are solved using Finite Element Method (FEM). The discretisation of the problem and the assembly of the stiffness matrix is handled by Fenicsx libraries (dolfinx [2], ufl[3], and basix[4,5])
+
 ### Material Properties 
 
 #### Rheological Model 
@@ -77,11 +83,7 @@ $$
 - $V$ is the activation volume $[cm/mol]$.
 - $R$ is the gas constant      $[kJ/mol/K]$.
 
-The effective viscosity for a given strain rate, pressure and temperature can be computed as the harmonic average of the diffusion (*dif*) and dislocation (*dis*) viscosities: 
-
-
-
-Diffusion and dislocation creep exponentially depend on temperature, thus, as a function of the temperature field, it is expected significant variation of viscosity ($> 10$ order of magnitude) especially for geodynamic applications. To improve the numerical stability, it is necessary to introduce a cap viscosity: $\eta_{max}$ and then combine with the effecitve viscosity yielding this formulation: 
+The effective viscosity for a given strain rate, pressure and temperature can be computed as the harmonic average of the diffusion (*dif*) and dislocation (*dis*) viscosities. Diffusion and dislocation creep exponentially depend on temperature, thus, as a function of the temperature field, it is expected significant variation of viscosity ($> 10$ order of magnitude) especially for geodynamic applications (such as thermal modelling of the mantle wedge). To improve the numerical stability, it is necessary to introduce a cap viscosity: $\eta_{max}$ and then combine with the effecitve viscosity yielding: 
 
 $$
 \eta_{\mathrm{eff}} = \left( \frac{1}{\eta_{\mathrm{dif}}}+\frac{1}{\eta_{\mathrm{dis}}}+ \frac{1}{\eta_{\mathrm{max}}}\right)^{-1}
@@ -146,5 +148,9 @@ where
 
 ---
 
-## Reference 
+## References 
 [1]: Jourdon, A. and May, D. A.,*An efficient partial-differential-equation-based method to compute pressure boundary conditions in regional geodynamic models* DOI: 10.5194/se-13-1107-2022
+[2]: I. A. Baratta, J. P. Dean, J. S. Dokken, M. Habera, J. S. Hale, C. N. Richardson, M. E. Rognes, M. W. Scroggs, N. Sime, and G. N. Wells. *DOLFINx: The next generation FEniCS problem solving environment, preprint (2023).* DOI: doi.org/10.5281/zenodo.10447666
+[3]:M. S. Alnaes, A. Logg, K. B. Ølgaard, M. E. Rognes and G. N. Wells. *Unified Form Language: A domain-specific language for weak formulations of partial differential equations, ACM Transactions on Mathematical Software 40 (2014).* DOI:doi.org/10.1145/2566630
+[4]:M. W. Scroggs, J. S. Dokken, C. N. Richardson, and G. N. Wells. *Construction of arbitrary order finite element degree-of-freedom maps on polygonal and polyhedral cell meshes, ACM Transactions on Mathematical Software 48(2) (2022) 18:1–18:23.* DOI: doi.org/10.1145/3524456
+[5]: M. W. Scroggs, I. A. Baratta, C. N. Richardson, and G. N. Wells. *Basix: a runtime finite element basis evaluation library,* DOI: doi.org/10.21105/joss.03982
