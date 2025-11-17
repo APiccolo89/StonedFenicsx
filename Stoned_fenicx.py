@@ -72,9 +72,12 @@ def StonedFenicsx():
         )
 
         args = parser.parse_args()
-        input_path = args.input_path
+        path_test = args.input_path
         steady_state = args.Steady_state
+        input_path = path_test+'/input.py'
+    
     except: 
+        path_test = "../../Tests/T3"
         input_path = "../../Tests/T3/input.py"
         steady_state = 1
     
@@ -105,7 +108,7 @@ def StonedFenicsx():
                             dt = IP.dt_sim)
     # IO controls
     io_ctrl = IOControls(test_name = IP.test_name,
-                        path_save = IP.path_save,
+                        path_save = path_save,
                         sname = IP.sname)
     io_ctrl.generate_io()
     # Scaling parameters

@@ -495,7 +495,181 @@ def compare_slab_surface(path2save:str,
     return 0
          
         
+def compare_slab_surface_SS(path2save:str,
+                        time_string:str,
+                        ipic:int,
+                        Ts:float,
+                        Ttd:float,
+                        M_data:MeshData,
+                        string_label:list):
+    from matplotlib import pyplot as plt
+    
+    plt.rcParams.update({
+    "text.usetex": True,           # Use LaTeX for all text
+    "font.family": "serif",        # Or 'sans-serif'
+    "font.serif": ["Computer Modern"],   # LaTeX default
+    "axes.unicode_minus": False,
+    })
+    
+    
+    def modify_ax(ax,fg):
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_linewidth(1.5)
+        ax.spines['left'].set_linewidth(1.5)
+        ax.spines['top'].set_color('black')
+        ax.spines['left'].set_color('black')
+        ax.xaxis.set_ticks_position('top')
+        ax.yaxis.set_ticks_position('left')
+        ax.tick_params(direction='in', which='both', length=6, width=1, colors='black', grid_color='black', grid_alpha=0.5)
+        ax.tick_params(axis='x', direction='in', which='both', bottom=False, top=True)
+        ax.tick_params(axis='y', direction='in', which='both', left=True, right=False)
+        #ax = arrowed_spines(fg, ax)
         
+        return ax 
+    
+    fname = os.path.join(path2save, 'Slab_surface_comparison')
+    if not os.path.isdir(fname):
+        os.makedirs(fname)
+    figure_name = f'Figure_{ipic:03d}.png'
+    
+    # Select the indices corresponding to the slab surface and oceanic crust
+    z = M_data.X[:,1]
+    
+    ind_top  = (M_data.mesh_tag==8.0)| (M_data.mesh_tag==9.0)
+    
+    ind_ocr  = (M_data.mesh_tag==10.0)
+
+    Ts_slab  = Ts[ind_top]
+    
+    Ts_ocmoh = Ts[ind_ocr]
+    
+    Ttd_slab = Ttd[ind_top]
+    
+    Ttd_ocmoh= Ttd[ind_ocr]
+
+    z_s = z[ind_top]
+    
+    z_ocmoh = z[ind_ocr]
+    
+    ts = np.argsort(z_s)
+    
+    z_s = z_s[ts]
+    
+    Ts_slab = Ts_slab[ts]
+    
+    Ttd_slab = Ttd_slab[ts]
+    
+    tocmoh = np.argsort(z_ocmoh)
+    
+    z_ocmoh = z_ocmoh[tocmoh]
+    
+    Ts_ocmoh = Ts_ocmoh[tocmoh]
+    
+    Ttd_ocmoh = Ttd_ocmoh[tocmoh]
+    
+    import matplotlib.pyplot as plt
+    
+    fig = plt.figure(figsize=(10,6))
+    
+    bx = 0.08 
+    
+    by = 0.04
+    
+    dy = 0.08 
+    
+    dx = 0.01 
+    
+    sx = 0.40
+    
+    sy = 0.4 
+    
+    ax0 = fig.add_axes([bx, by+sy+dy, sx, sy])
+    
+    ax1 = fig.add_axes([bx+sx+dx, by+sy+dy, sx, sy])
+    
+    ax2 = fig.add_axes([bx, by, sx, sy])
+    
+    ax3 = fig.add_axes([bx+sx+dx, by, sx, sy])
+    
+    ax0.plot(Ts_slab, z_s,c='forestgreen',label=r'$T^{\infty}$%s Slab'%string_label[0]                    ,linewidth=1.0, linestyle='-.')
+    
+    ax0.plot(Ttd_slab, z_s,c='firebrick',label=r'$T^{\infty}$%s Slab'%string_label[1]      ,linewidth=1.2                )
+    
+    ax1.plot(Ts_ocmoh, z_ocmoh,c='forestgreen',label=r'$T^{\infty}$%s Moho'%string_label[0] ,linewidth=1.0,linestyle='-.'                )
+    
+    ax1.plot(Ttd_ocmoh, z_ocmoh,c='firebrick',label=r'$T^{\infty}$%s Moho'%string_label[1] ,        linewidth=1.2)
+    
+    ax0.set_xlabel(r'T [$^{\circ} C$]', fontsize=12)
+    
+    ax0.set_ylabel('Depth [km]', fontsize=12)
+    
+    ax1.set_yticklabels([])
+    
+    ax3.set_yticklabels([])
+    
+    ax1.set_xlabel(r'T [$^{\circ} C$]', fontsize=12)
+    
+    ax2.plot(Ts_slab - Ttd_slab, z_s,c='darkblue',linewidth=1.2)
+    
+    ax2.set_xlabel(r'%s- %s [$^{\circ}C$]'%(string_label[0],string_label[1]), fontsize=12)
+
+    ax2.set_ylabel('Depth [km]', fontsize=12)
+    
+    ax3.plot(Ts_ocmoh - Ttd_ocmoh, z_ocmoh,c='darkblue',linewidth=1.2)
+        
+    ax3.set_xlabel(r'%s- %s [$^{\circ}C$]'%(string_label[0],string_label[1]), fontsize=12)
+    
+    ax0 = modify_ax(ax0,fig)
+    
+    ax1 = modify_ax(ax1,fig)
+    
+    ax2 = modify_ax(ax2,fig)
+    
+    ax3 = modify_ax(ax3,fig)
+    
+    ax0.legend(fontsize=8, loc='lower left', frameon=False)
+    ax1.legend(fontsize=8, loc='lower left', frameon=False)
+
+    
+    ax0.xaxis.set_label_position("top")
+    
+    ax1.xaxis.set_label_position("top")
+    
+    ax2.xaxis.set_label_position("top")
+    
+    ax3.xaxis.set_label_position("top")
+    
+    ax0.grid(True, linestyle='-.', linewidth=0.2)
+    
+    ax1.grid(True, linestyle='-.', linewidth=0.2)
+
+    ax2.grid(True, linestyle='-.', linewidth=0.2)
+    
+    ax3.grid(True, linestyle='-.', linewidth=0.2)
+    
+    
+    
+    
+    props = dict(boxstyle='round', facecolor='black', alpha=0.5)
+    
+    
+    ax0.text(0.9, 1.15, '[a]', transform=ax0.transAxes, fontsize=8,
+        verticalalignment='top', bbox=props,color='white')
+    ax1.text(0.9, 1.15,'[b]', transform=ax1.transAxes, fontsize=8,
+        verticalalignment='top', bbox=props,color='white')
+    ax2.text(0.9, 1.15, '[c]', transform=ax2.transAxes, fontsize=8,
+        verticalalignment='top', bbox=props,color='white')
+    ax3.text(0.9, 1.15, '[d]', transform=ax3.transAxes, fontsize=8,
+        verticalalignment='top', bbox=props,color='white')
+ 
+    ax0.text(0.1, 1.15, time_string, transform=ax0.transAxes, fontsize=10,
+        verticalalignment='top', bbox=props,color='white')
+ 
+    fig.savefig(os.path.join(fname, figure_name))
+
+    return 0
+                
         
 
 def create_figure(path2save:str, 
@@ -698,17 +872,81 @@ def compare_SS_TD(ss_file:str, td_file:str, time_td, M_data:MeshData,path_2_save
     return 0 
 
 
+def compare_experiments(file1:str, file2:str, time_td, M_data:MeshData,path_2_save:str,name_exp:list):
+
+    
+    """
+    Easy peasy function to compare steady state and time dependent solution at given time. Moreover, to make nice plot rather than 
+    that crap from paraview. 
+    1st: load the timedependent file and extract the geometry and temperature at given time
+         1. find the outerboundaries of the domain (very ugly way)
+         2. create a polygon from these boundaries
+         3. create a grid and interpolate the temperature on it
+         4. mask the temperature outside the polygon
+         
+    2nd: load the steady state file and extract the temperature
+         1. find the outerboundaries of the domain (very ugly way)
+         2. create a polygon from these boundaries
+         3. create a grid and interpolate the temperature on it
+         4. mask the temperature outside the polygon
+    3rd: make the plot
+    4th: save the plot
+    """
+    
+    
+    f = h5py.File(file1, 'r')
+    field = 'Function/Temperature  [degC]'
+    TSa = np.array(f[field+'/0'])
+    fs = h5py.File(file2, 'r')
+    TSb = np.array(fs[field+'/0'])
+    dTS = TSa - TSb
+    
+
+
+    # Load steady state file    
+    T_S = interpolate_field(dTS,M_data)
+
+    
+    ipic     = 0 
+
+    # CREATE FIGURE FOR STEADY STATE
+    time_str = r'time = $\infty$'
+    lim = [np.floor(np.nanmin(dTS)),np.floor(np.nanmax((dTS)))]
+    
+    create_figure(path_2_save,time_str,lim[0],lim[1],'cmc.vik',r'$\Delta$ T (%s-%s) [$^{\circ}C$]'%(name_exp[0],name_exp[1]), M_data,T_S, 20, 'TSS',ipic)
+
+
+    compare_slab_surface_SS(path_2_save,
+                            time_str,
+                            ipic,
+                            TSa,
+                            TSb,
+                            M_data,
+                            name_exp)    
+    
+    
+    
+    
+    return 0 
+
+
 if __name__ == "__main__":
-    path_2_test = '/Users/wlnw570/Work/Leeds/Tests/T3/Output'
-    path_2_save = '/Users/wlnw570/Work/Leeds/Tests/Results/T3'
+    path_2_test = '/Users/wlnw570/Work/Tests/T1/Output'
+    path_2_testb = '/Users/wlnw570/Work/Tests/T11/Output'
+
+    path_2_save = '/Users/wlnw570/Work/Tests/Results/'
+    path_2_saveb = '/Users/wlnw570/Work/Tests/Results/Comparison_T1_T11'
     if not os.path.isdir(path_2_save):
         os.makedirs(path_2_save)
     
     td_file = '%s/time_dependent.h5'%(path_2_test)
     ss_file = '%s/Steady_state.h5'%(path_2_test)
+    ss_file2 = '%s/Steady_state.h5'%(path_2_testb)
+
     ms_tag  = '%s/MeshTag.h5'%(path_2_test)
     time_td = 10.0  # Time in Myr to compare
     M_data = MeshData(ss_file,ms_tag)
+    compare_experiments(ss_file, ss_file2, time_td, M_data, path_2_saveb,['T1','T11'])
     
     
     compare_SS_TD(ss_file, td_file, time_td, M_data, path_2_save)
