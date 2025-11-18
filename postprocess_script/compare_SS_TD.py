@@ -932,22 +932,25 @@ def compare_experiments(file1:str, file2:str, time_td, M_data:MeshData,path_2_sa
 
 if __name__ == "__main__":
     path_2_test = '/Users/wlnw570/Work/Tests/T1/Output'
-    path_2_testb = '/Users/wlnw570/Work/Tests/T11/Output'
+    path_2_testb = '/Users/wlnw570/Work/Tests/T12/Output'
 
-    path_2_save = '/Users/wlnw570/Work/Tests/Results/'
-    path_2_saveb = '/Users/wlnw570/Work/Tests/Results/Comparison_T1_T11'
+    path_2_save = '/Users/wlnw570/Work/Tests/Results/T12'
+    path_2_saveb = '/Users/wlnw570/Work/Tests/Results/Comparison_T1_T12'
     if not os.path.isdir(path_2_save):
         os.makedirs(path_2_save)
     
     td_file = '%s/time_dependent.h5'%(path_2_test)
     ss_file = '%s/Steady_state.h5'%(path_2_test)
     ss_file2 = '%s/Steady_state.h5'%(path_2_testb)
+    td_file2 = '%s/time_dependent.h5'%(path_2_testb)
+
+
 
     ms_tag  = '%s/MeshTag.h5'%(path_2_test)
     time_td = 10.0  # Time in Myr to compare
     M_data = MeshData(ss_file,ms_tag)
-    compare_experiments(ss_file, ss_file2, time_td, M_data, path_2_saveb,['T1','T11'])
+    compare_experiments(ss_file, ss_file2, time_td, M_data, path_2_saveb,['T1','T12'])
     
     
-    compare_SS_TD(ss_file, td_file, time_td, M_data, path_2_save)
+    compare_SS_TD(ss_file2, td_file2, time_td, M_data, path_2_save)
     

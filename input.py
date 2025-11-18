@@ -47,8 +47,7 @@ friction_angle   = 1.0
 #---------------------------------------------------------------------------------------------------------
 # input/output control
 #---------------------------------------------------------------------------------------------------------
-test_name = 'case_Hobson_time_dependent_experiment2'
-path_save = '/Users/wlnw570/Work/Leeds/Output/Stonedphoenix/curved'
+test_name = 'Output'
 sname = test_name
 #---------------------------------------------------------------------------------------------------------
 # Scaling parameters
