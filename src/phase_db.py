@@ -13,7 +13,21 @@ Dic_rheo ={'Hirth_Dry_Olivine_diff':  'Dislocation_DryOlivine',
           'Van_Keken_diff'         :  'Diffusion_vanKeken',
           'Van_Keken_disl'         :  'Dislocation_vanKeken',
           'Hirth_Wet_Olivine_diff' :  'Diffusion_WetOlivine',
+          'Hirth_Wet_Olivine_disl' :  'Dislocation_WetOlivine'
+          }
+
+Dic_conductivity ={'Hirth_Dry_Olivine_diff':  'Dislocation_DryOlivine',
+          'Hirth_Dry_Olivine_disl' :  'Diffusion_DryOlivine',
+          'Van_Keken_diff'         :  'Diffusion_vanKeken',
+          'Van_Keken_disl'         :  'Dislocation_vanKeken',
+          'Hirth_Wet_Olivine_diff' :  'Diffusion_WetOlivine',
           'Hirth_Wet_Olivine_disl' :  'Dislocation_WetOlivine'}
+
+Dic_Cp ={'Berman_Forsterite': 1,
+         'Berman_Fayalite' : 2,
+         'Berman_Aranovich_Forsterite': 4,
+         'Berman_Aranovich_Fayalite' : 5    
+            }
 
 #-----------------------------------------------------------------------------------------------------------
 
@@ -107,6 +121,73 @@ class Rheological_data_Base():
         water = 1.0
         self.Diffusion_vanKeken = Rheological_flow_law(E,V,n,m,d0,B,0,0,r,water,q,gamma,taup)
 
+
+
+class Thermal_diffusivity():
+    """
+    # General form of the equation employed for thermal conductivity: 
+    Richard: 
+    a = 0.565/1e6  
+    b = 0.67/1e6
+    c = 590.0
+    d = 1.4/1e6
+    e = 135.0
+    T = T-273.15
+    
+    D = a + b * np.exp(-T/c) + d * np.exp(-T/e)
+    -> in m^2/s 
+    1) Data from Fosterite 
+    
+    """
+    def __init__(self):
+        # Fosterite Fayalite Richard et al 2020 {other reference}
+        a = 0.565/1e6  # m^2/s  
+        b = 0.67/1e6   # m^2/s
+        c = 590.0      # K 
+        d = 1.4/1e6    # m^2/s   
+        e = 135.0      # K 
+        self.Fosterite_Fayalite90 = Lattice_Diffusivity(a,b,c,d,e)
+        # Augite 
+        a  =  0.59/1e6 
+        b  =  1.03/1e6
+        c  =  386.0 
+        d  =  0.928/1e6
+        e  =  125.0   
+        
+        self.Augite = Lattice_Diffusivity(a,b,c,d,e)
+        # AnAb 
+        a = 0.36/1e6 
+        b = 0.4/1e6 
+        c = 300.0 
+        d = 0.0 
+        e = 1.0 
+        
+        self.AnAb = Lattice_Diffusivity(a,b,c,d,e)
+        # Crust 
+        a = 0.432/1e6
+        b = 0.44/1e6
+        c = 380.0
+        d = 0.305/1e6 
+        e = 145.0
+        
+        self.Oceanic_Crust  = Lattice_Diffusivity(a,b,c,d,e)
+    
+
+
+class Lattice_Diffusivity():
+    def __init__(a,b,c,d,e):
+        self.a = a 
+        self.b = b 
+        self.c = c 
+        self.d = d 
+        self.e = e 
+        
+        
+
+
+
+
+        
 
 #-----------------------------------------------------------------------------------------------------------
 
