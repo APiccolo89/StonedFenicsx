@@ -7,23 +7,30 @@ from numba import float64, int32
 from typing import Tuple, List
 from typing import Optional
 from numba import njit, prange
- 
-Dic_rheo ={'Hirth_Dry_Olivine_diff':  'Dislocation_DryOlivine',
+#-----
+Dic_rheo ={'Constant'              :  'Linear', 
+          'Hirth_Dry_Olivine_diff' :  'Dislocation_DryOlivine',
           'Hirth_Dry_Olivine_disl' :  'Diffusion_DryOlivine',
           'Van_Keken_diff'         :  'Diffusion_vanKeken',
           'Van_Keken_disl'         :  'Dislocation_vanKeken',
           'Hirth_Wet_Olivine_diff' :  'Diffusion_WetOlivine',
           'Hirth_Wet_Olivine_disl' :  'Dislocation_WetOlivine'
           }
-
-Dic_conductivity ={'Mantle'       :  'Fosterite_Fayalite90',
+#-----
+Dic_conductivity ={'Constant'     :  'Constant',
+                   'Mantle'       :  'Fosterite_Fayalite90',
                    'OceanicCrust' :  'Oceanic_Crust'}
-
-Dic_Cp ={'Berman_Forsterite': 1,
-         'Berman_Fayalite' : 2,
-         'Berman_Aranovich_Forsterite': 4,
-         'Berman_Aranovich_Fayalite' : 5 }
-
+#-----
+Dic_Cp ={'Constant'                                   : 'Constant',
+         'Berman_Forsterite'                          : 'BFo',
+         'Berman_Fayalite'                            : 'BFay',
+         'Berman_Aranovich_Forsterite'                : 'BAFo',
+         'Berman_Aranovich_Fayalite'                  : 'BaFa',
+         'Berman_Fo_Fa_01'                            : 'BFoFay01',
+         'Bermann_Aranovich_Fo_Fa_0_1'                : 'BAFoFa_0_1',
+         'Oceanic_crust'                              : 'OceanicCrust',
+         'ContinentalCrust'                           : 'Crust'}
+#-----
 #-----------------------------------------------------------------------------------------------------------
 
 class Rheological_data_Base():
@@ -277,6 +284,8 @@ spec_phase = [
     ("C1", float64[:]),      # Cp coefficient [J/mol/K^0.5]
     ("C2", float64[:]),      # Cp coefficient [J·K/mol]
     ("C3", float64[:]),      # Cp coefficient [J·K^2/mol]
+    ("C4", float64[:]),      # Cp coefficient []
+    ("C5", float64[:]),      # Cp coefficient []
     ("option_Cp", int32[:]), # Option for Cp calculation
     
     # Thermal conductivity    
@@ -380,7 +389,11 @@ class PhaseDataBase:
         self.C0         = np.zeros(number_phases, dtype=np.float64)               # Reference heat capacity [J/mol/K]
         self.C1         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [J/mol/K^0.5]  -> CONVERTED INTO J/kg/K^0.5       
         self.C2         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [(J*K)/mol]    -> CONVERTED INTO J/kg/K^2
-        self.C3         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [(J*K^2)/mol]  -> CONVERTED INTO J/kg/K^3
+        self.C3         = np.zeros(number_phases, dtype=np.float64)    # Temperature dependent heat capacity [(J*K^2)/mol]  -> CONVERTED INTO J/kg/K^3
+        self.C4         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [(J*K^2)/mol]  -> CONVERTED INTO J/kg/K^3
+        self.C5         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [(J*K^2)/mol]  -> CONVERTED INTO J/kg/K^3
+
+        
         self.option_Cp  = np.zeros(number_phases, dtype=np.int32)                 # Option for heat capacity calculation
         
         # Thermal conductivity 
@@ -428,11 +441,9 @@ def _generate_phase(PD:PhaseDataBase,
                     Cp:float               = 1250,
                     k:float                = 3.0,
                     rho0:float              = 3300,
-                    eta:float              = -1e23,
-                    option_rheology   :float  = 0,
-                    conducibility_law :int          = 0,
-                    diffusivity_law   :int      = 0,
-                    option_rho        :int   = 0,
+                    eta:float              = 1e20,
+                    name_capacity:str      = 'Constant',
+                    name_conductivity:str  = 'Constant',
                     radio:float = 0.0,
                     radio_flag:float = 0)     -> PhaseDataBase:
     """
@@ -488,13 +499,8 @@ def _generate_phase(PD:PhaseDataBase,
     
     PD.radio[id] = radio 
     # Heat capacity
-    if option_Cp == 0:
-        # constant heat capacity 
-        PD.C0[id] = Cp
-    elif option_Cp > 0 and option_Cp < 7:
-        # Compute the material the effective material property 
-        PD.C0[id],PD.C1[id],PD.C2[id],PD.C3[id] = release_heat_capacity_parameters(option_Cp)
     
+    PD.C0,PD.C1,PD.C2,PD.C3,PD.C4,PD.C5 =  release_heat_capacity_parameters(name_capacity, Cp)
     PD.option_Cp[id] = option_Cp
     
     
@@ -551,8 +557,121 @@ def release_heat_conductivity_parameters(option_k: int) -> Tuple[float, float]:
 
     return k, a, n 
 #-----------------------------------------------------------------------------------------------------------
+def release_heat_capacity_parameters(tag:str,C0:float)->Tuple[float,float,float,float]: 
+    """_summary_
+    Cp = C0 + C1 **(-1/2) + C2 ** (-2) + C3 ** (-3) ** C4 (1) ** C5 (2) 
+    Args:
+        tag (str): _description_
+        C0 (float): _description_
 
-def release_heat_capacity_parameters(option_C_p: int) -> Tuple[float, float, float, float]:
+    Returns:
+        Tuple[float,float,float,float]: _description_
+        
+        'Constant',
+
+    """
+    # Molar weight of fosterite and fayalite
+    
+    C0 = 0.0; C1 = 0.0; C2 = 0.0; C3 = 0.0; C4 = 0.0 ; C5 = 0.0
+    
+    if tag == 'Constant': 
+        C0 = C0  
+        C1 = 0.0 
+        C2 = 0.0 
+        C3 = 0.0 
+        C4 = 0.0 
+        C5 = 0.0 
+        
+    else: 
+        if tag == 'BFo' or tag == 'BFay' or tag == 'BFoFay01':
+            
+            flag = [0,None]           
+      
+            if tag == 'BFo': 
+                flag[1] = 'Fosterite'
+            elif tag == 'BFa': 
+                flag[1] = 'Fayalite'
+            else: 
+                flag[1] = 'Mix'
+        elif tag == 'BAFo' or tag == 'BAFay' or tag == 'BAFoFay01':
+            
+            flag = [1,None]           
+      
+            if tag == 'BAFo': 
+                flag[1] = 'Fosterite'
+            elif tag == 'BAFa': 
+                flag[1] = 'Fayalite'
+            else: 
+                flag[1] = 'Mix'
+        
+            C0, C1, C2, C3, C4, C5 =  mantle_heat_capacity(flag)
+        elif tag == 'Oceanic_crust': 
+            '''
+            This is really annoying: Cp calculation is always Cp = C0 + C1T^x ... 
+            The author of several paper seems to not understand to use a single consistent 
+            equations ... 
+            '''
+            C0, C1, C2, C3 , C4 , C5 = compute_oceanic_crust()
+        elif tag == 'Crust':
+            pass
+        
+
+    return C0, C1, C2, C3, C4, C5
+
+
+
+
+#----------------------------------------------------------------------------------------------------------
+
+def compute_oceanic_crust() -> Tuple[float,float,float,float,float,float]:
+    
+    """_summary_
+    Following Fred Richard 2020, with an adaptation, such as it makes sense. 
+    Returns:
+        _type_: _description_
+    """
+    # Olivine
+    # ---- 
+    C0_0l = 1.6108 * 1e3 
+    C1_Ol = -1.24788 * 1e4 
+    C2_Ol = 0.0 
+    C3_Ol = -1.728477*1e9 
+    C4_Ol = 0.0 
+    C5_Ol = 0.0 
+    # ---
+    # Clino ( Augite) 
+    # --- 
+    C0_au = 2.1715   * 1e3 
+    C1_au = -2.22716 * 1e4
+    C2_au = 1.1333   * 1e6 
+    C3_au = 0.0 
+    C4_au = -4.555 * 1e-1 
+    C5_au = 1.299 * 1e-4
+    # ---
+    # Plagioclase 
+    # --- 
+    C0_pg = 1.85757  * 1e3 
+    C1_pg = -1.64946 * 1e4
+    C2_pg = -5.061   * 1e6 
+    C3_pg = 0.0 
+    C4_pg = -3.324 * 1e-1 
+    C5_pg = 1.505 * 1e-4
+    fr_ol = 0.15; fr_au = 0.2; fr_pg = 0.65
+    # --- 
+    
+    C0 = fr_ol * C0_0l + fr_au * C0_au + fr_pg * C0_pg
+    C1 = fr_ol * C1_0l + fr_au * C1_au + fr_pg * C1_pg
+    C2 = fr_ol * C2_0l + fr_au * C2_au + fr_pg * C2_pg
+    C3 = fr_ol * C3_0l + fr_au * C3_au + fr_pg * C3_pg
+    C4 = fr_ol * C4_0l + fr_au * C4_au + fr_pg * C4_pg
+    C5 = fr_ol * C5_0l + fr_au * C5_au + fr_pg * C5_pg
+    
+    # --- 
+    
+    return C0, C1, C2, C3, C4, C4, C5
+
+
+def mantle_heat_capacity(flag: list) -> Tuple[float,float,float,float,float,float]:
     
     # To do in the future: generalise -> Database of heat capacity parameters as a function of the major mineral molar composition
     # The law of the heat capacity is only temperature dependent, and it is a polynomial. For now I keep the vision of Iris, and introduce a few options later on 
@@ -561,7 +680,7 @@ def release_heat_capacity_parameters(option_C_p: int) -> Tuple[float, float, flo
     mmfo = 1/(140.691/1000)
     mmfa = 1/(203.771/1000)
 
-    if option_C_p > 0 and option_C_p < 4:
+    if flag[0] == 0:
         # Berman 1988 
         # forsterite 
         C0_fo = mmfo * 238.64    
@@ -572,7 +691,7 @@ def release_heat_capacity_parameters(option_C_p: int) -> Tuple[float, float, flo
         C0_fa = mmfa * 248.93    
         C1_fa = mmfa * -19.239e2 
         C3_fa = mmfa * -13.910e7 
-    elif option_C_p > 3 and option_C_p < 7:
+    elif flag[0] == 1:
         # Berman & Aranovich 1996 
         # forsterite 
         C0_fo = mmfo * 233.18
@@ -585,13 +704,13 @@ def release_heat_capacity_parameters(option_C_p: int) -> Tuple[float, float, flo
         C3_fa = mmfa * -6.219e7   
     
     
-    if option_C_p == 1 or option_C_p == 4: 
+    if flag[1] == 'Fosterite': 
         # forsterite 
         x = 0.
-    if option_C_p == 2 or option_C_p == 5: 
+    if flag[1] == 'Fayalite': 
         # fayalite 
         x = 1.
-    if option_C_p == 3 or option_C_p == 6: 
+    if flag[1] == 'Mix': 
         # molar fraction of fayalite is 0.11 
         x = 0.11 
     
@@ -599,8 +718,10 @@ def release_heat_capacity_parameters(option_C_p: int) -> Tuple[float, float, flo
     C1 = (1-x)*C1_fo + x*C1_fa
     C2 = 0.0
     C3 = (1-x)*C3_fo + x*C3_fa
+    C4 = 0.0 
+    C5 = 0.0 
     
-    return C0, C1, C2, C3
+    return C0, C1, C2, C3, C4, C5
       
     
 

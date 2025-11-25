@@ -18,6 +18,7 @@ from numba import njit
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 from .utils import timing_function, print_ph
+from .compute_material_property import compute_thermal_properties
 
 start       = timing.time()
 zeros       = np.zeros
@@ -63,10 +64,8 @@ def _compute_Cp_k_rho(ph,pdb,Cp,k,rho,T,lit_p,ind_z):
     it = len(T)
 
     for i in range(it):
-        k[i]   = heat_conductivity(pdb,T[i],lit_p[i],ph[i])
-        Cp[i]  = heat_capacity(pdb,T[i],ph[i])
-
-        rho[i] = density(pdb,T[i],lit_p[i],ph[i])
+        Cp[i], rho[i], k[i] = compute_thermal_properties(pdb,T[i],p,ph)
+        
 
     return Cp,k,rho
 #-----------------------------------------------------------------------------------------

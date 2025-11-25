@@ -18,8 +18,16 @@ from petsc4py import PETSc
 from dolfinx import fem
 import ufl
 from ufl import *
-
-
+#----- 
+@njit 
+def compute_thermal_properties(pdb,T,p,ph):
+    
+    Cp   = heat_capacity(pdb,T,ph)
+    rho  = density(pdb,T,p,ph)
+    k    = heat_conductivity(pdb,T,p,rho,Cp,ph)
+    
+    return Cp, rho, k 
+#-----
 def evaluate_material_property(expr,P0):
     from scipy.interpolate import griddata
     from ufl import conditional, Or, eq
@@ -110,12 +118,13 @@ def compute_radiogenic(pdb, hs, phase, M):
 def heat_conductivity(pdb,T,p,rho,Cp,ph):    
 
 
+    k_rad = pdb.A * np.exp(-(T-pdb.T_A)**2/ (2*pdb.x_A ** 2 )) + pdb.B * np.exp(-(T - pdb.T_B)**2 / (2* pdb.x_B**2))
 
-    kappa_lat = pdb.k_a[ph] + pdb.k_b[ph] * np.exp(-(T-273.15)/pdb.k_c[ph]) + pdb.k_d[ph] * np.exp(-(T-273.15)/pdb.k_e[ph])
+    kappa_lat = pdb.k_a[ph] + pdb.k_b[ph] * np.exp(-(T-pdb.Tref)/pdb.k_c[ph]) + pdb.k_d[ph] * np.exp(-(T-pdb.Tref)/pdb.k_e[ph])
     
     kappa_p   = np.exp(pdb.k_f[ph] * p)  
 
-    k = k0 + kappa_lat * kappa_p * Cp * rho + k_rad
+    k = pdb.k0[ph] + kappa_lat * kappa_p * Cp * rho + k_rad * pdb.flag_radio[ph]
 
     return k 
 #---------------------------------------------------------------------------------
@@ -123,7 +132,7 @@ def heat_conductivity(pdb,T,p,rho,Cp,ph):
 @njit
 def heat_capacity(pdb,T,ph):
 
-    C_p = pdb.C0[ph] + pdb.C1[ph] * (T**(-0.5)) + pdb.C3[ph] * (T**(-3.))
+    C_p = pdb.C0[ph] + pdb.C1[ph] * (T**(-0.5)) +pdb.C2[ph] * T**(-2.0) + pdb.C3[ph] * (T**(-3.)) + pdb.C4[ph]* T + pdb.C5[ph] * T**2
         
     return C_p
 #---------------------------------------------------------------------------------
