@@ -164,6 +164,7 @@ k      = np.zeros((len(P), len(T)))
 k_rad  = np.zeros((len(P), len(T))) 
 Cp  = np.zeros((len(P), len(T))) 
 kp = np.zeros((len(P), len(T)))
+k2 = np.zeros((len(P),len(T)))
 
 
 for i in range(len(P)):
@@ -175,6 +176,7 @@ for i in range(len(P)):
         k_rad[i,j] = compute_radiative_conductivity_T(T[j],0.5)
         Cp[i,j]    = compute_thermal_capacity_T(T[j])
         kp[i,j]    = compute_diffusivity_P(P[i])
+        k2[i,j]    =  compute_diffusivity_T(P[i], T[j]) * rho2[i,j] * compute_thermal_capacity_T(T[j]) * compute_diffusivity_P(P[i])
         
 
 
@@ -193,6 +195,33 @@ plt.title('Conductivity as a function of Pressure and Temperature')
 plt.show()  
 fig.savefig('thermal_conductivity_total.png', dpi=300)
 
+
+
+fig = plt.figure(figsize=(8,6))
+ax = plt.gca()
+a0 = ax.contourf(T-273.15,P/1e9, (k2+k_rad), levels=10, cmap='cmc.lipari')
+b0 = ax.contour(T-273.15,P/1e9, (k2+k_rad), levels=np.linspace(1,10,num=10), colors='w', linewidths=0.5)
+ax.clabel(b0, inline=1, fontsize=10, fmt='%1.1f')
+ax.yaxis_inverted()
+plt.colorbar(a0,label='K (W/m/K)')
+plt.ylabel('Pressure (GPa)')
+plt.xlabel('Temperature (C)')
+plt.title('Conductivity as a function of Pressure and Temperature')
+plt.show()  
+fig.savefig('thermal_conductivity_tota_rho_alt.png', dpi=300)
+
+
+fig = plt.figure(figsize=(8,6))
+ax = plt.gca()
+a0 = ax.contourf(T-273.15,P/1e9, (k2-k)/((k+k_rad)+(k2+k_rad)), levels=10, cmap='cmc.lipari')
+ax.clabel(b0, inline=1, fontsize=10, fmt='%1.1f')
+ax.yaxis_inverted()
+plt.colorbar(a0,label='Ratio')
+plt.ylabel('Pressure (GPa)')
+plt.xlabel('Temperature (C)')
+plt.title('Conductivity as a function of Pressure and Temperature')
+plt.show()  
+fig.savefig('Ratio.png', dpi=300)
 
 fig = plt.figure(figsize=(8,6))
 ax = plt.gca()

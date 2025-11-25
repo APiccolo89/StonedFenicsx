@@ -16,18 +16,13 @@ Dic_rheo ={'Hirth_Dry_Olivine_diff':  'Dislocation_DryOlivine',
           'Hirth_Wet_Olivine_disl' :  'Dislocation_WetOlivine'
           }
 
-Dic_conductivity ={'Hirth_Dry_Olivine_diff':  'Dislocation_DryOlivine',
-          'Hirth_Dry_Olivine_disl' :  'Diffusion_DryOlivine',
-          'Van_Keken_diff'         :  'Diffusion_vanKeken',
-          'Van_Keken_disl'         :  'Dislocation_vanKeken',
-          'Hirth_Wet_Olivine_diff' :  'Diffusion_WetOlivine',
-          'Hirth_Wet_Olivine_disl' :  'Dislocation_WetOlivine'}
+Dic_conductivity ={'Mantle'       :  'Fosterite_Fayalite90',
+                   'OceanicCrust' :  'Oceanic_Crust'}
 
 Dic_Cp ={'Berman_Forsterite': 1,
          'Berman_Fayalite' : 2,
          'Berman_Aranovich_Forsterite': 4,
-         'Berman_Aranovich_Fayalite' : 5    
-            }
+         'Berman_Aranovich_Fayalite' : 5 }
 
 #-----------------------------------------------------------------------------------------------------------
 
@@ -175,14 +170,30 @@ class Thermal_diffusivity():
 
 
 class Lattice_Diffusivity():
-    def __init__(a,b,c,d,e):
+    def __init__(a=0.0,b=0.0,c=1.0,d=0.0,e=1.0,f=0.0,g=1.0):
+        
         self.a = a 
+        
         self.b = b 
+        
         self.c = c 
+        
         self.d = d 
-        self.e = e 
         
+        self.e = e
         
+        if a != 0: # I refuse to put a different coefficient for each mineral.  
+        
+            f = 0.05/1e9 
+        
+        self.f = f
+        
+        if a != 0: # Switch for heat conductivity 
+            
+            g = 0.0
+        
+        self.g = g
+
 
 
 
@@ -234,6 +245,17 @@ def _check_rheological(tag:str) -> Rheological_flow_law:
         return A 
 
 
+def _check_diffusivity(tag:str) ->Lattice_Diffusivity:
+
+
+    if tag == 'constant':
+        # empty rheological flow law to fill it
+        return Lattice_Diffusivity()
+    else: 
+        RB = Thermal_diffusivity()
+        A = getattr(RB,Dic_conductivity[tag])
+        return A 
+
 #-----------------------------------------------------------------------------------------------------------
 
 spec_phase = [
@@ -256,14 +278,16 @@ spec_phase = [
     ("C2", float64[:]),      # Cp coefficient [J·K/mol]
     ("C3", float64[:]),      # Cp coefficient [J·K^2/mol]
     ("option_Cp", int32[:]), # Option for Cp calculation
-
-    # Thermal conductivity
-    ("k0", float64[:]),      # Reference thermal conductivity [W/m/K]
-    ("a", float64[:]),       # Pressure-dependent coefficient [1/Pa]
-    ("k_n", float64[:]),       # Pressure-dependent coefficient [1/Pa]
-    ("k_b", float64[:]),     # Radiative heat transfer coefficient [W/m/K]
-    ("k_c", float64[:]),     # Radiative heat transfer coefficient [W/m/K^2]
-    ("k_d", float64[:, :]),  # Radiative polynomial coefficients [W/m/K^3]
+    
+    # Thermal conductivity    
+    ("k_a", float64[:]),     # Koefficient diffusivity  [m^2/s]
+    ("k_b", float64[:]),     # Pressure-dependent coefficient [m^2/s]
+    ("k_c", float64[:]),     # Radiative heat transfer coefficient [K]
+    ("k_d", float64[:]),     # Radiative heat transfer coefficient [m^2/s]
+    ("k_e", float64[:]),     # Radiative polynomial coefficients [W/m/K^3]
+    ("k_f", float64[:]),     # Pressure dependency               [W/m/K/Pa]
+    
+    ("k_0", float64[:]),     # Constant conductivity             [W/m/k] 
     ("option_k", int32[:]),  # Option for conductivity calculation
 
     # Density parameters
@@ -275,7 +299,18 @@ spec_phase = [
     
     # radiogenic heat
     ("radio",float64[:]), 
+    
+    
+    
+    ("A  ",float64), # Ref conductivity A 
+    ("B  ",float64), # Ref conductivity B 
+    ("T_A",float64), # T [K]
+    ("T_B",float64), # T [K]
+    ("x_A",float64), # T [K]
+    ("x_B",float64), # T [K]
+    ("radio_flag",float64[:]), # radio flag 
 
+    
     ("id", int32[:]),              # phase number
     
     # Constants
@@ -294,24 +329,34 @@ spec_phase = [
 #-----------------------------------------------------------------------------------------------------------
 @jitclass(spec_phase)
 class PhaseDataBase:
-    def __init__(self, number_phases,friction_angle):
+    def __init__(self, number_phases,friction_angle,d=0.5):
         # Initialize individual fields as arrays
         if number_phases>8: 
             raise ValueError("The number of phases should not exceed 7")
         
 
         
-        self.Tref        = 298.15  # Reference temperature [K]
-        self.Pref        = 1e5     # Reference pressure [Pa]
-        self.R           = 8.3145  # Universal gas constant [J/(mol K)]
-        self.eta_min     = 1e18    # Min viscosity [Pas]
-        self.eta_max     = 1e26    # Max viscosity [Pas]
-        self.eta_def     = 1e21    # Default viscosity [Pas]
-        self.T_Scal      = 1.      # Default temperature scale
-        self.P_Scal      = 1.      # Default Pressure scale 
+        self.Tref           = 298.15  # Reference temperature [K]
+        self.Pref           = 1e5     # Reference pressure [Pa]
+        self.R              = 8.3145  # Universal gas constant [J/(mol K)]
+        self.eta_min        = 1e18    # Min viscosity [Pas]
+        self.eta_max        = 1e26    # Max viscosity [Pas]
+        self.eta_def        = 1e21    # Default viscosity [Pas]
+        self.T_Scal         = 1.      # Default temperature scale
+        self.P_Scal         = 1.      # Default Pressure scale 
         self.friction_angle = friction_angle
-        self.id          = np.zeros(number_phases, dtype=np.int32)
-        self.cohesion    = 10e6 
+        self.id             = np.zeros(number_phases, dtype=np.int32)
+        self.cohesion       = 10e6 
+        self.A              = 1.8 * (1 - np.exp(-d**1.3 / 0.15)) - (1 - np.exp(-d**0.5 / 5.0))
+        self.B              = 11.7 * np.exp(-d / 0.159) + 6.0 * np.exp(-d**3 / 10.0)
+        self.T_A              = 490.0 + 1850.0 * np.exp(-d**0.315 / 0.825) + 875.0 * np.exp(-d / 0.18)
+        self.T_B            = 2700.0 + 9000.0 * np.exp(-d**0.5 / 0.205)
+        self.x_A            = 167.5 + 505.0 * np.exp(-d**0.5 / 0.85           )
+        self.x_B            = 465.0 + 1700.0 * np.exp(-d**0.94 / 0.175) 
+        
+        
+        
+        
         # Explanation: For testing the pressure and t scal are set to be 1.0 -> so, the software is not performing any 
         # scaling operation. 
         # -> When the property are automatically scaled these value will be update automatically. 
@@ -340,18 +385,26 @@ class PhaseDataBase:
         
         # Thermal conductivity 
         self.k0         = np.zeros(number_phases, dtype=np.float64)               # Reference heat conductivity [W/m/K]
-        self.a          = np.zeros(number_phases, dtype=np.float64)               # Thermal expansivity [1/Pa]
-        self.k_n        = np.zeros(number_phases, dtype=np.float64)               # exponent
+        self.k_a        = np.zeros(number_phases, dtype=np.float64)               # Thermal expansivity [1/Pa]
+        self.k_b        = np.zeros(number_phases, dtype=np.float64)               # exponent
         # Radiative heat transfer
-        self.k_b        = np.zeros(number_phases, dtype=np.float64)               # Radiative heat transfer constant [W/m/K]
-        self.k_c        = np.zeros(number_phases, dtype=np.float64)               # Radiative heat transfer constant [W/m/K^2]
-        self.k_d        = np.zeros((number_phases, 4), dtype=np.float64)             # Radiative heat transfer polynomial coefficients [W/m/K^3]        
-    
+        self.k_c        = np.ones(number_phases, dtype=np.float64)               # Radiative heat transfer constant [W/m/K]
+        self.k_d        = np.zeros(number_phases, dtype=np.float64)               # Radiative heat transfer constant [W/m/K^2]
+        self.k_e        = np.ones((number_phases), dtype=np.float64)             # Radiative heat transfer polynomial coefficients [W/m/K^3]        
+        self.k_f        = np.zeros((number_phases), dtype = np.float64)           # 
         # Radiative heat transfer 
         self.option_k   = np.zeros(number_phases, dtype=np.int32)                 # Option for heat conductivity calculation
+        
+        self.k_A         = 0.0
+        self.k_B         = 0.0
+        self.T_A         = 0.0
+        self.T_B         = 0.0
+        self.x_A         = 0.0
+        self.x_B         = 0.0
+        
+        
         self.radio      = np.zeros(number_phases, dtype=np.float64)               # Radiogenic
 
-        
         # Density parameters 
         self.alpha0     = np.zeros(number_phases, dtype=np.float64)               # Thermal expansivity coefficient [1/K]   
         self.alpha1     = np.zeros(number_phases, dtype=np.float64)               # Second-order expansivity [1/K^2]
@@ -376,11 +429,12 @@ def _generate_phase(PD:PhaseDataBase,
                     k:float                = 3.0,
                     rho0:float              = 3300,
                     eta:float              = -1e23,
-                    option_rheology:float  = 0,
-                    option_Cp:int          = 0,
-                    option_k:int           = 0,
-                    option_rho:int         = 0,
-                    radio:float = 0.0)     -> PhaseDataBase:
+                    option_rheology   :float  = 0,
+                    conducibility_law :int          = 0,
+                    diffusivity_law   :int      = 0,
+                    option_rho        :int   = 0,
+                    radio:float = 0.0,
+                    radio_flag:float = 0)     -> PhaseDataBase:
     """
     Generate phase: 
     id : phase id number [0->n] 
@@ -443,19 +497,17 @@ def _generate_phase(PD:PhaseDataBase,
     
     PD.option_Cp[id] = option_Cp
     
-    # Heat Conductivity
-    if option_k == 0:
-        # constant heat conductivity 
-        PD.k0[id] = k
-    elif option_k != 0:
-        # Compute the material the effective material property 
-        PD.k0[id],PD.a[id],PD.k_n[id]  = release_heat_conductivity_parameters(option_k)
     
-    elif option_k == 3:
-
-        PD.k_b[id]    = 5.3
-        PD.k_c[id]    = 0.0015
-        PD.k_d[id,:]  = np.array([1.753e-2, -1.0365e-4, 2.2451e-7, -3.4071e-11], dtype=np.float64) 
+    TD = _check_diffusivity(name_conductivity)
+    PD.k_a[id] = TD.a 
+    PD.k_b[id] = TD.b 
+    PD.k_c[id] = TD.c 
+    PD.k_d[id] = TD.d 
+    PD.k_e[id] = TD.e 
+    PD.k_f[id] = TD.f 
+    PD.k0[id] = k0 * TD.g 
+    d = 0.5
+    PD.radio_flag[id] = radio_flag 
     
     PD.option_k[id]   = option_k    
     
@@ -472,7 +524,7 @@ def _generate_phase(PD:PhaseDataBase,
     
 #-----------------------------------------------------------------------------------------------------------
 
-
+# Deprecated, but better to keep here. 
 def release_heat_conductivity_parameters(option_k: int) -> Tuple[float, float]:
     '''
     So, long story short: Hofmeister 1999 conductivity formulation is basically:

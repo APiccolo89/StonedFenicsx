@@ -107,29 +107,16 @@ def compute_radiogenic(pdb, hs, phase, M):
     
 #---------------------------------------------------------------------------------
 @njit
-def heat_conductivity(pdb,T,p,ph):    
+def heat_conductivity(pdb,T,p,rho,Cp,ph):    
+
+
+
+    kappa_lat = pdb.k_a[ph] + pdb.k_b[ph] * np.exp(-(T-273.15)/pdb.k_c[ph]) + pdb.k_d[ph] * np.exp(-(T-273.15)/pdb.k_e[ph])
     
-    if pdb.option_k[ph] == 0:
-        # constant variables 
-        
-        k =pdb.k0[ph]
-    
-    elif pdb.option_k[ph] >=1: 
-        
-        k = (pdb.k0[ph] + pdb.a[ph] * p) * (pdb.Tref/T)**pdb.k_n[ph]
-        
-        if pdb.option_k[ph] == 3 or pdb.option_k[ph] == 4 :
-           
-           # radiative component of the conductivity
-            k_h_radiative = 0.
-            
-            for i in range(0,4):
-            
-                k_h_radiative = k_h_radiative + pdb.k_d[ph,i] * (T)**i
-     
-            k = k + k_h_radiative
-             
-        
+    kappa_p   = np.exp(pdb.k_f[ph] * p)  
+
+    k = k0 + kappa_lat * kappa_p * Cp * rho + k_rad
+
     return k 
 #---------------------------------------------------------------------------------
 
@@ -137,7 +124,6 @@ def heat_conductivity(pdb,T,p,ph):
 def heat_capacity(pdb,T,ph):
 
     C_p = pdb.C0[ph] + pdb.C1[ph] * (T**(-0.5)) + pdb.C3[ph] * (T**(-3.))
-
         
     return C_p
 #---------------------------------------------------------------------------------
