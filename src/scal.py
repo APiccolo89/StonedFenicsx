@@ -94,11 +94,15 @@ def _scaling_material_properties(pdb,sc:Scal):
     scal_c1     = sc.Energy/sc.M/sc.Temp**(0.5) 
     scal_c2     = (sc.Energy*sc.Temp)/sc.M
     scal_c3     = (sc.Energy*sc.Temp**2)/sc.M
+    scal_c4     = (sc.Energy)/sc.M/sc.Temp**2
+    scal_c5     = (sc.Energy)/sc.M/sc.Temp**3
 
     pdb.C0     /= sc.Cp
     pdb.C1     /= scal_c1 
     pdb.C2     /= scal_c2 
     pdb.C3     /= scal_c3 
+    pdb.C4     /= scal_c4 
+    pdb.C5     /= scal_c5
     
     # conductivity      D = a + b * np.exp(-T/c) + d * np.exp(-T/e)
    
