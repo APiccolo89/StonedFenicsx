@@ -60,11 +60,11 @@ def _compute_lithostatic_pressure(nz,ph,g,dz,T,pdb):
 # M and D are different in the predictor and corrector step 
 #-----------------------------------------------------------------------------------------
 @njit
-def _compute_Cp_k_rho(ph,pdb,Cp,k,rho,T,lit_p,ind_z):
+def _compute_Cp_k_rho(ph,pdb,Cp,k,rho,T,p,ind_z):
     it = len(T)
 
     for i in range(it):
-        Cp[i], rho[i], k[i] = compute_thermal_properties(pdb,T[i],p,ph)
+        Cp[i], rho[i], k[i] = compute_thermal_properties(pdb,T[i],p[i],ph[i])
         
 
     return Cp,k,rho
@@ -287,7 +287,7 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
 
     z    = np.arange(0,nz*dz,dz)
     ph   = np.zeros([nz],dtype = np.int32) # I assume that everything is mantle 
-
+    ph[z<6000/scal.L] = np.int32(1)
     for i in range(0,nz):
         if z[i] == depth_melt:
             index_depth_melt = i
@@ -315,8 +315,11 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
     
 
 
-    temperature = zeros([nt,nz],dtype=np.float64)
-    pressure    = zeros([nt,nz],dtype=np.float64)
+    temperature       = zeros([nt,nz],dtype=np.float64)
+    pressure          = zeros([nt,nz],dtype=np.float64)
+    conductivity      = zeros([nt,nz],dtype=np.float64)
+    capacity          = zeros([nt,nz],dtype=np.float64)
+    density           = zeros([nt,nz],dtype=np.float64)
 
     T_1t = zeros([nt,nz],dtype=np.float64)
     temperature[0,:] = Told
@@ -327,6 +330,10 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
     k_m = zeros((nz),dtype=np.float64)
     heat_capacity_m = zeros((nz),dtype=np.float64)
     density_m = zeros((nz),dtype=np.float64)
+    k_tmp = zeros((nz),dtype=np.float64)
+    Cp_tmp = zeros((nz),dtype=np.float64)
+    rho_tmp = zeros((nz),dtype=np.float64)
+
 
     ind_z_lit = np.where(z>=120e3/scal.L)[0][0] # I force the temperature to be T_max at this dept -> Otherwise I have a temperature jump, and i do not know how much
     for time in range(1,nt):
@@ -399,19 +406,114 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
 
             # end for-loop predictor-corrector step 
         lit_p = _compute_lithostatic_pressure(nz,ph,g,dz,Told,pdb)
+        Cp_tmp,k_tmp,rho_tmp = _compute_Cp_k_rho(ph,pdb,Cp_tmp,k_tmp,rho_tmp,Tnew,lit_p,0)
         temperature[time,:] = Tnew
         pressure[time,:]    = lit_p
+        capacity[time,:]    = Cp_tmp
+        conductivity[time,:] = k_tmp 
+        density[time,:]      = rho_tmp
         
     # -> Save the actual LHS 
     # Correction 
-    temperature[:,-z<-120e3/scal.L] = ctrl.Tmax
+    #temperature[:,-z<-120e3/scal.L] = ctrl.Tmax
 
     # Current age index
     current_age_index = np.where(t[0] >= lhs.c_age_plate)[0][0]
     lhs.LHS[:] = temperature[current_age_index]
     lhs.z[:] = - z
 
+    TTime,ZZ = np.meshgrid(t[0],z)
+    TTime = TTime*scal.T/365.25/60/60/24/1e6
+    TTime = TTime[:,1::]
+    ZZ    = ZZ[:,1::] 
+    ZZ    = ZZ*scal.L/1e3
+    Tem   = temperature.T[:,1::]*scal.Temp - 273.15
+    Cp    = capacity.T[:,1::]*scal.Cp 
+    k     = conductivity.T[:,1::]*scal.k 
+    rho   = density.T[:,1::]*scal.rho 
+    LP   = pressure.T[:,1::]*scal.stress/1e9
+
+    
+    
+    import cmcrameri as cmc
+    
+    
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["mathtext.fontset"] = "cm"
+    plt.rcParams["mathtext.rm"] = "serif"
+    
+    
+    fg = plt.figure(figsize=(10,6))
+    ax0 = fg.gca()
+    a = ax0.contourf(TTime,-ZZ,Tem, levels=20, cmap='cmc.lipari')
+    
+    plt.colorbar(a, label=r'T, $[^{\circ}C]$', location='bottom')    
+    plt.ylabel('Depth [km]')
+    plt.xlabel('Time  [Myr]')
+    plt.title('Plate model')
+    plt.show()
+    plt.savefig('Temp.png')
+
+    
+    fg = plt.figure(figsize=(10,6))
+    ax0 = fg.gca()
+    a = ax0.contourf(TTime,-ZZ,Cp, levels=20, cmap='cmc.lipari')
+    plt.colorbar(a, label=r'Cp, $[J/K/kg]$', location='bottom')    
+    plt.ylabel('Depth [km]')
+    plt.xlabel('Time  [Myr]')
+    plt.title('Plate model')
+    plt.show()
+    fg.savefig('Cp.png')
+
+    
+    fg = plt.figure(figsize=(10,6))
+    ax0 = fg.gca()
+    a = ax0.contourf(TTime,-ZZ,k,  levels=40, cmap='cmc.nuuk')
+
+
+    plt.colorbar(a, label=r'k, $[W/K/m]$', location='bottom')    
+    plt.ylabel('Depth [km]')
+    plt.xlabel('Time  [Myr]')
+    plt.title('Plate model')
+    plt.show()
+    fg.savefig('Condu.png')
+
+    
+    fg = plt.figure(figsize=(10,6))
+    ax0 = fg.gca()
+    a = ax0.contourf(TTime,-ZZ,rho, levels=10, cmap='cmc.lipari')
+
+    plt.colorbar(a, label=r'$\rho$, $[kg/m^3]$', location='bottom')    
+    plt.ylabel('Depth [km]')
+    plt.xlabel('Time  [Myr]')
+    plt.title('Plate model')
+    plt.show()
+    fg.savefig('rho.png')
+    fg = plt.figure(figsize=(10,6))
+    ax0 = fg.gca()
+    a = ax0.contourf(TTime,-ZZ,LP, levels=10, cmap='cmc.lipari')
+
+    plt.colorbar(a, label=r'$P$, $[GPa]$', location='bottom')    
+    plt.ylabel('Depth [km]')
+    plt.xlabel('Time  [Myr]')
+    plt.title('Plate model')
+    plt.show()
+    fg.savefig('Pressure.png')
+
+
+
     return lhs, t, temperature
+
+
+def compute_topography(T,rho):
+    
+    
+    
+    
+    
+    pass
+    
+    #return H 
 
 
 @timing_function

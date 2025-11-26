@@ -177,7 +177,7 @@ class Thermal_diffusivity():
 
 
 class Lattice_Diffusivity():
-    def __init__(a=0.0,b=0.0,c=1.0,d=0.0,e=1.0,f=0.0,g=1.0):
+    def __init__(self,a=0.0,b=0.0,c=1.0,d=0.0,e=1.0,f=0.0,g=1.0):
         
         self.a = a 
         
@@ -255,7 +255,7 @@ def _check_rheological(tag:str) -> Rheological_flow_law:
 def _check_diffusivity(tag:str) ->Lattice_Diffusivity:
 
 
-    if tag == 'constant':
+    if tag == 'Constant':
         # empty rheological flow law to fill it
         return Lattice_Diffusivity()
     else: 
@@ -296,7 +296,7 @@ spec_phase = [
     ("k_e", float64[:]),     # Radiative polynomial coefficients [W/m/K^3]
     ("k_f", float64[:]),     # Pressure dependency               [W/m/K/Pa]
     
-    ("k_0", float64[:]),     # Constant conductivity             [W/m/k] 
+    ("k0", float64[:]),     # Constant conductivity             [W/m/k] 
     ("option_k", int32[:]),  # Option for conductivity calculation
 
     # Density parameters
@@ -311,8 +311,8 @@ spec_phase = [
     
     
     
-    ("A  ",float64), # Ref conductivity A 
-    ("B  ",float64), # Ref conductivity B 
+    ("A",float64), # Ref conductivity A 
+    ("B",float64), # Ref conductivity B 
     ("T_A",float64), # T [K]
     ("T_B",float64), # T [K]
     ("x_A",float64), # T [K]
@@ -358,9 +358,9 @@ class PhaseDataBase:
         self.cohesion       = 10e6 
         self.A              = 1.8 * (1 - np.exp(-d**1.3 / 0.15)) - (1 - np.exp(-d**0.5 / 5.0))
         self.B              = 11.7 * np.exp(-d / 0.159) + 6.0 * np.exp(-d**3 / 10.0)
-        self.T_A              = 490.0 + 1850.0 * np.exp(-d**0.315 / 0.825) + 875.0 * np.exp(-d / 0.18)
+        self.T_A            = 490.0 + 1850.0 * np.exp(-d**0.315 / 0.825) + 875.0 * np.exp(-d / 0.18)
         self.T_B            = 2700.0 + 9000.0 * np.exp(-d**0.5 / 0.205)
-        self.x_A            = 167.5 + 505.0 * np.exp(-d**0.5 / 0.85           )
+        self.x_A            = 167.5 + 505.0 * np.exp(-d**0.5 / 0.85)
         self.x_B            = 465.0 + 1700.0 * np.exp(-d**0.94 / 0.175) 
         
         
@@ -406,15 +406,7 @@ class PhaseDataBase:
         self.k_e        = np.ones((number_phases), dtype=np.float64)             # Radiative heat transfer polynomial coefficients [W/m/K^3]        
         self.k_f        = np.zeros((number_phases), dtype = np.float64)           # 
         # Radiative heat transfer 
-        self.option_k   = np.zeros(number_phases, dtype=np.int32)                 # Option for heat conductivity calculation
-        
-        self.k_A         = 0.0
-        self.k_B         = 0.0
-        self.T_A         = 0.0
-        self.T_B         = 0.0
-        self.x_A         = 0.0
-        self.x_B         = 0.0
-        
+        self.radio_flag   = np.zeros(number_phases, dtype=np.float64)                 # Option for heat conductivity calculation
         
         self.radio      = np.zeros(number_phases, dtype=np.float64)               # Radiogenic
 
@@ -429,11 +421,11 @@ class PhaseDataBase:
 #-----------------------------------------------------------------------------------------------------------
 def _generate_phase(PD:PhaseDataBase,
                     id:int                 = -100,
-                    name_diffusion:str     = '',
+                    name_diffusion:str     = 'Constant',
                     Edif:float             = -1e23, 
                     Vdif:float             = -1e23,
                     Bdif:float             = -1e23, 
-                    name_dislocation:float = '',
+                    name_dislocation:float = 'Constant',
                     n:float                = -1e23,
                     Edis:float             = -1e23,
                     Vdis:float             = -1e23, 
@@ -444,6 +436,7 @@ def _generate_phase(PD:PhaseDataBase,
                     eta:float              = 1e20,
                     name_capacity:str      = 'Constant',
                     name_conductivity:str  = 'Constant',
+                    name_density:str       = 'PT',
                     radio:float = 0.0,
                     radio_flag:float = 0)     -> PhaseDataBase:
     """
@@ -467,7 +460,7 @@ def _generate_phase(PD:PhaseDataBase,
     """
     PD.id[id-1] = id 
     id = id - 1 
-    if name_diffusion != 'constant':
+    if name_diffusion != 'Constant':
         A = _check_rheological(name_diffusion)
         PD.Edif[id] = A.E 
         PD.Vdif[id] = A.V
@@ -478,7 +471,7 @@ def _generate_phase(PD:PhaseDataBase,
         PD.Vdif[id] = Vdif 
     elif Bdif != -1e23:
         PD.Bdif[id] = Bdif  
-    if name_dislocation != 'constant':
+    if name_dislocation != 'Constant':
         A = _check_rheological(name_dislocation)
         PD.Edis[id] = A.E 
         PD.Vdis[id] = A.V
@@ -495,13 +488,20 @@ def _generate_phase(PD:PhaseDataBase,
     elif Bdis != -1e23:
         PD.Bdis[id] = Bdis  
     PD.eta[id] = eta
+ 
+    if name_diffusion == 'Constant' and name_dislocation == 'Constant': 
+        option_rheology = 0
+    elif name_dislocation == 'Constant': 
+        option_rheology = 1
+    else: 
+        option_rheology = 2 
+        
     PD.option_eta[id] = option_rheology
     
     PD.radio[id] = radio 
     # Heat capacity
     
-    PD.C0,PD.C1,PD.C2,PD.C3,PD.C4,PD.C5 =  release_heat_capacity_parameters(name_capacity, Cp)
-    PD.option_Cp[id] = option_Cp
+    PD.C0[id],PD.C1[id],PD.C2[id],PD.C3[id],PD.C4[id],PD.C5[id] = release_heat_capacity_parameters(Dic_Cp[name_capacity], Cp)
     
     
     TD = _check_diffusivity(name_conductivity)
@@ -511,19 +511,21 @@ def _generate_phase(PD:PhaseDataBase,
     PD.k_d[id] = TD.d 
     PD.k_e[id] = TD.e 
     PD.k_f[id] = TD.f 
-    PD.k0[id] = k0 * TD.g 
+    PD.k0[id] = k * TD.g 
     d = 0.5
     PD.radio_flag[id] = radio_flag 
     
-    PD.option_k[id]   = option_k    
     
     # Density
     PD.alpha0[id]     = 2.832e-5
     PD.alpha1[id]     = 3.79e-8 
     PD.Kb[id]         = (2*100e9*(1+0.25))/(3*(1-0.25*2))  # Bulk modulus [Pa]
     PD.rho0[id]       = rho0
+    if name_density == 'Constant':
+        PD.option_rho[id] = np.int32(0) 
+    else: 
+        PD.option_rho[id] = np.int32(2) 
     
-    PD.option_rho[id] = option_rho
     
     return PD 
 
@@ -593,6 +595,9 @@ def release_heat_capacity_parameters(tag:str,C0:float)->Tuple[float,float,float,
                 flag[1] = 'Fayalite'
             else: 
                 flag[1] = 'Mix'
+            
+            C0, C1, C2, C3, C4, C5 =  mantle_heat_capacity(flag)
+
         elif tag == 'BAFo' or tag == 'BAFay' or tag == 'BAFoFay01':
             
             flag = [1,None]           
@@ -605,7 +610,7 @@ def release_heat_capacity_parameters(tag:str,C0:float)->Tuple[float,float,float,
                 flag[1] = 'Mix'
         
             C0, C1, C2, C3, C4, C5 =  mantle_heat_capacity(flag)
-        elif tag == 'Oceanic_crust': 
+        if tag == 'OceanicCrust': 
             '''
             This is really annoying: Cp calculation is always Cp = C0 + C1T^x ... 
             The author of several paper seems to not understand to use a single consistent 
@@ -632,7 +637,7 @@ def compute_oceanic_crust() -> Tuple[float,float,float,float,float,float]:
     """
     # Olivine
     # ---- 
-    C0_0l = 1.6108 * 1e3 
+    C0_Ol = 1.6108 * 1e3 
     C1_Ol = -1.24788 * 1e4 
     C2_Ol = 0.0 
     C3_Ol = -1.728477*1e9 
@@ -659,16 +664,16 @@ def compute_oceanic_crust() -> Tuple[float,float,float,float,float,float]:
     fr_ol = 0.15; fr_au = 0.2; fr_pg = 0.65
     # --- 
     
-    C0 = fr_ol * C0_0l + fr_au * C0_au + fr_pg * C0_pg
-    C1 = fr_ol * C1_0l + fr_au * C1_au + fr_pg * C1_pg
-    C2 = fr_ol * C2_0l + fr_au * C2_au + fr_pg * C2_pg
-    C3 = fr_ol * C3_0l + fr_au * C3_au + fr_pg * C3_pg
-    C4 = fr_ol * C4_0l + fr_au * C4_au + fr_pg * C4_pg
-    C5 = fr_ol * C5_0l + fr_au * C5_au + fr_pg * C5_pg
+    C0 = fr_ol * C0_Ol + fr_au * C0_au + fr_pg * C0_pg
+    C1 = fr_ol * C1_Ol + fr_au * C1_au + fr_pg * C1_pg
+    C2 = fr_ol * C2_Ol + fr_au * C2_au + fr_pg * C2_pg
+    C3 = fr_ol * C3_Ol + fr_au * C3_au + fr_pg * C3_pg
+    C4 = fr_ol * C4_Ol + fr_au * C4_au + fr_pg * C4_pg
+    C5 = fr_ol * C5_Ol + fr_au * C5_au + fr_pg * C5_pg
     
     # --- 
     
-    return C0, C1, C2, C3, C4, C4, C5
+    return C0, C1, C2, C3, C4, C5
 
 
 def mantle_heat_capacity(flag: list) -> Tuple[float,float,float,float,float,float]:

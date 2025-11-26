@@ -124,7 +124,7 @@ def heat_conductivity(pdb,T,p,rho,Cp,ph):
     
     kappa_p   = np.exp(pdb.k_f[ph] * p)  
 
-    k = pdb.k0[ph] + kappa_lat * kappa_p * Cp * rho + k_rad * pdb.flag_radio[ph]
+    k = pdb.k0[ph] + kappa_lat * kappa_p * Cp * rho + k_rad * pdb.radio_flag[ph]
 
     return k 
 #---------------------------------------------------------------------------------
@@ -132,7 +132,7 @@ def heat_conductivity(pdb,T,p,rho,Cp,ph):
 @njit
 def heat_capacity(pdb,T,ph):
 
-    C_p = pdb.C0[ph] + pdb.C1[ph] * (T**(-0.5)) +pdb.C2[ph] * T**(-2.0) + pdb.C3[ph] * (T**(-3.)) + pdb.C4[ph]* T + pdb.C5[ph] * T**2
+    C_p = pdb.C0[ph] + pdb.C1[ph] * (T**(-0.5)) + pdb.C2[ph] * T**(-2.0) + pdb.C3[ph] * (T**(-3.)) + pdb.C4[ph]* T + pdb.C5[ph] * T**2
         
     return C_p
 #---------------------------------------------------------------------------------
