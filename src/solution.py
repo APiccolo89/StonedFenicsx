@@ -585,10 +585,10 @@ class Global_thermal(Problem):
         
         rho_k = density_FX(pdb, T, p_k, D.phase, D.mesh)  # frozen
         
-        k_k = heat_conductivity_FX(pdb, T, p_k, D.phase, D.mesh)  # frozen
         
         Cp_k = heat_capacity_FX(pdb, T, D.phase, D.mesh)  # frozen
 
+        k_k = heat_conductivity_FX(pdb, T, p_k, D.phase, D.mesh, Cp_k, rho_k)  # frozen
 
         f    = self.energy_source# source term
         
@@ -624,16 +624,19 @@ class Global_thermal(Problem):
         # -> Source term is assumed constant in time and do not vary between the timesteps 
         
         rho_k = density_FX(pdb, T_N, p_k, D.phase, D.mesh)  # frozen
-        
-        k_k = heat_conductivity_FX(pdb, T_N, p_k, D.phase, D.mesh)  # frozen
-        
+                
         Cp_k = heat_capacity_FX(pdb, T_N, D.phase, D.mesh)  # frozen
+
+        k_k = heat_conductivity_FX(pdb, T_N, p_k, D.phase, D.mesh, Cp_k, rho_k)  # frozen
+
+
         
         rho_k0 = density_FX(pdb, T_O, p_k, D.phase, D.mesh)  # frozen
-        
-        k_k0 = heat_conductivity_FX(pdb, T_O, p_k, D.phase, D.mesh)  # frozen
-        
+                
         Cp_k0 = heat_capacity_FX(pdb, T_O, D.phase, D.mesh)  # frozen
+        
+        k_k0 = heat_conductivity_FX(pdb, T_O, p_k, D.phase, D.mesh, Cp_k, rho_k)  # frozen
+
                 
         rhocp        =  (rho_k * Cp_k)
 

@@ -6,7 +6,8 @@ from numba.experimental import jitclass
 from numba import float64, int32
 from typing import Tuple, List
 from typing import Optional
-from numba import njit, prange
+from .utils import print_ph
+
 #-----
 Dic_rheo ={'Constant'              :  'Linear', 
           'Hirth_Dry_Olivine_diff' :  'Dislocation_DryOlivine',
@@ -458,6 +459,20 @@ def _generate_phase(PD:PhaseDataBase,
     rho : density 
     => output -> update the id_th phase_db 
     """
+    
+    
+    if (not name_diffusion in Dic_rheo) or (not name_dislocation in Dic_rheo):
+        print_ph('The avaiable options are: ')
+        for k in Dic_rheo: 
+            print_ph('%s; '%k)
+        
+        if (not name_diffusion in Dic_rheo):
+            raise ValueError("Error: %s is not a heat a Rheological option"%name_diffusion)
+        else: 
+            raise ValueError("Error: %s is not a heat a Rheological option"%name_dislocation)
+
+            
+    
     PD.id[id-1] = id 
     id = id - 1 
     if name_diffusion != 'Constant':
@@ -500,9 +515,25 @@ def _generate_phase(PD:PhaseDataBase,
     
     PD.radio[id] = radio 
     # Heat capacity
+
+    
+    if not name_capacity in Dic_Cp:
+        print_ph('The avaiable options are: ')
+        for k in Dic_Cp: 
+            print_ph('%s; '%k)
+        
+        raise ValueError("Error: %s is not a heat Capacity option"%name_capacity)
     
     PD.C0[id],PD.C1[id],PD.C2[id],PD.C3[id],PD.C4[id],PD.C5[id] = release_heat_capacity_parameters(Dic_Cp[name_capacity], Cp)
     
+    
+    
+    if not name_conductivity in Dic_conductivity:
+        print_ph('The avaiable options are: ')
+        for k in Dic_conductivity: 
+            print_ph('%s; '%k)
+        
+        raise ValueError("Error: %s is not a heat Conductivity option"%name_conductivity)
     
     TD = _check_diffusivity(name_conductivity)
     PD.k_a[id] = TD.a 

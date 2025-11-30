@@ -60,9 +60,38 @@ def evaluate_material_property(expr,P0):
     prb.solve()
     return prop_f
 
+#----------------------------------------------------------------------------------
+def heat_conductivity_FX(pdb,T,p,phase,M,Cp,rho):
+    
+    ph      = np.int32(phase.x.array)
+    P0      = phase.function_space
+    # Gather material parameters as UFL expressions via indexing
+    """
+    """
+    k0      = fem.Function(P0)  ; k0.x.array[:]    =  pdb.k0[ph]
+    fr      = fem.Function(P0)  ; fr.x.array[:]    = pdb.radio_flag[ph]
+    
+    k_a     = fem.Function(P0)  ; k_a.x.array[:]     =  pdb.k_a[ph]
+    k_b     = fem.Function(P0)  ; k_b.x.array[:]     =  pdb.k_b[ph]
+    k_c     = fem.Function(P0)  ; k_c.x.array[:]     =  pdb.k_c[ph]
+    k_d     = fem.Function(P0)  ; k_d.x.array[:]     =  pdb.k_d[ph]
+    k_e     = fem.Function(P0)  ; k_e.x.array[:]     =  pdb.k_e[ph]
+    k_f     = fem.Function(P0)  ; k_f.x.array[:]     =  pdb.k_f[ph]
+    
+    
 
+
+    k_rad = pdb.A * exp(-(T-pdb.T_A)**2/ (2*pdb.x_A ** 2 )) + pdb.B * exp(-(T - pdb.T_B)**2 / (2* pdb.x_B**2))
+
+    kappa_lat = k_a + k_b * exp(-(T-pdb.Tref)/k_c) + k_d * exp(-(T-pdb.Tref)/k_e)
+    
+    kappa_p   = exp(k_f * p)  
+
+    k = k0 + kappa_lat * kappa_p * Cp * rho + k_rad * fr 
+
+    return k 
 #---------------------------------------------------------------------------------
-def heat_conductivity_FX(pdb, T, p, phase, M):
+def heat_conductivity_FX_OLD(pdb, T, p, phase, M):
     
     ph      = np.int32(phase.x.array)
     P0      = phase.function_space
@@ -90,12 +119,17 @@ def heat_capacity_FX(pdb, T, phase, M):
     ph      = np.int32(phase.x.array)
     P0      = phase.function_space
             
-    Cp0       = fem.Function(P0)  ; Cp0.x.array[:]     =   pdb.C0[ph]
+    Cp0       = fem.Function(P0)  ; Cp0.x.array[:]     =  pdb.C0[ph]
     Cp1       = fem.Function(P0)  ; Cp1.x.array[:]     =  pdb.C1[ph]
+    Cp2       = fem.Function(P0)  ; Cp2.x.array[:]     =  pdb.C2[ph]
     Cp3       = fem.Function(P0)  ; Cp3.x.array[:]     =  pdb.C3[ph]
+    Cp4       = fem.Function(P0)  ; Cp4.x.array[:]     =  pdb.C4[ph]
+    Cp5       = fem.Function(P0)  ; Cp5.x.array[:]     =  pdb.C5[ph]
+
+
 
     
-    C_p = Cp0 + Cp1 * (T**(-0.5)) + Cp3 * (T**(-3.))
+    C_p = Cp0 + Cp1 * (T**(-0.5)) + Cp2 * T**(-2.) + Cp3 * (T**(-3.)) + Cp4 * T + Cp5 * T**2
 
     return C_p
   

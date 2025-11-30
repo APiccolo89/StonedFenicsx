@@ -142,7 +142,7 @@ class OUTPUT():
         Cp2.x.scatter_forward()
 
         # k 
-        k = heat_conductivity_FX(pdb,S.T_O,S.PL,D.phase,D)
+        k = heat_conductivity_FX(pdb,S.T_O,S.PL,D.phase,D,Cp,rho)
         k2 = evaluate_material_property(k,self.temp_V)
         k2.name = "k  [W/m/k]"
         k2.x.array[:] = k2.x.array[:]*sc.k

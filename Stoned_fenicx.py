@@ -123,11 +123,11 @@ def StonedFenicsx():
                     c_age_plate = IP.c_age_plate)
                            
     # Phase properties
-    Pdb = PhaseDataBase(7,IP.friction_angle*np.pi/180)
+    Pdb = PhaseDataBase(7,15*np.pi/180)
     # Phase 1
     Pdb = _generate_phase(Pdb,
                           1, 
-                          name_capacity='Berman_Fo_Fa_01',
+                          name_capacity='Berman_Fo_Fa_001',
                           name_conductivity='Mantle',
                           radio_flag = 1.0,
                           rho0 = 3300)
@@ -143,14 +143,14 @@ def StonedFenicsx():
                           3,
                           name_diffusion='Van_Keken_diff',
                           name_dislocation='Van_Keken_disl',
-                          name_capacity='Bermann_Aranovich_Fo_Fa_0_1',
+                          name_capacity='Berman_Fo_Fa_01',
                           name_conductivity='Mantle',
                           radio_flag = 1.0,
                           rho0 = 3300)
     # Phase 4 
     Pdb = _generate_phase(Pdb,
                           4,
-                          name_capacity='Bermann_Aranovich_Fo_Fa_0_1',
+                          name_capacity='Berman_Fo_Fa_01',
                           name_conductivity='Mantle',
                           radio_flag = 1.0,
                           rho0 = 3300)
@@ -191,7 +191,6 @@ def StonedFenicsx():
     ctrl = _scaling_control_parameters(ctrl, sc)
     Pdb = _scaling_material_properties(Pdb,sc)
     lhs = _scale_parameters(lhs, sc)
-    lhs_ctrl = compute_initial_LHS(ctrl,lhs, sc, Pdb)  
 
     M = cm(io_ctrl, sc,g_input,ctrl)
     
