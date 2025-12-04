@@ -59,6 +59,13 @@ def _compute_lithostatic_pressure(nz,ph,g,dz,T,pdb):
 # first, we need to build M and D
 # M and D are different in the predictor and corrector step 
 #-----------------------------------------------------------------------------------------
+# Melting parametrisation
+
+
+
+
+
+#-----------------------------------------------------------------------------------------
 @njit
 def _compute_Cp_k_rho(ph,pdb,Cp,k,rho,T,p,ind_z):
     it = len(T)
@@ -445,8 +452,10 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
     
     fg = plt.figure(figsize=(10,6))
     ax0 = fg.gca()
-    a = ax0.contourf(TTime,-ZZ,Tem, levels=20, cmap='cmc.lipari')
-    
+    a = ax0.contourf(TTime,-ZZ,Tem, levels=np.linspace(100,1300,num=13), cmap='cmc.lipari')
+    ax0.set_xlim(0,150)
+    ax0.set_ylim(-150,0.0)
+
     plt.colorbar(a, label=r'T, $[^{\circ}C]$', location='bottom')    
     plt.ylabel('Depth [km]')
     plt.xlabel('Time  [Myr]')

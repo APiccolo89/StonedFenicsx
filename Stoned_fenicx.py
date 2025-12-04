@@ -78,8 +78,8 @@ def StonedFenicsx():
         input_path = path_test+'/input.py'
     
     except: 
-        path_test = "../../Tests/T3"
-        input_path = "../../Tests/T3/input.py"
+        path_test = "../../Results/T1"
+        input_path = "input.py"
         steady_state = 1
     
     module_name = os.path.splitext(os.path.basename(input_path))[0]  # e.g. "input_case"
@@ -123,11 +123,11 @@ def StonedFenicsx():
                     c_age_plate = IP.c_age_plate)
                            
     # Phase properties
-    Pdb = PhaseDataBase(7,15*np.pi/180)
+    Pdb = PhaseDataBase(7,5*np.pi/180)
     # Phase 1
     Pdb = _generate_phase(Pdb,
                           1, 
-                          name_capacity='Berman_Fo_Fa_001',
+                          name_capacity='Berman_Fo_Fa_01',
                           name_conductivity='Mantle',
                           radio_flag = 1.0,
                           rho0 = 3300)

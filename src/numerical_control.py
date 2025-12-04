@@ -173,7 +173,7 @@ class ctrl_LHS:
         recalculate=0,        # flag for recomputation
         van_keken=1,          # benchmark flag
         d_RHS=-50e3,
-        z_min= 140e3# distance for RHS term
+        z_min= 400e3# distance for RHS term
     ):
         if dt > 0.1: 
             raise ValueError('dt: The input data must be in Myr. This timestep will be blow up the system. As a general remark: all input SI is Myr for time related parameters')
