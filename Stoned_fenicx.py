@@ -141,8 +141,8 @@ def StonedFenicsx():
     # Phase 3
     Pdb = _generate_phase(Pdb,
                           3,
-                          name_diffusion='Van_Keken_diff',
-                          name_dislocation='Van_Keken_disl',
+                          name_diffusion='Constant',
+                          name_dislocation='Constant',
                           name_capacity='Berman_Fo_Fa_01',
                           name_conductivity='Mantle',
                           radio_flag = 1.0,

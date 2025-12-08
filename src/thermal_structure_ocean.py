@@ -516,75 +516,6 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
 
     
     
-    import cmcrameri as cmc
-    
-    
-    plt.rcParams["font.family"] = "serif"
-    plt.rcParams["mathtext.fontset"] = "cm"
-    plt.rcParams["mathtext.rm"] = "serif"
-    
-    
-    fg = plt.figure(figsize=(10,6))
-    ax0 = fg.gca()
-    a = ax0.contourf(TTime,-ZZ,Tem, levels=[0,100,200,300,500,600,700,800,900,1000,1100,1200,1300,1400], cmap='cmc.lipari')
-    b = ax0.contour(TTime, -ZZ, Tem,levels=[100,200,300,500,600,700,800,900,1000,1100,1200,1300],colors='white')
-    
-    ax0.set_xlim(0,150)
-    ax0.set_ylim(-150,0.0)
-
-    plt.colorbar(a, label=r'T, $[^{\circ}C]$', location='bottom')    
-    plt.ylabel('Depth [km]')
-    plt.xlabel('Time  [Myr]')
-    plt.title('Plate model')
-    plt.show()
-    plt.savefig('Temp.png')
-
-    
-    fg = plt.figure(figsize=(10,6))
-    ax0 = fg.gca()
-    a = ax0.contourf(TTime,-ZZ,Cp, levels=20, cmap='cmc.lipari')
-    plt.colorbar(a, label=r'Cp, $[J/K/kg]$', location='bottom')    
-    plt.ylabel('Depth [km]')
-    plt.xlabel('Time  [Myr]')
-    plt.title('Plate model')
-    plt.show()
-    fg.savefig('Cp.png')
-
-    
-    fg = plt.figure(figsize=(10,6))
-    ax0 = fg.gca()
-    a = ax0.contourf(TTime,-ZZ,k,  levels=40, cmap='cmc.nuuk')
-
-
-    plt.colorbar(a, label=r'k, $[W/K/m]$', location='bottom')    
-    plt.ylabel('Depth [km]')
-    plt.xlabel('Time  [Myr]')
-    plt.title('Plate model')
-    plt.show()
-    fg.savefig('Condu.png')
-
-    
-    fg = plt.figure(figsize=(10,6))
-    ax0 = fg.gca()
-    a = ax0.contourf(TTime,-ZZ,rho, levels=10, cmap='cmc.lipari')
-
-    plt.colorbar(a, label=r'$\rho$, $[kg/m^3]$', location='bottom')    
-    plt.ylabel('Depth [km]')
-    plt.xlabel('Time  [Myr]')
-    plt.title('Plate model')
-    plt.show()
-    fg.savefig('rho.png')
-    fg = plt.figure(figsize=(10,6))
-    ax0 = fg.gca()
-    a = ax0.contourf(TTime,-ZZ,LP, levels=10, cmap='cmc.lipari')
-
-    plt.colorbar(a, label=r'$P$, $[GPa]$', location='bottom')    
-    plt.ylabel('Depth [km]')
-    plt.xlabel('Time  [Myr]')
-    plt.title('Plate model')
-    plt.show()
-    fg.savefig('Pressure.png')
-
 
 
     return lhs, t, temperature
@@ -688,6 +619,75 @@ def compute_initial_LHS(ctrl,lhs,scal,pdb):
         ax.set_xlabel('Age, [Myr]')
         ax.set_ylabel('Depth, [km]')
         fg.savefig(fn2,dpi=600,transparent=False)
+
+    import cmcrameri as cmc
+    
+    
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["mathtext.fontset"] = "cm"
+    plt.rcParams["mathtext.rm"] = "serif"
+    
+    
+    fg = plt.figure(figsize=(10,6))
+    ax0 = fg.gca()
+    a = ax0.contourf(TTime,-ZZ,Tem, levels=[0,100,200,300,500,600,700,800,900,1000,1100,1200,1300,1400], cmap='cmc.lipari')
+    b = ax0.contour(TTime, -ZZ, Tem,levels=[100,200,300,500,600,700,800,900,1000,1100,1200,1300],colors='white')
+    
+    ax0.set_xlim(0,150)
+    ax0.set_ylim(-150,0.0)
+
+    plt.colorbar(a, label=r'T, $[^{\circ}C]$', location='bottom')    
+    plt.ylabel('Depth [km]')
+    plt.xlabel('Time  [Myr]')
+    plt.title('Plate model')
+    plt.show()
+    plt.savefig('Temp.png')
+
+    
+    fg = plt.figure(figsize=(10,6))
+    ax0 = fg.gca()
+    a = ax0.contourf(TTime,-ZZ,Cp, levels=20, cmap='cmc.lipari')
+    plt.colorbar(a, label=r'Cp, $[J/K/kg]$', location='bottom')    
+    plt.ylabel('Depth [km]')
+    plt.xlabel('Time  [Myr]')
+    plt.title('Plate model')
+    plt.show()
+    fg.savefig('Cp.png')
+
+    
+    fg = plt.figure(figsize=(10,6))
+    ax0 = fg.gca()
+    a = ax0.contourf(TTime,-ZZ,k,  levels=40, cmap='cmc.nuuk')
+
+
+    plt.colorbar(a, label=r'k, $[W/K/m]$', location='bottom')    
+    plt.ylabel('Depth [km]')
+    plt.xlabel('Time  [Myr]')
+    plt.title('Plate model')
+    plt.show()
+    fg.savefig('Condu.png')
+
+    
+    fg = plt.figure(figsize=(10,6))
+    ax0 = fg.gca()
+    a = ax0.contourf(TTime,-ZZ,rho, levels=10, cmap='cmc.lipari')
+
+    plt.colorbar(a, label=r'$\rho$, $[kg/m^3]$', location='bottom')    
+    plt.ylabel('Depth [km]')
+    plt.xlabel('Time  [Myr]')
+    plt.title('Plate model')
+    plt.show()
+    fg.savefig('rho.png')
+    fg = plt.figure(figsize=(10,6))
+    ax0 = fg.gca()
+    a = ax0.contourf(TTime,-ZZ,LP, levels=10, cmap='cmc.lipari')
+
+    plt.colorbar(a, label=r'$P$, $[GPa]$', location='bottom')    
+    plt.ylabel('Depth [km]')
+    plt.xlabel('Time  [Myr]')
+    plt.title('Plate model')
+    plt.show()
+    fg.savefig('Pressure.png')
 
 
     """

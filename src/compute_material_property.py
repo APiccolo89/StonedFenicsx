@@ -143,7 +143,7 @@ def compute_radiogenic(pdb, hs, phase, M):
     Hrf       = fem.Function(hs.function_space) 
     Hrf.interpolate(Hr)
     
-    hs.x.array[:]       = hs.x.array[:] + Hrf.x.array[:] 
+    hs.x.array[:]       = Hrf.x.array[:] 
     hs.x.scatter_forward()
     return hs 
     
@@ -216,6 +216,25 @@ def density_FX(pdb, T, p, phase, M):
     )
 
     return rho 
+#----------------------------------
+def alpha_FX(pdb, T, p, phase, M):
+    """
+    Compute density as a UFL expression, FEniCSx-compatible.
+    """
+    # Again: apperently the phase field is converted into numpy 64. First I need to extract the array, then, I need to convert into int32 
+    ph = np.int32(phase.x.array)
+    P0 = phase.function_space
+    # Gather material parameters as UFL expressions via indexing
+    alpha0  = fem.Function(P0)  ; alpha0.x.array[:]  =  pdb.alpha0[ph]
+    alpha1  = fem.Function(P0)  ; alpha1.x.array[:]  =  pdb.alpha1[ph] 
+
+    # Base density (with temperature dependence)
+    alpha =  (alpha0 * (T - pdb.Tref) + (alpha1 / 2.0) * (T**2 - pdb.Tref**2))
+
+
+    return alpha 
+
+
 #-----------------------------------
 def compute_viscosity_FX(e,T_in,P_in,pdb,phase,M,sc):
     """

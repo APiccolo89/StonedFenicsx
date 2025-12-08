@@ -579,12 +579,27 @@ class Global_thermal(Problem):
         self.energy_source = source.copy()
 
     #------------------------------------------------------------------
+    def compute_adiabatic_heating(self,D,pdb,u,T,p,ctrl):
+        from .compute_material_property import alpha_FX
+        
+        if ctrl.adiabatic_heating == 1: 
+            
+        
+            alpha = alpha_FX(pdb,T,p,D.phase,D)
+            adiabatic_heating = alpha * T * ufl.inner(ufl.grad(p), u) 
+        else: 
+            adiabatic_heating = ufl.Constant(0.0)
+        
+        
+        self.adiabatic_heating = adiabatic_heating
+        
+
+    #------------------------------------------------------------------
 
     def set_linear_picard_SS(self,p_k,T,u_global,D,pdb, it=0):
         # Function that set linear form and linear picard for picard iteration
         
         rho_k = density_FX(pdb, T, p_k, D.phase, D.mesh)  # frozen
-        
         
         Cp_k = heat_capacity_FX(pdb, T, D.phase, D.mesh)  # frozen
 
@@ -597,11 +612,15 @@ class Global_thermal(Problem):
         if it == 0: 
             
             diff = ufl.inner(k_k * ufl.grad(self.trial0), ufl.grad(self.test0)) * dx
+            
             adv  = rho_k * Cp_k *ufl.dot(u_global, ufl.grad(self.trial0)) * self.test0 * dx
             
             a = fem.form(diff + adv)
-            L = fem.form(f * self.test0 * dx + self.shear_heating)      
+            
+            L = fem.form((f + self.adiabatic_heating) * self.test0 * dx + self.shear_heating )      
+        
         else: 
+        
             a = None
                 
 
@@ -646,6 +665,7 @@ class Global_thermal(Problem):
         
         f    = self.energy_source * self.test0 * dx + self.shear_heating # source term {energy_source is radiogenic heating compute before hand, shear heating is frictional heating already a form}
 
+        # Adiabatic term [Ex]
 
         # Linear operator with frozen coefficients
 
@@ -684,6 +704,7 @@ class Global_thermal(Problem):
         if it == 0:         
             self.shear_heating = self.compute_shear_heating(ctrl,pdb, S,getattr(M,'domainG'),geom,sc)
             self.compute_energy_source(getattr(M,'domainG'),pdb)
+            self.compute_adiabatic_heating(getattr(M,'domainG'),pdb,S.u_global,T,p_k,ctrl)
         
         a,L = self.set_linear_picard_SS(p_k,T,S.u_global,getattr(M,'domainG'),pdb)
         
@@ -935,6 +956,14 @@ class Global_thermal(Problem):
         )
 
         T_i.interpolate(fem.Expression(expr, X.element.interpolation_points()))
+        
+        
+        if ctrl.adiabatic_heating == 1: 
+            from .compute_material_property import alpha_FX, density_FX, heat_capacity_FX 
+            
+            
+            
+            
     
     
         return T_i 
