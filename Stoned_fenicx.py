@@ -95,7 +95,7 @@ def StonedFenicsx():
     ctrl = NumericalControls(g               = IP.g,
                             v_s              = np.asarray(IP.v_s),
                             slab_age         = IP.slab_age,
-                            time_max         = IP.time_max,
+                            time_max         = 1333,
                             time_dependent_v = IP.time_dependent_v,
                             steady_state     = steady_state,
                             slab_bc          = IP.slab_bc,

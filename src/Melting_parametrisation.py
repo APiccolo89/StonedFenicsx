@@ -4,9 +4,10 @@ import matplotlib.pyplot as plt
 
 
 class lithologies():
-    def __init__(self,Cp,S,Ts = None,Tcpx=None,TLl=None,TL = None,MCpx = None,dTs = None, dTL = None, dTLl = None):
+    def __init__(self,Cp=1187,S=407,fr = 0.15,alpha = 3e-5,Ts = None,Tcpx=None,TLl=None,TL = None,MCpx = None,dTs = None, dTL = None, dTLl = None):
         self.Cp    = Cp
-        self.alpha = 4e-5
+        self.alpha  = alpha 
+        self.alpha_l = 6.8e-5
         self.rho   = 3300 
         self.liq   = 2900 
         self.S     = S 
@@ -21,9 +22,8 @@ class lithologies():
         self.beta = 1.50 
         self.r0    = 0.5
         self.r1    = 0.08/1e9
-        self.fr    = 0.10 
+        self.fr    = fr
     
-    def SL(A,B,C,)
         
 def dry_differentiation(L,a,b,Tp):
     
@@ -53,7 +53,7 @@ def dFdP_derivative(L,P,T,dP,F):
 
 def dTdF_derivativeP(L,P,T,dP,F):
     
-    if F > L.Mcpx(P):
+    if F > L.Mcpx(L.fr,P):
 
         
         
@@ -88,7 +88,7 @@ def dTdP_derivativeF(L,P,T,dP,F):
         
     a0 = L.Ts(P)
     b0 = L.TLL(P)
-    c0 = L.Tcpx(P)
+    c0 = L.Tcpx(L.fr,P)
     d0 = L.TL(P)
     
     
@@ -99,7 +99,7 @@ def dTdP_derivativeF(L,P,T,dP,F):
     d1 = L.dTL(P)  # dTdP Tliquidus             
         
         
-    if F > L.Mcpx(P):
+    if F > L.Mcpx(L.fr,P):
 
         
         
@@ -136,7 +136,7 @@ def dTdP_derivativeF(L,P,T,dP,F):
 
 def dTdPS(L,P,T,Tp,dP):
     
-    F = compute_Fraction(T,L.TL(P),L.TLL(P),L.Ts(P),L.Tcpx(P),L.Mcpx(P))
+    F = compute_Fraction(T,L.TL(P),L.TLL(P),L.Ts(P),L.Tcpx(L.fr,P),L.Mcpx(L.fr,P))
     
     alpharho_l = 6.8e-5/L.liq
     alpharho_s = L.alpha/L.rho
@@ -150,9 +150,10 @@ def dTdPS(L,P,T,Tp,dP):
 def runge_kutta_algori(L,P,T,dP,F0,F1,Tp): 
 
     
-    
+    f = 1.0 
     if F0 == 0:
         dif = lambda P,T :dry_differentiation(L,P,  T, Tp)
+        f=0.0
     else: 
         dif = lambda P,T :dTdPS(L,P,T,Tp,dP)
 
