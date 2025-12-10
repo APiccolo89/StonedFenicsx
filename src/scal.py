@@ -65,6 +65,17 @@ def _scaling_material_properties(pdb,sc:Scal):
     pdb.P_Scal   = sc.stress 
     pdb.cohesion /= sc.stress 
     
+    # Radiative conductivity parameters 
+    
+    # The formula used by Richard and Grose yields a conductivity, thus, 
+    # thi
+    pdb.A   /= sc.k
+    pdb.B   /= sc.k 
+    pdb.T_A /= sc.Temp
+    pdb.T_B /= sc.Temp 
+    pdb.x_A /= sc.Temp 
+    pdb.x_B /= sc.Temp
+    
     # Viscosity
     pdb.eta     /= sc.eta 
     pdb.eta_min /= sc.eta
@@ -83,19 +94,26 @@ def _scaling_material_properties(pdb,sc:Scal):
     scal_c1     = sc.Energy/sc.M/sc.Temp**(0.5) 
     scal_c2     = (sc.Energy*sc.Temp)/sc.M
     scal_c3     = (sc.Energy*sc.Temp**2)/sc.M
+    scal_c4     = (sc.Energy)/sc.M/sc.Temp**2
+    scal_c5     = (sc.Energy)/sc.M/sc.Temp**3
 
     pdb.C0     /= sc.Cp
     pdb.C1     /= scal_c1 
     pdb.C2     /= scal_c2 
     pdb.C3     /= scal_c3 
+    pdb.C4     /= scal_c4 
+    pdb.C5     /= scal_c5
     
-    # conductivity     
+    # conductivity      D = a + b * np.exp(-T/c) + d * np.exp(-T/e)
+   
     pdb.k0    /= sc.k
-    pdb.a     /= sc.k/sc.stress 
-    # k_b / c are useless parameter from the Mckenzie parameterisation, keep them for potential use 
-    for i in range(4): 
-        scal_rad = (sc.Watt*sc.L)/sc.Temp**(1+i) 
-        pdb.k_d[:,i] /= scal_rad 
+
+    pdb.k_a        /= sc.L**2/sc.T           
+    pdb.k_b        /= sc.L**2/sc.T           
+    pdb.k_c        /= sc.Temp           
+    pdb.k_d        /= sc.L**2/sc.T           
+    pdb.k_e        /= sc.Temp           
+    pdb.k_f        /= sc.k/sc.stress
     
 
     pdb.alpha0 /= 1/sc.Temp 

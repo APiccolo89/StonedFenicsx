@@ -22,7 +22,7 @@ resolution_normal = 2.0e3  # To Do
 it_max            = 20 
 tol               = 1e-5 
 relax             = 0.9
-Tmax              = 1300.0
+Tmax              = 1333.0
 Ttop              = 0.0 
 g                 = 9.81 
 v_s               = [5.0,0.0]  # Convert cm/yr to m/s
@@ -47,8 +47,7 @@ friction_angle   = 1.0
 #---------------------------------------------------------------------------------------------------------
 # input/output control
 #---------------------------------------------------------------------------------------------------------
-test_name = 'case_Hobson_time_dependent_experiment2'
-path_save = '/Users/wlnw570/Work/Leeds/Output/Stonedphoenix/curved'
+test_name = 'Output'
 sname = test_name
 #---------------------------------------------------------------------------------------------------------
 # Scaling parameters
@@ -56,7 +55,7 @@ sname = test_name
 L       = 600e3          # length scale [m]
 stress  = 1e9          # stress scale [Pa]
 eta     = 1e21         # viscosity scale [Pa.s]
-Temp    = 1300.0       # temperature scale [K]
+Temp    = 1333.0       # temperature scale [K]
 #---------------------------------------------------------------------------------------------------------
 # Left boundary condition 
 #---------------------------------------------------------------------------------------------------------

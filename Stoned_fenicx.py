@@ -42,6 +42,7 @@ from src.scal                        import _scaling_control_parameters
 from src.scal                        import _scale_parameters
 from src.scal                        import _scaling_material_properties
 from src.solution                    import steady_state_solution,time_dependent_solution
+from src.thermal_structure_ocean     import compute_initial_LHS
 
 dict_options = {'Linear':1,
                 'SelfConsistent':2}
@@ -77,8 +78,8 @@ def StonedFenicsx():
         input_path = path_test+'/input.py'
     
     except: 
-        path_test = "../../Tests/T3"
-        input_path = "../../Tests/T3/input.py"
+        path_test = "../../Results/T2"
+        input_path = "input.py"
         steady_state = 1
     
     module_name = os.path.splitext(os.path.basename(input_path))[0]  # e.g. "input_case"
@@ -94,7 +95,7 @@ def StonedFenicsx():
     ctrl = NumericalControls(g               = IP.g,
                             v_s              = np.asarray(IP.v_s),
                             slab_age         = IP.slab_age,
-                            time_max         = IP.time_max,
+                            time_max         = 1333,
                             time_dependent_v = IP.time_dependent_v,
                             steady_state     = steady_state,
                             slab_bc          = IP.slab_bc,
@@ -108,7 +109,7 @@ def StonedFenicsx():
                             dt = IP.dt_sim)
     # IO controls
     io_ctrl = IOControls(test_name = IP.test_name,
-                        path_save = path_save,
+                        path_save = path_test,
                         sname = IP.sname)
     io_ctrl.generate_io()
     # Scaling parameters
@@ -122,70 +123,54 @@ def StonedFenicsx():
                     c_age_plate = IP.c_age_plate)
                            
     # Phase properties
-    Pdb = PhaseDataBase(7,IP.friction_angle*np.pi/180)
+    Pdb = PhaseDataBase(7,5*np.pi/180)
     # Phase 1
-    Pdb = _generate_phase(Pdb, 1, rho0 = IP.Phase1.rho0 , 
-                          option_rho = IP.Phase1.option_rho, 
-                          option_rheology = IP.Phase1.option_rheology, 
-                          option_k = IP.Phase1.option_k, option_Cp = IP.Phase1.option_Cp, 
-                          eta=IP.Phase1.eta,
-                          radio = IP.Phase1.radio)
+    Pdb = _generate_phase(Pdb,
+                          1, 
+                          name_capacity='Berman_Fo_Fa_01',
+                          name_conductivity='Mantle',
+                          radio_flag = 1.0,
+                          rho0 = 3300)
     # Phase 2
     Pdb = _generate_phase(Pdb,
                           2,
-                          rho0 = IP.Phase2.rho0,
-                          option_rho = IP.Phase2.option_rho, 
-                          option_rheology = IP.Phase2.option_rheology,
-                          option_k = IP.Phase2.option_k, 
-                          option_Cp = IP.Phase2.option_Cp, 
-                          eta=IP.Phase2.eta,
-                          radio = IP.Phase2.radio)
+                          name_capacity='Oceanic_crust',
+                          name_conductivity='OceanicCrust',
+                          radio_flag = 0.0,
+                          rho0 = 2900)
     # Phase 3
-    Pdb = _generate_phase(Pdb, 
-                          3, 
-                          rho0 = IP.Phase3.rho0 , 
-                          option_rho = IP.Phase3.option_rho, 
-                          option_rheology = IP.Phase3.option_rheology,
-                          option_k = IP.Phase3.option_k, 
-                          option_Cp = IP.Phase3.option_Cp, 
-                          name_diffusion=IP.Phase3.name_diffusion, 
-                          name_dislocation=IP.Phase3.name_dislocation,
-                          eta = IP.Phase3.eta,
-                          radio = IP.Phase3.radio)
-    # Phase 4
-    Pdb = _generate_phase(Pdb, 
-                          4, 
-                          rho0 = IP.Phase4.rho0 , 
-                          option_rho = IP.Phase4.option_rho, 
-                          option_rheology = IP.Phase4.option_rheology,
-                          option_k = IP.Phase4.option_k, 
-                          option_Cp = IP.Phase4.option_Cp, 
-                          eta=IP.Phase4.eta,
-                          radio = IP.Phase4.radio)
-    # Phase 5
-    Pdb = _generate_phase(Pdb, 
-                          5, 
-                          rho0 = IP.Phase5.rho0 , 
-                          option_rho = IP.Phase5.option_rho, 
-                          option_rheology = IP.Phase5.option_rheology,
-                          option_k = IP.Phase5.option_k, 
-                          option_Cp = IP.Phase5.option_Cp, 
-                          eta=IP.Phase5.eta,
-                          radio = IP.Phase5.radio)
-    # Phase 6
-    Pdb = _generate_phase(Pdb, 
-                          6, 
-                          rho0 = IP.Phase6.rho0 , 
-                          option_rho = IP.Phase6.option_rho, 
-                          option_rheology = IP.Phase6.option_rheology,
-                          option_k = IP.Phase6.option_k, 
-                          option_Cp = IP.Phase6.option_Cp, 
-                          eta=IP.Phase6.eta,
-                          radio = IP.Phase6.radio)
-        # Phase 3
+    Pdb = _generate_phase(Pdb,
+                          3,
+                          name_diffusion='Hirth_Dry_Olivine_diff',
+                          name_dislocation='Hirth_Dry_Olivine_disl',
+                          name_capacity='Berman_Fo_Fa_01',
+                          name_conductivity='Mantle',
+                          radio_flag = 1.0,
+                          rho0 = 3300)
+    # Phase 4 
+    Pdb = _generate_phase(Pdb,
+                          4,
+                          name_capacity='Berman_Fo_Fa_01',
+                          name_conductivity='Mantle',
+                          radio_flag = 1.0,
+                          rho0 = 3300)
+    
+    Pdb = _generate_phase(Pdb,
+                          5,
+                          name_capacity='Oceanic_crust',
+                          name_conductivity='OceanicCrust',
+                          radio_flag = 0.0,
+                          rho0 = 2700)
+
+    Pdb = _generate_phase(Pdb,
+                          6,
+                          name_capacity='Oceanic_crust',
+                          name_conductivity='OceanicCrust',
+                          radio_flag = 0.0,
+                          rho0 = 2800)
+
     Pdb = _generate_phase(Pdb, 
                           7, 
-                          option_rheology = IP.Phase7.option_rheology,
                           name_diffusion=IP.Phase7.name_diffusion, 
                           name_dislocation=IP.Phase7.name_dislocation)
     # ---
@@ -201,19 +186,18 @@ def StonedFenicsx():
                  decoupling = IP.decoupling,
                  lab_d = IP.lab_d)
     
-    
+
+    # Scaling
+    ctrl = _scaling_control_parameters(ctrl, sc)
+    Pdb = _scaling_material_properties(Pdb,sc)
+    lhs = _scale_parameters(lhs, sc)
+
     M = cm(io_ctrl, sc,g_input,ctrl)
     
     M.element_p       = IP.element_p
     M.element_PT      = IP.element_PT
     M.element_V       = IP.element_V
     
-    
-    # Scaling
-    ctrl = _scaling_control_parameters(ctrl, sc)
-    Pdb = _scaling_material_properties(Pdb,sc)
-    lhs = _scale_parameters(lhs, sc)
-
     if ctrl.steady_state == 1:
         steady_state_solution(M, ctrl, lhs, Pdb, io_ctrl, sc)
     else:
@@ -229,8 +213,11 @@ def StonedFenicsx():
 
  
 if __name__ == '__main__': 
+
         
     StonedFenicsx()   
+    
+    
         
     
     

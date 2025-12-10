@@ -18,6 +18,7 @@ from numba import njit
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 from .utils import timing_function, print_ph
+from .compute_material_property import compute_thermal_properties
 
 start       = timing.time()
 zeros       = np.zeros
@@ -58,15 +59,91 @@ def _compute_lithostatic_pressure(nz,ph,g,dz,T,pdb):
 # first, we need to build M and D
 # M and D are different in the predictor and corrector step 
 #-----------------------------------------------------------------------------------------
+# Melting parametrisation
+def compute_initial_geotherm(Tp,z,sc,option_melt = 1 ):
+    
+    if option_melt == 1: 
+        
+        from Melting_parametrisation import lithologies,compute_Fraction,runge_kutta_algori,SL,dSL,rcpx,compute_T_cpx
+        
+        TS       = lambda  P :SL(1085.7, 132.9,-5.1,P)
+
+        dTS      = lambda  P :dSL(132.9,-5.1,P)
+
+        TLL      = lambda  P :SL(1475,80,-3.2,P)
+
+        dTLL     = lambda P  :dSL(80,-3.2,P)
+
+        TL       = lambda  P :SL(1780,45.0,-2.0,P)
+
+        dTL      = lambda  P :dSL(45.0,-2.0,P)
+
+        Mcpx     = lambda  fr,P :rcpx(0.5,0.08,fr,P)
+
+        TCpx     = lambda  fr,P :compute_T_cpx(Mcpx(fr,P),TS(P),TLL(P))
+
+        #Ts = None,Tcpx=None,TLl=None,TL = None,MCpx = None,dTs = None, dTL = None, dTLl = None
+        lhz = lithologies(Ts=TS,Tcpx=TCpx,TLl=TLL,TL=TL,MCpx=Mcpx,dTs=dTS,dTL=dTL,dTLl=dTLL)
+
+        P = (z*sc.L * 9.81 * lhz.rho) 
+        
+        T = np.zeros(len(P))
+        
+        P = np.flip(P)
+        
+        Tp = Tp*sc.Temp
+        T_start = (Tp) + 18/1e9*P[0]
+        
+        T[0] = T_start
+        fig = plt.figure()
+        ax = fig.gca()
+
+        for i in range(len(P)-1):
+            dP = P[i+1]- P[i]
+            F0  = compute_Fraction(T[i],TL(P[i]),TLL(P[i]),TS(P[i]),TCpx(lhz.fr,P[i]),Mcpx(lhz.fr,P[i]))  
+            dT = runge_kutta_algori(lhz,P[i],T[i],dP,F0,None,Tp)
+            T[i+1] = T[i] + dT 
+            if F0>0.0 and F0 <= lhz.Mcpx(lhz.fr,P[i]):
+                c = 'r'
+                alpha = 0.8 
+            elif F0 > lhz.Mcpx(lhz.fr,P[i]):
+                c = 'forestgreen'
+                alpha = 0.9
+            else:
+                c='k'
+                alpha = 0.3
+
+
+            ax.scatter(T[i]-273.15,P[i]/1e9,c=c,s=0.5,alpha = alpha)   
+
+        ax.invert_yaxis()
+
+        ax.plot(lhz.Ts(P) - 273.15 , P/1e9 ,linestyle='-.', c = 'k'          , linewidth = 0.8)
+        ax.plot(lhz.TLL(P) - 273.15, P/1e9 ,linestyle='--', c = 'forestgreen', linewidth = 0.8)
+        ax.plot(lhz.TL(P)  - 273.15, P/1e9 ,linestyle='-.', c = 'firebrick'  , linewidth = 0.8)
+        ax.plot(lhz.Tcpx(lhz.fr,P)- 273.15, P/1e9 ,linestyle='--', c = 'b'          , linewidth = 0.8)
+        
+        Told = np.flip(T)/sc.Temp
+
+
+    else: 
+        
+        Told = np.ones(len(z))*Tp
+     
+    
+    
+    
+    
+    return Told 
+
+#-----------------------------------------------------------------------------------------
 @njit
-def _compute_Cp_k_rho(ph,pdb,Cp,k,rho,T,lit_p,ind_z):
+def _compute_Cp_k_rho(ph,pdb,Cp,k,rho,T,p,ind_z):
     it = len(T)
 
     for i in range(it):
-        k[i]   = heat_conductivity(pdb,T[i],lit_p[i],ph[i])
-        Cp[i]  = heat_capacity(pdb,T[i],ph[i])
-
-        rho[i] = density(pdb,T[i],lit_p[i],ph[i])
+        Cp[i], rho[i], k[i] = compute_thermal_properties(pdb,T[i],p[i],ph[i])
+        
 
     return Cp,k,rho
 #-----------------------------------------------------------------------------------------
@@ -89,11 +166,11 @@ def build_coefficient_matrix(A,
                              step,
                              lit_p,
                              sc,
-                             ind_z):
+                             ind_z,
+                             Ttop,
+                             Tmax):
 
     nz         = lhs.nz 
-    Ttop       = ctrl.Ttop
-    Tmax       = ctrl.Tmax
     dt         = lhs.dt 
     dz         = lhs.dz
     
@@ -176,7 +253,7 @@ def build_coefficient_matrix(A,
 
                 M[i,j] = 1. 
 
-                D[j]   = Ttop + 0 
+                D[j]   = Ttop 
 
             elif (i == nz-1 and j == nz-1):
 
@@ -184,7 +261,7 @@ def build_coefficient_matrix(A,
 
                 M[i,j] = 1. 
 
-                D[j]   = Tmax + 0  
+                D[j]   = Tmax 
 
             else:
 
@@ -286,12 +363,7 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
 
     # ========== initial conditions ========== 
 
-    z    = np.arange(0,nz*dz,dz)
-    ph   = np.zeros([nz],dtype = np.int32) # I assume that everything is mantle 
 
-    for i in range(0,nz):
-        if z[i] == depth_melt:
-            index_depth_melt = i
 
     if lhs.van_keken == 1: 
         from scipy import special
@@ -306,18 +378,27 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
 
         return lhs,[],[]
 
-         
-    Told = (np.ones((nz))*ctrl.Tmax)
 
-            
+    
 
+    z    = np.arange(0,nz*dz,dz)
+    ph   = np.zeros([nz],dtype = np.int32) # I assume that everything is mantle 
+    ph[z<6000/scal.L] = np.int32(1)
+    
+    Told = compute_initial_geotherm(ctrl.Tmax,z,scal)
+    
+    
 
+    
     lit_p = _compute_lithostatic_pressure(nz,ph,g,dz,Told,pdb)
     
 
 
-    temperature = zeros([nt,nz],dtype=np.float64)
-    pressure    = zeros([nt,nz],dtype=np.float64)
+    temperature       = zeros([nt,nz],dtype=np.float64)
+    pressure          = zeros([nt,nz],dtype=np.float64)
+    conductivity      = zeros([nt,nz],dtype=np.float64)
+    capacity          = zeros([nt,nz],dtype=np.float64)
+    density           = zeros([nt,nz],dtype=np.float64)
 
     T_1t = zeros([nt,nz],dtype=np.float64)
     temperature[0,:] = Told
@@ -328,6 +409,12 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
     k_m = zeros((nz),dtype=np.float64)
     heat_capacity_m = zeros((nz),dtype=np.float64)
     density_m = zeros((nz),dtype=np.float64)
+    k_tmp = zeros((nz),dtype=np.float64)
+    Cp_tmp = zeros((nz),dtype=np.float64)
+    rho_tmp = zeros((nz),dtype=np.float64)
+
+    Ttop = ctrl.Ttop
+    Tmax = np.max(Told)
 
     ind_z_lit = np.where(z>=120e3/scal.L)[0][0] # I force the temperature to be T_max at this dept -> Otherwise I have a temperature jump, and i do not know how much
     for time in range(1,nt):
@@ -355,7 +442,7 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
             for step in range(2):   
 
 
-                    M,D = build_coefficient_matrix(A,B,D,Q,M,pdb,ph,ctrl,lhs,TO,TG,TPr,k_m,density_m,heat_capacity_m,step,lit_p,scal,ind_z_lit)
+                    M,D = build_coefficient_matrix(A,B,D,Q,M,pdb,ph,ctrl,lhs,TO,TG,TPr,k_m,density_m,heat_capacity_m,step,lit_p,scal,ind_z_lit,Ttop,Tmax)
                     # ========== Solve system of equations using numpy.linalg.solve ==========
 
                     if option_1D_solve == 1:
@@ -400,19 +487,49 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
 
             # end for-loop predictor-corrector step 
         lit_p = _compute_lithostatic_pressure(nz,ph,g,dz,Told,pdb)
+        Cp_tmp,k_tmp,rho_tmp = _compute_Cp_k_rho(ph,pdb,Cp_tmp,k_tmp,rho_tmp,Tnew,lit_p,0)
         temperature[time,:] = Tnew
         pressure[time,:]    = lit_p
+        capacity[time,:]    = Cp_tmp
+        conductivity[time,:] = k_tmp 
+        density[time,:]      = rho_tmp
         
     # -> Save the actual LHS 
     # Correction 
-    temperature[:,-z<-120e3/scal.L] = ctrl.Tmax
+    #temperature[:,-z<-120e3/scal.L] = ctrl.Tmax
 
     # Current age index
     current_age_index = np.where(t[0] >= lhs.c_age_plate)[0][0]
     lhs.LHS[:] = temperature[current_age_index]
     lhs.z[:] = - z
 
+    TTime,ZZ = np.meshgrid(t[0],z)
+    TTime = TTime*scal.T/365.25/60/60/24/1e6
+    TTime = TTime[:,1::]
+    ZZ    = ZZ[:,1::] 
+    ZZ    = ZZ*scal.L/1e3
+    Tem   = temperature.T[:,1::]*scal.Temp - 273.15
+    Cp    = capacity.T[:,1::]*scal.Cp 
+    k     = conductivity.T[:,1::]*scal.k 
+    rho   = density.T[:,1::]*scal.rho 
+    LP    = pressure.T[:,1::]*scal.stress/1e9
+
+    
+    
+
+
     return lhs, t, temperature
+
+
+def compute_topography(T,rho):
+    
+    
+    
+    
+    
+    pass
+    
+    #return H 
 
 
 @timing_function
@@ -502,6 +619,75 @@ def compute_initial_LHS(ctrl,lhs,scal,pdb):
         ax.set_xlabel('Age, [Myr]')
         ax.set_ylabel('Depth, [km]')
         fg.savefig(fn2,dpi=600,transparent=False)
+
+    import cmcrameri as cmc
+    
+    
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["mathtext.fontset"] = "cm"
+    plt.rcParams["mathtext.rm"] = "serif"
+    
+    
+    fg = plt.figure(figsize=(10,6))
+    ax0 = fg.gca()
+    a = ax0.contourf(TTime,-ZZ,Tem, levels=[0,100,200,300,500,600,700,800,900,1000,1100,1200,1300,1400], cmap='cmc.lipari')
+    b = ax0.contour(TTime, -ZZ, Tem,levels=[100,200,300,500,600,700,800,900,1000,1100,1200,1300],colors='white')
+    
+    ax0.set_xlim(0,150)
+    ax0.set_ylim(-150,0.0)
+
+    plt.colorbar(a, label=r'T, $[^{\circ}C]$', location='bottom')    
+    plt.ylabel('Depth [km]')
+    plt.xlabel('Time  [Myr]')
+    plt.title('Plate model')
+    plt.show()
+    plt.savefig('Temp.png')
+
+    
+    fg = plt.figure(figsize=(10,6))
+    ax0 = fg.gca()
+    a = ax0.contourf(TTime,-ZZ,Cp, levels=20, cmap='cmc.lipari')
+    plt.colorbar(a, label=r'Cp, $[J/K/kg]$', location='bottom')    
+    plt.ylabel('Depth [km]')
+    plt.xlabel('Time  [Myr]')
+    plt.title('Plate model')
+    plt.show()
+    fg.savefig('Cp.png')
+
+    
+    fg = plt.figure(figsize=(10,6))
+    ax0 = fg.gca()
+    a = ax0.contourf(TTime,-ZZ,k,  levels=40, cmap='cmc.nuuk')
+
+
+    plt.colorbar(a, label=r'k, $[W/K/m]$', location='bottom')    
+    plt.ylabel('Depth [km]')
+    plt.xlabel('Time  [Myr]')
+    plt.title('Plate model')
+    plt.show()
+    fg.savefig('Condu.png')
+
+    
+    fg = plt.figure(figsize=(10,6))
+    ax0 = fg.gca()
+    a = ax0.contourf(TTime,-ZZ,rho, levels=10, cmap='cmc.lipari')
+
+    plt.colorbar(a, label=r'$\rho$, $[kg/m^3]$', location='bottom')    
+    plt.ylabel('Depth [km]')
+    plt.xlabel('Time  [Myr]')
+    plt.title('Plate model')
+    plt.show()
+    fg.savefig('rho.png')
+    fg = plt.figure(figsize=(10,6))
+    ax0 = fg.gca()
+    a = ax0.contourf(TTime,-ZZ,LP, levels=10, cmap='cmc.lipari')
+
+    plt.colorbar(a, label=r'$P$, $[GPa]$', location='bottom')    
+    plt.ylabel('Depth [km]')
+    plt.xlabel('Time  [Myr]')
+    plt.title('Plate model')
+    plt.show()
+    fg.savefig('Pressure.png')
 
 
     """

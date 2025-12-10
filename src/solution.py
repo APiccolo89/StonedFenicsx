@@ -112,6 +112,7 @@ def check_single_domain(expr):
 class Solution():
     def __init__(self):
         self.PL       : dolfinx.fem.function.Function 
+        self.T_I      : dolfinx.fem.function.Function
         self.T_O      : dolfinx.fem.function.Function 
         self.T_N      : dolfinx.fem.function.Function 
         self.u_global : dolfinx.fem.function.Function
@@ -415,7 +416,7 @@ class Global_thermal(Problem):
         else:
             self.typology = 'NonlinearProblem'
         
-    def create_bc_temp(self,M:Mesh,ctrl:NumericalControls,geom,lhs,u_global,it,ts=0):
+    def create_bc_temp(self,M:Mesh,ctrl:NumericalControls,geom,lhs,u_global,T_i,it,ts=0):
         from scipy.interpolate import griddata   
         cd_dof = self.FS.tabulate_dof_coordinates()
         fdim     = M.mesh.topology.dim - 1    
@@ -462,9 +463,13 @@ class Global_thermal(Problem):
         vel_bc = vel_T.x.array[dofs_right_wed]
         ind_z = np.where((vel_bc < 0.0) & (cd_dof[dofs_right_wed,1]<=-geom.lab_d))
         dofs_vel = dofs_right_wed[ind_z[0]]        
-        
-        self.bc_right_wed = fem.dirichletbc(ctrl.Tmax, dofs_vel,self.FS)
-
+        if ctrl.adiabatic_heating==0:
+            self.bc_right_wed = fem.dirichletbc(ctrl.Tmax, dofs_vel,self.FS)
+        else: 
+            function_bc = fem.Function(self.FS)
+            function_bc.interpolate(T_i)
+            self.bc_right_wed  = fem.dirichletbc(function_bc,dofs_vel)
+            
         facets                 = M.facets.find(M.bc_dict['Bottom_wed'])                        
         dofs_bot_wed        = fem.locate_dofs_topological(self.FS, M.mesh.topology.dim-1, facets)
         h_vel       = u_global.sub(0) # index 1 = y-direction (2D)   
@@ -579,16 +584,31 @@ class Global_thermal(Problem):
         self.energy_source = source.copy()
 
     #------------------------------------------------------------------
+    def compute_adiabatic_heating(self,D,pdb,u,T,p,ctrl):
+        from .compute_material_property import alpha_FX
+        
+        if ctrl.adiabatic_heating == 1: 
+            
+        
+            alpha = alpha_FX(pdb,T,p,D.phase,D)
+            adiabatic_heating = alpha * T * ufl.inner(ufl.grad(p), u) 
+        else: 
+            adiabatic_heating = ufl.Constant(0.0)
+        
+        
+        self.adiabatic_heating = adiabatic_heating
+        
+
+    #------------------------------------------------------------------
 
     def set_linear_picard_SS(self,p_k,T,u_global,D,pdb, it=0):
         # Function that set linear form and linear picard for picard iteration
         
         rho_k = density_FX(pdb, T, p_k, D.phase, D.mesh)  # frozen
         
-        k_k = heat_conductivity_FX(pdb, T, p_k, D.phase, D.mesh)  # frozen
-        
         Cp_k = heat_capacity_FX(pdb, T, D.phase, D.mesh)  # frozen
 
+        k_k = heat_conductivity_FX(pdb, T, p_k, D.phase, D.mesh, Cp_k, rho_k)  # frozen
 
         f    = self.energy_source# source term
         
@@ -597,11 +617,15 @@ class Global_thermal(Problem):
         if it == 0: 
             
             diff = ufl.inner(k_k * ufl.grad(self.trial0), ufl.grad(self.test0)) * dx
+            
             adv  = rho_k * Cp_k *ufl.dot(u_global, ufl.grad(self.trial0)) * self.test0 * dx
             
             a = fem.form(diff + adv)
-            L = fem.form(f * self.test0 * dx + self.shear_heating)      
+            
+            L = fem.form((f + self.adiabatic_heating) * self.test0 * dx + self.shear_heating )      
+        
         else: 
+        
             a = None
                 
 
@@ -624,16 +648,19 @@ class Global_thermal(Problem):
         # -> Source term is assumed constant in time and do not vary between the timesteps 
         
         rho_k = density_FX(pdb, T_N, p_k, D.phase, D.mesh)  # frozen
-        
-        k_k = heat_conductivity_FX(pdb, T_N, p_k, D.phase, D.mesh)  # frozen
-        
+                
         Cp_k = heat_capacity_FX(pdb, T_N, D.phase, D.mesh)  # frozen
+
+        k_k = heat_conductivity_FX(pdb, T_N, p_k, D.phase, D.mesh, Cp_k, rho_k)  # frozen
+
+
         
         rho_k0 = density_FX(pdb, T_O, p_k, D.phase, D.mesh)  # frozen
-        
-        k_k0 = heat_conductivity_FX(pdb, T_O, p_k, D.phase, D.mesh)  # frozen
-        
+                
         Cp_k0 = heat_capacity_FX(pdb, T_O, D.phase, D.mesh)  # frozen
+        
+        k_k0 = heat_conductivity_FX(pdb, T_O, p_k, D.phase, D.mesh, Cp_k, rho_k)  # frozen
+
                 
         rhocp        =  (rho_k * Cp_k)
 
@@ -641,8 +668,9 @@ class Global_thermal(Problem):
         
         dx  = self.dx
         
-        f    = self.energy_source * self.test0 * dx + self.shear_heating # source term {energy_source is radiogenic heating compute before hand, shear heating is frictional heating already a form}
+        f    = (self.energy_source+self.adiabatic_heating) * self.test0 * dx + self.shear_heating # source term {energy_source is radiogenic heating compute before hand, shear heating is frictional heating already a form}
 
+        # Adiabatic term [Ex]
 
         # Linear operator with frozen coefficients
 
@@ -681,10 +709,11 @@ class Global_thermal(Problem):
         if it == 0:         
             self.shear_heating = self.compute_shear_heating(ctrl,pdb, S,getattr(M,'domainG'),geom,sc)
             self.compute_energy_source(getattr(M,'domainG'),pdb)
+            self.compute_adiabatic_heating(getattr(M,'domainG'),pdb,S.u_global,T,p_k,ctrl)
         
         a,L = self.set_linear_picard_SS(p_k,T,S.u_global,getattr(M,'domainG'),pdb)
         
-        self.bc = self.create_bc_temp(getattr(M,'domainG'),ctrl,geom,lhs,S.u_global,it)
+        self.bc = self.create_bc_temp(getattr(M,'domainG'),ctrl,geom,lhs,S.u_global,S.T_i,it)
         if self.typology == 'NonlinearProblem':
             F,J = self.set_newton_SS(p_k,getattr(M,'domainG'),T,S.u_global,pdb)
             nl = 1 
@@ -723,6 +752,8 @@ class Global_thermal(Problem):
          
             self.shear_heating = self.compute_shear_heating(ctrl,pdb, S,getattr(M,'domainG'),geom,sc)
             self.compute_energy_source(getattr(M,'domainG'),pdb)
+            self.compute_adiabatic_heating(getattr(M,'domainG'),pdb,S.u_global,T,p_k,ctrl)
+
 
         a,L = self.set_linear_picard_TD(p_k,S.T_N,S.T_O,S.u_global,getattr(M,'domainG'),pdb,ctrl.dt)
 
@@ -932,7 +963,11 @@ class Global_thermal(Problem):
         )
 
         T_i.interpolate(fem.Expression(expr, X.element.interpolation_points()))
-    
+        
+        T_i.x.array[ind_B] = ctrl.Tmax
+
+
+               
     
         return T_i 
 #-----------------------------------------------------------------
@@ -1638,7 +1673,68 @@ class Wedge(Stokes_Problem):
 
 
         return S 
+
+def compute_adiabatic_initial_adiabatic_contribution(M,T,Tgue,p,pdb): 
     
+    from .compute_material_property import alpha_FX 
+    
+    
+    FS = T.function_space 
+    Tg = fem.Function(FS)
+    Tg = T.copy()
+    v  = ufl.TestFunction(FS)
+    
+    expr = (alpha_FX(pdb,Tg,p,M.phase,M) * p)/(heat_capacity_FX(pdb,Tg,M.phase,M) * density_FX(pdb,Tg,p,M.phase,M))
+    F = (Tg-T * ufl.exp(expr)) * v * ufl.dx 
+    
+    J = ufl.derivative(F,Tg)
+    
+    bcs = []
+
+    problem = NonlinearProblem(F, Tg, bcs, J)
+    solver = NewtonSolver(M.mesh.comm, problem)
+
+    solver.rtol = 1e-5
+    solver.atol = 1e-6
+
+
+
+    n_iter, converged = solver.solve(Tg)
+    Tg.x.scatter_forward()
+
+
+    
+    return Tg
+    
+    
+
+def initial_adiabatic_lithostatic_thermal_gradient(sol,lps,pdb,M,g,it_outer,ctrl):
+    res = 1 
+    it = 0
+    T_0 = sol.T_O.copy()
+    T_Oa = sol.T_O.copy()
+    while res > 1e-3: 
+        P_old = sol.PL.copy()
+        sol = lps.Solve_the_Problem(sol,ctrl,pdb,M,g,it_outer,ts=0)
+        T_O = compute_adiabatic_initial_adiabatic_contribution(M.domainG,T_0,T_Oa,sol.PL,pdb)
+        resp = compute_residuum(sol.PL,P_old)
+        resT = compute_residuum(T_O, T_Oa)
+        res = np.sqrt(resp**2 + resT**2)
+        if it !=0: 
+            sol.PL.x.array[:] = 0.8 * sol.PL.x.array[:] + (1-0.8) * P_old.x.array[:]
+            sol.PL.x.scatter_forward()
+            T_Oa.x.array[:]= T_O.x.array[:] * 0.8 + (1-0.8) * T_O.x.array[:]
+            sol.T_O.x.scatter_forward()
+        it = it + 1 
+        sol.T_O = T_Oa.copy()
+        print_ph('Adiabatic res is %.3e'%res)
+    
+    sol.T_i = T_O.copy()
+    return sol 
+
+    
+     
+
 #------------------------------------------------------------------------------------------------------------
 @timing_function
 def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb:PhaseDataBase, ioctrl:IOControls, sc:Scal)-> int:
@@ -1698,8 +1794,9 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
         u_globalold = sol.u_global.copy()
         p_globalold = sol.p_global.copy()
         
+        if (ctrl.adiabatic_heating == 1) & (it_outer==0) :
+            sol = initial_adiabatic_lithostatic_thermal_gradient(sol,lithostatic_pressure_global,pdb,M,g,it_outer,ctrl)
         
-        # Solve lithostatic pressure problem
         if lithostatic_pressure_global.typology == 'NonlinearProblem' or it_outer == 0:  
             lithostatic_pressure_global.Solve_the_Problem(sol,ctrl,pdb,M,g,it_outer,ts=0)
 
@@ -1795,6 +1892,7 @@ def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, p
     
     # Initial temperature field
     sol.T_O = energy_global.initial_temperature_field(M.domainG, ctrl, lhs_ctrl,M.g_input)
+    
     # Initial new temperature guess
     sol.T_N = sol.T_O.copy()
     
@@ -1805,6 +1903,10 @@ def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, p
     output = OUTPUT(M.domainG.mesh, ioctrl, ctrl, sc)
     save = 0 
     dt_save = 0.5*sc.scale_Myr2sec/sc.T  # Save every 0.5 Myr
+    
+    if (ctrl.adiabatic_heating == 1) & (it_outer==0) :
+        sol = initial_adiabatic_lithostatic_thermal_gradient(sol,lithostatic_pressure_global,pdb,M,g,0,ctrl)
+    
     while time<ctrl.time_max:
         time_A_ts = timing.time()
 
@@ -1856,13 +1958,7 @@ def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, p
 
             it_outer = it_outer + 1
         
-        # Compute new dt 
-        
-        #dt = compute_new_timestep(sol, M, ctrl, sc, dt)
-        
-        # Compute slab velocity 
-        
-        # Compute new plate age 
+
         
         # 
         time_B_ts = timing.time()
