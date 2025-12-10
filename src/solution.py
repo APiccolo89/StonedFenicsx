@@ -668,7 +668,7 @@ class Global_thermal(Problem):
         
         dx  = self.dx
         
-        f    = self.energy_source * self.test0 * dx + self.shear_heating # source term {energy_source is radiogenic heating compute before hand, shear heating is frictional heating already a form}
+        f    = (self.energy_source+self.adiabatic_heating) * self.test0 * dx + self.shear_heating # source term {energy_source is radiogenic heating compute before hand, shear heating is frictional heating already a form}
 
         # Adiabatic term [Ex]
 
@@ -752,6 +752,8 @@ class Global_thermal(Problem):
          
             self.shear_heating = self.compute_shear_heating(ctrl,pdb, S,getattr(M,'domainG'),geom,sc)
             self.compute_energy_source(getattr(M,'domainG'),pdb)
+            self.compute_adiabatic_heating(getattr(M,'domainG'),pdb,S.u_global,T,p_k,ctrl)
+
 
         a,L = self.set_linear_picard_TD(p_k,S.T_N,S.T_O,S.u_global,getattr(M,'domainG'),pdb,ctrl.dt)
 
@@ -1890,6 +1892,7 @@ def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, p
     
     # Initial temperature field
     sol.T_O = energy_global.initial_temperature_field(M.domainG, ctrl, lhs_ctrl,M.g_input)
+    
     # Initial new temperature guess
     sol.T_N = sol.T_O.copy()
     
@@ -1900,6 +1903,10 @@ def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, p
     output = OUTPUT(M.domainG.mesh, ioctrl, ctrl, sc)
     save = 0 
     dt_save = 0.5*sc.scale_Myr2sec/sc.T  # Save every 0.5 Myr
+    
+    if (ctrl.adiabatic_heating == 1) & (it_outer==0) :
+        sol = initial_adiabatic_lithostatic_thermal_gradient(sol,lithostatic_pressure_global,pdb,M,g,0,ctrl)
+    
     while time<ctrl.time_max:
         time_A_ts = timing.time()
 
