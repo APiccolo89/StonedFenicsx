@@ -28,8 +28,7 @@ Kynematic thermal numerical code for describing slab temperature evolution
 
 ### Equations  
 
-Stonedfenicsx is a numerical code that solves the continuity, momentum and energy conservation equation using FEM. The numerical model is fully driven by the kynematic boundary condition. The media 
-is incompressible, and the momentum equation does not have any gravitational momentum source. The strong form of the mechanical equation is: 
+Stonedfenicsx is a numerical code that solves the continuity, momentum and energy conservation equations using FEM. The numerical model is fully driven by the kynematic boundary condition. The media is incompressible, and the momentum equation does not have any gravitational momentum source. The strong form of the mechanical equation is: 
 
 - **Mass conservation**: $\nabla \cdot u = 0$ 
     - $u$: velocity field 
@@ -50,14 +49,14 @@ The code solves both the steady-state and time-dependent conservation of energy.
   - $C_p$ : *Heat capacity*     [kJ/kg/K]: $C_p = f(T)$ 
   - $\rho$: *Density*            $[kg/m^3]$: $\rho = f(P,T)$       
   - $t$   : *time* 
-  - $H$   : *source term* $[W/m^3]$. Radiogenic heat production or/and shear heating. 
+  - $H$   : *source term* $[W/m^3]$. Radiogenic heat production or/and shear heating and/or adiabatic heating. 
 
-The material properties required to solve both the steady-state and time-dependent equations can depends on temperature and pressure. Pressure depends on the velocity field, and without the gravitational momentum source is not reliable for computing the material properties. To compute the pressure and temperature dependent material properties, it is necessary to introduce a lithostatic pressure field. The lithostatic pressure field is computed following *Jourdon et al, 2022* [1]. The strong form for solving the lithostatic pressure field (i.e., steady state stokes) is: 
+The material properties required to solve both the steady-state and time-dependent equations can depend on temperature and pressure. Pressure depends on the velocity field, and without the gravitational momentum source is not reliable for computing the material properties. To compute the pressure and temperature dependent material properties, it is necessary to introduce a lithostatic pressure field. The lithostatic pressure field is computed following *Jourdon et al, 2022* [1]. The strong form for solving the lithostatic pressure field (i.e., steady state stokes) is: 
 
 - **Lithostatic Pressure**: $\nabla \cdot \nabla \left( P^{L}\right) - \nabla \cdot \left(\rho g \right) = 0$
     - g: *gravity acceleration vector* 
 
-This equation gives as results a lithostatic pressure field that can be used to compute the material property as a function of depth. 
+This equation gives as results a lithostatic pressure field that can be used to compute the material property as a function of depth. Thus, we assume that the dynamic and lithostatic pressure are the same. We use a simplified adiabatic heating for accounting for this process. 
 
 ## Numerical methods 
 
@@ -115,32 +114,98 @@ where
 - $cf_P = P \cdot \beta $
     - $\beta$ is the compressibility $[\frac{1}{Pa}]$ 
 
-### Heat conductivity 
 
-Heat conductivity is parametrised following (Hofmei...): 
-$$
-k = \left(k_0 + a \cdot P \right) \cdot \left(\frac{T_0}{T}\right)^{\gamma} + k_{rad}
-$$
-
-where: 
-- $k_0$ is a reference heat conductivity $[W m / K]$
-- $a$   is an empirical constant $[W m / K / Pa]$
-- $\gamma$ is an empirical constant 
-- $k_{rad}$ is the radiative conductivity: $k_{rad} = \sum^{3}_{m} d_m \cdot T^{m}$. 
 
 ### Heat Capacity 
 
 Heat capacity is computed using the following equations: 
 
 $$
-Cp = Cp_0 + Cp_1 \cdot T^{-0.5} + Cp_2 * T ^{-3}
+Cp = Cp_0 +Cp_1 \cdot T^{-0.5} + Cp_2 * T ^{-2} + Cp_3 * T ^{-3} + Cp_4 * T + Cp_5 * T ^{2}
 $$
 
 where
-- $Cp_{0,1,2}$ are constant $[kJ/kg/K^{1,0.5,2}]$ 
+- $Cp_{0,1,2,3,4,5}$ are constant $J * K^{-1,0.5,1,2,-2,-3} * kg^{-1}$ 
+
+### Heat conductivity 
 
 
+<p align="center">
+  <img src="thermal_conductivity_total.png" width="400">
+</p>
 
+Heat conductivity is computed starting from the diffusivity (following Richard et al 2020)[6]. 
+
+In StonedFenicx conductivity is implemented using the following formula: 
+
+$$
+k(P,T) = k_0 \cdot o_0 + \kappa(T) \cdot \rho(P,T) \cdot C_p(T) * k(P) + k_{rad}(T)
+$$
+
+$k_0$ is the constant conductivity. $o_0$ is a factor that is 0 when the pressure and temperature dependency of the conductivity is not consider. $\kappa(T)$ is the lattice thermal diffusivity ($\frac{m^2}{s}$), $\rho(P,T)$ is the density, $C_p(T)$ is the heat capacity. $k(P)$ is a factor to account for the pressure dependency of the heat conductivity and $k_{rad}$ is the radiative heat conductivity. $k(P)$ is the pressure dependency factor that controls how the conductivity evolves with pressure. 
+
+The temperature dependent thermal diffusivity is computed using the following equation:
+
+$$
+\kappa(T) =  \kappa_0 + \kappa_1 \cdot exp\left(- \frac{T-T_0}{\kappa_2}\right)+\kappa_3 \cdot exp\left(- \frac{T-T_0}{\kappa_4}\right)
+$$
+
+where $\kappa_{0,1,3}$ are reference thermal diffusivities, $T_0$ is the reference temperature (273.15 K in all the code) and $\kappa_{3,4}$ are empirical constant ($K$). 
+
+After the temperature dependent thermal diffusivity is computed, it is multiplied with the density and heat capacity. 
+
+$$
+k(T) = \kappa(T) * \rho(T,P) * C_p(T)
+$$
+
+Heat conductivity can be also pressure-dependent (NB: if the density changes as a function of pressure, k(T) is also implicitly a function of pressure). The pressure-dependency is computed multiplying $k(T)$ using the partial derivative of $k$ w.r.t the pressure: 
+
+$$
+k(T,P) = k(T) \cdot exp \left(\frac{\partial ln(k)}{\partial P} P\right)
+$$
+
+where $\frac{\partial ln(k)}{\partial P}$ is treated as a constant (which will be always $0.05/1e9$ $W/m/K/Pa$). 
+
+The code can account for the radiative conductivity. It follows the formulation of [6]: 
+
+$$
+k_{rad}(T) = A_r \cdot\left( - \frac{T-T_a}{2 \cdot \xi_A^2} \right) + B_r \cdot \left( - \frac{T-T_b}{2 \cdot \xi_B^2} \right)
+$$
+
+where $A_r$, $B_r$, $T_a$, $T_b$, $\xi_a$, and $\xi_b$ are empirical fitting parameters that depends on the grain size $d$. 
+
+\[
+A_r = 1.8\left[1 - \exp\left(-\frac{d^{1.3}}{0.15}\right)\right]
+      - \left[1 - \exp\left(-\frac{d^{0.5}}{5}\right)\right],
+\]
+
+\[
+B_r = 11.7\,\exp\left(-\frac{d}{0.159}\right)
+      + 6\,\exp\left(-\frac{d^{3}}{10}\right),
+\]
+
+\[
+T_a = 490
+      + 1850\,\exp\left(-\frac{d^{0.315}}{0.825}\right)
+      + 875\,\exp\left(-\frac{d}{0.18}\right),
+\]
+
+\[
+T_b = 2700
+      + 9000\,\exp\left(-\frac{d^{0.5}}{0.205}\right),
+\]
+
+\[
+\xi_a = 167.5
+      + 505\,\exp\left(-\frac{d^{0.5}}{0.85}\right),
+\]
+
+\[
+\xi_b = 465
+      + 1700\,\exp\left(-\frac{d^{0.94}}{0.175}\right).
+\]
+
+All these variable can be treated as constants, with a constant $d$ of $0.5$ $cm$. In the future, will be an additional parameter.
 
 ---
 
@@ -154,3 +219,4 @@ where
 [3]:M. S. Alnaes, A. Logg, K. B. Ølgaard, M. E. Rognes and G. N. Wells. *Unified Form Language: A domain-specific language for weak formulations of partial differential equations, ACM Transactions on Mathematical Software 40 (2014).* DOI:doi.org/10.1145/2566630
 [4]:M. W. Scroggs, J. S. Dokken, C. N. Richardson, and G. N. Wells. *Construction of arbitrary order finite element degree-of-freedom maps on polygonal and polyhedral cell meshes, ACM Transactions on Mathematical Software 48(2) (2022) 18:1–18:23.* DOI: doi.org/10.1145/3524456
 [5]: M. W. Scroggs, I. A. Baratta, C. N. Richardson, and G. N. Wells. *Basix: a runtime finite element basis evaluation library,* DOI: doi.org/10.21105/joss.03982
+[6]: R, Fred, et al. Structure and dynamics of the oceanic lithosphere-asthenosphere system. Physics of the Earth and Planetary Interiors, 2020, 309: 106559.
