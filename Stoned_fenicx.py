@@ -78,7 +78,7 @@ def StonedFenicsx():
         input_path = path_test+'/input.py'
     
     except: 
-        path_test = "../../Results/T1"
+        path_test = "../../Results/T2"
         input_path = "input.py"
         steady_state = 1
     
@@ -141,8 +141,8 @@ def StonedFenicsx():
     # Phase 3
     Pdb = _generate_phase(Pdb,
                           3,
-                          name_diffusion='Constant',
-                          name_dislocation='Constant',
+                          name_diffusion='Hirth_Dry_Olivine_diff',
+                          name_dislocation='Hirth_Dry_Olivine_disl',
                           name_capacity='Berman_Fo_Fa_01',
                           name_conductivity='Mantle',
                           radio_flag = 1.0,
