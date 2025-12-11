@@ -1,7 +1,7 @@
 # StonedFenicsx
 
 <p align="center">
-  <img src="./postprocess_script/example.png" width="400">
+  <img src="./figures/Temp_Slab.png" width="400">
 </p>
 
 
@@ -11,7 +11,7 @@ Kynematic thermal numerical code for describing slab temperature evolution
 
 ## Table of Contents
 - [Introduction](#introduction)
-- [NumericalMethods](#numerical methods)
+- [Methods](#methods)
 - [Domain](#domain)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -67,8 +67,41 @@ The continuum mechanics equations are solved using Finite Element Method (FEM). 
 ---
 
 ## Initial setup and boundary conditions
-
+<p align="center">
+  <img src="./figures/Boundary.png" width="400">
+</p>
 The initial setup is generated using gmsh library [6]. Gmsh create an unstructured triangular mesh, that then is read by fenicsx and transformed into a computational grid. 
+
+It is necessary to define a few parameters: 
+
+- Geometry of the top surface of the slab
+  - Thickness of the oceanic crust  
+- Thickness of the overriding lithosphere
+  - Thickness of crustal unit (upper and lower crust) and lithospheric mantle
+- Resolution of the mesh
+
+The initial setup is divided in three different domains: 
+ - Slab
+      - $\pm$ Oceanic crust
+ - Wedge 
+ - Overriding plate
+     - Lithospheric mantle
+     - $\pm$ Crust: 
+            - Oceanic
+            - Continental (upper and lower crust)
+
+The lithostatic pressure and energy conservation equations are solved for the entire mesh (Slab + Wedge + Overriding sub-domains). The momentum conservation is solved only for the the slab and for the wedge. 
+
+The slab momentum equation is solved only once during the entire experiment. The viscosity of the material properties are assumed to be constant.  
+
+The wedge equation is solved every iteration/timestep depending wether or not the rheology is non linear and/or temperature dependent. 
+
+The conservation of momentum equation is not solved in the overriding plate subdomain. 
+
+Each domain can be composed of different material phases. The slab subdomain can be composed of a mantle rheology and oceanic crust rheology. The wedge is only composed by mantle rheologies, and the overriding plate can have more compositional complexity as a function of the problem. 
+
+
+
 
 ---
 
@@ -141,7 +174,7 @@ where
 
 
 <p align="center">
-  <img src="thermal_conductivity_total.png" width="400">
+  <img src="./figures/thermal_conductivity_total.png" width="400">
 </p>
 
 Heat conductivity is computed starting from the diffusivity (following Richard et al 2020)[6]. 

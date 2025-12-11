@@ -682,7 +682,8 @@ def create_figure(path2save:str,
                   field:float, 
                   n_level:int,
                   name_fig:str,
-                  ipic:int): 
+                  ipic:int,
+                  name_field:str): 
     
     import matplotlib.pyplot as plt
 
@@ -730,7 +731,7 @@ def create_figure(path2save:str,
     if not os.path.isdir(pt_save):
         os.makedirs(pt_save)
         
-    figure_name = f'Figure_{ipic:03d}.png'
+    figure_name = f'Figure_{ipic:03d}_%s.png'%name_field
         
     fname = os.path.join(pt_save, figure_name)
     fig, ax0 = plt.subplots(figsize=(10, 6))
@@ -745,13 +746,120 @@ def create_figure(path2save:str,
     cbar = plt.colorbar(p0, ax=ax0, orientation='vertical', pad=0.02)
     cbar.set_label(label=title, fontsize=14)
     cbar.ax.tick_params(labelsize=12)
-    cbar.set_ticks(np.linspace(vmin, vmax, 5))
-    cbar.set_ticklabels([f'{val:.0f}' for val in np.linspace(vmin, vmax, 5)])
+    #cbar.set_ticks(np.linspace(vmin, vmax, 5))
+    #cbar.set_ticklabels([f'{val:.0f}' for val in np.linspace(vmin, vmax, 5)])
     fig.savefig(fname)
     plt.close(fig)
     
     return 0 
 
+
+def return_main_boundarys(M_data:MeshData,tag:float,sort_axis:int):
+    
+    x = M_data.X[(M_data.mesh_tag==tag),0]
+    y = M_data.X[(M_data.mesh_tag==tag),1]
+    
+    if sort_axis == 0:
+        sort = np.argsort(x)
+    else:
+        sort = np.argsort(y)
+    
+    xbd  = [x[sort], y[sort]]
+    
+    
+    return xbd
+
+def plot_main_boundarys(path_2_save,time_str,ipic,M_data): 
+    
+    import matplotlib.pyplot as plt
+
+    plt.rcParams.update({
+    "text.usetex": True,           # Use LaTeX for all text
+    "font.family": "serif",        # Or 'sans-serif'
+    "font.serif": ["Computer Modern"],   # LaTeX default
+    "axes.unicode_minus": False,
+    })
+    def modify_ax(ax):
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_linewidth(1.5)
+        ax.spines['left'].set_linewidth(1.5)
+        ax.spines['bottom'].set_color('black')
+        ax.spines['left'].set_color('black')
+        ax.xaxis.set_ticks_position('bottom')
+        ax.yaxis.set_ticks_position('left')
+        ax.tick_params(direction='in', which='both', length=6, width=1, colors='black', grid_color='black', grid_alpha=0.5)
+        ax.tick_params(axis='x', direction='in', which='both', bottom=True, top=False)
+        ax.tick_params(axis='y', direction='in', which='both', left=True, right=False)
+        return ax
+
+    def _plot_(x_bd,ax,c,ls,lw=1.2,opt=0):
+        if opt ==0:
+            p = ax.plot(x_bd[0],x_bd[1],c=c,linewidth=1.2)
+            return p
+        else: 
+            pa = ax.plot(x_bd[0][x_bd[1]>-80],x_bd[1][x_bd[1]>-80],c='orange',linewidth=lw,linestyle=ls)
+            pb = ax.plot(x_bd[0][x_bd[1]<=-80],x_bd[1][x_bd[1]<=-80],c='firebrick',linewidth=lw,linestyle=ls)
+            return pa,pb
+    
+    
+    name_fig = 'Main_boundaries'
+
+
+
+    bound = lambda tag, axis: return_main_boundarys(M_data,tag,axis)
+
+
+    pt_save = os.path.join(path_2_save,name_fig)
+    if not os.path.isdir(pt_save):
+        os.makedirs(pt_save)
+        
+    figure_name = f'Boundary.png'
+        
+    fname = os.path.join(pt_save, figure_name)
+    fig, ax0 = plt.subplots(figsize=(10, 6))
+    ax0 = modify_ax(ax0)
+    ax0.set_xlabel('Distance [km]', fontsize=14)
+    ax0.set_ylabel('Depth [km]', fontsize=14)
+    p1 = _plot_(bound(8.0,0),ax0,'orange','-')   # Slab surface
+    p2,p3 = _plot_(bound(9.0,0),ax0,'w','-',opt=1)   # Slab surface
+    p4 = _plot_(bound(11.0,0),ax0,'k','-') 
+    p5 = _plot_(bound(1.0,0),ax0,'k','-')  
+    p6 = _plot_(bound(2.0,1),ax0,'k','-')  
+    p7 = _plot_(bound(3.0,1),ax0,'forestgreen','..-')  
+    p8 = _plot_(bound(4.0,0),ax0,'forestgreen','..-')  
+    p9 = _plot_(bound(5.0,0),ax0,'forestgreen','..-')  
+    p10 = _plot_(bound(6.0,0),ax0,'k','-')  
+    p11 = _plot_(bound(7.0,1),ax0,'forestgreen','..-')  
+    #p12 = _plot_(bound(12.0,1),ax0,'grey','..-',lw=0.3)  
+    #p13 = _plot_(bound(13.0,1),ax0,'grey','..-',lw=0.3)  
+    #p14 = _plot_(bound(10.0,1),ax0,'grey','..-',lw=0.3)  
+    
+    fig.savefig(fname)
+    plt.close(fig)
+    
+    
+    
+    #----- Create Three poligons for masking -----#
+    x_slab = bound(8.0,0) 
+    x_slab2 = bound(9.0,0) 
+    x_bottom = bound(5.0,0)
+    x_slab_bottom = bound(6.0,0)
+    x_left = bound(7.0,0)
+    
+    from matplotlib.patches import Polygon        
+    from shapely import contains_xy as scontains_xy
+        
+    
+    fname = os.path.join(pt_save, figure_name)
+    fig, ax0 = plt.subplots(figsize=(10, 6))
+    polygon = np.vstack((np.array(x_left).T,
+                         np.array(x_slab_bottom).T, 
+                          np.array(x_bottom).T,
+                          np.array(x_slab2).T, 
+                        np.array(x_slab).T))
+
+    return 0 
 def compare_SS_TD(ss_file:str, td_file:str, time_td, M_data:MeshData,path_2_save:str):
 
     
@@ -930,6 +1038,62 @@ def compare_experiments(file1:str, file2:str, time_td, M_data:MeshData,path_2_sa
     return 0 
 
 
+def plot_ss_temperature(file1:str, M_data:MeshData,path_2_save:str,name_exp:list):
+
+    
+    """
+    Easy peasy function to compare steady state and time dependent solution at given time. Moreover, to make nice plot rather than 
+    that crap from paraview. 
+    1st: load the timedependent file and extract the geometry and temperature at given time
+         1. find the outerboundaries of the domain (very ugly way)
+         2. create a polygon from these boundaries
+         3. create a grid and interpolate the temperature on it
+         4. mask the temperature outside the polygon
+         
+    2nd: load the steady state file and extract the temperature
+         1. find the outerboundaries of the domain (very ugly way)
+         2. create a polygon from these boundaries
+         3. create a grid and interpolate the temperature on it
+         4. mask the temperature outside the polygon
+    3rd: make the plot
+    4th: save the plot
+    """
+    
+    
+    f = h5py.File(file1, 'r')
+    field = 'Function/Temperature  [degC]'
+    TSS = np.array(f[field+'/0'])
+    k   = 'Function/k  [W/m/k]/0'
+    k   = np.array(f[k]) 
+    k = interpolate_field(k,M_data) 
+
+
+    # Load steady state file    
+    T_S = interpolate_field(TSS,M_data)
+
+    
+    ipic     = 0 
+
+    # CREATE FIGURE FOR STEADY STATE
+    time_str = r'time = $\infty$'
+    lim = [0,2000]
+    lims = [np.floor(np.nanmin(k)),np.floor(np.nanmax(k))]
+    
+    
+    plot_main_boundarys(path_2_save,time_str,ipic,M_data)
+
+    
+    
+    create_figure(path_2_save,time_str,lim[0],lim[1],'cmc.lipari',r'T [$^{\circ}C$]', M_data,T_S, 21, 'TSS',ipic,'T')
+
+    create_figure(path_2_save,time_str,lims[0],lims[1],'cmc.vik',r'k [W/m/K]', M_data,k, 40, 'kSS',ipic,'k')
+    
+    
+    
+    
+    return 0 
+
+
 if __name__ == "__main__":
     path_2_test = '/Users/wlnw570/Work/Results/T1/Output'
     path_2_testb = '/Users/wlnw570/Work/Results/T2/Output'
@@ -949,6 +1113,9 @@ if __name__ == "__main__":
     ms_tag  = '%s/MeshTag.h5'%(path_2_test)
     time_td = 10.0  # Time in Myr to compare
     M_data = MeshData(ss_file,ms_tag)
+    
+    plot_ss_temperature(ss_file, M_data, path_2_save,'T1')
+    
     compare_experiments(ss_file, ss_file2, time_td, M_data, path_2_saveb,['T1','T12'])
     
     

@@ -127,7 +127,7 @@ def StonedFenicsx():
     # Phase 1
     Pdb = _generate_phase(Pdb,
                           1, 
-                          name_capacity='Berman_Fo_Fa_01',
+                          name_capacity='Berman_Aranovich_Forsterite',
                           name_conductivity='Mantle',
                           radio_flag = 1.0,
                           rho0 = 3300)
@@ -141,16 +141,16 @@ def StonedFenicsx():
     # Phase 3
     Pdb = _generate_phase(Pdb,
                           3,
-                          name_diffusion='Hirth_Dry_Olivine_diff',
-                          name_dislocation='Hirth_Dry_Olivine_disl',
-                          name_capacity='Berman_Fo_Fa_01',
+                          name_diffusion='Van_Keken_diff',
+                          name_dislocation='Van_Keken_disl',
+                          name_capacity='Berman_Aranovich_Forsterite',
                           name_conductivity='Mantle',
                           radio_flag = 1.0,
                           rho0 = 3300)
     # Phase 4 
     Pdb = _generate_phase(Pdb,
                           4,
-                          name_capacity='Berman_Fo_Fa_01',
+                          name_capacity='Berman_Aranovich_Forsterite',
                           name_conductivity='Mantle',
                           radio_flag = 1.0,
                           rho0 = 3300)

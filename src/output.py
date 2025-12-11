@@ -204,6 +204,14 @@ class OUTPUT():
             tag.x.array[dofs] = marker_unique[i]
             tag.x.scatter_forward()
         
+        with XDMFFile(MPI.COMM_WORLD, "%s.xdmf"%file_name2, "w") as ufile_xdmf:
+        
+            coord = D.mesh.geometry.x.copy()
+            D.mesh.geometry.x[:] *= sc.L/1e3
+            ufile_xdmf.write_mesh(D.mesh)
+            ufile_xdmf.write_function(tag)
+            D.mesh.geometry.x[:] = coord
+
 
         if ctrl.steady_state == 0:
             # transient: append to ongoing XDMF with time
@@ -242,14 +250,7 @@ class OUTPUT():
                 ufile_xdmf.write_function(flux )
                 ufile_xdmf.write_function(tag )
                 D.mesh.geometry.x[:] = coord
-        if ts == 0 or ts == 1: 
-            with XDMFFile(MPI.COMM_WORLD, "%s.xdmf"%file_name2, "w") as ufile_xdmf:
-            
-                coord = D.mesh.geometry.x.copy()
-                D.mesh.geometry.x[:] *= sc.L/1e3
-                ufile_xdmf.write_mesh(D.mesh)
-                ufile_xdmf.write_function(tag)
-                D.mesh.geometry.x[:] = coord
+
 
 
         return 0
