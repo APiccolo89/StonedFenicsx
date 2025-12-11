@@ -931,11 +931,11 @@ def compare_experiments(file1:str, file2:str, time_td, M_data:MeshData,path_2_sa
 
 
 if __name__ == "__main__":
-    path_2_test = '/Users/wlnw570/Work/Tests/T1/Output'
-    path_2_testb = '/Users/wlnw570/Work/Tests/T12/Output'
+    path_2_test = '/Users/wlnw570/Work/Results/T1/Output'
+    path_2_testb = '/Users/wlnw570/Work/Results/T2/Output'
 
     path_2_save = '/Users/wlnw570/Work/Tests/Results/T12'
-    path_2_saveb = '/Users/wlnw570/Work/Tests/Results/Comparison_T1_T12'
+    path_2_saveb = '/Users/wlnw570/Work/Tests/Results/Comparison_T1_T2'
     if not os.path.isdir(path_2_save):
         os.makedirs(path_2_save)
     

@@ -56,11 +56,21 @@ The material properties required to solve both the steady-state and time-depende
 - **Lithostatic Pressure**: $\nabla \cdot \nabla \left( P^{L}\right) - \nabla \cdot \left(\rho g \right) = 0$
     - g: *gravity acceleration vector* 
 
-This equation gives as results a lithostatic pressure field that can be used to compute the material property as a function of depth. Thus, we assume that the dynamic and lithostatic pressure are the same. We use a simplified adiabatic heating for accounting for this process. 
+This equation gives as results a lithostatic pressure field that can be used to compute the material property as a function of depth. Thus, we assume that the dynamic and lithostatic pressure are the same. 
 
 ## Numerical methods 
 
 The continuum mechanics equations are solved using Finite Element Method (FEM). The discretisation of the problem and the assembly of the stiffness matrix is handled by Fenicsx libraries (dolfinx [2], ufl[3], and basix[4,5])
+
+### Weak formulation of the equation 
+
+---
+
+## Initial setup and boundary conditions
+
+The initial setup is generated using gmsh library [6]. Gmsh create an unstructured triangular mesh, that then is read by fenicsx and transformed into a computational grid. 
+
+---
 
 ### Material Properties 
 
@@ -101,7 +111,7 @@ where:
 
 This approach is the most correct, as the harmonic average viscosity underestimate the viscosity. It will be implemented in the future. 
 
-### Density 
+#### Density 
 
 Density is computed as a function of pressure, temperature and a reference density: 
 
@@ -116,7 +126,7 @@ where
 
 
 
-### Heat Capacity 
+#### Heat Capacity 
 
 Heat capacity is computed using the following equations: 
 
@@ -127,7 +137,7 @@ $$
 where
 - $Cp_{0,1,2,3,4,5}$ are constant $J * K^{-1,0.5,1,2,-2,-3} * kg^{-1}$ 
 
-### Heat conductivity 
+#### Heat conductivity 
 
 
 <p align="center">
@@ -174,38 +184,49 @@ $$
 
 where $A_r$, $B_r$, $T_a$, $T_b$, $\xi_a$, and $\xi_b$ are empirical fitting parameters that depends on the grain size $d$. 
 
-\[
+$$
 A_r = 1.8\left[1 - \exp\left(-\frac{d^{1.3}}{0.15}\right)\right]
       - \left[1 - \exp\left(-\frac{d^{0.5}}{5}\right)\right],
-\]
+$$
 
-\[
+$$
 B_r = 11.7\,\exp\left(-\frac{d}{0.159}\right)
       + 6\,\exp\left(-\frac{d^{3}}{10}\right),
-\]
+$$
 
-\[
+$$
 T_a = 490
       + 1850\,\exp\left(-\frac{d^{0.315}}{0.825}\right)
       + 875\,\exp\left(-\frac{d}{0.18}\right),
-\]
+$$
 
-\[
+$$
 T_b = 2700
       + 9000\,\exp\left(-\frac{d^{0.5}}{0.205}\right),
-\]
+$$
 
-\[
+$$
 \xi_a = 167.5
       + 505\,\exp\left(-\frac{d^{0.5}}{0.85}\right),
-\]
+$$
 
-\[
+$$
 \xi_b = 465
       + 1700\,\exp\left(-\frac{d^{0.94}}{0.175}\right).
-\]
+$$
 
 All these variable can be treated as constants, with a constant $d$ of $0.5$ $cm$. In the future, will be an additional parameter.
+
+---
+
+## Heat sources 
+### Shear and frictional heating
+
+Shear and frictional heating are accounted using two different mode. One of the mode is merging the solution provided by Hobson et al [7] and Van Keken et al [8]. The other one is an ad hoc method developed for accouting a self-consistent seismogentic zone. 
+
+### Radiogenic heating 
+### Adiabatic heating 
+
 
 ---
 
@@ -219,4 +240,5 @@ All these variable can be treated as constants, with a constant $d$ of $0.5$ $cm
 [3]:M. S. Alnaes, A. Logg, K. B. Ølgaard, M. E. Rognes and G. N. Wells. *Unified Form Language: A domain-specific language for weak formulations of partial differential equations, ACM Transactions on Mathematical Software 40 (2014).* DOI:doi.org/10.1145/2566630
 [4]:M. W. Scroggs, J. S. Dokken, C. N. Richardson, and G. N. Wells. *Construction of arbitrary order finite element degree-of-freedom maps on polygonal and polyhedral cell meshes, ACM Transactions on Mathematical Software 48(2) (2022) 18:1–18:23.* DOI: doi.org/10.1145/3524456
 [5]: M. W. Scroggs, I. A. Baratta, C. N. Richardson, and G. N. Wells. *Basix: a runtime finite element basis evaluation library,* DOI: doi.org/10.21105/joss.03982
-[6]: R, Fred, et al. Structure and dynamics of the oceanic lithosphere-asthenosphere system. Physics of the Earth and Planetary Interiors, 2020, 309: 106559.
+[6]: C. Geuzaine and J.-F. Remacle. Gmsh: a three-dimensional finite element mesh generator with built-in pre- and post-processing facilities. International Journal for Numerical Methods in Engineering 79(11), pp. 1309-1331, 2009. 
+[7]: R, Fred, et al. Structure and dynamics of the oceanic lithosphere-asthenosphere system. Physics of the Earth and Planetary Interiors, 2020, 309: 106559.

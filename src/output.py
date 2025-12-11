@@ -240,6 +240,7 @@ class OUTPUT():
                 ufile_xdmf.write_function(e_T  )
                 ufile_xdmf.write_function(eta2 )
                 ufile_xdmf.write_function(flux )
+                ufile_xdmf.write_function(tag )
                 D.mesh.geometry.x[:] = coord
         if ts == 0 or ts == 1: 
             with XDMFFile(MPI.COMM_WORLD, "%s.xdmf"%file_name2, "w") as ufile_xdmf:
