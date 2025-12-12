@@ -1,7 +1,11 @@
+---
+bibliography: ./ReadMe_Figure/sample.bib
+nocite: "@*"
+---
 # StonedFenicsx
 
 <p align="center">
-  <img src="./figures/Temp_Slab.png" width="400">
+  <img src="./ReadMe_figure/Temp_Slab.png" width="400">
 </p>
 
 
@@ -51,7 +55,7 @@ The code solves both the steady-state and time-dependent conservation of energy.
   - $t$   : *time* 
   - $H$   : *source term* $[W/m^3]$. Radiogenic heat production or/and shear heating and/or adiabatic heating. 
 
-The material properties required to solve both the steady-state and time-dependent equations can depend on temperature and pressure. Pressure depends on the velocity field, and without the gravitational momentum source is not reliable for computing the material properties. To compute the pressure and temperature dependent material properties, it is necessary to introduce a lithostatic pressure field. The lithostatic pressure field is computed following *Jourdon et al, 2022* [1]. The strong form for solving the lithostatic pressure field (i.e., steady state stokes) is: 
+The material properties required to solve both the steady-state and time-dependent equations can depend on temperature and pressure. Pressure depends on the velocity field, and without the gravitational momentum source is not reliable for computing the material properties. To compute the pressure and temperature dependent material properties, it is necessary to introduce a lithostatic pressure field. The lithostatic pressure field is computed following @ [1]. The strong form for solving the lithostatic pressure field (i.e., steady state stokes) is: 
 
 - **Lithostatic Pressure**: $\nabla \cdot \nabla \left( P^{L}\right) - \nabla \cdot \left(\rho g \right) = 0$
     - g: *gravity acceleration vector* 
@@ -68,7 +72,7 @@ The continuum mechanics equations are solved using Finite Element Method (FEM). 
 
 ## Initial setup and boundary conditions
 <p align="center">
-  <img src="./figures/Boundary.png" width="400">
+  <img src="./ReadMe_figure/Boundary.png" width="400">
 </p>
 The initial setup is generated using gmsh library [6]. Gmsh create an unstructured triangular mesh, that then is read by fenicsx and transformed into a computational grid. 
 
@@ -174,7 +178,7 @@ where
 
 
 <p align="center">
-  <img src="./figures/thermal_conductivity_total.png" width="400">
+  <img src="./ReadMe_figure/thermal_conductivity_total.png" width="400">
 </p>
 
 Heat conductivity is computed starting from the diffusivity (following Richard et al 2020)[6]. 

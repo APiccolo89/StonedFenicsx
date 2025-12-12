@@ -1,0 +1,246 @@
+\documentclass[11pt,a4paper]{article}
+
+% -------------------------------------------------
+% Packages
+% -------------------------------------------------
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\usepackage{amsmath, amssymb, bm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{physics}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{booktabs}
+
+% -------------------------------------------------
+% Title
+% -------------------------------------------------
+\title{\textbf{StonedFenicsx}\\
+\large Kinematic thermal numerical code for slab temperature evolution}
+
+\author{Andrea Piccolo}
+\date{12.12.2025}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+  \includegraphics[width=1.0\textwidth]{Temp_Slab.png}
+\end{center}
+
+\vspace{1em}
+
+% =================================================
+\section*{Introduction}
+% =================================================
+
+%Presentation
+StonedFenicsx is a kinematic thermal numerical code designed to describe the
+thermal evolution of subducting slabs using the Finite Element Method (FEM). The main purpose of the code is to assess the impact of non-linear thermal properties on the evolution of a kinematically driven subduction. 
+
+% The importance of temperature evolution for understanding present-day subduction zone.
+To study the present-day subduction zone, it is necessary to have a means to accurately estimate the subducting plate thermal structure. The thermal structure of the subducting plate exerts a first-order control on the subduction processes. During the descendant of a subducting plate, the rocks heat and undergo metamorphic processes. The metamorphic reactions involving the hydrated minerals release fluids. Fluids can alter the frictional stability of the  materials by perturbing the stress and pressure field through the increase of in pore-fluid pressure. Moreover, fluids can escape from the source area and can percolate upward metasomatizing the mantle. The latter process leads to the decompression of the mantle's solidus, causing partial melting and consequent arc volcanism. Knowing the thermal structure of the subducting plate is important for predicting the potential hazards in a subduction zone \cite{hobson2025sensitivity}. Moreover, since many geophysical signals depend on material properties that depend on temperature and composition, having an accurate estimation of the thermal structure of the slab improves the interpretation of the geophysical data.
+
+%How to study subduction zone 
+Subduction dynamics can be studied using full dynamical model or imposing a kinematically driven flow \cite{van2023introductory,holt2021slab}. To understand the physical mechanisms behind the subduction processes, it is necessary to describe and model the temporal evolution of the subduction. Dynamical model, in this case, are the right choice, because they allow to describe how the stress, strain-rate evolves with time as a consequence of the time-dependent evolution of the system. But, due to the numerous parameters that controls the resulting geometry and final thermal structure of the descending plate, dynamic models are to computationally expensive for studying specific subduction zones and relative geophysical data-set. Kinematical models, in this latter case, are extremely useful, because it is possible to define the velocity field and the geometry of the target subduction zone and exploring what parameters best fit the current observations. 
+
+
+% =================================================
+\section*{Methods}
+% =================================================
+
+\subsection*{Equations}
+
+StonedFenicsx solves the continuity, momentum, and energy conservation equations
+using FEM. The numerical model is fully driven by kinematic boundary conditions.
+The medium is incompressible and the momentum equation does not include
+gravitational body forces.
+
+\paragraph{Mass conservation}
+\begin{equation}
+\nabla \cdot \mathbf{u} = 0
+\end{equation}
+where $\mathbf{u}$ is the velocity field.
+
+\paragraph{Momentum conservation}
+\begin{equation}
+\nabla \cdot \bm{\tau} + \nabla P = 0
+\end{equation}
+
+The deviatoric stress tensor is defined as
+\begin{equation}
+\bm{\tau} = 2 \, \eta_{\mathrm{eff}} \, \dot{\bm{\varepsilon}}
+\end{equation}
+
+with the deviatoric strain-rate tensor
+\begin{equation}
+\dot{\bm{\varepsilon}} =
+\frac{1}{2}\left( \nabla \mathbf{u} + \nabla \mathbf{u}^{T} \right)
+\end{equation}
+
+The second invariant of the strain rate is
+\begin{equation}
+\dot{\varepsilon}_{II} =
+\sqrt{\frac{1}{2}\, \dot{\bm{\varepsilon}} : \dot{\bm{\varepsilon}}}
+\end{equation}
+
+The effective viscosity depends on temperature, pressure, and strain rate:
+\begin{equation}
+\eta_{\mathrm{eff}} = f(T,P,\dot{\varepsilon}_{II})
+\end{equation}
+
+% -------------------------------------------------
+\subsection*{Energy Conservation}
+% -------------------------------------------------
+
+\paragraph{Steady state}
+\begin{equation}
+\nabla \cdot (k \nabla T) + \rho C_p \nabla \cdot T + H = 0
+\end{equation}
+
+\paragraph{Time dependent}
+\begin{equation}
+\rho C_p \frac{\partial T}{\partial t}
++ \rho C_p \nabla \cdot T
++ \nabla \cdot (k \nabla T)
++ H = 0
+\end{equation}
+
+where:
+\begin{itemize}[leftmargin=*]
+\item $k$ is thermal conductivity [$\mathrm{W\,m^{-1}\,K^{-1}}$]
+\item $C_p$ is heat capacity [$\mathrm{J\,kg^{-1}\,K^{-1}}$]
+\item $\rho$ is density [$\mathrm{kg\,m^{-3}}$]
+\item $H$ is the volumetric heat source
+\end{itemize}
+
+% -------------------------------------------------
+\subsection*{Lithostatic Pressure}
+% -------------------------------------------------
+
+Material properties depend on pressure and temperature. Since dynamic pressure
+computed without gravity is unreliable, a lithostatic pressure field is computed
+following \cite{jourdon2022efficient}.
+
+\begin{equation}
+\nabla \cdot \nabla P^{L} - \nabla \cdot (\rho \mathbf{g}) = 0
+\end{equation}
+
+This lithostatic pressure field is used to evaluate material properties as a
+function of depth.
+
+% =================================================
+\section*{Numerical Methods}
+% =================================================
+
+The equations are discretised using FEM. Assembly and discretisation are handled
+by the \texttt{dolfinx}, \texttt{ufl}, and \texttt{basix} libraries \cite{baratta2023dolfinx,alnaes2014unified,scroggs2022construction,scroggs2022basix}.
+
+% =================================================
+\section*{Initial Setup and Boundary Conditions}
+% =================================================
+
+\begin{center}
+  \includegraphics[width=0.8\textwidth]{Boundary.png}
+\end{center}
+
+The computational domain is generated using \texttt{gmsh} and consists of an
+unstructured triangular mesh \cite{geuzaine2009gmsh}.
+
+The model is divided into three domains:
+\begin{itemize}[leftmargin=*]
+\item Slab (with optional oceanic crust)
+\item Wedge
+\item Overriding plate
+\end{itemize}
+
+Momentum equations are solved only in the slab and wedge domains.
+
+% =================================================
+\section*{Material Properties}
+% =================================================
+
+\subsection*{Rheology}
+
+The effective viscosity is defined as
+\begin{equation}
+\eta =
+\frac{1}{2} B^{-1/n} d^{-m}
+\dot{\varepsilon}_{II}^{\frac{1-n}{n}}
+\exp\!\left( \frac{E + PV}{nRT} \right)
+\end{equation}
+
+The effective viscosity is computed as a harmonic average:
+\begin{equation}
+\eta_{\mathrm{eff}} =
+\left(
+\frac{1}{\eta_{\mathrm{dif}}}
++ \frac{1}{\eta_{\mathrm{dis}}}
++ \frac{1}{\eta_{\max}}
+\right)^{-1}
+\end{equation}
+
+% -------------------------------------------------
+\subsection*{Density}
+% -------------------------------------------------
+
+\begin{equation}
+\rho = \rho_0 \exp(cf_T)\exp(cf_P)
+\end{equation}
+
+with
+\begin{align}
+cf_T &= \alpha_0 (T-T_0) + \frac{\alpha_1}{2}(T^2 - T_0^2) \\
+cf_P &= \beta P
+\end{align}
+
+% -------------------------------------------------
+\subsection*{Heat Capacity}
+% -------------------------------------------------
+
+\begin{equation}
+C_p =
+C_{p0}
++ C_{p1}T^{-0.5}
++ C_{p2}T^{-2}
++ C_{p3}T^{-3}
++ C_{p4}T
++ C_{p5}T^2
+\end{equation}
+
+% -------------------------------------------------
+\subsection*{Thermal Conductivity}
+% -------------------------------------------------
+
+\begin{center}
+  \includegraphics[width=0.45\textwidth]{thermal_conductivity_total.png}
+\end{center}
+
+\begin{equation}
+k(P,T) =
+k_0 o_0
++ \kappa(T)\rho C_p
++ k_{\mathrm{rad}}(T)
+\end{equation}
+
+\begin{equation}
+\kappa(T) =
+\kappa_0
++ \kappa_1 e^{-\frac{T-T_0}{\kappa_2}}
++ \kappa_3 e^{-\frac{T-T_0}{\kappa_4}}
+\end{equation}
+
+% =================================================
+\section*{Heat Sources}
+% =================================================
+
+\subsection*{Shear and frictional heating}
+\subsection*{Radiogenic heating}
+\subsection*{Adiabatic heating}
+
+% =================================================
+\bibliography{bibliography}
+
+\end{document}
