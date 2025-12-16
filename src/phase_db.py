@@ -605,7 +605,7 @@ def release_heat_capacity_parameters(tag:str,C0:float)->Tuple[float,float,float,
     """
     # Molar weight of fosterite and fayalite
     
-    C0 = 0.0; C1 = 0.0; C2 = 0.0; C3 = 0.0; C4 = 0.0 ; C5 = 0.0
+    C1 = 0.0; C2 = 0.0; C3 = 0.0; C4 = 0.0 ; C5 = 0.0
     
     if tag == 'Constant': 
         C0 = C0  

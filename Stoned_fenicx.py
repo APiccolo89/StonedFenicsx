@@ -78,7 +78,7 @@ def StonedFenicsx():
         input_path = path_test+'/input.py'
     
     except: 
-        path_test = "../../Results/T2"
+        path_test = "../../Results/T0b"
         input_path = "input.py"
         steady_state = 1
     
@@ -127,47 +127,53 @@ def StonedFenicsx():
     # Phase 1
     Pdb = _generate_phase(Pdb,
                           1, 
-                          name_capacity='Berman_Aranovich_Forsterite',
-                          name_conductivity='Mantle',
-                          radio_flag = 1.0,
-                          rho0 = 3300)
+                          name_capacity='Constant',
+                          name_conductivity='Constant',
+                          radio_flag = 0.0,
+                          rho0 = 3300,
+                          name_density= 'Constant')
     # Phase 2
     Pdb = _generate_phase(Pdb,
                           2,
-                          name_capacity='Oceanic_crust',
-                          name_conductivity='OceanicCrust',
+                          name_capacity='Constant',
+                          name_conductivity='Constant',
                           radio_flag = 0.0,
-                          rho0 = 2900)
+                          rho0 = 3300,
+                          name_density= 'Constant')
     # Phase 3
     Pdb = _generate_phase(Pdb,
                           3,
                           name_diffusion='Van_Keken_diff',
                           name_dislocation='Van_Keken_disl',
-                          name_capacity='Berman_Aranovich_Forsterite',
-                          name_conductivity='Mantle',
+                          name_capacity='Constant',
+                          name_conductivity='Constant',
                           radio_flag = 1.0,
-                          rho0 = 3300)
+                          rho0 = 3300,
+                          name_density= 'Constant')
     # Phase 4 
     Pdb = _generate_phase(Pdb,
                           4,
-                          name_capacity='Berman_Aranovich_Forsterite',
-                          name_conductivity='Mantle',
+                          name_capacity='Constant',
+                          name_conductivity='Constant',
                           radio_flag = 1.0,
-                          rho0 = 3300)
+                          rho0 = 3300,
+                          name_density= 'Constant')
     
     Pdb = _generate_phase(Pdb,
                           5,
-                          name_capacity='Oceanic_crust',
-                          name_conductivity='OceanicCrust',
+                          name_capacity='Constant',
+                          name_conductivity='Constant',
                           radio_flag = 0.0,
-                          rho0 = 2700)
+                          rho0 = 3300,
+                          name_density= 'Constant')
 
     Pdb = _generate_phase(Pdb,
                           6,
-                          name_capacity='Oceanic_crust',
-                          name_conductivity='OceanicCrust',
+                          name_capacity='Constant',
+                          name_conductivity='Constant',
                           radio_flag = 0.0,
-                          rho0 = 2800)
+                          rho0 = 3300,
+                          name_density= 'Constant')
 
     Pdb = _generate_phase(Pdb, 
                           7, 

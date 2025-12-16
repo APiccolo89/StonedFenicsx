@@ -1021,7 +1021,7 @@ def compare_experiments(file1:str, file2:str, time_td, M_data:MeshData,path_2_sa
     time_str = r'time = $\infty$'
     lim = [np.floor(np.nanmin(dTS)),np.floor(np.nanmax((dTS)))]
     
-    create_figure(path_2_save,time_str,lim[0],lim[1],'cmc.vik',r'$\Delta$ T (%s-%s) [$^{\circ}C$]'%(name_exp[0],name_exp[1]), M_data,T_S, 20, 'TSS',ipic)
+    create_figure(path_2_save,time_str,lim[0],lim[1],'cmc.vik',r'$\Delta$ T (%s-%s) [$^{\circ}C$]'%(name_exp[0],name_exp[1]), M_data,T_S, 20, 'TSS',ipic,'dT')
 
 
     compare_slab_surface_SS(path_2_save,
@@ -1095,11 +1095,11 @@ def plot_ss_temperature(file1:str, M_data:MeshData,path_2_save:str,name_exp:list
 
 
 if __name__ == "__main__":
-    path_2_test = '/Users/wlnw570/Work/Results/T1/Output'
-    path_2_testb = '/Users/wlnw570/Work/Results/T2/Output'
+    path_2_test = '/Users/wlnw570/Work/Results/T0/Output'
+    path_2_testb = '/Users/wlnw570/Work/Results/T0b/Output'
 
-    path_2_save = '/Users/wlnw570/Work/Tests/Results/T12'
-    path_2_saveb = '/Users/wlnw570/Work/Tests/Results/Comparison_T1_T2'
+    path_2_save = '/Users/wlnw570/Work/Output_deb/T0'
+    path_2_saveb = '/Users/wlnw570/Work/Output_deb/Comparison_T0_T0b'
     if not os.path.isdir(path_2_save):
         os.makedirs(path_2_save)
     
@@ -1114,10 +1114,10 @@ if __name__ == "__main__":
     time_td = 10.0  # Time in Myr to compare
     M_data = MeshData(ss_file,ms_tag)
     
-    plot_ss_temperature(ss_file, M_data, path_2_save,'T1')
+    plot_ss_temperature(ss_file, M_data, path_2_save,'T0')
     
-    compare_experiments(ss_file, ss_file2, time_td, M_data, path_2_saveb,['T1','T12'])
+    compare_experiments(ss_file, ss_file2, time_td, M_data, path_2_saveb,['T0','T0b'])
     
     
-    compare_SS_TD(ss_file2, td_file2, time_td, M_data, path_2_save)
+    #compare_SS_TD(ss_file2, td_file2, time_td, M_data, path_2_save)
     
