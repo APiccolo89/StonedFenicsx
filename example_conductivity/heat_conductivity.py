@@ -230,7 +230,7 @@ plt.ylabel('Pressure (GPa)')
 plt.xlabel('Temperature (C)')
 plt.title(r'$\alpha$ as a function of Pressure and Temperature')
 plt.show()  
-e fig.savefig('alpha.png', dpi=300)
+fig.savefig('alpha.png', dpi=300)
 
 plt.figure(figsize=(8,6))
 plt.contourf(T-273.15,P/1e9, (Cp), levels=10, cmap='gist_heat')

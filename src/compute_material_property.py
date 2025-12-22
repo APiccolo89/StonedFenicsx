@@ -217,6 +217,47 @@ def density_FX(pdb, T, p, phase, M):
 
     return rho 
 #----------------------------------
+
+def f(V_V0, P, K0, K0p):
+    return (3.0/2.0)*K0*((V_V0)**(7.0/3.0)-(V_V0)**(5.0/3.0))*(1.0 + (3.0/4.0)*(K0p -4.0)*((V_V0)**(2.0/3.0)-1.0)) - P
+    
+
+def find_root_V0(P, K0, K0p):
+    
+    V_V0_initial_guess = 1.0 - P/(3.0*K0)  # Initial guess based on small compression
+
+    for i in range(len(P)):
+        
+        V_V0_solution = fsolve(f(V_V0_initial_guess,P[i],K0[i],K0p[i]), V_V0_initial_guess)[0]
+    
+    return V0
+    
+
+#----------------------------------
+def compute_V0(pdb, T, p, phase, M):
+    """
+    Compute density as a UFL expression, FEniCSx-compatible.
+    
+    """
+    
+    ph = np.int32(phase.x.array)
+    P0 = phase.function_space
+    
+    P = fem.Function(P0)  ; P.interpolate(p)
+    K0  = fem.Function(P0)  ; K0.x.array[:]  =  pdb.alpha0[ph]
+    K0p  = fem.Function(P0)  ; K0p.x.array[:]  =  pdb.alpha1[ph] 
+    V0 = fem.Function(P0) 
+    V0.x.array[:] = find_root_V0(P.x.array[:], K0.x.array[:], K0p.x.array[:])
+    
+    
+    # Again: apperently the phase field is converted into numpy 64. First I need to extract the array, then, I need to convert into int32 
+ 
+    return V0 
+
+
+
+
+#----------------------------------
 def alpha_FX(pdb, T, p, phase, M):
     """
     Compute density as a UFL expression, FEniCSx-compatible.
@@ -229,7 +270,7 @@ def alpha_FX(pdb, T, p, phase, M):
     alpha1  = fem.Function(P0)  ; alpha1.x.array[:]  =  pdb.alpha1[ph] 
 
     # Base density (with temperature dependence)
-    alpha =  (alpha0  + (alpha1) * (T))
+    alpha =  (alpha0  + (alpha1) * (T- pdb.Tref))
 
 
     return alpha 
