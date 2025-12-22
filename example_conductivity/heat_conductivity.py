@@ -123,10 +123,16 @@ def compute_thermal_expansivity_pressure_dependent(V_V0,Gr0):
 
 def compute_thermal_expansitivity_temperature_dependent(T, alpha0, alpha1 , T0 , q):
     
-    alphaT = alpha0 * (T - T0)  + 0.5 * alpha1 * (T**2 - T0**2) 
+    alphaT = alpha0   + alpha1 * (T-T0) 
 
     return alphaT
     
+
+def compute_int_thermal_expansitivity_temperature_dependent(T, alpha0, alpha1 , T0 , q):
+    
+    alphaT = alpha0*(T-T0)   + 0.5*alpha1 * (T**2-T0**2)
+
+    return alphaT
 
 T = np.linspace(298.15, 1600+273.15, 1001) #[K]
 
@@ -159,19 +165,19 @@ rho    = np.zeros((len(P), len(T)))
 rho2   = np.zeros((len(P), len(T)))
 Kb     = (2*100e9*(1+0.25))/(3*(1-0.25*2))
 alpha0 =  2.832e-5
-alpha1 =  3.79e-8 #[1/K2]
+alpha1 =  0.758e-8 #[1/K2]
 k      = np.zeros((len(P), len(T)))
 k_rad  = np.zeros((len(P), len(T))) 
 Cp  = np.zeros((len(P), len(T))) 
 kp = np.zeros((len(P), len(T)))
 k2 = np.zeros((len(P),len(T)))
-
+alpha_total = np.zeros((len(P), len(T)))
 
 for i in range(len(P)):
     for j in range(len(T)):
         
-        rho[i,j]   = rho_0 * V_V0[i] * (1-alpha_p[i] * alpha_T[j])
-        rho2[i,j]  = rho_0 * np.exp(P[i]/Kb) * (1 - (alpha0 * (T[j]-273.15) + 0.5 * alpha1 * (T[j]**2 - 273.15**2)))
+        rho[i,j]   = rho_0 * V_V0[i] * (1-alpha_p[i] * compute_int_thermal_expansitivity_temperature_dependent(T[j], alpha0, alpha1 , 273.15 , q=1.0))
+        alpha_total[i,j] =  alpha_T[j]*alpha_p[i]
         k[i,j]     = compute_diffusivity_T(P[i], T[j]) * rho[i,j] * compute_thermal_capacity_T(T[j]) * compute_diffusivity_P(P[i])
         k_rad[i,j] = compute_radiative_conductivity_T(T[j],0.5)
         Cp[i,j]    = compute_thermal_capacity_T(T[j])
@@ -191,37 +197,14 @@ ax.yaxis_inverted()
 plt.colorbar(a0,label='K (W/m/K)')
 plt.ylabel('Pressure (GPa)')
 plt.xlabel('Temperature (C)')
-plt.title('Conductivity as a function of Pressure and Temperature')
+plt.title(r'$k$ as a function of Pressure and Temperature')
 plt.show()  
 fig.savefig('thermal_conductivity_total.png', dpi=300)
 
 
 
-fig = plt.figure(figsize=(8,6))
-ax = plt.gca()
-a0 = ax.contourf(T-273.15,P/1e9, (k2+k_rad), levels=10, cmap='cmc.lipari')
-b0 = ax.contour(T-273.15,P/1e9, (k2+k_rad), levels=np.linspace(1,10,num=10), colors='w', linewidths=0.5)
-ax.clabel(b0, inline=1, fontsize=10, fmt='%1.1f')
-ax.yaxis_inverted()
-plt.colorbar(a0,label='K (W/m/K)')
-plt.ylabel('Pressure (GPa)')
-plt.xlabel('Temperature (C)')
-plt.title('Conductivity as a function of Pressure and Temperature')
-plt.show()  
-fig.savefig('thermal_conductivity_tota_rho_alt.png', dpi=300)
 
 
-fig = plt.figure(figsize=(8,6))
-ax = plt.gca()
-a0 = ax.contourf(T-273.15,P/1e9, (k2-k)/((k+k_rad)+(k2+k_rad)), levels=10, cmap='cmc.lipari')
-ax.clabel(b0, inline=1, fontsize=10, fmt='%1.1f')
-ax.yaxis_inverted()
-plt.colorbar(a0,label='Ratio')
-plt.ylabel('Pressure (GPa)')
-plt.xlabel('Temperature (C)')
-plt.title('Conductivity as a function of Pressure and Temperature')
-plt.show()  
-fig.savefig('Ratio.png', dpi=300)
 
 fig = plt.figure(figsize=(8,6))
 ax = plt.gca()
@@ -229,39 +212,30 @@ a0 = ax.contourf(T-273.15,P/1e9, (rho), levels=10, cmap='cmc.lipari')
 b0 = ax.contour(T-273.15,P/1e9, (rho), levels=np.linspace(1,10,num=10), colors='w', linewidths=0.5)
 ax.clabel(b0, inline=1, fontsize=10, fmt='%1.1f')
 ax.yaxis_inverted()
-plt.colorbar(a0,label='K (W/m/K)')
+plt.colorbar(a0,label=r'$\rho$ ($kg/m^3$)')
 plt.ylabel('Pressure (GPa)')
 plt.xlabel('Temperature (C)')
-plt.title('Density as a function of Pressure and Temperature')
+plt.title(r'$\rho$ as a function of Pressure and Temperature')
 plt.show()  
 fig.savefig('Density.png', dpi=300)
 
 
 fig = plt.figure(figsize=(8,6))
 ax = plt.gca()
-a0 = ax.contourf(T-273.15,P/1e9, (rho-rho2), levels=10, cmap='cmc.lipari')
-b0 = ax.contour(T-273.15,P/1e9, (rho-rho2), levels=np.linspace(1,10,num=10), colors='w', linewidths=0.5)
+a0 = ax.contourf(T-273.15,P/1e9, (alpha_total), levels=10, cmap='cmc.lipari')
 ax.clabel(b0, inline=1, fontsize=10, fmt='%1.1f')
 ax.yaxis_inverted()
-plt.colorbar(a0,label='K (W/m/K)')
+plt.colorbar(a0,label=r'\alpha (1/K)')
 plt.ylabel('Pressure (GPa)')
 plt.xlabel('Temperature (C)')
-plt.title('Density as a function of Pressure and Temperature')
+plt.title(r'$\alpha$ as a function of Pressure and Temperature')
 plt.show()  
-fig.savefig('Density.png', dpi=300)
+e fig.savefig('alpha.png', dpi=300)
 
 plt.figure(figsize=(8,6))
 plt.contourf(T-273.15,P/1e9, (Cp), levels=10, cmap='gist_heat')
-plt.colorbar(label='Cp (J/kg/K)')
+plt.colorbar(label=r'$C_p$ (J/kg/K)')
 plt.ylabel('Pressure (GPa)')
 plt.xlabel('Temperature (C)')
-plt.title('Conductivity as a function of Pressure and Temperature')
+plt.title(r'$C_p$ as a function of Pressure and Temperature')
 plt.show()  
-
-plt.figure(figsize=(8,6))
-plt.contourf(T-273.15,P/1e9, (rho), levels=10, cmap='viridis')
-plt.colorbar(label='Density (kg/m3)')
-plt.ylabel('Pressure (GPa)')
-plt.xlabel('Temperature (C)')
-plt.title('Density as a function of Pressure and Temperature')
-plt.show()

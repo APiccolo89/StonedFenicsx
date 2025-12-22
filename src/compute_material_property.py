@@ -229,7 +229,7 @@ def alpha_FX(pdb, T, p, phase, M):
     alpha1  = fem.Function(P0)  ; alpha1.x.array[:]  =  pdb.alpha1[ph] 
 
     # Base density (with temperature dependence)
-    alpha =  (alpha0 * (T - pdb.Tref) + (alpha1 / 2.0) * (T**2 - pdb.Tref**2))
+    alpha =  (alpha0  + (alpha1) * (T))
 
 
     return alpha 
