@@ -23,7 +23,6 @@ class lithologies():
         self.r1    = 0.08/1e9
         self.fr    = 0.10 
     
-    def SL(A,B,C,)
         
 def dry_differentiation(L,a,b,Tp):
     

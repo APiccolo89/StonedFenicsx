@@ -147,7 +147,7 @@ def StonedFenicsx():
                           name_dislocation='Van_Keken_disl',
                           name_capacity='Constant',
                           name_conductivity='Constant',
-                          radio_flag = 1.0,
+                          radio_flag = 0.0,
                           rho0 = 3300,
                           name_density= 'Constant')
     # Phase 4 
