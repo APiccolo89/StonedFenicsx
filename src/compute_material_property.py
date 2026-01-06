@@ -199,12 +199,13 @@ def density_FX(pdb, T, p, phase, M):
     rho0    = fem.Function(P0)  ; rho0.x.array[:]    =  pdb.rho0[ph]
     alpha0  = fem.Function(P0)  ; alpha0.x.array[:]  =  pdb.alpha0[ph]
     alpha1  = fem.Function(P0)  ; alpha1.x.array[:]  =  pdb.alpha1[ph] 
+    alpha2  = fem.Function(P0)  ; alpha2.x.array[:]  =  pdb.alpha2[ph] 
     Kb      = fem.Function(P0)  ; Kb.x.array[:]      =  pdb.Kb[ph]
     opt_rho = fem.Function(P0)  ; opt_rho.x.array[:] =  pdb.option_rho[ph]
 
     # Base density (with temperature dependence)
-    temp_term = - (alpha0 * (T - pdb.Tref) + (alpha1 / 2.0) * (T**2 - pdb.Tref**2))
-    rho_temp = rho0 * exp(temp_term)
+    temp_term = - exp(- p * alpha2)*(alpha0 * (T - pdb.Tref) + (alpha1 / 2.0) * (T**2 - pdb.Tref**2))
+    rho_temp = rho0 * (1-temp_term) 
 
     # Add pressure dependence if needed
     rho = conditional(
@@ -217,6 +218,9 @@ def density_FX(pdb, T, p, phase, M):
 
     return rho 
 #----------------------------------
+
+
+#----------------------------------
 def alpha_FX(pdb, T, p, phase, M):
     """
     Compute density as a UFL expression, FEniCSx-compatible.
@@ -227,9 +231,10 @@ def alpha_FX(pdb, T, p, phase, M):
     # Gather material parameters as UFL expressions via indexing
     alpha0  = fem.Function(P0)  ; alpha0.x.array[:]  =  pdb.alpha0[ph]
     alpha1  = fem.Function(P0)  ; alpha1.x.array[:]  =  pdb.alpha1[ph] 
+    alpha2  = fem.Function(P0)  ; alpha2.x.array[:]  =  pdb.alpha2[ph]
 
     # Base density (with temperature dependence)
-    alpha =  (alpha0 * (T - pdb.Tref) + (alpha1 / 2.0) * (T**2 - pdb.Tref**2))
+    alpha =  exp(- p * alpha2) * (alpha0  + (alpha1) * (T- pdb.Tref))
 
 
     return alpha 

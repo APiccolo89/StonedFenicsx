@@ -303,6 +303,8 @@ spec_phase = [
     # Density parameters
     ("alpha0", float64[:]),       # Thermal expansivity [1/K]
     ("alpha1", float64[:]),      # Second-order thermal expansivity [1/K^2]
+    ("alpha2", float64[:]),      # Pressure dependency of alpha [1/Pa]
+
     ("Kb", float64[:]),          # Bulk modulus [Pa]
     ("rho0", float64[:]),        # Reference density [kg/m^3]
     ("option_rho", int32[:]),    # Option for density calculation
@@ -414,6 +416,7 @@ class PhaseDataBase:
         # Density parameters 
         self.alpha0     = np.zeros(number_phases, dtype=np.float64)               # Thermal expansivity coefficient [1/K]   
         self.alpha1     = np.zeros(number_phases, dtype=np.float64)               # Second-order expansivity [1/K^2]
+        self.alpha2     = np.zeros(number_phases, dtype=np.float64)               # Second-order expansivity [1/Pa]
         self.Kb         = np.zeros(number_phases, dtype=np.float64)               # Bulk modulus [Pa]                
         self.rho0       = np.zeros(number_phases, dtype=np.float64)               # Reference density [kg/m^3] {In case of constant density}
         self.option_rho = np.zeros(number_phases, dtype=np.int32)                 # Option for density calculation
@@ -550,6 +553,7 @@ def _generate_phase(PD:PhaseDataBase,
     # Density
     PD.alpha0[id]     = 2.832e-5
     PD.alpha1[id]     = 3.79e-8 
+    PD.alpha2[id]     = 3.62e-2/1e9
     PD.Kb[id]         = (2*100e9*(1+0.25))/(3*(1-0.25*2))  # Bulk modulus [Pa]
     PD.rho0[id]       = rho0
     if name_density == 'Constant':

@@ -58,3 +58,16 @@ src/phase_db.py
 ReadMe_figure/Technical_documentation-blx.bib
 ReadMe_figure/Technical_documentation.bcf
 ReadMe_figure/Technical_documentation.dvi
+adiabatic_profile_A.png
+adiabatic_profile_B.png
+alpha_A.png
+alpha_B.png
+alpha_error.png
+Cp.png
+density_A.png
+density_B.png
+density_error.png
+error_alpha.png
+error_density.png
+temperature_error.png
+thermal_conductivity.png
