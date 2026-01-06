@@ -6,7 +6,389 @@ import h5py
 from dolfinx.io import XDMFFile
 import os
 import cmcrameri
+from data_extractor import Test
+from data_extractor import MeshData
 
+def release_vectorial_field(vec_field,T,ind_sortS,ind_sortO):
+    
+    if vec_field == 'HeatFlux':
+        vx = 'qx'
+        vy = 'qy'
+    else:
+        vx = 'vx'
+        vy = 'vy'
+    
+    ax    = eval('T.Data_raw.SteadyState.%s[M_data.ind_topSlab]'%vx)
+    ay    = eval('T.Data_raw.SteadyState.%s[M_data.ind_topSlab]'%vy)
+    
+    ox   = eval('T.Data_raw.SteadyState.%s[M_data.ind_Oceanic]'%vx)
+    oy   = eval('T.Data_raw.SteadyState.%s[M_data.ind_Oceanic]'%vy)
+    
+    s_slab = np.sqrt(ax**2 + ay**2)
+    s_oc   = np.sqrt(ox**2 + oy**2)
+    
+    s_slab = s_slab[ind_sortS]
+    s_oc   = s_oc[ind_sortO]
+    
+    return s_slab,s_oc
+
+def release_scalar_field(scalar_field,T,ind_sortS,ind_sortO):
+    
+    s_slab = eval('T.Data_raw.SteadyState.%s[M_data.ind_topSlab]'%scalar_field)
+    s_oc   = eval('T.Data_raw.SteadyState.%s[M_data.ind_Oceanic]'%scalar_field)
+
+    s_slab = s_slab[ind_sortS]
+    s_oc   = s_oc[ind_sortO] 
+
+    return s_slab,s_oc
+    
+
+def compare_slab_surface(path2save:str,
+                        time_string:str,
+                        ipic:int,
+                        XO:float,
+                        XS:float,
+                        QO:float,
+                        QS:float,
+                        S:float,
+                        OC:float,
+                        string_label:list):
+    from matplotlib import pyplot as plt
+    
+    plt.rcParams.update({
+    "text.usetex": True,           # Use LaTeX for all text
+    "font.family": "serif",        # Or 'sans-serif'
+    "font.serif": ["Computer Modern"],   # LaTeX default
+    "axes.unicode_minus": False,
+    })
+    
+    
+    def modify_ax(ax,fg):
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_linewidth(1.5)
+        ax.spines['left'].set_linewidth(1.5)
+        ax.spines['top'].set_color('black')
+        ax.spines['left'].set_color('black')
+        ax.xaxis.set_ticks_position('top')
+        ax.yaxis.set_ticks_position('left')
+        ax.tick_params(direction='in', which='both', length=6, width=1, colors='black', grid_color='black', grid_alpha=0.5)
+        ax.tick_params(axis='x', direction='in', which='both', bottom=False, top=True)
+        ax.tick_params(axis='y', direction='in', which='both', left=True, right=False)
+        #ax = arrowed_spines(fg, ax)
+        ax.set_ylim([-400,0.0])
+        return ax 
+    
+    color = ['forestgreen','firebrick','darkblue','orange','purple','brown','grey']
+    
+    fname = os.path.join(path2save, 'Slab_surface_comparison')
+    if not os.path.isdir(fname):
+        os.makedirs(fname)
+    figure_name = f'Figure_{ipic:03d}.png'
+    
+    import matplotlib.pyplot as plt
+    
+    fig = plt.figure(figsize=(10,6))
+    
+    bx = 0.08 
+    
+    by = 0.04
+    
+    dy = 0.08 
+    
+    dx = 0.01 
+    
+    sx = 0.40
+    
+    sy = 0.4 
+    
+    ax0 = fig.add_axes([bx, by+sy+dy, sx, sy])
+    
+    ax1 = fig.add_axes([bx+sx+dx, by+sy+dy, sx, sy])
+    
+    ax2 = fig.add_axes([bx, by, sx, sy])
+    
+    ax3 = fig.add_axes([bx+sx+dx, by, sx, sy])
+    
+    for i in range(len(S)):
+        ax0.plot(S[i],XS,c=color[i],label=r'$T^{\infty}$%s Slab'%string_label[i] ,linewidth=1.0,linestyle='-.'                )
+
+    for i in range(len(OC)):
+        ax2.plot(OC[i],XO,c=color[i],label=r'$T^{\infty}$%s Oceanic Crust'%string_label[i] ,linewidth=1.0,linestyle='-.'                )
+    
+    for i in range(len(QS)):
+        ax1.plot(QS[i],XS,c=color[i],label=r'$q^{\infty}$%s Slab'%string_label[i] ,linewidth=1.0,linestyle='-.'                )
+    
+    for i in range(len(QO)): 
+        ax3.plot(QO[i],XO,c=color[i],label=r'$q^{\infty}$%s Oceanic Crust'%string_label[i] ,linewidth=1.0,linestyle='-.'                )
+    
+    ax2.set_xlabel(r'T [$^{\circ} C$]', fontsize=12)
+    
+    ax0.set_ylabel('Depth [km]', fontsize=12)
+    
+    ax2.set_ylabel('Depth [km]', fontsize=12)
+    
+    ax3.set_xlabel(r'q [$W/m^2$]', fontsize=12)
+    
+    ax1.set_yticklabels([])
+    
+    ax3.set_yticklabels([])
+
+    
+    ax0 = modify_ax(ax0,fig)
+    
+    ax1 = modify_ax(ax1,fig)
+    
+    ax2 = modify_ax(ax2,fig)
+    
+    ax3 = modify_ax(ax3,fig)
+    
+    ax0.legend(fontsize=8, loc='lower left', frameon=False)
+    ax1.legend(fontsize=8, loc='lower right', frameon=False)
+
+
+    ax2.legend(fontsize=8, loc='lower left', frameon=False)
+    ax3.legend(fontsize=8, loc='lower right', frameon=False)
+    
+    ax0.xaxis.set_label_position("top")
+    
+    ax1.xaxis.set_label_position("top")
+    
+    ax2.xaxis.set_label_position("top")
+    
+    ax3.xaxis.set_label_position("top")
+    
+    ax0.grid(True, linestyle='-.', linewidth=0.2)
+    
+    ax1.grid(True, linestyle='-.', linewidth=0.2)
+
+    ax2.grid(True, linestyle='-.', linewidth=0.2)
+    
+    ax3.grid(True, linestyle='-.', linewidth=0.2)
+    
+    
+    props = dict(boxstyle='round', facecolor='black', alpha=0.5)
+    
+    
+    ax0.text(0.9, 1.15, '[a]', transform=ax0.transAxes, fontsize=8,
+        verticalalignment='top', bbox=props,color='white')
+    ax1.text(0.9, 1.15,'[b]', transform=ax1.transAxes, fontsize=8,
+        verticalalignment='top', bbox=props,color='white')
+    ax2.text(0.9, 1.15, '[c]', transform=ax2.transAxes, fontsize=8,
+        verticalalignment='top', bbox=props,color='white')
+    ax3.text(0.9, 1.15, '[d]', transform=ax3.transAxes, fontsize=8,
+        verticalalignment='top', bbox=props,color='white')
+ 
+    ax0.text(0.1, 1.15, time_string, transform=ax0.transAxes, fontsize=10,
+        verticalalignment='top', bbox=props,color='white')
+ 
+    fig.savefig(os.path.join(fname, figure_name))
+
+    return 0
+
+
+
+def create_figure(path2save:str, 
+                  M_data:MeshData,
+                  vmin:float, 
+                  vmax:float, 
+                  cmap: str, 
+                  title: str,
+                  field:float, 
+                  n_level:int,
+                  name_fig:str,
+                  ipic:int,
+                  name_field:str): 
+    
+    import matplotlib.pyplot as plt
+
+    plt.rcParams.update({
+    "text.usetex": True,           # Use LaTeX for all text
+    "font.family": "serif",        # Or 'sans-serif'
+    "font.serif": ["Computer Modern"],   # LaTeX default
+    "axes.unicode_minus": False,
+    })
+    def modify_ax(ax):
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_linewidth(1.5)
+        ax.spines['left'].set_linewidth(1.5)
+        ax.spines['bottom'].set_color('black')
+        ax.spines['left'].set_color('black')
+        ax.xaxis.set_ticks_position('bottom')
+        ax.yaxis.set_ticks_position('left')
+        ax.tick_params(direction='in', which='both', length=6, width=1, colors='black', grid_color='black', grid_alpha=0.5)
+        ax.tick_params(axis='x', direction='in', which='both', bottom=True, top=False)
+        ax.tick_params(axis='y', direction='in', which='both', left=True, right=False)
+        return ax
+
+    xs = M_data.X[(M_data.mesh_tag==8.0) | (M_data.mesh_tag == 9.0),0]
+    ys = M_data.X[(M_data.mesh_tag==8.0) | (M_data.mesh_tag == 9.0),1]
+    sort = np.argsort(xs)
+    
+    x_s  = [xs[sort], ys[sort]]
+    
+    xor = M_data.X[(M_data.mesh_tag==11.0),0]
+    yor = M_data.X[(M_data.mesh_tag==11.0),1]
+    sort = np.argsort(xor)
+    
+    x_or  = [xor[sort], yor[sort]]
+    
+    xbt = M_data.X[(M_data.mesh_tag==6.0),0]
+    ybt = M_data.X[(M_data.mesh_tag==6.0),1]
+    sort = np.argsort(xbt)
+    
+    x_bt  = [xbt[sort], ybt[sort]]
+    
+    
+    
+    pt_save = os.path.join(path2save,name_fig)
+    if not os.path.isdir(pt_save):
+        os.makedirs(pt_save)
+        
+    figure_name = f'Figure_{ipic:03d}_%s.png'%name_field
+        
+    fname = os.path.join(pt_save, figure_name)
+    fig, ax0 = plt.subplots(figsize=(10, 6))
+    ax0 = modify_ax(ax0)
+    ax0.set_title(time_string, fontsize=16)
+    ax0.set_xlabel('Distance [km]', fontsize=14)
+    ax0.set_ylabel('Depth [km]', fontsize=14)
+    p0 = ax0.contourf(M_data.Xi, M_data.Yi, field, levels=n_level, cmap=cmap, vmin=vmin, vmax=vmax)
+    p1 = ax0.plot(x_s[0],x_s[1],c='w',linewidth=1.2)
+    p2 = ax0.plot(x_or[0],x_or[1],c='w',linewidth=1.2)
+    p3 = ax0.plot(x_bt[0],x_bt[1],c='k',linewidth=1.2)
+    cbar = plt.colorbar(p0, ax=ax0, orientation='vertical', pad=0.02)
+    cbar.set_label(label=title, fontsize=14)
+    cbar.ax.tick_params(labelsize=12)
+    #cbar.set_ticks(np.linspace(vmin, vmax, 5))
+    #cbar.set_ticklabels([f'{val:.0f}' for val in np.linspace(vmin, vmax, 5)])
+    fig.savefig(fname)
+    plt.close(fig)
+    
+    return 0 
+
+
+
+
+path = '/Users/wlnw570/Work/Results'
+path2save = '/Users/wlnw570/Work/Figures_Tests'
+if not os.path.isdir(path2save):
+    os.makedirs(path2save)  
+    
+
+T0 = Test('%s/T0b/Output'%path)
+T1 = Test('%s/T0c/Output'%path)
+T2 = Test('%s/T0d/Output'%path)
+T3 = Test('%s/T0e/Output'%path)
+
+Temp_T0 = T0._interpolate_data('SteadyState.Temp')
+Temp_T1 = T1._interpolate_data('SteadyState.Temp')
+Temp_T2 = T2._interpolate_data('SteadyState.Temp')
+Temp_T3 = T3._interpolate_data('SteadyState.Temp')
+
+M_data = T0.MeshData
+
+vmin = 0.0
+vmax = 1700.0 
+
+n_level = 100
+cmap = cmcrameri.cm.lipari
+title = 'Temperature [$^{\circ}C$]'
+name_fig = 'Temperature'
+time_string = 'Steady State'
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T0,n_level,name_fig,0,'T0b')
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T1,n_level,name_fig,0,'T0c')
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T2,n_level,name_fig,0,'T0d')
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T3,n_level,name_fig,0,'T0e')   
+
+# Difference T1 - T0
+
+vmin = np.floor(np.nanmin(Temp_T1 - Temp_T0))
+vmax = np.ceil(np.nanmax(Temp_T1 - Temp_T0))
+n_level = 100
+cmap = cmcrameri.cm.vik
+title = 'Temperature Difference T0c - T0b [$^{\circ}C$]'
+name_fig = 'Temperature_difference_T0c_minus_T0b'
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T1-Temp_T0,n_level,name_fig,0,'T1_minus_T0')
+
+# Difference T2 - T0
+vmin = np.floor(np.nanmin(Temp_T2 - Temp_T0))
+vmax = np.ceil(np.nanmax(Temp_T2 - Temp_T0))
+n_level = 100
+cmap = cmcrameri.cm.vik
+title = 'Temperature Difference T0d - T0b [$^{\circ}C$]'
+name_fig = 'Temperature_difference_T0d_minus_T0b'
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T2-Temp_T0,n_level,name_fig,0,'T2_minus_T0')
+
+# Difference T3 - T0
+vmin = np.floor(np.nanmin(Temp_T3 - Temp_T0))
+vmax = np.ceil(np.nanmax(Temp_T3 - Temp_T0))
+n_level = 100
+cmap = cmcrameri.cm.vik
+title = 'Temperature Difference T0e - T0b [$^{\circ}C$]'
+name_fig = 'Temperature_difference_T0e_minus_T0b'
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T3-Temp_T0,n_level,name_fig,0,'T3_minus_T0')
+
+x      = M_data.X[:,0]
+y      = M_data.X[:,1]
+xs_slab = x[M_data.ind_topSlab]
+ys_slab = y[M_data.ind_topSlab]
+xs_ocmoh = x[M_data.ind_Oceanic]
+ys_ocmoh = y[M_data.ind_Oceanic]
+sort_slab = np.argsort(xs_slab)
+sort_ocmoh = np.argsort(xs_ocmoh)
+
+T0S,O0S = release_scalar_field('Temp',T0,sort_slab,sort_ocmoh)
+T1S,O1S = release_scalar_field('Temp',T1,sort_slab,sort_ocmoh)
+T2S,O2S = release_scalar_field('Temp',T2,sort_slab,sort_ocmoh)
+T3S,O3S = release_scalar_field('Temp',T3,sort_slab,sort_ocmoh)
+
+qx0S,Oq0S = release_vectorial_field('HeatFlux',T0,sort_slab,sort_ocmoh)
+qx1S,Oq1S = release_vectorial_field('HeatFlux',T1,sort_slab,sort_ocmoh)
+qx2S,Oq2S = release_vectorial_field('HeatFlux',T2,sort_slab,sort_ocmoh)
+qx3S,Oq3S = release_vectorial_field('HeatFlux',T3,sort_slab,sort_ocmoh)
+
+T0s_slab = T0S[sort_slab]
+T1s_slab = T1S[sort_slab]
+T2s_slab = T2S[sort_slab]
+T3s_slab = T3S[sort_slab]
+
+T0s_ocmoh = O0S[sort_ocmoh]
+T1s_ocmoh = O1S[sort_ocmoh]
+T2s_ocmoh = O2S[sort_ocmoh]
+T3s_ocmoh = O3S[sort_ocmoh]
+
+qx0s_slab = qx0S[sort_slab]
+qx1s_slab = qx1S[sort_slab]
+qx2s_slab = qx2S[sort_slab]
+qx3s_slab = qx3S[sort_slab]
+
+qx0s_ocmoh = Oq0S[sort_ocmoh]
+qx1s_ocmoh = Oq1S[sort_ocmoh]
+qx2s_ocmoh = Oq2S[sort_ocmoh]
+qx3s_ocmoh = Oq3S[sort_ocmoh]
+
+TSlab = [T0s_slab,T1s_slab,T2s_slab,T3s_slab]
+Tocmoh = [T0s_ocmoh,T1s_ocmoh,T2s_ocmoh,T3s_ocmoh]
+q0s_slab = [qx0s_slab,qx1s_slab,qx2s_slab,qx3s_slab]
+q0s_ocmoh = [qx0s_ocmoh,qx1s_ocmoh,qx2s_ocmoh,qx3s_ocmoh]
+
+
+label = ['T0b','T0c','T0d','T0e']
+
+compare_slab_surface(path2save,'',0,ys_ocmoh,ys_slab,q0s_ocmoh,q0s_slab,TSlab,Tocmoh,label)
+
+print('bla')
+
+
+
+
+
+
+
+
+'''
 class MeshData(): 
     def __init__(self,f:str,f1:str):
         # Extract mesh geometry 
@@ -495,180 +877,6 @@ def compare_slab_surface(path2save:str,
     return 0
          
         
-def compare_slab_surface_SS(path2save:str,
-                        time_string:str,
-                        ipic:int,
-                        Ts:float,
-                        Ttd:float,
-                        M_data:MeshData,
-                        string_label:list):
-    from matplotlib import pyplot as plt
-    
-    plt.rcParams.update({
-    "text.usetex": True,           # Use LaTeX for all text
-    "font.family": "serif",        # Or 'sans-serif'
-    "font.serif": ["Computer Modern"],   # LaTeX default
-    "axes.unicode_minus": False,
-    })
-    
-    
-    def modify_ax(ax,fg):
-        ax.spines['bottom'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.spines['top'].set_linewidth(1.5)
-        ax.spines['left'].set_linewidth(1.5)
-        ax.spines['top'].set_color('black')
-        ax.spines['left'].set_color('black')
-        ax.xaxis.set_ticks_position('top')
-        ax.yaxis.set_ticks_position('left')
-        ax.tick_params(direction='in', which='both', length=6, width=1, colors='black', grid_color='black', grid_alpha=0.5)
-        ax.tick_params(axis='x', direction='in', which='both', bottom=False, top=True)
-        ax.tick_params(axis='y', direction='in', which='both', left=True, right=False)
-        #ax = arrowed_spines(fg, ax)
-        
-        return ax 
-    
-    fname = os.path.join(path2save, 'Slab_surface_comparison')
-    if not os.path.isdir(fname):
-        os.makedirs(fname)
-    figure_name = f'Figure_{ipic:03d}.png'
-    
-    # Select the indices corresponding to the slab surface and oceanic crust
-    z = M_data.X[:,1]
-    
-    ind_top  = (M_data.mesh_tag==8.0)| (M_data.mesh_tag==9.0)
-    
-    ind_ocr  = (M_data.mesh_tag==10.0)
-
-    Ts_slab  = Ts[ind_top]
-    
-    Ts_ocmoh = Ts[ind_ocr]
-    
-    Ttd_slab = Ttd[ind_top]
-    
-    Ttd_ocmoh= Ttd[ind_ocr]
-
-    z_s = z[ind_top]
-    
-    z_ocmoh = z[ind_ocr]
-    
-    ts = np.argsort(z_s)
-    
-    z_s = z_s[ts]
-    
-    Ts_slab = Ts_slab[ts]
-    
-    Ttd_slab = Ttd_slab[ts]
-    
-    tocmoh = np.argsort(z_ocmoh)
-    
-    z_ocmoh = z_ocmoh[tocmoh]
-    
-    Ts_ocmoh = Ts_ocmoh[tocmoh]
-    
-    Ttd_ocmoh = Ttd_ocmoh[tocmoh]
-    
-    import matplotlib.pyplot as plt
-    
-    fig = plt.figure(figsize=(10,6))
-    
-    bx = 0.08 
-    
-    by = 0.04
-    
-    dy = 0.08 
-    
-    dx = 0.01 
-    
-    sx = 0.40
-    
-    sy = 0.4 
-    
-    ax0 = fig.add_axes([bx, by+sy+dy, sx, sy])
-    
-    ax1 = fig.add_axes([bx+sx+dx, by+sy+dy, sx, sy])
-    
-    ax2 = fig.add_axes([bx, by, sx, sy])
-    
-    ax3 = fig.add_axes([bx+sx+dx, by, sx, sy])
-    
-    ax0.plot(Ts_slab, z_s,c='forestgreen',label=r'$T^{\infty}$%s Slab'%string_label[0]                    ,linewidth=1.0, linestyle='-.')
-    
-    ax0.plot(Ttd_slab, z_s,c='firebrick',label=r'$T^{\infty}$%s Slab'%string_label[1]      ,linewidth=1.2                )
-    
-    ax1.plot(Ts_ocmoh, z_ocmoh,c='forestgreen',label=r'$T^{\infty}$%s Moho'%string_label[0] ,linewidth=1.0,linestyle='-.'                )
-    
-    ax1.plot(Ttd_ocmoh, z_ocmoh,c='firebrick',label=r'$T^{\infty}$%s Moho'%string_label[1] ,        linewidth=1.2)
-    
-    ax0.set_xlabel(r'T [$^{\circ} C$]', fontsize=12)
-    
-    ax0.set_ylabel('Depth [km]', fontsize=12)
-    
-    ax1.set_yticklabels([])
-    
-    ax3.set_yticklabels([])
-    
-    ax1.set_xlabel(r'T [$^{\circ} C$]', fontsize=12)
-    
-    ax2.plot(Ts_slab - Ttd_slab, z_s,c='darkblue',linewidth=1.2)
-    
-    ax2.set_xlabel(r'%s- %s [$^{\circ}C$]'%(string_label[0],string_label[1]), fontsize=12)
-
-    ax2.set_ylabel('Depth [km]', fontsize=12)
-    
-    ax3.plot(Ts_ocmoh - Ttd_ocmoh, z_ocmoh,c='darkblue',linewidth=1.2)
-        
-    ax3.set_xlabel(r'%s- %s [$^{\circ}C$]'%(string_label[0],string_label[1]), fontsize=12)
-    
-    ax0 = modify_ax(ax0,fig)
-    
-    ax1 = modify_ax(ax1,fig)
-    
-    ax2 = modify_ax(ax2,fig)
-    
-    ax3 = modify_ax(ax3,fig)
-    
-    ax0.legend(fontsize=8, loc='lower left', frameon=False)
-    ax1.legend(fontsize=8, loc='lower left', frameon=False)
-
-    
-    ax0.xaxis.set_label_position("top")
-    
-    ax1.xaxis.set_label_position("top")
-    
-    ax2.xaxis.set_label_position("top")
-    
-    ax3.xaxis.set_label_position("top")
-    
-    ax0.grid(True, linestyle='-.', linewidth=0.2)
-    
-    ax1.grid(True, linestyle='-.', linewidth=0.2)
-
-    ax2.grid(True, linestyle='-.', linewidth=0.2)
-    
-    ax3.grid(True, linestyle='-.', linewidth=0.2)
-    
-    
-    
-    
-    props = dict(boxstyle='round', facecolor='black', alpha=0.5)
-    
-    
-    ax0.text(0.9, 1.15, '[a]', transform=ax0.transAxes, fontsize=8,
-        verticalalignment='top', bbox=props,color='white')
-    ax1.text(0.9, 1.15,'[b]', transform=ax1.transAxes, fontsize=8,
-        verticalalignment='top', bbox=props,color='white')
-    ax2.text(0.9, 1.15, '[c]', transform=ax2.transAxes, fontsize=8,
-        verticalalignment='top', bbox=props,color='white')
-    ax3.text(0.9, 1.15, '[d]', transform=ax3.transAxes, fontsize=8,
-        verticalalignment='top', bbox=props,color='white')
- 
-    ax0.text(0.1, 1.15, time_string, transform=ax0.transAxes, fontsize=10,
-        verticalalignment='top', bbox=props,color='white')
- 
-    fig.savefig(os.path.join(fname, figure_name))
-
-    return 0
                 
         
 
@@ -1120,4 +1328,4 @@ if __name__ == "__main__":
     
     
     #compare_SS_TD(ss_file2, td_file2, time_td, M_data, path_2_save)
-    
+    '''
