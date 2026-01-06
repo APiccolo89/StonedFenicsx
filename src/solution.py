@@ -601,7 +601,7 @@ class Global_thermal(Problem):
 
     #------------------------------------------------------------------
 
-    def set_linear_picard_SS(self,p_k,T,u_global,D,pdb, it=0):
+    def set_linear_picard_SS(self,p_k,T,u_global,D,pdb, ctrl, it=0):
         # Function that set linear form and linear picard for picard iteration
         
         rho_k = density_FX(pdb, T, p_k, D.phase, D.mesh)  # frozen
@@ -609,6 +609,8 @@ class Global_thermal(Problem):
         Cp_k = heat_capacity_FX(pdb, T, D.phase, D.mesh)  # frozen
 
         k_k = heat_conductivity_FX(pdb, T, p_k, D.phase, D.mesh, Cp_k, rho_k)  # frozen
+
+        self.compute_adiabatic_heating(D,pdb,u_global,T,p_k,ctrl)
 
         f    = self.energy_source# source term
         
@@ -709,9 +711,9 @@ class Global_thermal(Problem):
         if it == 0:         
             self.shear_heating = self.compute_shear_heating(ctrl,pdb, S,getattr(M,'domainG'),geom,sc)
             self.compute_energy_source(getattr(M,'domainG'),pdb)
-            self.compute_adiabatic_heating(getattr(M,'domainG'),pdb,S.u_global,T,p_k,ctrl)
+            #self.compute_adiabatic_heating(getattr(M,'domainG'),pdb,S.u_global,T,p_k,ctrl)
         
-        a,L = self.set_linear_picard_SS(p_k,T,S.u_global,getattr(M,'domainG'),pdb)
+        a,L = self.set_linear_picard_SS(p_k,T,S.u_global,getattr(M,'domainG'),pdb,ctrl)
         
         self.bc = self.create_bc_temp(getattr(M,'domainG'),ctrl,geom,lhs,S.u_global,S.T_i,it)
         if self.typology == 'NonlinearProblem':
@@ -821,7 +823,7 @@ class Global_thermal(Problem):
         while it_inner < max_it and tol > 1e-5:
             time_ita = timing.time()
             
-            A,L = self.set_linear_picard_SS(S.PL,T_k,S.u_global,getattr(M,'domainG'),pdb)
+            A,L = self.set_linear_picard_SS(S.PL,T_k,S.u_global,getattr(M,'domainG'),pdb,ctrl)
             
             T_k1 = self.solve_the_linear(S,A,L,T_k1,1,it,1)
             T_k1.x.scatter_forward()
