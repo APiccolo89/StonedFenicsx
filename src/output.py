@@ -6,7 +6,7 @@
 from dolfinx import fem
 from mpi4py import MPI
 import ufl
-from .compute_material_property import density_FX,heat_capacity_FX,heat_conductivity_FX
+from .compute_material_property import density_FX,heat_capacity_FX,heat_conductivity_FX,alpha_FX
 from .compute_material_property import compute_viscosity_FX
 from .utils import compute_strain_rate,compute_eII
 import os
@@ -125,6 +125,13 @@ class OUTPUT():
         PL2.interpolate(S.PL)
         PL2.x.array[:] = PL2.x.array[:]*sc.stress/1e9
         PL2.x.scatter_forward()
+        
+        # alpha 
+        alpha = alpha_FX(pdb,S.T_O,S.PL,D.phase,D)
+        alpha2 = evaluate_material_property(alpha, self.temp_V)
+        alpha2.name = "alpha  [1/K]"
+        alpha2.x.array[:] = alpha2.x.array[:]*(1/sc.Temp)
+        alpha2.x.scatter_forward()
 
 
         # density 
@@ -174,6 +181,28 @@ class OUTPUT():
         eta2.x.array[:] = np.abs(eta2.x.array[:])*sc.eta
         eta2.x.scatter_forward()
 
+        # adiabatic heating 
+        
+        adiabatic_expr = alpha2 *ufl.inner(u_T*(sc.scale_vel), ufl.grad(PL2)) * T2 
+        adiabaticH = fem.Function(self.temp_V)
+        adiabaticH.name = 'Ha [W/m3]'
+        v = ufl.TestFunction(self.temp_V)
+        w = ufl.TrialFunction(self.temp_V)
+        a = ufl.inner(w,v) * ufl.dx
+        L = ufl.inner(adiabatic_expr,v) * ufl.dx
+        A = fem.petsc.assemble_matrix(fem.form(a))
+        A.assemble()
+        b = fem.petsc.assemble_vector(fem.form(L))
+
+        solver = PETSc.KSP().create(D.mesh.comm)
+        solver.setOperators(A)
+        solver.setType(PETSc.KSP.Type.CG)
+        solver.getPC().setType(PETSc.PC.Type.JACOBI)
+        solver.setFromOptions()
+        solver.solve(b, adiabaticH.x.petsc_vec)
+        adiabaticH.x.scatter_forward()
+
+
         # heat flux 
         q_expr = - (k2 * ufl.grad(T2)*1/sc.L)  
         flux   = fem.Function(self.vel_V)
@@ -217,19 +246,21 @@ class OUTPUT():
             # transient: append to ongoing XDMF with time
             # write each field at this physical_time
             # ...same for PL2, rho2, Cp2, k2, kappa2, e_T, eta2, flux
-            self.xdmf_main.write_function(dT,     time)
-            self.xdmf_main.write_function(u_T,    time)
-            self.xdmf_main.write_function(p2,     time)
-            self.xdmf_main.write_function(T2,     time)
-            self.xdmf_main.write_function(PL2,    time)
-            self.xdmf_main.write_function(rho2,   time)
-            self.xdmf_main.write_function(Cp2,    time)
-            self.xdmf_main.write_function(k2,     time)
-            self.xdmf_main.write_function(kappa2, time)
-            self.xdmf_main.write_function(e_T,    time)
-            self.xdmf_main.write_function(eta2,   time)
-            self.xdmf_main.write_function(flux,   time)
-            self.xdmf_main.write_function(tag,    time)
+            self.xdmf_main.write_function(dT,           time)
+            self.xdmf_main.write_function(u_T,          time)
+            self.xdmf_main.write_function(p2,           time)
+            self.xdmf_main.write_function(T2,           time)
+            self.xdmf_main.write_function(PL2,          time)
+            self.xdmf_main.write_function(rho2,         time)
+            self.xdmf_main.write_function(Cp2,          time)
+            self.xdmf_main.write_function(k2,           time)
+            self.xdmf_main.write_function(kappa2,       time)
+            self.xdmf_main.write_function(alpha2,       time)
+            self.xdmf_main.write_function(e_T,          time)
+            self.xdmf_main.write_function(eta2,         time)
+            self.xdmf_main.write_function(flux,         time)
+            self.xdmf_main.write_function(adiabaticH,   time)
+            self.xdmf_main.write_function(tag,          time)
         else:
             with XDMFFile(MPI.COMM_WORLD, "%s.xdmf"%file_name, "w") as ufile_xdmf:
 
@@ -245,9 +276,11 @@ class OUTPUT():
                 ufile_xdmf.write_function(Cp2  )
                 ufile_xdmf.write_function(k2   )
                 ufile_xdmf.write_function(kappa2)
+                ufile_xdmf.write_function(alpha2)
                 ufile_xdmf.write_function(e_T  )
                 ufile_xdmf.write_function(eta2 )
                 ufile_xdmf.write_function(flux )
+                ufile_xdmf.write_function(adiabaticH )
                 ufile_xdmf.write_function(tag )
                 D.mesh.geometry.x[:] = coord
 

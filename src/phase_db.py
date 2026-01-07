@@ -31,8 +31,43 @@ Dic_Cp ={'Constant'                                   : 'Constant',
          'Bermann_Aranovich_Fo_Fa_0_1'                : 'BAFoFa_0_1',
          'Oceanic_crust'                              : 'OceanicCrust',
          'ContinentalCrust'                           : 'Crust'}
+Dic_alpha = {'Constant'                               : 'Constant',
+             'Mantle'                                 : 'Mantle', 
+             'Crust'                                  : 'Crust'}
+
+
 #-----
 #-----------------------------------------------------------------------------------------------------------
+class thermal_expansivity():
+    def __init__(self): 
+        alpha0 = 2.832e-5
+        alpha1 = 3.79e-8 
+        alpha2 = 3.63e-2/1e9 
+        self.Mantle = alpha_law(alpha0 = alpha0, alpha1 = alpha1, alpha2 = alpha2)
+        alpha0 = 1.639e-5
+        alpha1 = 1.322e-6
+        alpha2 = 3.63e-2/1e9 
+        self.Crust    = alpha_law(alpha0 = alpha0, alpha1 = alpha1, alpha2 = alpha2)
+        self.Constant = alpha_law(alpha0 = 3.0e-5,alpha1 = 0.0, alpha2=0.0)
+        
+class alpha_law():
+    def __init__(self,alpha0 : float = 0.0, alpha1 : float = 0.0, alpha2 : float = 0.0):
+        self.alpha0 = alpha0
+        self.alpha1 = alpha1 
+        self.alpha2 = alpha2 
+        
+
+def _check_alpha(tag:str) -> alpha_law:
+
+
+    if tag == '':
+        # empty rheological flow law to fill it
+        return Rheological_flow_law()
+    else: 
+        RB = thermal_expansivity()
+        A = getattr(RB,Dic_alpha[tag])
+        return A 
+
 
 class Rheological_data_Base():
     """
@@ -124,7 +159,7 @@ class Rheological_data_Base():
         water = 1.0
         self.Diffusion_vanKeken = Rheological_flow_law(E,V,n,m,d0,B,0,0,r,water,q,gamma,taup)
 
-
+#----------------------------------------------------------------------------
 
 class Thermal_diffusivity():
     """
@@ -175,7 +210,7 @@ class Thermal_diffusivity():
         
         self.Oceanic_Crust  = Lattice_Diffusivity(a,b,c,d,e)
     
-
+#--------------------------------------------------------------------------------------------
 
 class Lattice_Diffusivity():
     def __init__(self,a=0.0,b=0.0,c=1.0,d=0.0,e=1.0,f=0.0,g=1.0):
@@ -252,6 +287,7 @@ def _check_rheological(tag:str) -> Rheological_flow_law:
         A = getattr(RB,Dic_rheo[tag])
         return A 
 
+#-----------------------------------------------------------------------------------------------------------
 
 def _check_diffusivity(tag:str) ->Lattice_Diffusivity:
 
@@ -392,7 +428,7 @@ class PhaseDataBase:
         self.C0         = np.zeros(number_phases, dtype=np.float64)               # Reference heat capacity [J/mol/K]
         self.C1         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [J/mol/K^0.5]  -> CONVERTED INTO J/kg/K^0.5       
         self.C2         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [(J*K)/mol]    -> CONVERTED INTO J/kg/K^2
-        self.C3         = np.zeros(number_phases, dtype=np.float64)    # Temperature dependent heat capacity [(J*K^2)/mol]  -> CONVERTED INTO J/kg/K^3
+        self.C3         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [(J*K^2)/mol]  -> CONVERTED INTO J/kg/K^3
         self.C4         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [(J*K^2)/mol]  -> CONVERTED INTO J/kg/K^3
         self.C5         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [(J*K^2)/mol]  -> CONVERTED INTO J/kg/K^3
 
@@ -436,10 +472,11 @@ def _generate_phase(PD:PhaseDataBase,
                     Bdis:float             = -1e23, 
                     Cp:float               = 1250,
                     k:float                = 3.0,
-                    rho0:float              = 3300,
+                    rho0:float             = 3300,
                     eta:float              = 1e20,
                     name_capacity:str      = 'Constant',
                     name_conductivity:str  = 'Constant',
+                    name_alpha:str         = 'Constant',
                     name_density:str       = 'PT',
                     radio:float = 0.0,
                     radio_flag:float = 0)     -> PhaseDataBase:
@@ -551,9 +588,17 @@ def _generate_phase(PD:PhaseDataBase,
     
     
     # Density
-    PD.alpha0[id]     = 2.832e-5
-    PD.alpha1[id]     = 3.79e-8 
-    PD.alpha2[id]     = 3.62e-2/1e9
+    
+    if not name_alpha in Dic_alpha:
+        print_ph('The avaiable options are: ')
+        for k in Dic_conductivity: 
+            print_ph('%s; '%k)
+
+        raise ValueError("Error: %s is not a heat Conductivity option"%name_conductivity)
+    alpha = _check_alpha(name_alpha)
+    PD.alpha0[id]     = alpha.alpha0
+    PD.alpha1[id]     = alpha.alpha1
+    PD.alpha2[id]     = alpha.alpha2
     PD.Kb[id]         = (2*100e9*(1+0.25))/(3*(1-0.25*2))  # Bulk modulus [Pa]
     PD.rho0[id]       = rho0
     if name_density == 'Constant':
