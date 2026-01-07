@@ -204,7 +204,7 @@ def density_FX(pdb, T, p, phase, M):
     opt_rho = fem.Function(P0)  ; opt_rho.x.array[:] =  pdb.option_rho[ph]
 
     # Base density (with temperature dependence)
-    temp_term = - exp(- p * alpha2)*(alpha0 * (T - pdb.Tref) + (alpha1 / 2.0) * (T**2 - pdb.Tref**2))
+    temp_term = exp(- p * alpha2)*(alpha0 * (T - pdb.Tref) + (alpha1 / 2.0) * (T**2 - pdb.Tref**2))
     rho_temp = rho0 * (1-temp_term) 
 
     # Add pressure dependence if needed
