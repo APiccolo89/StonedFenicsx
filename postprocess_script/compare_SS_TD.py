@@ -281,11 +281,14 @@ T0 = Test('%s/T0b/Output'%path)
 T1 = Test('%s/T0c/Output'%path)
 T2 = Test('%s/T0d/Output'%path)
 T3 = Test('%s/T0e/Output'%path)
+T4 = Test('%s/T0e_Bis/Output'%path)
 
 Temp_T0 = T0._interpolate_data('SteadyState.Temp')
 Temp_T1 = T1._interpolate_data('SteadyState.Temp')
 Temp_T2 = T2._interpolate_data('SteadyState.Temp')
 Temp_T3 = T3._interpolate_data('SteadyState.Temp')
+Temp_T4 = T4._interpolate_data('SteadyState.Temp')
+
 
 M_data = T0.MeshData
 
@@ -301,6 +304,8 @@ create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T0,n_level,name_fig,0,'
 create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T1,n_level,name_fig,0,'T0c')
 create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T2,n_level,name_fig,0,'T0d')
 create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T3,n_level,name_fig,0,'T0e')   
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T4,n_level,name_fig,0,'T0e_Bis')   
+
 
 # Difference T1 - T0
 
@@ -330,6 +335,14 @@ title = 'Temperature Difference T0e - T0b [$^{\circ}C$]'
 name_fig = 'Temperature_difference_T0e_minus_T0b'
 create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T3-Temp_T0,n_level,name_fig,0,'T3_minus_T0')
 
+vmin = np.floor(np.nanmin(Temp_T3 - Temp_T0))
+vmax = np.ceil(np.nanmax(Temp_T3 - Temp_T0))
+n_level = 100
+cmap = cmcrameri.cm.vik
+title = 'Temperature Difference T0eBis - T0b [$^{\circ}C$]'
+name_fig = 'Temperature_difference_T0e_minus_T0b'
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T4-Temp_T0,n_level,name_fig,0,'T4_minus_T0')
+
 x      = M_data.X[:,0]
 y      = M_data.X[:,1]
 xs_slab = x[M_data.ind_topSlab]
@@ -343,43 +356,52 @@ T0S,O0S = release_scalar_field('Temp',T0,sort_slab,sort_ocmoh)
 T1S,O1S = release_scalar_field('Temp',T1,sort_slab,sort_ocmoh)
 T2S,O2S = release_scalar_field('Temp',T2,sort_slab,sort_ocmoh)
 T3S,O3S = release_scalar_field('Temp',T3,sort_slab,sort_ocmoh)
+T4S,O4S = release_scalar_field('Temp',T4,sort_slab,sort_ocmoh)
 
 qx0S,Oq0S = release_vectorial_field('HeatFlux',T0,sort_slab,sort_ocmoh)
 qx1S,Oq1S = release_vectorial_field('HeatFlux',T1,sort_slab,sort_ocmoh)
 qx2S,Oq2S = release_vectorial_field('HeatFlux',T2,sort_slab,sort_ocmoh)
 qx3S,Oq3S = release_vectorial_field('HeatFlux',T3,sort_slab,sort_ocmoh)
+qx4S,Oq4S = release_vectorial_field('HeatFlux',T4,sort_slab,sort_ocmoh)
+
 
 T0s_slab = T0S[sort_slab]
 T1s_slab = T1S[sort_slab]
 T2s_slab = T2S[sort_slab]
 T3s_slab = T3S[sort_slab]
+T4s_slab = T4S[sort_slab]
 
 T0s_ocmoh = O0S[sort_ocmoh]
 T1s_ocmoh = O1S[sort_ocmoh]
 T2s_ocmoh = O2S[sort_ocmoh]
 T3s_ocmoh = O3S[sort_ocmoh]
+T4s_ocmoh = O4S[sort_ocmoh]
+
 
 qx0s_slab = qx0S[sort_slab]
 qx1s_slab = qx1S[sort_slab]
 qx2s_slab = qx2S[sort_slab]
 qx3s_slab = qx3S[sort_slab]
+qx4s_slab = qx4S[sort_slab]
+
 
 qx0s_ocmoh = Oq0S[sort_ocmoh]
 qx1s_ocmoh = Oq1S[sort_ocmoh]
 qx2s_ocmoh = Oq2S[sort_ocmoh]
 qx3s_ocmoh = Oq3S[sort_ocmoh]
-
-TSlab = [T0s_slab,T1s_slab,T2s_slab,T3s_slab]
-Tocmoh = [T0s_ocmoh,T1s_ocmoh,T2s_ocmoh,T3s_ocmoh]
-q0s_slab = [qx0s_slab,qx1s_slab,qx2s_slab,qx3s_slab]
-q0s_ocmoh = [qx0s_ocmoh,qx1s_ocmoh,qx2s_ocmoh,qx3s_ocmoh]
+qx4s_ocmoh = Oq4S[sort_ocmoh]
 
 
-label = ['T0b','T0c','T0d','T0e']
+TSlab = [T0s_slab,T1s_slab,T2s_slab,T3s_slab,T4s_slab]
+Tocmoh = [T0s_ocmoh,T1s_ocmoh,T2s_ocmoh,T3s_ocmoh,T4s_ocmoh]
+q0s_slab = [qx0s_slab,qx1s_slab,qx2s_slab,qx3s_slab,qx4s_slab]
+q0s_ocmoh = [qx0s_ocmoh,qx1s_ocmoh,qx2s_ocmoh,qx3s_ocmoh,qx4s_ocmoh]
+
+
+label = ['T0b','T0c','T0d','T0e','T0eBis']
 
 compare_slab_surface(path2save,'',0,ys_ocmoh,ys_slab,q0s_ocmoh,q0s_slab,TSlab,Tocmoh,label)
 
-print('bla')
 
 
 

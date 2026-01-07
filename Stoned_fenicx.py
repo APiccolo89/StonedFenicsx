@@ -78,7 +78,7 @@ def StonedFenicsx():
         input_path = path_test+'/input.py'
     
     except: 
-        path_test = "../../Results/T0e"
+        path_test = "../../Results/T0e_Bis"
         input_path = "input.py"
         steady_state = 1
     
@@ -129,7 +129,7 @@ def StonedFenicsx():
                           1, 
                           name_capacity='Berman_Fo_Fa_01',
                           name_conductivity='Mantle',
-                          radio_flag = 0.0,
+                          radio_flag = 1.0,
                           rho0 = 3300,
                           name_density= 'PT')
     # Phase 2
@@ -137,7 +137,7 @@ def StonedFenicsx():
                           2,
                           name_capacity='Oceanic_crust',
                           name_conductivity='OceanicCrust',
-                          radio_flag = 0.0,
+                          radio_flag = 1.0,
                           rho0 = 2900,
                           name_density= 'PT')
     # Phase 3
@@ -147,7 +147,7 @@ def StonedFenicsx():
                           name_dislocation='Van_Keken_disl',
                           name_capacity='Berman_Fo_Fa_01',
                           name_conductivity='Mantle',
-                          radio_flag = 0.0,
+                          radio_flag = 1.0,
                           rho0 = 3300,
                           name_density= 'PT')
     # Phase 4 
@@ -155,7 +155,7 @@ def StonedFenicsx():
                           4,
                           name_capacity='Berman_Fo_Fa_01',
                           name_conductivity='Mantle',
-                          radio_flag = 0.0,
+                          radio_flag = 1.0,
                           rho0 = 3300,
                           name_density= 'PT')
     
@@ -163,7 +163,7 @@ def StonedFenicsx():
                           5,
                           name_capacity='Oceanic_crust',
                           name_conductivity='OceanicCrust',
-                          radio_flag = 0.0,
+                          radio_flag = 1.0,
                           rho0 = 3300,
                           name_density= 'PT')
 
@@ -171,7 +171,7 @@ def StonedFenicsx():
                           6,
                           name_capacity='Oceanic_crust',
                           name_conductivity='OceanicCrust',
-                          radio_flag = 0.0,
+                          radio_flag = 1.0,
                           rho0 = 3300,
                           name_density= 'PT')
 
