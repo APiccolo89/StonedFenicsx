@@ -1,7 +1,7 @@
 import basix.ufl
+from src.utils import Phase 
 
-class Phase():
-    pass 
+
 #---------------------------------------------------------------------------------------------------------
 # Geometric input parameters: 
 x                 = [0, 660e3]               # main grid coordinate
@@ -69,15 +69,15 @@ flag_radio = 0.0
 #---------------------------------------------------------------------------------------------------------
 # Phase properties
 # ---------------------------------------------------------------------------------------------------------
-Phase1 = Phase()
-Phase1.name = 'Slab_Mantle'
-Phase1.rho0 = 3300.0
-Phase1.option_rho = 3
-Phase1.option_rheology = 0  
-Phase1.option_k = 3
-Phase1.option_Cp = 1
-Phase1.radio    = 0.066e-6 * flag_radio
-Phase1.eta = 1e22
+Slab_lithospheric_mantle = Phase()
+Slab_lithospheric_mantle.name = 'Slab'
+Slab_lithospheric_mantle.rho0 = 3300
+
+
+
+
+
+
 #---------------------------------------------------------------------------------------------------------
 Phase2 = Phase()
 Phase2.name = 'Oceanic_Crust'

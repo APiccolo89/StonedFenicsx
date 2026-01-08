@@ -78,7 +78,7 @@ def StonedFenicsx():
         input_path = path_test+'/input.py'
     
     except: 
-        path_test = "../../Results/exp2"
+        path_test = "../../Results/exp3"
         input_path = "input.py"
         steady_state = 1
     
@@ -140,11 +140,11 @@ def StonedFenicsx():
     Pdb = _generate_phase(Pdb,
                           2,
                           radio_flag = radio_flag,
-                          rho0 = 3300,
-                          name_alpha = 'Mantle',
+                          rho0 = 2900,
+                          name_alpha = 'Crust',
                           name_density= 'PT',                          
-                          name_capacity='Bermann_Aranovich_Fo_Fa_0_1',
-                          name_conductivity='Mantle')
+                          name_capacity='Oceanic_Crust',
+                          name_conductivity='Oceanic_Crust')
     # Phase 3
     Pdb = _generate_phase(Pdb,
                           3,
@@ -169,20 +169,20 @@ def StonedFenicsx():
     Pdb = _generate_phase(Pdb,
                           5,
                           radio_flag = radio_flag,
-                          rho0 = 3300,
-                          name_alpha   = 'Mantle', 
+                          rho0 = 2800,
+                          name_alpha   = 'Crust', 
                           name_density = 'PT',
-                          name_capacity='Bermann_Aranovich_Fo_Fa_0_1',
-                          name_conductivity='Mantle',)
+                          name_capacity='Oceanic_Crust',
+                          name_conductivity='Oceanic_Crust',)
 
     Pdb = _generate_phase(Pdb,
                           6,
                           radio_flag = radio_flag,
-                          rho0 = 3300,
-                           name_alpha   = 'Constant', 
-                          name_density = 'Constant',
-                          name_capacity ='Bermann_Aranovich_Fo_Fa_0_1',
-                          name_conductivity='Constant')
+                          rho0 = 2800,
+                           name_alpha   = 'Crust', 
+                          name_density = 'PT',
+                          name_capacity ='Oceanic_Crust',
+                          name_conductivity='Oceanic_Crust')
 
     Pdb = _generate_phase(Pdb, 
                           7, 

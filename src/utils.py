@@ -10,6 +10,9 @@ import matplotlib.colors as mcolors
 from functools import wraps
 import cmcrameri as cmc
 import numpy as np 
+from dataclasses import dataclass
+
+
 # Util performance 
 #---------------------------------------------------------------------------------------------------------
 def timing_function(fun):
@@ -353,6 +356,96 @@ def compute_eII(e):
     return e_II
 #---------------------------------------------------------------------------
 
+@dataclass
+class Phase:
+    """
+    Edif          : float -> energy activation of diffusion creep 
+    Vdif          : flaot -> volume activation of diffusion creep 
+    Edis          : float -> energy activation of dislocation creep 
+    Vdis          : float -> volume activation of dislocation creep
+    n             : float -> stress exponent ** NB: if you change this value, -> the Bdis must be changed accordingly
+    Bdif          : float -> Pre-exponential factor of diffusion [1/Pa/s]
+    Bdis          : float -> Pre-exponential factor of dislocation [1/Pa^n/s] 
+    Cp            : float -> Constant heat capacity     [J/kg/K]
+    k             : float -> constant heat conductivity [K/W/m]
+    rho0          : float -> reference density & constant density [kg/m3]
+    eta           : float -> constant viscosity 
+    name_diffusion: str -> Viscosity diffusion law 
+    name_capacity : str -> Heat capacity law 
+    name_density  : str -> Density law -> Constant,PT 
+    name_alpha    : str -> Thermal expansivity law {if constant alpha is ALWAYS equal to 3e-5}
+    radio         : float -> Radiogenic heat production [W/m3] or [Pa/s]
+    radio_flag    : float -> activation flag for the radiative conductivity 
+    
+    name_capacity_option: 
+    
+    
+    
+    
+    
+    
+    
+    name_density: 
+    Constat      : Density is not depending on P,T and is equal to the input reference density 
+    PT           : Density depends on pressure and temperature. The thermal expansivity is the same that is defined by name_alpha, and Kb is constant and equal to 130e9 Pa 
+    
+    name_alpha: 
+    Constant      : thermal expansivity is constant 
+    Mantle        : thermal expansivity data are the one for Fosterite as Groose and Afonso 2013, Richardson et al 2020 
+    Oceanic_Crust : thermal expansivity data are assuming a basalt mode composition, as Groose and Afonso 2013 et al 2020 
+    
+    name_conductivity: 
+    
+    Constant      : thermal conductivity is constant 
+    Mantle        : thermal conductivity data are the same for Fosterite as Groose and Afonso 2013, Richardoson et al 2020 and Korenaga 2016 
+    Oceanic_Crust : thermal conductivity data are the same are computed assuming a basalt mode composition, as Groose and Afonso 2013, Richardson et al 2020
+    
+    -----
+    Viscosity. 
+    Constant -> constant viscosity
+    -----
+    
+    name_diffusion: 
+    NB: ' Diffusion creep imply that the internal loop for Stokes is deactivated, because the viscosity is not depending in any solution of the stokes equation' 
+    
+    1. 'Hirth_Dry_Olivine_diff' : Classical Hirth and Kolhstedt (2003) diffusion creep for anyhydrous mantle. B_dis is computed as such to consider
+    a fixed grain size of 1 micro meter. 
+    2. 'Van_Keken_diff'         : The original source is Karato, but the name is reflecting the primary source where I find used. The data was given in other
+    units and I converted them to be similar to the Hirth formulation.  
+    3. 'Hirth_Wet_Olivine_diff' : Hydrous diffusion creep from Hirth and Kohlstedt (2003) for wet olivine. B_dis is computed assuming a fixed grain size (similar to LaMEM Kaus et al 2016) 
+    
+    name_dislocation
+    1. 'Hirth_Dry_Olivine_disl' : Hirth and Kohlstedt dry dislocation creep for olivine
+    2. 'Van_Keken_disl'         : Dislocation creep flow law from Van Keken et al 2008  
+    3. 'Hirth_Wet_Olivine_disl' : Hirth and Kohlstedt wet dislocation creep for olivine 
+    
+    
+    ---
+    Class for handling the input. I took the main arguments of the function that generate
+    the PhaseDataBase. The idea is allowing costumisation of the phases. For the work that 
+    I am doing for the kynematic of slab, is an overkill. But the hope is to generate a few 
+    utilities that can be used elsewhere for other problem. In principle, 
+    """ 
+    
+    name_diffusion:str     = 'Constant',
+    Edif:float             = -1e23, 
+    Vdif:float             = -1e23,
+    Bdif:float             = -1e23, 
+    name_dislocation:float = 'Constant',
+    n:float                = -1e23,
+    Edis:float             = -1e23,
+    Vdis:float             = -1e23, 
+    Bdis:float             = -1e23, 
+    Cp:float               = 1250,
+    k:float                = 3.0,
+    rho0:float             = 3300,
+    eta:float              = 1e20,
+    name_capacity:str      = 'Constant',
+    name_conductivity:str  = 'Constant',
+    name_alpha:str         = 'Constant',
+    name_density:str       = 'Constant',
+    radio:float            = 0.0,
+    radio_flag:float       = 0
 
 
 if __name__ == '__main__':
