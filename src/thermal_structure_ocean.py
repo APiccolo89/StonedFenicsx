@@ -51,6 +51,8 @@ from matplotlib import rcParams
 from .utils import timing_function, print_ph
 from .compute_material_property import compute_thermal_properties
 from numpy.typing import NDArray
+from .scal import Scal
+from .numerical_control import NumericalControls,ctrl_LHS
 
 start       = timing.time()
 zeros       = np.zeros
@@ -148,7 +150,7 @@ def _compute_lithostatic_pressure(
 # Melting parametrisation
 def compute_initial_geotherm(Tp:float
                              ,z: NDArray[np.float64]
-                             ,sc: Scaling
+                             ,sc: Scal
                              ,option_melt: int = 1 ) -> NDArray[np.float64]:
     """Compute the initial geotherm
     Compute the initial geotherm assuming isentropic melting in case the adiabatic flag is active. 
@@ -215,30 +217,49 @@ def compute_initial_geotherm(Tp:float
             else:
                 c='k'
                 alpha = 0.3
-
-
-            ax.scatter(T[i]-273.15,P[i]/1e9,c=c,s=0.5,alpha = alpha)   
-
         
         Told = np.flip(T)/sc.Temp
     else: 
         
         Told = np.ones(len(z))*Tp
-     
-    
-    
-    
-    
+        
     return Told 
 
 #-----------------------------------------------------------------------------------------
 @njit
-def _compute_Cp_k_rho(ph,pdb,Cp,k,rho,T,p,ind_z):
+def _compute_Cp_k_rho(ph   : NDArray[np.float64]
+                      ,pdb : PhaseDataBase
+                      ,Cp  : NDArray[np.float64]
+                      ,k   : NDArray[np.float64]
+                      ,rho : NDArray[np.float64]
+                      ,T   : NDArray[np.float64]
+                      ,p   : NDArray[np.float64]
+                      ,flagNL : int 
+                      ,CValues: NDArray[np.float64]
+                      ,ind_z: int)->tuple[NDArray[np.float64],NDArray[np.float64],NDArray[np.float64]]:
+    
+    """Compute the thermal material properties 
+    Function that compute all the three material properties that are required for solving the energy equation. 
+    Input: 
+        ph : phase vector 
+        pdb : Material phase structure
+        Cp  : heat capacity vector 
+        k   : heat conductivity vector 
+        rho : rho vector
+        T   : temperature vector
+        p   : pressure vector 
+        ind_z: must be removed i don't remember what does 
+    Returns:
+        Cp,k,rho => vector containing density, heat capacity, and conductivities that are computed using pressure and temperature vector
+    """
+    
+    
     it = len(T)
-
-    for i in range(it):
-        Cp[i], rho[i], k[i] = compute_thermal_properties(pdb,T[i],p[i],ph[i])
-        
+    if flagNL == 0:
+        for i in range(it):
+            Cp[i], rho[i], k[i] = compute_thermal_properties(pdb,T[i],p[i],ph[i])
+    else: 
+        Cp[:] = CValues[0]; k[:] = CValues[1]; rho[:] = CValues[2] 
 
     return Cp,k,rho
 #-----------------------------------------------------------------------------------------
@@ -268,7 +289,8 @@ def build_coefficient_matrix(A,
     nz         = lhs.nz 
     dt         = lhs.dt 
     dz         = lhs.dz
-    
+    NLflag     = lhs.non_linearities
+    CVal       = np.array([lhs.Cp,lhs.k,lhs.rho],dtype = np.float64)
 
     
     if step == 0:
@@ -277,7 +299,7 @@ def build_coefficient_matrix(A,
 
         # m = n
 
-        heat_capacity_m,k_m,density_m=_compute_Cp_k_rho(ph,pdb,heat_capacity_m,k_m,density_m,TG,lit_p,ind_z)
+        heat_capacity_m,k_m,density_m=_compute_Cp_k_rho(ph,pdb,heat_capacity_m,k_m,density_m,TG,lit_p,NLflag,CVal,ind_z)
 
         dz_m               = full((nz), dz) # current assumption: incompressible
 
@@ -287,9 +309,9 @@ def build_coefficient_matrix(A,
 
         # m = n+1/2
 
-        Cp_m0,k_m0,rho_m0=_compute_Cp_k_rho(ph,pdb,heat_capacity_m,k_m,density_m,TG,lit_p,ind_z)
+        Cp_m0,k_m0,rho_m0=_compute_Cp_k_rho(ph,pdb,heat_capacity_m,k_m,density_m,TG,lit_p,NLflag,CVal,ind_z)
 
-        Cp_m1,k_m1,rho_m1=_compute_Cp_k_rho(ph,pdb,heat_capacity_m,k_m,density_m,TG,lit_p,ind_z)
+        Cp_m1,k_m1,rho_m1=_compute_Cp_k_rho(ph,pdb,heat_capacity_m,k_m,density_m,TG,lit_p,NLflag,CVal,ind_z)
 
         heat_capacity_m = (Cp_m1+Cp_m0)/2
 
@@ -405,22 +427,30 @@ def build_coefficient_matrix(A,
 
 
                     # B - correction that represents the second term on the right-hand side on the equation 
-
-                    rho_A =  density(pdb,TO[j],lit_p[j],ph[j])
-                    Cp_A  = heat_capacity(pdb,TO[j],ph[j])
-
+                    if NLflag == 0:
+                        rho_A =  density(pdb,TO[j],lit_p[j],ph[j])
+                        Cp_A  = heat_capacity(pdb,TO[j],ph[j])
+                    else: 
+                        rho_A = lhs.rho 
+                        Cp_A  = lhs.Cp
            
                     if step == 0:
-                        
-                        rho_B = density(pdb,TO[j],lit_p[j],ph[j])
-                        Cp_B = heat_capacity(pdb,TO[j],ph[j])
-
+                        if NLflag == 0:
+                            rho_B = density(pdb,TO[j],lit_p[j],ph[j])
+                            Cp_B = heat_capacity(pdb,TO[j],ph[j])
+                        else: 
+                            rho_B = lhs.rho 
+                            Cp_B = lhs.Cp 
                         # B - predictor step 
                         B[j] = -TO[j] * ( rho_A * Cp_A - rho_B * Cp_B) / (rho_A * Cp_A)
 
                     elif step == 1: 
-                        rho_B = density(pdb,TPr[j],lit_p[j],ph[j])
-                        Cp_B = heat_capacity(pdb,TPr[j],ph[j])
+                        if NLflag == 0:
+                            rho_B = density(pdb,TO[j],lit_p[j],ph[j])
+                            Cp_B = heat_capacity(pdb,TO[j],ph[j])
+                        else: 
+                            rho_B = lhs.rho 
+                            Cp_B = lhs.Cp 
 
                         # B - corrector step 
 
@@ -432,9 +462,14 @@ def build_coefficient_matrix(A,
 
 #-----------------------------------------------------------------------------------------
 #@njit 
-def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
+def compute_ocean_plate_temperature(ctrl:NumericalControls
+                                    ,lhs:ctrl_LHS
+                                    ,scal:Scal
+                                    ,pdb:PhaseDataBase)->tuple[ctrl_LHS, NDArray[np.float64], NDArray[np.float64]]:
     
+    """
     
+    """
 
     # Spell out the structure 
     dz          = lhs.dz # m 
@@ -583,7 +618,7 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
             # end for-loop predictor-corrector step 
         #print_ph('Time %d, it %d'%(time,it))
         lit_p = _compute_lithostatic_pressure(nz,ph,g,dz,Told,pdb)
-        Cp_tmp,k_tmp,rho_tmp = _compute_Cp_k_rho(ph,pdb,Cp_tmp,k_tmp,rho_tmp,Tnew,lit_p,0)
+        Cp_tmp,k_tmp,rho_tmp = _compute_Cp_k_rho(ph,pdb,Cp_tmp,k_tmp,rho_tmp,Tnew,lit_p,lhs.non_linearities,[lhs.Cp,lhs.k,lhs.rho],0)
         temperature[time,:] = Tnew
         pressure[time,:]    = lit_p
         capacity[time,:]    = Cp_tmp
@@ -610,6 +645,52 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
     rho   = density.T[:,1::]*scal.rho 
     LP    = pressure.T[:,1::]*scal.stress/1e9
 
+
+
+    return lhs, t, temperature
+
+
+
+
+@timing_function
+def compute_initial_LHS(ctrl,lhs,scal,pdb):
+    
+    if lhs.van_keken == 0:
+        lhs,t, temperature = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb)
+    else:
+        lhs,_,_ = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb)
+        return lhs
+    
+    
+    
+    from scipy.interpolate import RegularGridInterpolator
+ 
+    t_re = np.linspace(lhs.c_age_var[0],lhs.c_age_var[1], num = lhs.LHS_var.shape[1])
+    T,Z  = np.meshgrid(t_re,lhs.z,indexing='ij')
+    TT,ZZ = np.meshgrid(t,lhs.z,indexing='ij')
+    interp_func = RegularGridInterpolator((t[0], lhs.z), temperature)
+    points_coarse = np.column_stack((T.ravel(), Z.ravel()))
+    lhs.LHS_var = interp_func(points_coarse).reshape(len(t_re), len(lhs.z))
+    lhs.t_res_vec = t_re 
+        
+    
+    return lhs
+#-----------------------------------------------------------------------------------------
+
+
+
+    #print("time: %.3f s" % (timing.time() - start))
+    # print(Tnew)
+
+    # ========== save thermal structure ==========
+    #if os.path.isdir('databases') == False:
+    #    os.makedirs('databases')
+
+    #fname = 'databases/slab_k{0}_Cp{1}_rho{2}'.format(option_k,option_Cp,option_rho)
+    #np.savez('%s.npz'%fname,temperature=temperature,t=t,z=z)
+    
+    
+    """
 
     import cmcrameri as cmc
     
@@ -680,61 +761,6 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
     plt.show()
     fg.savefig('Pressure_plate.png')
     
-
-
-    return lhs, t, temperature
-
-
-def compute_topography(T,rho):
-    
-    
-    
-    
-    
-    pass
-    
-    #return H 
-
-
-@timing_function
-def compute_initial_LHS(ctrl,lhs,scal,pdb):
-    
-    if lhs.van_keken == 0:
-        lhs,t, temperature = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb)
-    else:
-        lhs,_,_ = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb)
-        return lhs
-    
-    
-    
-    from scipy.interpolate import RegularGridInterpolator
- 
-    t_re = np.linspace(lhs.c_age_var[0],lhs.c_age_var[1], num = lhs.LHS_var.shape[1])
-    T,Z  = np.meshgrid(t_re,lhs.z,indexing='ij')
-    TT,ZZ = np.meshgrid(t,lhs.z,indexing='ij')
-    interp_func = RegularGridInterpolator((t[0], lhs.z), temperature)
-    points_coarse = np.column_stack((T.ravel(), Z.ravel()))
-    lhs.LHS_var = interp_func(points_coarse).reshape(len(t_re), len(lhs.z))
-    lhs.t_res_vec = t_re 
-        
-    
-    return lhs
-#-----------------------------------------------------------------------------------------
-
-
-
-    #print("time: %.3f s" % (timing.time() - start))
-    # print(Tnew)
-
-    # ========== save thermal structure ==========
-    #if os.path.isdir('databases') == False:
-    #    os.makedirs('databases')
-
-    #fname = 'databases/slab_k{0}_Cp{1}_rho{2}'.format(option_k,option_Cp,option_rho)
-    #np.savez('%s.npz'%fname,temperature=temperature,t=t,z=z)
-    
-    
-    """
 
 
 
