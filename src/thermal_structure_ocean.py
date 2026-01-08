@@ -2,6 +2,37 @@
 # we use a time- and space-centered Crank-Nicholson finite-difference scheme with a predictor-corrector step (Press et al., 1992)
 
 # import all the constants and defined model setup parameters 
+"""
+This module is adapted from FieldStone (Van Zelst et al., 2023). It has been refactored to match the current code structure
+and extended to handle temperature-dependent material properties via a fixed-point (Picard) iteration.
+
+Context (from reviewer feedback in Van Zelst et al., revision):
+    “Eqns 13–16 define the solution procedure for a linear problem (i.e., when ρ, Cp and k are not functions of T).
+     You stated earlier you incorporate the nonlinear parameters into this 1D model and use them as boundary conditions.
+     Please correct the description of the method used to obtain the 1D temperature profile for the non-linear case.” 
+'' https://egusphere.copernicus.org/preprints/2022/egusphere-2022-768/egusphere-2022-768-AR1.pdf'' 
+
+
+Non-linear solution procedure:
+    When ρ(T,P), Cp(T) and/or k(T,P) depend on temperature (and possibly pressure), the 1D temperature profile is obtained
+    through a fixed-point iteration at each time step. In practice:
+        1) initialize material properties from the previous time step (or an initial guess);
+        2) solve the Crank–Nicolson discretization for T using the current material properties;
+        3) update material properties from the new temperature estimate;
+        4) repeat steps (2)–(3) until convergence.
+
+Time stepping and stability:
+    With temperature-dependent coefficients, the Crank–Nicolson scheme is no longer unconditionally stable for arbitrarily
+    large time steps. Stability is ensured by using sufficiently small time steps. For the parameter ranges targeted here,
+    the fixed-point iteration typically converges in 2–3 iterations per time step, and becomes robust after the first step.
+
+Convergence criterion:
+    Convergence is monitored using the relative change in temperature between successive iterations at the same time step,
+    which is a commonly used stopping criterion in kinematic thermal models. The best alternative is computing the effective 
+    energy conservation residuum, but the amount of work required, is not exactly paying off in accuracy. 
+
+"""
+
 import sys,os,fnmatch
 
 # modules
@@ -14,11 +45,12 @@ import scipy.sparse as sps
 import scipy.sparse.linalg.dsolve as linsolve
 from .compute_material_property import heat_capacity,heat_conductivity,density
 from numba import njit
-
+from .phase_db import PhaseDataBase
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 from .utils import timing_function, print_ph
 from .compute_material_property import compute_thermal_properties
+from numpy.typing import NDArray
 
 start       = timing.time()
 zeros       = np.zeros
@@ -31,8 +63,62 @@ all         = np.all
 diagonal    = np.diagonal
 solve_banded= la.solve_banded
 
+
 @njit
-def _compute_lithostatic_pressure(nz,ph,g,dz,T,pdb):
+def _compute_lithostatic_pressure(
+                                 nz: int,
+                                 ph: NDArray[np.int32],          # (nz,) phase id per level (or per cell)
+                                 g: float,                       # m/s^2, vertical component
+                                 dz: float,                      # m
+                                 T: NDArray[np.float64],         # (nz,) K
+                                 pdb: "PhaseDataBase",
+                                )  -> NDArray[np.float64]:
+    """
+    Compute a 1D lithostatic pressure profile with pressure-dependent properties.
+
+    The lithostatic pressure is obtained by vertically integrating the weight of the
+    overburden:
+
+        dP/dz = rho(P, T, phase) * g_z
+
+    Because density (and possibly other properties) may depend on pressure, the
+    profile is computed with a fixed-point (Picard) nonlinear iteration: starting
+    from an initial pressure guess, evaluate rho(P, T), integrate to update P(z),
+    and repeat until convergence. The relative tollerance is hardcoded to be 1e-6
+
+    Parameters
+    ----------
+    nz : int
+        Number of grid points in the vertical direction.
+    ph : ndarray
+        Phase identifier array along the 1D column (length ``nz``). Used to select
+        material laws/properties from ``pdb``.
+    g : float
+        Vertical component of gravitational acceleration (m/s^2). Use sign
+        consistently with your z-axis convention.
+    T : ndarray
+        Temperature profile along the column (K), length ``nz``.
+    pdb : object
+        Material database/dataset providing density and other thermodynamic/elastic
+        properties as functions of phase, temperature and pressure.
+
+    NB: the parameters are usually scaled within the numerical routines
+    
+    Returns
+    -------
+    lit_p : ndarray
+        Lithostatic pressure profile (Pa), length ``nz``.
+
+    Notes
+    -----
+    - The boundary condition is typically ``P(z_surface) = 0`` (or atmospheric),
+      and pressure increases downward.
+    - Convergence is usually checked with a norm on successive pressure iterates,
+      e.g. ``max(|P_new - P_old|) / max(P_new, eps)``.
+    - If ``rho`` depends strongly on pressure, under-relaxation may be required.
+
+    """
+
     #compute lithostatic pressure:
     lit_p_o =  zeros((nz))
     lit_p   = zeros((nz))
@@ -60,7 +146,25 @@ def _compute_lithostatic_pressure(nz,ph,g,dz,T,pdb):
 # M and D are different in the predictor and corrector step 
 #-----------------------------------------------------------------------------------------
 # Melting parametrisation
-def compute_initial_geotherm(Tp,z,sc,option_melt = 1 ):
+def compute_initial_geotherm(Tp:float
+                             ,z: NDArray[np.float64]
+                             ,sc: Scaling
+                             ,option_melt: int = 1 ) -> NDArray[np.float64]:
+    """Compute the initial geotherm
+    Compute the initial geotherm assuming isentropic melting in case the adiabatic flag is active. 
+    Args:
+        Tp (float): Potential temperature (i.e., the prescribed maximum temperature of the model)
+        z (NDArray[np.float64]): Depth vecor
+        sc (Scaling): Scaling structure
+        option_melt (int, optional): Melting flag (== Adiabatic flag). Defaults to 1.
+
+    Returns:
+        NDArray[np.float64]: Geotherm: if adiabatic is not active, a vector of the shape of z, with a constant temperature; if the adiabatic flag is active
+        and isentropic adiabatic geotherm that accounts the melting processes following katz et al 2003, and Shorle et al 2014. 
+    
+    Note: the initial geotherm assume in anycase linear thermal coefficient. This simplify the calculation, and the literature references that have been used for computing
+    the melting adiabat are not accounting for the non-linearities. 
+    """
     
     if option_melt == 1: 
         
@@ -97,10 +201,6 @@ def compute_initial_geotherm(Tp,z,sc,option_melt = 1 ):
         
         T[0] = T_start
 
-        fig = plt.figure()
-
-        ax = fig.gca()
-
         for i in range(len(P)-1):
             dP = P[i+1]- P[i]
             F0  = compute_Fraction(T[i],TL(P[i]),TLL(P[i]),TS(P[i]),TCpx(lhz.fr,P[i]),Mcpx(lhz.fr,P[i]))  
@@ -119,16 +219,8 @@ def compute_initial_geotherm(Tp,z,sc,option_melt = 1 ):
 
             ax.scatter(T[i]-273.15,P[i]/1e9,c=c,s=0.5,alpha = alpha)   
 
-        ax.invert_yaxis()
-
-        ax.plot(lhz.Ts(P) - 273.15 , P/1e9 ,linestyle='-.', c = 'k'          , linewidth = 0.8)
-        ax.plot(lhz.TLL(P) - 273.15, P/1e9 ,linestyle='--', c = 'forestgreen', linewidth = 0.8)
-        ax.plot(lhz.TL(P)  - 273.15, P/1e9 ,linestyle='-.', c = 'firebrick'  , linewidth = 0.8)
-        ax.plot(lhz.Tcpx(lhz.fr,P)- 273.15, P/1e9 ,linestyle='--', c = 'b'          , linewidth = 0.8)
         
         Told = np.flip(T)/sc.Temp
-
-
     else: 
         
         Told = np.ones(len(z))*Tp
@@ -518,7 +610,75 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
     rho   = density.T[:,1::]*scal.rho 
     LP    = pressure.T[:,1::]*scal.stress/1e9
 
+
+    import cmcrameri as cmc
     
+    
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["mathtext.fontset"] = "cm"
+    plt.rcParams["mathtext.rm"] = "serif"
+    
+    
+    fg = plt.figure(figsize=(10,6))
+    ax0 = fg.gca()
+    a = ax0.contourf(TTime,-ZZ,Tem, levels=[0,100,200,300,500,600,700,800,900,1000,1100,1200,1300,1400], cmap='cmc.lipari')
+    b = ax0.contour(TTime, -ZZ, Tem,levels=[100,200,300,500,600,700,800,900,1000,1100,1200,1300],colors='k')
+    
+    ax0.set_xlim(0,130)
+    ax0.set_ylim(-130,0.0)
+
+    plt.colorbar(a, label=r'T, $[^{\circ}C]$', location='bottom')    
+    plt.ylabel('Depth [km]')
+    plt.xlabel('Time  [Myr]')
+    plt.title('Plate model')
+    plt.show()
+    plt.savefig('Temp_plate.png')
+
+    
+    fg = plt.figure(figsize=(10,6))
+    ax0 = fg.gca()
+    a = ax0.contourf(TTime,-ZZ,Cp, levels=20, cmap='cmc.lipari')
+    plt.colorbar(a, label=r'Cp, $[J/K/kg]$', location='bottom')    
+    plt.ylabel('Depth [km]')
+    plt.xlabel('Time  [Myr]')
+    plt.title('Plate model')
+    plt.show()
+    fg.savefig('Cp_plate.png')
+
+    
+    fg = plt.figure(figsize=(10,6))
+    ax0 = fg.gca()
+    a = ax0.contourf(TTime,-ZZ,k,  levels=40, cmap='cmc.nuuk')
+
+
+    plt.colorbar(a, label=r'k, $[W/K/m]$', location='bottom')    
+    plt.ylabel('Depth [km]')
+    plt.xlabel('Time  [Myr]')
+    plt.title('Plate model')
+    plt.show()
+    fg.savefig('Condu_plate.png')
+
+    
+    fg = plt.figure(figsize=(10,6))
+    ax0 = fg.gca()
+    a = ax0.contourf(TTime,-ZZ,rho, levels=10, cmap='cmc.lipari')
+
+    plt.colorbar(a, label=r'$\rho$, $[kg/m^3]$', location='bottom')    
+    plt.ylabel('Depth [km]')
+    plt.xlabel('Time  [Myr]')
+    plt.title('Plate model')
+    plt.show()
+    fg.savefig('rho_plate.png')
+    fg = plt.figure(figsize=(10,6))
+    ax0 = fg.gca()
+    a = ax0.contourf(TTime,-ZZ,LP, levels=10, cmap='cmc.lipari')
+
+    plt.colorbar(a, label=r'$P$, $[GPa]$', location='bottom')    
+    plt.ylabel('Depth [km]')
+    plt.xlabel('Time  [Myr]')
+    plt.title('Plate model')
+    plt.show()
+    fg.savefig('Pressure_plate.png')
     
 
 
@@ -575,123 +735,7 @@ def compute_initial_LHS(ctrl,lhs,scal,pdb):
     
     
     """
-        visualisation_1D = 1
-    if visualisation_1D == 1:
 
-        X, Y  = np.meshgrid(t*scal.T/1e6/364.25/24/60/60, z*scal.L/1e3)     # make a mesh of X and Y for easy plotting in the right units (i.e., t in Myr and z in km) 
-        Zaxis = transpose(temperature-273.15)                   # convert temperature back into C for easy plotting
-        Zaxis2 = transpose(pressure/1e9)
-        #matplotlib inline
-        fn = '%s_T.png'%fname
-        fn2 = '%s_P.png'%fname
-
-        
-        fg = plt.figure()
-        # Initialize plot objects
-        rcParams['figure.figsize'] = 10, 5 # sets plot size
-        ax = fg.gca()
-
-        # define contours
-        levels = array([200., 400., 600., 800., 1000., 1200.])
-
-        cpf = ax.contourf(X,-Y,Zaxis, len(levels), cmap='cmc.lipari')
-
-        line_colors = ['black' for l in cpf.levels]
-
-        # Generate a contour plot
-        cp = ax.contour(X, -Y, Zaxis, levels=levels, colors=line_colors)
-        #plt.colorbar(orientation='vertical',label=r'Temperature, $[^\circ]C$') 
-        ax.clabel(cp, fontsize=8, colors=line_colors)
-        ax.set_xlabel('Age [Myr]')
-        ax.set_ylabel('Depth, [km]')
-        fg.savefig(fn,dpi=600,transparent=False)
-        fg = plt.figure()
-        # Initialize plot objects
-        rcParams['figure.figsize'] = 10, 5 # sets plot size
-        ax = fg.gca()
-
-        # define contours
-        levels = np.linspace(0,3.5,20)
-
-        cpf = ax.contourf(X,-Y,Zaxis2, len(levels), cmap='cmc.lipari')
-
-        line_colors = ['black' for l in cpf.levels]
-
-        # Generate a contour plot
-        #plt.colorbar(orientation='vertical',label=r'Lithostatic Pressure, [GPa]') 
-        #ax.clabel(cp, fontsize=8, colors=line_colors)
-        ax.set_xlabel('Age, [Myr]')
-        ax.set_ylabel('Depth, [km]')
-        fg.savefig(fn2,dpi=600,transparent=False)
-
-    import cmcrameri as cmc
-    
-    
-    plt.rcParams["font.family"] = "serif"
-    plt.rcParams["mathtext.fontset"] = "cm"
-    plt.rcParams["mathtext.rm"] = "serif"
-    
-    
-    fg = plt.figure(figsize=(10,6))
-    ax0 = fg.gca()
-    a = ax0.contourf(TTime,-ZZ,Tem, levels=[0,100,200,300,500,600,700,800,900,1000,1100,1200,1300,1400], cmap='cmc.lipari')
-    b = ax0.contour(TTime, -ZZ, Tem,levels=[100,200,300,500,600,700,800,900,1000,1100,1200,1300],colors='white')
-    
-    ax0.set_xlim(0,150)
-    ax0.set_ylim(-150,0.0)
-
-    plt.colorbar(a, label=r'T, $[^{\circ}C]$', location='bottom')    
-    plt.ylabel('Depth [km]')
-    plt.xlabel('Time  [Myr]')
-    plt.title('Plate model')
-    plt.show()
-    plt.savefig('Temp.png')
-
-    
-    fg = plt.figure(figsize=(10,6))
-    ax0 = fg.gca()
-    a = ax0.contourf(TTime,-ZZ,Cp, levels=20, cmap='cmc.lipari')
-    plt.colorbar(a, label=r'Cp, $[J/K/kg]$', location='bottom')    
-    plt.ylabel('Depth [km]')
-    plt.xlabel('Time  [Myr]')
-    plt.title('Plate model')
-    plt.show()
-    fg.savefig('Cp.png')
-
-    
-    fg = plt.figure(figsize=(10,6))
-    ax0 = fg.gca()
-    a = ax0.contourf(TTime,-ZZ,k,  levels=40, cmap='cmc.nuuk')
-
-
-    plt.colorbar(a, label=r'k, $[W/K/m]$', location='bottom')    
-    plt.ylabel('Depth [km]')
-    plt.xlabel('Time  [Myr]')
-    plt.title('Plate model')
-    plt.show()
-    fg.savefig('Condu.png')
-
-    
-    fg = plt.figure(figsize=(10,6))
-    ax0 = fg.gca()
-    a = ax0.contourf(TTime,-ZZ,rho, levels=10, cmap='cmc.lipari')
-
-    plt.colorbar(a, label=r'$\rho$, $[kg/m^3]$', location='bottom')    
-    plt.ylabel('Depth [km]')
-    plt.xlabel('Time  [Myr]')
-    plt.title('Plate model')
-    plt.show()
-    fg.savefig('rho.png')
-    fg = plt.figure(figsize=(10,6))
-    ax0 = fg.gca()
-    a = ax0.contourf(TTime,-ZZ,LP, levels=10, cmap='cmc.lipari')
-
-    plt.colorbar(a, label=r'$P$, $[GPa]$', location='bottom')    
-    plt.ylabel('Depth [km]')
-    plt.xlabel('Time  [Myr]')
-    plt.title('Plate model')
-    plt.show()
-    fg.savefig('Pressure.png')
 
 
     """
