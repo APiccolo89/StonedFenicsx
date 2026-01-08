@@ -78,7 +78,7 @@ def StonedFenicsx():
         input_path = path_test+'/input.py'
     
     except: 
-        path_test = "../../Results/exp3"
+        path_test = "../../Results/exp3_bis"
         input_path = "input.py"
         steady_state = 1
     
@@ -121,69 +121,70 @@ def StonedFenicsx():
                     end_time = IP.end_time,
                     dt = IP.dt,
                     recalculate = IP.recalculate,
-                    van_keken = IP.van_keken,
+                    van_keken = 0.0,
+                    non_linearities=1,
                     c_age_plate = IP.c_age_plate)
                            
     # Phase properties
     Pdb = PhaseDataBase(7,5*np.pi/180)
     # Phase 1
-    radio_flag = 0.0
+    radio_flag = 1.0
     Pdb = _generate_phase(Pdb,
                           1, 
-                          radio_flag = radio_flag,
-                          rho0 = 3300,
-                          name_alpha = 'Mantle',
-                          name_density= 'PT',
-                          name_capacity='Bermann_Aranovich_Fo_Fa_0_1',
-                          name_conductivity='Mantle')
+                          radio_flag        = radio_flag,
+                          rho0              = 3300,
+                          name_alpha        = 'Mantle',#'Mantle',
+                          name_density      = 'PT',
+                          name_capacity     = 'Bermann_Aranovich_Fo_Fa_0_1',#'Bermann_Aranovich_Fo_Fa_0_1',
+                          name_conductivity = 'Mantle')#'Mantle')
     # Phase 2
     Pdb = _generate_phase(Pdb,
-                          2,
-                          radio_flag = radio_flag,
-                          rho0 = 2900,
-                          name_alpha = 'Crust',
-                          name_density= 'PT',                          
-                          name_capacity='Oceanic_Crust',
-                          name_conductivity='Oceanic_Crust')
+                          2, 
+                          radio_flag        = radio_flag,
+                          rho0              = 2900,
+                          name_alpha        = 'Crust',#'Mantle',
+                          name_density      = 'PT',
+                          name_capacity     = 'Oceanic_Crust',
+                          name_conductivity = 'Oceanic_Crust')#'Mantle')
     # Phase 3
     Pdb = _generate_phase(Pdb,
                           3,
                           radio_flag = radio_flag,
-                          rho0 = 3300,
-                          name_alpha = 'Mantle',
-                          name_density= 'PT',                          
+                          rho0 = 3300,                        
                           name_diffusion='Van_Keken_diff',
                           name_dislocation='Van_Keken_disl',
-                          name_capacity='Bermann_Aranovich_Fo_Fa_0_1',
-                          name_conductivity='Mantle',)
+                          name_alpha        ='Mantle',#'Mantle',
+                          name_density      ='PT',
+                          name_capacity     ='Bermann_Aranovich_Fo_Fa_0_1',
+                          name_conductivity ='Mantle')#'Mantle')
     # Phase 4 
     Pdb = _generate_phase(Pdb,
-                          4,
-                          radio_flag = radio_flag,
-                          rho0 = 3300,
-                          name_alpha = 'Mantle',
-                          name_density= 'PT',                          
-                          name_capacity='Bermann_Aranovich_Fo_Fa_0_1',
-                          name_conductivity='Mantle')
+                          4, 
+                          radio_flag        = radio_flag,
+                          rho0              = 3300,
+                          name_alpha        = 'Mantle',#'Mantle',
+                          name_density      = 'PT',
+                          name_capacity     = 'Bermann_Aranovich_Fo_Fa_0_1',
+                          name_conductivity = 'Mantle')#'Mantle')
     
     Pdb = _generate_phase(Pdb,
-                          5,
-                          radio_flag = radio_flag,
-                          rho0 = 2800,
-                          name_alpha   = 'Crust', 
-                          name_density = 'PT',
-                          name_capacity='Oceanic_Crust',
-                          name_conductivity='Oceanic_Crust',)
+                          5, 
+                          radio_flag        = radio_flag,
+                          rho0              = 2800,
+                          name_alpha        = 'Crust',#'Mantle',
+                          name_density      = 'PT',
+                          name_capacity     = 'Oceanic_Crust',
+                          name_conductivity = 'Oceanic_Crust')#'Mantle')
 
     Pdb = _generate_phase(Pdb,
-                          6,
-                          radio_flag = radio_flag,
-                          rho0 = 2800,
-                           name_alpha   = 'Crust', 
-                          name_density = 'PT',
-                          name_capacity ='Oceanic_Crust',
-                          name_conductivity='Oceanic_Crust')
-
+                          6, 
+                          radio_flag        = radio_flag,
+                          rho0              = 2800,
+                          name_alpha        = 'Crust',#'Mantle',
+                          name_density      = 'PT',
+                          name_capacity     = 'Oceanic_Crust',
+                          name_conductivity = 'Oceanic_Crust')#'Mantle')
+    
     Pdb = _generate_phase(Pdb, 
                           7, 
                           name_diffusion='Hirth_Wet_Olivine_diff', 

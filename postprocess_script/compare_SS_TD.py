@@ -277,11 +277,11 @@ if not os.path.isdir(path2save):
     os.makedirs(path2save)  
     
 
-T0 = Test('%s/T0b/Output'%path)
-T1 = Test('%s/T0c/Output'%path)
-T2 = Test('%s/T0d/Output'%path)
-T3 = Test('%s/T0e/Output'%path)
-T4 = Test('%s/T0e_Bis/Output'%path)
+T0 = Test('%s/exp0/Output'%path)
+T1 = Test('%s/exp1/Output'%path)
+T2 = Test('%s/exp2/Output'%path)
+T3 = Test('%s/exp3/Output'%path)
+T4 = Test('%s/exp4/Output'%path)
 
 Temp_T0 = T0._interpolate_data('SteadyState.Temp')
 Temp_T1 = T1._interpolate_data('SteadyState.Temp')
@@ -300,11 +300,11 @@ cmap = cmcrameri.cm.lipari
 title = 'Temperature [$^{\circ}C$]'
 name_fig = 'Temperature'
 time_string = 'Steady State'
-create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T0,n_level,name_fig,0,'T0b')
-create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T1,n_level,name_fig,0,'T0c')
-create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T2,n_level,name_fig,0,'T0d')
-create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T3,n_level,name_fig,0,'T0e')   
-create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T4,n_level,name_fig,0,'T0e_Bis')   
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T0,n_level,name_fig,0,'e_0_NA')
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T1,n_level,name_fig,0,'e_1_YA')
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T2,n_level,name_fig,0,'e_2_YA_NL')
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T3,n_level,name_fig,0,'e_3_YA_NL_C')   
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T4,n_level,name_fig,0,'e_4_YA_NL_C_R')   
 
 
 # Difference T1 - T0
@@ -313,35 +313,35 @@ vmin = np.floor(np.nanmin(Temp_T1 - Temp_T0))
 vmax = np.ceil(np.nanmax(Temp_T1 - Temp_T0))
 n_level = 100
 cmap = cmcrameri.cm.vik
-title = 'Temperature Difference T0c - T0b [$^{\circ}C$]'
-name_fig = 'Temperature_difference_T0c_minus_T0b'
-create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T1-Temp_T0,n_level,name_fig,0,'T1_minus_T0')
+title = 'Temperature Difference e_1_YA - e_0_NA [$^{\circ}C$]'
+name_fig = 'Temperature_difference_e_1_minus_e_0'
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T1-Temp_T0,n_level,name_fig,0,'e_1_minus_e_0')
 
 # Difference T2 - T0
-vmin = np.floor(np.nanmin(Temp_T2 - Temp_T0))
-vmax = np.ceil(np.nanmax(Temp_T2 - Temp_T0))
+vmin = np.floor(np.nanmin(Temp_T2 - Temp_T1))
+vmax = np.ceil(np.nanmax(Temp_T2 - Temp_T1))
 n_level = 100
 cmap = cmcrameri.cm.vik
-title = 'Temperature Difference T0d - T0b [$^{\circ}C$]'
-name_fig = 'Temperature_difference_T0d_minus_T0b'
-create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T2-Temp_T0,n_level,name_fig,0,'T2_minus_T0')
+title = 'Temperature Difference e_2_YA_NL - e_1_YA [$^{\circ}C$]'
+name_fig = 'Temperature_difference_e_2_minus_e_1'
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T2-Temp_T1,n_level,name_fig,0,'e_2_minus_e_1')
 
 # Difference T3 - T0
-vmin = np.floor(np.nanmin(Temp_T3 - Temp_T0))
-vmax = np.ceil(np.nanmax(Temp_T3 - Temp_T0))
+vmin = np.floor(np.nanmin(Temp_T3 - Temp_T1))
+vmax = np.ceil(np.nanmax(Temp_T3 - Temp_T1))
 n_level = 100
 cmap = cmcrameri.cm.vik
-title = 'Temperature Difference T0e - T0b [$^{\circ}C$]'
-name_fig = 'Temperature_difference_T0e_minus_T0b'
-create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T3-Temp_T0,n_level,name_fig,0,'T3_minus_T0')
+title = 'Temperature Difference e_3_YA_NL_C - e_1_YA [$^{\circ}C$]'
+name_fig = 'Temperature_difference_e_3_minus_e_1'
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T3-Temp_T1,n_level,name_fig,0,'e_3_minus_e_1')
 
-vmin = np.floor(np.nanmin(Temp_T3 - Temp_T0))
-vmax = np.ceil(np.nanmax(Temp_T3 - Temp_T0))
+vmin = np.floor(np.nanmin(Temp_T4 - Temp_T1))
+vmax = np.ceil(np.nanmax(Temp_T4 - Temp_T1))
 n_level = 100
 cmap = cmcrameri.cm.vik
-title = 'Temperature Difference T0eBis - T0b [$^{\circ}C$]'
+title = 'Temperature Difference e_4_YA_NL_C - e_1_YA [$^{\circ}C$]'
 name_fig = 'Temperature_difference_T0e_minus_T0b'
-create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T4-Temp_T0,n_level,name_fig,0,'T4_minus_T0')
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T4-Temp_T1,n_level,name_fig,0,'e_4_minus_e_1')
 
 x      = M_data.X[:,0]
 y      = M_data.X[:,1]
@@ -397,8 +397,7 @@ Tocmoh = [T0s_ocmoh,T1s_ocmoh,T2s_ocmoh,T3s_ocmoh,T4s_ocmoh]
 q0s_slab = [qx0s_slab,qx1s_slab,qx2s_slab,qx3s_slab,qx4s_slab]
 q0s_ocmoh = [qx0s_ocmoh,qx1s_ocmoh,qx2s_ocmoh,qx3s_ocmoh,qx4s_ocmoh]
 
-
-label = ['T0b','T0c','T0d','T0e','T0eBis']
+label = ['e_0_NA','e_1_YA','e_2_YA_NL','e_3_YA_NL_C','e_4_YA_NL_C_R']
 
 compare_slab_surface(path2save,'',0,ys_ocmoh,ys_slab,q0s_ocmoh,q0s_slab,TSlab,Tocmoh,label)
 
