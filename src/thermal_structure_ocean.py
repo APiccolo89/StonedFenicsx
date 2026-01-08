@@ -92,10 +92,13 @@ def compute_initial_geotherm(Tp,z,sc,option_melt = 1 ):
         P = np.flip(P)
         
         Tp = Tp*sc.Temp
+
         T_start = (Tp) + 18/1e9*P[0]
         
         T[0] = T_start
+
         fig = plt.figure()
+
         ax = fig.gca()
 
         for i in range(len(P)-1):
@@ -438,7 +441,7 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
 
         it = 0 
         res = 1.0
-        while res > 1e-6:
+        while res > 1e-6 and it < 10:
             for step in range(2):   
 
 
@@ -481,11 +484,12 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
             if np.isnan(res) == True:
                 print("NaN detected in the residual")
                 sys.exit(1)
-            TG = Tnew 
+            TG = Tnew * 0.8 + TG * (0.2) 
             lit_p = _compute_lithostatic_pressure(nz,ph,g,dz,Told,pdb)
             it += 1
 
             # end for-loop predictor-corrector step 
+        #print_ph('Time %d, it %d'%(time,it))
         lit_p = _compute_lithostatic_pressure(nz,ph,g,dz,Told,pdb)
         Cp_tmp,k_tmp,rho_tmp = _compute_Cp_k_rho(ph,pdb,Cp_tmp,k_tmp,rho_tmp,Tnew,lit_p,0)
         temperature[time,:] = Tnew

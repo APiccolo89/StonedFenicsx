@@ -179,7 +179,7 @@ def density(pdb,T,p,ph):
         return rho_0 
     else :
         # calculate rho
-        rho     = rho_0 * np.exp( - ( pdb.alpha0[ph] * (T - pdb.Tref) + (pdb.alpha1[ph]/2.) * ( T**2 - pdb.Tref**2 )))
+        rho     = rho_0 * (1 - np.exp(- p * pdb.alpha2[ph])*( pdb.alpha0[ph] * (T - pdb.Tref) + (pdb.alpha1[ph]/2.) * ( T**2 - pdb.Tref**2 )))
         if pdb.option_rho[ph] == 2:
             # calculate the pressure dependence of the density
             Kb = pdb.Kb[ph]

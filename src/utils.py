@@ -356,96 +356,137 @@ def compute_eII(e):
     return e_II
 #---------------------------------------------------------------------------
 
-@dataclass
+@dataclass(slots=True)
 class Phase:
     """
-    Edif          : float -> energy activation of diffusion creep 
-    Vdif          : flaot -> volume activation of diffusion creep 
-    Edis          : float -> energy activation of dislocation creep 
-    Vdis          : float -> volume activation of dislocation creep
-    n             : float -> stress exponent ** NB: if you change this value, -> the Bdis must be changed accordingly
-    Bdif          : float -> Pre-exponential factor of diffusion [1/Pa/s]
-    Bdis          : float -> Pre-exponential factor of dislocation [1/Pa^n/s] 
-    Cp            : float -> Constant heat capacity     [J/kg/K]
-    k             : float -> constant heat conductivity [K/W/m]
-    rho0          : float -> reference density & constant density [kg/m3]
-    eta           : float -> constant viscosity 
-    name_diffusion: str -> Viscosity diffusion law 
-    name_capacity : str -> Heat capacity law 
-    name_density  : str -> Density law -> Constant,PT 
-    name_alpha    : str -> Thermal expansivity law {if constant alpha is ALWAYS equal to 3e-5}
-    radio         : float -> Radiogenic heat production [W/m3] or [Pa/s]
-    radio_flag    : float -> activation flag for the radiative conductivity 
-    
-    name_capacity_option: 
-    
-    
-    
-    
-    
-    
-    
-    name_density: 
-    Constat      : Density is not depending on P,T and is equal to the input reference density 
-    PT           : Density depends on pressure and temperature. The thermal expansivity is the same that is defined by name_alpha, and Kb is constant and equal to 130e9 Pa 
-    
-    name_alpha: 
-    Constant      : thermal expansivity is constant 
-    Mantle        : thermal expansivity data are the one for Fosterite as Groose and Afonso 2013, Richardson et al 2020 
-    Oceanic_Crust : thermal expansivity data are assuming a basalt mode composition, as Groose and Afonso 2013 et al 2020 
-    
-    name_conductivity: 
-    
-    Constant      : thermal conductivity is constant 
-    Mantle        : thermal conductivity data are the same for Fosterite as Groose and Afonso 2013, Richardoson et al 2020 and Korenaga 2016 
-    Oceanic_Crust : thermal conductivity data are the same are computed assuming a basalt mode composition, as Groose and Afonso 2013, Richardson et al 2020
-    
+    Phase: container for rheological and thermal material parameters.
+
+    ------------------
+    Rheology (viscosity)
+    ------------------
+    name_diffusion : str
+        Diffusion creep flow law name.
+        Options include (non-exhaustive):
+          - 'Constant'                : constant viscosity
+          - 'Hirth_Dry_Olivine_diff'  : Hirth & Kohlstedt (2003), dry olivine
+          - 'Van_Keken_diff'          : Van Keken et al. (2008) style diffusion
+          - 'Hirth_Wet_Olivine_diff'  : Hirth & Kohlstedt (2003), wet olivine
+
+    Edif : float
+        Activation energy for diffusion creep [J/mol].
+    Vdif : float
+        Activation volume for diffusion creep [m³/mol].
+    Bdif : float
+        Pre-exponential factor for diffusion creep [1/Pa/s].
+
+    name_dislocation : str
+        Dislocation creep flow law name.
+        Options include:
+          - 'Constant'
+          - 'Hirth_Dry_Olivine_disl'
+          - 'Van_Keken_disl'
+          - 'Hirth_Wet_Olivine_disl'
+
+    n : float
+        Stress exponent. **NB**: if you change this, Bdis must be updated consistently.
+    Edis : float
+        Activation energy for dislocation creep [J/mol].
+    Vdis : float
+        Activation volume for dislocation creep [m³/mol].
+    Bdis : float
+        Pre-exponential factor for dislocation creep [1/Pa^n/s].
+
+    eta : float
+        Constant viscosity [Pa·s] (used if rheology is 'Constant').
+
+    ------------------
+    Thermal properties
+    ------------------
+    Cp : float
+        constant heat capacity [J/kg/K].
+    k : float
+        constant thermal conductivity [W/m/K].
+    rho0 : float
+        Reference / constant density [kg/m³].
+
+    name_capacity : str
+        Heat capacity law.
+        Options:
+          - 'Constant'
+          - 'Berman_Forsterite'
+          - 'Berman_Fayalite'
+          - 'Berman_Aranovich_Forsterite'
+          - 'Berman_Aranovich_Fayalite'
+          - 'Berman_Fo_Fa_01'
+          - 'Bermann_Aranovich_Fo_Fa_0_1'
+          - 'Oceanic_Crust'
+          - 'ContinentalCrust' (not implemented / to be removed).
+
+    name_density : str
+        Density law.
+        Options:
+          - 'Constant' : ρ = ρ0.
+          - 'PT'       : ρ(P,T) with constant bulk modulus K₀ ≈ 130e9 Pa and
+                         thermal expansivity consistent with `name_alpha`.
+
+    name_alpha : str
+        Thermal expansivity law (α).
+        Options:
+          - 'Constant'      : α = 3e-5 K⁻¹.
+          - 'Mantle'        : olivine / mantle α (e.g., Groose & Afonso 2013;
+                              Richardson et al. 2020).
+          - 'Oceanic_Crust' : basaltic crustal α.
+
+    name_conductivity : str
+        Thermal conductivity law (k).
+        Options:
+          - 'Constant'
+          - 'Mantle'
+          - 'Oceanic_Crust'
+
+    ------------------
+    Internal heating
+    ------------------
+    radio : float
+        Radiogenic heat production [W/m³] (or [Pa/s] if used as source in σ units).
+    radio_flag : float
+        Activation flag for radiogenic heating / radiative conductivity
+        (0.0 = off, 1.0 = on, or a more general scaling factor).
+
+    Notes
     -----
-    Viscosity. 
-    Constant -> constant viscosity
-    -----
-    
-    name_diffusion: 
-    NB: ' Diffusion creep imply that the internal loop for Stokes is deactivated, because the viscosity is not depending in any solution of the stokes equation' 
-    
-    1. 'Hirth_Dry_Olivine_diff' : Classical Hirth and Kolhstedt (2003) diffusion creep for anyhydrous mantle. B_dis is computed as such to consider
-    a fixed grain size of 1 micro meter. 
-    2. 'Van_Keken_diff'         : The original source is Karato, but the name is reflecting the primary source where I find used. The data was given in other
-    units and I converted them to be similar to the Hirth formulation.  
-    3. 'Hirth_Wet_Olivine_diff' : Hydrous diffusion creep from Hirth and Kohlstedt (2003) for wet olivine. B_dis is computed assuming a fixed grain size (similar to LaMEM Kaus et al 2016) 
-    
-    name_dislocation
-    1. 'Hirth_Dry_Olivine_disl' : Hirth and Kohlstedt dry dislocation creep for olivine
-    2. 'Van_Keken_disl'         : Dislocation creep flow law from Van Keken et al 2008  
-    3. 'Hirth_Wet_Olivine_disl' : Hirth and Kohlstedt wet dislocation creep for olivine 
-    
-    
-    ---
-    Class for handling the input. I took the main arguments of the function that generate
-    the PhaseDataBase. The idea is allowing costumisation of the phases. For the work that 
-    I am doing for the kynematic of slab, is an overkill. But the hope is to generate a few 
-    utilities that can be used elsewhere for other problem. In principle, 
-    """ 
-    
-    name_diffusion:str     = 'Constant',
-    Edif:float             = -1e23, 
-    Vdif:float             = -1e23,
-    Bdif:float             = -1e23, 
-    name_dislocation:float = 'Constant',
-    n:float                = -1e23,
-    Edis:float             = -1e23,
-    Vdis:float             = -1e23, 
-    Bdis:float             = -1e23, 
-    Cp:float               = 1250,
-    k:float                = 3.0,
-    rho0:float             = 3300,
-    eta:float              = 1e20,
-    name_capacity:str      = 'Constant',
-    name_conductivity:str  = 'Constant',
-    name_alpha:str         = 'Constant',
-    name_density:str       = 'Constant',
-    radio:float            = 0.0,
-    radio_flag:float       = 0
+    This class is intended as a flexible container for building a PhaseDataBase.
+    For your current kinematic slab work it may be somewhat overkill, but it
+    should be reusable for other problems.
+    """
+
+    # Viscosity / rheology
+    name_diffusion: str = "Constant"
+    Edif: float = -1e23
+    Vdif: float = -1e23
+    Bdif: float = -1e23
+
+    name_dislocation: str = "Constant"
+    n: float = -1e23
+    Edis: float = -1e23
+    Vdis: float = -1e23
+    Bdis: float = -1e23
+
+    eta: float = 1e20  # constant viscosity
+
+    # Thermal properties
+    Cp: float = 1250.0
+    k: float = 3.0
+    rho0: float = 3300.0
+    radio_flag: float = 0.0
+
+    name_capacity: str = "Constant"
+    name_conductivity: str = "Constant"
+    name_alpha: str = "Constant"
+    name_density: str = "Constant"
+
+    # Internal heating
+    radio: float = 0.0
 
 
 if __name__ == '__main__':

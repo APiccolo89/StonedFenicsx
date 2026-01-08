@@ -45,7 +45,7 @@ class thermal_expansivity():
         alpha2 = 3.63e-2/1e9 
         self.Mantle = alpha_law(alpha0 = alpha0, alpha1 = alpha1, alpha2 = alpha2)
         alpha0 = 1.639e-5
-        alpha1 = 1.322e-6
+        alpha1 = 1.322e-8
         alpha2 = 3.63e-2/1e9 
         self.Crust    = alpha_law(alpha0 = alpha0, alpha1 = alpha1, alpha2 = alpha2)
         self.Constant = alpha_law(alpha0 = 3.0e-5,alpha1 = 0.0, alpha2=0.0)

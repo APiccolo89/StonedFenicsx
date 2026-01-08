@@ -186,8 +186,8 @@ def StonedFenicsx():
 
     Pdb = _generate_phase(Pdb, 
                           7, 
-                          name_diffusion=IP.Phase7.name_diffusion, 
-                          name_dislocation=IP.Phase7.name_dislocation)
+                          name_diffusion='Hirth_Wet_Olivine_diff', 
+                          name_dislocation='Hirth_Wet_Olivine_disl')
     # ---
     # Create mesh 
     g_input = Geom_input(x = np.asarray(IP.x),
