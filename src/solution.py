@@ -112,7 +112,7 @@ def check_single_domain(expr):
 class Solution():
     def __init__(self):
         self.PL       : dolfinx.fem.function.Function 
-        self.T_I      : dolfinx.fem.function.Function
+        self.T_i      : dolfinx.fem.function.Function
         self.T_O      : dolfinx.fem.function.Function 
         self.T_N      : dolfinx.fem.function.Function 
         self.u_global : dolfinx.fem.function.Function
@@ -593,7 +593,7 @@ class Global_thermal(Problem):
             alpha = alpha_FX(pdb,T,p,D.phase,D)
             adiabatic_heating = alpha * T * ufl.inner(ufl.grad(p), u) 
         else: 
-            adiabatic_heating = ufl.Constant(0.0)
+            adiabatic_heating = (0.0)
         
         
         self.adiabatic_heating = adiabatic_heating
@@ -1796,8 +1796,10 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
         u_globalold = sol.u_global.copy()
         p_globalold = sol.p_global.copy()
         
-        if (ctrl.adiabatic_heating == 1) & (it_outer==0) :
+        if (ctrl.adiabatic_heating == 1) and (it_outer==0) :
             sol = initial_adiabatic_lithostatic_thermal_gradient(sol,lithostatic_pressure_global,pdb,M,g,it_outer,ctrl)
+        else: 
+            sol.T_i = sol.T_O
         
         if lithostatic_pressure_global.typology == 'NonlinearProblem' or it_outer == 0:  
             lithostatic_pressure_global.Solve_the_Problem(sol,ctrl,pdb,M,g,it_outer,ts=0)

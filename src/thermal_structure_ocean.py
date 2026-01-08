@@ -385,7 +385,7 @@ def compute_ocean_plate_temperature(ctrl,lhs,scal,pdb):
     ph   = np.zeros([nz],dtype = np.int32) # I assume that everything is mantle 
     ph[z<6000/scal.L] = np.int32(1)
     
-    Told = compute_initial_geotherm(ctrl.Tmax,z,scal)
+    Told = compute_initial_geotherm(ctrl.Tmax,z,scal,ctrl.adiabatic_heating)
     
     
 

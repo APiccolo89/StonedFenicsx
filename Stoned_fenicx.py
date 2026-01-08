@@ -78,7 +78,7 @@ def StonedFenicsx():
         input_path = path_test+'/input.py'
     
     except: 
-        path_test = "../../Results/exp"
+        path_test = "../../Results/exp2"
         input_path = "input.py"
         steady_state = 1
     
@@ -106,7 +106,9 @@ def StonedFenicsx():
                             van_keken_case   = IP.van_keken_case,
                             model_shear      = dict_options[IP.model_shear],
                             phase_wz         = IP.phase_wz,
-                            dt = IP.dt_sim)
+                            dt = IP.dt_sim,
+                            adiabatic_heating = 1,
+                            Tmax=IP.Tmax)
     # IO controls
     io_ctrl = IOControls(test_name = IP.test_name,
                         path_save = path_test,
@@ -125,61 +127,62 @@ def StonedFenicsx():
     # Phase properties
     Pdb = PhaseDataBase(7,5*np.pi/180)
     # Phase 1
+    radio_flag = 0.0
     Pdb = _generate_phase(Pdb,
                           1, 
-                          radio_flag = 1.0,
+                          radio_flag = radio_flag,
                           rho0 = 3300,
                           name_alpha = 'Mantle',
                           name_density= 'PT',
-                          name_capacity='Berman_Fo_Fa_01',
+                          name_capacity='Bermann_Aranovich_Fo_Fa_0_1',
                           name_conductivity='Mantle')
     # Phase 2
     Pdb = _generate_phase(Pdb,
                           2,
-                          radio_flag = 1.0,
-                          rho0 = 2900,
+                          radio_flag = radio_flag,
+                          rho0 = 3300,
                           name_alpha = 'Mantle',
                           name_density= 'PT',                          
-                          name_capacity='Oceanic_crust',
-                          name_conductivity='OceanicCrust')
+                          name_capacity='Bermann_Aranovich_Fo_Fa_0_1',
+                          name_conductivity='Mantle')
     # Phase 3
     Pdb = _generate_phase(Pdb,
                           3,
-                          radio_flag = 1.0,
+                          radio_flag = radio_flag,
                           rho0 = 3300,
                           name_alpha = 'Mantle',
                           name_density= 'PT',                          
                           name_diffusion='Van_Keken_diff',
                           name_dislocation='Van_Keken_disl',
-                          name_capacity='Berman_Fo_Fa_01',
+                          name_capacity='Bermann_Aranovich_Fo_Fa_0_1',
                           name_conductivity='Mantle',)
     # Phase 4 
     Pdb = _generate_phase(Pdb,
                           4,
-                          radio_flag = 1.0,
+                          radio_flag = radio_flag,
                           rho0 = 3300,
                           name_alpha = 'Mantle',
                           name_density= 'PT',                          
-                          name_capacity='Berman_Fo_Fa_01',
+                          name_capacity='Bermann_Aranovich_Fo_Fa_0_1',
                           name_conductivity='Mantle')
     
     Pdb = _generate_phase(Pdb,
                           5,
-                          radio_flag = 1.0,
+                          radio_flag = radio_flag,
                           rho0 = 3300,
                           name_alpha   = 'Mantle', 
                           name_density = 'PT',
-                          name_capacity='Oceanic_crust',
-                          name_conductivity='OceanicCrust',)
+                          name_capacity='Bermann_Aranovich_Fo_Fa_0_1',
+                          name_conductivity='Mantle',)
 
     Pdb = _generate_phase(Pdb,
                           6,
-                          radio_flag = 1.0,
+                          radio_flag = radio_flag,
                           rho0 = 3300,
-                          name_alpha   = 'Mantle', 
-                          name_density = 'PT',
-                          name_capacity ='Oceanic_crust',
-                          name_conductivity='OceanicCrust')
+                           name_alpha   = 'Constant', 
+                          name_density = 'Constant',
+                          name_capacity ='Bermann_Aranovich_Fo_Fa_0_1',
+                          name_conductivity='Constant')
 
     Pdb = _generate_phase(Pdb, 
                           7, 

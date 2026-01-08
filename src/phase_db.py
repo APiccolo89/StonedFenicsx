@@ -20,7 +20,7 @@ Dic_rheo ={'Constant'              :  'Linear',
 #-----
 Dic_conductivity ={'Constant'     :  'Constant',
                    'Mantle'       :  'Fosterite_Fayalite90',
-                   'OceanicCrust' :  'Oceanic_Crust'}
+                   'Oceanic_Crust' :  'Oceanic_Crust'}
 #-----
 Dic_Cp ={'Constant'                                   : 'Constant',
          'Berman_Forsterite'                          : 'BFo',
@@ -29,7 +29,7 @@ Dic_Cp ={'Constant'                                   : 'Constant',
          'Berman_Aranovich_Fayalite'                  : 'BaFa',
          'Berman_Fo_Fa_01'                            : 'BFoFay01',
          'Bermann_Aranovich_Fo_Fa_0_1'                : 'BAFoFa_0_1',
-         'Oceanic_crust'                              : 'OceanicCrust',
+         'Oceanic_Crust'                              : 'OceanicCrust',
          'ContinentalCrust'                           : 'Crust'}
 Dic_alpha = {'Constant'                               : 'Constant',
              'Mantle'                                 : 'Mantle', 
@@ -678,7 +678,7 @@ def release_heat_capacity_parameters(tag:str,C0:float)->Tuple[float,float,float,
             
             C0, C1, C2, C3, C4, C5 =  mantle_heat_capacity(flag)
 
-        elif tag == 'BAFo' or tag == 'BAFay' or tag == 'BAFoFay01':
+        elif tag == 'BAFo' or tag == 'BAFay' or tag == 'BAFoFa_0_1':
             
             flag = [1,None]           
       
