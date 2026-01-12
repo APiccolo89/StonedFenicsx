@@ -165,11 +165,21 @@ class Data_experiment():
 
             self.vy                 = v[:,1]
 
-            qS = np.array(fl['Function/q  [W/m2]/0'])
+            qS = np.array(fl['Function/Heat flux [W/m2]/0'])
 
             self.qx = qS[:,0]
 
             self.qy = qS[:,1]
+            
+            self.Cp = np.array(fl['/Function/Cp  [J/kg]/0']).flatten()
+            
+            self.k  = np.array(fl['/Function/k  [W/m/k]/0']).flatten()
+            
+            self.rho = np.array(fl['/Function/Density  [kg/m3]/0']).flatten()
+            
+            self.eta = np.array(fl['/Function/eta  [Pa s]/0']).flatten()
+            
+            self.alpha = np.array(fl['/Function/alpha  [1/K]/0']).flatten()
 
             fl.close()
         

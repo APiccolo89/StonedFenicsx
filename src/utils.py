@@ -286,7 +286,7 @@ class Phase:
     For your current kinematic slab work it may be somewhat overkill, but it
     should be reusable for other problems.
     """
-
+    name_phase:str = "Undefined Phase"
     # Viscosity / rheology
     name_diffusion: str = "Constant"
     Edif: float = -1e23
@@ -311,7 +311,11 @@ class Phase:
     name_conductivity: str = "Constant"
     name_alpha: str = "Constant"
     name_density: str = "Constant"
-
+    alpha0      : float = 3e-5  # constant thermal expansivity
+    Hr : float = 0.0
     # Internal heating
     radio: float = 0.0
 
+class Ph_input():
+    def __init__(self):
+        pass

@@ -1,5 +1,5 @@
 import basix.ufl
-from src.utils import Phase 
+from src.utils import Phase, Ph_input
 
 
 #---------------------------------------------------------------------------------------------------------
@@ -17,7 +17,6 @@ lt_d              = (cr+lit_mt)     # total lithosphere thicknes [and depth of t
 lab_d             = 100e3   # lithosphere-asthenosphere boundary depth -> useful for tuning the initial temperature profile
 decoupling        = 80e3      # decoupling depth -> i.e. where the weak zone is prolonged 
 resolution_normal = 2.0e3  # Normal resolution
-resolution_fine   = 0.5e3  # Maximum resolution
 transition        = 10e3    # Parameter that controls the transition depth of velocity in the decoupling zone
 #---------------------------------------------------------------------------------------------------------
 # Numerical Controls 
@@ -78,3 +77,70 @@ element_p = basix.ufl.element("Lagrange","triangle", 1)
 element_PT = basix.ufl.element("Lagrange","triangle",2)
 element_V = basix.ufl.element("Lagrange","triangle",2,shape=(2,))
 #---------------------------------------------------------------------------------------------------------
+Phase1 = Phase()
+Phase1.name_phase = 'Mantle_Slab'
+Phase1.rho0 = 3300.0
+Phase1.name_alpha = 'Mantle'
+Phase1.name_density = 'PT'
+Phase1.name_capacity = 'Bermann_Aranovich_Fo_Fa_0_1'
+Phase1.name_conductivity = 'Mantle'
+Phase1.radio_flag = 1.0
+
+Phase2 = Phase()
+Phase2.name_phase = 'Crust_Slab'
+Phase2.rho0 = 2900.0
+Phase2.name_alpha = 'Crust'
+Phase2.name_density = 'PT'
+Phase2.name_capacity = 'Oceanic_Crust'
+
+Phase3 = Phase()
+Phase3.name_phase = 'Mantle_WG'
+Phase3.rho0 = 3300.0
+Phase3.name_diffusion = 'Van_Keken_diff'
+Phase3.name_dislocation = 'Van_Keken_disl'
+Phase3.name_alpha = 'Mantle'
+Phase3.name_density = 'PT'
+Phase3.name_capacity = 'Bermann_Aranovich_Fo_Fa_0_1'
+Phase3.name_conductivity = 'Mantle'
+Phase3.radio_flag = 1.0 
+
+Phase4 = Phase()
+Phase4.name_phase = 'Mantle_Lithosphere'
+Phase4.rho0 = 3300.0
+Phase4.name_alpha = 'Mantle'
+Phase4.name_density = 'PT'
+Phase4.name_capacity = 'Bermann_Aranovich_Fo_Fa_0_1'
+Phase4.name_conductivity = 'Mantle'
+Phase4.radio_flag = 1.0 
+
+Phase5 = Phase()
+Phase5.name_phase = 'Crust_Lithosphere'
+Phase5.rho0 = 2800.0
+Phase5.name_alpha = 'Crust'
+Phase5.name_density = 'PT'
+Phase5.name_capacity = 'Oceanic_Crust'
+Phase5.name_conductivity = 'Oceanic_Crust'
+Phase5.radio_flag = 1.0
+
+Phase6 = Phase()
+Phase6.name_phase = 'Lower_Crust_Lithosphere'
+Phase6.rho0 = 2800.0
+Phase6.name_alpha = 'Crust'
+Phase6.name_density = 'PT'
+Phase6.name_capacity = 'Oceanic_Crust'
+Phase6.name_conductivity = 'Oceanic_Crust'
+Phase6.radio_flag = 1.0
+
+Phase7 = Phase()
+Phase7.name_phase = 'Weak_Zone'
+Phase7.name_diffusion = 'Hirth_Wet_Olivine_diff'
+Phase7.name_dislocation = 'Hirth_Wet_Olivine_disl'
+
+Ph_input = Ph_input()
+Ph_input.Phase1 = Phase1
+Ph_input.Phase2 = Phase2
+Ph_input.Phase3 = Phase3
+Ph_input.Phase4 = Phase4
+Ph_input.Phase5 = Phase5
+Ph_input.Phase6 = Phase6
+Ph_input.Phase7 = Phase7

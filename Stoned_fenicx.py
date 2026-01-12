@@ -48,7 +48,81 @@ dict_options = {'NoShear':0,
                 'Linear':1,
                 'SelfConsistent':2}
 
+def generate_phase_database(IP)->PhaseDataBase:
+    
+    pdb = PhaseDataBase(7,5*np.pi/180)
+    
+    it = 1 
+    for i in dir(IP.Ph_input):
+        if 'Phase' in i:
+            phase = getattr(IP.Ph_input,i)
+            print_ph(f"Generating phase {it} : {i}, Phase Name : {phase.name_phase}")
+            
+            print_ph('-----Rheological Parameters------')
+            print_ph(f"Diffusion law  : {phase.name_diffusion if hasattr(phase, 'name_diffusion') else 'Constant'}")
+            if phase.Edif != -1e23:
+                print_ph(f"   Edif : {phase.Edif} ")
+            if phase.Vdif != -1e23:
+                print_ph(f"   Vdif : {phase.Vdif} ")
+            if phase.Bdif != -1e23:
+                print_ph(f"   Bdif : {phase.Bdif} ")
+            
+            
+            print_ph(f"Dislocation law: {phase.name_dislocation if hasattr(phase, 'name_dislocation') else 'Constant'}")
+            if phase.n != -1e23:
+                print_ph(f"   n    : {phase.n} ")
+            if phase.Edis != -1e23:
+                print_ph(f"   Edis : {phase.Edis} ")
+            if phase.Vdis != -1e23:
+                print_ph(f"   Vdis : {phase.Vdis} ")
+            if phase.Bdis != -1e23:
+                print_ph(f"   Bdis : {phase.Bdis} ")
+            if phase.name_diffusion == 'Constant' and phase.name_dislocation == 'Constant':
+                print_ph(f"   eta  : {phase.eta} [Pas] ")    
+            
+            print_ph('-----------------------------------')
+            
+            print_ph('-----Thermal Parameters------')
+            print_ph(f"Density law       : {phase.name_density if hasattr(phase, 'name_density') else 'Constant'}")
+            print_ph(f"Thermal capacity  : {phase.name_capacity if hasattr(phase, 'name_capacity') else 'Constant'}")
+            print_ph(f"Thermal conductivity : {phase.name_conductivity if hasattr(phase, 'name_conductivity') else 'Constant'}")
+            print_ph(f"Thermal expansivity : {phase.name_alpha if hasattr(phase, 'name_conductivity') else 'Constant'}")
+            print_ph(f"Radiogenic heating:  {phase.Hr if phase.Hr !=0.0 else 'Radiogenic heating is not active'}")
+            
+            if hasattr(phase, 'radio_flag'):
+                print_ph(f"   radiative conductivity flag : {phase.radio_flag} ")
+            if hasattr(phase, 'rho0'):
+                print_ph(f"   rho0 : {phase.rho0} ")
+            print_ph('-----------------------------------') 
+            if phase.name_capacity == 'Constant':
+                print_ph(f"Heat capacity {phase.Cp} J/kg/K")
+                print_ph('-----------------------------------')
+            if phase.name_conductivity == 'Constant':
+                print_ph(f"Thermal conductivity {phase.k} W/m/K")
+                print_ph('-----------------------------------') 
+            print_ph('\n')
+            
+            pdb = _generate_phase(pdb,
+                                  it, 
+                                    radio_flag        = phase.radio_flag if hasattr(phase, 'radio_flag') else 0.0,
+                                    rho0              = phase.rho0 if hasattr(phase, 'rho0') else 3300,
+                                    name_diffusion    = phase.name_diffusion if hasattr(phase, 'name_diffusion') else 'Constant',
+                                    name_dislocation  = phase.name_dislocation if hasattr(phase, 'name_dislocation') else 'Constant',
+                                    name_alpha        = phase.name_alpha if hasattr(phase, 'name_alpha') else 'Constant',
+                                    name_capacity     = phase.name_capacity if hasattr(phase, 'name_capacity') else 'Constant',
+                                    name_density      = phase.name_density if hasattr(phase, 'name_density') else 'Constant',
+                                    name_conductivity = phase.name_conductivity if hasattr(phase, 'name_conductivity') else 'Constant',
+                                    Edif              = phase.Edif if hasattr(phase, 'Edif') else -1e23,
+                                    Vdif              = phase.Vdif if hasattr(phase, 'Vdif') else -1e23,
+                                    Bdif              = phase.Bdif if hasattr(phase, 'Bdif') else -1e23,
+                                    n                 = phase.n if hasattr(phase, 'n') else -1e23,
+                                    Edis              = phase.Edis if hasattr(phase, 'Edis') else -1e23,
+                                    Vdis              = phase.Vdis if hasattr(phase, 'Vdis') else -1e23,
+                                    Bdis              = phase.Bdis if hasattr(phase, 'Bdis') else -1e23,
+                                    eta               = phase.eta if hasattr(phase, 'eta') else 1e20)
+            it += 1
 
+    return pdb 
 
 def StonedFenicsx():
     #---------------------------------------------------------------------------------------------------------
@@ -125,71 +199,8 @@ def StonedFenicsx():
                     van_keken = 0.0,
                     non_linearities=1,
                     c_age_plate = IP.c_age_plate)
-                           
-    # Phase properties
-    Pdb = PhaseDataBase(7,5*np.pi/180)
-    # Phase 1
-    radio_flag = 1.0
-    Pdb = _generate_phase(Pdb,
-                          1, 
-                          radio_flag        = radio_flag,
-                          rho0              = 3300,
-                          name_alpha        = 'Mantle',#'Mantle',
-                          name_density      = 'PT',
-                          name_capacity     = 'Bermann_Aranovich_Fo_Fa_0_1',#'Bermann_Aranovich_Fo_Fa_0_1',
-                          name_conductivity = 'Mantle')#'Mantle')
-    # Phase 2
-    Pdb = _generate_phase(Pdb,
-                          2, 
-                          radio_flag        = radio_flag,
-                          rho0              = 2900,
-                          name_alpha        = 'Crust',#'Mantle',
-                          name_density      = 'PT',
-                          name_capacity     = 'Oceanic_Crust',
-                          name_conductivity = 'Oceanic_Crust')#'Mantle')
-    # Phase 3
-    Pdb = _generate_phase(Pdb,
-                          3,
-                          radio_flag = radio_flag,
-                          rho0 = 3300,                        
-                          name_diffusion='Van_Keken_diff',
-                          name_dislocation='Van_Keken_disl',
-                          name_alpha        ='Mantle',#'Mantle',
-                          name_density      ='PT',
-                          name_capacity     ='Bermann_Aranovich_Fo_Fa_0_1',
-                          name_conductivity ='Mantle')#'Mantle')
-    # Phase 4 
-    Pdb = _generate_phase(Pdb,
-                          4, 
-                          radio_flag        = radio_flag,
-                          rho0              = 3300,
-                          name_alpha        = 'Mantle',#'Mantle',
-                          name_density      = 'PT',
-                          name_capacity     = 'Bermann_Aranovich_Fo_Fa_0_1',
-                          name_conductivity = 'Mantle')#'Mantle')
     
-    Pdb = _generate_phase(Pdb,
-                          5, 
-                          radio_flag        = radio_flag,
-                          rho0              = 2800,
-                          name_alpha        = 'Crust',#'Mantle',
-                          name_density      = 'PT',
-                          name_capacity     = 'Oceanic_Crust',
-                          name_conductivity = 'Oceanic_Crust')#'Mantle')
-
-    Pdb = _generate_phase(Pdb,
-                          6, 
-                          radio_flag        = radio_flag,
-                          rho0              = 2800,
-                          name_alpha        = 'Crust',#'Mantle',
-                          name_density      = 'PT',
-                          name_capacity     = 'Oceanic_Crust',
-                          name_conductivity = 'Oceanic_Crust')#'Mantle')
-    
-    Pdb = _generate_phase(Pdb, 
-                          7, 
-                          name_diffusion='Hirth_Wet_Olivine_diff', 
-                          name_dislocation='Hirth_Wet_Olivine_disl')
+    Pdb = generate_phase_database(IP)                      
     # ---
     # Create mesh 
     g_input = Geom_input(x = np.asarray(IP.x),
@@ -224,10 +235,7 @@ def StonedFenicsx():
     # Create mesh
     return 0    
 
-
-
-
-
+#---------------------------------------------------------------------------
  
 if __name__ == '__main__': 
 
