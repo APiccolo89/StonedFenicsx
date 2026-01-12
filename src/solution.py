@@ -24,7 +24,7 @@ from dolfinx.fem.petsc import assemble_matrix_block, assemble_vector_block
 from .numerical_control import NumericalControls, ctrl_LHS, IOControls
 from .utils import interpolate_from_sub_to_main
 from .scal import Scal
-from .output import OUTPUT
+from .output import OUTPUT,OUTPUT_WEDGE
 from .utils import compute_eII,compute_strain_rate
 
 
@@ -1181,10 +1181,11 @@ class Stokes_Problem(Problem):
         
         R  = fem.petsc.assemble_vector(fem.form(F1))
         R2 = fem.petsc.assemble_vector(fem.form(F2))
-        rmom = R.norm()
-        rdiv = R2.norm() 
         if self.bc:
             fem.petsc.set_bc(R, self.bc)
+        rmom = R.norm()
+        rdiv = R2.norm() 
+
         
     
         divuL2 = (fem.assemble_scalar(fem.form(ufl.inner(ufl.div(u_new), ufl.div(u_new))*dx)))**0.5
@@ -1784,6 +1785,7 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
     res = 1.0
     
     output = OUTPUT(M.domainG.mesh, ioctrl, ctrl, sc)
+    output_W = OUTPUT_WEDGE(M.domainB.mesh,ioctrl,ctrl,sc)
 
 
     while it_outer < ctrl.it_max and res > ctrl.tol: 
@@ -1845,6 +1847,8 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
     
     
     output.print_output(sol,M.domainG,pdb,ioctrl,sc,ctrl,ts=it_outer)
+    output_W.print_output(sol,M.domainB,pdb,ioctrl,sc,ctrl,ts=it_outer)
+
     # Destroy KSP
     energy_global.solv.ksp.destroy()
     lithostatic_pressure_global.solv.ksp.destroy()
@@ -1904,7 +1908,7 @@ def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, p
     time = 0.0
     dt   = ctrl.dt
     sol.T_O = sol.T_N.copy()
-    output = OUTPUT(M.domainG.mesh, ioctrl, ctrl, sc)
+    output   = OUTPUT(M.domainG.mesh, ioctrl, ctrl, sc)
     save = 0 
     dt_save = 0.5*sc.scale_Myr2sec/sc.T  # Save every 0.5 Myr
     
