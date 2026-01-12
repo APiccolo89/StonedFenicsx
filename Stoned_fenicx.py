@@ -44,7 +44,8 @@ from src.scal                        import _scaling_material_properties
 from src.solution                    import steady_state_solution,time_dependent_solution
 from src.thermal_structure_ocean     import compute_initial_LHS
 
-dict_options = {'Linear':1,
+dict_options = {'NoShear':0,
+                'Linear':1,
                 'SelfConsistent':2}
 
 
@@ -78,7 +79,7 @@ def StonedFenicsx():
         input_path = path_test+'/input.py'
     
     except: 
-        path_test = "../../Results/exp3_bis"
+        path_test = "../../Results/exp4_bisNS"
         input_path = "input.py"
         steady_state = 1
     

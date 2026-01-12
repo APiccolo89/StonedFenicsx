@@ -52,7 +52,9 @@ def compare_slab_surface(path2save:str,
                         QS:float,
                         S:float,
                         OC:float,
-                        string_label:list):
+                        string_label:list,
+                        fname:str='comparison',
+                        ind:int = [-1,-1]):
     from matplotlib import pyplot as plt
     
     plt.rcParams.update({
@@ -76,12 +78,22 @@ def compare_slab_surface(path2save:str,
         ax.tick_params(axis='x', direction='in', which='both', bottom=False, top=True)
         ax.tick_params(axis='y', direction='in', which='both', left=True, right=False)
         #ax = arrowed_spines(fg, ax)
-        ax.set_ylim([-400,0.0])
+        ax.set_ylim([800,0.0])
         return ax 
     
-    color = ['forestgreen','firebrick','darkblue','orange','purple','brown','grey']
-    
-    fname = os.path.join(path2save, 'Slab_surface_comparison')
+    color = [
+    "#0072B2",  # blue
+    "#D55E00",  # vermillion
+    "#009E73",  # green
+    "#CC79A7",  # purple
+    "#F0E442",  # yellow
+    "#56B4E9",  # light blue
+    "#E69F00",  # orange
+    "#000000",  # black
+    "#999999",  # grey
+    "#332288",  # dark blue / indigo
+    ]
+    fname = os.path.join(path2save, 'Slab_surface_comparison%s'%fname)
     if not os.path.isdir(fname):
         os.makedirs(fname)
     figure_name = f'Figure_{ipic:03d}.png'
@@ -124,9 +136,9 @@ def compare_slab_surface(path2save:str,
     
     ax2.set_xlabel(r'T [$^{\circ} C$]', fontsize=12)
     
-    ax0.set_ylabel('Depth [km]', fontsize=12)
+    ax0.set_ylabel(r'$\ell_{sl}$ [km]', fontsize=12)
     
-    ax2.set_ylabel('Depth [km]', fontsize=12)
+    ax2.set_ylabel(r'$\ell_{oc}$ [km]', fontsize=12)
     
     ax3.set_xlabel(r'q [$W/m^2$]', fontsize=12)
     
@@ -134,7 +146,7 @@ def compare_slab_surface(path2save:str,
     
     ax3.set_yticklabels([])
 
-    
+
     ax0 = modify_ax(ax0,fig)
     
     ax1 = modify_ax(ax1,fig)
@@ -166,6 +178,17 @@ def compare_slab_surface(path2save:str,
     
     ax3.grid(True, linestyle='-.', linewidth=0.2)
     
+    if ind[0] !=0: 
+        ax1.axhline(XS[ind[0]],linewidth= 1.0,  alpha=0.7)
+        ax0.axhline(XS[ind[0]],linewidth = 1.0, alpha=0.7)
+        ax2.axhline(XO[ind[1]],linewidth = 1.0, alpha=0.7)
+        ax3.axhline(XO[ind[1]],linewidth = 1.0, alpha=0.7)
+        ax1.axhline(XS[ind[2]],linewidth= 1.0,  alpha=0.7)
+        ax0.axhline(XS[ind[2]],linewidth = 1.0, alpha=0.7)
+        ax2.axhline(XO[ind[3]],linewidth = 1.0, alpha=0.7)
+        ax3.axhline(XO[ind[3]],linewidth = 1.0, alpha=0.7)
+
+        
     
     props = dict(boxstyle='round', facecolor='black', alpha=0.5)
     
@@ -277,17 +300,40 @@ if not os.path.isdir(path2save):
     os.makedirs(path2save)  
     
 
-T0 = Test('%s/exp0/Output'%path)
-T1 = Test('%s/exp1/Output'%path)
-T2 = Test('%s/exp2/Output'%path)
-T3 = Test('%s/exp3/Output'%path)
-T4 = Test('%s/exp4/Output'%path)
+T0 = Test('%s/exp0_bis/Output'%path)
+T1 = Test('%s/exp1_bis/Output'%path)
+T2 = Test('%s/exp2_bis/Output'%path)
+T3 = Test('%s/exp3_bis/Output'%path)
+T4 = Test('%s/exp4_bis/Output'%path)
+T5 = Test('%s/exp4_bisNS/Output'%path)
 
 Temp_T0 = T0._interpolate_data('SteadyState.Temp')
 Temp_T1 = T1._interpolate_data('SteadyState.Temp')
 Temp_T2 = T2._interpolate_data('SteadyState.Temp')
 Temp_T3 = T3._interpolate_data('SteadyState.Temp')
 Temp_T4 = T4._interpolate_data('SteadyState.Temp')
+Temp_T5 = T5._interpolate_data('SteadyState.Temp')
+
+rho0 = T0._interpolate_data('SteadyState.Temp')
+rho1 = T1._interpolate_data('SteadyState.Temp')
+rho2 = T2._interpolate_data('SteadyState.Temp')
+rho3 = T3._interpolate_data('SteadyState.Temp')
+rho4 = T4._interpolate_data('SteadyState.Temp')
+rho5 = T5._interpolate_data('SteadyState.Temp')
+
+Cp0 = T0._interpolate_data('SteadyState.Temp')
+Cp1 = T1._interpolate_data('SteadyState.Temp')
+Cp2 = T2._interpolate_data('SteadyState.Temp')
+Cp3 = T3._interpolate_data('SteadyState.Temp')
+Cp4 = T4._interpolate_data('SteadyState.Temp')
+Cp5 = T5._interpolate_data('SteadyState.Temp')
+
+alpha0 = T0._interpolate_data('SteadyState.Temp')
+alpha1 = T1._interpolate_data('SteadyState.Temp')
+alpha2 = T2._interpolate_data('SteadyState.Temp')
+alpha3 = T3._interpolate_data('SteadyState.Temp')
+alpha4 = T4._interpolate_data('SteadyState.Temp')
+alpha5 = T5._interpolate_data('SteadyState.Temp')
 
 
 M_data = T0.MeshData
@@ -300,11 +346,15 @@ cmap = cmcrameri.cm.lipari
 title = 'Temperature [$^{\circ}C$]'
 name_fig = 'Temperature'
 time_string = 'Steady State'
-create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T0,n_level,name_fig,0,'e_0_NA')
-create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T1,n_level,name_fig,0,'e_1_YA')
-create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T2,n_level,name_fig,0,'e_2_YA_NL')
-create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T3,n_level,name_fig,0,'e_3_YA_NL_C')   
-create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T4,n_level,name_fig,0,'e_4_YA_NL_C_R')   
+create_figure(path2save,M_data,vmin,np.nanmax(Temp_T0),cmap,title,Temp_T0,n_level,name_fig,0,'e_0_NA_B')
+create_figure(path2save,M_data,vmin,np.nanmax(Temp_T1),cmap,title,Temp_T1,n_level,name_fig,0,'e_1_YA_B')
+create_figure(path2save,M_data,vmin,np.nanmax(Temp_T2),cmap,title,Temp_T2,n_level,name_fig,0,'e_2_YA_NL_B')
+create_figure(path2save,M_data,vmin,np.nanmax(Temp_T3),cmap,title,Temp_T3,n_level,name_fig,0,'e_3_YA_NL_C_B')   
+create_figure(path2save,M_data,vmin,np.nanmax(Temp_T4),cmap,title,Temp_T4,n_level,name_fig,0,'e_4_YA_NL_C_RB')   
+create_figure(path2save,M_data,vmin,np.nanmax(Temp_T5),cmap,title,Temp_T5,n_level,name_fig,0,'e_4_YA_NL_C_RB')   
+
+# --- 
+
 
 
 # Difference T1 - T0
@@ -315,7 +365,7 @@ n_level = 100
 cmap = cmcrameri.cm.vik
 title = 'Temperature Difference e_1_YA - e_0_NA [$^{\circ}C$]'
 name_fig = 'Temperature_difference_e_1_minus_e_0'
-create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T1-Temp_T0,n_level,name_fig,0,'e_1_minus_e_0')
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T1-Temp_T0,n_level,name_fig,0,'e_1_minus_e_0Bis')
 
 # Difference T2 - T0
 vmin = np.floor(np.nanmin(Temp_T2 - Temp_T1))
@@ -324,7 +374,7 @@ n_level = 100
 cmap = cmcrameri.cm.vik
 title = 'Temperature Difference e_2_YA_NL - e_1_YA [$^{\circ}C$]'
 name_fig = 'Temperature_difference_e_2_minus_e_1'
-create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T2-Temp_T1,n_level,name_fig,0,'e_2_minus_e_1')
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T2-Temp_T1,n_level,name_fig,0,'e_2_minus_e_1Bis')
 
 # Difference T3 - T0
 vmin = np.floor(np.nanmin(Temp_T3 - Temp_T1))
@@ -333,7 +383,7 @@ n_level = 100
 cmap = cmcrameri.cm.vik
 title = 'Temperature Difference e_3_YA_NL_C - e_1_YA [$^{\circ}C$]'
 name_fig = 'Temperature_difference_e_3_minus_e_1'
-create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T3-Temp_T1,n_level,name_fig,0,'e_3_minus_e_1')
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T3-Temp_T1,n_level,name_fig,0,'e_3_minus_e_1Bis')
 
 vmin = np.floor(np.nanmin(Temp_T4 - Temp_T1))
 vmax = np.ceil(np.nanmax(Temp_T4 - Temp_T1))
@@ -341,7 +391,15 @@ n_level = 100
 cmap = cmcrameri.cm.vik
 title = 'Temperature Difference e_4_YA_NL_C - e_1_YA [$^{\circ}C$]'
 name_fig = 'Temperature_difference_T0e_minus_T0b'
-create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T4-Temp_T1,n_level,name_fig,0,'e_4_minus_e_1')
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T4-Temp_T1,n_level,name_fig,0,'e_4_minus_e_1Bis')
+
+vmin = np.floor(np.nanmin(Temp_T5 - Temp_T4))
+vmax = np.ceil(np.nanmax(Temp_T5 - Temp_T4))
+n_level = 100
+cmap = cmcrameri.cm.vik
+title = 'Temperature Difference e_4_YA_NL_C_NS - e_4_YA_NL_C [$^{\circ}C$]'
+name_fig = 'Temperature_difference_T0e_minus_T0b'
+create_figure(path2save,M_data,vmin,vmax,cmap,title,Temp_T5-Temp_T4,n_level,name_fig,0,'e_4_minus_e_4NSBis')
 
 x      = M_data.X[:,0]
 y      = M_data.X[:,1]
@@ -349,57 +407,68 @@ xs_slab = x[M_data.ind_topSlab]
 ys_slab = y[M_data.ind_topSlab]
 xs_ocmoh = x[M_data.ind_Oceanic]
 ys_ocmoh = y[M_data.ind_Oceanic]
-sort_slab = np.argsort(xs_slab)
-sort_ocmoh = np.argsort(xs_ocmoh)
+sort_slab = np.argsort(np.abs(ys_slab))
+sort_ocmoh = np.argsort(np.abs(ys_ocmoh))
+ys_slab = ys_slab[sort_slab]
+xs_slab = xs_slab[sort_slab]
+xs_ocmoh = xs_ocmoh[sort_ocmoh]
+ys_ocmoh = ys_ocmoh[sort_ocmoh]
 
+
+length_slab = np.zeros(np.size(xs_slab),dtype = np.float64)
+for i in range(len(xs_slab)): 
+    if i > 0: 
+        d = np.sqrt((xs_slab[i]-xs_slab[i-1])**2 + (ys_slab[i]-ys_slab[i-1])**2)
+        length_slab[i] = length_slab[i-1]+d  
+
+length_ocean = np.zeros(np.size(xs_ocmoh),dtype = np.float64)
+for i in range(len(xs_ocmoh)): 
+    if i > 0: 
+        d = np.sqrt((xs_ocmoh[i]-xs_ocmoh[i-1])**2 + (ys_ocmoh[i]-ys_ocmoh[i-1])**2)
+        length_ocean[i] = length_ocean[i-1]+d  
+    
+
+ind_dc_s = np.where(ys_slab==-80)[0]
+ind_dc_o = np.where(ys_slab==-80)[0]
+ind_dc_s1 = np.where(ys_slab<-50)[0][0]
+ind_dc_o1 = np.where(ys_slab<-50)[0][0]
+ind = [ind_dc_s,ind_dc_o,ind_dc_s1,ind_dc_o1]
 T0S,O0S = release_scalar_field('Temp',T0,sort_slab,sort_ocmoh)
 T1S,O1S = release_scalar_field('Temp',T1,sort_slab,sort_ocmoh)
 T2S,O2S = release_scalar_field('Temp',T2,sort_slab,sort_ocmoh)
 T3S,O3S = release_scalar_field('Temp',T3,sort_slab,sort_ocmoh)
 T4S,O4S = release_scalar_field('Temp',T4,sort_slab,sort_ocmoh)
+T5S,O5S = release_scalar_field('Temp',T5,sort_slab,sort_ocmoh)
+
 
 qx0S,Oq0S = release_vectorial_field('HeatFlux',T0,sort_slab,sort_ocmoh)
 qx1S,Oq1S = release_vectorial_field('HeatFlux',T1,sort_slab,sort_ocmoh)
 qx2S,Oq2S = release_vectorial_field('HeatFlux',T2,sort_slab,sort_ocmoh)
 qx3S,Oq3S = release_vectorial_field('HeatFlux',T3,sort_slab,sort_ocmoh)
 qx4S,Oq4S = release_vectorial_field('HeatFlux',T4,sort_slab,sort_ocmoh)
+qx5S,Oq5S = release_vectorial_field('HeatFlux',T5,sort_slab,sort_ocmoh)
 
 
-T0s_slab = T0S[sort_slab]
-T1s_slab = T1S[sort_slab]
-T2s_slab = T2S[sort_slab]
-T3s_slab = T3S[sort_slab]
-T4s_slab = T4S[sort_slab]
 
-T0s_ocmoh = O0S[sort_ocmoh]
-T1s_ocmoh = O1S[sort_ocmoh]
-T2s_ocmoh = O2S[sort_ocmoh]
-T3s_ocmoh = O3S[sort_ocmoh]
-T4s_ocmoh = O4S[sort_ocmoh]
+TSlab = [T0S,T1S,T2S,T3S,T4S,T5S]
+Tocmoh = [O0S,O1S,O2S,O3S,O4S,O5S]
+q0s_slab = [qx0S,qx1S,qx2S,qx3S,qx4S,qx5S]
+q0s_ocmoh = [Oq0S,Oq1S,Oq2S,Oq3S,Oq4S,Oq5S]
+
+label = ['e_0_NAB','e_1_YAB','e_2_YA_NLB','e_3_YA_NL_CB','e_4_YA_NL_C_RB','e_4_YA_NL_C_RBNS']
+
+compare_slab_surface(path2save,'',0,length_ocean,length_slab,q0s_ocmoh,q0s_slab,TSlab,Tocmoh,label,'',ind)
 
 
-qx0s_slab = qx0S[sort_slab]
-qx1s_slab = qx1S[sort_slab]
-qx2s_slab = qx2S[sort_slab]
-qx3s_slab = qx3S[sort_slab]
-qx4s_slab = qx4S[sort_slab]
+TSlab = [T2S,T3S,T4S] -T1S
+Tocmoh = [O2S,O3S,O4S]-O1S
+q0s_slab = [qx2S,qx3S,qx4S]-qx1S
+q0s_ocmoh = [Oq2S,Oq3S,Oq4S]-Oq1S
+
+label = ['e_2_YA_NLB','e_3_YA_NL_CB','e_4_YA_NL_C_RB']
 
 
-qx0s_ocmoh = Oq0S[sort_ocmoh]
-qx1s_ocmoh = Oq1S[sort_ocmoh]
-qx2s_ocmoh = Oq2S[sort_ocmoh]
-qx3s_ocmoh = Oq3S[sort_ocmoh]
-qx4s_ocmoh = Oq4S[sort_ocmoh]
-
-
-TSlab = [T0s_slab,T1s_slab,T2s_slab,T3s_slab,T4s_slab]
-Tocmoh = [T0s_ocmoh,T1s_ocmoh,T2s_ocmoh,T3s_ocmoh,T4s_ocmoh]
-q0s_slab = [qx0s_slab,qx1s_slab,qx2s_slab,qx3s_slab,qx4s_slab]
-q0s_ocmoh = [qx0s_ocmoh,qx1s_ocmoh,qx2s_ocmoh,qx3s_ocmoh,qx4s_ocmoh]
-
-label = ['e_0_NA','e_1_YA','e_2_YA_NL','e_3_YA_NL_C','e_4_YA_NL_C_R']
-
-compare_slab_surface(path2save,'',0,ys_ocmoh,ys_slab,q0s_ocmoh,q0s_slab,TSlab,Tocmoh,label)
+compare_slab_surface(path2save,'',0,length_ocean,length_slab,q0s_ocmoh,q0s_slab,TSlab,Tocmoh,label,'difference',ind)
 
 
 
