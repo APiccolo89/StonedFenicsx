@@ -71,7 +71,7 @@ class NumericalControls:
                  slab_age=0.0,
                  v_s = np.array([5.0,0.0], dtype=np.float64),
                  steady_state = 1,
-                 relax = 0.8,
+                 relax = 0.9,
                  time_dependent_v = 0,
                  slab_bc = 1, # BC: 0 -> pipe like , 1 moving wall slab
                  decoupling = 1,

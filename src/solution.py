@@ -1158,7 +1158,44 @@ class Stokes_Problem(Problem):
      
         pass
     
-    def compute_residuum_stokes(self,u_new,p_new,D,T,PL,pdb,sc,it=0):
+    def compute_residuum_stokes(self, u_new, p_new, D, T, PL, pdb, sc):
+        V = u_new.function_space
+        Q = p_new.function_space
+        v = ufl.TestFunction(V)
+        q = ufl.TestFunction(Q)
+
+        e = compute_strain_rate(u_new)
+        eta_new = compute_viscosity_FX(e, T, PL, pdb, D.phase, D, sc)
+        f = fem.Constant(D.mesh, PETSc.ScalarType((0.0,) * D.mesh.geometry.dim))
+        dx = ufl.dx
+
+        Fmom = (ufl.inner(2*eta_new*ufl.sym(ufl.grad(u_new)), ufl.sym(ufl.grad(v))) * dx
+                - ufl.inner(p_new, ufl.div(v)) * dx
+                - ufl.inner(f, v) * dx)
+
+        Fdiv = ufl.inner(q, ufl.div(u_new)) * dx
+
+        Rm = fem.petsc.assemble_vector(fem.form(Fmom))
+        Rm.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+
+        # Apply velocity Dirichlet BCs ONLY if they are built on the same V
+        if getattr(self, "bc", None):
+            fem.petsc.set_bc(Rm, self.bc)
+
+        rmom = Rm.norm()
+
+        # divergence residual: I'd rely on divuL2 instead
+        divuL2 = (fem.assemble_scalar(fem.form(ufl.inner(ufl.div(u_new), ufl.div(u_new))*dx)))**0.5
+
+        # optional: keep your Q-vector residual if you really want it
+        Rd = fem.petsc.assemble_vector(fem.form(Fdiv))
+        Rd.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+        rdiv = Rd.norm()
+
+        return rmom, rdiv, divuL2
+
+    
+    def compute_residuum_stokes2(self,u_new,p_new,D,T,PL,pdb,sc,it=0):
         
         e = compute_strain_rate(u_new)
         
@@ -1575,7 +1612,7 @@ class Wedge(Stokes_Problem):
 
         
         if self.typology == 'LinearProblem': 
-            S = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl, S)
+            S,r_al = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl, S)
 
         else: 
             print_ph(f'              [//] Picard iterations for the non linear lithostatic pressure problem')
@@ -1598,7 +1635,7 @@ class Wedge(Stokes_Problem):
                     a_p0[0][0] = a1 
                     a_p0       = fem.form(a_p0)
                 
-                S = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl, S,it)
+                S,r_al = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl, S,it)
                 
                 
                 du0.x.array[:]  = S.u_wedge.x.array[:] - u_k.x.array[:];du0.x.scatter_forward()
@@ -1610,8 +1647,13 @@ class Wedge(Stokes_Problem):
                 dp1.x.array[:] = S.p_wedge.x.array[:] + p_k.x.array[:];dp1.x.scatter_forward()
         
                 rmom, rdiv, divuL2 = self.compute_residuum_stokes(S.u_wedge,S.p_wedge,M,S.t_owedge,S.p_lwedge,pdb,sc)
-        
                 
+                if it_inner == 0:
+                    rmom_0 = rmom
+                    rdiv_0 = rdiv
+                    r_al0 = r_al
+                
+        
                 tol_u = L2_norm_calculation(du0)/L2_norm_calculation(du1)
                 
                 tol_p = L2_norm_calculation(dp0)/L2_norm_calculation(dp1)
@@ -1623,11 +1665,17 @@ class Wedge(Stokes_Problem):
 
                 time_itb = timing.time()
 
-                print_ph(f'              []Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d}performed in {time_itb-time_ita:.2f} seconds')
-                print_ph(f'                                 [?] Res mom {rmom:.3e}, Res div {rdiv:.3e}')
+                print_ph(f'              []Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
+                print_ph(f'                         [x] |F^mom|/|F^mom_0| {rmom/rmom_0:.3e}, |F^div|/|F^div_0| {rdiv/rdiv_0:.3e}')
+                print_ph(f'                         [x] |F^mom|           {rmom:.3e},         |F^div| {rdiv:.3e}')
+                print_ph(f'                         [x] |r_al|/|r_al0|    {r_al/r_al0:.3e},         |r_al|  {r_al:.3e}')
 
                 it_inner = it_inner+1 
         
+        print_ph(f'              []Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
+        print_ph(f'                         [?] |F^mom|/|F^mom_0| {rmom/rmom_0:.3e}, |F^div|/|F^div_0| {rdiv/rdiv_0:.3e}')
+        print_ph(f'                         [?] |F^mom|           {rmom:.3e}, abs div residuum |F^div| {rdiv:.3e}')
+        print_ph(f'              []Converged ')
 
         time_B = timing.time()
         print_ph(f'. // -- // --- Solution of Wedge in {time_B-time_A:.2f} sec // -- // --- >')
@@ -1672,10 +1720,17 @@ class Wedge(Stokes_Problem):
             S.u_wedge.x.scatter_forward()
             S.p_wedge.x.scatter_forward()
         
+        r = self.solv.b.copy()
+        self.solv.A.mult(x, r)          # r = A x
+        r.scale(-1.0)         # r = -A x
+        r.axpy(1.0, self.solv.b)        # r = b - A x
+        r.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+
+        abs_res = r.norm()
 
 
 
-        return S 
+        return S,abs_res 
 
 def compute_adiabatic_initial_adiabatic_contribution(M,T,Tgue,p,pdb): 
     
@@ -1835,11 +1890,6 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
            
             _benchmark_van_keken(sol,1,ctrl.van_keken_case,ioctrl,sc)
 
-        # Save the top slab temperature and the bottom slab temperature (moho)
-        
-        #top, moho = extract_slab_top_moho(S,D,ctrl_io)
-
-        # Create h5 database systematic 
         
             
         it_outer = it_outer + 1

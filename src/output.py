@@ -13,12 +13,9 @@ import os
 from dolfinx.io import XDMFFile
 import numpy as np
 from petsc4py import PETSc
+from .utils import evaluate_material_property
 
 
-def evaluate_material_property(expr, V):
-    F = fem.Function(V)
-    F.interpolate(fem.Expression(expr, V.element.interpolation_points()))
-    return F 
 
 class OUTPUT(): 
     """

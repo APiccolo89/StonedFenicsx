@@ -18,6 +18,7 @@ from petsc4py import PETSc
 from dolfinx import fem
 import ufl
 from ufl import *
+from .utils import evaluate_material_property
 #----- 
 @njit 
 def compute_thermal_properties(pdb,T,p,ph):
@@ -27,38 +28,7 @@ def compute_thermal_properties(pdb,T,p,ph):
     k    = heat_conductivity(pdb,T,p,rho,Cp,ph)
     
     return Cp, rho, k 
-#-----
-def evaluate_material_property(expr,P0):
-    from scipy.interpolate import griddata
-    from ufl import conditional, Or, eq
-    from functools import reduce
-    """
-    X    -:- Functionspace (i.e., an abstract stuff that represents all the possible solution for the given mesh and element type)
-    M    -:- Mesh object (i.e., a random container of utils related to the mesh)
-    ctrl -:- Control structure containing the information of the simulations 
-    lhs  -:- left side boundary condition controls. Separated from the control structure for avoiding clutter in the main ctrl  
-    ---- 
-    Function: Create a function out of the function space (T_i). From the function extract dofs, interpolate (initial) lhs all over. 
-    Then select the crustal+lithospheric marker, and overwrite the T_i with a linear geotherm. Simple. 
-    ----
-    output : T_i the initial temperature field.  
-        T_gr = (-M.g_input.lt_d-0)/(ctrl.Tmax-ctrl.Ttop)
-        T_gr = T_gr**(-1) 
-        bc_fun = fem.Function(X)
-        bc_fun.x.array[dofs_dirichlet] = ctrl.Ttop + T_gr * cd_dof[dofs_dirichlet,1]
-        bc_fun.x.scatter_forward()
-    """    
-    #- CreatP0he thermal field: create function, extract dofs, 
-    X     = P0
-    prop_f = fem.Function(X)
 
-    v = ufl.TestFunction(X)
-    u = ufl.TrialFunction(X)
-    a = u * v * ufl.dx 
-    L = expr * v * ufl.dx
-    prb = fem.petsc.LinearProblem(a,L,u=prop_f)
-    prb.solve()
-    return prop_f
 
 #----------------------------------------------------------------------------------
 def heat_conductivity_FX(pdb,T,p,phase,M,Cp,rho):
@@ -255,7 +225,7 @@ def compute_viscosity_FX(e,T_in,P_in,pdb,phase,M,sc):
         return e_II
     
     P0    = M.solPh
-    e_II = compute_eII(e)
+    e_II_n = compute_eII(e)
     # If your phase IDs are available per cell for mesh0:
     
     # UNFORTUNATELY I AM STUPID and i do not have any idea how to scale the energies such that it would be easier to handle. Since the scale of force and legth is self-consistently related to mass, i do not know how to deal with the fucking useless mol in the energy of activation 
@@ -274,6 +244,7 @@ def compute_viscosity_FX(e,T_in,P_in,pdb,phase,M,sc):
     Edis    = fem.Function(P0,name = 'Edis')  ; Edis.x.array[:]    =  pdb.Edis[ph]
     Vdif    = fem.Function(P0,name = 'Vdif')  ; Vdif.x.array[:]    =  pdb.Vdif[ph]
     Vdis    = fem.Function(P0,name = 'Vdis')  ; Vdis.x.array[:]    =  pdb.Vdis[ph]
+    e_II    = fem.Function(P0,name = 'e_II')  ; e_II = evaluate_material_property(e_II_n,P0)
 
     # In case the viscosity for the given phase is constant 
     eta_con     = fem.Function(P0) ; eta_con.x.array[:]     =  pdb.eta[ph]

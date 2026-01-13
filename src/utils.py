@@ -11,6 +11,7 @@ from functools import wraps
 import cmcrameri as cmc
 import numpy as np 
 from dataclasses import dataclass
+from dolfinx import fem
 
 
 # Util performance 
@@ -319,3 +320,8 @@ class Phase:
 class Ph_input():
     def __init__(self):
         pass
+    
+def evaluate_material_property(expr, V):
+    F = fem.Function(V)
+    F.interpolate(fem.Expression(expr, V.element.interpolation_points()))
+    return F 
