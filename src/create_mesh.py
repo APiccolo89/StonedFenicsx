@@ -379,7 +379,7 @@ def create_gmesh(ioctrl   :IOControls,
     min_y           = g_input.y[0]                # Min domain y direction
     # Set up slab top surface a
     Data_Real = False; S = []
-    van_keken = ctrl.van_keken
+    van_keken =ctrl.van_keken
     if (Data_Real==False) & (isinstance(S, Slab)== False):
         if van_keken == 1: 
             min_x           =0.0 # The beginning of the model is the trench of the slab

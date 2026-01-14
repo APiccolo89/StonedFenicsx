@@ -142,18 +142,24 @@ def StonedFenicsx():
             help="Path to the input file or directory."
         )
         parser.add_argument(
+            "path_test",
+            type=str,
+            help="Path to the input file or directory."
+        )        
+        
+        parser.add_argument(
             "Steady_state",
             type=int,
             help="Path to the input file or directory."
         )
 
         args = parser.parse_args()
-        path_test = args.input_path
+        input_path = args.input_path
+        path_test = args.path_test
         steady_state = args.Steady_state
-        input_path = path_test+'/input.py'
     
     except: 
-        path_test = "../../Results/exp4_bisNS"
+        path_test = "../../Results_VK/exp0"
         input_path = "input.py"
         steady_state = 1
     
@@ -182,7 +188,7 @@ def StonedFenicsx():
                             model_shear      = dict_options[IP.model_shear],
                             phase_wz         = IP.phase_wz,
                             dt = IP.dt_sim,
-                            adiabatic_heating = 1,
+                            adiabatic_heating = 0,
                             Tmax=IP.Tmax)
     # IO controls
     io_ctrl = IOControls(test_name = IP.test_name,

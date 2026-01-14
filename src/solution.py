@@ -600,7 +600,34 @@ class Global_thermal(Problem):
         
 
     #------------------------------------------------------------------
+    def compute_residual_SS(self,p_k,T,u_global,D,pdb, ctrl):
+        # Function that set linear form and linear picard for picard iteration
+        
+        rho_k = density_FX(pdb, T, p_k, D.phase, D.mesh)  # frozen
+        
+        Cp_k = heat_capacity_FX(pdb, T, D.phase, D.mesh)  # frozen
 
+        k_k = heat_conductivity_FX(pdb, T, p_k, D.phase, D.mesh, Cp_k, rho_k)  # frozen
+
+        self.compute_adiabatic_heating(D,pdb,u_global,T,p_k,ctrl)
+
+        f    = self.energy_source# source term
+        
+        dx  = self.dx
+        # Linear operator with frozen coefficients
+            
+        diff = ufl.inner(k_k * ufl.grad(T), ufl.grad(self.test0)) * dx
+        
+        adv  = rho_k * Cp_k *ufl.dot(u_global, ufl.grad(T)) * self.test0 * dx
+            
+        L = fem.form((f + self.adiabatic_heating) * self.test0 * dx + self.shear_heating )      
+        
+        R = fem.form(diff + adv - L)
+                
+
+        return R
+    
+    
     def set_linear_picard_SS(self,p_k,T,u_global,D,pdb, ctrl, it=0):
         # Function that set linear form and linear picard for picard iteration
         
@@ -725,7 +752,7 @@ class Global_thermal(Problem):
         if it == 0 & ts == 0: 
             self.solv = ScalarSolver(a,L,M.comm,nl,J,F)
         
-        print_ph(f'. // -- // --- Temperature problem [GLOBAL] // -- // --->')
+        print_ph(f'              // -- // --- Temperature problem [GLOBAL] // -- // --->')
         
         time_A = timing.time()
 
@@ -736,7 +763,7 @@ class Global_thermal(Problem):
         
         time_B = timing.time()
         
-        print_ph(f'. // -- // --- Solution of Temperature  in {time_B-time_A:.2f} sec // -- // --->')
+        print_ph(f'              // -- // --- Solution of Temperature  in {time_B-time_A:.2f} sec // -- // --->')
 
 
 
@@ -1044,7 +1071,7 @@ class Global_pressure(Problem):
         if it_outer == 0 & ts == 0: 
             self.solv = ScalarSolver(a,L,M.comm,nl,J,F)
         
-        print_ph(f'. // -- // --- LITHOSTATIC PROBLEM [GLOBAL] // -- // --- > ')
+        print_ph(f'              // -- // --- LITHOSTATIC PROBLEM [GLOBAL] // -- // --- > ')
 
         time_A = timing.time()
 
@@ -1056,7 +1083,7 @@ class Global_pressure(Problem):
 
         time_B = timing.time()
 
-        print_ph(f'. // -- // --- Solution of Lithostatic pressure problem finished in {time_B-time_A:.2f} sec // -- // --->')
+        print_ph(f'              // -- // --- Solution of Lithostatic pressure problem finished in {time_B-time_A:.2f} sec // -- // --->')
         print_ph(f'')
 
         return S 
@@ -1177,10 +1204,12 @@ class Stokes_Problem(Problem):
 
         Rm = fem.petsc.assemble_vector(fem.form(Fmom))
         Rm.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
-
-        # Apply velocity Dirichlet BCs ONLY if they are built on the same V
         if getattr(self, "bc", None):
-            fem.petsc.set_bc(Rm, self.bc)
+            with Rm.localForm() as lf:
+                r = lf.getArray(readonly=False)
+                for bc in self.bc:
+                    dofs = bc.dof_indices()[0]   # local dof indices
+                    r[dofs] = 0.0
 
         rmom = Rm.norm()
 
@@ -1195,39 +1224,6 @@ class Stokes_Problem(Problem):
         return rmom, rdiv, divuL2
 
     
-    def compute_residuum_stokes2(self,u_new,p_new,D,T,PL,pdb,sc,it=0):
-        
-        e = compute_strain_rate(u_new)
-        
-        f  = fem.Constant(D.mesh, PETSc.ScalarType((0.0,)*D.mesh.geometry.dim))
-
-        V = self.FS.sub(0).collapse()[0]
-        Q = self.FS.sub(1).collapse()[0]
-
-        v = ufl.TestFunction(V)
-        q = ufl.TestFunction(Q)
-        
-        eta_new = compute_viscosity_FX(e,T,PL,pdb,D.phase,D,sc)
-        
-        dx   = ufl.dx
-        
-        F1 = (ufl.inner(2*eta_new*ufl.sym(ufl.grad(u_new)), ufl.sym(ufl.grad(v))) * dx \
-             - ufl.inner(p_new, ufl.div(v)) * dx \
-             - ufl.inner(f, v) * dx) 
-        F2 = ufl.inner(q, ufl.div(u_new)) * dx 
-        
-        R  = fem.petsc.assemble_vector(fem.form(F1))
-        R2 = fem.petsc.assemble_vector(fem.form(F2))
-        if self.bc:
-            fem.petsc.set_bc(R, self.bc)
-        rmom = R.norm()
-        rdiv = R2.norm() 
-
-        
-    
-        divuL2 = (fem.assemble_scalar(fem.form(ufl.inner(ufl.div(u_new), ufl.div(u_new))*dx)))**0.5
-        
-        return rmom, rdiv, divuL2 
     
     def set_linear_picard(self,u_slab,T,PL,D,pdb,ctrl,sc, a_p = None,it=0, ts = 0):
         
@@ -1405,7 +1401,7 @@ class Slab(Stokes_Problem):
 
         self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,ctrl ,J = None, r = None,it = 0, ts = 0)
         
-        print_ph(f'// -- // --- SLAB STOKES PROBLEM // -- // --->')    
+        print_ph(f'              // -- // --- SLAB STOKES PROBLEM // -- // --->')    
         time_A = timing.time()    
         if direct_solver==1:
             x = self.solv.A.createVecLeft()
@@ -1433,7 +1429,7 @@ class Slab(Stokes_Problem):
         
 
         time_B = timing.time()
-        print_ph(f'// -- // --- Solution of Stokes problem in {time_B-time_A:.2f} sec // -- // --->')
+        print_ph(f'              // -- // --- Solution of Stokes problem in {time_B-time_A:.2f} sec // -- // --->')
         print_ph(f'')
 
         return S 
@@ -1605,7 +1601,7 @@ class Wedge(Stokes_Problem):
         a   = [[a1, a2],[a3, None]]
         a_p0  = [[a1, None],[None, a_p]]
 
-        print_ph(f'. // -- // --- STOKES PROBLEM [WEDGE] // -- // --- > ')
+        print_ph(f'              // -- // --- STOKES PROBLEM [WEDGE] // -- // --- > ')
 
         
         time_A = timing.time()
@@ -1678,7 +1674,7 @@ class Wedge(Stokes_Problem):
         print_ph(f'              []Converged ')
 
         time_B = timing.time()
-        print_ph(f'. // -- // --- Solution of Wedge in {time_B-time_A:.2f} sec // -- // --- >')
+        print_ph(f'              // -- // --- Solution of Wedge in {time_B-time_A:.2f} sec // -- // --- >')
         print_ph(f'')
 
 
@@ -1845,6 +1841,8 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
 
     while it_outer < ctrl.it_max and res > ctrl.tol: 
         
+        print_ph(f'// -- // --- Outer iteration {it_outer:d} for the coupled problem // -- // --- > ')
+        
         time_A_outer = timing.time()
         # Copy the old solution for the residuum computation 
         
@@ -1890,7 +1888,8 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
            
             _benchmark_van_keken(sol,1,ctrl.van_keken_case,ioctrl,sc)
 
-        
+        print_ph(f'// -- // :( --- ------- ------- ------- :) // -- // --- > ')
+
             
         it_outer = it_outer + 1
         
@@ -2109,12 +2108,13 @@ def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA):
     time_B_outer = timing.time()
 
     print_ph(f'')
-    print_ph(f'             Outer iteration {it_outer:d} with tolerance {res_total:.3e}, in {time_B_outer-tA:.1f} sec // -- // --->')
-    print_ph(f'             []Res velocity       =  {res_u:.3e} [n.d.], max= {minMaxU[1]:.3e}, min= {minMaxU[0]:.3e} [cm/yr]')
-    print_ph(f'             []Res Temperature    =  {res_T:.3e} [n.d.], max= {minMaxT[1]:.2f}, min= {minMaxT[0]:.2f} [C]')
-    print_ph(f'             []Res pressure       =  {res_p:.3e} [n.d.], max= {minMaxP[1]:.3e}, min= {minMaxP[0]:.3e} [GPa]')
-    print_ph(f'             []Res lithostatic    =  {res_PL:.3e}[n.d.], max= {minMaxPL[1]:.3e}, min= {minMaxPL[0]:.3e} [GPa]')
-    print_ph(f'              =============================================// -- // --->')
+    print_ph(f' Outer iteration {it_outer:d} with tolerance {res_total:.3e}, in {time_B_outer-tA:.1f} sec // -- // --->')
+    print_ph(f'    []Res velocity       =  {res_u:.3e} [n.d.], max= {minMaxU[1]:.3e}, min= {minMaxU[0]:.3e} [cm/yr]')
+    print_ph(f'    []Res Temperature    =  {res_T:.3e} [n.d.], max= {minMaxT[1]:.3f}, min= {minMaxT[0]:.3f} [C]')
+    print_ph(f'    []Res pressure       =  {res_p:.3e} [n.d.], max= {minMaxP[1]:.3e}, min= {minMaxP[0]:.3e} [GPa]')
+    print_ph(f'    []Res lithostatic    =  {res_PL:.3e}[n.d.], max= {minMaxPL[1]:.3e}, min= {minMaxPL[0]:.3e} [GPa]')
+    print_ph(f'    []Res total (sqrt(rp^2+rT^2+rPL^2+rv^2)) =  {res_PL:.3e} [n.d.] ')
+    print_ph(f'=============================================// -- // --->')
     print_ph(f'')
 
     

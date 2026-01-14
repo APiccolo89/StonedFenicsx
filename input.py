@@ -44,7 +44,7 @@ model_shear       = 'NoShear' # 'SelfConsistent
 phase_wz          = 7
 time_dependent    = 1 
 dt_sim            = 15000/1e6 # in Myr
-
+adiabatic_heating = 0
 friction_angle   = 1.0 
 #---------------------------------------------------------------------------------------------------------
 # input/output control
@@ -77,59 +77,93 @@ element_p = basix.ufl.element("Lagrange","triangle", 1)
 element_PT = basix.ufl.element("Lagrange","triangle",2)
 element_V = basix.ufl.element("Lagrange","triangle",2,shape=(2,))
 #---------------------------------------------------------------------------------------------------------
+all_constant = True
+if all_constant == False:
+    capacity_nameM = 'Bermann_Aranovich_Fo_Fa_0_1'
+    conductivity_nameM = 'Mantle'
+    density_nameM = 'PT'
+    alpha_nameM = 'Mantle'
+
+    capacity_nameC = 'Oceanic_Crust'
+    conductivity_nameC = 'Oceanic_Crust'
+    density_nameC = 'PT'
+    alpha_nameC = 'Crust'
+
+    rho0_M = 3300.0
+    rho0_C = 2900.0
+    radio_flag = 1.0
+    
+else:
+    capacity_nameM = 'Constant'
+    conductivity_nameM = 'Constant'
+    density_nameM = 'Constant'
+    alpha_nameM = 'Constant'
+
+    capacity_nameC = 'Constant'
+    conductivity_nameC = 'Constant'
+    density_nameC = 'Constant'
+    alpha_nameC = 'Constant'
+
+    rho0_M = 3300.0
+    rho0_C = 3300.0
+    radio_flag = 0.0
+
+
 Phase1 = Phase()
 Phase1.name_phase = 'Mantle_Slab'
 Phase1.rho0 = 3300.0
-Phase1.name_alpha = 'Mantle'
-Phase1.name_density = 'PT'
-Phase1.name_capacity = 'Bermann_Aranovich_Fo_Fa_0_1'
-Phase1.name_conductivity = 'Mantle'
-Phase1.radio_flag = 1.0
+Phase1.name_alpha = alpha_nameM
+Phase1.name_density = density_nameM
+Phase1.name_capacity = capacity_nameM
+Phase1.name_conductivity = conductivity_nameM
+Phase1.radio_flag = radio_flag
 
 Phase2 = Phase()
 Phase2.name_phase = 'Crust_Slab'
 Phase2.rho0 = 2900.0
-Phase2.name_alpha = 'Crust'
-Phase2.name_density = 'PT'
-Phase2.name_capacity = 'Oceanic_Crust'
+Phase2.name_alpha = alpha_nameC
+Phase2.name_density = density_nameC
+Phase2.name_conductivity = conductivity_nameC
+Phase2.name_capacity = capacity_nameM
+Phase2.radio_flag = radio_flag
 
 Phase3 = Phase()
 Phase3.name_phase = 'Mantle_WG'
 Phase3.rho0 = 3300.0
 Phase3.name_diffusion = 'Van_Keken_diff'
 Phase3.name_dislocation = 'Van_Keken_disl'
-Phase3.name_alpha = 'Mantle'
-Phase3.name_density = 'PT'
-Phase3.name_capacity = 'Bermann_Aranovich_Fo_Fa_0_1'
-Phase3.name_conductivity = 'Mantle'
-Phase3.radio_flag = 1.0 
+Phase3.name_alpha = alpha_nameM
+Phase3.name_density = density_nameM
+Phase3.name_capacity = capacity_nameM
+Phase3.name_conductivity = conductivity_nameM
+Phase3.radio_flag = radio_flag
 
 Phase4 = Phase()
 Phase4.name_phase = 'Mantle_Lithosphere'
 Phase4.rho0 = 3300.0
-Phase4.name_alpha = 'Mantle'
-Phase4.name_density = 'PT'
-Phase4.name_capacity = 'Bermann_Aranovich_Fo_Fa_0_1'
-Phase4.name_conductivity = 'Mantle'
-Phase4.radio_flag = 1.0 
+Phase4.name_alpha = alpha_nameM
+Phase4.name_density = density_nameM
+Phase4.name_capacity = capacity_nameM
+Phase4.name_conductivity = conductivity_nameM
+Phase4.radio_flag = radio_flag 
 
 Phase5 = Phase()
 Phase5.name_phase = 'Crust_Lithosphere'
 Phase5.rho0 = 2800.0
-Phase5.name_alpha = 'Crust'
-Phase5.name_density = 'PT'
-Phase5.name_capacity = 'Oceanic_Crust'
-Phase5.name_conductivity = 'Oceanic_Crust'
-Phase5.radio_flag = 1.0
+Phase5.name_alpha = alpha_nameC
+Phase5.name_density = density_nameC
+Phase5.name_capacity = capacity_nameC
+Phase5.name_conductivity = conductivity_nameC
+Phase5.radio_flag = radio_flag
 
 Phase6 = Phase()
 Phase6.name_phase = 'Lower_Crust_Lithosphere'
 Phase6.rho0 = 2800.0
-Phase6.name_alpha = 'Crust'
-Phase6.name_density = 'PT'
-Phase6.name_capacity = 'Oceanic_Crust'
-Phase6.name_conductivity = 'Oceanic_Crust'
-Phase6.radio_flag = 1.0
+Phase6.name_alpha = alpha_nameC
+Phase6.name_density = density_nameC
+Phase6.name_capacity = capacity_nameC
+Phase6.name_conductivity = conductivity_nameC
+Phase6.radio_flag = radio_flag
 
 Phase7 = Phase()
 Phase7.name_phase = 'Weak_Zone'
