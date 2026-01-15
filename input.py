@@ -1,23 +1,20 @@
 import basix.ufl
 from src.utils import Phase, Ph_input
+from dataclasses import dataclass
+@dataclass
+class Input: 
+    it_max :int   = 20 
+    tol     :float = 1e-5
+    relax   :float = 0.9
+    Tmax    :float = 1300 
+    Ttop    :float = 0.0 
+    g       :float = 9.81 
+    slab_age:float = [5.0,0.0]
+    time_max:float = 2 
+    
 
 
-#---------------------------------------------------------------------------------------------------------
-# Geometric input parameters: 
-#---------------------------------------------------------------------------------------------------------
-x                 = [0, 660e3]               # main grid coordinate max X is changed accordingly to the slab geometry
-y                 = [-600e3,0.0]             # Initial input
-slab_tk           = 130e3                   # slab thickness
-cr                = 30e3              # crust 
-ocr               = 7e3             # oceanic crust
-lit_mt            = 20e3          # lithosperic mantle  
-lc                = 0.3              # lower crust ratio 
-wc                = 2.0e3          # width of the weak zone
-lt_d              = (cr+lit_mt)     # total lithosphere thicknes [and depth of the no slip boundary conditiopn]
-lab_d             = 100e3   # lithosphere-asthenosphere boundary depth -> useful for tuning the initial temperature profile
-decoupling        = 80e3      # decoupling depth -> i.e. where the weak zone is prolonged 
-resolution_normal = 2.0e3  # Normal resolution
-transition        = 10e3    # Parameter that controls the transition depth of velocity in the decoupling zone
+
 #---------------------------------------------------------------------------------------------------------
 # Numerical Controls 
 #---------------------------------------------------------------------------------------------------------
@@ -44,7 +41,7 @@ model_shear       = 'NoShear' # 'SelfConsistent
 phase_wz          = 7
 time_dependent    = 1 
 dt_sim            = 15000/1e6 # in Myr
-adiabatic_heating = 0
+adiabatic_heating = 1
 friction_angle   = 1.0 
 #---------------------------------------------------------------------------------------------------------
 # input/output control
@@ -65,7 +62,7 @@ nz = 108
 end_time = 180.0
 dt = 0.001
 recalculate = 1
-van_keken = 0
+van_keken = 1
 c_age_plate = 50.0 
 flag_radio = 0.0 
 #---------------------------------------------------------------------------------------------------------
@@ -77,8 +74,8 @@ element_p = basix.ufl.element("Lagrange","triangle", 1)
 element_PT = basix.ufl.element("Lagrange","triangle",2)
 element_V = basix.ufl.element("Lagrange","triangle",2,shape=(2,))
 #---------------------------------------------------------------------------------------------------------
-all_constant = True
-if all_constant == False:
+all_constant = True 
+if all_constant == False and van_keken != 0:
     capacity_nameM = 'Bermann_Aranovich_Fo_Fa_0_1'
     conductivity_nameM = 'Mantle'
     density_nameM = 'PT'
@@ -111,7 +108,7 @@ else:
 
 Phase1 = Phase()
 Phase1.name_phase = 'Mantle_Slab'
-Phase1.rho0 = 3300.0
+Phase1.rho0 = rho0_M
 Phase1.name_alpha = alpha_nameM
 Phase1.name_density = density_nameM
 Phase1.name_capacity = capacity_nameM
@@ -120,7 +117,7 @@ Phase1.radio_flag = radio_flag
 
 Phase2 = Phase()
 Phase2.name_phase = 'Crust_Slab'
-Phase2.rho0 = 2900.0
+Phase2.rho0 = rho0_C
 Phase2.name_alpha = alpha_nameC
 Phase2.name_density = density_nameC
 Phase2.name_conductivity = conductivity_nameC
@@ -129,7 +126,7 @@ Phase2.radio_flag = radio_flag
 
 Phase3 = Phase()
 Phase3.name_phase = 'Mantle_WG'
-Phase3.rho0 = 3300.0
+Phase3.rho0 = rho0_M
 Phase3.name_diffusion = 'Van_Keken_diff'
 Phase3.name_dislocation = 'Van_Keken_disl'
 Phase3.name_alpha = alpha_nameM
@@ -140,7 +137,7 @@ Phase3.radio_flag = radio_flag
 
 Phase4 = Phase()
 Phase4.name_phase = 'Mantle_Lithosphere'
-Phase4.rho0 = 3300.0
+Phase4.rho0 = rho0_M
 Phase4.name_alpha = alpha_nameM
 Phase4.name_density = density_nameM
 Phase4.name_capacity = capacity_nameM
@@ -149,7 +146,7 @@ Phase4.radio_flag = radio_flag
 
 Phase5 = Phase()
 Phase5.name_phase = 'Crust_Lithosphere'
-Phase5.rho0 = 2800.0
+Phase5.rho0 = rho0_C
 Phase5.name_alpha = alpha_nameC
 Phase5.name_density = density_nameC
 Phase5.name_capacity = capacity_nameC
@@ -158,7 +155,7 @@ Phase5.radio_flag = radio_flag
 
 Phase6 = Phase()
 Phase6.name_phase = 'Lower_Crust_Lithosphere'
-Phase6.rho0 = 2800.0
+Phase6.rho0 = rho0_C
 Phase6.name_alpha = alpha_nameC
 Phase6.name_density = density_nameC
 Phase6.name_capacity = capacity_nameC
@@ -178,3 +175,40 @@ Ph_input.Phase4 = Phase4
 Ph_input.Phase5 = Phase5
 Ph_input.Phase6 = Phase6
 Ph_input.Phase7 = Phase7
+
+
+#---------------------------------------------------------------------------------------------------------
+# Geometric input parameters: 
+#---------------------------------------------------------------------------------------------------------
+x                 = [0, 660e3]               # main grid coordinate max X is changed accordingly to the slab geometry
+y                 = [-600e3,0.0]             # Initial input
+slab_tk           = 130e3                   # slab thickness
+cr                = 30e3              # crust 
+ocr               = 7e3             # oceanic crust
+lit_mt            = 20e3          # lithosperic mantle  
+lc                = 0.3              # lower crust ratio 
+wc                = 2.0e3          # width of the weak zone
+lt_d              = (cr+lit_mt)     # total lithosphere thicknes [and depth of the no slip boundary conditiopn]
+lab_d             = 100e3   # lithosphere-asthenosphere boundary depth -> useful for tuning the initial temperature profile
+decoupling        = 80e3      # decoupling depth -> i.e. where the weak zone is prolonged 
+resolution_normal = 2.0e3  # Normal resolution
+transition        = 10e3    # Parameter that controls the transition depth of velocity in the decoupling zone
+
+if van_keken == 1: 
+    cr          = 0.0 
+    lc          = 0.0 
+    ocr         = 0.0
+    lt_d        = 50e3 
+    lit_mt      = 50e3 
+    lab_d       = lit_mt
+    decoupling  = 50e3 
+    Tmax        = 1300.0
+    if case_vk == 0: 
+        Ph_input.Phase3.name_diffusion   = 'Constant'
+        Ph_input.Phase3.name_dislocation = 'Constant'
+    elif case_vk ==1: 
+        Ph_input.Phase3.name_diffusion   = 'Van_Keken_diff'
+        Ph_input.Phase3.name_dislocation = 'Constant'  
+    else:      
+        Ph_input.Phase3.name_diffusion   = 'Van_Keken_diff'
+        Ph_input.Phase3.name_dislocation = 'Van_Keken_disl'  

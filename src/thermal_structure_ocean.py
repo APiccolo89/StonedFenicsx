@@ -494,6 +494,9 @@ def compute_ocean_plate_temperature(ctrl:NumericalControls
     # ========== initial conditions ========== 
 
 
+    z    = np.arange(0,nz*dz,dz)
+    ph   = np.zeros([nz],dtype = np.int32) # I assume that everything is mantle 
+    ph[z<6000/scal.L] = np.int32(1)
 
     if lhs.van_keken == 1: 
         from scipy import special
@@ -505,15 +508,15 @@ def compute_ocean_plate_temperature(ctrl:NumericalControls
         T_lhs = Ttop+(Tmax-Ttop) * special.erf(z /2 /np.sqrt(t * kappa))
         lhs.z[:] = -z[:] 
         lhs.LHS[:] = T_lhs[:]
+        P = ctrl.g * z * rho
+        if ctrl.adiabatic_heating == 1: 
+            T_lhs = T_lhs * np.exp((3e-5/rho/Cp) * P )
 
         return lhs,[],[]
 
 
     
 
-    z    = np.arange(0,nz*dz,dz)
-    ph   = np.zeros([nz],dtype = np.int32) # I assume that everything is mantle 
-    ph[z<6000/scal.L] = np.int32(1)
     
     Told = compute_initial_geotherm(ctrl.Tmax,z,scal,ctrl.adiabatic_heating)
     

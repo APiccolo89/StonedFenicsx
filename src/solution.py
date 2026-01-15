@@ -1668,10 +1668,10 @@ class Wedge(Stokes_Problem):
 
                 it_inner = it_inner+1 
         
-        print_ph(f'              []Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
-        print_ph(f'                         [?] |F^mom|/|F^mom_0| {rmom/rmom_0:.3e}, |F^div|/|F^div_0| {rdiv/rdiv_0:.3e}')
-        print_ph(f'                         [?] |F^mom|           {rmom:.3e}, abs div residuum |F^div| {rdiv:.3e}')
-        print_ph(f'              []Converged ')
+            print_ph(f'              []Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
+            print_ph(f'                         [?] |F^mom|/|F^mom_0| {rmom/rmom_0:.3e}, |F^div|/|F^div_0| {rdiv/rdiv_0:.3e}')
+            print_ph(f'                         [?] |F^mom|           {rmom:.3e}, abs div residuum |F^div| {rdiv:.3e}')
+            print_ph(f'              []Converged ')
 
         time_B = timing.time()
         print_ph(f'              // -- // --- Solution of Wedge in {time_B-time_A:.2f} sec // -- // --- >')
@@ -1728,7 +1728,7 @@ class Wedge(Stokes_Problem):
 
         return S,abs_res 
 
-def compute_adiabatic_initial_adiabatic_contribution(M,T,Tgue,p,pdb): 
+def compute_adiabatic_initial_adiabatic_contribution(M,T,Tgue,p,pdb,vankeken): 
     
     from .compute_material_property import alpha_FX 
     
@@ -1737,25 +1737,30 @@ def compute_adiabatic_initial_adiabatic_contribution(M,T,Tgue,p,pdb):
     Tg = fem.Function(FS)
     Tg = T.copy()
     v  = ufl.TestFunction(FS)
+
+
+    if vankeken==0:
+        expr = (alpha_FX(pdb,Tg,p,M.phase,M) * p)/(heat_capacity_FX(pdb,Tg,M.phase,M) * density_FX(pdb,Tg,p,M.phase,M))
+        F = (Tg-T * ufl.exp(expr)) * v * ufl.dx 
     
-    expr = (alpha_FX(pdb,Tg,p,M.phase,M) * p)/(heat_capacity_FX(pdb,Tg,M.phase,M) * density_FX(pdb,Tg,p,M.phase,M))
-    F = (Tg-T * ufl.exp(expr)) * v * ufl.dx 
     
-    J = ufl.derivative(F,Tg)
-    
-    bcs = []
+        bcs = []
 
-    problem = NonlinearProblem(F, Tg, bcs, J)
-    solver = NewtonSolver(M.mesh.comm, problem)
+        problem = NonlinearProblem(F, Tg, bcs, J)
+        solver = NewtonSolver(M.mesh.comm, problem)
 
-    solver.rtol = 1e-5
-    solver.atol = 1e-6
+        solver.rtol = 1e-4
+        solver.atol = 1e-4
 
 
 
-    n_iter, converged = solver.solve(Tg)
-    Tg.x.scatter_forward()
-
+        n_iter, converged = solver.solve(Tg)
+        Tg.x.scatter_forward()
+    else: 
+        from utils import evaluate_material_property
+        expr = (alpha_FX(pdb,Tg,p,M.phase,M) * p)/(heat_capacity_FX(pdb,Tg,M.phase,M) * density_FX(pdb,Tg,p,M.phase,M))
+        F = T * ufl.exp(expr)
+        Tg = evaluate_material_property(F,FS)
 
     
     return Tg
@@ -1770,7 +1775,7 @@ def initial_adiabatic_lithostatic_thermal_gradient(sol,lps,pdb,M,g,it_outer,ctrl
     while res > 1e-3: 
         P_old = sol.PL.copy()
         sol = lps.Solve_the_Problem(sol,ctrl,pdb,M,g,it_outer,ts=0)
-        T_O = compute_adiabatic_initial_adiabatic_contribution(M.domainG,T_0,T_Oa,sol.PL,pdb)
+        T_O = compute_adiabatic_initial_adiabatic_contribution(M.domainG,T_0,T_Oa,sol.PL,pdb,ctrl.van_keken)
         resp = compute_residuum(sol.PL,P_old)
         resT = compute_residuum(T_O, T_Oa)
         res = np.sqrt(resp**2 + resT**2)
@@ -1884,9 +1889,6 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
         # Compute residuum 
         res = compute_residuum_outer(sol,Told,PLold,u_globalold,p_globalold,it_outer,sc, time_A_outer)
 
-        if ctrl.van_keken == 1: 
-           
-            _benchmark_van_keken(sol,1,ctrl.van_keken_case,ioctrl,sc)
 
         print_ph(f'// -- // :( --- ------- ------- ------- :) // -- // --- > ')
 
@@ -2113,7 +2115,7 @@ def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA):
     print_ph(f'    []Res Temperature    =  {res_T:.3e} [n.d.], max= {minMaxT[1]:.3f}, min= {minMaxT[0]:.3f} [C]')
     print_ph(f'    []Res pressure       =  {res_p:.3e} [n.d.], max= {minMaxP[1]:.3e}, min= {minMaxP[0]:.3e} [GPa]')
     print_ph(f'    []Res lithostatic    =  {res_PL:.3e}[n.d.], max= {minMaxPL[1]:.3e}, min= {minMaxPL[0]:.3e} [GPa]')
-    print_ph(f'    []Res total (sqrt(rp^2+rT^2+rPL^2+rv^2)) =  {res_PL:.3e} [n.d.] ')
+    print_ph(f'    []Res total (sqrt(rp^2+rT^2+rPL^2+rv^2)) =  {res_total:.3e} [n.d.] ')
     print_ph(f'=============================================// -- // --->')
     print_ph(f'')
 

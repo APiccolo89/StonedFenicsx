@@ -12,7 +12,8 @@ import cmcrameri as cmc
 import numpy as np 
 from dataclasses import dataclass
 from dolfinx import fem
-
+from numpy import ndarray
+from typing import List
 
 # Util performance 
 #---------------------------------------------------------------------------------------------------------
@@ -183,7 +184,10 @@ def compute_eII(e):
     e_II  = sqrt(0.5*inner(e, e))    
     return e_II
 #---------------------------------------------------------------------------
-
+class Ph_input():
+    def __init__(self):
+        pass
+    
 @dataclass(slots=True)
 class Phase:
     """
@@ -316,12 +320,111 @@ class Phase:
     Hr : float = 0.0
     # Internal heating
     radio: float = 0.0
+   
 
-class Ph_input():
-    def __init__(self):
-        pass
-    
+
 def evaluate_material_property(expr, V):
     F = fem.Function(V)
     F.interpolate(fem.Expression(expr, V.element.interpolation_points()))
     return F 
+
+from dataclasses import dataclass, field
+from typing import List
+
+@dataclass(slots=True)
+class Input:
+    # -----------------------------------------------------------------------------------------------------
+    # Numerical Controls
+    # -----------------------------------------------------------------------------------------------------
+    it_max: int = 20
+    tol: float = 1e-5
+    relax: float = 0.9
+    Tmax: float = 1333.0
+    Ttop: float = 0.0
+    g: float = 9.81
+
+    v_s: List[float] = field(default_factory=lambda: [5.0, 0.0])  # (still not converted here)
+
+    slab_age: float = 50.0
+    time_max: float = 2.0
+    time_dependent_v: int = 0
+    steady_state: int = 1
+    slab_bc: int = 1
+    tol_innerPic: float = 1e-2
+    tol_innerNew: float = 1e-5
+    van_keken_case: int = 2
+    decoupling_ctrl: int = 1
+    model_shear: str = "NoShear"
+    phase_wz: int = 7
+    time_dependent: int = 1
+    dt_sim: float = 15000 / 1e6  # Myr
+
+    adiabatic_heating: int = 0  # keep only once
+
+    phi: float = 5.0
+
+    # -----------------------------------------------------------------------------------------------------
+    # input/output control
+    # -----------------------------------------------------------------------------------------------------
+    test_name: str = "Output"
+    sname: str = "Output"
+    path_test: str = "../Results"
+
+    # -----------------------------------------------------------------------------------------------------
+    # Scaling parameters
+    # -----------------------------------------------------------------------------------------------------
+    L: float = 600e3
+    stress: float = 1e9
+    eta: float = 1e21
+    Temp: float = 1333.0
+
+    # -----------------------------------------------------------------------------------------------------
+    # Left boundary condition
+    # -----------------------------------------------------------------------------------------------------
+    nz: int = 108
+    end_time: float = 180.0
+    dt: float = 0.001
+    recalculate: int = 1
+    van_keken: int = 1
+    c_age_plate: float = 50.0
+    flag_radio: float = 0.0
+
+    # -----------------------------------------------------------------------------------------------------
+    # Phase/property selection flags + defaults
+    # -----------------------------------------------------------------------------------------------------
+    capacity_nameM: str = "Constant"
+    conductivity_nameM: str = "Constant"
+    density_nameM: str = "Constant"
+    alpha_nameM: str = "Constant"
+
+    capacity_nameC: str = "Constant"
+    conductivity_nameC: str = "Constant"
+    density_nameC: str = "Constant"
+    alpha_nameC: str = "Constant"
+
+    rho0_M: float = 3300.0
+    rho0_C: float = 3300.0
+    radio_flag: float = 0.0
+
+    # -----------------------------------------------------------------------------------------------------
+    # Geometry
+    # -----------------------------------------------------------------------------------------------------
+    x: List[float] = field(default_factory=lambda: [0.0, 660e3])
+    y: List[float] = field(default_factory=lambda: [-600e3, 0.0])
+
+    slab_tk: float = 130e3
+    cr: float = 30e3
+    ocr: float = 7e3
+    lit_mt: float = 20e3
+    lc: float = 0.3
+    wc: float = 2.0e3
+
+    lt_d: float = 50e3
+    lab_d: float = 100e3
+    decoupling: float = 80e3
+    resolution_normal: float = 2.0e3
+    transition: float = 10e3
+
+    def __post_init__(self) -> None:
+        if self.sname == "Output" and self.test_name != "Output":
+            self.sname = self.test_name

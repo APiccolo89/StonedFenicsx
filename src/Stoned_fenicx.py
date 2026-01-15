@@ -48,14 +48,14 @@ dict_options = {'NoShear':0,
                 'Linear':1,
                 'SelfConsistent':2}
 
-def generate_phase_database(IP)->PhaseDataBase:
+def generate_phase_database(IP,Phin)->PhaseDataBase:
     
-    pdb = PhaseDataBase(7,5*np.pi/180)
+    pdb = PhaseDataBase(7,IP.phi*np.pi/180)
     
     it = 1 
-    for i in dir(IP.Ph_input):
+    for i in dir(Phin):
         if 'Phase' in i:
-            phase = getattr(IP.Ph_input,i)
+            phase = getattr(Phin,i)
             print_ph(f"Generating phase {it} : {i}, Phase Name : {phase.name_phase}")
             
             print_ph('-----Rheological Parameters------')
@@ -124,61 +124,19 @@ def generate_phase_database(IP)->PhaseDataBase:
 
     return pdb 
 
-def StonedFenicsx():
+def StonedFenicsx(IP,Ph_input):
     #---------------------------------------------------------------------------------------------------------
     # Input parameters 
     #---------------------------------------------------------------------------------------------------------
-    
-    import argparse
-    import importlib.util
-    
-    try:
-        parser = argparse.ArgumentParser(
-            description="Run simulation with a given input path."
-        )
-        parser.add_argument(
-            "input_path",
-            type=str,
-            help="Path to the input file or directory."
-        )
-        parser.add_argument(
-            "path_test",
-            type=str,
-            help="Path to the input file or directory."
-        )        
         
-        parser.add_argument(
-            "Steady_state",
-            type=int,
-            help="Path to the input file or directory."
-        )
-
-        args = parser.parse_args()
-        input_path = args.input_path
-        path_test = args.path_test
-        steady_state = args.Steady_state
-    
-    except: 
-        path_test = "../../Results_VK/exp0"
-        input_path = "input.py"
-        steady_state = 1
-    
-    module_name = os.path.splitext(os.path.basename(input_path))[0]  # e.g. "input_case"
-
-    spec = importlib.util.spec_from_file_location(module_name, input_path)
-    IP = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(IP)
-    print(f"Loaded {module_name} from {input_path}")
-    print(IP)
-    print(IP.test_name)
     
     # Numerical controls
     ctrl = NumericalControls(g               = IP.g,
                             v_s              = np.asarray(IP.v_s),
                             slab_age         = IP.slab_age,
-                            time_max         = 1333,
+                            time_max         = IP.time_max,
                             time_dependent_v = IP.time_dependent_v,
-                            steady_state     = steady_state,
+                            steady_state     = IP.steady_state,
                             slab_bc          = IP.slab_bc,
                             decoupling       = IP.decoupling_ctrl,
                             tol_innerPic     = IP.tol_innerPic,
@@ -188,11 +146,11 @@ def StonedFenicsx():
                             model_shear      = dict_options[IP.model_shear],
                             phase_wz         = IP.phase_wz,
                             dt = IP.dt_sim,
-                            adiabatic_heating = 0,
+                            adiabatic_heating = IP.adiabatic_heating,
                             Tmax=IP.Tmax)
     # IO controls
     io_ctrl = IOControls(test_name = IP.test_name,
-                        path_save = path_test,
+                        path_save = IP.path_test,
                         sname = IP.sname)
     io_ctrl.generate_io()
     # Scaling parameters
@@ -202,11 +160,11 @@ def StonedFenicsx():
                     end_time = IP.end_time,
                     dt = IP.dt,
                     recalculate = IP.recalculate,
-                    van_keken = 0.0,
-                    non_linearities=1,
+                    van_keken = IP.van_keken,
+                    non_linearities=0,
                     c_age_plate = IP.c_age_plate)
     
-    Pdb = generate_phase_database(IP)                      
+    Pdb = generate_phase_database(IP,Ph_input)                      
     # ---
     # Create mesh 
     g_input = Geom_input(x = np.asarray(IP.x),
@@ -228,9 +186,9 @@ def StonedFenicsx():
 
     M = cm(io_ctrl, sc,g_input,ctrl)
     
-    M.element_p       = IP.element_p
-    M.element_PT      = IP.element_PT
-    M.element_V       = IP.element_V
+    M.element_p = basix.ufl.element("Lagrange","triangle", 1) 
+    M.element_PT = basix.ufl.element("Lagrange","triangle",2)
+    M.element_V = basix.ufl.element("Lagrange","triangle",2,shape=(2,))
     
     if ctrl.steady_state == 1:
         steady_state_solution(M, ctrl, lhs, Pdb, io_ctrl, sc)
