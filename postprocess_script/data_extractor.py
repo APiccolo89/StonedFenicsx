@@ -1,10 +1,201 @@
+import h5py
+import numpy as np
+import os
 class Test:
-    def __init__(self):
+    def __init__(self,path_2_test:str):
         self.meta_data = None
-        self.Data_raw = None 
-        self.path_2_test = None 
-        self.MeshData = MeshData()
+        self.path_2_test = path_2_test 
+        self.MeshData = MeshData(self.path_2_test)
+        self.Data_raw = Data_Raw(self.path_2_test,num=len(self.MeshData.X[:,0]))
         
+    def _interpolate_data(self,Data_field):
+        """ Interpolate the data on a regular grid for visualisation
+        Args:
+            Data_field (str): field to be interpolated
+        Returns:
+            Zi (np.array): interpolated data
+            
+            Paraview is not able to visualise unstructured data properly, so we need to interpolate the data on a regular grid for visualisation purposes.
+            The nan mask is used to mask the data outside the domain, and giving you the illusion that I was able to generate a curved mesh in python. Ahah. 
+        """
+        import numpy as np
+        from scipy.interpolate import griddata
+        
+        xi = self.MeshData.X[:,0]
+        yi = self.MeshData.X[:,1]
+        Xi = self.MeshData.Xi
+        Yi = self.MeshData.Yi
+        
+        # Extrac the field data 
+        values = eval('self.Data_raw.%s'%Data_field)
+        
+        Zi = griddata(self.MeshData.X, values, (Xi, Yi), method='linear')
+        
+        Zi[self.MeshData.ar==False] = np.nan
+
+        
+        return Zi  
+
+
+class Data_Raw():
+    def __init__(self,f:str,num:int):
+        """ Extract the data from the h5 file. 
+
+        Args:
+            f (str): path to the test 
+        """
+        
+        import h5py
+        import numpy as np
+        
+        self.SteadyState = Data_experiment(f,num,ts=False)
+        
+        self.TimeDependent = Data_experiment(f,num,ts=True)
+        
+class Data_experiment():
+    '''
+    Class to extract the data from either the steady state or time dependent h5 file.
+    the init function requires the path to the test, the number of points and the number of timestep
+    The main issue is for the timedependent case, as I need to extract the number of timesteps from the 
+    the h5 file, but I will create the function later, and will be in the metadata field of the test 
+    '''
+    def __init__(self,f:str,num:int,ts:bool):
+        """ Extract the steady state data from the h5 file. 
+
+        Args:
+            f (str)  : path to the test
+            num (int): number of points 
+            ts (int) : time step
+        """
+        
+        import h5py
+        import numpy as np
+        
+        self.times     = None
+        self.time_list = None
+        self.Temp      = None
+        self.Pres      = None
+        self.LitPres   = None
+        self.vx        = None
+        self.vy        = None
+        self.qx        = None
+        self.qy        = None  
+        self.kappa     = None 
+        self.alpha     = None 
+        self.eta       = None 
+        self.rho       = None 
+        self.k         = None 
+        self.Cp        = None
+        self.NoTD      = False
+        
+        if ts == True: 
+            # Rather necessary as the h5 file was not created in reasonable way 
+            # Direct to the time dependent file
+            if os.path.exists('%s/TimeDependent.h5'%f):
+                print("The file exists.")
+            else:
+                print("The file does not exist. Either the time dependent simulation was not run or the path is incorrect.")
+                self.NoTD = True
+                return None 
+            
+            fl = h5py.File('%s/TimeDependent.h5'%f, 'r')
+            field = 'Function/Temperature  [degC]'
+            times = list(f[field].keys())
+            time_list = [float(s.replace("_", ".")) for s in times]
+            time_sort = np.argsort(time_list)
+            time_list = [time_list[i] for i in time_sort]
+            times = [times[i] for i in time_sort]
+            TS = len(times) 
+            self.times = times
+            self.time_list = time_list
+            fl.close()
+        else: 
+            TS = 0 
+        
+        self.Temp    = np.zeros([num,TS],dtype=float)
+        self.Pres    = np.zeros([num,TS],dtype=float)
+        self.LitPres = np.zeros([num,TS],dtype=float)
+        self.vx      = np.zeros([num,TS],dtype=float)
+        self.vy      = np.zeros([num,TS],dtype=float)
+        self.qx      = np.zeros([num,TS],dtype=float)
+        self.qy      = np.zeros([num,TS],dtype=float) 
+        self.kappa   = np.zeros([num,TS],dtype=float) 
+        self.alpha   = np.zeros([num,TS],dtype=float) 
+        self.eta     = np.zeros([num,TS],dtype=float) 
+        self.rho     = np.zeros([num,TS],dtype=float) 
+        self.k       = np.zeros([num,TS],dtype=float) 
+        self.Cp      = np.zeros([num,TS],dtype=float) 
+            
+        
+        self.extract_data(f,ts)
+        
+        
+    def extract_data(self,f:str,ts:bool):
+        import h5py
+        import numpy as np
+        
+        if ts == True: 
+            # Direct to the time dependent file
+            fl = h5py.File('%s/TimeDependent.h5'%f, 'r')
+            for it, time in enumerate(self.times):
+                field_temp = '/Function/Temperature  [degC]/%s'%time
+                field_pres = '/Function/Pressure  [GPa]/%s'%time
+                field_litpres = '/Function/Lit Pres  [GPa]/%s'%time
+                field_v   = '/Function/Velocity  [cm/yr]/%s'%time
+                field_q   = '/Function/q  [W/m2]/%s'%time
+                
+                self.Temp[:,it]    = np.array(fl[field_temp]).flatten()
+                self.Pres[:,it]    = np.array(fl[field_pres]).flatten()
+                self.LitPres[:,it] = np.array(fl[field_litpres]).flatten()
+                
+                v                 = np.array(fl[field_v])
+                self.vx[:,it]     = v[:,0]
+                self.vy[:,it]     = v[:,1]
+                
+                qS               = np.array(fl[field_q])
+                self.qx[:,it]    = qS[:,0]
+                self.qy[:,it]    = qS[:,1]
+                
+                fl.close()
+        else:
+            # Direct to the steady state file 
+            f = '%s/Steady_state.h5'%f
+
+            # Extract mesh geometry 
+            fl = h5py.File(f, 'r')
+
+
+            self.Temp               = np.array(fl['/Function/Temperature  [degC]/0']).flatten()
+
+            self.Pres               = np.array(fl['/Function/Pressure  [GPa]/0']).flatten()
+
+            self.LitPres            = np.array(fl['/Function/Lit Pres  [GPa]/0']).flatten()
+
+            v                       =  np.array(fl['Function/Velocity  [cm/yr]/0'])
+
+            self.vx                 = v[:,0]
+
+            self.vy                 = v[:,1]
+
+            qS = np.array(fl['Function/Heat flux [W/m2]/0'])
+
+            self.qx = qS[:,0]
+
+            self.qy = qS[:,1]
+            
+            self.Cp = np.array(fl['/Function/Cp  [J/kg]/0']).flatten()
+            
+            self.k  = np.array(fl['/Function/k  [W/m/k]/0']).flatten()
+            
+            self.rho = np.array(fl['/Function/Density  [kg/m3]/0']).flatten()
+            
+            self.eta = np.array(fl['/Function/eta  [Pa s]/0']).flatten()
+            
+            self.alpha = np.array(fl['/Function/alpha  [1/K]/0']).flatten()
+            
+            self.kappa = np.array(fl['/Function/kappa  [m2/s]/0']).flatten()
+
+            fl.close()
         
 class MeshData(): 
     def __init__(self,f:str):
@@ -14,8 +205,10 @@ class MeshData():
             f (str): path to the test 
         """
         
-        import h5py
-        import numpy as np
+
+        
+        # Direct to the steady state file 
+        f = '%s/Steady_state.h5'%f
         
         # Extract mesh geometry 
         fl = h5py.File(f, 'r')
@@ -39,8 +232,13 @@ class MeshData():
         ind = ind[0]
         
         self.mesh_tag = ar_point.flatten()
+        
+        self.ind_topSlab  = (self.mesh_tag==8.0)| (self.mesh_tag==9.0)
+    
+        self.ind_Oceanic  = (self.mesh_tag==10.0)
 
         fl.close()
+
         
 
        

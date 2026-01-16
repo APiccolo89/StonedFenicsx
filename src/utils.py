@@ -10,6 +10,11 @@ import matplotlib.colors as mcolors
 from functools import wraps
 import cmcrameri as cmc
 import numpy as np 
+from dataclasses import dataclass
+from dolfinx import fem
+from numpy import ndarray
+from typing import List
+
 # Util performance 
 #---------------------------------------------------------------------------------------------------------
 def timing_function(fun):
@@ -93,180 +98,6 @@ def interpolate_from_sub_to_main(u_dest, u_start, cells,parent2child=0):
 
     return u_dest
 
-
-
-def logistic_function_decoupling():
-    import numpy as np
-    import matplotlib.pyplot as plt
-    plt.rcParams.update({
-    "text.usetex": True,
-    "font.family": "serif",       # serif = Computer Modern
-    "font.serif": ["Computer Modern Roman"],
-    "axes.labelsize": 14,
-    "font.size": 12,
-    "legend.fontsize": 12,
-    "xtick.labelsize": 12,
-    "ytick.labelsize": 12,
-    })
-    
-    
-    
-    z = np.linspace(0,300e3,500)
-    lit = 50e3
-    dec = 100e3 
-    creep = 40e3 
-    
-    # jump function 
-    # Linear 
-    jfl         = np.zeros(len(z))
-    jfl[z<lit]  = 1.0 
-    jfl[z>=lit] = 1+(z[z>=lit]-lit)/(lit-dec)
-    jfl[z>dec]  = 0.0
-    
-    # Tanh 
-    jtanh      = np.zeros(len(z))
-    m          = (lit+dec)/2
-    ls         = (dec-m)
-    jtanh      = 1-0.5 * ((1)+(1)*np.tanh((z-m)/(ls/4)))
-    
-    fig = plt.figure()
-    ax0 = plt.gca()
-    ax0.plot(jfl,-z/1e3,c='k',label='linear_function_jump')
-    ax0.set_ylabel('Depth [km]')    
-    ax0.set_xlabel('friction efficiency [n.d.]')
-    ax0.plot(jtanh,-z/1e3,c='firebrick',label='tan_function_jump')
-    ax0.grid(True, linestyle='--', alpha=0.5)
-    ax0.legend()
-    plt.savefig("../../jump_functions.png", dpi=300, bbox_inches='tight')
-    plt.close()
-    # Friction function 
-    # linear 
-    frl           = np.zeros(len(z))
-    frl[z<creep]  = 1.0 
-    frl[z>=creep] = 1+(z[z>=creep]-creep)/(creep-dec)
-    frl[z>dec]    = 0 
-    
-    # Tanh 
-    frtan           = np.zeros(len(z))
-    m          = (creep+dec)/2
-    ls         = 2*(dec-m)
-    frtan      = 1-0.5 * ((1)+(1)*np.tanh((z-m)/(ls/4)))
-    
-    fig = plt.figure()
-    ax0 = plt.gca()
-    ax0.plot(frl,-z/1e3,c='k',label='linear friction efficiency')
-    ax0.set_ylabel('Depth [km]')    
-    ax0.set_xlabel('friction efficiency [n.d.]')
-    ax0.plot(frtan,-z/1e3,c='firebrick',label='tan friction efficiency')
-    ax0.grid(True, linestyle='--', alpha=0.5)
-    ax0.legend()
-    plt.savefig("../../efficiency_functions.png", dpi=300, bbox_inches='tight')
-    plt.close()
-    
-    # case 1 
-    eff1 = jfl*frl 
-    # case 2 
-    eff2 = jfl*frtan
-    # case 3 
-    eff3 = jtanh*frl 
-    # case 4
-    eff4 = jtanh*frtan 
-    
-    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(10, 6), sharey=True)      
-    ax0.plot(eff1,-z/1e3,c='k',label='linearxlinear',linestyle='-.')
-    ax0.plot(eff2,-z/1e3,c='r',label='linearxnonlinear',linestyle='-.')
-    ax1.plot(eff3,-z/1e3,c='forestgreen',label='nonlinearxlinear')
-    ax1.plot(eff4,-z/1e3,c='firebrick',label='nonlinearxnonlinear')
-    ax1.set_ylim([-100,0])
-    ax0.set_ylim([-100,0])
-    ax0.grid(True, linestyle='--', alpha=0.5)
-    ax1.grid(True, linestyle='--', alpha=0.5)
-
-    ax0.set_ylabel(r'Depth [km]')
-    ax1.set_xlabel(r'effective_efficiency [n.d.]')
-    ax0.set_xlabel(r'effective_efficiency [n.d.]')
-    ax0.legend()
-    ax1.legend()
-    plt.savefig("../../effective_function.png", dpi=300, bbox_inches='tight')
-    plt.close()
-    # W/m3 frictional heating
-    pl = 3300.0*9.81*z/1e3
-    v  = 5.0/1e2/(365.25*24*60*60)
-    c1 = eff1*pl*v 
-    c2 = eff2*pl*v
-    c3 = eff3*pl*v
-    c4 = eff4*pl*v
-    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(10, 6), sharey=True)      
-    ax0.plot(c1,-z/1e3,c='k',label='linearxlinear',linestyle='-.')
-    ax0.plot(c2,-z/1e3,c='r',label='linearxnonlinear',linestyle='-.')
-    ax1.plot(c3,-z/1e3,c='forestgreen',label='nonlinearxlinear')
-    ax1.plot(c4,-z/1e3,c='firebrick',label='nonlinearxnonlinear')
-    ax1.set_ylim([-100,0])
-    ax0.set_ylim([-100,0])
-    ax0.grid(True, linestyle='--', alpha=0.5)
-    ax1.grid(True, linestyle='--', alpha=0.5)
-
-    ax0.set_ylabel(r'Depth [km]')
-    ax1.set_xlabel(r'$\psi$ [$\frac{W}{m^3}$]')
-    ax0.set_xlabel(r'$\psi$ [$\frac{W}{m^3}$]')
-    ax0.legend()
-    ax1.legend()
-    plt.savefig("../../Power.png", dpi=300, bbox_inches='tight')
-    plt.close()
-
-    dc_u = 100e3
-    lit = 50e3
-    lit = lit/dc_u
-    z = z/dc_u
-    dc = 1.0
-    zm = (dc + lit)/2
-    k = 15.0
-    C = 1.0 / (1 + np.exp(-k *(z-zm)))
-    C2 = np.zeros(len(z))
-    C2[z < lit] = 0.0
-    C2[z >= lit] = 1.0/(dc-lit)*(z[z >= lit]-lit)
-    C2[C2 > 1.0] = 1.0
-    plt.plot(z-lit,C)
-    plt.plot(z-lit,C2)
-    plt.xlabel('Depth [m]')
-    plt.ylabel('Decoupling factor')
-    plt.title('Logistic function for decoupling')
-    plt.grid()
-    plt.show()
-    plt.close()
-    
-    dv = ((1.0 - C)*1e-9)*((z*dc)*9.81*3300)*0.06
-    dv2 = ((1.0 - C2)*1e-9)*((z*dc)*9.81*3300)*0.06
-
-    plt.plot((z)*dc_u,dv)
-    plt.plot((z)*dc_u,dv2)
-
-    plt.xlabel('Depth [m]')
-    plt.ylabel('Decoupling viscous force [Pa]')
-    plt.title('Decoupling viscous force')
-    plt.grid()
-    
-    #hobson 
-    u = 5.0 
-    l = 0.1 
-    el = np.linspace(0,300,300)
-    c = 100 
-    L = 10 
-    vel = 0.5 * ((1+0.01)+(1-0.01)*np.tanh((el-c)/(L/4)))
-    
-    zt = 40e3 
-    z0 = 100e3 
-    zm = (zt+z0)/2
-    zd = (z0-zm)
-    z = np.linspace(0,100e3,1000)
-    fu = np.zeros(len(z))    
-    fu = 1- 0.5 * ((1+0)+(1)*np.tanh((z-zm)/(zd/2)))
-    fu2 = np.zeros(len(z))
-    fu2[z<zt]  = 1 
-    fu2[z>=zt] = 1-(zt-z[z>=zt])/(zt-z0)
-    vel = 0.5 * ((1+0.01)+(1-0.01)*np.tanh((z-z0)/(10e3/4)))
-    return 0
-
 def gather_vector(v): 
     
     comm = MPI.COMM_WORLD
@@ -300,6 +131,7 @@ def gather_vector(v):
     if rank == 0:
 
         return lv 
+
 
 def gather_coordinates(V):
     """
@@ -352,8 +184,247 @@ def compute_eII(e):
     e_II  = sqrt(0.5*inner(e, e))    
     return e_II
 #---------------------------------------------------------------------------
+class Ph_input():
+    def __init__(self):
+        pass
+    
+@dataclass(slots=True)
+class Phase:
+    """
+    Phase: container for rheological and thermal material parameters.
+
+    ------------------
+    Rheology (viscosity)
+    ------------------
+    name_diffusion : str
+        Diffusion creep flow law name.
+        Options include (non-exhaustive):
+          - 'Constant'                : constant viscosity
+          - 'Hirth_Dry_Olivine_diff'  : Hirth & Kohlstedt (2003), dry olivine
+          - 'Van_Keken_diff'          : Van Keken et al. (2008) style diffusion
+          - 'Hirth_Wet_Olivine_diff'  : Hirth & Kohlstedt (2003), wet olivine
+
+    Edif : float
+        Activation energy for diffusion creep [J/mol].
+    Vdif : float
+        Activation volume for diffusion creep [m³/mol].
+    Bdif : float
+        Pre-exponential factor for diffusion creep [1/Pa/s].
+
+    name_dislocation : str
+        Dislocation creep flow law name.
+        Options include:
+          - 'Constant'
+          - 'Hirth_Dry_Olivine_disl'
+          - 'Van_Keken_disl'
+          - 'Hirth_Wet_Olivine_disl'
+
+    n : float
+        Stress exponent. **NB**: if you change this, Bdis must be updated consistently.
+    Edis : float
+        Activation energy for dislocation creep [J/mol].
+    Vdis : float
+        Activation volume for dislocation creep [m³/mol].
+    Bdis : float
+        Pre-exponential factor for dislocation creep [1/Pa^n/s].
+
+    eta : float
+        Constant viscosity [Pa·s] (used if rheology is 'Constant').
+
+    ------------------
+    Thermal properties
+    ------------------
+    Cp : float
+        constant heat capacity [J/kg/K].
+    k : float
+        constant thermal conductivity [W/m/K].
+    rho0 : float
+        Reference / constant density [kg/m³].
+
+    name_capacity : str
+        Heat capacity law.
+        Options:
+          - 'Constant'
+          - 'Berman_Forsterite'
+          - 'Berman_Fayalite'
+          - 'Berman_Aranovich_Forsterite'
+          - 'Berman_Aranovich_Fayalite'
+          - 'Berman_Fo_Fa_01'
+          - 'Bermann_Aranovich_Fo_Fa_0_1'
+          - 'Oceanic_Crust'
+          - 'ContinentalCrust' (not implemented / to be removed).
+
+    name_density : str
+        Density law.
+        Options:
+          - 'Constant' : ρ = ρ0.
+          - 'PT'       : ρ(P,T) with constant bulk modulus K₀ ≈ 130e9 Pa and
+                         thermal expansivity consistent with `name_alpha`.
+
+    name_alpha : str
+        Thermal expansivity law (α).
+        Options:
+          - 'Constant'      : α = 3e-5 K⁻¹.
+          - 'Mantle'        : olivine / mantle α (e.g., Groose & Afonso 2013;
+                              Richardson et al. 2020).
+          - 'Oceanic_Crust' : basaltic crustal α.
+
+    name_conductivity : str
+        Thermal conductivity law (k).
+        Options:
+          - 'Constant'
+          - 'Mantle'
+          - 'Oceanic_Crust'
+
+    ------------------
+    Internal heating
+    ------------------
+    radio : float
+        Radiogenic heat production [W/m³] (or [Pa/s] if used as source in σ units).
+    radio_flag : float
+        Activation flag for radiogenic heating / radiative conductivity
+        (0.0 = off, 1.0 = on, or a more general scaling factor).
+
+    Notes
+    -----
+    This class is intended as a flexible container for building a PhaseDataBase.
+    For your current kinematic slab work it may be somewhat overkill, but it
+    should be reusable for other problems.
+    """
+    name_phase:str = "Undefined Phase"
+    # Viscosity / rheology
+    name_diffusion: str = "Constant"
+    Edif: float = -1e23
+    Vdif: float = -1e23
+    Bdif: float = -1e23
+
+    name_dislocation: str = "Constant"
+    n: float = -1e23
+    Edis: float = -1e23
+    Vdis: float = -1e23
+    Bdis: float = -1e23
+
+    eta: float = 1e20  # constant viscosity
+
+    # Thermal properties
+    Cp: float = 1250.0
+    k: float = 3.0
+    rho0: float = 3300.0
+    radio_flag: float = 0.0
+
+    name_capacity: str = "Constant"
+    name_conductivity: str = "Constant"
+    name_alpha: str = "Constant"
+    name_density: str = "Constant"
+    alpha0      : float = 3e-5  # constant thermal expansivity
+    Hr : float = 0.0
+    # Internal heating
+    radio: float = 0.0
+   
 
 
+def evaluate_material_property(expr, V):
+    F = fem.Function(V)
+    F.interpolate(fem.Expression(expr, V.element.interpolation_points()))
+    return F 
 
-if __name__ == '__main__':
-    logistic_function_decoupling()
+from dataclasses import dataclass, field
+from typing import List
+
+@dataclass(slots=True)
+class Input:
+    # -----------------------------------------------------------------------------------------------------
+    # Numerical Controls
+    # -----------------------------------------------------------------------------------------------------
+    it_max: int = 20
+    tol: float = 1e-5
+    relax: float = 0.9
+    Tmax: float = 1333.0
+    Ttop: float = 0.0
+    g: float = 9.81
+
+    v_s: List[float] = field(default_factory=lambda: [5.0, 0.0])  # (still not converted here)
+
+    slab_age: float = 50.0
+    time_max: float = 2.0
+    time_dependent_v: int = 0
+    steady_state: int = 1
+    slab_bc: int = 1
+    tol_innerPic: float = 1e-2
+    tol_innerNew: float = 1e-5
+    van_keken_case: int = 2
+    decoupling_ctrl: int = 1
+    model_shear: str = "NoShear"
+    phase_wz: int = 7
+    time_dependent: int = 1
+    dt_sim: float = 15000 / 1e6  # Myr
+
+    adiabatic_heating: int = 0  # keep only once
+
+    phi: float = 5.0
+
+    # -----------------------------------------------------------------------------------------------------
+    # input/output control
+    # -----------------------------------------------------------------------------------------------------
+    test_name: str = "Output"
+    sname: str = "Output"
+    path_test: str = "../Results"
+
+    # -----------------------------------------------------------------------------------------------------
+    # Scaling parameters
+    # -----------------------------------------------------------------------------------------------------
+    L: float = 600e3
+    stress: float = 1e9
+    eta: float = 1e21
+    Temp: float = 1333.0
+
+    # -----------------------------------------------------------------------------------------------------
+    # Left boundary condition
+    # -----------------------------------------------------------------------------------------------------
+    nz: int = 108
+    end_time: float = 180.0
+    dt: float = 0.001
+    recalculate: int = 1
+    van_keken: int = 1
+    c_age_plate: float = 50.0
+    flag_radio: float = 0.0
+
+    # -----------------------------------------------------------------------------------------------------
+    # Phase/property selection flags + defaults
+    # -----------------------------------------------------------------------------------------------------
+    capacity_nameM: str = "Constant"
+    conductivity_nameM: str = "Constant"
+    density_nameM: str = "Constant"
+    alpha_nameM: str = "Constant"
+
+    capacity_nameC: str = "Constant"
+    conductivity_nameC: str = "Constant"
+    density_nameC: str = "Constant"
+    alpha_nameC: str = "Constant"
+
+    rho0_M: float = 3300.0
+    rho0_C: float = 3300.0
+    radio_flag: float = 0.0
+
+    # -----------------------------------------------------------------------------------------------------
+    # Geometry
+    # -----------------------------------------------------------------------------------------------------
+    x: List[float] = field(default_factory=lambda: [0.0, 660e3])
+    y: List[float] = field(default_factory=lambda: [-600e3, 0.0])
+
+    slab_tk: float = 130e3
+    cr: float = 30e3
+    ocr: float = 7e3
+    lit_mt: float = 20e3
+    lc: float = 0.3
+    wc: float = 2.0e3
+
+    lt_d: float = 50e3
+    lab_d: float = 100e3
+    decoupling: float = 80e3
+    resolution_normal: float = 2.0e3
+    transition: float = 10e3
+
+    def __post_init__(self) -> None:
+        if self.sname == "Output" and self.test_name != "Output":
+            self.sname = self.test_name

@@ -71,7 +71,7 @@ class NumericalControls:
                  slab_age=0.0,
                  v_s = np.array([5.0,0.0], dtype=np.float64),
                  steady_state = 1,
-                 relax = 0.6,
+                 relax = 0.9,
                  time_dependent_v = 0,
                  slab_bc = 1, # BC: 0 -> pipe like , 1 moving wall slab
                  decoupling = 1,
@@ -152,7 +152,11 @@ spec_LHS = [
     ('c_age_var', float64[:]),
     ('flag', int32[:]),
     ('d_RHS', float64),
-    ('t_res_vec',float64[:])
+    ('t_res_vec',float64[:]),
+    ('non_linearities',int32),
+    ('Cp',float64),
+    ('rho',float64),
+    ('k',float64)
 ]
 
 @jitclass(spec_LHS)
@@ -177,6 +181,10 @@ class ctrl_LHS:
         van_keken=1,          # benchmark flag
         d_RHS=-50e3,
         z_min= 140e3# distance for RHS term
+        ,non_linearities = 0 # Flag that forces the non-linearities to be off
+        ,k = 3.0 
+        ,rho = 3300
+        ,Cp = 1250 
     ):
         if dt > 0.1: 
             raise ValueError('dt: The input data must be in Myr. This timestep will be blow up the system. As a general remark: all input SI is Myr for time related parameters')
@@ -199,6 +207,10 @@ class ctrl_LHS:
         self.t_res_vec = np.zeros((t_res), dtype=float64)
         self.flag = np.zeros(nz, dtype=int32)
         self.d_RHS = d_RHS
+        self.non_linearities = non_linearities
+        self.Cp  = Cp 
+        self.k   = k 
+        self.rho = rho
         
 
 

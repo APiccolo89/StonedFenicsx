@@ -1,21 +1,20 @@
 import basix.ufl
+from src.utils import Phase, Ph_input
+from dataclasses import dataclass
+@dataclass
+class Input: 
+    it_max :int   = 20 
+    tol     :float = 1e-5
+    relax   :float = 0.9
+    Tmax    :float = 1300 
+    Ttop    :float = 0.0 
+    g       :float = 9.81 
+    slab_age:float = [5.0,0.0]
+    time_max:float = 2 
+    
 
-class Phase():
-    pass 
-#---------------------------------------------------------------------------------------------------------
-# Geometric input parameters: 
-x                 = [0, 660e3]               # main grid coordinate
-y                 = [-600e3,0.0]   
-slab_tk           = 130e3                   # slab thickness
-cr                = 30e3              # crust 
-ocr               = 7e3             # oceanic crust
-lit_mt            = 20e3          # lithosperic mantle  
-lc                = 0.3              # lower crust ratio 
-wc                = 2.0e3              # weak zone 
-lt_d              = (cr+lit_mt)     # total lithosphere thickness
-lab_d             = 100e3 
-decoupling        = 80e3      # decoupling depth -> i.e. where the weak zone is prolonged 
-resolution_normal = 2.0e3  # To Do
+
+
 #---------------------------------------------------------------------------------------------------------
 # Numerical Controls 
 #---------------------------------------------------------------------------------------------------------
@@ -38,11 +37,11 @@ van_keken_case    = 2 # 1 Van Keken benchmark, When these flag are activated -> 
                     # 3 composite 
                     # 4 Iterative 
 decoupling_ctrl   = 1
-model_shear       = 'SelfConsistent' # 'SelfConsistent
+model_shear       = 'NoShear' # 'SelfConsistent
 phase_wz          = 7
 time_dependent    = 1 
 dt_sim            = 15000/1e6 # in Myr
-
+adiabatic_heating = 1
 friction_angle   = 1.0 
 #---------------------------------------------------------------------------------------------------------
 # input/output control
@@ -63,167 +62,153 @@ nz = 108
 end_time = 180.0
 dt = 0.001
 recalculate = 1
-van_keken = 0
+van_keken = 1
 c_age_plate = 50.0 
 flag_radio = 0.0 
 #---------------------------------------------------------------------------------------------------------
 # Phase properties
 # ---------------------------------------------------------------------------------------------------------
-Phase1 = Phase()
-Phase1.name = 'Slab_Mantle'
-Phase1.rho0 = 3300.0
-Phase1.option_rho = 3
-Phase1.option_rheology = 0  
-Phase1.option_k = 3
-Phase1.option_Cp = 1
-Phase1.radio    = 0.066e-6 * flag_radio
-Phase1.eta = 1e22
-#---------------------------------------------------------------------------------------------------------
-Phase2 = Phase()
-Phase2.name = 'Oceanic_Crust'
-Phase2.rho0 = 2900.0
-Phase2.option_rho = 3
-Phase2.option_rheology = 0  
-Phase2.option_k =2
-Phase2.option_Cp = 1
-Phase2.radio    = 0.25e-6 * flag_radio
-Phase2.eta = 1e22
-#---------------------------------------------------------------------------------------------------------
-Phase3 = Phase()
-Phase3.name = 'Wedge'
-Phase3.rho0 = 3300.0
-Phase3.option_rho = 3
-Phase3.option_rheology = 2 
-Phase3.option_k = 2
-Phase3.option_Cp = 1
-Phase3.radio    = 0.066e-6 * flag_radio
 
-Phase3.name_diffusion = 'Van_Keken_diff'
-Phase3.name_dislocation = 'Van_Keken_disl'
-Phase3.eta = 1e21
-#---------------------------------------------------------------------------------------------------------
-Phase4 = Phase()
-Phase4.name = 'Continental_Mantle'
-Phase4.rho0 = 3300.0
-Phase4.option_rho = 3
-Phase4.option_rheology = 0  
-Phase4.option_k = 2
-Phase4.radio    = 0.066e-6 * flag_radio
-Phase4.option_Cp = 1
-Phase4.eta = 1e22
-#---------------------------------------------------------------------------------------------------------
-Phase5 = Phase()
-Phase5.name = 'Continental_Crust'
-Phase5.rho0 = 2700.0
-Phase5.option_rho = 3
-Phase5.option_rheology = 0  
-Phase5.option_k = 2
-Phase5.option_Cp = 1
-Phase5.eta = 1e22
-Phase5.radio    = 2.00e-6 * flag_radio
-
-#---------------------------------------------------------------------------------------------------------
-Phase6 = Phase()
-Phase6.name = 'Lower_Crust'
-Phase6.rho0 = 2900.0
-Phase6.option_rho = 2
-Phase6.option_rheology = 0
-Phase6.option_k = 2
-Phase6.option_Cp = 1
-Phase6.eta = 1e22
-Phase6.radio    = 0.17e-6 * flag_radio
-
-
-Phase7 = Phase()
-Phase7.name = 'WeakZone'
-Phase7.option_rheology = 3  
-Phase7.name_diffusion = 'Hirth_Wet_Olivine_diff'
-Phase7.name_dislocation = 'Hirth_Wet_Olivine_disl'
 #---------------------------------------------------------------------------------------------------------
 element_p = basix.ufl.element("Lagrange","triangle", 1) 
 element_PT = basix.ufl.element("Lagrange","triangle",2)
 element_V = basix.ufl.element("Lagrange","triangle",2,shape=(2,))
 #---------------------------------------------------------------------------------------------------------
-if van_keken != 0:
-    rho        = 3300.0 
-    option_k   = 2 
-    option_Cp  = 1
-    option_k   = 2
-    option_rho = 3
-    option_eta = van_keken_case
-    HR = 0.0 
+all_constant = True 
+if all_constant == False and van_keken != 0:
+    capacity_nameM = 'Bermann_Aranovich_Fo_Fa_0_1'
+    conductivity_nameM = 'Mantle'
+    density_nameM = 'PT'
+    alpha_nameM = 'Mantle'
+
+    capacity_nameC = 'Oceanic_Crust'
+    conductivity_nameC = 'Oceanic_Crust'
+    density_nameC = 'PT'
+    alpha_nameC = 'Crust'
+
+    rho0_M = 3300.0
+    rho0_C = 2900.0
+    radio_flag = 1.0
     
-    #---------------------------------------------------------------------------------------------------------
-    # Phase properties
-    # ---------------------------------------------------------------------------------------------------------
-    Phase1 = Phase()
-    Phase1.name = 'Slab_Mantle'
-    Phase1.rho0 = rho
-    Phase1.option_rho = option_rho
-    Phase1.option_rheology = 0   
-    Phase1.option_k = option_k
-    Phase1.option_Cp = option_Cp
-    Phase1.radio    = 0.066e-6 * HR
-    Phase1.eta = 1e21
-    #---------------------------------------------------------------------------------------------------------
-    Phase2 = Phase()
-    Phase2.name = 'Oceanic_Crust'
-    Phase2.rho0 = rho
-    Phase2.option_rho = option_rho
-    Phase2.option_rheology = 0
-    Phase2.option_k = option_k
-    Phase2.option_Cp = option_Cp
-    Phase2.radio    = 0.25e-6 * HR
-    Phase2.eta = 1e21
-    #---------------------------------------------------------------------------------------------------------
-    Phase3 = Phase()
-    Phase3.name = 'Wedge'
-    Phase3.rho0 = rho
-    Phase3.option_rho = option_rho
-    Phase3.option_rheology = option_eta
-    Phase3.option_k = option_k
-    Phase3.option_Cp = option_Cp
-    Phase3.radio    = 0.066e-6 * HR
+else:
+    capacity_nameM = 'Constant'
+    conductivity_nameM = 'Constant'
+    density_nameM = 'Constant'
+    alpha_nameM = 'Constant'
 
-    Phase3.name_diffusion = 'Van_Keken_diff'
-    Phase3.name_dislocation = 'Van_Keken_disl'
-    Phase3.eta = 1e21
-    #---------------------------------------------------------------------------------------------------------
-    Phase4 = Phase()
-    Phase4.name = 'Continental_Mantle'
-    Phase4.rho0 = rho
-    Phase4.option_rho = option_rho
-    Phase4.option_rheology = 0  
-    Phase4.option_k = option_k
-    Phase4.radio    = 0.066e-6 * HR
-    Phase4.option_Cp = option_Cp
-    Phase4.eta = 1e21
-    #---------------------------------------------------------------------------------------------------------
-    Phase5 = Phase()
-    Phase5.name = 'Continental_Crust'
-    Phase5.rho0 = rho
-    Phase5.option_rho = option_rho
-    Phase5.option_rheology = 0  
-    Phase5.option_k = option_k
-    Phase5.option_Cp = option_Cp
-    Phase5.eta = 1e21
-    Phase5.radio    = 2.00e-6 * HR
+    capacity_nameC = 'Constant'
+    conductivity_nameC = 'Constant'
+    density_nameC = 'Constant'
+    alpha_nameC = 'Constant'
 
-    #---------------------------------------------------------------------------------------------------------
-    Phase6 = Phase()
-    Phase6.name = 'Lower_Crust'
-    Phase6.rho0 = rho
-    Phase6.option_rho = option_rho
-    Phase6.option_rheology = 0
-    Phase6.option_k = option_k
-    Phase6.option_Cp = option_Cp
-    Phase6.eta = 1e21
-    Phase6.radio    = 0.17e-6 * HR
-    
-    Phase7 = Phase()
-    Phase7.name = 'WeakZone'
-    Phase7.option_rheology = 3  
+    rho0_M = 3300.0
+    rho0_C = 3300.0
+    radio_flag = 0.0
 
-    Phase7.name_diffusion = 'Van_Keken_diff'
-    Phase7.name_dislocation = 'Van_Keken_disl'
-    #---------------------------------------------------------------------------------------------------------
+
+Phase1 = Phase()
+Phase1.name_phase = 'Mantle_Slab'
+Phase1.rho0 = rho0_M
+Phase1.name_alpha = alpha_nameM
+Phase1.name_density = density_nameM
+Phase1.name_capacity = capacity_nameM
+Phase1.name_conductivity = conductivity_nameM
+Phase1.radio_flag = radio_flag
+
+Phase2 = Phase()
+Phase2.name_phase = 'Crust_Slab'
+Phase2.rho0 = rho0_C
+Phase2.name_alpha = alpha_nameC
+Phase2.name_density = density_nameC
+Phase2.name_conductivity = conductivity_nameC
+Phase2.name_capacity = capacity_nameM
+Phase2.radio_flag = radio_flag
+
+Phase3 = Phase()
+Phase3.name_phase = 'Mantle_WG'
+Phase3.rho0 = rho0_M
+Phase3.name_diffusion = 'Van_Keken_diff'
+Phase3.name_dislocation = 'Van_Keken_disl'
+Phase3.name_alpha = alpha_nameM
+Phase3.name_density = density_nameM
+Phase3.name_capacity = capacity_nameM
+Phase3.name_conductivity = conductivity_nameM
+Phase3.radio_flag = radio_flag
+
+Phase4 = Phase()
+Phase4.name_phase = 'Mantle_Lithosphere'
+Phase4.rho0 = rho0_M
+Phase4.name_alpha = alpha_nameM
+Phase4.name_density = density_nameM
+Phase4.name_capacity = capacity_nameM
+Phase4.name_conductivity = conductivity_nameM
+Phase4.radio_flag = radio_flag 
+
+Phase5 = Phase()
+Phase5.name_phase = 'Crust_Lithosphere'
+Phase5.rho0 = rho0_C
+Phase5.name_alpha = alpha_nameC
+Phase5.name_density = density_nameC
+Phase5.name_capacity = capacity_nameC
+Phase5.name_conductivity = conductivity_nameC
+Phase5.radio_flag = radio_flag
+
+Phase6 = Phase()
+Phase6.name_phase = 'Lower_Crust_Lithosphere'
+Phase6.rho0 = rho0_C
+Phase6.name_alpha = alpha_nameC
+Phase6.name_density = density_nameC
+Phase6.name_capacity = capacity_nameC
+Phase6.name_conductivity = conductivity_nameC
+Phase6.radio_flag = radio_flag
+
+Phase7 = Phase()
+Phase7.name_phase = 'Weak_Zone'
+Phase7.name_diffusion = 'Hirth_Wet_Olivine_diff'
+Phase7.name_dislocation = 'Hirth_Wet_Olivine_disl'
+
+Ph_input = Ph_input()
+Ph_input.Phase1 = Phase1
+Ph_input.Phase2 = Phase2
+Ph_input.Phase3 = Phase3
+Ph_input.Phase4 = Phase4
+Ph_input.Phase5 = Phase5
+Ph_input.Phase6 = Phase6
+Ph_input.Phase7 = Phase7
+
+
+#---------------------------------------------------------------------------------------------------------
+# Geometric input parameters: 
+#---------------------------------------------------------------------------------------------------------
+x                 = [0, 660e3]               # main grid coordinate max X is changed accordingly to the slab geometry
+y                 = [-600e3,0.0]             # Initial input
+slab_tk           = 130e3                   # slab thickness
+cr                = 30e3              # crust 
+ocr               = 7e3             # oceanic crust
+lit_mt            = 20e3          # lithosperic mantle  
+lc                = 0.3              # lower crust ratio 
+wc                = 2.0e3          # width of the weak zone
+lt_d              = (cr+lit_mt)     # total lithosphere thicknes [and depth of the no slip boundary conditiopn]
+lab_d             = 100e3   # lithosphere-asthenosphere boundary depth -> useful for tuning the initial temperature profile
+decoupling        = 80e3      # decoupling depth -> i.e. where the weak zone is prolonged 
+resolution_normal = 2.0e3  # Normal resolution
+transition        = 10e3    # Parameter that controls the transition depth of velocity in the decoupling zone
+
+if van_keken == 1: 
+    cr          = 0.0 
+    lc          = 0.0 
+    ocr         = 0.0
+    lt_d        = 50e3 
+    lit_mt      = 50e3 
+    lab_d       = lit_mt
+    decoupling  = 50e3 
+    Tmax        = 1300.0
+    if case_vk == 0: 
+        Ph_input.Phase3.name_diffusion   = 'Constant'
+        Ph_input.Phase3.name_dislocation = 'Constant'
+    elif case_vk ==1: 
+        Ph_input.Phase3.name_diffusion   = 'Van_Keken_diff'
+        Ph_input.Phase3.name_dislocation = 'Constant'  
+    else:      
+        Ph_input.Phase3.name_diffusion   = 'Van_Keken_diff'
+        Ph_input.Phase3.name_dislocation = 'Van_Keken_disl'  

@@ -147,6 +147,9 @@ def _scale_parameters(lhs,scal):
     lhs.c_age_var    = lhs.c_age_var   * scal_factor  
     lhs.dz           = lhs.dz / scal.L 
     lhs.alpha_g      = lhs.alpha_g / (1 / scal.Temp)
+    lhs.k            = lhs.k/scal.k
+    lhs.Cp           = lhs.Cp/scal.Cp
+    lhs.rho          = lhs.rho/scal.rho
     
     
     return lhs 
