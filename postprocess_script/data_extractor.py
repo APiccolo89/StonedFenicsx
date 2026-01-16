@@ -80,6 +80,12 @@ class Data_experiment():
         self.vy        = None
         self.qx        = None
         self.qy        = None  
+        self.kappa     = None 
+        self.alpha     = None 
+        self.eta       = None 
+        self.rho       = None 
+        self.k         = None 
+        self.Cp        = None
         self.NoTD      = False
         
         if ts == True: 
@@ -112,7 +118,13 @@ class Data_experiment():
         self.vx      = np.zeros([num,TS],dtype=float)
         self.vy      = np.zeros([num,TS],dtype=float)
         self.qx      = np.zeros([num,TS],dtype=float)
-        self.qy      = np.zeros([num,TS],dtype=float)    
+        self.qy      = np.zeros([num,TS],dtype=float) 
+        self.kappa   = np.zeros([num,TS],dtype=float) 
+        self.alpha   = np.zeros([num,TS],dtype=float) 
+        self.eta     = np.zeros([num,TS],dtype=float) 
+        self.rho     = np.zeros([num,TS],dtype=float) 
+        self.k       = np.zeros([num,TS],dtype=float) 
+        self.Cp      = np.zeros([num,TS],dtype=float) 
             
         
         self.extract_data(f,ts)
@@ -180,6 +192,8 @@ class Data_experiment():
             self.eta = np.array(fl['/Function/eta  [Pa s]/0']).flatten()
             
             self.alpha = np.array(fl['/Function/alpha  [1/K]/0']).flatten()
+            
+            self.kappa = np.array(fl['/Function/kappa  [m2/s]/0']).flatten()
 
             fl.close()
         

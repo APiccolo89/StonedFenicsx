@@ -10,8 +10,19 @@ option_van_keken = [0,1,2]
 
 inp.path_test = '../Results/Tests_Van_keken'
 
+inp.alpha_nameC = 'Crust'
+inp.alpha_nameM = 'Mantle'
+inp.density_nameM = 'PT'
+inp.density_nameC = 'PT'
+inp.capacity_nameM = 'Bermann_Aranovich_Fo_Fa_0_1'
+inp.capacity_nameC = 'Oceanic_Crust'
+inp.conductivity_nameC = 'Oceanic_Crust'
+inp.conductivity_nameM = 'Mantle'
+
+inp.adiabatic_heating = 1 
+
 for i in range(len(option_van_keken)):
-    inp.sname = 'Test_VK_option_%d'%option_van_keken[i]
+    inp.sname = 'Test_VK_option_AD_SC_%d'%option_van_keken[i]
     # Initialise the input
     inp.van_keken      = van_keken
     inp.van_keken_case = option_van_keken[i]
@@ -19,7 +30,7 @@ for i in range(len(option_van_keken)):
     rho0_M  = inp.rho0_M
     rho0_C  = inp.rho0_C 
     
-    alpha_M = inp.alpha_nameM
+    alpha_M =  inp.alpha_nameM
     alpha_C = inp.alpha_nameC
     
     density_nameM = inp.density_nameM

@@ -160,7 +160,7 @@ def StonedFenicsx(IP,Ph_input):
                     end_time = IP.end_time,
                     dt = IP.dt,
                     recalculate = IP.recalculate,
-                    van_keken = IP.van_keken,
+                    van_keken = 0,#IP.van_keken,
                     non_linearities=0,
                     c_age_plate = IP.c_age_plate)
     
