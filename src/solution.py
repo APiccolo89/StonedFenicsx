@@ -1569,17 +1569,6 @@ class Wedge(Stokes_Problem):
             "ksp_rtol": 1e-20,
             }
         ).solve()
-        
-
-
-            
-        
-        
-            # ut_h \in V
-            # Introducing the coupling depth velocity increasing
-            
-            #alpha_decoupling = 1/(1+np.exp(0.1*(z-lit)))
-            
             
         self.moving_wall_wedge = moving_wall_wedge.copy()
         self.moving_wall_wedge.x.array[:] = moving_wall_wedge.x.array[:]*ctrl.v_s[0] 

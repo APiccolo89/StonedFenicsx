@@ -172,8 +172,7 @@ for i in range(len(option_thermal)):
             StonedFenicsx(inp,Ph_inp)
             
             time_B = timethis.time()
-            print_ph(f'Finished test T_{option_viscous[i]}_{option_thermal[j]}_{option_adiabatic[k]} in {time_B-time_A:.2f} sec')        
-            print('Finished the first test============================================================')
+            print(' T_%d_%d_%d'%(option_viscous[k],option_thermal[i],option_adiabatic[j]))
 
 time_fin = timethis.time()
 

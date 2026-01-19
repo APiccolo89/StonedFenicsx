@@ -189,17 +189,36 @@ class OUTPUT():
         flux = evaluate_material_property(q_expr,self.vel_V)
         flux.name = 'Heat flux [W/m2]'
         flux.x.array[:] *= sc.Watt/sc.L**2
+        # adiabatic heating 
+        if ctrl.adiabatic_heating >0:
+            adiabatic_expr = alpha * ufl.inner(S.u_wedge, ufl.grad(S.p_lwedge)) * S.t_owedge
+            adiabatic_H = evaluate_material_property(adiabatic_expr,self.temp_V)
+            adiabaticH = fem.Function(self.temp_V)
+            adiabaticH.name = 'Ha [W/m3]'
+            adiabaticH.x.array[:] = adiabatic_H.x.array[:]*sc.Watt/sc.L**3
         
-        adiabatic_expr = alpha * ufl.inner(S.u_global, ufl.grad(S.PL)) * S.T_O
-        adiabatic_H = evaluate_material_property(adiabatic_expr,self.temp_V)
-        adiabaticH = fem.Function(self.temp_V)
-        adiabaticH.name = 'Ha [W/m3]'
-        adiabaticH.x.array[:] = adiabatic_H.x.array[:]*sc.Watt/sc.L**3
-        
-        shear_heating =  2.0 * eta * ufl.inner(e,e)
-        shear_heatibnF = evaluate_material_property(shear_heating,self.temp_V)
-        shear_heatibnF.name = 'Hs [W/m3]'
-        shear_heatibnF.x.array[:]*=sc.Watt/sc.L**3
+            shear_heatingF =  fem.Function(self.temp_V)
+            shear_heatingF.interpolate(S.Hs_global)
+            shear_heatingF.name = 'Hs [W/m3]'
+            shear_heatingF.x.array[:]*=sc.Watt/sc.L**3
+
+            adiabatic_comp    = fem.Function(self.temp_V)
+            adiabatic_comp.name = " Ha+Hs [W/m3]"
+            adiabatic_comp.x.array[:] = adiabaticH.x.array[:] + shear_heatingF.x.array[:]
+            adiabatic_comp.x.scatter_forward()
+        else: 
+            adiabaticH = fem.Function(self.temp_V)
+            adiabaticH.name = 'Ha [W/m3]'
+            adiabaticH.x.array[:] = 0.0 
+            
+            shear_heatingF =  fem.Function(self.temp_V)
+            shear_heatingF.name = 'Hs [W/m3]'
+            shear_heatingF.x.array[:] = 0.0 
+
+            adiabatic_comp    = fem.Function(self.temp_V)
+            adiabatic_comp.name = "Ha+Hs [W/m3]"
+            adiabatic_comp.x.array[:] = 0.0 
+            adiabatic_comp.x.scatter_forward()    
 
         
         # Line Tag for the mesh and post_processing 
@@ -239,6 +258,7 @@ class OUTPUT():
             self.xdmf_main.write_function(eta2,         time)
             self.xdmf_main.write_function(flux,         time)
             self.xdmf_main.write_function(adiabaticH,   time)
+            self.xdmf_main.write_function(shear_heatingF,   time)
             self.xdmf_main.write_function(tag,          time)
         else:
             with XDMFFile(MPI.COMM_WORLD, "%s.xdmf"%file_name, "w") as ufile_xdmf:
@@ -260,7 +280,7 @@ class OUTPUT():
                 ufile_xdmf.write_function(eta2 )
                 ufile_xdmf.write_function(flux )
                 ufile_xdmf.write_function(adiabaticH )
-                ufile_xdmf.write_function(shear_heatibnF)
+                ufile_xdmf.write_function(shear_heatingF)
                 ufile_xdmf.write_function(tag )
                 D.mesh.geometry.x[:] = coord
 
@@ -437,23 +457,35 @@ class OUTPUT_WEDGE():
         eta2.x.scatter_forward()
 
         # adiabatic heating 
+        if ctrl.adiabatic_heating >0:
+            adiabatic_expr = alpha * ufl.inner(S.u_wedge, ufl.grad(S.p_lwedge)) * S.t_owedge
+            adiabatic_H = evaluate_material_property(adiabatic_expr,self.temp_V)
+            adiabaticH = fem.Function(self.temp_V)
+            adiabaticH.name = 'Ha [W/m3]'
+            adiabaticH.x.array[:] = adiabatic_H.x.array[:]*sc.Watt/sc.L**3
         
-        adiabatic_expr = alpha * ufl.inner(S.u_wedge, ufl.grad(S.p_lwedge)) * S.t_owedge
-        adiabatic_H = evaluate_material_property(adiabatic_expr,self.temp_V)
-        adiabaticH = fem.Function(self.temp_V)
-        adiabaticH.name = 'Ha [W/m3]'
-        adiabaticH.x.array[:] = adiabatic_H.x.array[:]*sc.Watt/sc.L**3
-        
-        shear_heatingF =  fem.Function(self.temp_V)
-        shear_heatingF.interpolate(S.Hs_global)
-        shear_heatingF.name = 'Hs [W/m3]'
-        shear_heatingF.x.array[:]*=sc.Watt/sc.L**3
+            shear_heatingF =  fem.Function(self.temp_V)
+            shear_heatingF.interpolate(S.Hs_global)
+            shear_heatingF.name = 'Hs [W/m3]'
+            shear_heatingF.x.array[:]*=sc.Watt/sc.L**3
 
-        adiabatic_comp    = fem.Function(self.temp_V)
-        adiabatic_comp.name = " Ha+Hs [W/m3]"
-        adiabatic_comp.x.array[:] = adiabaticH.x.array[:] + shear_heatingF.x.array[:]
-        adiabatic_comp.x.scatter_forward()
-                
+            adiabatic_comp    = fem.Function(self.temp_V)
+            adiabatic_comp.name = " Ha+Hs [W/m3]"
+            adiabatic_comp.x.array[:] = adiabaticH.x.array[:] + shear_heatingF.x.array[:]
+            adiabatic_comp.x.scatter_forward()
+        else: 
+            adiabaticH = fem.Function(self.temp_V)
+            adiabaticH.name = 'Ha [W/m3]'
+            adiabaticH.x.array[:] = 0.0 
+            
+            shear_heatingF =  fem.Function(self.temp_V)
+            shear_heatingF.name = 'Hs [W/m3]'
+            shear_heatingF.x.array[:] = 0.0 
+
+            adiabatic_comp    = fem.Function(self.temp_V)
+            adiabatic_comp.name = "Ha+Hs [W/m3]"
+            adiabatic_comp.x.array[:] = 0.0 
+            adiabatic_comp.x.scatter_forward()    
         
         # Line Tag for the mesh and post_processing 
         tag = fem.Function(self.temp_V)
