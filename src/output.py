@@ -444,14 +444,14 @@ class OUTPUT_WEDGE():
         adiabaticH.name = 'Ha [W/m3]'
         adiabaticH.x.array[:] = adiabatic_H.x.array[:]*sc.Watt/sc.L**3
         
-        shear_heating =  2.0 * eta * ufl.inner(e,e)
-        shear_heatibnF = evaluate_material_property(shear_heating,self.temp_V)
-        shear_heatibnF.name = 'Hs [W/m3]'
-        shear_heatibnF.x.array[:]*=sc.Watt/sc.L**3
+        shear_heatingF =  fem.Function(self.temp_V)
+        shear_heatingF.interpolate(S.Hs_global)
+        shear_heatingF.name = 'Hs [W/m3]'
+        shear_heatingF.x.array[:]*=sc.Watt/sc.L**3
 
         adiabatic_comp    = fem.Function(self.temp_V)
         adiabatic_comp.name = " Ha+Hs [W/m3]"
-        adiabatic_comp.x.array[:] = adiabaticH.x.array[:] + shear_heatibnF.x.array[:]
+        adiabatic_comp.x.array[:] = adiabaticH.x.array[:] + shear_heatingF.x.array[:]
         adiabatic_comp.x.scatter_forward()
                 
         
@@ -491,7 +491,7 @@ class OUTPUT_WEDGE():
             self.xdmf_main.write_function(e_T,          time)
             self.xdmf_main.write_function(eta2,         time)
             self.xdmf_main.write_function(eta2,         time)
-            self.xdmf_main.write_function(shear_heatibnF,   time)
+            self.xdmf_main.write_function(shear_heatingF,   time)
             self.xdmf_main.write_function(tag,          time)
         else:
             with XDMFFile(MPI.COMM_WORLD, "%s.xdmf"%file_name, "w") as ufile_xdmf:
@@ -511,7 +511,7 @@ class OUTPUT_WEDGE():
                 ufile_xdmf.write_function(e_T  )
                 ufile_xdmf.write_function(eta2 )
                 ufile_xdmf.write_function(adiabaticH )
-                ufile_xdmf.write_function(shear_heatibnF)
+                ufile_xdmf.write_function(shear_heatingF)
                 ufile_xdmf.write_function(adiabatic_comp)
 
                 ufile_xdmf.write_function(tag )
@@ -530,7 +530,8 @@ class OUTPUT_WEDGE():
 #-----------------------------------------------------------------------------------------
 # Benchmarking functions    
 #-----------------------------------------------------------------------------------------
-def _benchmark_van_keken(S,b_vk,case,ctrl_io,sc):
+def _benchmark_van_keken(S,ctrl_io,sc):
+    import h5py 
     from scipy.interpolate import griddata
     from utils import gather_vector,gather_coordinates
     
@@ -637,25 +638,41 @@ def _benchmark_van_keken(S,b_vk,case,ctrl_io,sc):
         [583.11, 604.96, 1000.05]
         ])
 
-        if case    == 0: 
-            data   = data_1c 
-        elif case  == 1:
-            data = data_2a
-        elif case== 2 : 
-            data = data_2b 
-        else: 
-            data = data_1c*0.
+            
 
         print( '------------------------------------------------------------------' )
-        print( ':::====> T(11,11) = %.2f [deg C], average value VanK2008 = %.2f [deg C] +/- %.2f;m/M = %.2f/%.2f [deg C]'%( T_11_11, np.mean(data[:,0]), np.std(data[:,0]),np.min(data[:,0]),np.max(data[:,0]) ) )
-        print( ':::====> L2_A     = %.2f [deg C], average value VanK2008 = %.2f [deg C] +/- %.2f;m/M = %.2f/%.2f [deg C]'%( T_ln, np.mean(data[:,1]), np.std(data[:,1]) ,np.min(data[:,1]),np.max(data[:,1]) ) )
-        print( ':::====> L2_B     = %.2f [deg C], average value VanK2008 = %.2f [deg C] +/- %.2f;;m/M = %.2f/%.2f[deg C]'%( T_ln2, np.mean(data[:,2]), np.std(data[:,2]),np.min(data[:,2]),np.max(data[:,2]) ) )
+        print( ':::====> T(11,11) = %.2f [deg C]'%( T_11_11, ) )
+        print( ':::====> L2_A     = %.2f [deg C]'%( T_ln,     ) )
+        print( ':::====> L2_B     = %.2f [deg C]'%( T_ln2,   ) )
         print( ':::L2_A = T along the slab surface from 0 to -210 km' )
         print( ':::L2_B = T wedge norm from -54 to -110 km ' )
         print( ':::=> From grid to downsampled grid -> nearest interpolation' )
         print( '------------------------------------------------------------------' )
         # place holder for the save database 
         
+    if comm.rank ==0:
+        if os.path.join(ctrl_io.path_save,'benchmark_van_keken.h5') :
+            van_keken_db = h5py.File(os.path.join(ctrl_io.path_save,'benchmark_van_keken.h5'),'a')
+        else: 
+            van_keken_db = h5py.File(os.path.join(ctrl_io.path_save,'benchmark_van_keken.h5'),'w')
+        
+        group_name = ctrl_io.sname
+        name       = '%s/T_11_11'%group_name
+        if name in van_keken_db.keys():
+            del van_keken_db[name]
+        
+        van_keken_db.create_dataset(name,data=T_11_11)
+        name       = '%s/L2_A'%group_name
+        
+        if name in van_keken_db.keys():
+            del van_keken_db[name]
+        van_keken_db.create_dataset(name,data=T_ln)
+        
+        name       = '%s/L2_B'%group_name
+        
+        if name in van_keken_db.keys():
+            del van_keken_db[name]
+        van_keken_db.create_dataset(name,data=T_ln2)
+        van_keken_db.close()
 
-
-    return 0
+    return 0 
