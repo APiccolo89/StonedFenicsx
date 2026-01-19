@@ -595,7 +595,7 @@ class Global_thermal(Problem):
     def compute_adiabatic_heating(self,D,pdb,u,T,p,ctrl):
         from .compute_material_property import alpha_FX
         
-        if ctrl.adiabatic_heating == 1: 
+        if ctrl.adiabatic_heating != 0: 
             
         
             alpha = alpha_FX(pdb,T,p,D.phase,D)
@@ -645,7 +645,7 @@ class Global_thermal(Problem):
 
         k_k = heat_conductivity_FX(pdb, T, p_k, D.phase, D.mesh, Cp_k, rho_k)  # frozen
 
-        if ctrl.adiabatic_heating == 1:
+        if ctrl.adiabatic_heating != 0:
             self.compute_adiabatic_heating(D,pdb,u_global,T,p_k,ctrl)
         else:
             self.adiabatic_heating = 0.0
@@ -745,7 +745,7 @@ class Global_thermal(Problem):
         nl = 0 
         p_k = S.PL.copy()  # Previous lithostatic pressure 
         T   = S.T_O # -> will not eventually update 
-        if ctrl.adiabatic_heating ==1:
+        if ctrl.adiabatic_heating ==2:
             Hs = S.Hs_global # Shear heating
         else:
             Hs = 0.0
@@ -1471,7 +1471,8 @@ class Slab(Stokes_Problem):
         time_B = timing.time()
         print_ph(f'              // -- // --- Solution of Stokes problem in {time_B-time_A:.2f} sec // -- // --->')
         print_ph(f'')
-        S = self.compute_shear_heating(ctrl,pdb,S,M,sc,wedge=0)
+        if ctrl.adiabatic_heating==2:
+            S = self.compute_shear_heating(ctrl,pdb,S,M,sc,wedge=0)
         return S 
     
 #---------------------------------------------------------------------------------------------------       
@@ -1719,8 +1720,8 @@ class Wedge(Stokes_Problem):
 
 
 
-        
-        S = self.compute_shear_heating(ctrl,pdb,S,M,sc,wedge=1)
+        if ctrl.adiabatic_heating==2:
+            S = self.compute_shear_heating(ctrl,pdb,S,M,sc,wedge=1)
         
 
 
@@ -1879,9 +1880,10 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
 
     res = 1.0
     
-    output = OUTPUT(M.domainG.mesh, ioctrl, ctrl, sc)
-    output_W = OUTPUT_WEDGE(M.domainB.mesh,ioctrl,ctrl,sc)
-
+    output = OUTPUT(M.domainG.mesh, ioctrl, ctrl, sc,0)
+    
+    output_W = OUTPUT_WEDGE(M.domainB.mesh,ioctrl,ctrl,sc,0)
+         
 
     while it_outer < ctrl.it_max and res > ctrl.tol: 
         
@@ -1895,7 +1897,7 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
         u_globalold = sol.u_global.copy()
         p_globalold = sol.p_global.copy()
         
-        if (ctrl.adiabatic_heating == 1) and (it_outer==0) :
+        if (ctrl.adiabatic_heating != 0) and (it_outer==0) :
             sol = initial_adiabatic_lithostatic_thermal_gradient(sol,lithostatic_pressure_global,pdb,M,g,it_outer,ctrl)
         else: 
             sol.T_i = sol.T_O
@@ -1941,7 +1943,10 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
     
     output.print_output(sol,M.domainG,pdb,ioctrl,sc,ctrl,ts=it_outer)
     output_W.print_output(sol,M.domainB,pdb,ioctrl,sc,ctrl,ts=it_outer)
-
+    if ctrl.van_keken == 1:
+        from .output import _benchmark_van_keken
+        _benchmark_van_keken(sol,ioctrl,sc)
+    
     # Destroy KSP
     energy_global.solv.ksp.destroy()
     lithostatic_pressure_global.solv.ksp.destroy()
@@ -2005,7 +2010,7 @@ def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, p
     save = 0 
     dt_save = 0.5*sc.scale_Myr2sec/sc.T  # Save every 0.5 Myr
     
-    if (ctrl.adiabatic_heating == 1) & (it_outer==0) :
+    if (ctrl.adiabatic_heating != 0) & (it_outer==0) :
         sol = initial_adiabatic_lithostatic_thermal_gradient(sol,lithostatic_pressure_global,pdb,M,g,0,ctrl)
     
     while time<ctrl.time_max:
