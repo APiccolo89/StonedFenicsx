@@ -89,9 +89,7 @@ for i in range(len(option_thermal)):
                 name_diffusion   = 'Van_Keken_diff'
                 name_dislocation = 'Van_Keken_disl'              
             
-            inp.sname = 'T_%d_%d_%d'%(option_viscous[i],option_thermal[j],option_adiabatic[k])
-            
-            
+            inp.sname = ' T_%d_%d_%d'%(option_viscous[k],option_thermal[i],option_adiabatic[j])
             
             print(' T_%d_%d_%d'%(option_viscous[k],option_thermal[i],option_adiabatic[j]))
             # Initialise the input
