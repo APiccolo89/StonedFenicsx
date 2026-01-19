@@ -125,6 +125,9 @@ class Solution():
         self.p_global : dolfinx.fem.function.Function 
         self.p_wedge  : dolfinx.fem.function.Function 
         self.p_slab   : dolfinx.fem.function.Function
+        self.Hs_wedge : dolfinx.fem.function.Function
+        self.Hs_slab  : dolfinx.fem.function.Function
+        self.Hs_global : dolfinx.fem.function.Function
         
         
     def create_function(self,PG,PS,PW,elements): 
@@ -160,6 +163,10 @@ class Solution():
         self.PL       = fem.Function(PG.FS) # Thermal and Pressure problems share the same functional space -> Need to enforce this bullshit 
         self.T_O      = fem.Function(PG.FS) 
         self.T_N      = fem.Function(PG.FS)
+        self.Hs_global = fem.Function(PG.FS)
+        self.Hs_slab  = fem.Function(PS.FSPT)
+        self.Hs_wedge = fem.Function(PW.FSPT)
+        self.T_i      = fem.Function(PG.FS)
         self.p_lwedge = fem.Function(PW.FSPT) # PW.SolPT -> It is the only part of this lovercraftian nightmare that needs to have temperature and pressure -> Viscosity depends pressure and temperature potentially
         self.t_owedge = fem.Function(PW.FSPT) # same stuff as before, again, this is a nightmare: why the fuck. 
         self.p_lslab = fem.Function(PS.FSPT) # PW.SolPT -> It is the only part of this lovercraftian nightmare that needs to have temperature and pressure -> Viscosity depends pressure and temperature potentially
@@ -208,6 +215,7 @@ class SolverStokes():
             self.set_iterative_solver(a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0)    
     
     
+
     def set_direct_solver(self,
                           a,
                           a_p,
@@ -628,7 +636,7 @@ class Global_thermal(Problem):
         return R
     
     
-    def set_linear_picard_SS(self,p_k,T,u_global,D,pdb, ctrl, it=0):
+    def set_linear_picard_SS(self,p_k,T,u_global,Hs,D,pdb, ctrl, it=0):
         # Function that set linear form and linear picard for picard iteration
         
         rho_k = density_FX(pdb, T, p_k, D.phase, D.mesh)  # frozen
@@ -637,7 +645,10 @@ class Global_thermal(Problem):
 
         k_k = heat_conductivity_FX(pdb, T, p_k, D.phase, D.mesh, Cp_k, rho_k)  # frozen
 
-        self.compute_adiabatic_heating(D,pdb,u_global,T,p_k,ctrl)
+        if ctrl.adiabatic_heating == 1:
+            self.compute_adiabatic_heating(D,pdb,u_global,T,p_k,ctrl)
+        else:
+            self.adiabatic_heating = 0.0
 
         f    = self.energy_source# source term
         
@@ -651,7 +662,7 @@ class Global_thermal(Problem):
             
             a = fem.form(diff + adv)
             
-            L = fem.form((f + self.adiabatic_heating) * self.test0 * dx + self.shear_heating )      
+            L = fem.form((f + Hs + self.adiabatic_heating) * self.test0 * dx + self.shear_heating )      
         
         else: 
         
@@ -734,13 +745,16 @@ class Global_thermal(Problem):
         nl = 0 
         p_k = S.PL.copy()  # Previous lithostatic pressure 
         T   = S.T_O # -> will not eventually update 
-
+        if ctrl.adiabatic_heating ==1:
+            Hs = S.Hs_global # Shear heating
+        else:
+            Hs = 0.0
+            
         if it == 0:         
             self.shear_heating = self.compute_shear_heating(ctrl,pdb, S,getattr(M,'domainG'),geom,sc)
             self.compute_energy_source(getattr(M,'domainG'),pdb)
-            #self.compute_adiabatic_heating(getattr(M,'domainG'),pdb,S.u_global,T,p_k,ctrl)
         
-        a,L = self.set_linear_picard_SS(p_k,T,S.u_global,getattr(M,'domainG'),pdb,ctrl)
+        a,L = self.set_linear_picard_SS(p_k,T,S.u_global,Hs,getattr(M,'domainG'),pdb,ctrl)
         
         self.bc = self.create_bc_temp(getattr(M,'domainG'),ctrl,geom,lhs,S.u_global,S.T_i,it)
         if self.typology == 'NonlinearProblem':
@@ -759,7 +773,7 @@ class Global_thermal(Problem):
         if nl == 0: 
             S = self.solve_the_linear(S,a,L,S.T_O) 
         else: 
-            S = self.solve_the_non_linear_SS(M,S,ctrl,pdb)
+            S = self.solve_the_non_linear_SS(M,S,Hs,ctrl,pdb)
         
         time_B = timing.time()
         
@@ -833,7 +847,7 @@ class Global_thermal(Problem):
         else:
             return fen_function
 
-    def solve_the_non_linear_SS(self,M,S,ctrl,pdb,it=0):  
+    def solve_the_non_linear_SS(self,M,S,Hs,ctrl,pdb,it=0):  
         
         tol = 1e-3  # Tolerance Picard  
         max_it = 20  # Max iteration before Newton
@@ -850,7 +864,7 @@ class Global_thermal(Problem):
         while it_inner < max_it and tol > 1e-5:
             time_ita = timing.time()
             
-            A,L = self.set_linear_picard_SS(S.PL,T_k,S.u_global,getattr(M,'domainG'),pdb,ctrl)
+            A,L = self.set_linear_picard_SS(S.PL,T_k,S.u_global,Hs,getattr(M,'domainG'),pdb,ctrl)
             
             T_k1 = self.solve_the_linear(S,A,L,T_k1,1,it,1)
             T_k1.x.scatter_forward()
@@ -1185,6 +1199,32 @@ class Stokes_Problem(Problem):
      
         pass
     
+    def compute_shear_heating(self,ctrl,pdb,S,D,sc,wedge=1):
+        from .compute_material_property import compute_viscosity_FX
+        from .utils import evaluate_material_property
+        if wedge ==1: 
+            V = S.u_wedge.function_space
+            PT = self.FSPT
+            v = ufl.TestFunction(V)
+            e = compute_strain_rate(S.u_wedge)
+            vel_e = ufl.sym(ufl.grad(S.u_wedge))
+            eta_new = compute_viscosity_FX(e, S.t_owedge, S.p_lwedge, pdb, D.phase, D, sc)
+        else: 
+            V = S.u_slab.function_space
+            PT = self.FSPT
+            e = compute_strain_rate(S.u_slab)
+            vel_e = ufl.sym(ufl.grad(S.u_slab))
+            eta_new = compute_viscosity_FX(e, S.t_oslab, S.p_lslab, pdb, D.phase, D, sc)
+
+        shear_heating = ufl.inner(2*eta_new*vel_e, vel_e)
+
+        if wedge ==1: 
+            S.Hs_wedge = evaluate_material_property(shear_heating,PT)
+        else: 
+            S.Hs_slab = evaluate_material_property(shear_heating,PT)
+
+        return S
+    
     def compute_residuum_stokes(self, u_new, p_new, D, T, PL, pdb, sc):
         V = u_new.function_space
         Q = p_new.function_space
@@ -1431,7 +1471,7 @@ class Slab(Stokes_Problem):
         time_B = timing.time()
         print_ph(f'              // -- // --- Solution of Stokes problem in {time_B-time_A:.2f} sec // -- // --->')
         print_ph(f'')
-
+        S = self.compute_shear_heating(ctrl,pdb,S,M,sc,wedge=0)
         return S 
     
 #---------------------------------------------------------------------------------------------------       
@@ -1679,9 +1719,8 @@ class Wedge(Stokes_Problem):
 
 
 
- 
         
-
+        S = self.compute_shear_heating(ctrl,pdb,S,M,sc,wedge=1)
         
 
 
@@ -1880,6 +1919,9 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
         sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_wedge, M.domainB.cell_par)
         sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_slab, M.domainA.cell_par)
         
+        sol.Hs_global = interpolate_from_sub_to_main(sol.Hs_global,sol.Hs_wedge, M.domainB.cell_par)
+        sol.Hs_global = interpolate_from_sub_to_main(sol.Hs_global,sol.Hs_slab, M.domainA.cell_par)
+        
         sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_wedge, M.domainB.cell_par)
         sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_slab, M.domainA.cell_par)
         
@@ -2005,6 +2047,9 @@ def time_dependent_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, p
             # Interpolate from wedge/slab to global
             sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_wedge, M.domainB.cell_par)
             sol.u_global = interpolate_from_sub_to_main(sol.u_global,sol.u_slab, M.domainA.cell_par)
+
+            sol.Hs_global = interpolate_from_sub_to_main(sol.Hs_global,sol.Hs_wedge, M.domainB.cell_par)
+            sol.Hs_global = interpolate_from_sub_to_main(sol.Hs_global,sol.Hs_slab, M.domainA.cell_par)
 
             sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_wedge, M.domainB.cell_par)
             sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_slab, M.domainA.cell_par)
