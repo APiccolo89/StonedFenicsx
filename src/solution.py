@@ -1871,7 +1871,7 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
     
     output = OUTPUT(M.domainG.mesh, ioctrl, ctrl, sc,0)
     
-    output_W = OUTPUT_WEDGE(M.domainB.mesh,ioctrl,ctrl,sc,0)
+    #output_W = OUTPUT_WEDGE(M.domainB.mesh,ioctrl,ctrl,sc,0)
          
 
     while it_outer < ctrl.it_max and res > ctrl.tol: 
@@ -1931,7 +1931,7 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
     
     
     output.print_output(sol,M.domainG,pdb,ioctrl,sc,ctrl,ts=it_outer)
-    output_W.print_output(sol,M.domainB,pdb,ioctrl,sc,ctrl,ts=it_outer)
+    #output_W.print_output(sol,M.domainB,pdb,ioctrl,sc,ctrl,ts=it_outer)
     if ctrl.van_keken == 1:
         from .output import _benchmark_van_keken
         _benchmark_van_keken(sol,ioctrl,sc)
