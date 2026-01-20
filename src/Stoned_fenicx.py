@@ -1,24 +1,7 @@
 
 
 # -- Main solver script --
-from petsc4py                        import PETSc
-from mpi4py                          import MPI
-import numpy                          as np
-from scipy.interpolate                import griddata
-import ufl
-from dolfinx                          import mesh, fem, io, nls, log, plot
-from dolfinx.fem                       import (Function, FunctionSpace, dirichletbc,
-                                           locate_dofs_topological, form)
-from dolfinx.fem.petsc import (LinearProblem,
-                               NonlinearProblem)
-from dolfinx.io                        import XDMFFile
-from dolfinx.mesh                      import CellType, create_rectangle, locate_entities_boundary
-from dolfinx.cpp.mesh                  import to_type
-
-import basix
-import time                          as timing
-import sys 
-import os 
+from .package_import import *
 
 #---------------------------------------------------------------------------------------------------------
 # My modules 

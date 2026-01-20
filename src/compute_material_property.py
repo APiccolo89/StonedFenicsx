@@ -4,21 +4,129 @@
 # import all the constants and defined model setup parameters 
 
 # modules
-import numpy                         as np
-import matplotlib.pyplot             as plt
-import time                          as timing
-
-import scipy.sparse.linalg.dsolve    as linsolve
-from numba                           import njit
-from numba                           import jit, prange
-from scipy.optimize                  import bisect
-from ufl                             import exp, conditional, eq, as_ufl, Constant
-from mpi4py import MPI
-from petsc4py import PETSc
-from dolfinx import fem
-import ufl
-from ufl import *
+from .package_import import *
 from .utils import evaluate_material_property
+# ---------------------------------------------------------------------------------
+@dataclass
+class Functions_material_properties_global():
+    # Heat Conductivity properties
+    k0 : fem.Function = None 
+    fr : fem.Function = None
+    k_a: fem.Function = None
+    k_b: fem.Function = None
+    k_c: fem.Function = None
+    k_d: fem.Function = None
+    k_e: fem.Function = None
+    k_f: fem.Function = None
+    # Heat Capacity properties
+    C0 : fem.Function = None
+    C1 : fem.Function = None
+    C2 : fem.Function = None
+    C3 : fem.Function = None
+    C4 : fem.Function = None
+    C5 : fem.Function = None
+    # Density properties
+    rho0    : fem.Function = None
+    alpha0  : fem.Function = None
+    alpha1  : fem.Function = None
+    alpha2  : fem.Function = None
+    Kb      : fem.Function = None
+    option_rho : fem.Function = None
+    # Radiogenic heating properties
+    radio   : fem.Function = None
+    # Other properties
+    Tref    : float = 0.0
+    R       : float = 8.3145
+    A       : float = 0.0
+    B       : float = 0.0
+    T_A     : float = 0.0
+    x_A     : float = 0.0
+    T_B     : float = 0.0
+    x_B     : float = 0.0
+# ---------------------------------------------------------------------------------
+    def __post_init__(self,pdb,phase):
+        """
+        Initialize all material properties as FEniCS functions.
+        """
+        ph = np.int32(phase.x.array)
+        P0 = phase.function_space
+        
+        # Heat Conductivity properties
+        self.k0 = fem.Function(P0)  ; self.k0.x.array[:]    =  pdb.k0[ph]
+        self.fr = fem.Function(P0)  ; self.fr.x.array[:]     =  pdb.radio_flag[ph]
+        self.k_a= fem.Function(P0)  ; self.k_a.x.array[:]    = pdb.k_a[ph]
+        self.k_b= fem.Function(P0)  ; self.k_b.x.array[:]    = pdb.k_b[ph]
+        self.k_c= fem.Function(P0)  ; self.k_c.x.array[:]    = pdb.k_c[ph]
+        self.k_d= fem.Function(P0)  ; self.k_d.x.array[:]    = pdb.k_d[ph]
+        self.k_e= fem.Function(P0)  ; self.k_e.x.array[:]    = pdb.k_e[ph]
+        self.k_f= fem.Function(P0)  ; self.k_f.x.array[:]    = pdb.k_f[ph]
+        # Heat Capacity properties
+        self.C0 = fem.Function(P0)  ; self.C0.x.array[:]     = pdb.C0[ph]
+        self.C1 = fem.Function(P0)  ; self.C1.x.array[:]     = pdb.C1[ph]
+        self.C2 = fem.Function(P0)  ; self.C2.x.array[:]     = pdb.C2[ph]
+        self.C3 = fem.Function(P0)  ; self.C3.x.array[:]     = pdb.C3[ph]
+        self.C4 = fem.Function(P0)  ; self.C4.x.array[:]     = pdb.C4[ph]
+        self.C5 = fem.Function(P0)  ; self.C5.x.array[:]     = pdb.C5[ph]
+        # Density properties
+        self.rho0    = fem.Function(P0)  ; self.rho0.x.array[:]    = pdb.rho0[ph]
+        self.alpha0  = fem.Function(P0)  ; self.alpha0.x.array[:]  = pdb.alpha0[ph]
+        self.alpha1  = fem.Function(P0)  ; self.alpha1.x.array[:]  = pdb.alpha1[ph]
+        self.alpha2  = fem.Function(P0)  ; self.alpha2.x.array[:]  = pdb.alpha2[ph]
+        self.Kb      = fem.Function(P0)  ; self.Kb.x.array[:]      = pdb.Kb[ph]
+        self.option_rho = fem.Function(P0)  ; self.option_rho.x.array[:] = pdb.option_rho[ph]
+        
+        self.radio   = fem.Function(P0)  ; self.radio.x.array[:]     = pdb.radio[ph]
+        self.radio.x.scatter_forward()
+        self.Tref    = pdb.Tref
+        self.R       = pdb.R
+        self.A       = pdb.A
+        self.B       = pdb.B
+        self.T_A     = pdb.T_A
+        self.x_A     = pdb.x_A
+        self.T_B     = pdb.T_B
+        self.x_B     = pdb.x_B
+
+        
+        
+        
+        
+        
+@dataclass
+class Functions_material_rheology():
+    Bdif    : fem.Function = None
+    Bdis    : fem.Function = None
+    n       : fem.Function = None
+    Edif    : fem.Function = None
+    Edis    : fem.Function = None
+    Vdif    : fem.Function = None
+    Vdis    : fem.Function = None
+    eta     : fem.Function = None
+    option_eta : fem.Function = None
+    eta_max : float
+
+    def __post_init__(self,pdb,phase):
+        """
+        Initialize all rheological properties as FEniCS functions.
+        """
+        ph = np.int32(phase.x.array)
+        P0 = phase.function_space
+        
+        self.Bdif    = fem.Function(P0)  ; self.Bdif.x.array[:]     = pdb.Bdif[ph]
+        self.Bdis    = fem.Function(P0)  ; self.Bdis.x.array[:]     = pdb.Bdis[ph]
+        self.n       = fem.Function(P0)  ; self.n.x.array[:]        = pdb.n[ph]
+        self.Edif    = fem.Function(P0)  ; self.Edif.x.array[:]     = pdb.Edif[ph]
+        self.Edis    = fem.Function(P0)  ; self.Edis.x.array[:]     = pdb.Edis[ph]
+        self.Vdif    = fem.Function(P0)  ; self.Vdif.x.array[:]     = pdb.Vdif[ph]
+        self.Vdis    = fem.Function(P0)  ; self.Vdis.x.array[:]     = pdb.Vdis[ph]
+        self.eta     = fem.Function(P0)  ; self.eta.x.array[:]      = pdb.eta[ph]
+        self.option_eta = fem.Function(P0)  ; self.option_eta.x.array[:] = pdb.option_eta[ph]
+        self.eta_max = pdb.eta_max
+    
+# ---------------------------------------------------------------------------------
+
+
+
+
 #----- 
 @njit 
 def compute_thermal_properties(pdb,T,p,ph):
@@ -38,8 +146,8 @@ def heat_conductivity_FX(pdb,T,p,phase,M,Cp,rho):
     # Gather material parameters as UFL expressions via indexing
     """
     """
-    k0      = fem.Function(P0)  ; k0.x.array[:]    =  pdb.k0[ph]
-    fr      = fem.Function(P0)  ; fr.x.array[:]    = pdb.radio_flag[ph]
+    k0      = fem.Function(P0)  ; k0.x.array[:]      =  pdb.k0[ph]
+    fr      = fem.Function(P0)  ; fr.x.array[:]       = pdb.radio_flag[ph]
     
     k_a     = fem.Function(P0)  ; k_a.x.array[:]     =  pdb.k_a[ph]
     k_b     = fem.Function(P0)  ; k_b.x.array[:]     =  pdb.k_b[ph]

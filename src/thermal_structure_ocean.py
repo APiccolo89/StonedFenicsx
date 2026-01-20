@@ -33,24 +33,12 @@ Convergence criterion:
 
 """
 
-import sys,os,fnmatch
-
+from .package_import import *
 # modules
-import numpy as np
-from numpy import load
-import matplotlib.pyplot as plt
-import time as timing
-import scipy.linalg as la 
-import scipy.sparse as sps
-import scipy.sparse.linalg.dsolve as linsolve
 from .compute_material_property import heat_capacity,heat_conductivity,density
-from numba import njit
 from .phase_db import PhaseDataBase
-import matplotlib.pyplot as plt
-from matplotlib import rcParams
 from .utils import timing_function, print_ph
 from .compute_material_property import compute_thermal_properties
-from numpy.typing import NDArray
 from .scal import Scal
 from .numerical_control import NumericalControls,ctrl_LHS
 

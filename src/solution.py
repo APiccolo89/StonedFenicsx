@@ -1,31 +1,15 @@
-import numpy as np
-import gmsh 
+from .package_import import *
 
-import ufl
-import meshio
-from mpi4py import MPI
-from petsc4py import PETSc
-import dolfinx 
-from dolfinx import mesh, fem, io, nls, log
-from dolfinx.fem.petsc import NonlinearProblem
-from dolfinx.nls.petsc import NewtonSolver
-import matplotlib.pyplot as plt
-from dolfinx.io import XDMFFile, gmshio
-import gmsh 
-from ufl import exp, conditional, eq, as_ufl
-import basix.ufl
-from .utils import timing_function, print_ph,time_the_time
+from .utils                     import timing_function, print_ph,time_the_time
 from .compute_material_property import density_FX, heat_conductivity_FX, heat_capacity_FX, compute_viscosity_FX, compute_radiogenic 
-
-from .create_mesh import Mesh 
-from .phase_db import PhaseDataBase
-import time                          as timing
-from dolfinx.fem.petsc import assemble_matrix_block, assemble_vector_block
-from .numerical_control import NumericalControls, ctrl_LHS, IOControls
-from .utils import interpolate_from_sub_to_main
-from .scal import Scal
-from .output import OUTPUT,OUTPUT_WEDGE
-from .utils import compute_eII,compute_strain_rate
+from .create_mesh               import Mesh 
+from .phase_db                  import PhaseDataBase
+from dolfinx.fem.petsc          import assemble_matrix_block, assemble_vector_block
+from .numerical_control         import NumericalControls, ctrl_LHS, IOControls
+from .utils                     import interpolate_from_sub_to_main
+from .scal                      import Scal
+from .output                    import OUTPUT,OUTPUT_WEDGE
+from .utils                     import compute_eII,compute_strain_rate
 
 
 """
@@ -48,66 +32,6 @@ ta.interpolate(expr)
 
 
 """
-
-fig2 = plt.figure()
-fig1 = plt.figure()
-direct_solver = 1
-DEBUG = 1
-
-def mesh_of(obj):
-    if hasattr(obj, "function_space"):    # Function
-        return obj.function_space.mesh
-    if hasattr(obj, "mesh"):              # FunctionSpace
-        return obj.mesh
-    if hasattr(obj, "ufl_domain"):        # Constant
-        dom = obj.ufl_domain()
-        return dom.ufl_cargo() if dom else None
-    if hasattr(obj, "ufl_domains"):       # UFL expr
-        ds = obj.ufl_domains()
-        if len(ds) == 1:
-            return list(ds)[0].ufl_cargo()
-    return None
-
-def check_single_domain(expr):
-    """
-    Inspect a UFL expression or Form and report all meshes/domains used.
-    Returns True if all coefficients live on the same mesh, False otherwise.
-    """
-    from ufl.algorithms import extract_coefficients
-    # Collect domains
-    if hasattr(expr, "integrals"):      # Form
-        doms = {itg.ufl_domain() for itg in expr.integrals()}
-        kind = "Form"
-    else:                               # Expression
-        doms = set(expr.ufl_domains())
-        kind = "Expr"
-
-    print(f"[{kind}] domains referenced ({len(doms)}):")
-    for d in doms:
-        print("  -", d, "cargo:", d.ufl_cargo() if d else None)
-
-    # Collect coefficients
-    coeffs = list(extract_coefficients(expr))
-    print(f"Coefficients used ({len(coeffs)}):")
-    for c in coeffs:
-        nm = getattr(c, "name", None) or repr(c)
-        dom = getattr(c, "ufl_domain", lambda: None)()
-        print("  -", nm, "on", dom.ufl_cargo() if dom else None)
-
-    if len(doms) == 1:
-        print(" :P Expression is single-domain.")
-        return True
-    else:
-        print(" :( Expression involves multiple domains — rebuild coefficients on one mesh.")
-        return False
-
-#---------------------------------------------------------------------------
-
-    
-    
-    
-
-
 #--------------------------------------------------------------------------------------------------------------
 class Solution():
     def __init__(self):
@@ -206,12 +130,14 @@ class  ScalarSolver(Solvers):
         self.r = None 
     
 class SolverStokes(): 
+
     
     def __init__(self,a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0):
-        if direct_solver == 1: 
+        self.direct_solver = 1
+        if self.direct_solver == 1: 
             self.set_direct_solver(a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0)
             self.offset = F0.dofmap.index_map.size_local * F0.dofmap.index_map_bs
-        elif direct_solver ==0: 
+        elif self.direct_solver ==0: 
             self.set_iterative_solver(a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0)    
     
     
@@ -1443,12 +1369,12 @@ class Slab(Stokes_Problem):
         
         print_ph(f'              // -- // --- SLAB STOKES PROBLEM // -- // --->')    
         time_A = timing.time()    
-        if direct_solver==1:
+        if self.solv.direct_solver==1:
             x = self.solv.A.createVecLeft()
         else:
             x = self.solv.A.createVecRight()
         self.solv.ksp.solve(self.solv.b, x)
-        if direct_solver == 0: 
+        if self.solv.direct_solver == 0: 
             xu = x.getSubVector(self.solv.is_u)
             xp = x.getSubVector(self.solv.is_p)
             u, p = fem.Function(self.F0), fem.Function(self.F1)
@@ -1722,12 +1648,12 @@ class Wedge(Stokes_Problem):
         self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,ctrl ,J = None, r = None,it = 0, ts = 0)
         
         
-        if direct_solver==1:
+        if self.solv.direct_solver==1:
             x = self.solv.A.createVecLeft()
         else:
             x = self.solv.A.createVecRight()
         self.solv.ksp.solve(self.solv.b, x)
-        if direct_solver == 0: 
+        if self.solv.direct_solver == 0: 
             xu = x.getSubVector(self.solv.is_u)
             xp = x.getSubVector(self.solv.is_p)
     
@@ -1821,7 +1747,46 @@ def initial_adiabatic_lithostatic_thermal_gradient(sol,lps,pdb,M,g,it_outer,ctrl
     return sol 
 
     
+
+def initialise_the_simulation(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb:PhaseDataBase, ioctrl:IOControls, sc:Scal)-> int:
+    from .phase_db import PhaseDataBase
+    from .phase_db import _generate_phase
+    from .thermal_structure_ocean import compute_initial_LHS
+    from .scal import Scal 
+    from .compute_material_property import Func
+    
+    element_p           = M.element_p#basix.ufl.element("Lagrange","triangle", 1) 
+    
+    element_PT          = M.element_PT#basix.ufl.element("Lagrange","triangle",2)
+    
+    element_V           = M.element_V#basix.ufl.element("Lagrange","triangle",2,shape=(2,))
+
+    #==================== Phase Parameter ====================
+    lhs_ctrl = compute_initial_LHS(ctrl,lhs_ctrl, sc, pdb)  
+          
+    # Define Problem
+    
+    # Pressure 
+    
+    energy_global               = Global_thermal (M = M, name = ['energy','domainG']  , elements = (element_PT,                   ), pdb = pdb, ctrl = ctrl)
+    
+    lithostatic_pressure_global = Global_pressure(M = M, name = ['pressure','domainG'], elements = (element_PT,                     ), pdb = pdb                                ) 
+    
+    wedge                       = Wedge          (M = M, name = ['stokes','domainB'  ], elements = (element_V,element_p,element_PT  ), pdb = pdb                                )
+    
+    slab                        = Slab           (M = M, name = ['stokes','domainA'  ], elements = (element_V,element_p,element_PT  ), pdb = pdb                                )
+    
+    g = fem.Constant(M.domainG.mesh, PETSc.ScalarType([0.0, -ctrl.g]))    
+
+    # Define Solution 
+    sol                         = Solution()
      
+    sol.create_function(lithostatic_pressure_global,slab,wedge,[element_V,element_p])
+    
+          
+    
+    return lhs_ctrl,sol,energy_global,lithostatic_pressure_global,slab,wedge,g
+  
 
 #------------------------------------------------------------------------------------------------------------
 @timing_function
@@ -1830,6 +1795,8 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
     from .phase_db import _generate_phase
     from .thermal_structure_ocean import compute_initial_LHS
     from .scal import Scal 
+    
+    
     
     
     

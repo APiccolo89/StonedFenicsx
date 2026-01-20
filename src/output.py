@@ -3,17 +3,9 @@
     
 """
     
-from dolfinx import fem
-from mpi4py import MPI
-import ufl
-from .compute_material_property import density_FX,heat_capacity_FX,heat_conductivity_FX,alpha_FX
-from .compute_material_property import compute_viscosity_FX
-from .utils import compute_strain_rate,compute_eII
-import os
-from dolfinx.io import XDMFFile
-import numpy as np
-from petsc4py import PETSc
-from .utils import evaluate_material_property
+from .package_import import *
+from .utils import evaluate_material_property,compute_strain_rate,compute_eII,print_ph
+from .compute_material_property import compute_viscosity_FX,density_FX,heat_capacity_FX,heat_conductivity_FX,alpha_FX
 
 
 
@@ -565,7 +557,7 @@ class OUTPUT_WEDGE():
 def _benchmark_van_keken(S,ctrl_io,sc):
     import h5py 
     from scipy.interpolate import griddata
-    from utils import gather_vector,gather_coordinates
+    from .utils import gather_vector,gather_coordinates
     
     comm = MPI.COMM_WORLD
     # Suppose u is your Function
