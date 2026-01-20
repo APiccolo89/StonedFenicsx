@@ -10,6 +10,7 @@ from .utils                     import interpolate_from_sub_to_main
 from .scal                      import Scal
 from .output                    import OUTPUT,OUTPUT_WEDGE
 from .utils                     import compute_eII,compute_strain_rate
+from .compute_material_property import Functions_material_properties_global
 
 
 """
@@ -975,7 +976,7 @@ class Global_pressure(Problem):
     def set_linear_picard(self,p_k,T,D,pdb,g, it=0):
         # Function that set linear form and linear picard for picard iteration
         
-        rho_k = density_FX(pdb, T, p_k, D.phase, D.mesh)  # frozen
+        rho_k = density_FX(FGpdb, T, p_k)  # frozen
         
         # Linear operator with frozen coefficients
         if it == 0: 
@@ -1729,7 +1730,7 @@ def initial_adiabatic_lithostatic_thermal_gradient(sol,lps,pdb,M,g,it_outer,ctrl
     T_Oa = sol.T_O.copy()
     while res > 1e-3: 
         P_old = sol.PL.copy()
-        sol = lps.Solve_the_Problem(sol,ctrl,pdb,M,g,it_outer,ts=0)
+        sol = lps.Solve_the_Problem(sol,ctrl,FGpdb,M,g,it_outer,ts=0)
         T_O = compute_adiabatic_initial_adiabatic_contribution(M.domainG,T_0,T_Oa,sol.PL,pdb,ctrl.van_keken)
         resp = compute_residuum(sol.PL,P_old)
         resT = compute_residuum(T_O, T_Oa)
@@ -1753,7 +1754,7 @@ def initialise_the_simulation(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS,
     from .phase_db import _generate_phase
     from .thermal_structure_ocean import compute_initial_LHS
     from .scal import Scal 
-    from .compute_material_property import Func
+    from .compute_material_property import populate_material_properties_thermal,populate_material_properties_rheology
     
     element_p           = M.element_p#basix.ufl.element("Lagrange","triangle", 1) 
     
@@ -1783,9 +1784,16 @@ def initialise_the_simulation(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS,
      
     sol.create_function(lithostatic_pressure_global,slab,wedge,[element_V,element_p])
     
-          
+    FGpdb   = Functions_material_properties_global()      
+    FGWG_R  = Functions_material_rheology()
+    FGS_R   = Functions_material_rheology()
     
-    return lhs_ctrl,sol,energy_global,lithostatic_pressure_global,slab,wedge,g
+    FGpdb   = populate_material_properties_thermal(FGpdb,pdb,M.domainG.phase)
+    FGWG_R  = populate_material_properties_rheology(FGWG_R,pdb,M.domainB.phase)
+    FGS_R   = populate_material_properties_rheology(FGS_R,pdb,M.domainA.phase)
+    
+    
+    return lhs_ctrl,sol,energy_global,lithostatic_pressure_global,slab,wedge,g,FGpdb,FGWG_R,FGS_R
   
 
 #------------------------------------------------------------------------------------------------------------
@@ -1797,46 +1805,29 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
     from .scal import Scal 
     
     
-    
-    
+    (lhs_ctrl,
+    sol, 
+    energy_global, 
+    lithostatic_pressure_global,
+    slab,
+    wedge,
+    g,
+    FGpdb,
+    FGWG_R, 
+    FGS_R) = initialise_the_simulation(M,
+                                       ctrl,
+                                       lhs_ctrl,
+                                       pdb,
+                                       ioctrl,
+                                       sc)    
     
     print_ph(f'// -- // --- Steady State temperature // -- // --- > ')
-
-    element_p           = M.element_p#basix.ufl.element("Lagrange","triangle", 1) 
-    
-    element_PT          = M.element_PT#basix.ufl.element("Lagrange","triangle",2)
-    
-    element_V           = M.element_V#basix.ufl.element("Lagrange","triangle",2,shape=(2,))
-
-    #==================== Phase Parameter ====================
-    lhs_ctrl = compute_initial_LHS(ctrl,lhs_ctrl, sc, pdb)  
-          
-    # Define Problem
-    
-    # Pressure 
-    
-    energy_global               = Global_thermal (M = M, name = ['energy','domainG']  , elements = (element_PT,                   ), pdb = pdb, ctrl = ctrl)
-    
-    lithostatic_pressure_global = Global_pressure(M = M, name = ['pressure','domainG'], elements = (element_PT,                     ), pdb = pdb                                ) 
-    
-    wedge                       = Wedge          (M = M, name = ['stokes','domainB'  ], elements = (element_V,element_p,element_PT  ), pdb = pdb                                )
-    
-    slab                        = Slab           (M = M, name = ['stokes','domainA'  ], elements = (element_V,element_p,element_PT  ), pdb = pdb                                )
-    
-    g = fem.Constant(M.domainG.mesh, PETSc.ScalarType([0.0, -ctrl.g]))    
-
-    # Define Solution 
-    sol                         = Solution()
-     
-    sol.create_function(lithostatic_pressure_global,slab,wedge,[element_V,element_p])
-    
-    sol.T_O = energy_global.initial_temperature_field(M.domainG, ctrl, lhs_ctrl,M.g_input)
 
     it_outer = 0 
 
     res = 1.0
     
-    output = OUTPUT(M.domainG.mesh, ioctrl, ctrl, sc,0)
+    output = OUTPUT(M.domainG, ioctrl, ctrl, sc,0)
     
     #output_W = OUTPUT_WEDGE(M.domainB.mesh,ioctrl,ctrl,sc,0)
          
@@ -1854,7 +1845,7 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
         p_globalold = sol.p_global.copy()
         
         if (ctrl.adiabatic_heating != 0) and (it_outer==0) :
-            sol = initial_adiabatic_lithostatic_thermal_gradient(sol,lithostatic_pressure_global,pdb,M,g,it_outer,ctrl)
+            sol = initial_adiabatic_lithostatic_thermal_gradient(sol,lithostatic_pressure_global,FGpdb,M,g,it_outer,ctrl)
         else: 
             sol.T_i = sol.T_O
         

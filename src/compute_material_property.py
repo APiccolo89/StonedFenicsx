@@ -44,47 +44,49 @@ class Functions_material_properties_global():
     T_B     : float = 0.0
     x_B     : float = 0.0
 # ---------------------------------------------------------------------------------
-    def __post_init__(self,pdb,phase):
-        """
-        Initialize all material properties as FEniCS functions.
-        """
-        ph = np.int32(phase.x.array)
-        P0 = phase.function_space
-        
-        # Heat Conductivity properties
-        self.k0 = fem.Function(P0)  ; self.k0.x.array[:]    =  pdb.k0[ph]
-        self.fr = fem.Function(P0)  ; self.fr.x.array[:]     =  pdb.radio_flag[ph]
-        self.k_a= fem.Function(P0)  ; self.k_a.x.array[:]    = pdb.k_a[ph]
-        self.k_b= fem.Function(P0)  ; self.k_b.x.array[:]    = pdb.k_b[ph]
-        self.k_c= fem.Function(P0)  ; self.k_c.x.array[:]    = pdb.k_c[ph]
-        self.k_d= fem.Function(P0)  ; self.k_d.x.array[:]    = pdb.k_d[ph]
-        self.k_e= fem.Function(P0)  ; self.k_e.x.array[:]    = pdb.k_e[ph]
-        self.k_f= fem.Function(P0)  ; self.k_f.x.array[:]    = pdb.k_f[ph]
-        # Heat Capacity properties
-        self.C0 = fem.Function(P0)  ; self.C0.x.array[:]     = pdb.C0[ph]
-        self.C1 = fem.Function(P0)  ; self.C1.x.array[:]     = pdb.C1[ph]
-        self.C2 = fem.Function(P0)  ; self.C2.x.array[:]     = pdb.C2[ph]
-        self.C3 = fem.Function(P0)  ; self.C3.x.array[:]     = pdb.C3[ph]
-        self.C4 = fem.Function(P0)  ; self.C4.x.array[:]     = pdb.C4[ph]
-        self.C5 = fem.Function(P0)  ; self.C5.x.array[:]     = pdb.C5[ph]
-        # Density properties
-        self.rho0    = fem.Function(P0)  ; self.rho0.x.array[:]    = pdb.rho0[ph]
-        self.alpha0  = fem.Function(P0)  ; self.alpha0.x.array[:]  = pdb.alpha0[ph]
-        self.alpha1  = fem.Function(P0)  ; self.alpha1.x.array[:]  = pdb.alpha1[ph]
-        self.alpha2  = fem.Function(P0)  ; self.alpha2.x.array[:]  = pdb.alpha2[ph]
-        self.Kb      = fem.Function(P0)  ; self.Kb.x.array[:]      = pdb.Kb[ph]
-        self.option_rho = fem.Function(P0)  ; self.option_rho.x.array[:] = pdb.option_rho[ph]
-        
-        self.radio   = fem.Function(P0)  ; self.radio.x.array[:]     = pdb.radio[ph]
-        self.radio.x.scatter_forward()
-        self.Tref    = pdb.Tref
-        self.R       = pdb.R
-        self.A       = pdb.A
-        self.B       = pdb.B
-        self.T_A     = pdb.T_A
-        self.x_A     = pdb.x_A
-        self.T_B     = pdb.T_B
-        self.x_B     = pdb.x_B
+def populate_material_properties_thermal(CP,pdb,phase):
+    """
+    Initialize all material properties as FEniCS functions.
+    """
+    ph = np.int32(phase.x.array)
+    P0 = phase.function_space
+    
+    # Heat Conductivity properties
+    CP.k0 = fem.Function(P0)  ; CP.k0.x.array[:]    =  pdb.k0[ph]
+    CP.fr = fem.Function(P0)  ; CP.fr.x.array[:]     =  pdb.radio_flag[ph]
+    CP.k_a= fem.Function(P0)  ; CP.k_a.x.array[:]    = pdb.k_a[ph]
+    CP.k_b= fem.Function(P0)  ; CP.k_b.x.array[:]    = pdb.k_b[ph]
+    CP.k_c= fem.Function(P0)  ; CP.k_c.x.array[:]    = pdb.k_c[ph]
+    CP.k_d= fem.Function(P0)  ; CP.k_d.x.array[:]    = pdb.k_d[ph]
+    CP.k_e= fem.Function(P0)  ; CP.k_e.x.array[:]    = pdb.k_e[ph]
+    CP.k_f= fem.Function(P0)  ; CP.k_f.x.array[:]    = pdb.k_f[ph]
+    # Heat Capacity properties
+    CP.C0  = fem.Function(P0) ; CP.C0.x.array[:]     = pdb.C0[ph]
+    CP.C1 = fem.Function(P0)  ; CP.C1.x.array[:]     = pdb.C1[ph]
+    CP.C2 = fem.Function(P0)  ; CP.C2.x.array[:]     = pdb.C2[ph]
+    CP.C3 = fem.Function(P0)  ; CP.C3.x.array[:]     = pdb.C3[ph]
+    CP.C4 = fem.Function(P0)  ; CP.C4.x.array[:]     = pdb.C4[ph]
+    CP.C5 = fem.Function(P0)  ; CP.C5.x.array[:]     = pdb.C5[ph]
+    # Density properties
+    CP.rho0    = fem.Function(P0)     ; CP.rho0.x.array[:]    = pdb.rho0[ph]
+    CP.alpha0  = fem.Function(P0)     ; CP.alpha0.x.array[:]  = pdb.alpha0[ph]
+    CP.alpha1  = fem.Function(P0)     ; CP.alpha1.x.array[:]  = pdb.alpha1[ph]
+    CP.alpha2  = fem.Function(P0)     ; CP.alpha2.x.array[:]  = pdb.alpha2[ph]
+    CP.Kb      = fem.Function(P0)     ; CP.Kb.x.array[:]      = pdb.Kb[ph]
+    CP.option_rho = fem.Function(P0)  ; CP.option_rho.x.array[:] = pdb.option_rho[ph]
+    
+    CP.radio   = fem.Function(P0)   ; CP.radio.x.array[:]     = pdb.radio[ph]
+    CP.radio.x.scatter_forward()
+    CP.Tref    = pdb.Tref
+    CP.R       = pdb.R
+    CP.A       = pdb.A
+    CP.B       = pdb.B
+    CP.T_A     = pdb.T_A
+    CP.x_A     = pdb.x_A
+    CP.T_B     = pdb.T_B
+    CP.x_B     = pdb.x_B
+    
+    return CP
 
         
         
@@ -102,25 +104,30 @@ class Functions_material_rheology():
     Vdis    : fem.Function = None
     eta     : fem.Function = None
     option_eta : fem.Function = None
-    eta_max : float
+    eta_max : float = None
+    R        : float = None
 
-    def __post_init__(self,pdb,phase):
-        """
-        Initialize all rheological properties as FEniCS functions.
-        """
-        ph = np.int32(phase.x.array)
-        P0 = phase.function_space
+def populate_material_properties_rheology(CP,pdb,phase):
+    """
+    Initialize all rheological properties as FEniCS functions.
+    """
+    ph = np.int32(phase.x.array)
+    P0 = phase.function_space
+    
+    CP.Bdif    = fem.Function(P0)     ; CP.Bdif.x.array[:]     = pdb.Bdif[ph]
+    CP.Bdis    = fem.Function(P0)     ; CP.Bdis.x.array[:]     = pdb.Bdis[ph]
+    CP.n       = fem.Function(P0)     ; CP.n.x.array[:]        = pdb.n[ph]
+    CP.Edif    = fem.Function(P0)     ; CP.Edif.x.array[:]     = pdb.Edif[ph]
+    CP.Edis    = fem.Function(P0)     ; CP.Edis.x.array[:]     = pdb.Edis[ph]
+    CP.Vdif    = fem.Function(P0)     ; CP.Vdif.x.array[:]     = pdb.Vdif[ph]
+    CP.Vdis    = fem.Function(P0)     ; CP.Vdis.x.array[:]     = pdb.Vdis[ph]
+    CP.eta     = fem.Function(P0)     ; CP.eta.x.array[:]      = pdb.eta[ph]
+    CP.option_eta = fem.Function(P0)  ; CP.option_eta.x.array[:] = pdb.option_eta[ph]
+    CP.eta_max = pdb.eta_max
+    CP.R       = pdb.R
+    CP.eta.x.scatter_forward()
+    return CP 
         
-        self.Bdif    = fem.Function(P0)  ; self.Bdif.x.array[:]     = pdb.Bdif[ph]
-        self.Bdis    = fem.Function(P0)  ; self.Bdis.x.array[:]     = pdb.Bdis[ph]
-        self.n       = fem.Function(P0)  ; self.n.x.array[:]        = pdb.n[ph]
-        self.Edif    = fem.Function(P0)  ; self.Edif.x.array[:]     = pdb.Edif[ph]
-        self.Edis    = fem.Function(P0)  ; self.Edis.x.array[:]     = pdb.Edis[ph]
-        self.Vdif    = fem.Function(P0)  ; self.Vdif.x.array[:]     = pdb.Vdif[ph]
-        self.Vdis    = fem.Function(P0)  ; self.Vdis.x.array[:]     = pdb.Vdis[ph]
-        self.eta     = fem.Function(P0)  ; self.eta.x.array[:]      = pdb.eta[ph]
-        self.option_eta = fem.Function(P0)  ; self.option_eta.x.array[:] = pdb.option_eta[ph]
-        self.eta_max = pdb.eta_max
     
 # ---------------------------------------------------------------------------------
 
