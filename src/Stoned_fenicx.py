@@ -24,7 +24,7 @@ from src.create_mesh                 import Geom_input
 from src.scal                        import _scaling_control_parameters
 from src.scal                        import _scale_parameters
 from src.scal                        import _scaling_material_properties
-from src.solution                    import steady_state_solution,time_dependent_solution
+from src.solution                    import steady_state_solution,time_dependent_solution,solution_routine
 from src.thermal_structure_ocean     import compute_initial_LHS
 
 dict_options = {'NoShear':0,
@@ -173,10 +173,12 @@ def StonedFenicsx(IP,Ph_input):
     M.element_PT = basix.ufl.element("Lagrange","triangle",2)
     M.element_V = basix.ufl.element("Lagrange","triangle",2,shape=(2,))
     
-    if ctrl.steady_state == 1:
-        steady_state_solution(M, ctrl, lhs, Pdb, io_ctrl, sc)
-    else:
-        time_dependent_solution(M, ctrl, lhs, Pdb, io_ctrl, sc)
+    
+    solution_routine(M, ctrl, lhs, Pdb, io_ctrl, sc)
+    #if ctrl.steady_state == 1:
+    #    steady_state_solution(M, ctrl, lhs, Pdb, io_ctrl, sc)
+    #else:
+    #    time_dependent_solution(M, ctrl, lhs, Pdb, io_ctrl, sc)
 
          
     # Create mesh

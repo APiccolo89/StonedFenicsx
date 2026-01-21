@@ -98,7 +98,7 @@ class OUTPUT():
         T2 = fem.Function(self.temp_V)
         T2.name = "Temperature  [degC]"
         if ctrl.steady_state == 1:
-            T2.interpolate(S.T_O)
+            T2.interpolate(S.T_N)
         else:
             T2.interpolate(S.T_N)
         T2.x.array[:] = T2.x.array[:]*sc.Temp - 273.15
