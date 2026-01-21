@@ -121,7 +121,7 @@ class OUTPUT():
         PL2.x.scatter_forward()
         
         # alpha 
-        alpha = alpha_FX(FGT,S.T_O,S.PL)
+        alpha = alpha_FX(FGT,S.T_N,S.PL)
         alpha2 = evaluate_material_property(alpha, self.temp_V)
         alpha2.name = "alpha  [1/K]"
         alpha2.x.array[:] = alpha2.x.array[:]*(1/sc.Temp)
@@ -129,21 +129,21 @@ class OUTPUT():
 
 
         # density 
-        rho = density_FX(FGT,S.T_O,S.PL)
+        rho = density_FX(FGT,S.T_N,S.PL)
         rho2 = evaluate_material_property(rho, self.temp_V)
         rho2.name = "Density  [kg/m3]"
         rho2.x.array[:] = rho2.x.array[:]*sc.rho
         rho2.x.scatter_forward()
 
         # Cp 
-        Cp = heat_capacity_FX(FGT,S.T_O)
+        Cp = heat_capacity_FX(FGT,S.T_N)
         Cp2 = evaluate_material_property(Cp,self.temp_V)
         Cp2.name = "Cp  [J/kg]"
         Cp2.x.array[:] = Cp2.x.array[:]*sc.Cp
         Cp2.x.scatter_forward()
 
         # k 
-        k = heat_conductivity_FX(FGT,S.T_O,S.PL,Cp,rho)
+        k = heat_conductivity_FX(FGT,S.T_N,S.PL,Cp,rho)
         k2 = evaluate_material_property(k,self.temp_V)
         k2.name = "k  [W/m/k]"
         k2.x.array[:] = k2.x.array[:]*sc.k
@@ -169,7 +169,7 @@ class OUTPUT():
         e_T.x.scatter_forward()
 
         # viscosity (e,S.t_oslab,S.p_lslab,pdb,D.phase,D,sc)
-        eta = compute_viscosity_FX(eII,S.T_O,S.PL,FGR,sc)
+        eta = compute_viscosity_FX(eII,S.T_N,S.PL,FGR,sc)
         eta2 = evaluate_material_property(eta,self.temp_V)
         eta2.name = "eta  [Pa s]"
         eta2.x.array[:] = np.abs(eta2.x.array[:])*sc.eta
@@ -178,13 +178,13 @@ class OUTPUT():
 
 
         # heat flux 
-        q_expr = - ( heat_conductivity_FX(FGT,S.T_O,S.PL,Cp,rho)* ufl.grad(S.T_O))  
+        q_expr = - ( heat_conductivity_FX(FGT,S.T_O,S.PL,Cp,rho)* ufl.grad(S.T_N))  
         flux = evaluate_material_property(q_expr,self.vel_V)
         flux.name = 'Heat flux [W/m2]'
         flux.x.array[:] *= sc.Watt/sc.L**2
         # adiabatic heating 
         if ctrl.adiabatic_heating >0:
-            adiabatic_expr = alpha * ufl.inner(S.u_wedge, ufl.grad(S.p_lwedge)) * S.t_owedge
+            adiabatic_expr = alpha * ufl.inner(S.u_global, ufl.grad(S.PL)) * S.T_N
             adiabatic_H = evaluate_material_property(adiabatic_expr,self.temp_V)
             adiabaticH = fem.Function(self.temp_V)
             adiabaticH.name = 'Ha [W/m3]'
