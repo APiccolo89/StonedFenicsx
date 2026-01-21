@@ -10,7 +10,7 @@ from .utils                     import interpolate_from_sub_to_main
 from .scal                      import Scal
 from .output                    import OUTPUT,OUTPUT_WEDGE
 from .utils                     import compute_eII,compute_strain_rate
-from .compute_material_property import Functions_material_properties_global
+from .compute_material_property import Functions_material_properties_global, Functions_material_rheology
 
 
 """
@@ -513,19 +513,19 @@ class Global_thermal(Problem):
         return F,J 
     
     #------------------------------------------------------------------
-    def compute_energy_source(self,D,pdb):
+    def compute_energy_source(self,D,FG):
         source = fem.Function(self.FS)
-        source = compute_radiogenic(pdb, source, D.phase, D.mesh)
+        source = compute_radiogenic(FG, source)
         self.energy_source = source.copy()
 
     #------------------------------------------------------------------
-    def compute_adiabatic_heating(self,D,pdb,u,T,p,ctrl):
+    def compute_adiabatic_heating(self,D,FG,u,T,p,ctrl):
         from .compute_material_property import alpha_FX
         
         if ctrl.adiabatic_heating != 0: 
             
         
-            alpha = alpha_FX(pdb,T,p,D.phase,D)
+            alpha = alpha_FX(FG,T,p)
             adiabatic_heating = alpha * T * ufl.inner(ufl.grad(p), u) 
         else: 
             adiabatic_heating = (0.0)
@@ -535,16 +535,16 @@ class Global_thermal(Problem):
         
 
     #------------------------------------------------------------------
-    def compute_residual_SS(self,p_k,T,u_global,D,pdb, ctrl):
+    def compute_residual_SS(self,p_k,T,u_global,D,FG, ctrl):
         # Function that set linear form and linear picard for picard iteration
         
-        rho_k = density_FX(pdb, T, p_k, D.phase, D.mesh)  # frozen
+        rho_k = density_FX(FG, T, p_k)  # frozen
         
-        Cp_k = heat_capacity_FX(pdb, T, D.phase, D.mesh)  # frozen
+        Cp_k = heat_capacity_FX(FG, T)  # frozen
 
-        k_k = heat_conductivity_FX(pdb, T, p_k, D.phase, D.mesh, Cp_k, rho_k)  # frozen
+        k_k = heat_conductivity_FX(FG, T, p_k, Cp_k, rho_k)  # frozen
 
-        self.compute_adiabatic_heating(D,pdb,u_global,T,p_k,ctrl)
+        self.compute_adiabatic_heating(D,FG,u_global,T,p_k,ctrl)
 
         f    = self.energy_source# source term
         
@@ -563,17 +563,17 @@ class Global_thermal(Problem):
         return R
     
     
-    def set_linear_picard_SS(self,p_k,T,u_global,Hs,D,pdb, ctrl, it=0):
+    def set_linear_picard_SS(self,p_k,T,u_global,Hs,D,FG, ctrl, it=0):
         # Function that set linear form and linear picard for picard iteration
         
-        rho_k = density_FX(pdb, T, p_k, D.phase, D.mesh)  # frozen
+        rho_k = density_FX(FG, T, p_k)  # frozen
         
-        Cp_k = heat_capacity_FX(pdb, T, D.phase, D.mesh)  # frozen
+        Cp_k = heat_capacity_FX(FG, T)  # frozen
 
-        k_k = heat_conductivity_FX(pdb, T, p_k, D.phase, D.mesh, Cp_k, rho_k)  # frozen
+        k_k = heat_conductivity_FX(FG, T, p_k, Cp_k, rho_k)  # frozen
 
         if ctrl.adiabatic_heating != 0:
-            self.compute_adiabatic_heating(D,pdb,u_global,T,p_k,ctrl)
+            self.compute_adiabatic_heating(D,FG,u_global,T,p_k,ctrl)
         else:
             self.adiabatic_heating = 0.0
 
@@ -667,7 +667,7 @@ class Global_thermal(Problem):
             return a, None
     #------------------------------------------------------------------
 
-    def Solve_the_Problem_SS(self,S,ctrl,pdb,M,lhs,geom,sc,it=0,ts=0): 
+    def Solve_the_Problem_SS(self,S,ctrl,FG,M,lhs,geom,sc,it=0,ts=0): 
         
         nl = 0 
         p_k = S.PL.copy()  # Previous lithostatic pressure 
@@ -678,10 +678,10 @@ class Global_thermal(Problem):
             Hs = 0.0
             
         if it == 0:         
-            self.shear_heating = self.compute_shear_heating(ctrl,pdb, S,getattr(M,'domainG'),geom,sc)
-            self.compute_energy_source(getattr(M,'domainG'),pdb)
+            self.shear_heating = self.compute_shear_heating(ctrl,FG, S,getattr(M,'domainG'),geom,sc)
+            self.compute_energy_source(getattr(M,'domainG'),FG)
         
-        a,L = self.set_linear_picard_SS(p_k,T,S.u_global,Hs,getattr(M,'domainG'),pdb,ctrl)
+        a,L = self.set_linear_picard_SS(p_k,T,S.u_global,Hs,getattr(M,'domainG'),FG,ctrl)
         
         self.bc = self.create_bc_temp(getattr(M,'domainG'),ctrl,geom,lhs,S.u_global,S.T_i,it)
         if self.typology == 'NonlinearProblem':
@@ -973,10 +973,10 @@ class Global_pressure(Problem):
         return F,J 
     
     
-    def set_linear_picard(self,p_k,T,D,pdb,g, it=0):
+    def set_linear_picard(self,p_k,T,D,FG,g, it=0):
         # Function that set linear form and linear picard for picard iteration
         
-        rho_k = density_FX(FGpdb, T, p_k)  # frozen
+        rho_k = density_FX(FG, T, p_k)  # frozen
         
         # Linear operator with frozen coefficients
         if it == 0: 
@@ -1053,7 +1053,7 @@ class Global_pressure(Problem):
         else:
             return function_fen
     
-    def solve_the_non_linear(self,M,S,ctrl,pdb,g):  
+    def solve_the_non_linear(self,M,S,ctrl,FG,g):  
         
         tol = 1e-3  # Tolerance Picard  
         isPicard = 1 # Flag for the linear solver. 
@@ -1072,9 +1072,9 @@ class Global_pressure(Problem):
             time_ita = timing.time()
             
             if it_inner == 0:
-                A,L = self.set_linear_picard(p_k,S.T_O,getattr(M,'domainG'),pdb,g)
+                A,L = self.set_linear_picard(p_k,S.T_O,getattr(M,'domainG'),FG,g)
             else: 
-                _,L = self.set_linear_picard(p_k,S.T_O,getattr(M,'domainG'),pdb,g,1)
+                _,L = self.set_linear_picard(p_k,S.T_O,getattr(M,'domainG'),FG,g,1)
             
             p_k1 = self.solve_the_linear(S,A,L,p_k1,1,it_inner,1) 
 
@@ -1126,7 +1126,7 @@ class Stokes_Problem(Problem):
      
         pass
     
-    def compute_shear_heating(self,ctrl,pdb,S,D,sc,wedge=1):
+    def compute_shear_heating(self,ctrl,FR,S,D,sc,wedge=1):
         from .compute_material_property import compute_viscosity_FX
         from .utils import evaluate_material_property
         if wedge ==1: 
@@ -1135,13 +1135,13 @@ class Stokes_Problem(Problem):
             v = ufl.TestFunction(V)
             e = compute_strain_rate(S.u_wedge)
             vel_e = ufl.sym(ufl.grad(S.u_wedge))
-            eta_new = compute_viscosity_FX(e, S.t_owedge, S.p_lwedge, pdb, D.phase, D, sc)
+            eta_new = compute_viscosity_FX(e, S.t_owedge, S.p_lwedge, FR, sc)
         else: 
             V = S.u_slab.function_space
             PT = self.FSPT
             e = compute_strain_rate(S.u_slab)
             vel_e = ufl.sym(ufl.grad(S.u_slab))
-            eta_new = compute_viscosity_FX(e, S.t_oslab, S.p_lslab, pdb, D.phase, D, sc)
+            eta_new = compute_viscosity_FX(e, S.t_oslab, S.p_lslab, FR, sc)
 
         shear_heating = ufl.inner(2*eta_new*vel_e, vel_e)
 
@@ -1152,14 +1152,14 @@ class Stokes_Problem(Problem):
 
         return S
     
-    def compute_residuum_stokes(self, u_new, p_new, D, T, PL, pdb, sc):
+    def compute_residuum_stokes(self, u_new, p_new, D, T, PL, FR, sc):
         V = u_new.function_space
         Q = p_new.function_space
         v = ufl.TestFunction(V)
         q = ufl.TestFunction(Q)
 
         e = compute_strain_rate(u_new)
-        eta_new = compute_viscosity_FX(e, T, PL, pdb, D.phase, D, sc)
+        eta_new = compute_viscosity_FX(e, T, PL, FR,sc)
         f = fem.Constant(D.mesh, PETSc.ScalarType((0.0,) * D.mesh.geometry.dim))
         dx = ufl.dx
 
@@ -1192,7 +1192,7 @@ class Stokes_Problem(Problem):
 
     
     
-    def set_linear_picard(self,u_slab,T,PL,D,pdb,ctrl,sc, a_p = None,it=0, ts = 0):
+    def set_linear_picard(self,u_slab,T,PL,D,FR,ctrl,sc, a_p = None,it=0, ts = 0):
         
         """
         The problem is always LINEAR when depends on T/P -> Becomes fairly 
@@ -1205,7 +1205,7 @@ class Stokes_Problem(Problem):
 
         e = compute_strain_rate(u_slab)
 
-        eta = compute_viscosity_FX(e,T,PL,pdb,D.phase,D,sc)
+        eta = compute_viscosity_FX(e,T,PL,FR,sc)
 
         a1 = ufl.inner(2*eta*ufl.sym(ufl.grad(u)), ufl.sym(ufl.grad(v))) * dx
         a2 = - ufl.inner(ufl.div(v), p) * dx             # build once
@@ -1293,7 +1293,7 @@ class Slab(Stokes_Problem):
                 return [bc_left_x,bc_left_y,bc_bottom_x,bc_bottom_y]
                 
     
-    def compute_nitsche_FS(self,D, S, dS, a1,a2,a3,pdb,gamma,sc,it = 0):
+    def compute_nitsche_FS(self,D, S, dS, a1,a2,a3,FGS,gamma,sc,it = 0):
         """
         Compute the Nitsche free slip boundary condition for the slab problem.
         This is a placeholder function and should be implemented with the actual Nitsche    method.
@@ -1304,7 +1304,7 @@ class Slab(Stokes_Problem):
         
         # Linear 
         e   = compute_strain_rate(S.u_slab)   
-        eta = compute_viscosity_FX(e,S.t_oslab,S.p_lslab,pdb,D.phase,D,sc)
+        eta = compute_viscosity_FX(e,S.t_oslab,S.p_lslab,FGS,sc)
         
         n = ufl.FacetNormal(D.mesh)
         h = ufl.CellDiameter(D.mesh)
@@ -1324,7 +1324,7 @@ class Slab(Stokes_Problem):
             a3 += 0 
         return a1, a2, a3 
     
-    def Solve_the_Problem(self,S,ctrl,pdb,M,g,sc,it=0,ts=0):
+    def Solve_the_Problem(self,S,ctrl,FGS,M,g,sc,it=0,ts=0):
         theta = M.g_input.theta_out_slab
         M = getattr(M,'domainA')
         
@@ -1347,7 +1347,7 @@ class Slab(Stokes_Problem):
         self.trial1 = ufl.TrialFunction(p_subs)
         self.test1 = ufl.TestFunction(p_subs)
         # Create the linear problem
-        a1,a2,a3, L, a_p = self.set_linear_picard(S.u_slab,S.t_oslab,S.p_lslab,M,pdb,ctrl,sc)
+        a1,a2,a3, L, a_p = self.set_linear_picard(S.u_slab,S.t_oslab,S.p_lslab,M,FGS,ctrl,sc)
 
         # Create the dirichlecht boundary condition 
         self.bc   = self.setdirichlecht(ctrl,M,theta) 
@@ -1355,10 +1355,10 @@ class Slab(Stokes_Problem):
         dS_top = M.bc_dict["top_subduction"]
         dS_bot = M.bc_dict["bot_subduction"]
         # 1 Extract ds 
-        a1,a2,a3 = self.compute_nitsche_FS(M, S, dS_bot, a1, a2 ,a3,pdb ,50.0,sc)
+        a1,a2,a3 = self.compute_nitsche_FS(M, S, dS_bot, a1, a2 ,a3,FGS ,50.0,sc)
         
         if ctrl.slab_bc == 0: 
-            a1,a2,a3 = self.compute_nitsche_FS(M, S, dS_top, a1, a2 ,a3,pdb ,50.0,sc)
+            a1,a2,a3 = self.compute_nitsche_FS(M, S, dS_top, a1, a2 ,a3,FGS ,50.0,sc)
         
         # Slab problem is ALWAYS LINEAR
         
@@ -1524,7 +1524,7 @@ class Wedge(Stokes_Problem):
 
         return a1, a2, a3 
     
-    def Solve_the_Problem(self,S,ctrl,pdb,M,g,sc,g_input,it=0,ts=0):
+    def Solve_the_Problem(self,S,ctrl,FGW,M,g,sc,g_input,it=0,ts=0):
         theta = M.g_input.theta_out_slab
         M = getattr(M,'domainB')
 
@@ -1549,7 +1549,7 @@ class Wedge(Stokes_Problem):
     
 
         # Create the linear problem
-        a1,a2,a3, L, a_p = self.set_linear_picard(S.u_wedge,S.t_owedge,S.p_lwedge,M,pdb,ctrl,sc)
+        a1,a2,a3, L, a_p = self.set_linear_picard(S.u_wedge,S.t_owedge,S.p_lwedge,M,FGW,ctrl,sc)
 
         # Create the dirichlecht boundary condition 
         self.bc   = self.setdirichlecht(ctrl,M,theta,V_subs,g_input) 
@@ -1582,7 +1582,7 @@ class Wedge(Stokes_Problem):
             while (res > ctrl.tol_innerPic) and it_inner < ctrl.it_max: 
                 time_ita = timing.time()
                 if it_inner>0: 
-                    a1,_,_, _,_ = self.set_linear_picard(u_k,S.t_owedge,S.p_lwedge,M,pdb,ctrl,sc)
+                    a1,_,_, _,_ = self.set_linear_picard(u_k,S.t_owedge,S.p_lwedge,M,FGW,ctrl,sc)
                     a[0][0] = a1 
                     a       = fem.form(a)
                     a_p0[0][0] = a1 
@@ -1599,7 +1599,7 @@ class Wedge(Stokes_Problem):
                 
                 dp1.x.array[:] = S.p_wedge.x.array[:] + p_k.x.array[:];dp1.x.scatter_forward()
         
-                rmom, rdiv, divuL2 = self.compute_residuum_stokes(S.u_wedge,S.p_wedge,M,S.t_owedge,S.p_lwedge,pdb,sc)
+                rmom, rdiv, divuL2 = self.compute_residuum_stokes(S.u_wedge,S.p_wedge,M,S.t_owedge,S.p_lwedge,FGW,sc)
                 
                 if it_inner == 0:
                     rmom_0 = rmom
@@ -1684,7 +1684,7 @@ class Wedge(Stokes_Problem):
 
         return S,abs_res 
 
-def compute_adiabatic_initial_adiabatic_contribution(M,T,Tgue,p,pdb,vankeken): 
+def compute_adiabatic_initial_adiabatic_contribution(M,T,Tgue,p,FG,vankeken): 
     
     from .compute_material_property import alpha_FX 
     
@@ -1696,7 +1696,7 @@ def compute_adiabatic_initial_adiabatic_contribution(M,T,Tgue,p,pdb,vankeken):
 
 
     if vankeken==0:
-        expr = (alpha_FX(pdb,Tg,p,M.phase,M) * p)/(heat_capacity_FX(pdb,Tg,M.phase,M) * density_FX(pdb,Tg,p,M.phase,M))
+        expr = (alpha_FX(FWG,Tg,p) * p)/(heat_capacity_FX(FWG,Tg) * density_FX(FWG,Tg,p))
         F = (Tg-T * ufl.exp(expr)) * v * ufl.dx 
     
     
@@ -1714,7 +1714,7 @@ def compute_adiabatic_initial_adiabatic_contribution(M,T,Tgue,p,pdb,vankeken):
         Tg.x.scatter_forward()
     else: 
         from utils import evaluate_material_property
-        expr = (alpha_FX(pdb,Tg,p,M.phase,M) * p)/(heat_capacity_FX(pdb,Tg,M.phase,M) * density_FX(pdb,Tg,p,M.phase,M))
+        expr = (alpha_FX(FG,Tg,p) * p)/(heat_capacity_FX(FG,Tg) * density_FX(FG,Tg,p))
         F = T * ufl.exp(expr)
         Tg = evaluate_material_property(F,FS)
 
@@ -1723,7 +1723,7 @@ def compute_adiabatic_initial_adiabatic_contribution(M,T,Tgue,p,pdb,vankeken):
     
     
 
-def initial_adiabatic_lithostatic_thermal_gradient(sol,lps,pdb,M,g,it_outer,ctrl):
+def initial_adiabatic_lithostatic_thermal_gradient(sol,lps,FGpdb,M,g,it_outer,ctrl):
     res = 1 
     it = 0
     T_0 = sol.T_O.copy()
@@ -1749,12 +1749,26 @@ def initial_adiabatic_lithostatic_thermal_gradient(sol,lps,pdb,M,g,it_outer,ctrl
 
     
 
-def initialise_the_simulation(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb:PhaseDataBase, ioctrl:IOControls, sc:Scal)-> int:
-    from .phase_db import PhaseDataBase
-    from .phase_db import _generate_phase
+def initialise_the_simulation(M:Mesh, 
+                              ctrl:NumericalControls, 
+                              lhs_ctrl:ctrl_LHS, 
+                              pdb:PhaseDataBase, 
+                              ioctrl:IOControls, 
+                              sc:Scal)-> tuple[ctrl_LHS,
+                                                Solution,
+                                                Global_thermal,
+                                                Global_pressure,
+                                                Wedge,
+                                                Slab,
+                                                dolfinx.fem.function.Function,
+                                                Functions_material_properties_global,
+                                                Functions_material_rheology,
+                                                Functions_material_rheology,
+                                                Functions_material_rheology]:
+    
     from .thermal_structure_ocean import compute_initial_LHS
-    from .scal import Scal 
     from .compute_material_property import populate_material_properties_thermal,populate_material_properties_rheology
+
     
     element_p           = M.element_p#basix.ufl.element("Lagrange","triangle", 1) 
     
@@ -1766,37 +1780,77 @@ def initialise_the_simulation(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS,
     lhs_ctrl = compute_initial_LHS(ctrl,lhs_ctrl, sc, pdb)  
           
     # Define Problem
-    
-    # Pressure 
-    
+    # Global energy
     energy_global               = Global_thermal (M = M, name = ['energy','domainG']  , elements = (element_PT,                   ), pdb = pdb, ctrl = ctrl)
-    
+    # Global lithostatic pressure
     lithostatic_pressure_global = Global_pressure(M = M, name = ['pressure','domainG'], elements = (element_PT,                     ), pdb = pdb                                ) 
-    
+    # Wedge stokes problem
     wedge                       = Wedge          (M = M, name = ['stokes','domainB'  ], elements = (element_V,element_p,element_PT  ), pdb = pdb                                )
-    
+    # Slab stokes problem
     slab                        = Slab           (M = M, name = ['stokes','domainA'  ], elements = (element_V,element_p,element_PT  ), pdb = pdb                                )
-    
+    # Gravity, as I do not know where to put -> most likely inside the global problem 
     g = fem.Constant(M.domainG.mesh, PETSc.ScalarType([0.0, -ctrl.g]))    
 
     # Define Solution 
+    # Create instance of solution.
     sol                         = Solution()
-     
+    # Allocate the function that handles. 
     sol.create_function(lithostatic_pressure_global,slab,wedge,[element_V,element_p])
-    
+    # Allocate the material properties.
     FGpdb   = Functions_material_properties_global()      
     FGWG_R  = Functions_material_rheology()
     FGS_R   = Functions_material_rheology()
-    
+    FGG_R   = Functions_material_rheology()
+    # Populate the function.
     FGpdb   = populate_material_properties_thermal(FGpdb,pdb,M.domainG.phase)
     FGWG_R  = populate_material_properties_rheology(FGWG_R,pdb,M.domainB.phase)
     FGS_R   = populate_material_properties_rheology(FGS_R,pdb,M.domainA.phase)
+    FGG_R   = populate_material_properties_rheology(FGG_R,pdb,M.domainG.phase)
+    # Generate the initial guess for the temperature. 
+    sol.T_O = energy_global.initial_temperature_field(M.domainG, ctrl, lhs_ctrl,M.g_input)
     
-    
-    return lhs_ctrl,sol,energy_global,lithostatic_pressure_global,slab,wedge,g,FGpdb,FGWG_R,FGS_R
+    return lhs_ctrl,sol,energy_global,lithostatic_pressure_global,slab,wedge,g,FGpdb,FGWG_R,FGS_R,FGG_R
   
+# Def time_loop 
+def time_loop():
+    
+    
+    
+    
+    
+    
+    return 0 
+
+# Def Outer iteration routine
+
 
 #------------------------------------------------------------------------------------------------------------
+def solution_routine(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb:PhaseDataBase, ioctrl:IOControls, sc:Scal):
+
+    # Initialise
+    (lhs_ctrl,                      # Left Boundary controls
+    sol,                            # Solution data class
+    energy_global,                  # Energy Problem defined in the global mesh
+    lithostatic_pressure_global,    # Lithostatic Problem defined in the global mesh
+    slab,                           # Stokes Problem defined in the slab mesh 
+    wedge,                          # Stokes Problem defined in the wedge mesh
+    g,                              # gravity 
+    FGpdb,                          # Global thermal properties (pre-computed fem.function)
+    FGWG_R,                         # Rheological material properties of the slab mesh
+    FGS_R,
+    FGG_R) = initialise_the_simulation(M,                 # Mesh 
+                                       ctrl,              # Controls 
+                                       lhs_ctrl,          # Not updated Lhs Control 
+                                       pdb,               # Material property database
+                                       ioctrl,            # Control input and output
+                                       sc)                # Scaling 
+    
+    # Time Loop 
+    
+    S = time_loop()
+    
+    return 0 
+#--------------------------------------------------------------------------------------------
 @timing_function
 def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb:PhaseDataBase, ioctrl:IOControls, sc:Scal)-> int:
     from .phase_db import PhaseDataBase
@@ -1804,22 +1858,24 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
     from .thermal_structure_ocean import compute_initial_LHS
     from .scal import Scal 
     
+    # Create the initial structure -> common function. 
     
-    (lhs_ctrl,
-    sol, 
-    energy_global, 
-    lithostatic_pressure_global,
-    slab,
-    wedge,
-    g,
-    FGpdb,
-    FGWG_R, 
-    FGS_R) = initialise_the_simulation(M,
-                                       ctrl,
-                                       lhs_ctrl,
-                                       pdb,
-                                       ioctrl,
-                                       sc)    
+    (lhs_ctrl,                      # Left Boundary controls
+    sol,                            # Solution data class
+    energy_global,                  # Energy Problem defined in the global mesh
+    lithostatic_pressure_global,    # Lithostatic Problem defined in the global mesh
+    slab,                           # Stokes Problem defined in the slab mesh 
+    wedge,                          # Stokes Problem defined in the wedge mesh
+    g,                              # gravity 
+    FGpdb,                          # Global thermal properties (pre-computed fem.function)
+    FGWG_R,                         # Rheological material properties of the slab mesh
+    FGS_R,
+    FGG_R) = initialise_the_simulation(M,                 # Mesh 
+                                       ctrl,              # Controls 
+                                       lhs_ctrl,          # Not updated Lhs Control 
+                                       pdb,               # Material property database
+                                       ioctrl,            # Control input and output
+                                       sc)                # Scaling 
     
     print_ph(f'// -- // --- Steady State temperature // -- // --- > ')
 
@@ -1828,9 +1884,7 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
     res = 1.0
     
     output = OUTPUT(M.domainG, ioctrl, ctrl, sc,0)
-    
-    #output_W = OUTPUT_WEDGE(M.domainB.mesh,ioctrl,ctrl,sc,0)
-         
+             
 
     while it_outer < ctrl.it_max and res > ctrl.tol: 
         
@@ -1850,7 +1904,7 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
             sol.T_i = sol.T_O
         
         if lithostatic_pressure_global.typology == 'NonlinearProblem' or it_outer == 0:  
-            lithostatic_pressure_global.Solve_the_Problem(sol,ctrl,pdb,M,g,it_outer,ts=0)
+            lithostatic_pressure_global.Solve_the_Problem(sol,ctrl,FGpdb,M,g,it_outer,ts=0)
 
         # Interpolate from global to wedge/slab
 
@@ -1858,10 +1912,10 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
         sol.p_lwedge = interpolate_from_sub_to_main(sol.p_lwedge,sol.PL, M.domainB.cell_par,1)
 
         if it_outer == 0: 
-            slab.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,it = it_outer,ts=0)
+            slab.Solve_the_Problem(sol,ctrl,FGS_R,M,g,sc,it = it_outer,ts=0)
 
         if wedge.typology == 'NonlinearProblem' or it_outer == 0:  
-            wedge.Solve_the_Problem(sol,ctrl,pdb,M,g,sc,M.g_input,it = it_outer,ts=0)
+            wedge.Solve_the_Problem(sol,ctrl,FGWG_R,M,g,sc,M.g_input,it = it_outer,ts=0)
 
 
         # Interpolate from wedge/slab to global
@@ -1875,7 +1929,7 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
         sol.p_global = interpolate_from_sub_to_main(sol.p_global,sol.p_slab, M.domainA.cell_par)
         
         
-        energy_global.Solve_the_Problem_SS(sol,ctrl,pdb,M,lhs_ctrl,M.g_input,sc,it = it_outer, ts = 0)
+        energy_global.Solve_the_Problem_SS(sol,ctrl,FGpdb,M,lhs_ctrl,M.g_input,sc,it = it_outer, ts = 0)
         
         # Compute residuum 
         res = compute_residuum_outer(sol,Told,PLold,u_globalold,p_globalold,it_outer,sc, time_A_outer)
@@ -1888,7 +1942,7 @@ def steady_state_solution(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb
         
     
     
-    output.print_output(sol,M.domainG,pdb,ioctrl,sc,ctrl,ts=it_outer)
+    output.print_output(sol,M.domainG,FGpdb,FGG_R,ioctrl,sc,ctrl,ts=it_outer)
     #output_W.print_output(sol,M.domainB,pdb,ioctrl,sc,ctrl,ts=it_outer)
     if ctrl.van_keken == 1:
         from .output import _benchmark_van_keken

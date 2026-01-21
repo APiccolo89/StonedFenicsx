@@ -29,13 +29,13 @@ class OUTPUT():
         
         import basix
         
-        self.vel_V   = fem.functionspace(mesh,
-                          basix.ufl.element("Lagrange", "triangle", 1, shape=(mesh.geometry.dim,)))
-        self.pres_V  = fem.functionspace(mesh,
+        self.vel_V   = fem.functionspace(mesh.mesh,
+                          basix.ufl.element("Lagrange", "triangle", 1, shape=(mesh.mesh.geometry.dim,)))
+        self.pres_V  = fem.functionspace(mesh.mesh,
                           basix.ufl.element("Lagrange", "triangle", 1))
         self.temp_V  = self.pres_V
-        self.stress_V= fem.functionspace(mesh,
-                          basix.ufl.element("Lagrange", "triangle", 1, shape=(mesh.geometry.dim**2,)))
+        self.stress_V= fem.functionspace(mesh.mesh,
+                          basix.ufl.element("Lagrange", "triangle", 1, shape=(mesh.mesh.geometry.dim**2,)))
 
         # for transient we keep XDMF files open across timesteps
         if ctrl.steady_state == 0:
@@ -57,7 +57,8 @@ class OUTPUT():
     def print_output(self
                      ,S                # Solution object
                      ,D                # Global domain object
-                     ,pdb              # Phase database object
+                     ,FGT              # Phase database object
+                     ,FGR
                      ,ioctrl           # IO control object
                      ,sc               # Scaling object
                      ,ctrl             # Numerical control object
@@ -120,7 +121,7 @@ class OUTPUT():
         PL2.x.scatter_forward()
         
         # alpha 
-        alpha = alpha_FX(pdb,S.T_O,S.PL,D.phase,D)
+        alpha = alpha_FX(FGT,S.T_O,S.PL)
         alpha2 = evaluate_material_property(alpha, self.temp_V)
         alpha2.name = "alpha  [1/K]"
         alpha2.x.array[:] = alpha2.x.array[:]*(1/sc.Temp)
@@ -128,21 +129,21 @@ class OUTPUT():
 
 
         # density 
-        rho = density_FX(pdb,S.T_O,S.PL,D.phase,D)
+        rho = density_FX(FGT,S.T_O,S.PL)
         rho2 = evaluate_material_property(rho, self.temp_V)
         rho2.name = "Density  [kg/m3]"
         rho2.x.array[:] = rho2.x.array[:]*sc.rho
         rho2.x.scatter_forward()
 
         # Cp 
-        Cp = heat_capacity_FX(pdb,S.T_O,D.phase,D)
+        Cp = heat_capacity_FX(FGT,S.T_O)
         Cp2 = evaluate_material_property(Cp,self.temp_V)
         Cp2.name = "Cp  [J/kg]"
         Cp2.x.array[:] = Cp2.x.array[:]*sc.Cp
         Cp2.x.scatter_forward()
 
         # k 
-        k = heat_conductivity_FX(pdb,S.T_O,S.PL,D.phase,D,Cp,rho)
+        k = heat_conductivity_FX(FGT,S.T_O,S.PL,Cp,rho)
         k2 = evaluate_material_property(k,self.temp_V)
         k2.name = "k  [W/m/k]"
         k2.x.array[:] = k2.x.array[:]*sc.k
@@ -168,7 +169,7 @@ class OUTPUT():
         e_T.x.scatter_forward()
 
         # viscosity (e,S.t_oslab,S.p_lslab,pdb,D.phase,D,sc)
-        eta = compute_viscosity_FX(eII,S.T_O,S.PL,pdb,D.phase,D,sc)
+        eta = compute_viscosity_FX(eII,S.T_O,S.PL,FGR,sc)
         eta2 = evaluate_material_property(eta,self.temp_V)
         eta2.name = "eta  [Pa s]"
         eta2.x.array[:] = np.abs(eta2.x.array[:])*sc.eta
@@ -177,7 +178,7 @@ class OUTPUT():
 
 
         # heat flux 
-        q_expr = - ( heat_conductivity_FX(pdb,S.T_O,S.PL,D.phase,D,Cp,rho)* ufl.grad(S.T_O))  
+        q_expr = - ( heat_conductivity_FX(FGT,S.T_O,S.PL,Cp,rho)* ufl.grad(S.T_O))  
         flux = evaluate_material_property(q_expr,self.vel_V)
         flux.name = 'Heat flux [W/m2]'
         flux.x.array[:] *= sc.Watt/sc.L**2
