@@ -1431,7 +1431,7 @@ class Slab(Stokes_Problem):
         print_ph(f'              // -- // --- Solution of Stokes problem in {time_B-time_A:.2f} sec // -- // --->')
         print_ph(f'')
         if ctrl.adiabatic_heating==2:
-            S = self.compute_shear_heating(ctrl,pdb,S,M,sc,wedge=0)
+            S = self.compute_shear_heating(ctrl,FGS,S,M,sc,wedge=0)
         return S 
     
 #---------------------------------------------------------------------------------------------------       
@@ -1669,7 +1669,7 @@ class Wedge(Stokes_Problem):
 
 
         if ctrl.adiabatic_heating==2:
-            S = self.compute_shear_heating(ctrl,pdb,S,M,sc,wedge=1)
+            S = self.compute_shear_heating(ctrl,FGW,S,M,sc,wedge=1)
         
 
 
@@ -1896,7 +1896,7 @@ def outerloop_operation(M:Mesh,
         # Interpolate from global to wedge/slab
 
         sol.t_owedge = interpolate_from_sub_to_main(sol.t_owedge
-                                                    ,sol.T_O
+                                                    ,sol.T_N
                                                     ,M.domainB.cell_par
                                                     ,1)
         
@@ -1905,7 +1905,7 @@ def outerloop_operation(M:Mesh,
                                                     ,M.domainB.cell_par
                                                     ,1)
 
-        if it_outer == 0 & ts == 0: 
+        if it_outer == 0 and ts == 0: 
             Sl.Solve_the_Problem(sol,
                                    ctrl
                                    ,FGSR
