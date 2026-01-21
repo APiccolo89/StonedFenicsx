@@ -24,7 +24,7 @@ from src.create_mesh                 import Geom_input
 from src.scal                        import _scaling_control_parameters
 from src.scal                        import _scale_parameters
 from src.scal                        import _scaling_material_properties
-from src.solution                    import steady_state_solution,time_dependent_solution,solution_routine
+from src.solution                    import solution_routine
 from src.thermal_structure_ocean     import compute_initial_LHS
 
 dict_options = {'NoShear':0,
