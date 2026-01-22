@@ -6,7 +6,7 @@ from src.Stoned_fenicx import StonedFenicsx
 
 
 option_thermal   = [0,1,2]
-option_adiabatic = [0,1,2]
+option_adiabatic = [0,1]
 option_viscous   = [0,1,2]
 
 
@@ -77,6 +77,9 @@ for i in range(len(option_thermal)):
                 inp.adiabatic_heating = 1
             elif option_adiabatic[j] == 2: 
                 inp.adiabatic_heating = 2
+                inp.lab_d       = 80e3
+
+                
             
             if option_viscous[k] == 0: 
                 name_diffusion   = 'Constant'

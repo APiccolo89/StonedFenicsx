@@ -170,7 +170,7 @@ def heat_conductivity_FX(FG,T,p,Cp,rho):
     
     kappa_p   = exp(FG.k_f * p)  
 
-    k = FG.k0  + kappa_lat * kappa_p * Cp * rho + k_rad * FG.fr 
+    k = FG.k0  + (kappa_lat * kappa_p * Cp * rho + k_rad * FG.fr)  
 
     return k 
 #---------------------------------------------------------------------------------

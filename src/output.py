@@ -175,7 +175,15 @@ class OUTPUT():
         eta2.x.array[:] = np.abs(eta2.x.array[:])*sc.eta
         eta2.x.scatter_forward()
 
-
+        T_ad    = fem.Function(self.temp_V)
+        if ctrl.adiabatic_heating == 0:
+            T_adexp = S.T_N * exp((alpha/rho/Cp)*S.PL)
+            T_ad    = evaluate_material_property(T_adexp,self.temp_V)
+            T_ad.x.array[:]    = T_ad.x.array[:]*sc.Temp -273.15
+        else:
+            T_ad.x.array[:]=-100 
+            T_ad.x.scatter_forward()
+        T_ad.name = 'Tad [C]'
 
         # heat flux 
         q_expr = - ( heat_conductivity_FX(FGT,S.T_O,S.PL,Cp,rho)* ufl.grad(S.T_N))  
@@ -241,6 +249,7 @@ class OUTPUT():
             self.xdmf_main.write_function(u_T,          time)
             self.xdmf_main.write_function(p2,           time)
             self.xdmf_main.write_function(T2,           time)
+            self.xdmf_main.write_function(Tad,           time)
             self.xdmf_main.write_function(PL2,          time)
             self.xdmf_main.write_function(rho2,         time)
             self.xdmf_main.write_function(Cp2,          time)
@@ -263,6 +272,7 @@ class OUTPUT():
                 ufile_xdmf.write_function(u_T  )
                 ufile_xdmf.write_function(p2   )
                 ufile_xdmf.write_function(T2   )
+                ufile_xdmf.write_function(T_ad )
                 ufile_xdmf.write_function(PL2  )
                 ufile_xdmf.write_function(rho2 )
                 ufile_xdmf.write_function(Cp2  )
@@ -276,6 +286,7 @@ class OUTPUT():
                 ufile_xdmf.write_function(shear_heatingF)
                 ufile_xdmf.write_function(tag )
                 D.mesh.geometry.x[:] = coord
+                
 
 
 

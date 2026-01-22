@@ -1175,7 +1175,7 @@ class Stokes_Problem(Problem):
             vel_e = ufl.sym(ufl.grad(S.u_slab))
             eta_new = compute_viscosity_FX(e, S.t_oslab, S.p_lslab, FR, sc)
 
-        shear_heating = ufl.inner(2*eta_new*vel_e, vel_e)
+        shear_heating = ufl.inner(2*eta_new*e, e)
 
         if wedge ==1: 
             S.Hs_wedge = evaluate_material_property(shear_heating,PT)
@@ -1745,7 +1745,7 @@ def compute_adiabatic_initial_adiabatic_contribution(M,T,Tgue,p,FG,vankeken):
         n_iter, converged = solver.solve(Tg)
         Tg.x.scatter_forward()
     else: 
-        from utils import evaluate_material_property
+        from .utils import evaluate_material_property
         expr = (alpha_FX(FG,Tg,p) * p)/(heat_capacity_FX(FG,Tg) * density_FX(FG,Tg,p))
         F = T * ufl.exp(expr)
         Tg = evaluate_material_property(F,FS)
@@ -1777,6 +1777,8 @@ def initial_adiabatic_lithostatic_thermal_gradient(sol,lps,FGpdb,M,g,it_outer,ct
         print_ph('Adiabatic res is %.3e'%res)
     
     sol.T_i = T_O.copy()
+    sol.T_N = T_O.copy()
+    sol.T_O = T_O.copy()
     return sol 
 
     
@@ -1874,7 +1876,7 @@ def outerloop_operation(M:Mesh,
         u_global_kouter = sol.u_global.copy()
         p_global_kouter = sol.p_global.copy()
         
-        if (ctrl.adiabatic_heating != 0) and (it_outer==0) and (ts==1) :
+        if (ctrl.adiabatic_heating != 0) and (it_outer==0) and (ts==0) :
             sol = initial_adiabatic_lithostatic_thermal_gradient(sol,
                                                                  LG,
                                                                  FGT,
@@ -1882,8 +1884,7 @@ def outerloop_operation(M:Mesh,
                                                                  g,
                                                                  it_outer,
                                                                  ctrl)
-        else: 
-            sol.T_i = sol.T_O
+        
         
         if LG.typology == 'NonlinearProblem' or it_outer == 0:  
             LG.Solve_the_Problem(sol,
