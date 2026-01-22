@@ -177,8 +177,7 @@ class OUTPUT():
 
         T_ad    = fem.Function(self.temp_V)
         if ctrl.adiabatic_heating == 0:
-            T_adexp = S.T_N * exp((alpha/rho/Cp)*S.PL)
-            T_ad    = evaluate_material_property(T_adexp,self.temp_V)
+            T_ad.interpolate(S.T_ad)
             T_ad.x.array[:]    = T_ad.x.array[:]*sc.Temp -273.15
         else:
             T_ad.x.array[:]=-100 

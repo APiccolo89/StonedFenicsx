@@ -53,6 +53,7 @@ class Solution():
         self.Hs_wedge : dolfinx.fem.function.Function
         self.Hs_slab  : dolfinx.fem.function.Function
         self.Hs_global : dolfinx.fem.function.Function
+        self.T_ad      : dolfinx.fem.function.Function
         
         
     def create_function(self,PG,PS,PW,elements): 
@@ -99,6 +100,7 @@ class Solution():
         self.u_global, self.p_global = gives_Function(space_GL)
         self.u_slab  , self.p_slab   = gives_Function(PS.FS)
         self.u_wedge , self.p_wedge  = gives_Function(PW.FS)
+        self.T_ad                     = fem.Function(PG.FS)    
 
         return self 
 #---------------------------------------------------------------------------
@@ -996,7 +998,7 @@ class Global_pressure(Problem):
 
         a_lin = ufl.inner(ufl.grad(p), ufl.grad(test)) * self.dx
         L     = ufl.inner(ufl.grad(test),
-                              density_FX(pdb, T, p, D.phase, D.mesh) * g) * self.dx
+                              density_FX(pdb, T, p) * g) * self.dx
         # Nonlinear residual: F(p; v) = ∫ ∇p·∇v dx - ∫ ∇v·(ρ(T, p) g) dx
         F = a_lin - L
         # Jacobian dF/dp in direction δp (trial0)
@@ -1719,6 +1721,7 @@ class Wedge(Stokes_Problem):
 def compute_adiabatic_initial_adiabatic_contribution(M,T,Tgue,p,FG,vankeken): 
     
     from .compute_material_property import alpha_FX 
+    from .utils import evaluate_material_property
     
     
     FS = T.function_space 
@@ -1728,22 +1731,19 @@ def compute_adiabatic_initial_adiabatic_contribution(M,T,Tgue,p,FG,vankeken):
 
 
     if vankeken==0:
-        expr = (alpha_FX(FWG,Tg,p) * p)/(heat_capacity_FX(FWG,Tg) * density_FX(FWG,Tg,p))
-        F = (Tg-T * ufl.exp(expr)) * v * ufl.dx 
-    
-    
-        bcs = []
+        
+        res = 1
+        while res > 1e-6:
+        
+            expr = (alpha_FX(FG,Tg,p) * p)/(heat_capacity_FX(FG,Tg) * density_FX(FG,Tg,p))
+            a = T * ufl.exp(expr)
+            TG1 = evaluate_material_property(a,FS)
+            res = compute_residuum(TG1,Tg)
+            Tg.x.array[:]  = 0.8*(TG1.x.array[:])+(1-0.8)*Tg.x.array[:]
+            
 
-        problem = NonlinearProblem(F, Tg, bcs, J)
-        solver = NewtonSolver(M.mesh.comm, problem)
-
-        solver.rtol = 1e-4
-        solver.atol = 1e-4
-
-
-
-        n_iter, converged = solver.solve(Tg)
-        Tg.x.scatter_forward()
+            
+        
     else: 
         from .utils import evaluate_material_property
         expr = (alpha_FX(FG,Tg,p) * p)/(heat_capacity_FX(FG,Tg) * density_FX(FG,Tg,p))
@@ -2003,6 +2003,10 @@ def time_loop(M,ctrl,ioctrl,sc,lhs,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g):
     while t<ctrl.time_max: 
         # Prepare variable
         sol = outerloop_operation(M,ctrl,ioctrl,sc,lhs,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g,ts=ts)
+
+        if ctrl.adiabatic_heating==0:
+            sol.T_ad = compute_adiabatic_initial_adiabatic_contribution(M.domainG,sol.T_N,None,sol.PL,FGT,0)
+
 
         O.print_output(sol,M.domainG,FGT,FGGR,ioctrl,sc,ctrl,ts=ts)
         
