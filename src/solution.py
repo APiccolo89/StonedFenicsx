@@ -1128,18 +1128,6 @@ class Global_pressure(Problem):
         print_ph(f'              [//] Newton iterations for the non linear lithostatic pressure problem')
 
         # --- Newton =>         
-        F,J = self.set_newton(p_k,getattr(M,'domainG'),S.T_O,g,pdb)
-        
-        problem = fem.petsc.NonlinearProblem(F, p_k, bcs=self.bc[0], J=J)
-
-        # Newton solver
-        solver = NewtonSolver(MPI.COMM_WORLD, problem)
-        solver.convergence_criterion = "residual"
-        #solver.rtol = ctrl.tol_innerNew
-        #solver.report = True
-        
-        #n, converged = solver.solve(p_k)
-        #print(f"              []Newton iterations: {n}, converged = {converged}")   
         
         S.PL.x.array[:] = p_k.x.array[:]
       

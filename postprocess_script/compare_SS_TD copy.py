@@ -9,6 +9,28 @@ import cmcrameri
 from data_extractor import Test
 from data_extractor import MeshData
 
+def extractor_differences(path:str,A:str,B:str,C:str,T0:float,T1:float,T2:float,dT:list,name:list,field:str): 
+    
+    #---------------------------
+    Ta = Test('%s/%s'%(path,A))
+    Tb = Test('%s/%s'%(path,B))
+    Tc = Test('%s/%s'%(path,C))
+    #---------------------------
+    Temp_T0     = Ta._interpolate_data(field)
+    Temp_T1     = Tb._interpolate_data(field)
+    Temp_T2     = Tc._interpolate_data(field)
+    #---------------------------
+    dT.append(Temp_T0-T0)
+    dT.append(Temp_T1-T1)
+    dT.append(Temp_T2-T2)
+    name.append('%s - T_0_0_0'%A)
+    name.append('%s - T_0_0_0'%B)
+    name.append('%s - T_0_0_0'%C)
+    
+
+    return dT, name
+
+
 def release_vectorial_field(vec_field,T,ind_sortS,ind_sortO):
     
     if vec_field == 'HeatFlux':
@@ -311,29 +333,21 @@ def create_figure(path2save:str,
     ax3 = fig.add_axes([bx+dx+sx, by, sx, sy])
     ax4 = fig.add_axes([bx+dx+sx, by+dy+sy, sx, sy])
     ax5 = fig.add_axes([bx+dx+sx, by+2*(dy+sy), sx, sy])
-    ax6 = fig.add_axes([0.25, 0.01, 0.5, 0.07])
-    ax7 = fig.add_axes([0.25, 0.01+0.07+0.01, 0.5, 0.07])
+    ax6 = fig.add_axes([0.25, 0.01, 0.5, 0.14])
 
-    vdtick = np.nanmin([np.nanmin(field[0]),np.nanmin(field[3])])
-    Vdtick = np.nanmax([np.nanmax(field[0]),np.nanmax(field[3])])
 
-    vdTick = np.nanmin([np.nanmin(field[1]),np.nanmin(field[2]),np.nanmin(field[4]),np.nanmin(field[5])])
-    VdTick = np.nanmax([np.nanmax(field[1]),np.nanmax(field[2]),np.nanmax(field[4]),np.nanmax(field[5])])
     
-    vdtick = -80.0
-    Vdtick = 250.0
+    vdtick = vmin
+    Vdtick = vmax
+   
     
-    vdTick = 0.0
-    VdTick = np.ceil(VdTick)
-    
-    cmap = cmcrameri.cm.lipari
-    cmap2 = cmcrameri.cm.vik
+    cmap  = cmap
+    cmap2 = cmap
     
     ax0 = modify_ax(ax0) # dT Reference -> adiabatic 
-    ax0.set_title(time_string, fontsize=16)
     ax0.set_xlabel('Distance [km]', fontsize=14)
     ax0.set_ylabel('Depth [km]', fontsize=14)
-    p0 = ax0.contourf(M_data.Xi, M_data.Yi, field[0], levels=11, cmap=cmap2, vmin=vdtick, vmax=Vdtick)
+    p0 = ax0.pcolormesh(M_data.Xi, M_data.Yi, field[2], cmap=cmap2, vmin=vdtick, vmax=Vdtick)
     p1 = ax0.plot(x_s[0],x_s[1],c='w',linewidth=1.2)
     p2 = ax0.plot(x_or[0],x_or[1],c='w',linewidth=1.2)
     p3 = ax0.plot(x_bt[0],x_bt[1],c='k',linewidth=1.2)
@@ -346,7 +360,7 @@ def create_figure(path2save:str,
     ax1.set_xticklabels([])
     ax1.set_xlabel('', fontsize=14)
     
-    p0 = ax1.contourf(M_data.Xi, M_data.Yi, field[1], levels=18, cmap=cmap, vmin=vdTick, vmax=VdTick)
+    p0 = ax1.pcolormesh(M_data.Xi, M_data.Yi, field[1], cmap=cmap2, vmin=vdtick, vmax=Vdtick)
     p1 = ax1.plot(x_s[0],x_s[1],c='w',linewidth=1.2)
     p2 = ax1.plot(x_or[0],x_or[1],c='w',linewidth=1.2)
     p3 = ax1.plot(x_bt[0],x_bt[1],c='k',linewidth=1.2)
@@ -355,13 +369,13 @@ def create_figure(path2save:str,
     ax2 = modify_ax(ax2) # T without adiabatic 
     ax2.set_ylabel('Depth [km]', fontsize=14)
     ax2.set_xticklabels([])
-    pB = ax2.contourf(M_data.Xi, M_data.Yi, field[2], levels=18, cmap=cmap, vmin=vdTick, vmax=VdTick)
+    p0 = ax2.pcolormesh(M_data.Xi, M_data.Yi, field[0], cmap=cmap2, vmin=vdtick, vmax=Vdtick)
     p1 = ax2.plot(x_s[0],x_s[1],c='w',linewidth=1.2)
     p2 = ax2.plot(x_or[0],x_or[1],c='w',linewidth=1.2)
     p3 = ax2.plot(x_bt[0],x_bt[1],c='k',linewidth=1.2)
     
     ax3 = modify_ax(ax3) # dT adiabatic reference,  
-    pA = ax3.contourf(M_data.Xi, M_data.Yi, field[3], levels=11, cmap=cmap2,  vmin=vdtick, vmax=Vdtick)
+    p0 = ax3.pcolormesh(M_data.Xi, M_data.Yi, field[5], cmap=cmap2, vmin=vdtick, vmax=Vdtick)
     ax3.set_xticklabels([])
     ax3.set_yticklabels([])
     p1 = ax3.plot(x_s[0],x_s[1],c='w',linewidth=1.2)
@@ -371,7 +385,7 @@ def create_figure(path2save:str,
     ax4 = modify_ax(ax4) # dT adiabatic reference,  
     ax4.set_xticklabels([])
     ax4.set_yticklabels([])
-    pB = ax4.contourf(M_data.Xi, M_data.Yi, field[5], levels=18, cmap=cmap,  vmin=vdTick, vmax=VdTick)
+    p0 = ax4.pcolormesh(M_data.Xi, M_data.Yi, field[4], cmap=cmap2, vmin=vdtick, vmax=Vdtick)
     p1 = ax4.plot(x_s[0],x_s[1],c='w',linewidth=1.2)
     p2 = ax4.plot(x_or[0],x_or[1],c='w',linewidth=1.2)
     p3 = ax4.plot(x_bt[0],x_bt[1],c='k',linewidth=1.2)
@@ -379,14 +393,12 @@ def create_figure(path2save:str,
     ax5 = modify_ax(ax5) # dT adiabatic reference,  
     ax5.set_xticklabels([])
     ax5.set_yticklabels([])
-    pT = ax5.contourf(M_data.Xi, M_data.Yi, field[4], levels=18, cmap=cmap,  vmin=vdTick, vmax=VdTick)
+    p0 = ax5.pcolormesh(M_data.Xi, M_data.Yi, field[3], cmap=cmap2, vmin=vdtick, vmax=Vdtick)
     p1 = ax5.plot(x_s[0],x_s[1],c='w',linewidth=1.2)
     p2 = ax5.plot(x_or[0],x_or[1],c='w',linewidth=1.2)
     p3 = ax5.plot(x_bt[0],x_bt[1],c='k',linewidth=1.2)
     
-    cb0 = define_colorbar_S(pA,ax6,[vdtick,Vdtick],np.linspace(vdtick,Vdtick,10),r'$\Delta T [^{\circ} C]$')
-    cb0 = define_colorbar_S(pB,ax7,[vdTick,VdTick],np.linspace(vdTick,VdTick,10),r'T $[^{\circ} C]$')
-    ax7.set_axis_off()
+    cb0 = define_colorbar_S(p0,ax6,[vdtick,Vdtick],np.linspace(vdtick,Vdtick,10),r'$\Delta T [^{\circ} C]$')
     ax6.set_axis_off()
 
     props = dict(boxstyle='round', facecolor='black', alpha=0.5)
@@ -414,54 +426,91 @@ def create_figure(path2save:str,
 
 
 
-path = '/Users/wlnw570/Work/Results_VK'
-path2save = '/Users/wlnw570/Work/Figures_Tests'
+path = '/Users/wlnw570/Work/Leeds/Results/Tests_Van_keken'
+path2save = '/Users/wlnw570/Work/Leeds/Results/Figures_Tests'
 if not os.path.isdir(path2save):
     os.makedirs(path2save)  
+
+
+option_viscous   = [0,1,2]
+
+option_adiabatic = [0]
+
+option_heat      = [0,1,2] 
+
+T00 = 'T_0_0_0'
+T01 = 'T_1_0_0'
+T02 = 'T_2_0_0'
+
+
+T0 = Test('%s/%s'%(path,T00))
+T1 = Test('%s/%s'%(path,T01))
+T2 = Test('%s/%s'%(path,T02))
+
+
+
+Temp_T0     = T0._interpolate_data('SteadyState.Temp')
+Temp_T1     = T1._interpolate_data('SteadyState.Temp')
+Temp_T2     = T2._interpolate_data('SteadyState.Temp')
+
+
+
+Temp_T0ad   = T0._interpolate_data('SteadyState.Temp_ad')
+Temp_T1ad   = T1._interpolate_data('SteadyState.Temp_ad')
+Temp_T2ad   = T2._interpolate_data('SteadyState.Temp_ad')
+
+
+
+
+
+
+dT    = [] ; dT_name    = []
+dT_ad = [] ; dT_ad_name = []
+
+
+
+
+
+
+
+T1a = 'T_%d_1_0'%option_viscous[0]
+T1b = 'T_%d_1_0'%option_viscous[1]
+T1c = 'T_%d_1_0'%option_viscous[2]
+
+T2a = 'T_%d_2_0'%option_viscous[0]
+T2b = 'T_%d_2_0'%option_viscous[1]
+T2c = 'T_%d_2_0'%option_viscous[2]
+
+dT,dT_name = extractor_differences(path,T1a,T1b,T1c,Temp_T0,Temp_T1,Temp_T2,dT,dT_name,'SteadyState.Temp')
+dT,dT_name = extractor_differences(path,T2a,T2b,T2c,Temp_T0,Temp_T1,Temp_T2,dT,dT_name,'SteadyState.Temp')
+
+dT_ad,dT_name_ad = extractor_differences(path,T1a,T1b,T1c,Temp_T0ad,Temp_T1ad,Temp_T2ad,dT_ad,dT_ad_name,'SteadyState.Temp_ad')
+dT_ad,dT_name_ad = extractor_differences(path,T2a,T2b,T2c,Temp_T0ad,Temp_T1ad,Temp_T2ad,dT_ad,dT_ad_name,'SteadyState.Temp_ad')
+
+create_figure(path2save,
+             T0.MeshData,
+              -100,
+              100,
+              'cmc.vik'
+              ,r'$\Delta$ T [$^{\circ}$C]'
+              ,dT,
+              100,
+              'difference_tests',
+              0,
+              r'Comparison') 
     
 
-T0 = Test('%s/exp0/Output'%path)
-T1 = Test('%s/exp0_ad/Output'%path)
-T2 = Test('%s/exp1/Output'%path)
-T3 = Test('%s/exp1_ad/Output'%path)
-
-Temp_T0 = T0._interpolate_data('SteadyState.Temp')
-Temp_T1 = T1._interpolate_data('SteadyState.Temp')
-Temp_T2 = T2._interpolate_data('SteadyState.Temp')
-Temp_T3 = T3._interpolate_data('SteadyState.Temp')
-
-
-rho0 = T0._interpolate_data('SteadyState.Temp')
-rho1 = T1._interpolate_data('SteadyState.Temp')
-rho2 = T2._interpolate_data('SteadyState.Temp')
-rho3 = T3._interpolate_data('SteadyState.Temp')
-
-
-Cp0 = T0._interpolate_data('SteadyState.Temp')
-Cp1 = T1._interpolate_data('SteadyState.Temp')
-Cp2 = T2._interpolate_data('SteadyState.Temp')
-Cp3 = T3._interpolate_data('SteadyState.Temp')
-
-
-alpha0 = T0._interpolate_data('SteadyState.Temp')
-alpha1 = T1._interpolate_data('SteadyState.Temp')
-alpha2 = T2._interpolate_data('SteadyState.Temp')
-alpha3 = T3._interpolate_data('SteadyState.Temp')
-
-
-
-M_data = T0.MeshData
-
-vmin = 0.0
-vmax = 1700.0 
-
-n_level = 20
-cmap = cmcrameri.cm.lipari
-title = 'Temperature [$^{\circ}C$]'
-name_fig = 'Temperature'
-time_string = 'Steady State'
-
-fields = [Temp_T1-Temp_T0, Temp_T1, Temp_T0, Temp_T3-Temp_T1,Temp_T2,Temp_T3]
-
-create_figure(path2save,M_data,vmin,np.nanmax(Temp_T0),cmap,title,fields,n_level,name_fig,0,'comparison')
-
+create_figure(path2save,
+             T0.MeshData,
+              -100,
+              100,
+              'cmc.vik'
+              ,r'$\Delta$ T [$^{\circ}$C]'
+              ,dT_ad,
+              100,
+              'difference_tests',
+              0,
+              r'Comparison_adiabatic') 
+ 
+    
+ 

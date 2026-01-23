@@ -144,7 +144,7 @@ def StonedFenicsx(IP,Ph_input):
                     dt = IP.dt,
                     recalculate = IP.recalculate,
                     van_keken = IP.van_keken,
-                    non_linearities=0,
+                    non_linearities=1,
                     c_age_plate = IP.c_age_plate)
     
     Pdb = generate_phase_database(IP,Ph_input)                      

@@ -124,7 +124,8 @@ class Data_experiment():
         self.eta     = np.zeros([num,TS],dtype=float) 
         self.rho     = np.zeros([num,TS],dtype=float) 
         self.k       = np.zeros([num,TS],dtype=float) 
-        self.Cp      = np.zeros([num,TS],dtype=float) 
+        self.Cp      = np.zeros([num,TS],dtype=float)
+        self.T_Ad    = np.zeros([num,TS],dtype=float) 
             
         
         self.extract_data(f,ts)
@@ -194,6 +195,8 @@ class Data_experiment():
             self.alpha = np.array(fl['/Function/alpha  [1/K]/0']).flatten()
             
             self.kappa = np.array(fl['/Function/kappa  [m2/s]/0']).flatten()
+            
+            self.Temp_ad = np.array(fl['/Function/Tad [C]/0']).flatten()
 
             fl.close()
         

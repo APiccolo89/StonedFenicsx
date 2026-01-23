@@ -646,7 +646,7 @@ def compute_ocean_plate_temperature(ctrl:NumericalControls
 @timing_function
 def compute_initial_LHS(ctrl,lhs,scal,pdb):
     
-    if lhs.van_keken == 0:
+    if lhs.van_keken == 0 or lhs.non_linearities == 0 :
         lhs,t, temperature = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb)
     else:
         lhs,_,_ = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb)

@@ -6,8 +6,8 @@ from src.Stoned_fenicx import StonedFenicsx
 
 
 option_thermal   = [0,1,2]
-option_adiabatic = [0,1]
-option_viscous   = [0,1,2]
+option_adiabatic = [0]
+option_viscous   = [1,2]
 
 
 
@@ -21,7 +21,7 @@ inp.path_test = '../Results/Tests_Van_keken'
 
 inp.cr          = 30.0 
 inp.lc          = 0.3 
-inp.ocr         = 0.0
+inp.ocr         = 6.0e3
 inp.lt_d        = 50e3 
 inp.lit_mt      = 50e3 
 inp.lab_d       = inp.lit_mt
@@ -92,14 +92,14 @@ for i in range(len(option_thermal)):
                 name_diffusion   = 'Van_Keken_diff'
                 name_dislocation = 'Van_Keken_disl'              
             
-            inp.sname = 'T_%d_%d_%d'%(option_viscous[k],option_thermal[i],option_adiabatic[j])
+            inp.sname = 'T_radio_%d_%d_%d'%(option_viscous[k],option_thermal[i],option_adiabatic[j])
             
             print(' T_%d_%d_%d'%(option_viscous[k],option_thermal[i],option_adiabatic[j]))
             # Initialise the input
             inp.van_keken        = van_keken
 
             
-            radio_flag = 0 
+            radio_flag = 1 
             
             
             Phase1 = Phase()
