@@ -4,29 +4,30 @@ from src.Stoned_fenicx import StonedFenicsx
 # Create the script for the benchmark tests
 
 
-
+# option for the benchmark
 option_thermal   = [0,1,2,3]
 option_adiabatic = [0]
 option_viscous   = [0,1,2]
 self_con         = [0,1]
 
 
-# Create input data 
+# Create input data - Input is a class populated by default dataset
 inp = Input()
-
+# A flag that generate the geometry of the benchmark
 van_keken = 1 
 
-
+# The input path for saving the results
 inp.path_test = '../Results/Tests_Van_keken'
 
-inp.cr          = 0.0
-inp.lc          = 0.3 
-inp.ocr         = 6.0e3
-inp.lt_d        = 50e3 
-inp.lit_mt      = 50e3 
-inp.lab_d       = inp.lit_mt
-inp.decoupling  = 50e3 
-inp.Tmax        = 1300.0
+# Geometrical input
+inp.cr          = 0.0 # Overriding crust 
+inp.lc          = 0.3 # relative amount of lower crust
+inp.ocr         = 6.0e3 # Crustal thickness
+inp.lt_d        = 50e3 # No slip boundary condition depth
+inp.lit_mt      = 50e3 # Lithospheric mantle depth 
+inp.lab_d       = inp.lit_mt # depth of the lab 
+inp.decoupling  = 50e3  # decoupling depth
+inp.Tmax        = 1300.0 # mantle potential temperature
 #inp.model_shear = 'SelfConsistent'
 
 print_ph('Starting the benchmark tests with different options')
@@ -105,7 +106,7 @@ for i in range(len(option_thermal)):
                     inp.self_consistent_flag = 0 
                 else: 
                     inp.self_consistent_flag = 1 
-                inp.sname = 'T_radio_%d_%d_%d_%d'%(option_viscous[k],option_thermal[i],option_adiabatic[j],self_con[l])
+                inp.sname = 'T_%d_%d_%d_%d'%(option_viscous[k],option_thermal[i],option_adiabatic[j],self_con[l])
 
                 # Initialise the input
                 inp.van_keken        = van_keken
@@ -186,7 +187,18 @@ for i in range(len(option_thermal)):
                 StonedFenicsx(inp,Ph_inp)
 
                 time_B = timethis.time()
-                print(' T_%d_%d_%d'%(option_viscous[k],option_thermal[i],option_adiabatic[j]))
+                dt = time_B - time_
+                print
+                if dt > 60.0:
+                    m, s = divmod(dt, 60)
+                    print(f"{inp.sname} took {m:.2f} min and {s:.2f} sec")
+                if dt > 3600.0:
+                    m, s = divmod(dt, 60)
+                    h, m = divmod(m, 60)
+                    print(f"{inp.sname} took {dt/3600:.2f} hr, {m:.2f} min and {s:.2f} sec")
+                else:
+                    print(f"{inp.sname} took  {dt:.2f} sec")
+
 
 time_fin = timethis.time()
 
