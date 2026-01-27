@@ -7,7 +7,7 @@ from src.Stoned_fenicx import StonedFenicsx
 
 option_thermal   = [3]
 option_adiabatic = [0]
-option_viscous   = [0,1,2]
+option_viscous   = [2]
 self_con         = [0,1]
 
 
