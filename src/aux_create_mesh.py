@@ -521,7 +521,7 @@ def function_create_subduction_bottom(sx:NDArray[np.float64],
     cy = sy - lt*np.cos(th)
     # Find the node that are lower than the left boundary [same function, but switching the position -> ca rotate ]
     cord_x = 0.0 
-    cord_z = -lt/np.cos(th[0])
+    cord_z = -lt
     cy = cy[cx>0.0]
     cx = cx[cx>0.0]
     cx = np.insert(cx,0,0.0)  

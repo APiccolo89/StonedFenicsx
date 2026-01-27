@@ -8,6 +8,93 @@ import os
 import cmcrameri
 from data_extractor import Test
 from data_extractor import MeshData
+import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+#---------------------------------------------------------------------------
+def get_discrete_colormap(n_colors, base_cmap='cmc.lipari'):
+    import numpy as np
+    import matplotlib.colors as mcolors
+
+    """
+    Create a discrete colormap with `n_colors` from a given base colormap.
+    
+    Parameters:
+        n_colors (int): Number of discrete colors.
+        base_cmap (str or Colormap): Name of the matplotlib colormap to base on.
+    
+    Returns:
+        matplotlib.colors.ListedColormap: A discrete version of the colormap.
+        copied from internet
+    """
+    base = plt.cm.get_cmap(base_cmap)
+    color_list = base(np.linspace(0, 1, n_colors))
+    return mcolors.ListedColormap(color_list, name=f'{base_cmap}_{n_colors}')
+
+def extract_contour_isotherm(list_test,pathsave,colors,ls,name):
+    
+    plt.rcParams.update({
+    "text.usetex": True,           # Use LaTeX for all text
+    "font.family": "serif",        # Or 'sans-serif'
+    "font.serif": ["Computer Modern"],   # LaTeX default
+    "axes.unicode_minus": False,
+    })
+    fig = plt.figure(figsize=(10,6))
+    ax0 = fig.gca()
+    legend_handles = []
+    cmap = get_discrete_colormap(21,'cmc.lisbon')
+    for i in range(len(list_test)):
+        T = list_test[i]
+        Ta = Test('%s/%s'%(path,T))
+        Temp_T0     = Ta._interpolate_data('SteadyState.Temp')
+
+        if i == 0: 
+            a = Temp_T0 
+            M_data = Ta.MeshData
+            Xi = M_data.Xi 
+            Yi = M_data.Yi
+            xs = M_data.X[(M_data.mesh_tag==8.0) | (M_data.mesh_tag == 9.0),0]
+            ys = M_data.X[(M_data.mesh_tag==8.0) | (M_data.mesh_tag == 9.0),1]
+            sort = np.argsort(xs)
+    
+            x_s  = [xs[sort], ys[sort]]
+    
+            xor = M_data.X[(M_data.mesh_tag==11.0),0]
+            yor = M_data.X[(M_data.mesh_tag==11.0),1]
+            sort = np.argsort(xor)
+    
+            x_or  = [xor[sort], yor[sort]]
+    
+            xbt = M_data.X[(M_data.mesh_tag==6.0),0]
+            ybt = M_data.X[(M_data.mesh_tag==6.0),1]
+            sort = np.argsort(xbt)
+    
+            x_bt  = [xbt[sort], ybt[sort]]
+            p1 = ax0.plot(x_s[0],x_s[1],  c='k',linewidth=1.2)
+            p2 = ax0.plot(x_or[0],x_or[1],c='k',linewidth=1.2)
+            p3 = ax0.plot(x_bt[0],x_bt[1],c='k',linewidth=1.2)
+    
+        p4 = ax0.contour(Xi,Yi,Temp_T0,levels=[600],colors=colors[i],linewidths=0.6,linestyles = ls[i])
+        p5 = ax0.contour(Xi,Yi,Temp_T0,levels=[800],colors=colors[i],linewidth=0.6,linestyles='dotted')   
+        p6 = ax0.pcolormesh(Xi,Yi,Temp_T0-a,cmap = cmap,vmin=-100,vmax=100)
+        legend_handles.append(
+                        Line2D([0], [0],
+                        color=colors[i],
+                        lw=2,
+                        label=T))    
+        
+    cbar=plt.colorbar(p6, orientation='horizontal',extend="both")
+    cbar.set_label(label=r'$\Delta$ T [deg C]',size=10) 
+    
+    ax0.legend(handles=legend_handles, loc="best")
+    plt.show()
+
+    fig.savefig(os.path.join(pathsave, name),dpi=600)
+
+    plt.close()
+    
+    
+    
+
 
 def extractor_differences(path:str,A:str,B:str,C:str,T0:float,T1:float,T2:float,dT:list,name:list,field:str): 
     
@@ -340,6 +427,7 @@ def create_figure(path2save:str,
     vdtick = vmin
     Vdtick = vmax
    
+    cmap = get_discrete_colormap(n_level,cmap)
     
     cmap  = cmap
     cmap2 = cmap
@@ -398,7 +486,7 @@ def create_figure(path2save:str,
     p2 = ax5.plot(x_or[0],x_or[1],c='w',linewidth=1.2)
     p3 = ax5.plot(x_bt[0],x_bt[1],c='k',linewidth=1.2)
     
-    cb0 = define_colorbar_S(p0,ax6,[vdtick,Vdtick],np.linspace(vdtick,Vdtick,10),r'$\Delta T [^{\circ} C]$')
+    cb0 = define_colorbar_S(p0,ax6,[vdtick,Vdtick],np.linspace(vdtick,Vdtick,10),name_field)
     ax6.set_axis_off()
 
     props = dict(boxstyle='round', facecolor='black', alpha=0.5)
@@ -417,8 +505,8 @@ def create_figure(path2save:str,
     ax5.text(0.01, 0.1, '[d]', transform=ax5.transAxes, fontsize=12,
         verticalalignment='top', bbox=props,color='white')  
  
-    
-    fig.savefig(fname)
+    plt.show()
+    fig.savefig(os.path.join(path2save,'%s.png'%name_fig),dpi = 600)
     plt.close(fig)
     
     return 0 
@@ -449,29 +537,16 @@ T2 = Test('%s/%s'%(path,T02))
 
 
 
-Temp_T0     = T0._interpolate_data('SteadyState.Temp')
-Temp_T1     = T1._interpolate_data('SteadyState.Temp')
+
 Temp_T2     = T2._interpolate_data('SteadyState.Temp')
 
 
 
-Temp_T0ad   = T0._interpolate_data('SteadyState.Temp_ad')
-Temp_T1ad   = T1._interpolate_data('SteadyState.Temp_ad')
-Temp_T2ad   = T2._interpolate_data('SteadyState.Temp_ad')
 
 
-
-
-
-
-dT    = [] ; dT_name    = []
-dT_ad = [] ; dT_ad_name = []
-
-
-
-
-
-
+Ta = 'T_0_0_0'
+Tb = 'T_1_0_0'
+Tc = 'T_2_0_0'
 
 T1a = 'T_%d_1_0'%option_viscous[0]
 T1b = 'T_%d_1_0'%option_viscous[1]
@@ -481,36 +556,64 @@ T2a = 'T_%d_2_0'%option_viscous[0]
 T2b = 'T_%d_2_0'%option_viscous[1]
 T2c = 'T_%d_2_0'%option_viscous[2]
 
-dT,dT_name = extractor_differences(path,T1a,T1b,T1c,Temp_T0,Temp_T1,Temp_T2,dT,dT_name,'SteadyState.Temp')
-dT,dT_name = extractor_differences(path,T2a,T2b,T2c,Temp_T0,Temp_T1,Temp_T2,dT,dT_name,'SteadyState.Temp')
+T1aR = 'T_radio_%d_1_0'%option_viscous[0]
+T1bR = 'T_radio_%d_1_0'%option_viscous[1]
+T1cR = 'T_radio_%d_1_0'%option_viscous[2]
 
-dT_ad,dT_name_ad = extractor_differences(path,T1a,T1b,T1c,Temp_T0ad,Temp_T1ad,Temp_T2ad,dT_ad,dT_ad_name,'SteadyState.Temp_ad')
-dT_ad,dT_name_ad = extractor_differences(path,T2a,T2b,T2c,Temp_T0ad,Temp_T1ad,Temp_T2ad,dT_ad,dT_ad_name,'SteadyState.Temp_ad')
+T2aR = 'T_radio_%d_2_0'%option_viscous[0]
+T2bR = 'T_radio_%d_2_0'%option_viscous[1]
+T2cR = 'T_radio_%d_2_0'%option_viscous[2]
 
-create_figure(path2save,
-             T0.MeshData,
-              -100,
-              100,
-              'cmc.vik'
-              ,r'$\Delta$ T [$^{\circ}$C]'
-              ,dT,
-              100,
-              'difference_tests',
-              0,
-              r'Comparison') 
-    
+T1aRc = 'T_radio_con_%d_1_0'%option_viscous[0]
+T1bRc = 'T_radio_con_%d_1_0'%option_viscous[1]
+T1cRc = 'T_radio_con_%d_1_0'%option_viscous[2]
 
-create_figure(path2save,
-             T0.MeshData,
-              -100,
-              100,
-              'cmc.vik'
-              ,r'$\Delta$ T [$^{\circ}$C]'
-              ,dT_ad,
-              100,
-              'difference_tests',
-              0,
-              r'Comparison_adiabatic') 
- 
-    
- 
+T2aRc = 'T_radio_con_%d_2_0'%option_viscous[0]
+T2bRc = 'T_radio_con_%d_2_0'%option_viscous[1]
+T2cRc = 'T_radio_con_%d_2_0'%option_viscous[2]
+
+
+kappa_1rc = Test('%s/%s'%(path,T1cRc))._interpolate_data('SteadyState.k')
+kappa_2rc = Test('%s/%s'%(path,T2cRc))._interpolate_data('SteadyState.k')
+kappa_1c  = Test('%s/%s'%(path,T1c))._interpolate_data('SteadyState.k')
+kappa_2c  = Test('%s/%s'%(path,T2c))._interpolate_data('SteadyState.k')
+kappa_1cR = Test('%s/%s'%(path,T1cR))._interpolate_data('SteadyState.k')
+kappa_2cR = Test('%s/%s'%(path,T2cR))._interpolate_data('SteadyState.k')
+
+
+list_field = [kappa_1c,kappa_1cR,kappa_1rc,kappa_2c,kappa_2cR,kappa_2rc]
+
+create_figure(path2save=path2save,
+              M_data=T0.MeshData,
+              vmin=2,
+              vmax=5,
+              cmap='cmc.lipari',
+              title='Conductivity',
+              field=list_field,
+              n_level=20,
+              name_fig='Conductivity',
+              ipic=0,
+              name_field=r'$k$ [$W/m/K$]')
+
+
+
+T_contour = [Tc,T2cRc]
+LineColor    = ['yellow','firebrick','forestgreen','royalblue','royalblue','orange','orange']
+Linestyle    = ['solid','solid','dotted','solid','dotted','solid','dotted']
+
+extract_contour_isotherm(T_contour,path2save,LineColor,Linestyle,'Extreme')
+
+T_contour = [Tc,T1cRc]
+extract_contour_isotherm(T_contour,path2save,LineColor,Linestyle,'OnlyMantle')
+
+T_contour = [Tc,T1c]
+extract_contour_isotherm(T_contour,path2save,LineColor,Linestyle,'OnlyMantlenoR')
+
+T_contour = [Tc,T2c]
+extract_contour_isotherm(T_contour,path2save,LineColor,Linestyle,'OnlyMantlenoR_CRUST')
+
+T_contour = [Tc,T1cR]
+extract_contour_isotherm(T_contour,path2save,LineColor,Linestyle,'OnlyMantleR')
+
+T_contour = [Tc,T2cR]
+extract_contour_isotherm(T_contour,path2save,LineColor,Linestyle,'OnlyMantleR_CRUST')

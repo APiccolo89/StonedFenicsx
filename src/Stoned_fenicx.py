@@ -144,7 +144,7 @@ def StonedFenicsx(IP,Ph_input):
                     dt = IP.dt,
                     recalculate = IP.recalculate,
                     van_keken = IP.van_keken,
-                    non_linearities=1,
+                    non_linearities=IP.self_consistent_flag,
                     c_age_plate = IP.c_age_plate)
     
     Pdb = generate_phase_database(IP,Ph_input)                      
@@ -175,12 +175,7 @@ def StonedFenicsx(IP,Ph_input):
     
     
     solution_routine(M, ctrl, lhs, Pdb, io_ctrl, sc)
-    #if ctrl.steady_state == 1:
-    #    steady_state_solution(M, ctrl, lhs, Pdb, io_ctrl, sc)
-    #else:
-    #    time_dependent_solution(M, ctrl, lhs, Pdb, io_ctrl, sc)
 
-         
     # Create mesh
     return 0    
 

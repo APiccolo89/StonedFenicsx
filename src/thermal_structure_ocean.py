@@ -486,7 +486,7 @@ def compute_ocean_plate_temperature(ctrl:NumericalControls
     ph   = np.zeros([nz],dtype = np.int32) # I assume that everything is mantle 
     ph[z<6000/scal.L] = np.int32(1)
 
-    if lhs.van_keken == 1: 
+    if lhs.van_keken == 1 and lhs.non_linearities==1: 
         from scipy import special
         Cp    = 1250/scal.Cp
         k     = 3.0/scal.k
