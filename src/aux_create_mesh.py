@@ -121,7 +121,7 @@ class Geom_input():
         slab_tk: float = 130e3,
         decoupling: float = 100e3,
         trans: float = 10e3,
-        lab_d: float = 0.0e3) -> None:
+        lt_d : float = 50e3) -> None:
          
         self.x                 = x               # main grid coordinate
         self.y                 = y   
@@ -131,7 +131,7 @@ class Geom_input():
         self.lit_mt            = lit_mt          # lithosperic mantle  
         self.lc                = lc              # lower crust ratio 
         self.wc                = wc              # weak zone 
-        self.lt_d              = (cr+lit_mt)     # total lithosphere thickness
+        self.lt_d              = lt_d     # total lithosphere thickness
         self.decoupling        = decoupling      # decoupling depth -> i.e. where the weak zone is prolonged 
         self.resolution_normal = wc  # To Do
         self.theta_out_slab    = []
