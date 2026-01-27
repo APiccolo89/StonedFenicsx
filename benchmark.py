@@ -187,8 +187,8 @@ for i in range(len(option_thermal)):
                 StonedFenicsx(inp,Ph_inp)
 
                 time_B = timethis.time()
-                dt = time_B - time_
-                print
+                dt = time_B - time_A
+                print('#--------------------------------------------------------------------#')
                 if dt > 60.0:
                     m, s = divmod(dt, 60)
                     print(f"{inp.sname} took {m:.2f} min and {s:.2f} sec")
@@ -198,6 +198,8 @@ for i in range(len(option_thermal)):
                     print(f"{inp.sname} took {dt/3600:.2f} hr, {m:.2f} min and {s:.2f} sec")
                 else:
                     print(f"{inp.sname} took  {dt:.2f} sec")
+                print('#--------------------------------------------------------------------#')
+
 
 
 time_fin = timethis.time()
