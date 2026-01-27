@@ -8,7 +8,7 @@ from dolfinx.fem.petsc          import assemble_matrix_block, assemble_vector_bl
 from .numerical_control         import NumericalControls, ctrl_LHS, IOControls
 from .utils                     import interpolate_from_sub_to_main
 from .scal                      import Scal
-from .output                    import OUTPUT,OUTPUT_WEDGE
+from .output                    import OUTPUT
 from .utils                     import compute_eII,compute_strain_rate
 from .compute_material_property import Functions_material_properties_global, Functions_material_rheology
 
@@ -570,7 +570,6 @@ class Global_thermal(Problem):
                              T:dolfinx.fem.Function = None,
                              T_O:dolfinx.fem.Function=None,
                              u_global:dolfinx.fem.Function=None,
-                             Hs:dolfinx.fem.Function=None,
                              D:Domain =None,
                              FG:Functions_material_properties_global=None,
                              ctrl:NumericalControls=None,
@@ -584,10 +583,6 @@ class Global_thermal(Problem):
 
         k_k = heat_conductivity_FX(FG, T, p_k, Cp_k, rho_k)  # frozen
 
-        if ctrl.adiabatic_heating != 0:
-            self.compute_adiabatic_heating(D,FG,u_global,T,p_k,ctrl)
-        else:
-            self.adiabatic_heating = 0.0
 
         f    = self.energy_source# source term
         
@@ -601,7 +596,7 @@ class Global_thermal(Problem):
             
             a = fem.form(diff + adv)
             
-            L = fem.form((f + Hs + self.adiabatic_heating) * self.test0 * dx + self.shear_heating )      
+            L = fem.form((f) * self.test0 * dx + self.shear_heating )      
         
         else: 
         
@@ -616,7 +611,6 @@ class Global_thermal(Problem):
                              T:dolfinx.fem.Function = None,
                              T_O:dolfinx.fem.Function=None,
                              u_global:dolfinx.fem.Function=None,
-                             Hs:dolfinx.fem.Function=None,
                              D:Domain =None,
                              FG:Functions_material_properties_global=None,
                              ctrl:NumericalControls=None,
@@ -628,24 +622,21 @@ class Global_thermal(Problem):
         # L - > Old temperature
         # -> Source term is assumed constant in time and do not vary between the timesteps 
         
-        rho_k = density_FX(pdb, T_N, p_k, D.phase, D.mesh)  # frozen
+        rho_k = density_FX(FG, T, p_k)  # frozen
                 
-        Cp_k = heat_capacity_FX(pdb, T_N, D.phase, D.mesh)  # frozen
+        Cp_k = heat_capacity_FX(FG, T)  # frozen
 
-        k_k = heat_conductivity_FX(pdb, T_N, p_k, D.phase, D.mesh, Cp_k, rho_k)  # frozen
+        k_k = heat_conductivity_FX(FG, T, p_k, Cp_k, rho_k)  # frozen
 
 
         
-        rho_k0 = density_FX(pdb, T_O, p_k, D.phase, D.mesh)  # frozen
+        rho_k0 = density_FX(FG, T_O, p_k)  # frozen
                 
-        Cp_k0 = heat_capacity_FX(pdb, T_O, D.phase, D.mesh)  # frozen
+        Cp_k0 = heat_capacity_FX(FG, T_O)  # frozen
         
-        k_k0 = heat_conductivity_FX(pdb, T_O, p_k, Cp_k, rho_k)  # frozen
+        k_k0 = heat_conductivity_FX(FG, T_O, p_k, Cp_k, rho_k)  # frozen
 
-        if ctrl.adiabatic_heating != 0:
-            self.compute_adiabatic_heating(D,FG,u_global,T,p_k,ctrl)
-        else:
-            self.adiabatic_heating = 0.0
+
                 
         rhocp        =  (rho_k * Cp_k)
 
@@ -653,7 +644,7 @@ class Global_thermal(Problem):
         
         dx  = self.dx
         
-        f    = (self.energy_source+self.adiabatic_heating) * self.test0 * dx + self.shear_heating # source term {energy_source is radiogenic heating compute before hand, shear heating is frictional heating already a form}
+        f    = (self.energy_source) * self.test0 * dx + self.shear_heating # source term {energy_source is radiogenic heating compute before hand, shear heating is frictional heating already a form}
 
         
         # a -> New temperature 
@@ -683,21 +674,18 @@ class Global_thermal(Problem):
     def Solve_the_Problem(self,S,ctrl,FG,M,lhs,geom,sc,it=0,ts=0): 
         
         nl = 0 
-        
+        dt = None
         # choose the problem: 
         if ctrl.steady_state == 1: 
             self.set_linear = self.set_linear_picard_SS 
         else: 
             self.set_linear = self.set_linear_picard_TD
+            dt = ctrl.dt
         
         
         p_k = S.PL.copy()  # Previous lithostatic pressure 
         T   = S.T_N # -> will not eventually update 
         
-        if ctrl.adiabatic_heating ==2:
-            Hs = S.Hs_global # Shear heating
-        else:
-            Hs = 0.0
             
         if it == 0:         
             self.shear_heating = self.compute_shear_heating(ctrl,FG, S,getattr(M,'domainG'),geom,sc)
@@ -707,10 +695,10 @@ class Global_thermal(Problem):
                               ,T
                               ,S.T_O
                               ,S.u_global
-                              ,Hs
                               ,getattr(M,'domainG')
                               ,FG
-                              ,ctrl)
+                              ,ctrl
+                              ,dt)
         
         self.bc = self.create_bc_temp(getattr(M,'domainG'),ctrl,geom,lhs,S.u_global,S.T_i,it)
 
@@ -1420,8 +1408,7 @@ class Slab(Stokes_Problem):
         time_B = timing.time()
         print_ph(f'              // -- // --- Solution of Stokes problem in {time_B-time_A:.2f} sec // -- // --->')
         print_ph(f'')
-        if ctrl.adiabatic_heating==2:
-            S = self.compute_shear_heating(ctrl,FGS,S,M,sc,wedge=0)
+
         return S 
     
 #---------------------------------------------------------------------------------------------------       
@@ -1655,13 +1642,6 @@ class Wedge(Stokes_Problem):
         time_B = timing.time()
         print_ph(f'              // -- // --- Solution of Wedge in {time_B-time_A:.2f} sec // -- // --- >')
         print_ph(f'')
-
-
-
-        if ctrl.adiabatic_heating==2:
-            S = self.compute_shear_heating(ctrl,FGW,S,M,sc,wedge=1)
-        
-
 
         return S 
     
@@ -1924,13 +1904,6 @@ def outerloop_operation(M:Mesh,
                                                     ,sol.u_slab
                                                     , M.domainA.cell_par)
         
-        sol.Hs_global = interpolate_from_sub_to_main(sol.Hs_global
-                                                     ,sol.Hs_wedge
-                                                     ,M.domainB.cell_par)
-        
-        sol.Hs_global = interpolate_from_sub_to_main(sol.Hs_global
-                                                     ,sol.Hs_slab
-                                                     ,M.domainA.cell_par)
         
         sol.p_global = interpolate_from_sub_to_main(sol.p_global
                                                     ,sol.p_wedge
@@ -1983,7 +1956,7 @@ def time_loop(M,ctrl,ioctrl,sc,lhs,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g):
         
     t  = 0.0 
     ts = 0 
-    O  = OUTPUT(M.domainG, ioctrl, ctrl, sc,0)
+    O  = OUTPUT(M.domainG, ioctrl, ctrl, sc)
     
     # Initialise S.T_N 
     sol.T_N = sol.T_O.copy()
@@ -2000,13 +1973,16 @@ def time_loop(M,ctrl,ioctrl,sc,lhs,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g):
         
         sol.T_O = sol.T_N.copy()
         
-        if ctrl.steady_state == 1: 
+        if ctrl.steady_state == 1 & ctrl.steady_state==1: 
             t = ctrl.time_max
             if ctrl.van_keken == 1: 
                 from .output import _benchmark_van_keken
                 _benchmark_van_keken(sol,ioctrl,sc)
 
-    
+        t = time+ctrl.dt
+        print_ph(f'Time = {t*sc.T/sc.scale_Myr2sec:.3f} Myr')
+        print_ph(f'================ // =====================')
+
     return 0 
 
 # Def Outer iteration routine
