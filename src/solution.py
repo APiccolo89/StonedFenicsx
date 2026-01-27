@@ -2075,6 +2075,8 @@ def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA):
     
     
     res_total = np.sqrt(res_u**2+res_p**2+res_T**2)
+    if not np.isfinite(res_total):
+        raise ValueError("res_total is NaN/Inf; check inputs and residual computations.")
     
     time_B_outer = timing.time()
 
