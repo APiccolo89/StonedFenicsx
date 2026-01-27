@@ -1780,7 +1780,7 @@ def initialise_the_simulation(M:Mesh,
     element_V           = M.element_V#basix.ufl.element("Lagrange","triangle",2,shape=(2,))
 
     #==================== Phase Parameter ====================
-    lhs_ctrl = compute_initial_LHS(ctrl,lhs_ctrl, sc, pdb)  
+    lhs_ctrl = compute_initial_LHS(ctrl,lhs_ctrl, sc, pdb,M.g_input.theta_in_slab)  
           
     # Define Problem
     # Global energy

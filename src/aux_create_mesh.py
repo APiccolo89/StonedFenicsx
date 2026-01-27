@@ -136,6 +136,7 @@ class Geom_input():
         self.decoupling        = decoupling      # decoupling depth -> i.e. where the weak zone is prolonged 
         self.resolution_normal = wc  # To Do
         self.theta_out_slab    = []
+        self.theta_in_slab     = []
         self.trans             = trans
         if lab_d == 0.0:
             self.lab_d         = self.lt_d
@@ -522,7 +523,7 @@ def function_create_subduction_bottom(sx:NDArray[np.float64],
     cy = sy - lt*np.cos(th)
     # Find the node that are lower than the left boundary [same function, but switching the position -> ca rotate ]
     cord_x = 0.0 
-    cord_z = -lt
+    cord_z = -lt/np.cos(th[0])
     cy = cy[cx>0.0]
     cx = cx[cx>0.0]
     cx = np.insert(cx,0,0.0)  

@@ -644,7 +644,11 @@ def compute_ocean_plate_temperature(ctrl:NumericalControls
 
 
 @timing_function
-def compute_initial_LHS(ctrl,lhs,scal,pdb):
+def compute_initial_LHS(ctrl,lhs,scal,pdb,theta_in):
+    
+    if theta_in !=0.0:
+        # Transform the z coordinate. 
+        lhs.z = lhs.z/np.cos(theta_in)
     
     if lhs.van_keken == 0 or lhs.non_linearities == 0 :
         lhs,t, temperature = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb)

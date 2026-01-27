@@ -29,7 +29,7 @@ inp.lab_d       = inp.lit_mt # depth of the lab
 inp.decoupling  = 50e3  # decoupling depth
 inp.Tmax        = 1300.0 # mantle potential temperature
 #inp.model_shear = 'SelfConsistent'
-inp.steady_state = 0 
+inp.steady_state = 1 
 print_ph('Starting the benchmark tests with different options')
 
 time_in = timethis.time()

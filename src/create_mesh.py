@@ -407,6 +407,9 @@ def create_gmesh(ioctrl   :IOControls,
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
     theta = np.arctan2((slab_y[-1]-slab_y[-2]),(slab_x[-1]-slab_x[-2]))
     g_input.theta_out_slab = theta   # Convert to degrees
+    theta = np.arctan2((slab_y[0]-slab_y[1]),(slab_x[0]-slab_x[1]))
+    g_input.theta_in_slab = theta   # Convert to degrees
+
     mesh_model.geo.removeAllDuplicates()
     gmsh.option.setNumber("Mesh.Algorithm", 6)  # Frontal-Delaunay
     gmsh.option.setNumber("Mesh.Optimize", 1)
