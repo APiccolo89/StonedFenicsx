@@ -5,9 +5,9 @@ from src.Stoned_fenicx import StonedFenicsx
 
 
 
-option_thermal   = [3]
+option_thermal   = [0,1,2,3]
 option_adiabatic = [0]
-option_viscous   = [2]
+option_viscous   = [0,1,2]
 self_con         = [0,1]
 
 
@@ -76,7 +76,7 @@ for i in range(len(option_thermal)):
                     rho0_M   = 3300.0
                     rho0_C   = 2900.0
                     if option_thermal[i] == 3: 
-                        inp.ocr = 30e3
+                        inp.cr = 30e3
                         
                         
 
