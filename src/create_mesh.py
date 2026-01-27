@@ -1,36 +1,12 @@
 # input for iFieldstone 
 
-import os 
-import sys
-from .aux_create_mesh import Class_Points
-from .aux_create_mesh import Class_Line
-from .aux_create_mesh import create_loop
-from .aux_create_mesh import find_line_index
+from .package_import import *
+
 from .numerical_control import IOControls, NumericalControls
-
-import numpy as np
-
-import gmsh 
-
-import ufl
-import meshio
-from mpi4py import MPI
-from petsc4py import PETSc
-
-from dolfinx import mesh, fem, io, nls, log
-from dolfinx.fem.petsc import NonlinearProblem
-from dolfinx.nls.petsc import NewtonSolver
-import matplotlib.pyplot as plt
-from dolfinx.io import XDMFFile, gmshio
-import gmsh 
-from ufl import exp, conditional, eq, as_ufl
-from .scal import _scaling_mesh,Scal
-import basix.ufl
-from .utils import timing_function, print_ph
-import dolfinx
-from dolfinx.mesh import create_submesh
-from .aux_create_mesh import Mesh, Domain, Class_Points, Class_Line, Geom_input, dict_tag_lines, dict_surf
-from numpy.typing import NDArray
+from .scal              import _scaling_mesh,Scal
+from .utils             import timing_function, print_ph
+from dolfinx.mesh       import create_submesh
+from .aux_create_mesh   import Mesh, Domain, Class_Points, Class_Line, Geom_input, dict_tag_lines, dict_surf,find_line_index,create_loop
 
 
 def debug_plot(target,global_line,global_point,color):
@@ -367,7 +343,6 @@ def create_gmesh(ioctrl   :IOControls,
     """
     
 
-    import gmsh 
     from   .Subducting_plate import Slab
     from  .aux_create_mesh import function_create_slab_channel 
 
@@ -432,7 +407,9 @@ def create_gmesh(ioctrl   :IOControls,
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
     theta = np.arctan2((slab_y[-1]-slab_y[-2]),(slab_x[-1]-slab_x[-2]))
     g_input.theta_out_slab = theta   # Convert to degrees
-
+    mesh_model.geo.removeAllDuplicates()
+    gmsh.option.setNumber("Mesh.Algorithm", 6)  # Frontal-Delaunay
+    gmsh.option.setNumber("Mesh.Optimize", 1)
     mesh_model.mesh.generate(2)
     #mesh_model.mesh.setOrder(2)
     

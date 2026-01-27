@@ -1,24 +1,7 @@
 
 
 # -- Main solver script --
-from petsc4py                        import PETSc
-from mpi4py                          import MPI
-import numpy                          as np
-from scipy.interpolate                import griddata
-import ufl
-from dolfinx                          import mesh, fem, io, nls, log, plot
-from dolfinx.fem                       import (Function, FunctionSpace, dirichletbc,
-                                           locate_dofs_topological, form)
-from dolfinx.fem.petsc import (LinearProblem,
-                               NonlinearProblem)
-from dolfinx.io                        import XDMFFile
-from dolfinx.mesh                      import CellType, create_rectangle, locate_entities_boundary
-from dolfinx.cpp.mesh                  import to_type
-
-import basix
-import time                          as timing
-import sys 
-import os 
+from .package_import import *
 
 #---------------------------------------------------------------------------------------------------------
 # My modules 
@@ -41,7 +24,7 @@ from src.create_mesh                 import Geom_input
 from src.scal                        import _scaling_control_parameters
 from src.scal                        import _scale_parameters
 from src.scal                        import _scaling_material_properties
-from src.solution                    import steady_state_solution,time_dependent_solution
+from src.solution                    import solution_routine
 from src.thermal_structure_ocean     import compute_initial_LHS
 
 dict_options = {'NoShear':0,
@@ -160,8 +143,8 @@ def StonedFenicsx(IP,Ph_input):
                     end_time = IP.end_time,
                     dt = IP.dt,
                     recalculate = IP.recalculate,
-                    van_keken = 0,#IP.van_keken,
-                    non_linearities=0,
+                    van_keken = IP.van_keken,
+                    non_linearities=IP.self_consistent_flag,
                     c_age_plate = IP.c_age_plate)
     
     Pdb = generate_phase_database(IP,Ph_input)                      
@@ -190,12 +173,9 @@ def StonedFenicsx(IP,Ph_input):
     M.element_PT = basix.ufl.element("Lagrange","triangle",2)
     M.element_V = basix.ufl.element("Lagrange","triangle",2,shape=(2,))
     
-    if ctrl.steady_state == 1:
-        steady_state_solution(M, ctrl, lhs, Pdb, io_ctrl, sc)
-    else:
-        time_dependent_solution(M, ctrl, lhs, Pdb, io_ctrl, sc)
+    
+    solution_routine(M, ctrl, lhs, Pdb, io_ctrl, sc)
 
-         
     # Create mesh
     return 0    
 

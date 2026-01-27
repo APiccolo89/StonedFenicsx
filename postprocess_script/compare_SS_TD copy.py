@@ -8,6 +8,115 @@ import os
 import cmcrameri
 from data_extractor import Test
 from data_extractor import MeshData
+import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+#---------------------------------------------------------------------------
+def get_discrete_colormap(n_colors, base_cmap='cmc.lipari'):
+    import numpy as np
+    import matplotlib.colors as mcolors
+
+    """
+    Create a discrete colormap with `n_colors` from a given base colormap.
+    
+    Parameters:
+        n_colors (int): Number of discrete colors.
+        base_cmap (str or Colormap): Name of the matplotlib colormap to base on.
+    
+    Returns:
+        matplotlib.colors.ListedColormap: A discrete version of the colormap.
+        copied from internet
+    """
+    base = plt.cm.get_cmap(base_cmap)
+    color_list = base(np.linspace(0, 1, n_colors))
+    return mcolors.ListedColormap(color_list, name=f'{base_cmap}_{n_colors}')
+
+def extract_contour_isotherm(list_test,pathsave,colors,ls,name):
+    
+    plt.rcParams.update({
+    "text.usetex": True,           # Use LaTeX for all text
+    "font.family": "serif",        # Or 'sans-serif'
+    "font.serif": ["Computer Modern"],   # LaTeX default
+    "axes.unicode_minus": False,
+    })
+    fig = plt.figure(figsize=(10,6))
+    ax0 = fig.gca()
+    legend_handles = []
+    cmap = get_discrete_colormap(21,'cmc.lisbon')
+    for i in range(len(list_test)):
+        T = list_test[i]
+        Ta = Test('%s/%s'%(path,T))
+        Temp_T0     = Ta._interpolate_data('SteadyState.Temp')
+
+        if i == 0: 
+            a = Temp_T0 
+            M_data = Ta.MeshData
+            Xi = M_data.Xi 
+            Yi = M_data.Yi
+            xs = M_data.X[(M_data.mesh_tag==8.0) | (M_data.mesh_tag == 9.0),0]
+            ys = M_data.X[(M_data.mesh_tag==8.0) | (M_data.mesh_tag == 9.0),1]
+            sort = np.argsort(xs)
+    
+            x_s  = [xs[sort], ys[sort]]
+    
+            xor = M_data.X[(M_data.mesh_tag==11.0),0]
+            yor = M_data.X[(M_data.mesh_tag==11.0),1]
+            sort = np.argsort(xor)
+    
+            x_or  = [xor[sort], yor[sort]]
+    
+            xbt = M_data.X[(M_data.mesh_tag==6.0),0]
+            ybt = M_data.X[(M_data.mesh_tag==6.0),1]
+            sort = np.argsort(xbt)
+    
+            x_bt  = [xbt[sort], ybt[sort]]
+            p1 = ax0.plot(x_s[0],x_s[1],  c='k',linewidth=1.2)
+            p2 = ax0.plot(x_or[0],x_or[1],c='k',linewidth=1.2)
+            p3 = ax0.plot(x_bt[0],x_bt[1],c='k',linewidth=1.2)
+    
+        p4 = ax0.contour(Xi,Yi,Temp_T0,levels=[600],colors=colors[i],linewidths=0.6,linestyles = ls[i])
+        p5 = ax0.contour(Xi,Yi,Temp_T0,levels=[800],colors=colors[i],linewidth=0.6,linestyles='dotted')   
+        p6 = ax0.pcolormesh(Xi,Yi,Temp_T0-a,cmap = cmap,vmin=-100,vmax=100)
+        legend_handles.append(
+                        Line2D([0], [0],
+                        color=colors[i],
+                        lw=2,
+                        label=T))    
+        
+    cbar=plt.colorbar(p6, orientation='horizontal',extend="both")
+    cbar.set_label(label=r'$\Delta$ T [deg C]',size=10) 
+    
+    ax0.legend(handles=legend_handles, loc="best")
+    plt.show()
+
+    fig.savefig(os.path.join(pathsave, name),dpi=600)
+
+    plt.close()
+    
+    
+    
+
+
+def extractor_differences(path:str,A:str,B:str,C:str,T0:float,T1:float,T2:float,dT:list,name:list,field:str): 
+    
+    #---------------------------
+    Ta = Test('%s/%s'%(path,A))
+    Tb = Test('%s/%s'%(path,B))
+    Tc = Test('%s/%s'%(path,C))
+    #---------------------------
+    Temp_T0     = Ta._interpolate_data(field)
+    Temp_T1     = Tb._interpolate_data(field)
+    Temp_T2     = Tc._interpolate_data(field)
+    #---------------------------
+    dT.append(Temp_T0-T0)
+    dT.append(Temp_T1-T1)
+    dT.append(Temp_T2-T2)
+    name.append('%s - T_0_0_0'%A)
+    name.append('%s - T_0_0_0'%B)
+    name.append('%s - T_0_0_0'%C)
+    
+
+    return dT, name
+
 
 def release_vectorial_field(vec_field,T,ind_sortS,ind_sortO):
     
@@ -311,29 +420,22 @@ def create_figure(path2save:str,
     ax3 = fig.add_axes([bx+dx+sx, by, sx, sy])
     ax4 = fig.add_axes([bx+dx+sx, by+dy+sy, sx, sy])
     ax5 = fig.add_axes([bx+dx+sx, by+2*(dy+sy), sx, sy])
-    ax6 = fig.add_axes([0.25, 0.01, 0.5, 0.07])
-    ax7 = fig.add_axes([0.25, 0.01+0.07+0.01, 0.5, 0.07])
+    ax6 = fig.add_axes([0.25, 0.01, 0.5, 0.14])
 
-    vdtick = np.nanmin([np.nanmin(field[0]),np.nanmin(field[3])])
-    Vdtick = np.nanmax([np.nanmax(field[0]),np.nanmax(field[3])])
 
-    vdTick = np.nanmin([np.nanmin(field[1]),np.nanmin(field[2]),np.nanmin(field[4]),np.nanmin(field[5])])
-    VdTick = np.nanmax([np.nanmax(field[1]),np.nanmax(field[2]),np.nanmax(field[4]),np.nanmax(field[5])])
     
-    vdtick = -80.0
-    Vdtick = 250.0
+    vdtick = vmin
+    Vdtick = vmax
+   
+    cmap = get_discrete_colormap(n_level,cmap)
     
-    vdTick = 0.0
-    VdTick = np.ceil(VdTick)
-    
-    cmap = cmcrameri.cm.lipari
-    cmap2 = cmcrameri.cm.vik
+    cmap  = cmap
+    cmap2 = cmap
     
     ax0 = modify_ax(ax0) # dT Reference -> adiabatic 
-    ax0.set_title(time_string, fontsize=16)
     ax0.set_xlabel('Distance [km]', fontsize=14)
     ax0.set_ylabel('Depth [km]', fontsize=14)
-    p0 = ax0.contourf(M_data.Xi, M_data.Yi, field[0], levels=11, cmap=cmap2, vmin=vdtick, vmax=Vdtick)
+    p0 = ax0.pcolormesh(M_data.Xi, M_data.Yi, field[2], cmap=cmap2, vmin=vdtick, vmax=Vdtick)
     p1 = ax0.plot(x_s[0],x_s[1],c='w',linewidth=1.2)
     p2 = ax0.plot(x_or[0],x_or[1],c='w',linewidth=1.2)
     p3 = ax0.plot(x_bt[0],x_bt[1],c='k',linewidth=1.2)
@@ -346,7 +448,7 @@ def create_figure(path2save:str,
     ax1.set_xticklabels([])
     ax1.set_xlabel('', fontsize=14)
     
-    p0 = ax1.contourf(M_data.Xi, M_data.Yi, field[1], levels=18, cmap=cmap, vmin=vdTick, vmax=VdTick)
+    p0 = ax1.pcolormesh(M_data.Xi, M_data.Yi, field[1], cmap=cmap2, vmin=vdtick, vmax=Vdtick)
     p1 = ax1.plot(x_s[0],x_s[1],c='w',linewidth=1.2)
     p2 = ax1.plot(x_or[0],x_or[1],c='w',linewidth=1.2)
     p3 = ax1.plot(x_bt[0],x_bt[1],c='k',linewidth=1.2)
@@ -355,13 +457,13 @@ def create_figure(path2save:str,
     ax2 = modify_ax(ax2) # T without adiabatic 
     ax2.set_ylabel('Depth [km]', fontsize=14)
     ax2.set_xticklabels([])
-    pB = ax2.contourf(M_data.Xi, M_data.Yi, field[2], levels=18, cmap=cmap, vmin=vdTick, vmax=VdTick)
+    p0 = ax2.pcolormesh(M_data.Xi, M_data.Yi, field[0], cmap=cmap2, vmin=vdtick, vmax=Vdtick)
     p1 = ax2.plot(x_s[0],x_s[1],c='w',linewidth=1.2)
     p2 = ax2.plot(x_or[0],x_or[1],c='w',linewidth=1.2)
     p3 = ax2.plot(x_bt[0],x_bt[1],c='k',linewidth=1.2)
     
     ax3 = modify_ax(ax3) # dT adiabatic reference,  
-    pA = ax3.contourf(M_data.Xi, M_data.Yi, field[3], levels=11, cmap=cmap2,  vmin=vdtick, vmax=Vdtick)
+    p0 = ax3.pcolormesh(M_data.Xi, M_data.Yi, field[5], cmap=cmap2, vmin=vdtick, vmax=Vdtick)
     ax3.set_xticklabels([])
     ax3.set_yticklabels([])
     p1 = ax3.plot(x_s[0],x_s[1],c='w',linewidth=1.2)
@@ -371,7 +473,7 @@ def create_figure(path2save:str,
     ax4 = modify_ax(ax4) # dT adiabatic reference,  
     ax4.set_xticklabels([])
     ax4.set_yticklabels([])
-    pB = ax4.contourf(M_data.Xi, M_data.Yi, field[5], levels=18, cmap=cmap,  vmin=vdTick, vmax=VdTick)
+    p0 = ax4.pcolormesh(M_data.Xi, M_data.Yi, field[4], cmap=cmap2, vmin=vdtick, vmax=Vdtick)
     p1 = ax4.plot(x_s[0],x_s[1],c='w',linewidth=1.2)
     p2 = ax4.plot(x_or[0],x_or[1],c='w',linewidth=1.2)
     p3 = ax4.plot(x_bt[0],x_bt[1],c='k',linewidth=1.2)
@@ -379,14 +481,12 @@ def create_figure(path2save:str,
     ax5 = modify_ax(ax5) # dT adiabatic reference,  
     ax5.set_xticklabels([])
     ax5.set_yticklabels([])
-    pT = ax5.contourf(M_data.Xi, M_data.Yi, field[4], levels=18, cmap=cmap,  vmin=vdTick, vmax=VdTick)
+    p0 = ax5.pcolormesh(M_data.Xi, M_data.Yi, field[3], cmap=cmap2, vmin=vdtick, vmax=Vdtick)
     p1 = ax5.plot(x_s[0],x_s[1],c='w',linewidth=1.2)
     p2 = ax5.plot(x_or[0],x_or[1],c='w',linewidth=1.2)
     p3 = ax5.plot(x_bt[0],x_bt[1],c='k',linewidth=1.2)
     
-    cb0 = define_colorbar_S(pA,ax6,[vdtick,Vdtick],np.linspace(vdtick,Vdtick,10),r'$\Delta T [^{\circ} C]$')
-    cb0 = define_colorbar_S(pB,ax7,[vdTick,VdTick],np.linspace(vdTick,VdTick,10),r'T $[^{\circ} C]$')
-    ax7.set_axis_off()
+    cb0 = define_colorbar_S(p0,ax6,[vdtick,Vdtick],np.linspace(vdtick,Vdtick,10),name_field)
     ax6.set_axis_off()
 
     props = dict(boxstyle='round', facecolor='black', alpha=0.5)
@@ -405,8 +505,8 @@ def create_figure(path2save:str,
     ax5.text(0.01, 0.1, '[d]', transform=ax5.transAxes, fontsize=12,
         verticalalignment='top', bbox=props,color='white')  
  
-    
-    fig.savefig(fname)
+    plt.show()
+    fig.savefig(os.path.join(path2save,'%s.png'%name_fig),dpi = 600)
     plt.close(fig)
     
     return 0 
@@ -414,54 +514,106 @@ def create_figure(path2save:str,
 
 
 
-path = '/Users/wlnw570/Work/Results_VK'
-path2save = '/Users/wlnw570/Work/Figures_Tests'
+path = '/Users/wlnw570/Work/Leeds/Results/Tests_Van_keken'
+path2save = '/Users/wlnw570/Work/Leeds/Results/Figures_Tests'
 if not os.path.isdir(path2save):
     os.makedirs(path2save)  
-    
-
-T0 = Test('%s/exp0/Output'%path)
-T1 = Test('%s/exp0_ad/Output'%path)
-T2 = Test('%s/exp1/Output'%path)
-T3 = Test('%s/exp1_ad/Output'%path)
-
-Temp_T0 = T0._interpolate_data('SteadyState.Temp')
-Temp_T1 = T1._interpolate_data('SteadyState.Temp')
-Temp_T2 = T2._interpolate_data('SteadyState.Temp')
-Temp_T3 = T3._interpolate_data('SteadyState.Temp')
 
 
-rho0 = T0._interpolate_data('SteadyState.Temp')
-rho1 = T1._interpolate_data('SteadyState.Temp')
-rho2 = T2._interpolate_data('SteadyState.Temp')
-rho3 = T3._interpolate_data('SteadyState.Temp')
+option_viscous   = [0,1,2]
+
+option_adiabatic = [0]
+
+option_heat      = [0,1,2] 
+
+T00 = 'T_0_0_0'
+T01 = 'T_1_0_0'
+T02 = 'T_2_0_0'
 
 
-Cp0 = T0._interpolate_data('SteadyState.Temp')
-Cp1 = T1._interpolate_data('SteadyState.Temp')
-Cp2 = T2._interpolate_data('SteadyState.Temp')
-Cp3 = T3._interpolate_data('SteadyState.Temp')
-
-
-alpha0 = T0._interpolate_data('SteadyState.Temp')
-alpha1 = T1._interpolate_data('SteadyState.Temp')
-alpha2 = T2._interpolate_data('SteadyState.Temp')
-alpha3 = T3._interpolate_data('SteadyState.Temp')
+T0 = Test('%s/%s'%(path,T00))
+T1 = Test('%s/%s'%(path,T01))
+T2 = Test('%s/%s'%(path,T02))
 
 
 
-M_data = T0.MeshData
 
-vmin = 0.0
-vmax = 1700.0 
+Temp_T2     = T2._interpolate_data('SteadyState.Temp')
 
-n_level = 20
-cmap = cmcrameri.cm.lipari
-title = 'Temperature [$^{\circ}C$]'
-name_fig = 'Temperature'
-time_string = 'Steady State'
 
-fields = [Temp_T1-Temp_T0, Temp_T1, Temp_T0, Temp_T3-Temp_T1,Temp_T2,Temp_T3]
 
-create_figure(path2save,M_data,vmin,np.nanmax(Temp_T0),cmap,title,fields,n_level,name_fig,0,'comparison')
 
+
+Ta = 'T_0_0_0'
+Tb = 'T_1_0_0'
+Tc = 'T_2_0_0'
+
+T1a = 'T_%d_1_0'%option_viscous[0]
+T1b = 'T_%d_1_0'%option_viscous[1]
+T1c = 'T_%d_1_0'%option_viscous[2]
+
+T2a = 'T_%d_2_0'%option_viscous[0]
+T2b = 'T_%d_2_0'%option_viscous[1]
+T2c = 'T_%d_2_0'%option_viscous[2]
+
+T1aR = 'T_radio_%d_1_0'%option_viscous[0]
+T1bR = 'T_radio_%d_1_0'%option_viscous[1]
+T1cR = 'T_radio_%d_1_0'%option_viscous[2]
+
+T2aR = 'T_radio_%d_2_0'%option_viscous[0]
+T2bR = 'T_radio_%d_2_0'%option_viscous[1]
+T2cR = 'T_radio_%d_2_0'%option_viscous[2]
+
+T1aRc = 'T_radio_con_%d_1_0'%option_viscous[0]
+T1bRc = 'T_radio_con_%d_1_0'%option_viscous[1]
+T1cRc = 'T_radio_con_%d_1_0'%option_viscous[2]
+
+T2aRc = 'T_radio_con_%d_2_0'%option_viscous[0]
+T2bRc = 'T_radio_con_%d_2_0'%option_viscous[1]
+T2cRc = 'T_radio_con_%d_2_0'%option_viscous[2]
+
+
+kappa_1rc = Test('%s/%s'%(path,T1cRc))._interpolate_data('SteadyState.k')
+kappa_2rc = Test('%s/%s'%(path,T2cRc))._interpolate_data('SteadyState.k')
+kappa_1c  = Test('%s/%s'%(path,T1c))._interpolate_data('SteadyState.k')
+kappa_2c  = Test('%s/%s'%(path,T2c))._interpolate_data('SteadyState.k')
+kappa_1cR = Test('%s/%s'%(path,T1cR))._interpolate_data('SteadyState.k')
+kappa_2cR = Test('%s/%s'%(path,T2cR))._interpolate_data('SteadyState.k')
+
+
+list_field = [kappa_1c,kappa_1cR,kappa_1rc,kappa_2c,kappa_2cR,kappa_2rc]
+
+create_figure(path2save=path2save,
+              M_data=T0.MeshData,
+              vmin=2,
+              vmax=5,
+              cmap='cmc.lipari',
+              title='Conductivity',
+              field=list_field,
+              n_level=20,
+              name_fig='Conductivity',
+              ipic=0,
+              name_field=r'$k$ [$W/m/K$]')
+
+
+
+T_contour = [Tc,T2cRc]
+LineColor    = ['yellow','firebrick','forestgreen','royalblue','royalblue','orange','orange']
+Linestyle    = ['solid','solid','dotted','solid','dotted','solid','dotted']
+
+extract_contour_isotherm(T_contour,path2save,LineColor,Linestyle,'Extreme')
+
+T_contour = [Tc,T1cRc]
+extract_contour_isotherm(T_contour,path2save,LineColor,Linestyle,'OnlyMantle')
+
+T_contour = [Tc,T1c]
+extract_contour_isotherm(T_contour,path2save,LineColor,Linestyle,'OnlyMantlenoR')
+
+T_contour = [Tc,T2c]
+extract_contour_isotherm(T_contour,path2save,LineColor,Linestyle,'OnlyMantlenoR_CRUST')
+
+T_contour = [Tc,T1cR]
+extract_contour_isotherm(T_contour,path2save,LineColor,Linestyle,'OnlyMantleR')
+
+T_contour = [Tc,T2cR]
+extract_contour_isotherm(T_contour,path2save,LineColor,Linestyle,'OnlyMantleR_CRUST')

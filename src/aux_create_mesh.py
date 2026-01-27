@@ -1,18 +1,5 @@
-
-import numpy as np
-import gmsh 
+from .package_import import *
 from .scal import Scal 
-import matplotlib.pyplot as plt
-from dataclasses import dataclass, field
-from dolfinx import mesh, fem, io, nls, log
-import matplotlib.pyplot as plt
-from dolfinx.io import XDMFFile, gmshio
-from ufl import exp, conditional, eq, as_ufl
-import basix.ufl
-from .utils import timing_function, print_ph
-import dolfinx
-from dolfinx.mesh import create_submesh
-from numpy.typing import NDArray
 
 # --- Index 
 '''
@@ -534,7 +521,7 @@ def function_create_subduction_bottom(sx:NDArray[np.float64],
     cy = sy - lt*np.cos(th)
     # Find the node that are lower than the left boundary [same function, but switching the position -> ca rotate ]
     cord_x = 0.0 
-    cord_z = -lt/np.cos(th[0])
+    cord_z = -lt
     cy = cy[cx>0.0]
     cx = cx[cx>0.0]
     cx = np.insert(cx,0,0.0)  

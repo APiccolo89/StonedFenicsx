@@ -3,17 +3,9 @@
     
 """
     
-from dolfinx import fem
-from mpi4py import MPI
-import ufl
-from .compute_material_property import density_FX,heat_capacity_FX,heat_conductivity_FX,alpha_FX
-from .compute_material_property import compute_viscosity_FX
-from .utils import compute_strain_rate,compute_eII
-import os
-from dolfinx.io import XDMFFile
-import numpy as np
-from petsc4py import PETSc
-from .utils import evaluate_material_property
+from .package_import import *
+from .utils import evaluate_material_property,compute_strain_rate,compute_eII,print_ph
+from .compute_material_property import compute_viscosity_FX,density_FX,heat_capacity_FX,heat_conductivity_FX,alpha_FX
 
 
 
@@ -37,13 +29,13 @@ class OUTPUT():
         
         import basix
         
-        self.vel_V   = fem.functionspace(mesh,
-                          basix.ufl.element("Lagrange", "triangle", 1, shape=(mesh.geometry.dim,)))
-        self.pres_V  = fem.functionspace(mesh,
+        self.vel_V   = fem.functionspace(mesh.mesh,
+                          basix.ufl.element("Lagrange", "triangle", 1, shape=(mesh.mesh.geometry.dim,)))
+        self.pres_V  = fem.functionspace(mesh.mesh,
                           basix.ufl.element("Lagrange", "triangle", 1))
         self.temp_V  = self.pres_V
-        self.stress_V= fem.functionspace(mesh,
-                          basix.ufl.element("Lagrange", "triangle", 1, shape=(mesh.geometry.dim**2,)))
+        self.stress_V= fem.functionspace(mesh.mesh,
+                          basix.ufl.element("Lagrange", "triangle", 1, shape=(mesh.mesh.geometry.dim**2,)))
 
         # for transient we keep XDMF files open across timesteps
         if ctrl.steady_state == 0:
@@ -65,7 +57,8 @@ class OUTPUT():
     def print_output(self
                      ,S                # Solution object
                      ,D                # Global domain object
-                     ,pdb              # Phase database object
+                     ,FGT              # Phase database object
+                     ,FGR
                      ,ioctrl           # IO control object
                      ,sc               # Scaling object
                      ,ctrl             # Numerical control object
@@ -105,7 +98,7 @@ class OUTPUT():
         T2 = fem.Function(self.temp_V)
         T2.name = "Temperature  [degC]"
         if ctrl.steady_state == 1:
-            T2.interpolate(S.T_O)
+            T2.interpolate(S.T_N)
         else:
             T2.interpolate(S.T_N)
         T2.x.array[:] = T2.x.array[:]*sc.Temp - 273.15
@@ -128,7 +121,7 @@ class OUTPUT():
         PL2.x.scatter_forward()
         
         # alpha 
-        alpha = alpha_FX(pdb,S.T_O,S.PL,D.phase,D)
+        alpha = alpha_FX(FGT,S.T_N,S.PL)
         alpha2 = evaluate_material_property(alpha, self.temp_V)
         alpha2.name = "alpha  [1/K]"
         alpha2.x.array[:] = alpha2.x.array[:]*(1/sc.Temp)
@@ -136,21 +129,21 @@ class OUTPUT():
 
 
         # density 
-        rho = density_FX(pdb,S.T_O,S.PL,D.phase,D)
+        rho = density_FX(FGT,S.T_N,S.PL)
         rho2 = evaluate_material_property(rho, self.temp_V)
         rho2.name = "Density  [kg/m3]"
         rho2.x.array[:] = rho2.x.array[:]*sc.rho
         rho2.x.scatter_forward()
 
         # Cp 
-        Cp = heat_capacity_FX(pdb,S.T_O,D.phase,D)
+        Cp = heat_capacity_FX(FGT,S.T_N)
         Cp2 = evaluate_material_property(Cp,self.temp_V)
         Cp2.name = "Cp  [J/kg]"
         Cp2.x.array[:] = Cp2.x.array[:]*sc.Cp
         Cp2.x.scatter_forward()
 
         # k 
-        k = heat_conductivity_FX(pdb,S.T_O,S.PL,D.phase,D,Cp,rho)
+        k = heat_conductivity_FX(FGT,S.T_N,S.PL,Cp,rho)
         k2 = evaluate_material_property(k,self.temp_V)
         k2.name = "k  [W/m/k]"
         k2.x.array[:] = k2.x.array[:]*sc.k
@@ -176,30 +169,56 @@ class OUTPUT():
         e_T.x.scatter_forward()
 
         # viscosity (e,S.t_oslab,S.p_lslab,pdb,D.phase,D,sc)
-        eta = compute_viscosity_FX(eII,S.T_O,S.PL,pdb,D.phase,D,sc)
+        eta = compute_viscosity_FX(eII,S.T_N,S.PL,FGR,sc)
         eta2 = evaluate_material_property(eta,self.temp_V)
         eta2.name = "eta  [Pa s]"
         eta2.x.array[:] = np.abs(eta2.x.array[:])*sc.eta
         eta2.x.scatter_forward()
 
-
+        T_ad    = fem.Function(self.temp_V)
+        if ctrl.adiabatic_heating == 0:
+            T_ad.interpolate(S.T_ad)
+            T_ad.x.array[:]    = T_ad.x.array[:]*sc.Temp -273.15
+        else:
+            T_ad.x.array[:]=-100 
+            T_ad.x.scatter_forward()
+        T_ad.name = 'Tad [C]'
 
         # heat flux 
-        q_expr = - ( heat_conductivity_FX(pdb,S.T_O,S.PL,D.phase,D,Cp,rho)* ufl.grad(S.T_O))  
+        q_expr = - ( heat_conductivity_FX(FGT,S.T_O,S.PL,Cp,rho)* ufl.grad(S.T_N))  
         flux = evaluate_material_property(q_expr,self.vel_V)
         flux.name = 'Heat flux [W/m2]'
         flux.x.array[:] *= sc.Watt/sc.L**2
+        # adiabatic heating 
+        if ctrl.adiabatic_heating >0:
+            adiabatic_expr = alpha * ufl.inner(S.u_global, ufl.grad(S.PL)) * S.T_N
+            adiabatic_H = evaluate_material_property(adiabatic_expr,self.temp_V)
+            adiabaticH = fem.Function(self.temp_V)
+            adiabaticH.name = 'Ha [W/m3]'
+            adiabaticH.x.array[:] = adiabatic_H.x.array[:]*sc.Watt/sc.L**3
         
-        adiabatic_expr = alpha * ufl.inner(S.u_global, ufl.grad(S.PL)) * S.T_O
-        adiabatic_H = evaluate_material_property(adiabatic_expr,self.temp_V)
-        adiabaticH = fem.Function(self.temp_V)
-        adiabaticH.name = 'Ha [W/m3]'
-        adiabaticH.x.array[:] = adiabatic_H.x.array[:]*sc.Watt/sc.L**3
-        
-        shear_heating =  2.0 * eta * ufl.inner(e,e)
-        shear_heatibnF = evaluate_material_property(shear_heating,self.temp_V)
-        shear_heatibnF.name = 'Hs [W/m3]'
-        shear_heatibnF.x.array[:]*=sc.Watt/sc.L**3
+            shear_heatingF =  fem.Function(self.temp_V)
+            shear_heatingF.interpolate(S.Hs_global)
+            shear_heatingF.name = 'Hs [W/m3]'
+            shear_heatingF.x.array[:]*=sc.Watt/sc.L**3
+
+            adiabatic_comp    = fem.Function(self.temp_V)
+            adiabatic_comp.name = " Ha+Hs [W/m3]"
+            adiabatic_comp.x.array[:] = adiabaticH.x.array[:] + shear_heatingF.x.array[:]
+            adiabatic_comp.x.scatter_forward()
+        else: 
+            adiabaticH = fem.Function(self.temp_V)
+            adiabaticH.name = 'Ha [W/m3]'
+            adiabaticH.x.array[:] = 0.0 
+            
+            shear_heatingF =  fem.Function(self.temp_V)
+            shear_heatingF.name = 'Hs [W/m3]'
+            shear_heatingF.x.array[:] = 0.0 
+
+            adiabatic_comp    = fem.Function(self.temp_V)
+            adiabatic_comp.name = "Ha+Hs [W/m3]"
+            adiabatic_comp.x.array[:] = 0.0 
+            adiabatic_comp.x.scatter_forward()    
 
         
         # Line Tag for the mesh and post_processing 
@@ -229,6 +248,7 @@ class OUTPUT():
             self.xdmf_main.write_function(u_T,          time)
             self.xdmf_main.write_function(p2,           time)
             self.xdmf_main.write_function(T2,           time)
+            self.xdmf_main.write_function(Tad,           time)
             self.xdmf_main.write_function(PL2,          time)
             self.xdmf_main.write_function(rho2,         time)
             self.xdmf_main.write_function(Cp2,          time)
@@ -239,6 +259,7 @@ class OUTPUT():
             self.xdmf_main.write_function(eta2,         time)
             self.xdmf_main.write_function(flux,         time)
             self.xdmf_main.write_function(adiabaticH,   time)
+            self.xdmf_main.write_function(shear_heatingF,   time)
             self.xdmf_main.write_function(tag,          time)
         else:
             with XDMFFile(MPI.COMM_WORLD, "%s.xdmf"%file_name, "w") as ufile_xdmf:
@@ -250,6 +271,7 @@ class OUTPUT():
                 ufile_xdmf.write_function(u_T  )
                 ufile_xdmf.write_function(p2   )
                 ufile_xdmf.write_function(T2   )
+                ufile_xdmf.write_function(T_ad )
                 ufile_xdmf.write_function(PL2  )
                 ufile_xdmf.write_function(rho2 )
                 ufile_xdmf.write_function(Cp2  )
@@ -260,9 +282,10 @@ class OUTPUT():
                 ufile_xdmf.write_function(eta2 )
                 ufile_xdmf.write_function(flux )
                 ufile_xdmf.write_function(adiabaticH )
-                ufile_xdmf.write_function(shear_heatibnF)
+                ufile_xdmf.write_function(shear_heatingF)
                 ufile_xdmf.write_function(tag )
                 D.mesh.geometry.x[:] = coord
+                
 
 
 
@@ -437,23 +460,35 @@ class OUTPUT_WEDGE():
         eta2.x.scatter_forward()
 
         # adiabatic heating 
+        if ctrl.adiabatic_heating >0:
+            adiabatic_expr = alpha * ufl.inner(S.u_wedge, ufl.grad(S.p_lwedge)) * S.t_owedge
+            adiabatic_H = evaluate_material_property(adiabatic_expr,self.temp_V)
+            adiabaticH = fem.Function(self.temp_V)
+            adiabaticH.name = 'Ha [W/m3]'
+            adiabaticH.x.array[:] = adiabatic_H.x.array[:]*sc.Watt/sc.L**3
         
-        adiabatic_expr = alpha * ufl.inner(S.u_wedge, ufl.grad(S.p_lwedge)) * S.t_owedge
-        adiabatic_H = evaluate_material_property(adiabatic_expr,self.temp_V)
-        adiabaticH = fem.Function(self.temp_V)
-        adiabaticH.name = 'Ha [W/m3]'
-        adiabaticH.x.array[:] = adiabatic_H.x.array[:]*sc.Watt/sc.L**3
-        
-        shear_heating =  2.0 * eta * ufl.inner(e,e)
-        shear_heatibnF = evaluate_material_property(shear_heating,self.temp_V)
-        shear_heatibnF.name = 'Hs [W/m3]'
-        shear_heatibnF.x.array[:]*=sc.Watt/sc.L**3
+            shear_heatingF =  fem.Function(self.temp_V)
+            shear_heatingF.interpolate(S.Hs_global)
+            shear_heatingF.name = 'Hs [W/m3]'
+            shear_heatingF.x.array[:]*=sc.Watt/sc.L**3
 
-        adiabatic_comp    = fem.Function(self.temp_V)
-        adiabatic_comp.name = " Ha+Hs [W/m3]"
-        adiabatic_comp.x.array[:] = adiabaticH.x.array[:] + shear_heatibnF.x.array[:]
-        adiabatic_comp.x.scatter_forward()
-                
+            adiabatic_comp    = fem.Function(self.temp_V)
+            adiabatic_comp.name = " Ha+Hs [W/m3]"
+            adiabatic_comp.x.array[:] = adiabaticH.x.array[:] + shear_heatingF.x.array[:]
+            adiabatic_comp.x.scatter_forward()
+        else: 
+            adiabaticH = fem.Function(self.temp_V)
+            adiabaticH.name = 'Ha [W/m3]'
+            adiabaticH.x.array[:] = 0.0 
+            
+            shear_heatingF =  fem.Function(self.temp_V)
+            shear_heatingF.name = 'Hs [W/m3]'
+            shear_heatingF.x.array[:] = 0.0 
+
+            adiabatic_comp    = fem.Function(self.temp_V)
+            adiabatic_comp.name = "Ha+Hs [W/m3]"
+            adiabatic_comp.x.array[:] = 0.0 
+            adiabatic_comp.x.scatter_forward()    
         
         # Line Tag for the mesh and post_processing 
         tag = fem.Function(self.temp_V)
@@ -491,7 +526,7 @@ class OUTPUT_WEDGE():
             self.xdmf_main.write_function(e_T,          time)
             self.xdmf_main.write_function(eta2,         time)
             self.xdmf_main.write_function(eta2,         time)
-            self.xdmf_main.write_function(shear_heatibnF,   time)
+            self.xdmf_main.write_function(shear_heatingF,   time)
             self.xdmf_main.write_function(tag,          time)
         else:
             with XDMFFile(MPI.COMM_WORLD, "%s.xdmf"%file_name, "w") as ufile_xdmf:
@@ -511,7 +546,7 @@ class OUTPUT_WEDGE():
                 ufile_xdmf.write_function(e_T  )
                 ufile_xdmf.write_function(eta2 )
                 ufile_xdmf.write_function(adiabaticH )
-                ufile_xdmf.write_function(shear_heatibnF)
+                ufile_xdmf.write_function(shear_heatingF)
                 ufile_xdmf.write_function(adiabatic_comp)
 
                 ufile_xdmf.write_function(tag )
@@ -530,9 +565,10 @@ class OUTPUT_WEDGE():
 #-----------------------------------------------------------------------------------------
 # Benchmarking functions    
 #-----------------------------------------------------------------------------------------
-def _benchmark_van_keken(S,b_vk,case,ctrl_io,sc):
+def _benchmark_van_keken(S,ctrl_io,sc):
+    import h5py 
     from scipy.interpolate import griddata
-    from utils import gather_vector,gather_coordinates
+    from .utils import gather_vector,gather_coordinates
     
     comm = MPI.COMM_WORLD
     # Suppose u is your Function
@@ -637,25 +673,41 @@ def _benchmark_van_keken(S,b_vk,case,ctrl_io,sc):
         [583.11, 604.96, 1000.05]
         ])
 
-        if case    == 0: 
-            data   = data_1c 
-        elif case  == 1:
-            data = data_2a
-        elif case== 2 : 
-            data = data_2b 
-        else: 
-            data = data_1c*0.
+            
 
         print( '------------------------------------------------------------------' )
-        print( ':::====> T(11,11) = %.2f [deg C], average value VanK2008 = %.2f [deg C] +/- %.2f;m/M = %.2f/%.2f [deg C]'%( T_11_11, np.mean(data[:,0]), np.std(data[:,0]),np.min(data[:,0]),np.max(data[:,0]) ) )
-        print( ':::====> L2_A     = %.2f [deg C], average value VanK2008 = %.2f [deg C] +/- %.2f;m/M = %.2f/%.2f [deg C]'%( T_ln, np.mean(data[:,1]), np.std(data[:,1]) ,np.min(data[:,1]),np.max(data[:,1]) ) )
-        print( ':::====> L2_B     = %.2f [deg C], average value VanK2008 = %.2f [deg C] +/- %.2f;;m/M = %.2f/%.2f[deg C]'%( T_ln2, np.mean(data[:,2]), np.std(data[:,2]),np.min(data[:,2]),np.max(data[:,2]) ) )
+        print( ':::====> T(11,11) = %.2f [deg C]'%( T_11_11, ) )
+        print( ':::====> L2_A     = %.2f [deg C]'%( T_ln,     ) )
+        print( ':::====> L2_B     = %.2f [deg C]'%( T_ln2,   ) )
         print( ':::L2_A = T along the slab surface from 0 to -210 km' )
         print( ':::L2_B = T wedge norm from -54 to -110 km ' )
         print( ':::=> From grid to downsampled grid -> nearest interpolation' )
         print( '------------------------------------------------------------------' )
         # place holder for the save database 
         
+    if comm.rank ==0:
+        if os.path.join(ctrl_io.path_save,'benchmark_van_keken.h5') :
+            van_keken_db = h5py.File(os.path.join(ctrl_io.path_save,'benchmark_van_keken.h5'),'a')
+        else: 
+            van_keken_db = h5py.File(os.path.join(ctrl_io.path_save,'benchmark_van_keken.h5'),'w')
+        
+        group_name = ctrl_io.sname
+        name       = '%s/T_11_11'%group_name
+        if name in van_keken_db.keys():
+            del van_keken_db[name]
+        
+        van_keken_db.create_dataset(name,data=T_11_11)
+        name       = '%s/L2_A'%group_name
+        
+        if name in van_keken_db.keys():
+            del van_keken_db[name]
+        van_keken_db.create_dataset(name,data=T_ln)
+        
+        name       = '%s/L2_B'%group_name
+        
+        if name in van_keken_db.keys():
+            del van_keken_db[name]
+        van_keken_db.create_dataset(name,data=T_ln2)
+        van_keken_db.close()
 
-
-    return 0
+    return 0 

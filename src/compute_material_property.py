@@ -4,21 +4,136 @@
 # import all the constants and defined model setup parameters 
 
 # modules
-import numpy                         as np
-import matplotlib.pyplot             as plt
-import time                          as timing
-
-import scipy.sparse.linalg.dsolve    as linsolve
-from numba                           import njit
-from numba                           import jit, prange
-from scipy.optimize                  import bisect
-from ufl                             import exp, conditional, eq, as_ufl, Constant
-from mpi4py import MPI
-from petsc4py import PETSc
-from dolfinx import fem
-import ufl
-from ufl import *
+from .package_import import *
 from .utils import evaluate_material_property
+# ---------------------------------------------------------------------------------
+@dataclass
+class Functions_material_properties_global():
+    # Heat Conductivity properties
+    k0 : fem.Function = None 
+    fr : fem.Function = None
+    k_a: fem.Function = None
+    k_b: fem.Function = None
+    k_c: fem.Function = None
+    k_d: fem.Function = None
+    k_e: fem.Function = None
+    k_f: fem.Function = None
+    # Heat Capacity properties
+    C0 : fem.Function = None
+    C1 : fem.Function = None
+    C2 : fem.Function = None
+    C3 : fem.Function = None
+    C4 : fem.Function = None
+    C5 : fem.Function = None
+    # Density properties
+    rho0    : fem.Function = None
+    alpha0  : fem.Function = None
+    alpha1  : fem.Function = None
+    alpha2  : fem.Function = None
+    Kb      : fem.Function = None
+    option_rho : fem.Function = None
+    # Radiogenic heating properties
+    radio   : fem.Function = None
+    # Other properties
+    Tref    : float = 0.0
+    R       : float = 8.3145
+    A       : float = 0.0
+    B       : float = 0.0
+    T_A     : float = 0.0
+    x_A     : float = 0.0
+    T_B     : float = 0.0
+    x_B     : float = 0.0
+# ---------------------------------------------------------------------------------
+def populate_material_properties_thermal(CP,pdb,phase):
+    """
+    Initialize all material properties as FEniCS functions.
+    """
+    ph = np.int32(phase.x.array)
+    P0 = phase.function_space
+    
+    # Heat Conductivity properties
+    CP.k0 = fem.Function(P0)  ; CP.k0.x.array[:]    =  pdb.k0[ph]
+    CP.fr = fem.Function(P0)  ; CP.fr.x.array[:]     =  pdb.radio_flag[ph]
+    CP.k_a= fem.Function(P0)  ; CP.k_a.x.array[:]    = pdb.k_a[ph]
+    CP.k_b= fem.Function(P0)  ; CP.k_b.x.array[:]    = pdb.k_b[ph]
+    CP.k_c= fem.Function(P0)  ; CP.k_c.x.array[:]    = pdb.k_c[ph]
+    CP.k_d= fem.Function(P0)  ; CP.k_d.x.array[:]    = pdb.k_d[ph]
+    CP.k_e= fem.Function(P0)  ; CP.k_e.x.array[:]    = pdb.k_e[ph]
+    CP.k_f= fem.Function(P0)  ; CP.k_f.x.array[:]    = pdb.k_f[ph]
+    # Heat Capacity properties
+    CP.C0  = fem.Function(P0) ; CP.C0.x.array[:]     = pdb.C0[ph]
+    CP.C1 = fem.Function(P0)  ; CP.C1.x.array[:]     = pdb.C1[ph]
+    CP.C2 = fem.Function(P0)  ; CP.C2.x.array[:]     = pdb.C2[ph]
+    CP.C3 = fem.Function(P0)  ; CP.C3.x.array[:]     = pdb.C3[ph]
+    CP.C4 = fem.Function(P0)  ; CP.C4.x.array[:]     = pdb.C4[ph]
+    CP.C5 = fem.Function(P0)  ; CP.C5.x.array[:]     = pdb.C5[ph]
+    # Density properties
+    CP.rho0    = fem.Function(P0)     ; CP.rho0.x.array[:]    = pdb.rho0[ph]
+    CP.alpha0  = fem.Function(P0)     ; CP.alpha0.x.array[:]  = pdb.alpha0[ph]
+    CP.alpha1  = fem.Function(P0)     ; CP.alpha1.x.array[:]  = pdb.alpha1[ph]
+    CP.alpha2  = fem.Function(P0)     ; CP.alpha2.x.array[:]  = pdb.alpha2[ph]
+    CP.Kb      = fem.Function(P0)     ; CP.Kb.x.array[:]      = pdb.Kb[ph]
+    CP.option_rho = fem.Function(P0)  ; CP.option_rho.x.array[:] = pdb.option_rho[ph]
+    
+    CP.radio   = fem.Function(P0)   ; CP.radio.x.array[:]     = pdb.radio[ph]
+    CP.radio.x.scatter_forward()
+    CP.Tref    = pdb.Tref
+    CP.R       = pdb.R
+    CP.A       = pdb.A
+    CP.B       = pdb.B
+    CP.T_A     = pdb.T_A
+    CP.x_A     = pdb.x_A
+    CP.T_B     = pdb.T_B
+    CP.x_B     = pdb.x_B
+    
+    return CP
+
+        
+        
+        
+        
+        
+@dataclass
+class Functions_material_rheology():
+    Bdif    : fem.Function = None
+    Bdis    : fem.Function = None
+    n       : fem.Function = None
+    Edif    : fem.Function = None
+    Edis    : fem.Function = None
+    Vdif    : fem.Function = None
+    Vdis    : fem.Function = None
+    eta     : fem.Function = None
+    option_eta : fem.Function = None
+    eta_max : float = None
+    R        : float = None
+
+def populate_material_properties_rheology(CP,pdb,phase):
+    """
+    Initialize all rheological properties as FEniCS functions.
+    """
+    ph = np.int32(phase.x.array)
+    P0 = phase.function_space
+    
+    CP.Bdif    = fem.Function(P0)     ; CP.Bdif.x.array[:]     = pdb.Bdif[ph]
+    CP.Bdis    = fem.Function(P0)     ; CP.Bdis.x.array[:]     = pdb.Bdis[ph]
+    CP.n       = fem.Function(P0)     ; CP.n.x.array[:]        = pdb.n[ph]
+    CP.Edif    = fem.Function(P0)     ; CP.Edif.x.array[:]     = pdb.Edif[ph]
+    CP.Edis    = fem.Function(P0)     ; CP.Edis.x.array[:]     = pdb.Edis[ph]
+    CP.Vdif    = fem.Function(P0)     ; CP.Vdif.x.array[:]     = pdb.Vdif[ph]
+    CP.Vdis    = fem.Function(P0)     ; CP.Vdis.x.array[:]     = pdb.Vdis[ph]
+    CP.eta     = fem.Function(P0)     ; CP.eta.x.array[:]      = pdb.eta[ph]
+    CP.option_eta = fem.Function(P0)  ; CP.option_eta.x.array[:] = pdb.option_eta[ph]
+    CP.eta_max = pdb.eta_max
+    CP.R       = pdb.R
+    CP.eta.x.scatter_forward()
+    return CP 
+        
+    
+# ---------------------------------------------------------------------------------
+
+
+
+
 #----- 
 @njit 
 def compute_thermal_properties(pdb,T,p,ph):
@@ -31,90 +146,43 @@ def compute_thermal_properties(pdb,T,p,ph):
 
 
 #----------------------------------------------------------------------------------
-def heat_conductivity_FX(pdb,T,p,phase,M,Cp,rho):
-    
-    ph      = np.int32(phase.x.array)
-    P0      = phase.function_space
-    # Gather material parameters as UFL expressions via indexing
+def heat_conductivity_FX(FG,T,p,Cp,rho):
+    """Function that computes the heat conductivity for a given Pressure and Temperature
+       k = k0 + kb*exp(-(T-Tr)/kc)+kd*exp(-(T-Tr)/ke)*exp(kf*P) + rad * flag
+       if the phase has a constant conductivity, k0 is defined and positive, otherwise is 0.0 
+       while while the other properties are set to be 0.0 
+       kb*exp(T-Tr/0)=0.0 so no active. 
+    Args:
+        FG (_type_) : Precomputed function spaces with the material properties
+        T (_type_)  : Input temperature
+        p (_type_)  : Input pressure
+        Cp (_type_) : Cp form 
+        rho (_type_): rho form
+
+    Returns:
+        k: fem.form
     """
-    """
-    k0      = fem.Function(P0)  ; k0.x.array[:]    =  pdb.k0[ph]
-    fr      = fem.Function(P0)  ; fr.x.array[:]    = pdb.radio_flag[ph]
-    
-    k_a     = fem.Function(P0)  ; k_a.x.array[:]     =  pdb.k_a[ph]
-    k_b     = fem.Function(P0)  ; k_b.x.array[:]     =  pdb.k_b[ph]
-    k_c     = fem.Function(P0)  ; k_c.x.array[:]     =  pdb.k_c[ph]
-    k_d     = fem.Function(P0)  ; k_d.x.array[:]     =  pdb.k_d[ph]
-    k_e     = fem.Function(P0)  ; k_e.x.array[:]     =  pdb.k_e[ph]
-    k_f     = fem.Function(P0)  ; k_f.x.array[:]     =  pdb.k_f[ph]
-    
     
 
+    k_rad = FG.A * exp(-(T-FG.T_A)**2/ (2*FG.x_A ** 2 )) + FG.B * exp(-(T - FG.T_B)**2 / (2* FG.x_B**2))
 
-    k_rad = pdb.A * exp(-(T-pdb.T_A)**2/ (2*pdb.x_A ** 2 )) + pdb.B * exp(-(T - pdb.T_B)**2 / (2* pdb.x_B**2))
-
-    kappa_lat = k_a + k_b * exp(-(T-pdb.Tref)/k_c) + k_d * exp(-(T-pdb.Tref)/k_e)
+    kappa_lat = FG.k_a + FG.k_b * exp(-(T-FG.Tref)/FG.k_c) + FG.k_d * exp(-(T-FG.Tref)/FG.k_e)
     
-    kappa_p   = exp(k_f * p)  
+    kappa_p   = exp(FG.k_f * p)  
 
-    k = k0 + kappa_lat * kappa_p * Cp * rho + k_rad * fr 
+    k = FG.k0  + (kappa_lat * kappa_p * Cp * rho + k_rad * FG.fr)  
 
     return k 
 #---------------------------------------------------------------------------------
-def heat_conductivity_FX_OLD(pdb, T, p, phase, M):
-    
-    ph      = np.int32(phase.x.array)
-    P0      = phase.function_space
-    # Gather material parameters as UFL expressions via indexing
-    """
-    """
-    k0      = fem.Function(P0)  ; k0.x.array[:]    =  pdb.k0[ph]
-    a       = fem.Function(P0)  ; a.x.array[:]     =  pdb.a[ph]
-    n       = fem.Function(P0)  ; n.x.array[:]     =  pdb.k_n[ph]
-    
-    kr0     = fem.Function(P0)  ; kr0.x.array[:]     =  pdb.k_d[ph,0]
-    kr1     = fem.Function(P0)  ; kr1.x.array[:]     =  pdb.k_d[ph,1]
-    kr2     = fem.Function(P0)  ; kr2.x.array[:]     =  pdb.k_d[ph,2]
-    kr3     = fem.Function(P0)  ; kr3.x.array[:]     =  pdb.k_d[ph,3]
+def heat_capacity_FX(FG, T): 
 
     
-    k_rad   = kr0 * T**0 + kr1 * T**1 + kr2 * T**2 + kr3 * T**3 
-    
-    k       = (k0 + a * p) * (pdb.Tref/T)**n + k_rad
-    
-    
-    return k 
-# --------------------------------------------------------------------------------------
-def heat_capacity_FX(pdb, T, phase, M): 
-    ph      = np.int32(phase.x.array)
-    P0      = phase.function_space
-            
-    Cp0       = fem.Function(P0)  ; Cp0.x.array[:]     =  pdb.C0[ph]
-    Cp1       = fem.Function(P0)  ; Cp1.x.array[:]     =  pdb.C1[ph]
-    Cp2       = fem.Function(P0)  ; Cp2.x.array[:]     =  pdb.C2[ph]
-    Cp3       = fem.Function(P0)  ; Cp3.x.array[:]     =  pdb.C3[ph]
-    Cp4       = fem.Function(P0)  ; Cp4.x.array[:]     =  pdb.C4[ph]
-    Cp5       = fem.Function(P0)  ; Cp5.x.array[:]     =  pdb.C5[ph]
-
-
-
-    
-    C_p = Cp0 + Cp1 * (T**(-0.5)) + Cp2 * T**(-2.) + Cp3 * (T**(-3.)) + Cp4 * T + Cp5 * T**2
+    C_p = FG.C0 + FG.C1 * (T**(-0.5)) + FG.C2 * T**(-2.) + FG.C3 * (T**(-3.)) + FG.C4 * T + FG.C5 * T**2
 
     return C_p
   
-def compute_radiogenic(pdb, hs, phase, M): 
-    ph      = np.int32(phase.x.array)
-    P0      = phase.function_space
-                
-    Hr       = fem.Function(P0)  ; Hr.x.array[:]     =   pdb.radio[ph] 
-    Hr.x.scatter_forward()
-
-    Hrf       = fem.Function(hs.function_space) 
-    Hrf.interpolate(Hr)
-    
-    hs.x.array[:]       = Hrf.x.array[:] 
-    hs.x.scatter_forward()
+def compute_radiogenic(FG, hs): 
+    hs.interpolate(FG.radio)
     return hs 
     
 #---------------------------------------------------------------------------------
@@ -158,31 +226,22 @@ def density(pdb,T,p,ph):
     return rho
 
 #-----
-def density_FX(pdb, T, p, phase, M):
+def density_FX(FG, T, p):
     """
     Compute density as a UFL expression, FEniCSx-compatible.
     """
-    # Again: apperently the phase field is converted into numpy 64. First I need to extract the array, then, I need to convert into int32 
-    ph = np.int32(phase.x.array)
-    P0 = phase.function_space
-    # Gather material parameters as UFL expressions via indexing
-    rho0    = fem.Function(P0)  ; rho0.x.array[:]    =  pdb.rho0[ph]
-    alpha0  = fem.Function(P0)  ; alpha0.x.array[:]  =  pdb.alpha0[ph]
-    alpha1  = fem.Function(P0)  ; alpha1.x.array[:]  =  pdb.alpha1[ph] 
-    alpha2  = fem.Function(P0)  ; alpha2.x.array[:]  =  pdb.alpha2[ph] 
-    Kb      = fem.Function(P0)  ; Kb.x.array[:]      =  pdb.Kb[ph]
-    opt_rho = fem.Function(P0)  ; opt_rho.x.array[:] =  pdb.option_rho[ph]
+
 
     # Base density (with temperature dependence)
-    temp_term = exp(- p * alpha2)*(alpha0 * (T - pdb.Tref) + (alpha1 / 2.0) * (T**2 - pdb.Tref**2))
-    rho_temp = rho0 * (1-temp_term) 
+    temp_term = exp(- p * FG.alpha2)*(FG.alpha0 * (T - FG.Tref) + (FG.alpha1 / 2.0) * (T**2 - FG.Tref**2))
+    rho_temp = FG.rho0 * (1-temp_term) 
 
     # Add pressure dependence if needed
     rho = conditional(
-        eq(opt_rho, 0), rho0,
+        eq(FG.option_rho, 0), FG.rho0,
         conditional(
-            eq(opt_rho, 1), rho_temp,
-            rho_temp * exp(p / Kb)
+            eq(FG.option_rho, 1), rho_temp,
+            rho_temp * exp(p / FG.Kb)
         )
     )
 
@@ -191,27 +250,20 @@ def density_FX(pdb, T, p, phase, M):
 
 
 #----------------------------------
-def alpha_FX(pdb, T, p, phase, M):
+def alpha_FX(FG, T, p):
     """
     Compute density as a UFL expression, FEniCSx-compatible.
     """
-    # Again: apperently the phase field is converted into numpy 64. First I need to extract the array, then, I need to convert into int32 
-    ph = np.int32(phase.x.array)
-    P0 = phase.function_space
-    # Gather material parameters as UFL expressions via indexing
-    alpha0  = fem.Function(P0)  ; alpha0.x.array[:]  =  pdb.alpha0[ph]
-    alpha1  = fem.Function(P0)  ; alpha1.x.array[:]  =  pdb.alpha1[ph] 
-    alpha2  = fem.Function(P0)  ; alpha2.x.array[:]  =  pdb.alpha2[ph]
 
     # Base density (with temperature dependence)
-    alpha =  exp(- p * alpha2) * (alpha0  + (alpha1) * (T- pdb.Tref))
+    alpha =  exp(- p * FG.alpha2) * (FG.alpha0  + (FG.alpha1) * (T- FG.Tref))
 
 
     return alpha 
 
 
 #-----------------------------------
-def compute_viscosity_FX(e,T_in,P_in,pdb,phase,M,sc):
+def compute_viscosity_FX(e,T_in,P_in,FR,sc):
     """
     It is wrong, but frequently used: it does not change too much by the end the prediction. 
     I use the minimum viscosity possible. The alternative is taking the average between eta_min and eta_av. So, 
@@ -224,58 +276,31 @@ def compute_viscosity_FX(e,T_in,P_in,pdb,phase,M,sc):
         e_II  = sqrt(0.5*inner(e, e) + 1e-15)    
         return e_II
     
-    P0    = M.solPh
-    e_II_n = compute_eII(e)
+    e_II = compute_eII(e)
     # If your phase IDs are available per cell for mesh0:
     
-    # UNFORTUNATELY I AM STUPID and i do not have any idea how to scale the energies such that it would be easier to handle. Since the scale of force and legth is self-consistently related to mass, i do not know how to deal with the fucking useless mol in the energy of activation 
-    T = T_in.copy()
-    P = P_in.copy()
-    T.x.array[:] = T.x.array[:]*sc.Temp  ;T.x.scatter_forward()
-    P.x.array[:] = P.x.array[:]*sc.stress;P.x.scatter_forward()
-
-    ph = np.int32(phase.x.array)
-    
-    # Gather material parameters as UFL expressions via indexing
-    Bdif    = fem.Function(P0,name = 'Bdif')  ; Bdif.x.array[:]    =  pdb.Bdif[ph]
-    Bdis    = fem.Function(P0,name = 'Bdis')  ; Bdis.x.array[:]    =  pdb.Bdis[ph]
-    n       = fem.Function(P0,name = 'n')     ; n.x.array[:]       =  pdb.n[ph]
-    Edif    = fem.Function(P0,name = 'Edif')  ; Edif.x.array[:]    =  pdb.Edif[ph]
-    Edis    = fem.Function(P0,name = 'Edis')  ; Edis.x.array[:]    =  pdb.Edis[ph]
-    Vdif    = fem.Function(P0,name = 'Vdif')  ; Vdif.x.array[:]    =  pdb.Vdif[ph]
-    Vdis    = fem.Function(P0,name = 'Vdis')  ; Vdis.x.array[:]    =  pdb.Vdis[ph]
-    e_II    = fem.Function(P0,name = 'e_II')  ; e_II = evaluate_material_property(e_II_n,P0)
-
-    # In case the viscosity for the given phase is constant 
-    eta_con     = fem.Function(P0) ; eta_con.x.array[:]     =  pdb.eta[ph]
-    # Option for eta for a given marker number ph 
-    opt_eta = fem.Function(P0)  ; opt_eta.x.array[:] =  pdb.option_eta[ph]
     # Eta max 
-    Bd_max  = 1 / 2 / pdb.eta_max
     # strain indipendent  
-    cdf = Bdif * exp(-(Edif + P * Vdif )/(pdb.R * T)) ; cds = Bdis * exp(-(Edis + P * Vdis)/(pdb.R * T))
+    cdf = FR.Bdif * exp(-(FR.Edif + P_in * sc.stress * FR.Vdif )/(FR.R * T_in * sc.Temp)) ; cds = FR.Bdis * exp(-(FR.Edis + P_in * sc.stress * FR.Vdis)/(FR.R * T_in*sc.Temp))
     # compute tau guess
-    n_co  = (1-n)/n
-    n_inv = 1/n 
+    n_co  = (1-FR.n)/FR.n
+    n_inv = 1/FR.n 
     # Se esiste un cazzo di inferno in culo a Satana ci vanno quelli che hanno generato 
     # sto modo creativo di fare gli esponenti. 
     etads     = 0.5 * cds**(-n_inv) * e_II**n_co
     etadf     = 0.5 * cdf**(-1)
-    eta_av    = 1 / (1 / etads + 1/etadf + 1/pdb.eta_max)
-    eta_df    = 1 / (1 / etadf + 1 / pdb.eta_max) 
-    eta_ds    = 1 / (1 / etads + 1 / pdb.eta_max)
+    eta_av    = 1 / (1 / etads + 1/etadf + 1/FR.eta_max)
+    eta_df    = 1 / (1 / etadf + 1 / FR.eta_max) 
+    eta_ds    = 1 / (1 / etads + 1 / FR.eta_max)
     
     
     
     # check if the option_eta -> constant or not, otherwise release the composite eta 
     eta = ufl.conditional(
-        ufl.eq(opt_eta, 0.0), eta_con,
+        ufl.eq(FR.option_eta, 0.0), FR.eta,
         ufl.conditional(
-            ufl.eq(opt_eta, 1.0), eta_df,
-            ufl.conditional(
-                ufl.eq(opt_eta, 2.0), eta_ds,
-                eta_av
-            )
+            ufl.eq(FR.option_eta, 1.0), eta_df,
+            eta_av
         )
     )
 

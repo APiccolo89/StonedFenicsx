@@ -1,20 +1,4 @@
-import sys, os
-
-from mpi4py                          import MPI
-from petsc4py                        import PETSc
-
-import ufl
-import time                          as timing
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-from functools import wraps
-import cmcrameri as cmc
-import numpy as np 
-from dataclasses import dataclass
-from dolfinx import fem
-from numpy import ndarray
-from typing import List
-
+from .package_import import *
 # Util performance 
 #---------------------------------------------------------------------------------------------------------
 def timing_function(fun):
@@ -362,7 +346,7 @@ class Input:
     adiabatic_heating: int = 0  # keep only once
 
     phi: float = 5.0
-
+    self_consistent_flag:int = 1
     # -----------------------------------------------------------------------------------------------------
     # input/output control
     # -----------------------------------------------------------------------------------------------------
