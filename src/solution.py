@@ -97,6 +97,7 @@ class Solution():
         self.t_owedge = fem.Function(PW.FSPT) # same stuff as before, again, this is a nightmare: why the fuck. 
         self.p_lslab = fem.Function(PS.FSPT) # PW.SolPT -> It is the only part of this lovercraftian nightmare that needs to have temperature and pressure -> Viscosity depends pressure and temperature potentially
         self.t_oslab = fem.Function(PS.FSPT)
+        self.t_nslab = fem.Function(PS.FSPT)
         self.u_global, self.p_global = gives_Function(space_GL)
         self.u_slab  , self.p_slab   = gives_Function(PS.FS)
         self.u_wedge , self.p_wedge  = gives_Function(PW.FS)
@@ -1969,9 +1970,8 @@ def time_loop(M,ctrl,ioctrl,sc,lhs,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g):
             sol.T_ad = compute_adiabatic_initial_adiabatic_contribution(M.domainG,sol.T_N,None,sol.PL,FGT,0)
 
 
-        O.print_output(sol,M.domainG,FGT,FGGR,ioctrl,sc,ctrl,ts=ts)
+        O.print_output(sol,M.domainG,FGT,FGGR,ioctrl,sc,ctrl,it_outer=0,time=t,ts=ts)
         
-        sol.T_O = sol.T_N.copy()
         
         if ctrl.steady_state == 1 & ctrl.steady_state==1: 
             t = ctrl.time_max
@@ -1979,7 +1979,19 @@ def time_loop(M,ctrl,ioctrl,sc,lhs,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g):
                 from .output import _benchmark_van_keken
                 _benchmark_van_keken(sol,ioctrl,sc)
 
-        t = time+ctrl.dt
+        if ctrl.steady_state == 0: 
+            sol.t_oslab = interpolate_from_sub_to_main(sol.t_oslab
+                                                    ,sol.T_O
+                                                    ,M.domainA.cell_par
+                                                    ,1)
+            sol.t_nslab = interpolate_from_sub_to_main(sol.t_nslab
+                                                    ,sol.T_O
+                                                    ,M.domainA.cell_par
+                                                    ,1)
+            relative_slab_T_difference(sol)
+
+
+        t = t+ctrl.dt
         print_ph(f'Time = {t*sc.T/sc.scale_Myr2sec:.3f} Myr')
         print_ph(f'================ // =====================')
 
@@ -2095,4 +2107,20 @@ def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA):
     
     
     return res_total 
+#------------------------------------------------------------------------------------------------------------
+def relative_slab_T_difference(sol):
+    # Prepare the variables 
+
+    
+
+    res_T = compute_residuum(sol.t_nslab,sol.t_oslab)
+
+    print_ph(f'    []dT slab   =  {res_T:.3e} [n.d.]')
+
+
+    
+    
+    
+    
+    return 0
 #------------------------------------------------------------------------------------------------------------

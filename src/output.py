@@ -104,15 +104,7 @@ class OUTPUT():
         T2.x.array[:] = T2.x.array[:]*sc.Temp - 273.15
         T2.x.scatter_forward()  
 
-        #if ctrl.steady_state == 0:
-        dT = fem.Function(self.temp_V)
-        dT.name = "dT  [degC]"
-        a = S.T_N.copy()
-        a.x.array[:] = a.x.array[:]-S.T_O.x.array[:]
-        a.x.scatter_forward() 
-        dT.interpolate(a)
-        dT.x.array[:] = dT.x.array[:]*sc.Temp
-        dT.x.scatter_forward()
+
         # Lithostatic pressure
         PL2 = fem.Function(self.temp_V)
         PL2.name = "Lit Pres  [GPa]"
@@ -189,37 +181,6 @@ class OUTPUT():
         flux = evaluate_material_property(q_expr,self.vel_V)
         flux.name = 'Heat flux [W/m2]'
         flux.x.array[:] *= sc.Watt/sc.L**2
-        # adiabatic heating 
-        if ctrl.adiabatic_heating >0:
-            adiabatic_expr = alpha * ufl.inner(S.u_global, ufl.grad(S.PL)) * S.T_N
-            adiabatic_H = evaluate_material_property(adiabatic_expr,self.temp_V)
-            adiabaticH = fem.Function(self.temp_V)
-            adiabaticH.name = 'Ha [W/m3]'
-            adiabaticH.x.array[:] = adiabatic_H.x.array[:]*sc.Watt/sc.L**3
-        
-            shear_heatingF =  fem.Function(self.temp_V)
-            shear_heatingF.interpolate(S.Hs_global)
-            shear_heatingF.name = 'Hs [W/m3]'
-            shear_heatingF.x.array[:]*=sc.Watt/sc.L**3
-
-            adiabatic_comp    = fem.Function(self.temp_V)
-            adiabatic_comp.name = " Ha+Hs [W/m3]"
-            adiabatic_comp.x.array[:] = adiabaticH.x.array[:] + shear_heatingF.x.array[:]
-            adiabatic_comp.x.scatter_forward()
-        else: 
-            adiabaticH = fem.Function(self.temp_V)
-            adiabaticH.name = 'Ha [W/m3]'
-            adiabaticH.x.array[:] = 0.0 
-            
-            shear_heatingF =  fem.Function(self.temp_V)
-            shear_heatingF.name = 'Hs [W/m3]'
-            shear_heatingF.x.array[:] = 0.0 
-
-            adiabatic_comp    = fem.Function(self.temp_V)
-            adiabatic_comp.name = "Ha+Hs [W/m3]"
-            adiabatic_comp.x.array[:] = 0.0 
-            adiabatic_comp.x.scatter_forward()    
-
         
         # Line Tag for the mesh and post_processing 
         tag = fem.Function(self.temp_V)
@@ -244,11 +205,9 @@ class OUTPUT():
             # transient: append to ongoing XDMF with time
             # write each field at this physical_time
             # ...same for PL2, rho2, Cp2, k2, kappa2, e_T, eta2, flux
-            self.xdmf_main.write_function(dT,           time)
             self.xdmf_main.write_function(u_T,          time)
             self.xdmf_main.write_function(p2,           time)
             self.xdmf_main.write_function(T2,           time)
-            self.xdmf_main.write_function(Tad,           time)
             self.xdmf_main.write_function(PL2,          time)
             self.xdmf_main.write_function(rho2,         time)
             self.xdmf_main.write_function(Cp2,          time)
@@ -258,8 +217,6 @@ class OUTPUT():
             self.xdmf_main.write_function(e_T,          time)
             self.xdmf_main.write_function(eta2,         time)
             self.xdmf_main.write_function(flux,         time)
-            self.xdmf_main.write_function(adiabaticH,   time)
-            self.xdmf_main.write_function(shear_heatingF,   time)
             self.xdmf_main.write_function(tag,          time)
         else:
             with XDMFFile(MPI.COMM_WORLD, "%s.xdmf"%file_name, "w") as ufile_xdmf:
@@ -267,11 +224,9 @@ class OUTPUT():
                 coord = D.mesh.geometry.x.copy()
                 D.mesh.geometry.x[:] *= sc.L/1e3
                 ufile_xdmf.write_mesh(D.mesh)
-                ufile_xdmf.write_function(dT   )
                 ufile_xdmf.write_function(u_T  )
                 ufile_xdmf.write_function(p2   )
                 ufile_xdmf.write_function(T2   )
-                ufile_xdmf.write_function(T_ad )
                 ufile_xdmf.write_function(PL2  )
                 ufile_xdmf.write_function(rho2 )
                 ufile_xdmf.write_function(Cp2  )
@@ -281,8 +236,6 @@ class OUTPUT():
                 ufile_xdmf.write_function(e_T  )
                 ufile_xdmf.write_function(eta2 )
                 ufile_xdmf.write_function(flux )
-                ufile_xdmf.write_function(adiabaticH )
-                ufile_xdmf.write_function(shear_heatingF)
                 ufile_xdmf.write_function(tag )
                 D.mesh.geometry.x[:] = coord
                 

@@ -121,7 +121,8 @@ class Geom_input():
         slab_tk: float = 130e3,
         decoupling: float = 100e3,
         trans: float = 10e3,
-        lt_d : float = 50e3) -> None:
+        lt_d : float = 50e3,
+        lab_d: float = 50e3) -> None:
          
         self.x                 = x               # main grid coordinate
         self.y                 = y   
