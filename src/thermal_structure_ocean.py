@@ -400,7 +400,7 @@ def build_coefficient_matrix(A,
 
                     elif j == nz - 1:
 
-                        M[i,j] = -A[j] * ( (k_m[j] + k_m[j] ) / 2. ) / dz_m[j]
+                        M[i, j] = -A[j] * ((k_m[j] + k_m[j]) / 2.) / dz_m[j]
 
 
                 # ========== BUILD D ========== - right hand side vector 
@@ -416,11 +416,11 @@ def build_coefficient_matrix(A,
 
                     # B - correction that represents the second term on the right-hand side on the equation 
                     if NLflag == 0:
-                        rho_A =  density(pdb,TO[j],lit_p[j],ph[j])
-                        Cp_A  = heat_capacity(pdb,TO[j],ph[j])
+                        rho_A = density(pdb, TO[j], lit_p[j], ph[j])
+                        Cp_A  = heat_capacity(pdb, TO[j], ph[j])
                     else: 
-                        rho_A = lhs.rho 
-                        Cp_A  = lhs.Cp
+                        rho_A = lhs.rho
+                        Cp_A = lhs.Cp
            
                     if step == 0:
                         if NLflag == 0:
@@ -485,7 +485,7 @@ def compute_ocean_plate_temperature(ctrl:NumericalControls
     if theta_in !=0: 
         z    = np.linspace(0,nz*dz,nz)
     else: 
-        z    = np.linspace(0,(nz*dz)/np.cos(theta_in-np.pi),nz)
+        z    = np.linspace(0,(nz*dz)/np.cos(theta_in),nz)
     ph   = np.zeros([nz],dtype = np.int32) # I assume that everything is mantle 
     ph[z<6000/scal.L] = np.int32(1)
 

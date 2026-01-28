@@ -17,7 +17,6 @@ FUNCTION:
 '''
 
 
-
 #---------------------------------------------------------
 
 dict_surf = {
@@ -121,8 +120,7 @@ class Geom_input():
         slab_tk: float = 130e3,
         decoupling: float = 100e3,
         trans: float = 10e3,
-        lt_d : float = 50e3,
-        lab_d: float = 50e3) -> None:
+        lab_d: float = 0.0e3) -> None:
          
         self.x                 = x               # main grid coordinate
         self.y                 = y   
@@ -132,11 +130,12 @@ class Geom_input():
         self.lit_mt            = lit_mt          # lithosperic mantle  
         self.lc                = lc              # lower crust ratio 
         self.wc                = wc              # weak zone 
-        self.lt_d              = lt_d     # total lithosphere thickness
+        self.lt_d              = (cr+lit_mt)     # total lithosphere thickness
         self.decoupling        = decoupling      # decoupling depth -> i.e. where the weak zone is prolonged 
         self.resolution_normal = wc  # To Do
         self.theta_out_slab    = []
-        self.theta_in_slab     = []
+        self.theta_in_slab    = []
+
         self.trans             = trans
         if lab_d == 0.0:
             self.lab_d         = self.lt_d

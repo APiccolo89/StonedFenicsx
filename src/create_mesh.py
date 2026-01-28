@@ -389,6 +389,9 @@ def create_gmesh(ioctrl   :IOControls,
         
     min_x           = g_input.x[0] # The beginning of the model is the trench of the slab
     max_x           = g_input.x[1]          
+    
+    g_input.theta_in_slab = S.theta_mean[0]
+    
     if g_input.cr != 0:
         ind_oc_cr = np.where(slab_y == -g_input.cr)[0][0]
         if g_input.lc !=0:     
@@ -407,8 +410,6 @@ def create_gmesh(ioctrl   :IOControls,
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
     theta = np.arctan2((slab_y[-1]-slab_y[-2]),(slab_x[-1]-slab_x[-2]))
     g_input.theta_out_slab = theta   # Convert to degrees
-    theta = np.arctan2((slab_y[0]-slab_y[1]),(slab_x[0]-slab_x[1]))
-    g_input.theta_in_slab = theta   # Convert to degrees
 
     mesh_model.geo.removeAllDuplicates()
     gmsh.option.setNumber("Mesh.Algorithm", 6)  # Frontal-Delaunay

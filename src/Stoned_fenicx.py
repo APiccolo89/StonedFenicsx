@@ -159,8 +159,7 @@ def StonedFenicsx(IP,Ph_input):
                  lc = IP.lc,
                  wc = IP.wc,
                  slab_tk = IP.slab_tk, 
-                 decoupling = IP.decoupling,
-                 lt_d = IP.lab_d)
+                 decoupling = IP.decoupling)
     
 
     # Scaling

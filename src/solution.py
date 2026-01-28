@@ -1933,7 +1933,8 @@ def outerloop_operation(M:Mesh,
                                      ,p_global_kouter
                                      ,it_outer
                                      ,sc
-                                     ,time_A_outer)
+                                     ,time_A_outer
+                                     ,ctrl.Tmax)
 
 
         print_ph(f'   // -- // :( --- ------- ------- ------- :) // -- // --- > ')
@@ -2062,7 +2063,7 @@ def min_max_array(a, vel = False):
     return np.array([global_min, global_max],dtype=np.float64)
 
 #------------------------------------------------------------------------------------------------------------
-def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA):
+def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA,Tmax):
     # Prepare the variables 
 
     
@@ -2085,6 +2086,8 @@ def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA):
     minMaxT = minMaxT*sc.Temp -273.15
     minMaxPL= minMaxPL*sc.stress/1e9
     
+    if minMaxT[1]-(Tmax * sc.Temp-273.15)>1.0: 
+        print_ph('Temperature higher than the maximum temperature')
     
     res_total = np.sqrt(res_u**2+res_p**2+res_T**2)
     if not np.isfinite(res_total):

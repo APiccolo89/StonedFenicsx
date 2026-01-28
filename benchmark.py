@@ -1,34 +1,33 @@
-from src.utils import Input,Phase,Ph_input,print_ph,time_the_time
+from src.utils import Input, Phase, Ph_input, print_ph
 import time as timethis
 from src.Stoned_fenicx import StonedFenicsx
 # Create the script for the benchmark tests
 
 
 # option for the benchmark
-option_thermal   = [0,1,2,3]
+option_thermal = [1, 2, 3]
 option_adiabatic = [0]
-option_viscous   = [0,1,2]
-self_con         = [0,1]
+option_viscous = [0]
+self_con = [0, 1]
 
 
 # Create input data - Input is a class populated by default dataset
 inp = Input()
 # A flag that generate the geometry of the benchmark
-van_keken = 1 
-
+van_keken = 1
 # The input path for saving the results
 inp.path_test = '../Results/Tests_Van_keken'
 
 # Geometrical input
-inp.cr          = 0.0 # Overriding crust 
-inp.lc          = 0.3 # relative amount of lower crust
-inp.ocr         = 6.0e3 # Crustal thickness
-inp.lt_d        = 50e3 # No slip boundary condition depth
-inp.lit_mt      = 50e3 # Lithospheric mantle depth 
-inp.lab_d       = inp.lit_mt # depth of the lab 
-inp.decoupling  = 50e3  # decoupling depth
-inp.Tmax        = 1300.0 # mantle potential temperature
-#inp.model_shear = 'SelfConsistent'
+inp.cr = 0.0   # Overriding crust 
+inp.lc = 0.3   # relative amount of lower crust
+inp.ocr = 6.0e3  # Crustal thickness
+inp.lt_d = 50e3  # No slip boundary condition depth
+inp.lit_mt = 50e3  # Lithospheric mantle depth 
+inp.lab_d = inp.lit_mt  # depth of the lab 
+inp.decoupling = 50e3  # decoupling depth
+inp.Tmax = 1300.0  # mantle potential temperature
+# inp.model_shear = 'SelfConsistent'
 inp.steady_state = 1 
 print_ph('Starting the benchmark tests with different options')
 
@@ -184,11 +183,11 @@ for i in range(len(option_thermal)):
                 Ph_inp.Phase6 = Phase6
                 Ph_inp.Phase7 = Phase7
 
-                StonedFenicsx(inp,Ph_inp)
+                StonedFenicsx(inp, Ph_inp)
 
                 time_B = timethis.time()
                 dt = time_B - time_A
-                print('#--------------------------------------------------------------------#')
+                print('#---------------------------------------------------#')
                 if dt > 60.0:
                     m, s = divmod(dt, 60)
                     print(f"{inp.sname} took {m:.2f} min and {s:.2f} sec")
