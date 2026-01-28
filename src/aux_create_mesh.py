@@ -521,12 +521,12 @@ def function_create_subduction_bottom(sx:NDArray[np.float64],
     cx = sx - lt*np.sin(th)
     cy = sy - lt*np.cos(th)
     # Find the node that are lower than the left boundary [same function, but switching the position -> ca rotate ]
-    cord_x = 0.0 
-    cord_z = -lt/np.cos(th[0])
-    cy = cy[cx>0.0]
-    cx = cx[cx>0.0]
-    cx = np.insert(cx,0,0.0)  
-    cy = np.insert(cy,0,cord_z)  
+    #cord_x = 0.0 
+    #cord_z = -lt/np.cos(th[0])
+    #cy = cy[cx>0.0]
+    #cx = cx[cx>0.0]
+    #cx = np.insert(cx,0,0.0)  
+    #cy = np.insert(cy,0,cord_z)  
 
 
     e_node2,t_ex1 = _find_e_node(cx,cy,cx*0.0,-np.min(sy),flag=False)
