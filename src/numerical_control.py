@@ -172,7 +172,7 @@ class ctrl_LHS:
         recalculate=0,        # flag for recomputation
         van_keken=1,          # benchmark flag
         d_RHS=-50e3,
-        z_min= 140e3# distance for RHS term
+        slab_tk = 130e3# distance for RHS term
         ,non_linearities = 0 # Flag that forces the non-linearities to be off
         ,k = 3.0 
         ,rho = 3300
@@ -182,7 +182,7 @@ class ctrl_LHS:
             raise ValueError('dt: The input data must be in Myr. This timestep will be blow up the system. As a general remark: all input SI is Myr for time related parameters')
         elif end_time > 200: 
             raise ValueError('end_time: 200 Myr is already an overkill.')
-        self.dz = z_min/nz 
+        self.dz = slab_tk/nz 
         self.nz = nz
         self.alpha_g = alpha_g
         self.end_time = end_time

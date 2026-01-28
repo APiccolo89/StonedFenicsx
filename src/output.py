@@ -263,14 +263,14 @@ def _benchmark_van_keken(S,ctrl_io,sc):
     # Suppose u is your Function
     # u = fem.Function(V)
 
-    lT = S.T_O.copy()#gather_vector(S.T_O.copy())
+    lT = S.T_N.copy()#gather_vector(S.T_O.copy())
     mpi_comm = lT.function_space.mesh.comm
     array = lT.x.array
 
     # gather solution from all processes on proc 0
     gT = mpi_comm.gather(array, root=0)
     
-    XGl = S.T_O.function_space.tabulate_dof_coordinates()#gather_coordinates(S.T_O.function_space)
+    XGl = S.T_N.function_space.tabulate_dof_coordinates()#gather_coordinates(S.T_O.function_space)
     x  = XGl[:,0]
     y  = XGl[:,1]
     X_G = mpi_comm.gather(x,root=0)

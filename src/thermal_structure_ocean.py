@@ -453,7 +453,8 @@ def build_coefficient_matrix(A,
 def compute_ocean_plate_temperature(ctrl:NumericalControls
                                     ,lhs:ctrl_LHS
                                     ,scal:Scal
-                                    ,pdb:PhaseDataBase)->tuple[ctrl_LHS, NDArray[np.float64], NDArray[np.float64]]:
+                                    ,pdb:PhaseDataBase
+                                    ,theta_in:float)->tuple[ctrl_LHS, NDArray[np.float64], NDArray[np.float64]]:
     
     """
     
@@ -481,8 +482,10 @@ def compute_ocean_plate_temperature(ctrl:NumericalControls
 
     # ========== initial conditions ========== 
 
-
-    z    = np.arange(0,nz*dz,dz)
+    if theta_in !=0: 
+        z    = np.linspace(0,nz*dz,nz)
+    else: 
+        z    = np.linspace(0,(nz*dz)/np.cos(theta_in-np.pi),nz)
     ph   = np.zeros([nz],dtype = np.int32) # I assume that everything is mantle 
     ph[z<6000/scal.L] = np.int32(1)
 
@@ -646,27 +649,29 @@ def compute_ocean_plate_temperature(ctrl:NumericalControls
 @timing_function
 def compute_initial_LHS(ctrl,lhs,scal,pdb,theta_in):
     
-    if theta_in !=0.0:
-        # Transform the z coordinate. 
-        lhs.z = lhs.z/np.cos(theta_in)
+
     
     if lhs.van_keken == 0 or lhs.non_linearities == 0 :
-        lhs,t, temperature = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb)
-    else:
-        lhs,_,_ = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb)
-        return lhs
-    
-    
-    
-    from scipy.interpolate import RegularGridInterpolator
+        lhs,t, temperature = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb,theta_in)
+        from scipy.interpolate import RegularGridInterpolator
  
-    t_re = np.linspace(lhs.c_age_var[0],lhs.c_age_var[1], num = lhs.LHS_var.shape[1])
-    T,Z  = np.meshgrid(t_re,lhs.z,indexing='ij')
-    TT,ZZ = np.meshgrid(t,lhs.z,indexing='ij')
-    interp_func = RegularGridInterpolator((t[0], lhs.z), temperature)
-    points_coarse = np.column_stack((T.ravel(), Z.ravel()))
-    lhs.LHS_var = interp_func(points_coarse).reshape(len(t_re), len(lhs.z))
-    lhs.t_res_vec = t_re 
+        t_re = np.linspace(lhs.c_age_var[0],lhs.c_age_var[1], num = lhs.LHS_var.shape[1])
+        T,Z  = np.meshgrid(t_re,lhs.z,indexing='ij')
+        TT,ZZ = np.meshgrid(t,lhs.z,indexing='ij')
+        interp_func = RegularGridInterpolator((t[0], lhs.z), temperature)
+        points_coarse = np.column_stack((T.ravel(), Z.ravel()))
+        lhs.LHS_var = interp_func(points_coarse).reshape(len(t_re), len(lhs.z))
+        lhs.t_res_vec = t_re 
+    else:
+        lhs,_,_ = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb,theta_in)
+        
+        
+
+        
+    
+    
+    
+
         
     
     return lhs

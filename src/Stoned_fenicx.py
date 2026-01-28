@@ -142,6 +142,7 @@ def StonedFenicsx(IP,Ph_input):
     lhs = ctrl_LHS(nz=IP.nz,
                     end_time = IP.end_time,
                     dt = IP.dt,
+                    slab_tk=IP.slab_tk,
                     recalculate = IP.recalculate,
                     van_keken = IP.van_keken,
                     non_linearities=IP.self_consistent_flag,
