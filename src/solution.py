@@ -1366,7 +1366,8 @@ class Slab(Stokes_Problem):
         dS_top = M.bc_dict["top_subduction"]
         dS_bot = M.bc_dict["bot_subduction"]
         # 1 Extract ds 
-        a1,a2,a3 = self.compute_nitsche_FS(M, S, dS_bot, a1, a2 ,a3,FGS ,50.0,sc)
+        if ctrl.van_keken !=0:
+            a1,a2,a3 = self.compute_nitsche_FS(M, S, dS_bot, a1, a2 ,a3,FGS ,50.0,sc)
         
         if ctrl.slab_bc == 0: 
             a1,a2,a3 = self.compute_nitsche_FS(M, S, dS_top, a1, a2 ,a3,FGS ,50.0,sc)
