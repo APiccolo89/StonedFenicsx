@@ -130,7 +130,9 @@ def StonedFenicsx(IP,Ph_input):
                             phase_wz         = IP.phase_wz,
                             dt = IP.dt_sim,
                             adiabatic_heating = IP.adiabatic_heating,
-                            Tmax=IP.Tmax)
+                            Tmax=IP.Tmax,
+                            it_max=IP.it_max,
+                            tol=IP.tol)
     # IO controls
     io_ctrl = IOControls(test_name = IP.test_name,
                         path_save = IP.path_test,
@@ -183,7 +185,6 @@ def StonedFenicsx(IP,Ph_input):
  
 if __name__ == '__main__': 
 
-        
     StonedFenicsx()   
     
     
