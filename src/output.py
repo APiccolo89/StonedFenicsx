@@ -65,20 +65,11 @@ class OUTPUT():
                      ,it_outer = 0     # outer iteration counter
                      ,time=0.0,        # current time
                      ts=0):            # time step counter
-        
         import os
         from dolfinx.io import XDMFFile
-        import basix  
-
         if ctrl.steady_state == 1:
-            file_name = os.path.join(self.pt_save,'Steady_state')
-            
+            file_name = os.path.join(self.pt_save,'Steady_state')         
         file_name2 = os.path.join(self.pt_save,'MeshTag')
-
-
-
-        # Prepare variable and spaces 
-
 
         # Velocity 
         u_T = fem.Function(self.vel_V)
@@ -104,6 +95,12 @@ class OUTPUT():
         T2.x.array[:] = T2.x.array[:]*sc.Temp - 273.15
         T2.x.scatter_forward()  
 
+        # Temperature
+        T3 = fem.Function(self.temp_V)
+        T3.name = "Temperature old [degC]"
+        T3.interpolate(S.T_O)
+        T3.x.array[:] = T3.x.array[:]*sc.Temp - 273.15
+        T3.x.scatter_forward()  
 
         # Lithostatic pressure
         PL2 = fem.Function(self.temp_V)
@@ -208,6 +205,7 @@ class OUTPUT():
             self.xdmf_main.write_function(u_T,          time)
             self.xdmf_main.write_function(p2,           time)
             self.xdmf_main.write_function(T2,           time)
+            self.xdmf_main.write_function(T3,           time)
             self.xdmf_main.write_function(PL2,          time)
             self.xdmf_main.write_function(rho2,         time)
             self.xdmf_main.write_function(Cp2,          time)
@@ -227,6 +225,7 @@ class OUTPUT():
                 ufile_xdmf.write_function(u_T  )
                 ufile_xdmf.write_function(p2   )
                 ufile_xdmf.write_function(T2   )
+                ufile_xdmf.write_function(T3   )
                 ufile_xdmf.write_function(PL2  )
                 ufile_xdmf.write_function(rho2 )
                 ufile_xdmf.write_function(Cp2  )

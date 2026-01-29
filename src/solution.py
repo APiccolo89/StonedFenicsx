@@ -1994,6 +1994,9 @@ def time_loop(M,ctrl,ioctrl,sc,lhs,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g):
 
 
         t = t+ctrl.dt
+        
+        sol.T_O = sol.T_N
+        
         print_ph(f'Time = {t*sc.T/sc.scale_Myr2sec:.3f} Myr')
         print_ph(f'================ // =====================')
 
