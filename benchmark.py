@@ -10,7 +10,7 @@ from src.Stoned_fenicx import StonedFenicsx
 # option for the benchmark
 option_thermal = [0, 1, 2, 3]
 option_adiabatic = [0]
-option_viscous = [0, 1, 2]
+option_viscous = [1, 2]
 self_con = [0, 1]
 
 
@@ -39,7 +39,7 @@ time_in = timethis.time()
 for i in range(len(option_thermal)):
     for j in range(len(option_adiabatic)):
         for k in range(len(option_viscous)):
-            for l in range(len(self_con)):
+            for m in range(len(self_con)):
                 time_A = timethis.time()
                 radio_flag = 1 
 
@@ -102,12 +102,12 @@ for i in range(len(option_thermal)):
                     name_diffusion = 'Van_Keken_diff'
                     name_dislocation = 'Van_Keken_disl'              
 
-                if self_con[l] ==1:
+                if self_con[m] ==1:
                     inp.self_consistent_flag = 0
                 else:
                     inp.self_consistent_flag = 1
                 
-                inp.sname = 'T_%d_%d_%d_%d'%(option_viscous[k],option_thermal[i],option_adiabatic[j],self_con[l])
+                inp.sname = 'T_%d_%d_%d_%d'%(option_viscous[k],option_thermal[i],option_adiabatic[j],self_con[m])
 
                 # Initialise the input
                 inp.van_keken = van_keken
@@ -190,7 +190,7 @@ for i in range(len(option_thermal)):
                 if dt > 60.0:
                     m, s = divmod(dt, 60)
                     print(f"{inp.sname} took {m:.2f} min and {s:.2f} sec")
-                if dt > 3600.0:
+                elif dt > 3600.0:
                     m, s = divmod(dt, 60)
                     h, m = divmod(m, 60)
                     print(f"{inp.sname} took {dt/3600:.2f} hr, {m:.2f} min and {s:.2f} sec")

@@ -1861,7 +1861,7 @@ def outerloop_operation(M:Mesh,
                                    it = it_outer,
                                    ts=ts)
 
-        if We.typology == 'NonlinearProblem' or We.typology == 'NonLinearProblemT' or it_outer == 0:  
+        if (We.typology == 'NonlinearProblem') or (We.typology == 'NonlinearProblemT') or (it_outer == 0):  
             We.Solve_the_Problem(sol
                                     ,ctrl
                                     ,FGWR
@@ -2007,7 +2007,7 @@ def solution_routine(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb:Phas
     
     # Time Loop 
     
-    S = time_loop(M,ctrl,ioctrl,sc,lhs_ctrl,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g)
+    time_loop(M,ctrl,ioctrl,sc,lhs_ctrl,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g)
     
     return 0 
 #--------------------------------------------------------------------------------------------
@@ -2064,7 +2064,7 @@ def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA,Tmax):
     
     # scal back 
     
-    minMaxU = minMaxU*(sc.L/sc.T)*sc.scale_vel 
+    minMaxU = minMaxU*(sc.L/sc.T)/sc.scale_vel 
     minMaxP = minMaxP*sc.stress/1e9 
     minMaxT = minMaxT*sc.Temp -273.15
     minMaxPL= minMaxPL*sc.stress/1e9
@@ -2078,15 +2078,15 @@ def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA,Tmax):
     
     time_B_outer = timing.time()
 
-    print_ph(f'')
+    print_ph('')
     print_ph(f' Outer iteration {it_outer:d} with tolerance {res_total:.3e}, in {time_B_outer-tA:.1f} sec // -- // --->')
-    print_ph(f'    []Res velocity       =  {res_u:.3e} [n.d.], max= {minMaxU[1]:.3e}, min= {minMaxU[0]:.3e} [cm/yr]')
-    print_ph(f'    []Res Temperature    =  {res_T:.3e} [n.d.], max= {minMaxT[1]:.3f}, min= {minMaxT[0]:.3f} [C]')
+    print_ph(f'    []Res velocity       =  {res_u:.3e} [n.d.], max= {minMaxU[1]:.6f}, min= {minMaxU[0]:.6f} [cm/yr]')
+    print_ph(f'    []Res Temperature    =  {res_T:.3e} [n.d.], max= {minMaxT[1]:.6f}, min= {minMaxT[0]:.6f} [C]')
     print_ph(f'    []Res pressure       =  {res_p:.3e} [n.d.], max= {minMaxP[1]:.3e}, min= {minMaxP[0]:.3e} [GPa]')
     print_ph(f'    []Res lithostatic    =  {res_PL:.3e}[n.d.], max= {minMaxPL[1]:.3e}, min= {minMaxPL[0]:.3e} [GPa]')
     print_ph(f'    []Res total (sqrt(rp^2+rT^2+rPL^2+rv^2)) =  {res_total:.3e} [n.d.] ')
-    print_ph(f'=============================================// -- // --->')
-    print_ph(f'')
+    print_ph('. =============================================// -- // --->')
+    print_ph('')
 
     
     
