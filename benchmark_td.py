@@ -8,10 +8,10 @@ from src.Stoned_fenicx import StonedFenicsx
 
 
 # option for the benchmark
-option_thermal = [0, 1, 2, 3]
+option_thermal = [1]
 option_adiabatic = [0]
-option_viscous = [0, 1, 2]
-self_con = [0, 1]
+option_viscous = [2]
+self_con = [0]
 
 
 # Create input data - Input is a class populated by default dataset
@@ -33,7 +33,8 @@ inp.Tmax = 1300.0  # mantle potential temperature
 # inp.model_shear = 'SelfConsistent'
 inp.steady_state = 0
 print_ph('Starting the benchmark tests with different options')
-
+inp.tol = 1e-2
+inp.it_max = 5
 time_in = timethis.time()
 
 for i in range(len(option_thermal)):

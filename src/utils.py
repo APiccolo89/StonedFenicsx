@@ -9,7 +9,7 @@ def timing_function(fun):
         result = fun(*args, **kwargs)
         time_B = timing.time()
         dt = time_B - time_A
-        global_dt = comm.allreduce(dt, op=MPI.MAX)
+        dt = comm.allreduce(dt, op=MPI.MAX)
         if comm.rank == 0:
             if dt > 60.0:
                 m, s = divmod(dt, 60)
