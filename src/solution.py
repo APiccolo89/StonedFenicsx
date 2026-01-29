@@ -1971,8 +1971,8 @@ def time_loop(M,ctrl,ioctrl,sc,lhs,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g):
         if ctrl.adiabatic_heating==0:
             sol.T_ad = compute_adiabatic_initial_adiabatic_contribution(M.domainG,sol.T_N,None,sol.PL,FGT,0)
 
-
-        O.print_output(sol,M.domainG,FGT,FGGR,ioctrl,sc,ctrl,it_outer=0,time=t,ts=ts)
+        if ctrl.steady_state == 1 or mod(ts,10) == 0:
+            O.print_output(sol,M.domainG,FGT,FGGR,ioctrl,sc,ctrl,it_outer=0,time=t*t*sc.T/sc.scale_Myr2sec,ts=ts)
         
         
         if ctrl.steady_state == 1 & ctrl.steady_state==1: 
