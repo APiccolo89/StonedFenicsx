@@ -1,5 +1,4 @@
 from .package_import import *
-# Util performance 
 #---------------------------------------------------------------------------------------------------------
 def timing_function(fun):
     @wraps(fun)
@@ -67,8 +66,6 @@ def interpolate_from_sub_to_main(u_dest, u_start, cells,parent2child=0):
         M (Mesh): The mesh of the main domain.
         V (FunctionSpace): The function space of the main domain.
     """
-    from dolfinx                         import mesh
-    import numpy as np
     
     if parent2child == 0: 
         a = np.arange(len(cells))

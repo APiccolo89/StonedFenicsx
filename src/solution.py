@@ -9,7 +9,7 @@ from .numerical_control         import NumericalControls, ctrl_LHS, IOControls
 from .utils                     import interpolate_from_sub_to_main
 from .scal                      import Scal
 from .output                    import OUTPUT
-from .utils                     import compute_eII,compute_strain_rate
+from .utils                     import compute_strain_rate
 from .compute_material_property import Functions_material_properties_global, Functions_material_rheology
 
 
@@ -173,7 +173,6 @@ class SolverStokes():
             # handle pressure nullspace
             self.pc = self.ksp.getPC()
             self.pc.setType("lu")
-            use_superlu = PETSc.IntType == np.int64
             self.pc.setFactorSolverType("mumps")
             self.pc.setFactorSetUpSolverType()
             self.pc.getFactorMatrix().setMumpsIcntl(icntl=24, ival=1)
@@ -328,8 +327,6 @@ class Problem:
             self.F0,_       = self.FS.sub(0).collapse()
             self.F1,_       = self.FS.sub(1).collapse()
             # Define trial/test on mixed FS
-            trial         = ufl.TrialFunction(self.FS)
-            test          = ufl.TestFunction(self.FS)
             self.trial0   = ufl.TrialFunction(self.FS.sub(0).collapse()[0])
             self.trial1   = ufl.TrialFunction(self.FS.sub(1).collapse()[0])
             self.test0    = ufl.TestFunction(self.FS.sub(0).collapse()[0])
@@ -381,8 +378,6 @@ class Global_thermal(Problem):
 
             facets                 = M.facets.find(M.bc_dict['Right_lit'])                        
             dofs_right_lit        = fem.locate_dofs_topological(self.FS, M.mesh.topology.dim-1, facets)
-
-            cd_dof_b = cd_dof[dofs_right_lit]
     
             T_gr = (-geom.lab_d-0)/(ctrl.Tmax-ctrl.Ttop)
             T_gr = T_gr**(-1) 
@@ -487,7 +482,6 @@ class Global_thermal(Problem):
             
     
     def set_newton_SS(self,p,D,T,u_global,pdb):
-        test   = self.test0                 # v
         trial0 = self.trial0                # δp (TrialFunction) for Jacobian
 
 
@@ -706,7 +700,7 @@ class Global_thermal(Problem):
         if it == 0 & ts == 0: 
             self.solv = ScalarSolver(a,L,M.comm,nl)
         
-        print_ph(f'              // -- // --- Temperature problem [GLOBAL] // -- // --->')
+        print_ph('              // -- // --- Temperature problem [GLOBAL] // -- // --->')
         
         time_A = timing.time()
 
@@ -757,7 +751,7 @@ class Global_thermal(Problem):
         if it == 0 & ts == 0: 
             self.solv = ScalarSolver(a,L,M.comm,nl,J,F)
         
-        print_ph(f'              // -- // --- Temperature problem [GLOBAL] // -- // --->')
+        print_ph('              // -- // --- Temperature problem [GLOBAL] // -- // --->')
         
         time_A = timing.time()
 
@@ -793,13 +787,14 @@ class Global_thermal(Problem):
         self.bc = self.create_bc_temp(getattr(M,'domainG'),ctrl,geom,lhs,S.u_global,it)
         if self.typology == 'NonlinearProblem':
             nl = 1 
-        F = None;J=None 
+        F = None 
+        J = None 
 
         if it == 0 & ts == 0: 
             self.solv = ScalarSolver(a,L,M.comm,nl,J,F)
         
 
-        print_ph(f'. // -- // --- Temperature problem [GLOBAL] // -- // --->')
+        print_ph('     // -- // --- Temperature problem [GLOBAL] // -- // --->')
         
         time_A = timing.time()
 
@@ -818,8 +813,7 @@ class Global_thermal(Problem):
     
     def solve_the_linear(self,S,a,L,fen_function,isPicard=0,it=0,ts=0):
         
-        buf = fem.Function(self.FS)
-        x   = self.solv.b.copy()
+
         self.solv.A.zeroEntries()
         fem.petsc.assemble_matrix(self.solv.A,fem.form(a),self.bc)
         self.solv.A.assemble()
@@ -855,7 +849,7 @@ class Global_thermal(Problem):
         du2  = S.PL.copy()
         it_inner = 0 
         time_A = timing.time()
-        print_ph(f'              [//] Picard iterations for the non linear temperature problem')
+        print_ph('              [//] Picard iterations for the non linear temperature problem')
 
         while it_inner < max_it and tol > ctrl.tol:
             time_ita = timing.time()
@@ -975,7 +969,6 @@ class Global_pressure(Problem):
         self.bc = [self.set_problem_bc(getattr(M,'domainG'))]
     def set_problem_bc(self,M):
          
-        fdim = 1    
         top_facets   = M.facets.find(M.bc_dict['Top'])
         top_dofs    = fem.locate_dofs_topological(self.FS, 1, top_facets)
         bc = [fem.dirichletbc(0.0, top_dofs, self.FS)]
@@ -1035,7 +1028,7 @@ class Global_pressure(Problem):
         if it_outer == 0 & ts == 0: 
             self.solv = ScalarSolver(a,L,M.comm,nl,J,F)
         
-        print_ph(f'              // -- // --- LITHOSTATIC PROBLEM [GLOBAL] // -- // --- > ')
+        print_ph('              // -- // --- LITHOSTATIC PROBLEM [GLOBAL] // -- // --- > ')
 
         time_A = timing.time()
 
@@ -1047,15 +1040,13 @@ class Global_pressure(Problem):
 
         time_B = timing.time()
 
-        print_ph(f'              // -- // --- Solution of Lithostatic pressure problem finished in {time_B-time_A:.2f} sec // -- // --->')
-        print_ph(f'')
+        print_ph('              // -- // --- Solution of Lithostatic pressure problem finished in {time_B-time_A:.2f} sec // -- // --->')
+        print_ph('')
 
         return S 
     
     def solve_the_linear(self,S,a,L,function_fen,isPicard=0,it=0,ts=0):
         
-        buf = fem.Function(self.FS)
-        x   = self.solv.b.copy()
         if it == 0 or ts == 0:
             self.solv.A.zeroEntries()
             fem.petsc.assemble_matrix(self.solv.A,fem.form(a),self.bc[0])
@@ -1079,7 +1070,6 @@ class Global_pressure(Problem):
     def solve_the_non_linear(self,M,S,ctrl,FG,g):  
         
         tol = 1e-3  # Tolerance Picard  
-        isPicard = 1 # Flag for the linear solver. 
         tol = 1.0 
         p_k = S.PL.copy() 
         p_k1 = S.PL.copy()
@@ -1088,7 +1078,7 @@ class Global_pressure(Problem):
         it_inner = 0 
         
         
-        print_ph(f'              [//] Picard iterations for the non linear lithostatic pressure problem')
+        print_ph('              [//] Picard iterations for the non linear lithostatic pressure problem')
 
         
         while it_inner < ctrl.it_max and tol > ctrl.tol_innerPic:
@@ -1114,7 +1104,7 @@ class Global_pressure(Problem):
             
             it_inner = it_inner + 1 
         
-        print_ph(f'              [//] Newton iterations for the non linear lithostatic pressure problem')
+        print_ph('              [//] Newton iterations for the non linear lithostatic pressure problem')
 
         # --- Newton =>         
         
@@ -1143,15 +1133,12 @@ class Stokes_Problem(Problem):
         if wedge ==1: 
             V = S.u_wedge.function_space
             PT = self.FSPT
-            v = ufl.TestFunction(V)
             e = compute_strain_rate(S.u_wedge)
-            vel_e = ufl.sym(ufl.grad(S.u_wedge))
             eta_new = compute_viscosity_FX(e, S.t_owedge, S.p_lwedge, FR, sc)
         else: 
             V = S.u_slab.function_space
             PT = self.FSPT
             e = compute_strain_rate(S.u_slab)
-            vel_e = ufl.sym(ufl.grad(S.u_slab))
             eta_new = compute_viscosity_FX(e, S.t_oslab, S.p_lslab, FR, sc)
 
         shear_heating = ufl.inner(2*eta_new*e, e)
@@ -1366,8 +1353,7 @@ class Slab(Stokes_Problem):
         dS_top = M.bc_dict["top_subduction"]
         dS_bot = M.bc_dict["bot_subduction"]
         # 1 Extract ds 
-        if ctrl.van_keken !=0:
-            a1,a2,a3 = self.compute_nitsche_FS(M, S, dS_bot, a1, a2 ,a3,FGS ,50.0,sc)
+        a1,a2,a3 = self.compute_nitsche_FS(M, S, dS_bot, a1, a2 ,a3,FGS ,50.0,sc)
         
         if ctrl.slab_bc == 0: 
             a1,a2,a3 = self.compute_nitsche_FS(M, S, dS_top, a1, a2 ,a3,FGS ,50.0,sc)
@@ -1380,7 +1366,7 @@ class Slab(Stokes_Problem):
 
         self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,ctrl ,J = None, r = None,it = 0, ts = 0)
         
-        print_ph(f'              // -- // --- SLAB STOKES PROBLEM // -- // --->')    
+        print_ph('              // -- // --- SLAB STOKES PROBLEM // -- // --->')    
         time_A = timing.time()    
         if self.solv.direct_solver==1:
             x = self.solv.A.createVecLeft()
@@ -1421,7 +1407,6 @@ class Wedge(Stokes_Problem):
         M = getattr(M,'domainB')
 
         comm = MPI.COMM_WORLD
-        rank = comm.Get_rank()
 
         # Example: each rank has some local IDs
         local_ids = np.int32(M.phase.x.array[:])
@@ -1520,20 +1505,7 @@ class Wedge(Stokes_Problem):
     
         return [bcx, bcy, bc_overriding]
                 
-    
-    def compute_nitsche_traction(self,D, S, dS, a1,a2,a3,pdb ,gamma,it = 0):
-        # Place holder for eventual traction boundary condition 
-        """
-        In case I want to introduce the feedback between thermal evolution and density 
-        I will introduce this boundary condition. The material properties will be computed 
-        as a function of the lithostatic pressure 
-        
-        
-        
-        """
-
-
-        return a1, a2, a3 
+   
     
     def Solve_the_Problem(self,S,ctrl,FGW,M,g,sc,g_input,it=0,ts=0):
         theta = M.g_input.theta_out_slab
@@ -1569,7 +1541,7 @@ class Wedge(Stokes_Problem):
         a   = [[a1, a2],[a3, None]]
         a_p0  = [[a1, None],[None, a_p]]
 
-        print_ph(f'              // -- // --- STOKES PROBLEM [WEDGE] // -- // --- > ')
+        print_ph('              // -- // --- STOKES PROBLEM [WEDGE] // -- // --- > ')
 
         
         time_A = timing.time()
@@ -1579,7 +1551,7 @@ class Wedge(Stokes_Problem):
             S,r_al = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl, S)
 
         else: 
-            print_ph(f'              [//] Picard iterations for the non linear lithostatic pressure problem')
+            print_ph('              [//] Picard iterations for the non linear lithostatic pressure problem')
 
             u_k   = S.u_wedge.copy()
             p_k   = S.p_wedge.copy()
@@ -1639,11 +1611,11 @@ class Wedge(Stokes_Problem):
             print_ph(f'              []Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
             print_ph(f'                         [?] |F^mom|/|F^mom_0| {rmom/rmom_0:.3e}, |F^div|/|F^div_0| {rdiv/rdiv_0:.3e}')
             print_ph(f'                         [?] |F^mom|           {rmom:.3e}, abs div residuum |F^div| {rdiv:.3e}')
-            print_ph(f'              []Converged ')
+            print_ph('              []Converged ')
 
         time_B = timing.time()
-        print_ph(f'              // -- // --- Solution of Wedge in {time_B-time_A:.2f} sec // -- // --- >')
-        print_ph(f'')
+        print_ph('              // -- // --- Solution of Wedge in {time_B-time_A:.2f} sec // -- // --- >')
+        print_ph('')
 
         return S 
     
@@ -1938,7 +1910,7 @@ def outerloop_operation(M:Mesh,
                                      ,ctrl.Tmax)
 
 
-        print_ph(f'   // -- // :( --- ------- ------- ------- :) // -- // --- > ')
+        print_ph('   // -- // :( --- ------- ------- ------- :) // -- // --- > ')
 
             
         it_outer = it_outer + 1
@@ -1951,28 +1923,33 @@ def outerloop_operation(M:Mesh,
 def time_loop(M,ctrl,ioctrl,sc,lhs,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g):
     
     if ctrl.steady_state == 1:
-        print_ph(f'// -- // --- Steady   State  solution // -- // --- > ')
+        print_ph('// -- // --- Steady   State  solution // -- // --- > ')
     else:
-        print_ph(f'// -- // --- Time Dependent solution // -- // --- > ')
+        print_ph('// -- // --- Time Dependent solution // -- // --- > ')
 
          
         
     t  = 0.0 
     ts = 0 
-    O  = OUTPUT(M.domainG, ioctrl, ctrl, sc)
+    output_class  = OUTPUT(M.domainG, ioctrl, ctrl, sc)
     
     # Initialise S.T_N 
     sol.T_N = sol.T_O.copy()
     
     while t<ctrl.time_max: 
+        
+        if ctrl.steady_state==0:
+            print_ph(f'Time = {t*sc.T/sc.scale_Myr2sec:.3f} Myr, timestep = {ts:d}')
+            print_ph('================ // =====================')
+        
         # Prepare variable
         sol = outerloop_operation(M,ctrl,ioctrl,sc,lhs,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g,ts=ts)
 
         if ctrl.adiabatic_heating==0:
             sol.T_ad = compute_adiabatic_initial_adiabatic_contribution(M.domainG,sol.T_N,None,sol.PL,FGT,0)
 
-        if ctrl.steady_state == 1 or mod(ts,10) == 0:
-            O.print_output(sol,M.domainG,FGT,FGGR,ioctrl,sc,ctrl,it_outer=0,time=t*t*sc.T/sc.scale_Myr2sec,ts=ts)
+        if ctrl.steady_state == 1 or (ts%10) == 0:
+            output_class.print_output(sol,M.domainG,FGT,FGGR,ioctrl,sc,ctrl,it_outer=0,time=t*t*sc.T/sc.scale_Myr2sec,ts=ts)
         
         
         if ctrl.steady_state == 1 & ctrl.steady_state==1: 
@@ -1997,8 +1974,7 @@ def time_loop(M,ctrl,ioctrl,sc,lhs,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g):
         
         sol.T_O = sol.T_N
         
-        print_ph(f'Time = {t*sc.T/sc.scale_Myr2sec:.3f} Myr')
-        print_ph(f'================ // =====================')
+        ts = ts + 1
 
     return 0 
 
