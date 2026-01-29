@@ -1242,7 +1242,6 @@ class Slab(Stokes_Problem):
             if ctrl.slab_bc == 1: # moving wall slab bc 
                 # Compute this crap only once @ the beginning of the simulation 
                 if it == 0 and ts == 0:
-                        dofs        = fem.locate_dofs_topological(self.F0, fdim, slab_facets)
 
                         n = ufl.FacetNormal(mesh)                    # exact facet normal in    weak   form
                         v_slab = float(1.0)  # slab velocity magnitude
@@ -1420,15 +1419,21 @@ class Wedge(Stokes_Problem):
         # Compute global unique IDs
         unique_ids = np.unique(all_ids)
 
-        non_linear = False 
+        non_linear_v = False 
+        non_linear_T = False 
+
         
         for i in range(np.shape(unique_ids)[0]): 
-            if pdb.option_eta[unique_ids[i]] > 0: 
-                non_linear = True
-                break
+            if pdb.option_eta[unique_ids[i]] > 1: 
+                non_linear_v = True
+            elif pdb.option_eta[unique_ids[i]] > 0:
+                non_linear_T = True
+    
             
-        if non_linear == True:
+        if non_linear_v == True:
             self.typology = 'NonlinearProblem'
+        elif non_linear_T == True and non_linear_v==False: 
+            self.typology = 'NonlinearProblemT'
         else:
             self.typology = 'LinearProblem'
         
@@ -1442,7 +1447,6 @@ class Wedge(Stokes_Problem):
         
     
         # facet ids
-        overriding_facet = D.facets.find(D.bc_dict['overriding'])
         slab_facets      = D.facets.find(D.bc_dict['slab'])
         
             
@@ -1456,7 +1460,6 @@ class Wedge(Stokes_Problem):
         
         
         #------------------------------------------------------------------------
-        dofs        = fem.locate_dofs_topological(V, fdim, slab_facets)
 
         n = ufl.FacetNormal(mesh)                    # exact facet normal in    weak   form
         v_slab = float(1.0)  # slab velocity magnitude
@@ -1547,7 +1550,7 @@ class Wedge(Stokes_Problem):
         time_A = timing.time()
 
         
-        if self.typology == 'LinearProblem': 
+        if self.typology == 'LinearProblem' or self.typology == 'NonlinearProblemT': 
             S,r_al = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl, S)
 
         else: 
@@ -1614,7 +1617,7 @@ class Wedge(Stokes_Problem):
             print_ph('              []Converged ')
 
         time_B = timing.time()
-        print_ph('              // -- // --- Solution of Wedge in {time_B-time_A:.2f} sec // -- // --- >')
+        print_ph(f'              // -- // --- Solution of Wedge in {time_B-time_A:.2f} sec // -- // --- >')
         print_ph('')
 
         return S 
@@ -1858,7 +1861,7 @@ def outerloop_operation(M:Mesh,
                                    it = it_outer,
                                    ts=ts)
 
-        if We.typology == 'NonlinearProblem' or it_outer == 0:  
+        if We.typology == 'NonlinearProblem' or We.typology == 'NonLinearProblemT' or it_outer == 0:  
             We.Solve_the_Problem(sol
                                     ,ctrl
                                     ,FGWR
