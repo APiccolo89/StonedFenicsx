@@ -153,11 +153,13 @@ def StonedFenicsx(IP,Ph_input):
     Pdb = generate_phase_database(IP,Ph_input)                      
     # ---
     # Create mesh 
-    g_input = Geom_input(x = np.asarray(IP.x),
+    g_input = Geom_input(x = np.asarray(IP.x), 
                  y = np.array(IP.y),
                  cr=IP.cr,
                  ocr=IP.ocr,
                  lit_mt=IP.lit_mt,
+                 ns_depth=IP.ns_depth,
+                 lab_d = IP.lab_d,
                  lc = IP.lc,
                  wc = IP.wc,
                  slab_tk = IP.slab_tk, 
