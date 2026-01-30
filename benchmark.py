@@ -8,9 +8,9 @@ from src.Stoned_fenicx import StonedFenicsx
 
 
 # option for the benchmark
-option_thermal = [0, 1, 2, 3]
+option_thermal = [3]
 option_adiabatic = [0]
-option_viscous = [1, 2]
+option_viscous = [0, 1, 2]
 self_con = [0, 1]
 
 
@@ -25,10 +25,10 @@ inp.path_test = '../Results/Tests_Van_keken'
 inp.cr = 0.0   # Overriding crust 
 inp.lc = 0.3   # relative amount of lower crust
 inp.ocr = 6.0e3  # Crustal thickness
-inp.lt_d = 50e3  # No slip boundary condition depth
 inp.lit_mt = 50e3  # Lithospheric mantle depth 
 inp.lab_d = inp.lit_mt  # depth of the lab 
 inp.decoupling = 50e3  # decoupling depth
+inp.ns_depth = 50e3
 inp.Tmax = 1300.0  # mantle potential temperature
 # inp.model_shear = 'SelfConsistent'
 inp.steady_state = 1

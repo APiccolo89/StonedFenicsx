@@ -120,25 +120,26 @@ class Geom_input():
         slab_tk: float = 130e3,
         decoupling: float = 100e3,
         trans: float = 10e3,
-        lab_d: float = 0.0e3) -> None:
+        lab_d: float = 0.0e3,
+        ns_depth: float = 50e3) -> None:
          
         self.x                 = x               # main grid coordinate
-        self.y                 = y   
-        self.slab_tk           = slab_tk
-        self.cr                = cr              # crust 
+        self.y                 = y               # main grid coordinate
+        self.slab_tk           = slab_tk         # slab thickness 
+        self.cr                = cr              # overriding crust [can be oceanic, or continental]
         self.ocr               = ocr             # oceanic crust
         self.lit_mt            = lit_mt          # lithosperic mantle  
-        self.lc                = lc              # lower crust ratio 
-        self.wc                = wc              # weak zone 
-        self.lt_d              = (cr+lit_mt)     # total lithosphere thickness
+        self.lc                = lc              # lower crust ratio -> compute the thicness of the lower crust
+        self.wc                = wc              # weak zone -> thickness of the weak zone. 
+        self.ns_depth          = ns_depth     # # no-slip boundary condition overriding plate depth
         self.decoupling        = decoupling      # decoupling depth -> i.e. where the weak zone is prolonged 
-        self.resolution_normal = wc  # To Do
-        self.theta_out_slab    = []
-        self.theta_in_slab    = []
+        self.resolution_normal = wc              # To Do
+        self.theta_out_slab    = []              # slab bending angle at the bottom of the model
+        self.theta_in_slab    = []               # slab bending at the top-left model 
 
-        self.trans             = trans
-        if lab_d == 0.0:
-            self.lab_d         = self.lt_d
+        self.trans             = trans           # Decoupling parameter
+        if lab_d == 0.0:                         # Depth of lab: we distinguish the no-slip with the actual overriding mantle-astenosphere boundary. This gives more freedom to test hypotesis. 
+            self.lab_d         = self.ns_depth
         else:
             self.lab_d         = lab_d
     
@@ -149,7 +150,7 @@ class Geom_input():
         self.ocr               /= sc.L             # oceanic crust
         self.lit_mt            /= sc.L          # lithosperic mantle  
         self.wc                /= sc.L             # weak zone 
-        self.lt_d              /= sc.L    # total lithosphere thickness
+        self.ns_depth              /= sc.L    # total lithosphere thickness
         self.decoupling        /= sc.L      # decoupling depth -> i.e. where the weak zone is prolonged 
         self.resolution_normal /= sc.L  # To Do
         self.trans             /= sc.L
@@ -193,7 +194,7 @@ class Class_Points():
 
 
         self.max_tag_b, self.tag_right_c_b, self.coord_bc,  mesh_model            = _create_points(mesh_model,  g_input.x[1], g_input.y[0],         g_input.wc,  self.max_tag_oc,  True)
-        self.max_tag_c, self.tag_right_c_l, self.coord_lr,  mesh_model            = _create_points(mesh_model,   g_input.x[1], -g_input.lt_d, g_input.wc,  self.max_tag_b,  True)
+        self.max_tag_c, self.tag_right_c_l, self.coord_lr,  mesh_model            = _create_points(mesh_model,   g_input.x[1], -g_input.ns_depth, g_input.wc,  self.max_tag_b,  True)
         self.max_tag_d, self.tag_right_c_t, self.coord_top, mesh_model            = _create_points(mesh_model,   g_input.x[1],  g_input.y[1],         g_input.wc,  self.max_tag_c,  True)
 
         if g_input.cr != 0.0:
@@ -266,7 +267,7 @@ class Class_Line():
             self.lines_oc = None
         # Create line overriding plate:
         #-- find tag of the of the channel # -> find the mistake: confusion with index types
-        i_s = find_tag_line(CP.coord_sub,     g_input.lt_d,'y')
+        i_s = find_tag_line(CP.coord_sub,     g_input.ns_depth,'y')
         p_list = [i_s, CP.tag_right_c_l[0]]
         if g_input.ocr != 0.0:
             self.max_tag_line_ov,    self.tag_L_ov,    self.lines_L_ov,  mesh_model         = _create_lines(mesh_model, self.max_tag_line_ocean, p_list, False)
@@ -605,8 +606,8 @@ def find_extra_node(ax:NDArray[np.float64],
     ax,ay,t = _correct_(ax,ay,e_node_lc,c_phase.cr,t,t_ex2)
 
     
-    e_node_lit,t_ex3 = _find_e_node(ax,ay,t,c_phase.lt_d)
-    ax,ay,t = _correct_(ax,ay,e_node_lit,c_phase.lt_d,t,t_ex3)
+    e_node_lit,t_ex3 = _find_e_node(ax,ay,t,c_phase.ns_depth)
+    ax,ay,t = _correct_(ax,ay,e_node_lit,c_phase.ns_depth,t,t_ex3)
 
         
     e_node_lit,t_ex3 = _find_e_node(ax,ay,t,c_phase.decoupling)
@@ -632,8 +633,8 @@ def correct_channel(cx:NDArray[np.float64],
     e_node_lc,t_ex2 = _find_e_node(cx,cy,np.zeros_like(cx),c_phase.cr)
     cx,cy,t = _correct_(cx,cy,e_node_lc,c_phase.cr,cx*0.0,0)
 
-    e_node_lit,t_ex3 = _find_e_node(cx,cy,np.zeros_like(cx),c_phase.lt_d)
-    cx,cy,t = _correct_(cx,cy,e_node_lit,c_phase.lt_d,cx*0.0,0)
+    e_node_lit,t_ex3 = _find_e_node(cx,cy,np.zeros_like(cx),c_phase.ns_depth)
+    cx,cy,t = _correct_(cx,cy,e_node_lit,c_phase.ns_depth,cx*0.0,0)
 
     e_node_dc,t_ex4 = _find_e_node(cx,cy,np.zeros_like(cx),c_phase.decoupling)
     cx,cy,t = _correct_(cx,cy,e_node_dc,c_phase.decoupling,cx*0.0,0)
@@ -646,10 +647,10 @@ def correct_channel(cx:NDArray[np.float64],
 
     # we want to add an extra node in the middle of the channel so that we can easily assign boundary conditions and we control the mesh there
     for i in range (0,len(sx)-1):
-        if sy[i] == - c_phase.lt_d:
+        if sy[i] == - c_phase.ns_depth:
             slab_x_extra_node = sx[i]
     ex = (cx[e_node_lit] + slab_x_extra_node) / 2
-    ey = - c_phase.lt_d
+    ey = - c_phase.ns_depth
 
 
     return cx,cy,ex,ey

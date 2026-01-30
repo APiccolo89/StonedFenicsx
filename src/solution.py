@@ -54,7 +54,10 @@ class Solution():
         self.Hs_slab  : dolfinx.fem.function.Function
         self.Hs_global : dolfinx.fem.function.Function
         self.T_ad      : dolfinx.fem.function.Function
-        
+        self.outer_iteration : NDArray[:]
+        self.mT            : NDArray[:]
+        self.MT            : NDArray[:]     
+        self.ts            : NDArray[:]   
         
     def create_function(self,PG,PS,PW,elements): 
         """
@@ -101,7 +104,11 @@ class Solution():
         self.u_global, self.p_global = gives_Function(space_GL)
         self.u_slab  , self.p_slab   = gives_Function(PS.FS)
         self.u_wedge , self.p_wedge  = gives_Function(PW.FS)
-        self.T_ad                     = fem.Function(PG.FS)    
+        self.T_ad                     = fem.Function(PG.FS)   
+        self.mT    = np.zeros(1,dtype=float)
+        self.MT    = np.zeros(1,dtype=float) 
+        self.outer_iteration = np.zeros(1,dtype=float)
+        self.ts             = np.zeros(1,dtype=int)
 
         return self 
 #---------------------------------------------------------------------------
@@ -265,7 +272,7 @@ def decoupling_function(z,fun,g_input):
     """
     
     dc = g_input.decoupling
-    lit = g_input.lt_d
+    lit = g_input.ns_depth
     dc = dc/g_input.decoupling
     lit = lit/g_input.decoupling
     z2 = np.abs(z)/g_input.decoupling
@@ -443,7 +450,6 @@ class Global_thermal(Problem):
             heat_source.x.scatter_forward()
         
             decoupling    = heat_source.copy()
-            efficiency    = heat_source.copy()
             Z = self.FS.tabulate_dof_coordinates()[:,1]
             decoupling = decoupling_function(Z,decoupling,g_input)
 
@@ -917,7 +923,7 @@ class Global_thermal(Problem):
         Then select the crustal+lithospheric marker, and overwrite the T_i with a linear geotherm. Simple. 
         ----
         output : T_i the initial temperature field.  
-            T_gr = (-M.g_input.lt_d-0)/(ctrl.Tmax-ctrl.Ttop)
+            T_gr = (-M.g_input.ns_depth-0)/(ctrl.Tmax-ctrl.Ttop)
             T_gr = T_gr**(-1) 
 
             bc_fun = fem.Function(X)
@@ -1902,7 +1908,7 @@ def outerloop_operation(M:Mesh,
                             ,ts = ts)
         
         # Compute residuum 
-        res = compute_residuum_outer(sol
+        res,sol = compute_residuum_outer(sol
                                      ,T_kouter
                                      ,PL_kouter
                                      ,u_global_kouter
@@ -1910,7 +1916,8 @@ def outerloop_operation(M:Mesh,
                                      ,it_outer
                                      ,sc
                                      ,time_A_outer
-                                     ,ctrl.Tmax)
+                                     ,ctrl.Tmax
+                                     ,ts)
 
 
         print_ph('   // -- // :( --- ------- ------- ------- :) // -- // --- > ')
@@ -2046,7 +2053,7 @@ def min_max_array(a, vel = False):
     return np.array([global_min, global_max],dtype=np.float64)
 
 #------------------------------------------------------------------------------------------------------------
-def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA,Tmax):
+def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA,Tmax,ts):
     # Prepare the variables 
 
     
@@ -2088,11 +2095,13 @@ def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA,Tmax):
     print_ph('. =============================================// -- // --->')
     print_ph('')
 
+    sol.mT = np.append(sol.mT,minMaxT[0])
+    sol.MT = np.append(sol.MT,minMaxT[1])
+    sol.outer_iteration = np.append(sol.outer_iteration,res_total)
+    sol.ts = np.append(sol.ts,ts)
     
     
-    
-    
-    return res_total 
+    return res_total, sol 
 #------------------------------------------------------------------------------------------------------------
 def relative_slab_T_difference(sol):
     # Prepare the variables 

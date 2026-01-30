@@ -119,7 +119,7 @@ def create_domain_A(mesh_model, CP, LC, g_input):
 
 def create_domain_B(mesh_model, CP, LC, g_input):
     
-    index = find_line_index(LC.lines_S,CP.coord_sub,g_input.lt_d)
+    index = find_line_index(LC.lines_S,CP.coord_sub,g_input.ns_depth)
     index = index 
     buf_array = LC.lines_S[2,index:]
     buf_array = -buf_array 
@@ -147,7 +147,7 @@ def create_domain_C(mesh_model, CP, LC, g_input):
         if g_input.lc !=0:
             
             index_a    = find_line_index(LC.lines_S,CP.coord_sub,g_input.cr)
-            index_b    = find_line_index(LC.lines_S,CP.coord_sub,g_input.lt_d)-1
+            index_b    = find_line_index(LC.lines_S,CP.coord_sub,g_input.ns_depth)-1
             buf_array = LC.lines_S[2,index_a:index_b+1]
             buf_array = -buf_array[::-1]
         
@@ -173,7 +173,7 @@ def create_domain_C(mesh_model, CP, LC, g_input):
             mesh_model = create_loop(l_list, mesh_model, 30)
         else:
             index_a    = find_line_index(LC.lines_S,CP.coord_sub,g_input.cr)
-            index_b    = find_line_index(LC.lines_S,CP.coord_sub,g_input.lt_d)-1
+            index_b    = find_line_index(LC.lines_S,CP.coord_sub,g_input.ns_depth)-1
             buf_array = LC.lines_S[2,index_a:index_b+1]
             buf_array = -buf_array[::-1]
         
@@ -188,7 +188,7 @@ def create_domain_C(mesh_model, CP, LC, g_input):
             l_list = [LC.lines_R[2,0],-LC.lines_cr[2,:],buf_array,LC.lines_T[2,:]]
             mesh_model = create_loop(l_list, mesh_model, 30)
     else:   
-        index    = find_line_index(LC.lines_S,CP.coord_sub,g_input.lt_d)-1
+        index    = find_line_index(LC.lines_S,CP.coord_sub,g_input.ns_depth)-1
         buf_array = LC.lines_S[2,0:index+1]
         buf_array = -buf_array[::-1]
         
@@ -213,7 +213,7 @@ def create_physical_line(CP,LC, g_input,mesh_model):
     for i in range(len(LC.tag_L_R)):
         L = LC.tag_L_R[i]
         p0,p1,cx,cy = from_line_to_point_coordinate(L,LC.line_global, CP.global_points)
-        if cy[0] == -g_input.lt_d or cy[1] == -g_input.lt_d:
+        if cy[0] == -g_input.ns_depth or cy[1] == -g_input.ns_depth:
             break 
     mesh_model.addPhysicalGroup(1, LC.tag_L_R[0:i+1], tag=dict_tag_lines['Right_lit'])
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
@@ -237,7 +237,7 @@ def create_physical_line(CP,LC, g_input,mesh_model):
     for i in range(len(LC.tag_L_sub)):
         L = LC.tag_L_sub[i]
         p0,p1,cx,cy = from_line_to_point_coordinate(L,LC.line_global, CP.global_points)
-        if cy[0] == -g_input.lt_d or cy[1] == -g_input.lt_d:
+        if cy[0] == -g_input.ns_depth or cy[1] == -g_input.ns_depth:
             break 
     
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
@@ -402,7 +402,7 @@ def create_gmesh(ioctrl   :IOControls,
         ind_oc_cr = []
         ind_oc_lc = []
         
-    ind_oc_lt = np.where(slab_y == -g_input.lt_d)[0][0]
+    ind_oc_lt = np.where(slab_y == -g_input.ns_depth)[0][0]
     
     
     mesh_model = create_gmsh(slab_x,slab_y,bot_x,bot_y,oc_cx,oc_cy,g_input) 

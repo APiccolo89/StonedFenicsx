@@ -317,33 +317,33 @@ class Input:
     # -----------------------------------------------------------------------------------------------------
     # Numerical Controls
     # -----------------------------------------------------------------------------------------------------
-    it_max: int = 20
-    tol: float = 1e-5
-    relax: float = 0.9
-    Tmax: float = 1333.0
-    Ttop: float = 0.0
-    g: float = 9.81
+    it_max: int = 20             # It max outer iteration and inner iteration
+    tol: float = 1e-5            # residual for the outer iteration
+    relax: float = 0.9           # Correction factor for the solution
+    Tmax: float = 1333.0         # maximum temperature (mantle temperature) [deg C]
+    Ttop: float = 0.0            # surface temperature [deg C]
+    g: float = 9.81              # gravity module vector [m/s^2]
+  
+    v_s: List[float] = field(default_factory=lambda: [5.0, 0.0])  # slab velocity vector [cm/yr]
 
-    v_s: List[float] = field(default_factory=lambda: [5.0, 0.0])  # (still not converted here)
+    slab_age: float = 50.0          # age of the slab [Myr]
+    time_max: float = 2.0           # maximum time of timedependent problem [Myr]
+    time_dependent_v: int = 0       # Flag to activate change in velocity 
+    steady_state: int = 1           # Flag to decide wether the problem is steady state or transient
+    slab_bc: int = 1                # change bc kind -> depecrated to remove
+    tol_innerPic: float = 1e-2      # Inner tollerance residual of picard iteration
+    tol_innerNew: float = 1e-5      # To Remove
+    van_keken_case: int = 2         # Van keken case -> to remove
+    decoupling_ctrl: int = 1        # Activate the decoupling between overriding material and subducting slab
+    model_shear: str = "NoShear"    # Model for shear heating along the interaface
+    phase_wz: int = 7               # Virtual weakzone phase
+    time_dependent: int = 1         # Depecrated 
+    dt_sim: float = 15000 / 1e6  # Myr #timestep simulation
 
-    slab_age: float = 50.0
-    time_max: float = 2.0
-    time_dependent_v: int = 0
-    steady_state: int = 1
-    slab_bc: int = 1
-    tol_innerPic: float = 1e-2
-    tol_innerNew: float = 1e-5
-    van_keken_case: int = 2
-    decoupling_ctrl: int = 1
-    model_shear: str = "NoShear"
-    phase_wz: int = 7
-    time_dependent: int = 1
-    dt_sim: float = 15000 / 1e6  # Myr
+    adiabatic_heating: int = 0  # adiabatic heating flag -> to remove
 
-    adiabatic_heating: int = 0  # keep only once
-
-    phi: float = 5.0
-    self_consistent_flag:int = 1
+    phi: float = 5.0            # Friction angle
+    self_consistent_flag:int = 1 # incoming plate thermal structure: 0 -> half space cooling model ; 1 -> self-consistent with material properties
     # -----------------------------------------------------------------------------------------------------
     # input/output control
     # -----------------------------------------------------------------------------------------------------
@@ -400,7 +400,7 @@ class Input:
     lc: float = 0.3
     wc: float = 2.0e3
 
-    lt_d: float = 50e3
+    ns_depth: float = 50e3
     lab_d: float = 100e3
     decoupling: float = 80e3
     resolution_normal: float = 2.0e3

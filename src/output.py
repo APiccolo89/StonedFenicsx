@@ -256,13 +256,10 @@ class OUTPUT():
 def _benchmark_van_keken(S,ctrl_io,sc):
     import h5py 
     from scipy.interpolate import griddata
-    from .utils import gather_vector,gather_coordinates
     
     comm = MPI.COMM_WORLD
-    # Suppose u is your Function
-    # u = fem.Function(V)
 
-    lT = S.T_N.copy()#gather_vector(S.T_O.copy())
+    lT = S.T_N.copy()
     mpi_comm = lT.function_space.mesh.comm
     array = lT.x.array
 
@@ -287,8 +284,7 @@ def _benchmark_van_keken(S,ctrl_io,sc):
         ny   = 101
         idx0 = 10 #(11 in van keken)
         idy0 = ny-11 
-        idx1 = 36-1 
-        idy1 = ny-36
+
 
         xx   = np.linspace(x_g[0],x_g[1],num=nx)
         yy   = np.linspace(y_g[0],y_g[1],num=ny)
@@ -308,7 +304,6 @@ def _benchmark_van_keken(S,ctrl_io,sc):
         c = 0
         X_S = []
         Y_S = []
-        i_X = 10
         for i in range(36):
                 T = T+(T_g[i,ny-1-i])**2
                 x_s.append(xx[i])
@@ -334,34 +329,6 @@ def _benchmark_van_keken(S,ctrl_io,sc):
 
         T_ln = np.sqrt(T/co) 
         T_ln2 = np.sqrt(np.sum(T2)/c)
-
-        data_1c = np.array([
-        [397.55, 505.70, 850.50],
-        [391.57, 511.09, 852.43],
-        [387.78, 503.10, 852.97],
-        [387.84, 503.13, 852.92],
-        [389.39, 503.04, 851.68],
-        [388.73, 504.03, 854.99]
-        ])
-
-        data_2a = np.array([
-        [570.30, 614.09, 1007.31],
-        [580.52, 606.94, 1002.85],
-        [580.66, 607.11, 1003.20],
-        [577.59, 607.52, 1002.15],
-        [581.30, 607.26, 1003.35]
-        ])
-
-        data_2b = np.array([
-        [550.17, 593.48, 994.11],
-        [551.60, 608.85, 984.08],
-        [582.65, 604.51, 998.71],
-        [583.36, 605.11, 1000.01],
-        [574.84, 603.80, 995.24],
-        [583.11, 604.96, 1000.05]
-        ])
-
-            
 
         print( '------------------------------------------------------------------' )
         print( ':::====> T(11,11) = %.2f [deg C]'%( T_11_11, ) )
@@ -396,6 +363,27 @@ def _benchmark_van_keken(S,ctrl_io,sc):
         if name in van_keken_db.keys():
             del van_keken_db[name]
         van_keken_db.create_dataset(name,data=T_ln2)
+        
+        name = '%s/Outer_residual'%group_name
+        if name in van_keken_db.keys():
+            del van_keken_db[name]
+        van_keken_db.create_dataset(name,data = S.outer_iteration)
+        
+        name = '%s/maxTemperature'%group_name 
+        if name in van_keken_db.keys():
+            del van_keken_db[name]
+        van_keken_db.create_dataset(name,data = S.MT)
+        
+        name = '%s/minTemperature'%group_name 
+        if name in van_keken_db.keys():
+            del van_keken_db[name]
+        van_keken_db.create_dataset(name,data = S.mT)
+        
+        name = '%s/ts'%group_name 
+        if name in van_keken_db.keys():
+            del van_keken_db[name]
+        van_keken_db.create_dataset(name,data = S.ts)        
+
         van_keken_db.close()
 
     return 0 
