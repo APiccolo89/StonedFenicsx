@@ -1,0 +1,24 @@
+[project]
+name = "StonedFenicsx"
+version = "2026.0.1"
+requires-python = ">=3.10,<3.14"
+
+dependencies = [
+    "numpy>=2.2,<2.3",
+    "mpi4py>=4.1,<4.2",
+    "petsc4py>=3.23,<3.24",
+
+    # FEniCSx stack (usually via conda-forge)
+    "dolfinx==0.9.0",
+    "basix==0.9.0",
+    "ufl==2024.2.0",
+    "ffcx==0.9.0",
+
+    # Mesh + utilities
+    "gmsh>=4.13,<4.14",
+    "meshio>=5.3,<5.4",
+
+    # Performance / numerics
+    "numba>=0.61,<0.62",
+    "scipy>=1.15,<1.16",
+]

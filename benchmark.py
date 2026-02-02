@@ -8,7 +8,7 @@ from src.Stoned_fenicx import StonedFenicsx
 
 
 # option for the benchmark
-option_thermal = [3]
+option_thermal = [0,1,2,3]
 option_adiabatic = [0]
 option_viscous = [0, 1, 2]
 self_con = [0, 1]
@@ -196,7 +196,7 @@ for i in range(len(option_thermal)):
                     print(f"{inp.sname} took {dt/3600:.2f} hr, {m:.2f} min and {s:.2f} sec")
                 else:
                     print(f"{inp.sname} took  {dt:.2f} sec")
-                print('#--------------------------------------------------------------------#')
+                print('#---------------------------------------------------#')
 
 time_fin = timethis.time()
 
@@ -205,7 +205,7 @@ dt = time_fin - time_in
 if dt > 60.0:
     m, s = divmod(dt, 60)
     print(f" All the experiments took {m:.2f} min and {s:.2f} sec")
-if dt > 3600.0:
+elif dt > 3600.0:
     m, s = divmod(dt, 60)
     h, m = divmod(m, 60)
     print(f"All the experiments took {dt/3600:.2f} hr, {m:.2f} min and {s:.2f} sec")
