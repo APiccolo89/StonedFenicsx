@@ -24,12 +24,6 @@ import scipy.sparse.linalg.dsolve as linsolve
 from scipy.interpolate import griddata
 from scipy.optimize import bisect
 
-# Third-party: Visualization
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-from matplotlib import rcParams
-import cmcrameri as cmc
-
 # Third-party: MPI and PETSc
 from mpi4py import MPI
 from petsc4py import PETSc

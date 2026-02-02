@@ -361,7 +361,6 @@ class Global_thermal(Problem):
     def create_bc_temp(self,M:Mesh,ctrl:NumericalControls,geom,lhs,u_global,T_i,it,ts=0):
         from scipy.interpolate import griddata   
         cd_dof = self.FS.tabulate_dof_coordinates()
-        fdim     = M.mesh.topology.dim - 1    
         # This part can be done only once -> bc dofs are constant 
         if ts == 0 and it == 0:
             facets                 = M.facets.find(M.bc_dict['Top'])    
@@ -1962,7 +1961,7 @@ def time_loop(M,ctrl,ioctrl,sc,lhs,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g):
             output_class.print_output(sol,M.domainG,FGT,FGGR,ioctrl,sc,ctrl,it_outer=0,time=t*t*sc.T/sc.scale_Myr2sec,ts=ts)
         
         
-        if ctrl.steady_state == 1 & ctrl.steady_state==1: 
+        if ctrl.steady_state == 1: 
             t = ctrl.time_max
             if ctrl.van_keken == 1: 
                 from .output import _benchmark_van_keken
