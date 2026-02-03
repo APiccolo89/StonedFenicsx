@@ -166,7 +166,10 @@ def create_domain_A(mesh_model, CP, LC, g_input):
     return mesh_model
 
 
-def create_domain_B(mesh_model, CP, LC, g_input):
+def create_domain_B(mesh_model
+                    ,CP
+                    ,LC
+                    ,g_input):
     
     index = find_line_index(LC.lines_S,CP.coord_sub,g_input.ns_depth)
     index = index 
@@ -185,7 +188,10 @@ def create_domain_B(mesh_model, CP, LC, g_input):
     return mesh_model 
 
 
-def create_domain_C(mesh_model, CP, LC, g_input):
+def create_domain_C(mesh_model
+                    ,CP
+                    ,LC
+                    ,g_input):
 
 
     if g_input.cr !=0:
@@ -245,7 +251,10 @@ def create_domain_C(mesh_model, CP, LC, g_input):
     return mesh_model
 
 
-def create_physical_line(CP,LC, g_input,mesh_model):
+def create_physical_line(CP
+                         ,LC
+                         ,g_input
+                         ,mesh_model):
 
 
     
@@ -376,7 +385,11 @@ def create_gmsh(sx,        # subduction x
 
 #----------------------------------------------------------------------------------------------------------------------
 
-def extract_facet_boundary(Mesh, Mfacet_tag, submesh, sm_vertex_maps, boundary,m_id):
+def extract_facet_boundary(Mesh
+                           ,Mfacet_tag
+                           ,submesh
+                           ,sm_vertex_maps
+                           ,boundary,m_id):
     """
     ]Function to create an array of list containing the facet of BC (from the parent mesh)
 
@@ -584,16 +597,12 @@ def read_mesh(ioctrl,sc):
     mesh = _scaling_mesh(mesh,sc)
 
     return mesh, cell_markers, facet_markers
-#-----------------------------------------------------------------------------------------------------
-def create_shear_heating_interface(mesh,cell_markers, facet_markers):
-    
-    new = facet_markers.find(9)  # Find the facet with tag 9 -> subduction top wedge
-    
-    return new_facet
-
 #------------------------------------------------------------------------------------------------------
 @timing_function
-def create_mesh_object(mesh,sc,ioctrl,g_input):    
+def create_mesh_object(mesh
+                       ,sc
+                       ,ioctrl
+                       ,g_input):    
     
     from stonedfenicsx.scal import dimensionless_ginput
     
