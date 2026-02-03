@@ -114,10 +114,10 @@ def compute_bending_angle(g_input:Geom_input
     if g_input.sub_constant_flag:
         theta = g_input.sub_theta_max
     else:
-        if lgh > g_input.Lb:
+        if lgh > g_input.sub_Lb:
             theta = g_input.sub_theta_max
         else:
-            theta = ribe_angle(g_input.sub_theta_max, g_input.sub_LbLb, lgh)
+            theta = ribe_angle(g_input.sub_theta_max, g_input.sub_Lb, lgh)
             if theta<g_input.sub_theta_0: 
                 theta = g_input.sub_theta_0
     
