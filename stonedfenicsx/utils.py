@@ -165,9 +165,6 @@ def compute_eII(e):
     e_II  = sqrt(0.5*inner(e, e))    
     return e_II
 #---------------------------------------------------------------------------
-class Ph_input():
-    def __init__(self):
-        pass
     
 @dataclass(slots=True)
 class Phase:
@@ -301,7 +298,17 @@ class Phase:
     Hr : float = 0.0
     # Internal heating
     radio: float = 0.0
-   
+
+
+class Ph_input():
+    def __init__(self):
+        phase1 : Phase = Phase()
+        phase2 : Phase = Phase()
+        phase3 : Phase = Phase()
+        phase4 : Phase = Phase()
+        phase5 : Phase = Phase()
+        phase6 : Phase = Phase()
+        phase7 : Phase = Phase()
 
 
 def evaluate_material_property(expr, V):
@@ -309,8 +316,6 @@ def evaluate_material_property(expr, V):
     F.interpolate(fem.Expression(expr, V.element.interpolation_points()))
     return F 
 
-from dataclasses import dataclass, field
-from typing import List
 
 @dataclass(slots=True)
 class Input:
@@ -324,7 +329,7 @@ class Input:
     Ttop: float = 0.0            # surface temperature [deg C]
     g: float = 9.81              # gravity module vector [m/s^2]
   
-    v_s: List[float] = field(default_factory=lambda: [5.0, 0.0])  # slab velocity vector [cm/yr]
+    v_s: NDArray[float] = field(default_factory=lambda: np.array([5.0, 0.0]))  # slab velocity vector [cm/yr]
 
     slab_age: float = 50.0          # age of the slab [Myr]
     time_max: float = 2.0           # maximum time of timedependent problem [Myr]
@@ -390,8 +395,8 @@ class Input:
     # -----------------------------------------------------------------------------------------------------
     # Geometry
     # -----------------------------------------------------------------------------------------------------
-    x: List[float] = field(default_factory=lambda: [0.0, 660e3])
-    y: List[float] = field(default_factory=lambda: [-600e3, 0.0])
+    x: NDArray[float] = field(default_factory=lambda: np.array([0.0, 660e3]))
+    y: NDArray[float] = field(default_factory=lambda: np.array([-600e3, 0.0]))
 
     slab_tk: float = 130e3
     cr: float = 30e3
@@ -405,7 +410,17 @@ class Input:
     decoupling: float = 80e3
     resolution_normal: float = 2.0e3
     transition: float = 10e3
-
+    wz_tk : float = 2e3
+    
+    # Slab Geometry 
+    Lb : float = 300e3 
+    dl : float = 1e3 
+    theta0 : float = 5 
+    theta_max : float = 45
+    trench :NDArray[float] = field(default_factory=lambda: np.array([0.0, 660e3]))
+    slab_type : str = 'Costum'
+    sub_path = 'Not Defined'
+     
     def __post_init__(self) -> None:
         if self.sname == "Output" and self.test_name != "Output":
             self.sname = self.test_name

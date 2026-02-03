@@ -1,21 +1,4 @@
-from .package_import import *
-from .scal import Scal 
-
-# --- Index 
-'''
-DICTIONARIES:
-dict_surf
-dict_tag_lines
-CLASS: 
-Mesh [Important]
-Domain[Important]
-Geom_input[Important]
-Class_Points[Secondary] => Used in create_mesh
-Class_Line[Secondary]   => Used in create_mesh
-FUNCTION: 
-
-'''
-
+from stonedfenicsx.package_import import *
 
 #---------------------------------------------------------
 
@@ -46,48 +29,21 @@ dict_tag_lines = {
     'LCrust_overplate'  : 13,
 }
 
-
-
 #------------------------------------------------------------------------------------------------
-
-class Mesh(): 
-    def __init__(self) :
-
-        ''' g_input: Geometric input parameters,
-            domainG: Global domain
-            domainA: Subduction zone domain
-            domainB: Wedge domain
-            domainC: Overriding plate domain
-            rank: MPI rank
-            size: MPI size
-            element_p: Finite element for pressure
-            element_PT: Finite element for temperature
-            element_V: Finite element for velocity
-        '''
-        self.g_input         : geom_input                            # Geometric input
-        self.domainG         : Domain                                # 
-        self.domainA         : Domain
-        self.domainB         : Domain
-        self.domainC         : Domain
-        self.comm            : mpi4py.MPI.Intracomm
-        self.rank            : int
-        self.size            : int 
-        self.element_p       : ufl.FiniteElement   
-        self.element_PT      : ufl.FiniteElement
-        self.element_V       : ufl.FiniteElement
- 
- 
 @dataclass
 class Domain:
     """
     Domain stores the mesh and associated data:
+      - hierarchy: parent = global mesh; child = submesh 
       - cell_par, node_par: parent relationships (if global mesh has submeshes)
       - facets: tagged facets (boundary features)
       - Tagcells: tagged cells (markers)
       - bc_dict: dictionary of boundary condition tags/names
       - solPh: function space for material properties
       - phase: material phase function
-      # Admit: corrected with chatgpt, yeah, I am lazy
+    Small subclasse that store the information of the domain. The domain is either the total mesh, or 
+    one of the sub-domains: wedge, subducting plate, overriding plate. The information allows to transmit
+    the information from the global mesh to the sub-meshes and viceversa. 
     """
     hierarchy: str = "Parent"
     mesh: dolfinx.mesh.Mesh = None
@@ -100,64 +56,96 @@ class Domain:
     phase: dolfinx.fem.Function = None
         
 
+@dataclass(slots=True)
+class Geom_input:
+    """
+    Geometric input of the test
 
+    x: main grid coordinate SI: [m]
+    y: main grid coordinate SI: [m] -> can be negative
+    slab_tk : thickness of the subducting slab SI: [m]
+    cr : thickness of the overriding crust SI: [m]
+    ocr: thickness of the oceanic crust SI: [m]
+    lit_mt: depth of the lithospheric mantle SI: [m] (always positive)
+    lc: lower crust ratio of the overriding crust SI: [n.d.] value in [0,1]
+    ns_depth: no slip boundary condition depth SI: [m] always positive
+    decoupling: depth of the decoupling SI: [m] always positive
+    resolution_normal : minimum resolution of the grid SI: [m] always positive
+    resolution_refine : maximum resolution of the grid SI: [m] always positive
+    theta_out_slab : slab bending angle at the bottom of the simulation [degrees]
+    theta_in_slab : slab bending angle at the trench [degrees]
+    trans : interval of depth at which coupling/uncoupling occurs SI: [m]
+    lab_d : depth of the lithosphere-asthenosphere boundary SI: [m]
+    sub_type : "Custom" (internal) or "Real" (external geometry)
+    sub_path : path or url of the geometry database
+    sub_Lb : along-slab distance where bending occurs SI: [m]
+    sub_constant_flag : constant bending angle flag
+    sub_theta_0 : initial bending angle at the left upper most corner [deg]
+    sub_theta_max : maximum bending angle after the critical distance Lb [deg]
+    sub_trench : position of trench 
+    sub_dl : segment slab length [m]
+    """
 
-#-------------------------------------------------------------------------------------------------
-# Class containing the geometric input of the numerical simulation. The values are in meters, and is made dimensionless 
-# later on.
-#-------------------------------------------------------------------------------------------------
+    x: NDArray[np.float64]
+    y: NDArray[np.float64]
 
-class Geom_input():
-    def __init__(
-        self,
-        x: NDArray[np.float64] = np.array([0.0, 1000e3]),
-        y: NDArray[np.float64] = np.array([-660e3, 0.0]),
-        cr: float = 20e3,
-        ocr: float = 6e3,
-        lit_mt: float = 30e3,
-        lc: float = 0.5,
-        wc: float = 2.0e3,
-        slab_tk: float = 130e3,
-        decoupling: float = 100e3,
-        trans: float = 10e3,
-        lab_d: float = 0.0e3,
-        ns_depth: float = 50e3) -> None:
-         
-        self.x                 = x               # main grid coordinate
-        self.y                 = y               # main grid coordinate
-        self.slab_tk           = slab_tk         # slab thickness 
-        self.cr                = cr              # overriding crust [can be oceanic, or continental]
-        self.ocr               = ocr             # oceanic crust
-        self.lit_mt            = lit_mt          # lithosperic mantle  
-        self.lc                = lc              # lower crust ratio -> compute the thicness of the lower crust
-        self.wc                = wc              # weak zone -> thickness of the weak zone. 
-        self.ns_depth          = ns_depth     # # no-slip boundary condition overriding plate depth
-        self.decoupling        = decoupling      # decoupling depth -> i.e. where the weak zone is prolonged 
-        self.resolution_normal = wc              # To Do
-        self.theta_out_slab    = []              # slab bending angle at the bottom of the model
-        self.theta_in_slab    = []               # slab bending at the top-left model 
+    slab_tk: float
+    cr: float
+    ocr: float
+    lit_mt: float
+    lc: float
 
-        self.trans             = trans           # Decoupling parameter
-        if lab_d == 0.0:                         # Depth of lab: we distinguish the no-slip with the actual overriding mantle-astenosphere boundary. This gives more freedom to test hypotesis. 
-            self.lab_d         = self.ns_depth
-        else:
-            self.lab_d         = lab_d
+    ns_depth: float
+    decoupling: float
+
+    resolution_normal: float
+    resolution_refine: float
+
+    theta_out_slab: float
+    theta_in_slab: float
+
+    trans: float
+    lab_d: float
+
+    sub_type: str
+    sub_path: str
+    sub_Lb: float
+
+    sub_constant_flag: bool
+    sub_theta_0 : float 
+    sub_theta_max : float
     
-    def dimensionless_ginput(self,sc:Scal):
-        self.x                 /= sc.L               # main grid coordinate
-        self.y                 /= sc.L   
-        self.cr                /= sc.L              # crust 
-        self.ocr               /= sc.L             # oceanic crust
-        self.lit_mt            /= sc.L          # lithosperic mantle  
-        self.wc                /= sc.L             # weak zone 
-        self.ns_depth              /= sc.L    # total lithosphere thickness
-        self.decoupling        /= sc.L      # decoupling depth -> i.e. where the weak zone is prolonged 
-        self.resolution_normal /= sc.L  # To Do
-        self.trans             /= sc.L
-        self.lab_d             /= sc.L
-        
-        return self 
-        
+    sub_trench : float 
+    sub_dl : float
+    wz_tk : float 
+    
+    
+
+@dataclass
+class Mesh:   
+    ''' g_input: Geometric input parameters,
+        domainG: Global domain
+        domainA: Subduction zone domain
+        domainB: Wedge domain
+        domainC: Overriding plate domain
+        rank: MPI rank
+        size: MPI size
+        element_p: Finite element for pressure
+        element_PT: Finite element for temperature
+        element_V: Finite element for velocity
+    '''
+    g_input : Geom_input    # Geometric input
+    domainG : Domain                                # Domain
+    domainA : Domain                     
+    domainB : Domain
+    domainC : Domain
+    comm : MPI.Intracomm
+    rank : int
+    size : int 
+    element_p  : object   
+    element_PT : object
+    element_V  : object
+     
 #-----------------------------------------------------------------------------------------------------------------
 class Class_Points():
     def update_points      (self,
@@ -183,28 +171,29 @@ class Class_Points():
         # but, I am paranoid, therefore: just create the geometry of slab, channel and oceanic crust such that y = f(x) where f(x) is always growing (or decreasing)
         # if you want to be creative, you have to modify the function of create points, up to you, no one is against it. 
 
-        self.max_tag_s,  self.tag_subduction, self.coord_sub,     mesh_model     = _create_points(mesh_model, sx,    sy,    g_input.wc, 0)
-        self.max_tag_bots,  self.tag_bottom,    self.coord_bottom, mesh_model     = _create_points(mesh_model, bx,    by,    g_input.wc, self.max_tag_s)
+        self.max_tag_s,  self.tag_subduction, self.coord_sub,     mesh_model     = _create_points(mesh_model, sx,    sy,    g_input.resolution_refine, 0)
+        self.max_tag_bots,  self.tag_bottom,    self.coord_bottom, mesh_model     = _create_points(mesh_model, bx,    by,    g_input.resolution_normal, self.max_tag_s)
         if g_input.ocr != 0.0: 
-            self.max_tag_oc, self.tag_oc,         self.coord_ocean,   mesh_model     = _create_points(mesh_model, oc_cx, oc_cy, g_input.wc, self.max_tag_bots)
+            self.max_tag_oc, self.tag_oc,         self.coord_ocean,   mesh_model     = _create_points(mesh_model, oc_cx, oc_cy, g_input.resolution_normal, self.max_tag_bots)
         else: 
             self.max_tag_oc = self.max_tag_bots; self.coord_ocean  = None
         # -- Here are the points at the boundary of the model. The size of the model is defined earlier, and subduction zone is modified as such to comply the main geometrical input, 
         # I used subduction points because they define a few important point. 
 
 
-        self.max_tag_b, self.tag_right_c_b, self.coord_bc,  mesh_model            = _create_points(mesh_model,  g_input.x[1], g_input.y[0],         g_input.wc,  self.max_tag_oc,  True)
-        self.max_tag_c, self.tag_right_c_l, self.coord_lr,  mesh_model            = _create_points(mesh_model,   g_input.x[1], -g_input.ns_depth, g_input.wc,  self.max_tag_b,  True)
-        self.max_tag_d, self.tag_right_c_t, self.coord_top, mesh_model            = _create_points(mesh_model,   g_input.x[1],  g_input.y[1],         g_input.wc,  self.max_tag_c,  True)
+        self.max_tag_b, self.tag_right_c_b, self.coord_bc,  mesh_model            = _create_points(mesh_model,  g_input.x[1], g_input.y[0],         g_input.resolution_normal,  self.max_tag_oc,  True)
+        self.max_tag_c, self.tag_right_c_l, self.coord_lr,  mesh_model            = _create_points(mesh_model,   g_input.x[1], -g_input.ns_depth, g_input.resolution_normal,  self.max_tag_b,  True)
+        self.max_tag_d, self.tag_right_c_t, self.coord_top, mesh_model            = _create_points(mesh_model,   g_input.x[1],  g_input.y[1],         g_input.resolution_normal,  self.max_tag_c,  True)
 
         if g_input.cr != 0.0:
-            self.max_tag_e, self.tag_right_c_cr, self.coord_crust,    mesh_model  = _create_points(mesh_model,  g_input.x[1], -g_input.cr,                g_input.wc, self.max_tag_d, True)
+            self.max_tag_e, self.tag_right_c_cr, self.coord_crust,    mesh_model  = _create_points(mesh_model,  g_input.x[1], -g_input.cr,                g_input.resolution_normal, self.max_tag_d, True)
             if g_input.lc !=0: 
-                    self.max_tag_f, self.tag_right_c_lcr,  self.coord_lcr, mesh_model = _create_points(mesh_model,  g_input.x[1], -g_input.cr*(1-g_input.lc), g_input.wc, self.max_tag_e, True)
+                    self.max_tag_f, self.tag_right_c_lcr,  self.coord_lcr, mesh_model = _create_points(mesh_model,  g_input.x[1], -g_input.cr*(1-g_input.lc), g_input.resolution_normal, self.max_tag_e, True)
             else: 
                 self.coord_lcr = None
         else: 
-            self.coord_lcr = None ; self.coord_crust = None
+            self.coord_lcr = None 
+            self.coord_crust = None
 
         # Thank Chatgpt 
         arr = [self.coord_sub, self.coord_bottom, self.coord_ocean, self.coord_bc, self.coord_lr, self.coord_top, self.coord_crust, self.coord_lcr]
@@ -212,9 +201,6 @@ class Class_Points():
 
         self.global_points = np.hstack(arrays)
 
-
-        
-        
         return mesh_model
 #-----------------------------------------------------------------------------------------------------------------
  
@@ -295,20 +281,6 @@ class Class_Line():
         arrays = [a for a in arr if a is not None]
 
         self.line_global = np.hstack(arrays)
-        # Plot debug 
-        DEBUG = 0 
-        if DEBUG == 1: 
-            
-            for i in range(len(self.line_global[0,:])):
-                p0 = self.line_global[0,i]
-                p1 = self.line_global[1,i]
-                coord_x = [CP.global_points[0,p0-1],CP.global_points[0,p1-1]] 
-                coord_y = [CP.global_points[1,p0-1],CP.global_points[1,p1-1]]
-                plt.plot(coord_x, coord_y, c='r') 
-        
-        
-        
-        
         
         return mesh_model
                 
@@ -372,10 +344,10 @@ def find_tag_line(coord:NDArray,
     return np.int32(i)                 
 
 
-def function_create_slab_channel(data_real:bool,
+def function_create_slab_channel(slab_top:NDArray[np.float64],
+                                 theta_mean:NDArray[np.float64],
                                  c_phase:Geom_input,
-                                 SP=[],
-                                 fname=[])-> tuple[NDArray[np.float64],NDArray[np.float64],NDArray[np.float64],NDArray[np.float64],NDArray[np.float64] | None,NDArray[np.float64] | None]: 
+                                 )-> tuple[NDArray[np.float64],NDArray[np.float64],NDArray[np.float64],NDArray[np.float64],NDArray[np.float64] | None,NDArray[np.float64] | None]: 
 
     """
     Input: 
@@ -405,30 +377,21 @@ def function_create_slab_channel(data_real:bool,
         Then call a function that correct the channel, finding its point at surface and the base 
         of the lithosphere. On top of that, compute the coordinate of an extra node at the 
         base of the lithosphere, between slab and channel. 
-
     """
     
     # Prepare the slab surface. Slab surface can be derived from real data, or just created ad hoc by the slab routines
     # Add the extra node that is required for the interface with the lithosphere. 
-    
-    if data_real == True:
-        a = np.loadtxt(fname)
-        a *= 1e3
-        ax = a[:,0]
-        ay = -a[:,1]
-        # Place holder for a closure to compute the theta associated with a real geometry 
-    else:
-        SP._find_slab_surface()
-        ax = SP.slab_top[:,0]*1e3
-        ay = SP.slab_top[:,1]*1e3
-        theta_mean = SP.theta_mean 
+
+    ax = slab_top[:,0]
+    ay = slab_top[:,1] 
         
     # Create the channel using the subduction interface as guide
     #cx,cy = function_create_subduction_channel(ax,ay,theta_mean,c_phase)
     if c_phase.ocr != 0.0:
         ox,oy = function_create_oceanic_crust(ax,ay,theta_mean,c_phase.ocr)
     else: 
-        ox = None; oy = None 
+        ox = None
+        oy = None 
     # Correct the slab surface and find the extra node
     ax,ay,theta_mean = find_extra_node(ax,ay,theta_mean,c_phase)
     # Correct the subduction channel as well finding the extranode 
@@ -733,6 +696,25 @@ def _create_lines(mesh_model:gmsh.model,
     max_tag = np.max(tag_l)
     
     return max_tag,tag_l,lines,mesh_model
+#------------------------------------------------------------------------------------------------------------
+def assign_phases(dict_surf:dict, 
+                  cell_tags:int,
+                  phase:dolfinx.fem.Function)->dolfinx.fem.Function:
+    """Assigns phase tags to the mesh based on the provided surface tags."""
+    for tag, value in dict_surf.items():
+        indices = cell_tags.find(value) 
+        phase.x.array[indices] = np.full_like(indices,  value , dtype=PETSc.IntType)
+    
+    return phase 
+#----------------------------------------------------------------------------------------------------------------
+def debug_plot(target,global_line,global_point,color):
+    for i in range(len(target)):
+        line = np.abs(target[i])
+        
+        p0   = global_line[0,line-1]
+        p1   = global_line[1,line-1]
+        coord_x = [global_point[0,p0-1],global_point[0,p1-1]]            
+        coord_y = [global_point[1,p0-1],global_point[1,p1-1]]
 
 # End File ----
 #-----------------------------------------------------------------------------------------------------------------

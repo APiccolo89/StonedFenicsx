@@ -6,26 +6,20 @@ from .package_import import *
 #---------------------------------------------------------------------------------------------------------
 # My modules 
 #---------------------------------------------------------------------------------------------------------
-from src.create_mesh                 import create_mesh as cm 
-from src.solution                    import Solution as sol 
+from src.create_mesh.create_mesh     import create_mesh as cm 
 from src.phase_db                    import PhaseDataBase 
 from src.numerical_control           import ctrl_LHS 
 from src.utils                       import print_ph
-from src.utils                       import timing_function
-from src.utils                       import time_the_time
-from src.utils                       import get_discrete_colormap
 from src.phase_db                    import _generate_phase
 from src.scal                        import Scal
 from src.scal                        import _scaling_material_properties
 from src.numerical_control           import NumericalControls
 from src.numerical_control           import IOControls
-from src.create_mesh                 import Mesh
 from src.create_mesh                 import Geom_input
 from src.scal                        import _scaling_control_parameters
 from src.scal                        import _scale_parameters
-from src.scal                        import _scaling_material_properties
 from src.solution                    import solution_routine
-from src.thermal_structure_ocean     import compute_initial_LHS
+from src.create_mesh.Subducting_plate import Slab
 
 dict_options = {'NoShear':0,
                 'Linear':1,
@@ -164,6 +158,13 @@ def StonedFenicsx(IP,Ph_input):
                  wc = IP.wc,
                  slab_tk = IP.slab_tk, 
                  decoupling = IP.decoupling)
+
+
+    slab = Slab(theta_0=IP.theta_0,
+                theta_max=IP.theta_max,
+                Lb=IP.Lb,
+                trench=IP.trench)
+    
     
 
     # Scaling
@@ -171,7 +172,7 @@ def StonedFenicsx(IP,Ph_input):
     Pdb = _scaling_material_properties(Pdb,sc)
     lhs = _scale_parameters(lhs, sc)
 
-    M = cm(io_ctrl, sc,g_input,ctrl)
+    M = cm(io_ctrl, sc,g_input,slab,ctrl)
     
     M.element_p = basix.ufl.element("Lagrange","triangle", 1) 
     M.element_PT = basix.ufl.element("Lagrange","triangle",2)
