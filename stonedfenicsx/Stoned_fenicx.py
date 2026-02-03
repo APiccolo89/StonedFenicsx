@@ -6,20 +6,19 @@ from .package_import import *
 #---------------------------------------------------------------------------------------------------------
 # My modules 
 #---------------------------------------------------------------------------------------------------------
-from src.create_mesh.create_mesh     import create_mesh as cm 
-from src.phase_db                    import PhaseDataBase 
-from src.numerical_control           import ctrl_LHS 
-from src.utils                       import print_ph
-from src.phase_db                    import _generate_phase
-from src.scal                        import Scal
-from src.scal                        import _scaling_material_properties
-from src.numerical_control           import NumericalControls
-from src.numerical_control           import IOControls
-from src.create_mesh                 import Geom_input
-from src.scal                        import _scaling_control_parameters
-from src.scal                        import _scale_parameters
-from src.solution                    import solution_routine
-from src.create_mesh.Subducting_plate import Slab
+from stonedfenicsx.create_mesh.create_mesh     import create_mesh as cm 
+from stonedfenicsx.phase_db                    import PhaseDataBase 
+from stonedfenicsx.numerical_control           import ctrl_LHS 
+from stonedfenicsx.utils                       import print_ph
+from stonedfenicsx.phase_db                    import _generate_phase
+from stonedfenicsx.scal                        import Scal
+from stonedfenicsx.scal                        import _scaling_material_properties
+from stonedfenicsx.numerical_control           import NumericalControls
+from stonedfenicsx.numerical_control           import IOControls
+from stonedfenicsx.create_mesh.create_mesh     import Geom_input
+from stonedfenicsx.scal                        import _scaling_control_parameters
+from stonedfenicsx.scal                        import _scale_parameters
+from stonedfenicsx.solution                    import solution_routine
 
 dict_options = {'NoShear':0,
                 'Linear':1,
@@ -101,6 +100,87 @@ def generate_phase_database(IP,Phin)->PhaseDataBase:
 
     return pdb 
 
+def fill_geometrical_input(IP)->Geom_input: 
+    from dataclasses import fields
+    """_summary_
+
+
+    Returns:
+        _type_: geometrical input dataclasses
+         
+    """
+    
+    
+    
+    g_input = Geom_input
+    
+    g_input.x = IP.x 
+    g_input.y = IP.y
+    g_input.cr = IP.cr
+    g_input.ocr = IP.ocr
+    g_input.lc = IP.lc 
+    g_input.lit_mt = IP.lit_mt
+    g_input.lab_d = IP.lab_d
+    g_input.slab_tk = IP.slab_tk
+    g_input.resolution_normal = IP.wc
+    g_input.resolution_refine = IP.wc
+    g_input.ns_depth = IP.ns_depth
+    g_input.decoupling = IP.decoupling
+    g_input.sub_constant_flag = IP.van_keken
+    g_input.sub_type = IP.slab_type
+    g_input.sub_trench = IP.trench 
+    g_input.sub_dl = IP.dl 
+    g_input.sub_theta_0 = IP.theta0
+    g_input.sub_theta_max = IP.theta_max
+    g_input.sub_Lb = IP.Lb
+    g_input.trans = IP.transition
+    g_input.sub_path = IP.sub_path
+    g_input.wz_tk = IP.wz_tk
+    g_input.sub_constant_flag = IP.van_keken
+    
+    fields_g_input = fields(g_input)
+    
+    print_ph('----:Geometric input of the numerical simulation: ')
+    it = 0 
+    for f in fields_g_input: 
+        if (f.name != 'theta_out_slab') and (f.name != 'theta_in_slab'):
+            values = eval(f'g_input.{f.name:s}')
+            if not isinstance(values, np.ndarray):
+                if isinstance(values,str):
+                    string_2_print = f'          {it}. {f.name:s} = {values:s}'
+                else:
+                    string_2_print = f'          {it}. {f.name:s} = {values:.3f} [m]'
+                    if f.name == 'sub_theta_0' or f.name == 'sub_theta_max' or f.name == 'sub_constant_flag': 
+                        string_2_print = f'          {it}. {f.name:s} = {values:.3f} [n.d.]'
+            else: 
+                string_2_print = f'          {it}. {f.name:s} = [{values[0]:.3f}, {values[1]:.3f}] [m]'
+            
+            print_ph(string_2_print)            
+            
+            if f.name == 'sub_theta_0' or f.name == 'sub_theta_max':
+                print_ph('                          => converted in rad. ')
+                if f.name == 'sub_theta_0':
+                    g_input.sub_theta_0 *= np.pi/180.0 
+                else: 
+                    g_input.sub_theta_max *= np.pi/180.0
+            
+
+            if f.name == 'y':
+                if g_input.y[0] >= 0.0:
+                    raise ValueError(f'minimum coordinate of y = {g_input.y[0]:.3f} is positive or equal to 0.0. The coordinate must be negative')
+            if ((f.name == 'ocr') or (f.name == 'cr') or (f.name=='lc') or (f.name =='decoupling') or (f.name =='lit_mit')
+                or (f.name =='lab_d') or (f.name=='trans') or (f.name =='resolution_normal') or (f.name =='resolution_refine') 
+                or (f.name =='decoupling') or (f.name =='slab_tk')):
+                
+                if values < 0: 
+                    raise ValueError(f'{f.name :s} is negative. The coordinate must be positive')
+        it = it+1
+        
+    print_ph('----://////:---- ')
+
+    return g_input 
+
+
 def StonedFenicsx(IP,Ph_input):
     #---------------------------------------------------------------------------------------------------------
     # Input parameters 
@@ -147,24 +227,10 @@ def StonedFenicsx(IP,Ph_input):
     Pdb = generate_phase_database(IP,Ph_input)                      
     # ---
     # Create mesh 
-    g_input = Geom_input(x = np.asarray(IP.x), 
-                 y = np.array(IP.y),
-                 cr=IP.cr,
-                 ocr=IP.ocr,
-                 lit_mt=IP.lit_mt,
-                 ns_depth=IP.ns_depth,
-                 lab_d = IP.lab_d,
-                 lc = IP.lc,
-                 wc = IP.wc,
-                 slab_tk = IP.slab_tk, 
-                 decoupling = IP.decoupling)
+    g_input = fill_geometrical_input(IP)
 
 
-    slab = Slab(theta_0=IP.theta_0,
-                theta_max=IP.theta_max,
-                Lb=IP.Lb,
-                trench=IP.trench)
-    
+
     
 
     # Scaling
@@ -172,7 +238,7 @@ def StonedFenicsx(IP,Ph_input):
     Pdb = _scaling_material_properties(Pdb,sc)
     lhs = _scale_parameters(lhs, sc)
 
-    M = cm(io_ctrl, sc,g_input,slab,ctrl)
+    M = cm(io_ctrl, sc,g_input,ctrl)
     
     M.element_p = basix.ufl.element("Lagrange","triangle", 1) 
     M.element_PT = basix.ufl.element("Lagrange","triangle",2)

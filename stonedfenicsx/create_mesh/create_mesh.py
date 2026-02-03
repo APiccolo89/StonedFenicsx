@@ -578,7 +578,7 @@ def read_mesh(ioctrl,sc):
         meshio.write("%s/mesh.xdmf"%pt_save, triangle_mesh)
         meshio.write("%s/mt.xdmf"%pt_save, line_mesh)
         # Remove gmsh file, to save memory: every information of the mesh is already known by fenicsx
-        #os.remove(mesh_name)
+        os.remove(mesh_name)
         
         
     mesh = _scaling_mesh(mesh,sc)
