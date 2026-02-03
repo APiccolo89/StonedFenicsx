@@ -100,9 +100,16 @@ def test_van_keken_mesh():
     NB: number of nodes between submeshes is always not summing up to the global mesh
     """
     
+    
     IP = Input()
+    # Remove the crustal unit -> plain van keken model
+    IP.ocr = 0.0 
+    IP.cr = 0.0 
+    IP.dl = 10e3
     
     g_input = fill_geometrical_input(IP) 
+    
+    
     sc = Scal(L=600e3,Temp=1000,stress=1e9,eta=1e21)
 
     ctrl = NumericalControls()

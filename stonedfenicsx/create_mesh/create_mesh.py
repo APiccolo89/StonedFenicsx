@@ -642,7 +642,7 @@ def create_mesh_object(mesh,sc,ioctrl,g_input):
     MESH.domainC              = domainC   
 
     # dimension-> g_input
-    g_input                   = dimensionless_ginput(sc)
+    g_input                   = dimensionless_ginput(g_input,sc)
     
     MESH.g_input              = g_input 
     
