@@ -15,37 +15,74 @@ def create_mesh(ioctrl:IOControls
                 ,sc:Scal
                 ,g_input:Geom_input
                 ,ctrl:NumericalControls)->Mesh:
-    
+    """
+    Create a Gmsh model and convert it into a FEniCSx mesh.
+
+    This function generates the computational geometry using Gmsh, builds the
+    corresponding `.msh` file, and imports it into dolfinx as a finite element mesh.
+
+    Parameters
+    ----------
+    ioctrl : IOControls
+        I/O controller handling file paths and output directories.
+    sc : Scal
+        Scaling object storing nondimensionalisation parameters.
+    g_input : Geom_input
+        Geometrical input defining the domain and mesh construction.
+    ctrl : NumericalControls
+        Numerical controls determining the problem setup.
+
+    Returns
+    -------
+    Mesh
+        Mesh wrapper object containing the global mesh, extracted subdomains,
+        and associated boundary/cell tags.
+    """
 
     # Collect the rank and comm 
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()  # 0, 1, ..., size-1
-    size = comm.Get_size()  # total number of MPI processes
+    rank = MPI.COMM_WORLD.Get_rank()  # 0, 1, ..., size-1
     # Perform the create mesh routines in the rank 0
     if rank == 0: 
         g_input = create_gmesh(ioctrl,g_input,ctrl)
     # Convert the mesh from gmsh to mesh objects 
     M = create_mesh_object(sc,ioctrl, g_input)
-   
-    M.comm = comm 
-    M.rank = rank 
-    M.size = size 
-
-
+    
     return M
 #-----------------------------------------------------------------------------------------------
 def create_gmesh(ioctrl   : IOControls,
                  g_input  : Geom_input,
                  ctrl     : NumericalControls):
-    """_summary_: The function is composed by three part: -> create points, create lines, loop 
-    ->-> 
-    Args:
-        ctrl (_type_): _description_
-        ctrlio (_type_): _description_
-
-    Returns:
-        _type_: _description_
     """
+    Create a Gmsh geometry model from the provided geometrical input.
+
+    This function generates a `.msh` file, which is later imported and converted
+    into a finite element mesh compatible with FEniCSx (dolfinx).
+
+    The function also updates the `Geom_input` object by computing and storing
+    the initial slab bending angle and the outgoing angle of the subducting plate.
+    This information is required to construct the left thermal boundary conditions.
+
+    The lateral extent of the global domain depends on the slab geometry and the
+    maximum model depth. Therefore, the function modifies the domain geometry by
+    extending the horizontal size by an additional 60 km from the intersection
+    between the slab top surface and the maximum depth of the model.
+
+    Parameters
+    ----------
+    ctrl : NumericalControls
+        Numerical controls defining the simulation type.
+    ctrlio : IOControls
+        I/O controller storing input/output directories.
+    g_input : Geom_input
+        Geometrical input parameters used to construct the domain.
+
+    Returns
+    -------
+    Geom_input
+        Updated geometrical input object containing the computed slab angles and
+        modified domain extent.
+    """
+
 
     min_x           = g_input.x[0]        # The beginning of the model is the trench of the slab
     max_x           = g_input.x[1]                 # Max domain x direction
@@ -91,41 +128,34 @@ def create_gmesh(ioctrl   : IOControls,
     ind_oc_lt = np.where(slab_y == -g_input.ns_depth)[0][0]
     
     
-    mesh_model = create_gmsh(slab_x,slab_y,bot_x,bot_y,oc_cx,oc_cy,g_input) 
+    mesh_model = create_gmsh(slab_x
+                             ,slab_y
+                             ,bot_x
+                             ,bot_y
+                             ,oc_cx
+                             ,oc_cy
+                             ,g_input) 
 
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
     theta = np.arctan2((slab_y[-1]-slab_y[-2]),(slab_x[-1]-slab_x[-2]))
+    
     g_input.theta_out_slab = theta   # Convert to degrees
 
     mesh_model.geo.removeAllDuplicates()
+
     gmsh.option.setNumber("Mesh.Algorithm", 6)  # Frontal-Delaunay
+
     gmsh.option.setNumber("Mesh.Optimize", 1)
+
     mesh_model.mesh.generate(2)
-    #mesh_model.mesh.setOrder(2)
     
     mesh_name = os.path.join(ioctrl.path_save,ioctrl.sname)
     
     gmsh.write("%s.msh"%mesh_name)
     
+    gmsh.finalize()
     
     return g_input
-
-
-
-def create_mesh_fenicsx(mesh, cell_type, prune_z=False):
-    """
-    mesh, cell_type, remove z 
-    source: Dokken tutorial generating mesh 
-    """
-    
-    # From the tutorials of dolfinx
-    cells = mesh.get_cells_type(cell_type)
-    cell_data = mesh.get_cell_data("gmsh:physical", cell_type)
-    points = mesh.points[:, :2] if prune_z else mesh.points
-    out_mesh = meshio.Mesh(points=points, cells={cell_type: cells}, cell_data={"name_to_read": [cell_data.astype(np.int32)]})
-    return out_mesh
-
-
+#--------------------------------------------------------------------------------------------------------
 def from_line_to_point_coordinate(L:int
                                   ,LG:NDArray[np.int64]
                                   ,GP:NDArray[np.float64])->tuple[int,int,float,float]:
@@ -136,18 +166,33 @@ def from_line_to_point_coordinate(L:int
     coord_y = [GP[1,p0-1],GP[1,p1-1]]
 
     return p0, p1, coord_x, coord_y 
-
-
-
-def create_domain_A(mesh_model, CP, LC, g_input):
+#--------------------------------------------------------------------------------------------------------
+def create_domain_A(mesh_model:gmsh.model
+                    ,CP:Class_Points
+                    ,LC:Class_Line
+                    ,g_input:Geom_input)->gmsh.model:
     """
-    Domain: subduction plate: domain composed by two area: oceanic crust and lithospheric mantle 
-    Short disclaimer: I might be a bit retarded, but the way in which gmsh is assessing wheter or not 
-    a line is correct, are still obscure. At the end I did trial and error till it works. My internal convection 
-    is to start from the uppermost and rightmost corner and doing anticlockwise collection of lines 
-    -> [the sign of the line depends on the order of the points, but I could not be arsed enough to create a function
-    to recognise it]
+    Create the subducting-plate loop in the Gmsh model.
+    
+    Parameters
+    ----------
+    mesh_model : gmsh.model
+        Gmsh model object containing the geometry/mesh entities.
+    CP : Class_Points
+        Container of points defining the global mesh (coordinates, point IDs, target resolution).
+    LP : Class_Line
+        Container of lines defining the global mesh (line IDs and point connectivity).
+    g_input : Geom_input
+        Geometry input parameters.
+    
+    Returns
+    -------
+    gmsh.model
+        The updated Gmsh model with the sub-domain loop entities added.
     """
+
+
+
     if g_input.ocr != 0.0:
         
         l_list     = [LC.lines_oc[2,:],-LC.lines_B[2,-1],-LC.lines_BS[2,::-1], LC.lines_L[2,0]]
@@ -165,12 +210,33 @@ def create_domain_A(mesh_model, CP, LC, g_input):
 
     return mesh_model
 
-
+#--------------------------------------------------------------------------------------------------------
 def create_domain_B(mesh_model
                     ,CP
                     ,LC
                     ,g_input):
+
+    """
+    Create the Wedge loop in the Gmsh model.
     
+    Parameters
+    ----------
+    mesh_model : gmsh.model
+        Gmsh model object containing the geometry/mesh entities.
+    CP : Class_Points
+        Container of points defining the global mesh (coordinates, point IDs, target resolution).
+    LP : Class_Line
+        Container of lines defining the global mesh (line IDs and point connectivity).
+    g_input : Geom_input
+        Geometry input parameters.
+    
+    Returns
+    -------
+    gmsh.model
+        The updated Gmsh model with the sub-domain loop entities added.
+    """
+
+
     index = find_line_index(LC.lines_S,CP.coord_sub,g_input.ns_depth)
     index = index 
     buf_array = LC.lines_S[2,index:]
@@ -186,13 +252,32 @@ def create_domain_B(mesh_model
     
     print('Finished to generate the curved loop for domain B [Wedge]')
     return mesh_model 
-
-
+#-------------------------------------------------------------------------------------------------------------
 def create_domain_C(mesh_model
                     ,CP
                     ,LC
                     ,g_input):
 
+
+    """
+    Create the Overriding plate loop in the Gmsh model.
+    
+    Parameters
+    ----------
+    mesh_model : gmsh.model
+        Gmsh model object containing the geometry/mesh entities.
+    CP : Class_Points
+        Container of points defining the global mesh (coordinates, point IDs, target resolution).
+    LP : Class_Line
+        Container of lines defining the global mesh (line IDs and point connectivity).
+    g_input : Geom_input
+        Geometry input parameters.
+    
+    Returns
+    -------
+    gmsh.model
+        The updated Gmsh model with the sub-domain loop entities added.
+    """
 
     if g_input.cr !=0:
             
@@ -250,20 +335,36 @@ def create_domain_C(mesh_model
     print('Finished to generate the curved loop for domain C [Crust]')
     return mesh_model
 
+#--------------------------------------------------------------------------------------------------------
+def create_physical_line(CP:Class_Points
+                         ,LC:Class_Line
+                         ,g_input:Geom_input
+                         ,mesh_model:gmsh.model)->gmsh.model:
 
-def create_physical_line(CP
-                         ,LC
-                         ,g_input
-                         ,mesh_model):
-
+    """Create the physical line using the lines.
+    
+    Parameters
+    ----------
+    mesh_model : gmsh.model
+        Gmsh model object containing the geometry/mesh entities.
+    CP : Class_Points
+        Container of points defining the global mesh (coordinates, point IDs, target resolution).
+    LP : Class_Line
+        Container of lines defining the global mesh (line IDs and point connectivity).
+    g_input : Geom_input
+        Geometry input parameters.
+    
+    Returns
+    -------
+    gmsh.model
+        The updated Gmsh model with the physical line loop entities added.
+    """
 
     
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
     
     mesh_model.addPhysicalGroup(1, LC.tag_L_T, tag=dict_tag_lines['Top'])
     
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
-
     # Find point above the lithosphere 
     for i in range(len(LC.tag_L_R)):
         L = LC.tag_L_R[i]
@@ -271,22 +372,15 @@ def create_physical_line(CP
         if cy[0] == -g_input.ns_depth or cy[1] == -g_input.ns_depth:
             break 
     mesh_model.addPhysicalGroup(1, LC.tag_L_R[0:i+1], tag=dict_tag_lines['Right_lit'])
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
+
     mesh_model.addPhysicalGroup(1, LC.tag_L_R[i+1:], tag=dict_tag_lines['Right_wed'])
 
-
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
     mesh_model.addPhysicalGroup(1, [LC.tag_L_B[0]], tag=dict_tag_lines['Bottom_wed'])
 
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
     mesh_model.addPhysicalGroup(1, LC.tag_L_B[1:], tag=dict_tag_lines['Bottom_sla'])
     
-    
-    
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
     mesh_model.addPhysicalGroup(1, LC.tag_L_Bsub, tag=dict_tag_lines['Subduction_bot'])
 
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
     mesh_model.addPhysicalGroup(1, LC.tag_L_L, tag=dict_tag_lines['Left_inlet'])
 
     for i in range(len(LC.tag_L_sub)):
@@ -295,14 +389,10 @@ def create_physical_line(CP
         if cy[0] == -g_input.ns_depth or cy[1] == -g_input.ns_depth:
             break 
     
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
     mesh_model.addPhysicalGroup(1, LC.tag_L_sub[0:i+1],   tag=dict_tag_lines['Subduction_top_lit'])
 
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
     mesh_model.addPhysicalGroup(1, LC.tag_L_sub[i:],   tag=dict_tag_lines['Subduction_top_wed'])
 
-    
-    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
     if g_input.ocr != 0.0:
         mesh_model.addPhysicalGroup(1, LC.tag_L_oc,    tag=dict_tag_lines['Oceanic'])
   
@@ -311,49 +401,70 @@ def create_physical_line(CP
 
     mesh_model.addPhysicalGroup(1, LC.tag_L_ov,    tag=dict_tag_lines['Overriding_mantle'])
 
-
-
     if g_input.cr !=0: 
-
-        mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
         mesh_model.addPhysicalGroup(1,    LC.tag_L_cr, tag=dict_tag_lines['Crust_overplate'])
 
         if g_input.lc !=0:
-            mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
             mesh_model.addPhysicalGroup(1, LC.tag_L_Lcr,tag=dict_tag_lines['LCrust_overplate'])
-    return mesh_model 
+    
+    mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-def create_gmsh(sx,        # subduction x
-                sy,        # subdcution y 
-                bsx,       # bottom subduction x
-                bsy,       # bottom subduction y 
-                oc_cx,     # oceanic cx 
-                oc_cy,     # oceanic cu
-                g_input):  # geometry input class 
+    return mesh_model 
+#----------------------------------------------------------------------------------------------------------------------
+def create_gmsh(sx:np.ndarray,      # subduction x
+                sy:np.ndarray,        # subdcution y 
+                bsx:np.ndarray,       # bottom subduction x
+                bsy:np.ndarray,       # bottom subduction y 
+                oc_cx:np.ndarray,     # oceanic cx 
+                oc_cy:np.ndarray,     # oceanic cu
+                g_input:Geom_input)->gmsh.model:  # geometry input class 
+    """
+    Create a Gmsh model from the slab and crust geometry.
+
+    Parameters
+    ----------
+    sx : np.ndarray
+        x-coordinates of the top surface of the subducting plate.
+    sy : np.ndarray
+        y-coordinates of the top surface of the subducting plate.
+    bsx : np.ndarray
+        x-coordinates of the bottom surface of the subducting plate.
+    bsy : np.ndarray
+        y-coordinates of the bottom surface of the subducting plate.
+    oc_cx : np.ndarray
+        x-coordinates of the oceanic crust Moho.
+    oc_cy : np.ndarray
+        y-coordinates of the oceanic crust Moho.
+    g_input : Geom_input
+        Object containing the geometrical input parameters used to construct the model.
+
+    Returns
+    -------
+    object
+        The generated Gmsh model handle (`gmsh.model`), containing the geometry
+        definition (points, curves, surfaces) and the associated physical groups
+        (mesh tags).
+    """
     
     # -> USE GMSH FUNCTION 
     gmsh.initialize()
     gmsh.option.setNumber("General.Terminal", 0)
 
     mesh_model = gmsh.model()
-
+    # Create the point class containing the physical point of the mesh
     CP = Class_Points()
     mesh_model = CP.update_points(mesh_model,sx,sy,bsx,bsy,oc_cx,oc_cy,g_input)
-
+    # Create the line class containing the lines of the mesh 
     LC = Class_Line()
     mesh_model = LC.update_lines(mesh_model, CP, g_input)
-
+    # Create the physical lines 
     mesh_model = create_physical_line(CP,LC,g_input,mesh_model)
-
+    # Create the sub-domains of the mesh
     mesh_model = create_domain_A(mesh_model, CP, LC, g_input)
     mesh_model = create_domain_B(mesh_model, CP, LC, g_input)
     mesh_model = create_domain_C(mesh_model, CP, LC, g_input)    
-    
-
-    # Wedge 
-    
-    
+    # Create the  surface 
     if g_input.ocr != 0.0:
         Left_side_of_subduction_surf   = gmsh.model.geo.addPlaneSurface([10],tag=100) # Left side of the subudction zone
         Oceanic_Crust_surf             = gmsh.model.geo.addPlaneSurface([15],tag=150) # Left side of the subudction zone
@@ -367,7 +478,7 @@ def create_gmsh(sx,        # subduction x
             Crust_LC_surf                  = gmsh.model.geo.addPlaneSurface([35],tag=350) # Crust LC
     
 
-    
+    # Create the physical surface the effective domain
     mesh_model.geo.synchronize()
 
     mesh_model.addPhysicalGroup(2, [Left_side_of_subduction_surf],  tag=dict_surf['sub_plate'])
@@ -384,14 +495,39 @@ def create_gmsh(sx,        # subduction x
     return mesh_model 
 
 #----------------------------------------------------------------------------------------------------------------------
+def create_mesh_fenicsx(mesh:meshio._mesh.Mesh
+                        ,cell_type:str 
+                        ,prune_z:bool=False)->dolfinx.mesh.Mesh:
 
+    """Convert gmsh into meshio object
+    Parameters 
+    -----------
+        mesh : meshio._mesh.Mesh
+            meshio object that contains the .msh model
+        cell_type: str 
+                element type to process {triangle} or {line} 
+        prune_z : Bool 
+            flag to remove the z coordinate from the mesh model
+    Returns
+    -----------
+        _type_: _description_
+    """
+
+    # From the tutorials of dolfinx
+    cells = mesh.get_cells_type(cell_type)
+    cell_data = mesh.get_cell_data("gmsh:physical", cell_type)
+    points = mesh.points[:, :2] if prune_z else mesh.points
+    out_mesh = meshio.Mesh(points=points, cells={cell_type: cells}, cell_data={"name_to_read": [cell_data.astype(np.int32)]})
+    
+    return out_mesh
+#------------------------------------------------------------------------------------------------------------------
 def extract_facet_boundary(Mesh:dolfinx.mesh.Mesh
                            ,Mfacet_tag:dolfinx.mesh.MeshTags
                            ,submesh:dolfinx.mesh.Mesh
                            ,sm_vertex_maps:np.ndarray
                            ,boundary:list
                            ,m_id:int)->tuple([np.ndarray,np.ndarray]):
-    """
+    r"""
     Extract facet indices for a submesh boundary from global boundary markers.
 
     This function builds the facet-index array (and corresponding marker values) needed to
@@ -514,29 +650,53 @@ def create_subdomain(mesh:dolfinx.mesh.Mesh
                      ,phase:dolfinx.fem.function.Function)->Domain:
     """Create the subdomain from the global mesh, and interpolate the phases from the global mesh to the local mesh
 
-    Args:
-        mesh (dolfinx.mesh.Mesh): global mesh information
-        mesh_tag (dolfinx.mesh.MeshTags): the mesh tag of the surface {i.e., phase}
-        facet_tag (dolfinx.mesh.MeshTags): the mesh tag of the linear feature (e.g., subducting top surface)
-        phase_set (list): the cell marker that constitute the subdomain
-        name (str): the name of the subdomain
-        phase (dolfinx.fem.function.Function): function that stores the information of the phase. 
+    Parameters
+    ----------
+        mesh : dolfinx.mesh.Mesh
+            global mesh information
+        mesh_tag : dolfinx.mesh.MeshTags
+            the mesh tag of the surface {i.e., phase}
+        facet_tag : dolfinx.mesh.MeshTags
+            the mesh tag of the linear feature (e.g., subducting top surface)
+        phase_set :list 
+            the cell marker that constitute the subdomain
+        name : str
+            the name of the subdomain
+        phase : dolfinx.fem.function.Function
+            function that stores the information of the phase. 
 
-    Returns:
-        Domain: Class that contains the information of the subdomain. 
+    Returns
+    ----------
+        domain : Domain
+              Class that contains the information of the subdomain. 
     """
-    
-    
-    
-    
-    
+
     from dolfinx.mesh import meshtags
     #--------------------------------------------------------------
     def facet_BC(mesh:dolfinx.mesh.Mesh
                  ,facet_tag:dolfinx.mesh.MeshTags
                  ,submesh:dolfinx.mesh.Mesh
-                 ,vertex_maps:numpy.ndarray
+                 ,vertex_maps:np.ndarray
                  ,specs:list)->dolfinx.mesh.MeshTags:
+        """From the list of facets of the global mesh, generate the mesh tag of the subdomain
+
+        Parameters
+        ----------
+            mesh (dolfinx.mesh.Mesh): Global mesh object storing the information of the main mesh
+            facet_tag (dolfinx.mesh.MeshTags): The facet tags object from the global mesh
+            submesh (dolfinx.mesh.Mesh): Submesh object 
+            vertex_maps (numpy.ndarray): The maps of the vertex of the mesh tag
+            specs (list): a 2D list containing [facet_tag_id_global_mesh,newIDsubmesh]
+
+        Returns
+        ----------
+            FT: (dolfinx.mesh.MeshTags): the mesh tag object of the subdomain
+            
+        Source of portion of the code, and general explanation    
+        https://fenicsproject.discourse.group/t/how-to-define-bcs-on-boundaries-of-submeshes-of-a-parent-mesh/5470/3
+
+        """
+        
         # preparing the lists
         chosen_total = []
         
@@ -555,9 +715,6 @@ def create_subdomain(mesh:dolfinx.mesh.Mesh
         
         return FT
     #--------------------------------------------------------------
-    """
-    https://fenicsproject.discourse.group/t/how-to-define-bcs-on-boundaries-of-submeshes-of-a-parent-mesh/5470/3
-    """
     # Find the chosen markers 
     marked_cells = []
     
@@ -630,6 +787,26 @@ def create_subdomain(mesh:dolfinx.mesh.Mesh
 def read_mesh(ioctrl:IOControls
               ,sc:Scal)->tuple([dolfinx.mesh.Mesh,dolfinx.mesh.MeshTags,dolfinx.mesh.MeshTags]):
 
+    """read the .msh file, and convert into a dolfinx mesh object and extract mesh tags from .msh
+    Parameter
+    ----------
+        ioctrl : IOControls
+            Input/Output controls object, stores the information of the path of the .msh file
+        sc     : Scal
+            Scal object containing the scaling parameters
+
+    Returns
+    ----------
+        mesh : dolfinx.mesh.Mesh
+            dolfinx mesh 
+        cell_markers: dolfinx.mesh.MeshTags
+            cell markers (i.e., physical surface tags)
+        facet_markers : dolfinx.mesh.MeshTags
+            facet markers (i.e., physical line tags )
+
+    """
+
+
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()  # 0, 1, ..., size-1
 
@@ -653,8 +830,8 @@ def read_mesh(ioctrl:IOControls
         # Create and save one file for the mesh, and one file for the facets
         triangle_mesh = create_mesh_fenicsx(msh, "triangle", prune_z=True)
         line_mesh = create_mesh_fenicsx(msh, "line", prune_z=True)
-        meshio.write("%s/mesh.xdmf"%pt_save, triangle_mesh)
-        meshio.write("%s/mt.xdmf"%pt_save, line_mesh)
+        meshio.write("%s/mesh.xdmf"%pt_save, triangle_mesh) # Debug
+        meshio.write("%s/mt.xdmf"%pt_save, line_mesh) # Debug 
         # Remove gmsh file, to save memory: every information of the mesh is already known by fenicsx
         os.remove(mesh_name)
         
@@ -667,11 +844,11 @@ def create_mesh_object(sc:Scal
                        ,g_input:Geom_input)->Mesh:    
     """
     Create a subdomain mesh from the global mesh and interpolate phase information.
-    
+
     This function extracts a submesh corresponding to a given set of cell markers
     (phases) from the global mesh. The phase function defined on the global mesh is
     then interpolated or transferred onto the subdomain mesh.
-    
+
     Parameters
     ----------
     mesh : dolfinx.mesh.Mesh
@@ -686,7 +863,7 @@ def create_mesh_object(sc:Scal
         Name of the subdomain (used for identification and debugging).
     phase : dolfinx.fem.Function
         Cell-wise (or DG) function storing phase/material information on the global mesh.
-    
+
     Returns
     -------
     Domain
@@ -728,19 +905,18 @@ def create_mesh_object(sc:Scal
     domainC = create_subdomain(mesh, cell_markers, facet_markers, [4,5,6], 'Lithosphere', phase)
 
     # -- Fill the Mesh object
-    
-    MESH = Mesh
-    
-    MESH.domainG              = domainG
-    MESH.domainA              = domainA     
-    MESH.domainB              = domainB
-    MESH.domainC              = domainC   
 
-    # dimension-> g_input
-    g_input                   = dimensionless_ginput(g_input,sc)
-    
-    MESH.g_input              = g_input 
-    
+    MESH = Mesh(g_input = dimensionless_ginput(g_input,sc)
+                ,domainG = domainG
+                ,domainA = domainA
+                ,domainB = domainB
+                ,domainC = domainC
+                ,comm = MPI.COMM_WORLD
+                ,rank = MPI.COMM_WORLD.Get_rank()
+                ,element_p = None
+                ,element_PT = None
+                ,element_V =None)
+
     return MESH
 #-----------------------------------------------------------------------------------------------
 

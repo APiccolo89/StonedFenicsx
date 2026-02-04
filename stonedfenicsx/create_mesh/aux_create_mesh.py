@@ -141,7 +141,6 @@ class Mesh:
     domainC : Domain
     comm : MPI.Intracomm
     rank : int
-    size : int 
     element_p  : object   
     element_PT : object
     element_V  : object
