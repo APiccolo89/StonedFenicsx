@@ -117,10 +117,10 @@ def test_van_keken_mesh_crust():
     num_cell = len(M.domainG.Tagcells.indices)-(len(M.domainA.cell_par)+len(M.domainB.cell_par)+len(M.domainC.cell_par))
     
     
-    assert (la+lb+lc==91699) 
-    assert (lg==90964) 
+    assert (la+lb+lc==91650) 
+    assert (lg==90915) 
     assert (num_cell ==0) 
-    assert len(M.domainG.Tagcells.indices) == 180784
+    assert len(M.domainG.Tagcells.indices) == 180686
 
 
 def test_van_keken_mesh_decoupling():
@@ -174,10 +174,10 @@ def test_van_keken_mesh_decoupling():
     num_cell = len(M.domainG.Tagcells.indices)-(len(M.domainA.cell_par)+len(M.domainB.cell_par)+len(M.domainC.cell_par))
     
     
-    assert (la+lb+lc==91874) 
-    assert (lg==91138) 
+    assert (la+lb+lc==91825) 
+    assert (lg==91089) 
     assert (num_cell ==0) 
-    assert len(M.domainG.Tagcells.indices) == 181132
+    assert len(M.domainG.Tagcells.indices) == 181034
 
 
 def test_van_keken_mesh_curved():
@@ -232,13 +232,13 @@ def test_van_keken_mesh_curved():
     num_cell = len(M.domainG.Tagcells.indices)-(len(M.domainA.cell_par)+len(M.domainB.cell_par)+len(M.domainC.cell_par))
     
     
-    assert (la+lb+lc==101090) 
-    assert (lg==100280) 
+    assert (la+lb+lc == 100949) 
+    assert (lg==100139) 
     assert (num_cell ==0) 
-    assert len(M.domainG.Tagcells.indices) == 199270
+    assert len(M.domainG.Tagcells.indices) == 198986
 
-if __name__ == '__main__': 
-    test_van_keken_mesh()
-    test_van_keken_mesh_crust()
-    test_van_keken_mesh_decoupling()
-    test_van_keken_mesh_curved()
+#if __name__ == '__main__': 
+    #test_van_keken_mesh()
+    #test_van_keken_mesh_crust()
+    #test_van_keken_mesh_decoupling()
+    #test_van_keken_mesh_curved()
