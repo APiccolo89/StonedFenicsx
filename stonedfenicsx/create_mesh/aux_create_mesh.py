@@ -30,21 +30,56 @@ dict_tag_lines = {
 }
 
 #------------------------------------------------------------------------------------------------
-@dataclass
+@dataclass(slots=True)
 class Domain:
     """
-    Domain stores the mesh and associated data:
-      - hierarchy: parent = global mesh; child = submesh 
-      - cell_par, node_par: parent relationships (if global mesh has submeshes)
-      - facets: tagged facets (boundary features)
-      - Tagcells: tagged cells (markers)
-      - bc_dict: dictionary of boundary condition tags/names
-      - solPh: function space for material properties
-      - phase: material phase function
-    Small subclasse that store the information of the domain. The domain is either the total mesh, or 
-    one of the sub-domains: wedge, subducting plate, overriding plate. The information allows to transmit
-    the information from the global mesh to the sub-meshes and viceversa. 
+    Domain object storing the mesh and all associated metadata.
+
+    This dataclass represents either the full computational domain (global mesh)
+    or one of its subdomains (e.g., wedge, subducting plate, overriding plate).
+
+    It provides the necessary information to transfer data between the global mesh
+    and extracted submeshes, ensuring consistent handling of markers, facets,
+    material phases, and boundary conditions.
+
+    Attributes
+    ----------
+    hierarchy : str
+        Mesh hierarchy level:
+        - `"parent"` for the global mesh
+        - `"child"` for a submesh
+
+    cell_par : np.ndarray | None
+        Parent cell relationships mapping submesh cells to the global mesh cells.
+        Only defined if the domain is a submesh.
+
+    node_par : np.ndarray | None
+        Parent node relationships mapping submesh nodes to the global mesh nodes.
+        Only defined if the domain is a submesh.
+
+    facets : dolfinx.mesh.MeshTags | None
+        Tagged facet markers representing boundary features
+        (e.g., trench, free surface, inflow/outflow).
+
+    Tagcells : dolfinx.mesh.MeshTags | None
+        Tagged cell markers representing physical regions/material domains.
+
+    bc_dict : dict
+        Dictionary mapping boundary condition names to integer tags.
+
+    solPh : dolfinx.fem.FunctionSpace | None
+        Function space used to define material property fields or phase functions.
+
+    phase : dolfinx.fem.Function | None
+        Material phase indicator function defined on the domain.
+
+    Notes
+    -----
+    The `Domain` class is a lightweight container for all domain-specific mesh data.
+    It allows safe communication of field variables, markers, and boundary tags
+    between the global mesh and its corresponding subdomains.
     """
+
     hierarchy: str = "Parent"
     mesh: dolfinx.mesh.Mesh = None
     cell_par: np.ndarray = field(default_factory=lambda: np.array([], dtype=np.int32))
@@ -54,36 +89,65 @@ class Domain:
     bc_dict: dict = field(default_factory=dict)
     solPh: dolfinx.fem.FunctionSpace = None
     phase: dolfinx.fem.Function = None
-        
-
+#---------------------------------------------------------------------------------------------------
 @dataclass(slots=True)
 class Geom_input:
     """
-    Geometric input of the test
+    Geometric input parameters defining the subduction setup.
 
-    x: main grid coordinate SI: [m]
-    y: main grid coordinate SI: [m] -> can be negative
-    slab_tk : thickness of the subducting slab SI: [m]
-    cr : thickness of the overriding crust SI: [m]
-    ocr: thickness of the oceanic crust SI: [m]
-    lit_mt: depth of the lithospheric mantle SI: [m] (always positive)
-    lc: lower crust ratio of the overriding crust SI: [n.d.] value in [0,1]
-    ns_depth: no slip boundary condition depth SI: [m] always positive
-    decoupling: depth of the decoupling SI: [m] always positive
-    resolution_normal : minimum resolution of the grid SI: [m] always positive
-    resolution_refine : maximum resolution of the grid SI: [m] always positive
-    theta_out_slab : slab bending angle at the bottom of the simulation [degrees]
-    theta_in_slab : slab bending angle at the trench [degrees]
-    trans : interval of depth at which coupling/uncoupling occurs SI: [m]
-    lab_d : depth of the lithosphere-asthenosphere boundary SI: [m]
-    sub_type : "Custom" (internal) or "Real" (external geometry)
-    sub_path : path or url of the geometry database
-    sub_Lb : along-slab distance where bending occurs SI: [m]
-    sub_constant_flag : constant bending angle flag
-    sub_theta_0 : initial bending angle at the left upper most corner [deg]
-    sub_theta_max : maximum bending angle after the critical distance Lb [deg]
-    sub_trench : position of trench 
-    sub_dl : segment slab length [m]
+    This dataclass stores the main geometric quantities required to build the
+    computational domain and prescribe the slab geometry.
+
+    Attributes
+    ----------
+    x : float
+        Main grid coordinate in the x-direction (SI units: [m]).
+    y : float
+        Main grid coordinate in the y-direction (SI units: [m]).
+        Can be negative.
+    slab_tk : float
+        Thickness of the subducting slab (SI units: [m]).
+    cr : float
+        Thickness of the overriding crust (SI units: [m]).
+    ocr : float
+        Thickness of the oceanic crust (SI units: [m]).
+    lit_mt : float
+        Depth of the lithospheric mantle (SI units: [m], always positive).
+    lc : float
+        Lower crust ratio of the overriding crust (dimensionless, value in [0, 1]).
+    ns_depth : float
+        Depth of the no-slip boundary condition (SI units: [m], always positive).
+    decoupling : float
+        Depth of the slab–mantle decoupling (SI units: [m], always positive).
+    resolution_normal : float
+        Minimum grid resolution (SI units: [m], always positive).
+    resolution_refine : float
+        Maximum grid refinement resolution (SI units: [m], always positive).
+    theta_out_slab : float
+        Slab bending angle at the bottom of the simulation domain (degrees).
+    theta_in_slab : float
+        Slab bending angle at the trench (degrees).
+    trans : float
+        Transition interval over which coupling/uncoupling occurs (SI units: [m]).
+    lab_d : float
+        Depth of the lithosphere–asthenosphere boundary (SI units: [m]).
+    sub_type : str
+        Geometry type, either `"Custom"` (internal geometry) or `"Real"`
+        (external geometry database).
+    sub_path : str
+        Path or URL of the external geometry database (used if `sub_type="Real"`).
+    sub_Lb : float
+        Along-slab distance where bending occurs (SI units: [m]).
+    sub_constant_flag : int
+        Flag controlling whether the slab bending angle is constant.
+    sub_theta_0 : float
+        Initial bending angle at the upper-left corner of the slab (degrees).
+    sub_theta_max : float
+        Maximum bending angle after the critical distance `sub_Lb` (degrees).
+    sub_trench : float
+        Horizontal position of the trench (SI units: [m]).
+    sub_dl : float
+        Segment length used to discretize the slab surface (SI units: [m]).
     """
 
     x: NDArray[np.float64]
@@ -118,22 +182,50 @@ class Geom_input:
     sub_trench : float 
     sub_dl : float
     wz_tk : float 
-    
-    
-
-@dataclass
+#---------------------------------------------------------------------------------------------------
+@dataclass(slots=True)
 class Mesh:   
-    ''' g_input: Geometric input parameters,
-        domainG: Global domain
-        domainA: Subduction zone domain
-        domainB: Wedge domain
-        domainC: Overriding plate domain
-        rank: MPI rank
-        size: MPI size
-        element_p: Finite element for pressure
-        element_PT: Finite element for temperature
-        element_V: Finite element for velocity
-    '''
+    """
+    Mesh wrapper storing the global mesh, subdomains, and finite element definitions.
+
+    This dataclass acts as a central container for all mesh-related objects used in
+    the simulation. It includes the geometric input parameters, the global domain,
+    its associated subdomains, and the finite element definitions required for the
+    numerical discretization of pressure, temperature, and velocity.
+
+    Attributes
+    ----------
+    g_input : Geom_input
+        Geometric input parameters defining the model setup.
+
+    domainG : Domain
+        Global computational domain (full mesh).
+
+    domainA : Domain
+        Subduction zone domain (submesh extracted from the global mesh).
+
+    domainB : Domain
+        Wedge domain (submesh extracted from the global mesh).
+
+    domainC : Domain
+        Overriding plate domain (submesh extracted from the global mesh).
+
+    rank : int
+        MPI rank of the current process.
+
+    size : int
+        Total number of MPI processes.
+
+    element_p : ufl.FiniteElement
+        Finite element definition for the pressure field.
+
+    element_PT : ufl.FiniteElement
+        Finite element definition for the temperature field.
+
+    element_V : ufl.FiniteElement
+        Finite element definition for the velocity field.
+    """
+
     g_input : Geom_input    # Geometric input
     domainG : Domain                                # Domain
     domainA : Domain                     
@@ -147,28 +239,51 @@ class Mesh:
      
 #-----------------------------------------------------------------------------------------------------------------
 class Class_Points():
-    def update_points      (self,
-                            mesh_model:gmsh.model,
-                            sx        :float,
-                            sy        :float,
-                            bx        :float,
-                            by        :float,
-                            oc_cx     :float | None,
-                            oc_cy     :float | None,
-                            g_input   :Geom_input) -> gmsh.model:
+    def update_points(self,
+                      mesh_model : gmsh.model,
+                      sx : np.ndarray,
+                      sy : np.ndarray,
+                      bx : np.ndarray,
+                      by : np.ndarray,
+                      oc_cx : np.ndarray | None,
+                      oc_cy : np.ndarray | None,
+                      g_input : Geom_input) -> gmsh.model:
+
         """
-        To Do Friday: document this function
-
-
-
+        Generate the physical points required to build the Gmsh geometry.
+        
+        Using the main geometric information stored in `g_input` together with the slab
+        top/bottom surfaces (and optionally the oceanic Moho), this routine defines the
+        physical points that will later be connected into physical lines for the Gmsh
+        model.
+        
+        Parameters
+        ----------
+        sx : np.ndarray
+            x-coordinates of the top surface of the subducting plate.
+        sy : np.ndarray
+            y-coordinates of the top surface of the subducting plate.
+        bx : np.ndarray
+            x-coordinates of the bottom surface of the subducting plate.
+        by : np.ndarray
+            y-coordinates of the bottom surface of the subducting plate.
+        oc_cx : np.ndarray | None
+            x-coordinates of the oceanic Moho. Can be `None`/empty if the crust is not defined.
+        oc_cy : np.ndarray | None
+            y-coordinates of the oceanic Moho. Can be `None`/empty if the crust is not defined.
+        g_input : Geom_input
+            Object containing all input geometric information.
+        
+        Returns
+        -------
+        mesh_model : gmsh.model
+            Updated Gmsh model containing the generated points. 
+        -> update the class points with new members 
         """
 
         # Function CREATE POINTS
 
         #-- Create the subduction,channel and oceanic crust points 
-        # Point of subduction -> In general, the good wisdom would tell you to not put a disordered list of points, 
-        # but, I am paranoid, therefore: just create the geometry of slab, channel and oceanic crust such that y = f(x) where f(x) is always growing (or decreasing)
-        # if you want to be creative, you have to modify the function of create points, up to you, no one is against it. 
 
         self.max_tag_s,  self.tag_subduction, self.coord_sub,     mesh_model     = _create_points(mesh_model, sx,    sy,    g_input.resolution_refine, 0)
         self.max_tag_bots,  self.tag_bottom,    self.coord_bottom, mesh_model     = _create_points(mesh_model, bx,    by,    g_input.resolution_normal, self.max_tag_s)
@@ -208,15 +323,46 @@ class Class_Line():
                      mesh_model:gmsh.model, 
                      CP:Class_Points, 
                      g_input:Geom_input)-> gmsh.model:
+        """
+        Generate Gmsh lines and assign tags/IDs.
+        
+        This routine creates the physical lines required for the geometry, using the
+        previously generated point set stored in `CP`, and assigns consistent tags/IDs
+        to each line so they can be referenced later (e.g., for boundary markers and
+        physical groups).
+        
+        Parameters
+        ----------
+        mesh_model : gmsh.model
+            Gmsh model object to be updated.
+        CP : Class_Points
+            Container storing the physical point tags and their coordinates.
+        g_input : Geom_input
+            Object containing the geometric input parameters controlling which lines
+            are created and how they are connected.
+        
+        Returns
+        -------
+        mesh_model : gmsh.model
+            Updated Gmsh model containing the generated lines.
+        LP : Class_Line
+            Updated line container holding the created line IDs/tags and connectivity
+            (e.g., mapping line -> endpoint point tags).
+        
+        Notes
+        -----
+        The returned line container is used to:
+        - build surfaces from line loops,
+        - define physical groups for boundaries/regions,
+        - and maintain consistent bookkeeping between geometry objects.
+        """
         
         # Top Boundary      
         p_list                                                    = [CP.tag_subduction[0], CP.tag_right_c_t[0]]
         self.max_tag_top, self.tag_L_T, self.lines_T, mesh_model  = _create_lines(mesh_model,0,p_list,False)
 
         #[right boundary]
-        # -- This a tedius job, but remember, dear, to just follow the logic: since I introduced a few new functionality, and the gmsh function are pretty annoying 
-        # I tried to make the function as simple as my poor demented mind can do. So, it is not the most easiest possible, but the easiest that I was able to conceive
-        # in 10 minutes. Good luck 
+
 
         if g_input.cr !=0: 
             if g_input.lc !=0:
@@ -342,140 +488,246 @@ def find_tag_line(coord:NDArray,
     
     return np.int32(i)                 
 
-
-def function_create_slab_channel(slab_top:NDArray[np.float64],
-                                 theta_mean:NDArray[np.float64],
-                                 c_phase:Geom_input,
-                                 )-> tuple[NDArray[np.float64],NDArray[np.float64],NDArray[np.float64],NDArray[np.float64],NDArray[np.float64] | None,NDArray[np.float64] | None]: 
-
+#-----------------------------------------------------------------------------------------
+def find_slab_surface(g_input:Geom_input)->tuple([NDArray[float],NDArray[float]]):  
     """
-    Input: 
-        data_real = flag to warn that we are dealing with real data
-        wc        = the thickness of the subduction channel [m]
-        lt        = lithospheric thickness                  [m]
-        SP        = [] default -> Slab class in case
-        fname     = [] default -> file name of the real slab 
-    Output: 
-        ax         = slab x coordinate    [m]
-        ay         = slab y coordinate    [m]
-        theta_mean = mean theta angle along slab lenght
-        cx         = channel x coordinate [m]
-        cy         = channel y coordinate [m]
-        ex         = extra node x  coordinate at the base of over-
-                     riding plate and within channel [m]
-        ey         = extra node x  coordinate at the base of over-
-                     riding plate and within channel [m]
+    Compute the top surface of a kinematic slab as a polyline starting from the trench.
+
+    The slab surface is discretised into straight segments of length `g_input.sub_dl`.
+    At each step we compute the local bending angle at the current and next arc-length
+    positions, average them, and use that mean angle to advance to the next point.
+
+    Angle convention
+    ----------------
+    theta is measured with respect to the positive horizontal x-axis.
+
+             theta
+    x-axis  -------\------
+                    \ theta
+                     \/
+
+    Algorithm (summary)
+    -------------------
+    1. Initialise `top_slab` with the trench point.
+    2. Initialise the arc-length `lgh = 0.0` (distance measured along the slab surface).
+    3. While the current point is above the model bottom boundary (`y > ymin`):
+       a. Set `lghn = lgh + g_input.sub_dl`.
+       b. Compute `theta  = theta(lgh)`  and `theta1 = theta(lghn)`.
+       c. Compute `theta_mean = 0.5 * (theta + theta1)`.
+       d. Use `theta_mean` to advance one step and append the new point to `top_slab`.
+       e. Update `lgh = lghn`.
+
+    Returns
+    -------
+    top_slab : (n_segment, 2) ndarray
+        Coordinates (x, y) of the slab top surface polyline.
+    theta_mean : float
+        Mean bending angle used for the last segment (or an average over segments,
+        depending on your implementation).
+
+    Raises
+    ------
+    ValueError
+        If the selected slab-surface method is not implemented (only "custom" is
+        currently supported).
+    """
+
+ 
+    if g_input.sub_type == 'Costum':
+        # Initialise the theta_mean and slab_top array
+        theta_mean = np.zeros([2],dtype=float)
+        slab_top   = np.zeros([2,2],dtype=float)
+        
+        # compute the bending angle as a function of L
+        slab_top[0,0] = g_input.sub_trench[0]
+        slab_top[0,1] = 0.0
+
+        lgh = 0.0
+        lghn = 0.0
+
+        dl = g_input.sub_dl
+
+        it = 0 
+
+        statement = True 
+        while statement:
+            lghn += dl
+            theta1 = compute_bending_angle(g_input,lgh) # bending angle at the beginning of the segment
+            theta2 = compute_bending_angle(g_input,lghn) # bending angle at the end of the segment
+            theta = 0.5*(theta1+theta2) # mean bending angle
+            theta_mean[it]= theta
+            theta_meani_1 = theta
+            # Find the middle of the slab
+            slab_topi_ix = slab_top[it,0]+dl*(np.cos(theta)) # middle of the slab at the end of the segment x
+            slab_topi_iz = slab_top[it,1]-dl*(np.sin(theta)) # middle of the slab at the end of the segment z
+
+
+            if it+1 > len(slab_top[:,0])-1:
+                slab_top = np.vstack([slab_top,[slab_topi_ix,slab_topi_iz]])
+                theta_mean = np.append(theta_mean,theta_meani_1)
+            else: 
+                slab_top[it+1,0] = slab_topi_ix
+                slab_top[it+1,1] = slab_topi_iz
+                theta_mean[it] = theta
+                theta_mean[it+1] = theta
+            if g_input.y[0] != -1e23: 
+                x = slab_top[it+1,1]
+                statement = x > g_input.y[0]
+                if not statement:
+                    dz = slab_top[it,1] - g_input.y[0]
+                    dx = dz / np.tan(theta)
+                    slab_top[it+1,0] = slab_top[it,0] + dx
+                    slab_top[it+1,1] = g_input.y[0]
+            it = it+1
+            lgh = lghn
+            
+    else: 
+        raise ValueError("There is not yet any alternative to costum subduction yet, please, be patient")
+        
+    return slab_top, theta_mean
+
+#------------------------------------------------------------------------------------------------------------
+def compute_bending_angle(g_input:Geom_input
+                        ,lgh: float):
     
-    Explanation: 
-        the function create arrays of point that are used to compute the domain. First
-        compute the surface of the slab using either the Slab class or the real data. 
-        Then compute the subduction channel (alg: per each point of the slab, compute
-        the perpendicular projection whose distance is the wc). 
-        Then call functions that correct the slab, adding a point at the intersection with 
-        the depth of the lithosphere. 
-        Then call a function that correct the channel, finding its point at surface and the base 
-        of the lithosphere. On top of that, compute the coordinate of an extra node at the 
-        base of the lithosphere, between slab and channel. 
+    """compute_bending_angle: 
+    inputs: 
+    geometrical information
+    current length of the slab 
+    Returns:
+        theta:float -> for a given bending angle function, return theta = f(l) -> l the actual distance along the slab surface from the trench
+    """
+    if g_input.sub_constant_flag:
+        theta = g_input.sub_theta_max
+    else:
+        if lgh > g_input.sub_Lb:
+            theta = g_input.sub_theta_max
+        else:
+            theta = ribe_angle(g_input.sub_theta_max, g_input.sub_Lb, lgh)
+            if theta<g_input.sub_theta_0: 
+                theta = g_input.sub_theta_0
+    
+    return theta
+
+#--------------------------------------------------------------------------------------------------------------
+def ribe_angle(theta_max: float
+                ,Lb: float
+                ,lgh: float) -> float:
+
+    """ribe_angle 
+    inputs: 
+    theta_max : float -> maximum angle of the slab
+    Lb : float -> critical along slab distance where the bending is occuring 
+    lgh : float -> current position along the slab surface  
+
+    Returns:
+        theta :float -> Bending angle at the local point along the top surface slab. 
+    """
+
+    theta = theta_max*lgh**2*(3*Lb-2*lgh)/(Lb**3)
+
+    return theta
+
+def function_create_subducting_plate_geometry(g_input:Geom_input,
+                                 )-> tuple[NDArray[np.float64],NDArray[np.float64],NDArray[np.float64],NDArray[np.float64],NDArray[np.float64] | None,NDArray[np.float64] | None, Geom_input]: 
+    """
+    Create the main subducting-plate geometry from input parameters.
+
+    This routine builds the coordinate arrays describing the slab top and bottom
+    surfaces and, if requested/available, the oceanic Moho. The returned arrays are
+    used to define the Gmsh geometry and subsequent mesh generation. The input
+    geometry object may be updated (e.g., derived quantities, validated parameters,
+    or cached geometry).
+
+    Parameters
+    ----------
+    g_input : Geom_input
+        Object containing all input geometric parameters required to construct the
+        slab and associated interfaces.
+
+    Returns
+    -------
+    ax : np.ndarray
+        x-coordinates of the slab top surface.
+    ay : np.ndarray
+        y-coordinates of the slab top surface.
+    bx : np.ndarray
+        x-coordinates of the slab bottom surface.
+    by : np.ndarray
+        y-coordinates of the slab bottom surface.
+    ox : np.ndarray | None
+        x-coordinates of the oceanic Moho. Can be `None`/empty if the crust is not
+        defined or not requested.
+    oy : np.ndarray | None
+        y-coordinates of the oceanic Moho. Can be `None`/empty if the crust is not
+        defined or not requested.
+    g_input : Geom_input
+        Updated geometry input object (may include derived or validated fields).
     """
     
     # Prepare the slab surface. Slab surface can be derived from real data, or just created ad hoc by the slab routines
     # Add the extra node that is required for the interface with the lithosphere. 
+    slab_top, theta_mean = find_slab_surface(g_input)
 
     ax = slab_top[:,0]
     ay = slab_top[:,1] 
         
     # Create the channel using the subduction interface as guide
-    #cx,cy = function_create_subduction_channel(ax,ay,theta_mean,c_phase)
-    if c_phase.ocr != 0.0:
-        ox,oy = function_create_oceanic_crust(ax,ay,theta_mean,c_phase.ocr)
+    #cx,cy = function_create_subduction_channel(ax,ay,theta_mean,g_input)
+    if g_input.ocr != 0.0:
+        ox,oy = generate_parallel_layer_subducting_plate(ax,ay,theta_mean,g_input.ocr)
     else: 
         ox = None
         oy = None 
     # Correct the slab surface and find the extra node
-    ax,ay,theta_mean = find_extra_node(ax,ay,theta_mean,c_phase)
+    ax,ay,theta_mean = find_extra_node(ax,ay,theta_mean,g_input)
     # Correct the subduction channel as well finding the extranode 
     # I needed to correct first the slab and then the channel, because otherwise it was
     # creating an unrealistic bending of the weak zone. Initially I was recomputing the angle 
     # between the linear segment, using an average. It is more convinient use two // lines and then 
     # correcting them. 
-    #cx,cy,ex,ey = correct_channel(cx,cy,ax,ay,c_phase)
-    bx,by = function_create_subduction_bottom(ax,ay,theta_mean,c_phase.slab_tk)
+    bx,by = generate_parallel_layer_subducting_plate(ax,ay,theta_mean,g_input.slab_tk)
 
-    return ax,ay,bx,by,ox,oy
-
-#-----------------------------------------------------------------------------------------------------------------
-
-def function_create_subduction_channel(sx:NDArray,
-                                       sy:NDArray,
-                                       th:float,
-                                       c_phase:Geom_input)->tuple[NDArray[np.float64],NDArray[np.float64]]:
-    wc = c_phase.wc
-    cx = np.zeros([np.amax(sx.shape),1])
-    cy = np.zeros([np.amax(sx.shape),1])
-    # Loop over the interface of the slab and find the points on the top of the surface of the subduction channel: the point on the of the top of the channel are perpendicular to the slab interface#
-    # Compute the top surface of the subduction channel
-    cx = sx + wc * np.sin(th)
-    cy = sy + wc * np.cos(th)
-    # Find the node that are lower than the top boundary
-    ind = np.where(cy < sy[0])
-    ind = ind[0]
-    # find the first node
-    ind_min = ind[0]
-    # Compute the new x-coordinate of the node that are lower than the top boundary
-    x_top_channel = -cy[ind_min-1]/((cy[ind_min] - cy[ind_min-1])/(cx[ind_min] - cx[ind_min-1]))+cx[ind_min-1]
-    cxn = np.zeros([len(ind)+1])
-    cyn = np.zeros([len(ind)+1])
-    cxn[0] = x_top_channel
-    cyn[0] = sy[0]
-    cxn[1:] = cx[cy < sy[0]]
-    cyn[1:] = cy[cy < sy[0]] 
-    cx = cxn
-    cy = cyn
-
-    # fix x-coordinate of point at y = y_max 
-    cy[-1] = np.amin(sy)
-
-    shift_x2 = ((sx[-1] - sx[-2]) * (cy[-1] - cy[-2])) / (sy[-1] - sy[-2]) 
-    cx[-1] = cx[-2] + shift_x2
-
-    return cx,cy
+    # update the g_input
+    g_input.theta_in_slab = theta_mean[0]
 
 
-def function_create_oceanic_crust(sx:NDArray[np.float64],
-                                  sy:NDArray[np.float64],
-                                  th:float,
-                                  olt:float):
+    return ax,ay,bx,by,ox,oy,g_input
 
-    cx = np.zeros([np.amax(sx.shape),1])
-    cy = np.zeros([np.amax(sx.shape),1])
-    # Loop over the interface of the slab and find the points on the top of the surface of the subduction channel: the point on the of the top of the channel are perpendicular to the slab interface#
-    # Compute the top surface of the subduction channel
-    cx = sx - olt*np.sin(th)
-    cy = sy - olt*np.cos(th)
-    # Find the node that are lower than the left boundary [same function, but switching the position -> ca rotate ]
-    cord_x = 0.0 
-    cord_z = -olt/np.cos(th[0])
-    cy = cy[cx>0.0]
-    cx = cx[cx>0.0]
-    cx = np.insert(cx,0,0.0)  
-    cy = np.insert(cy,0,cord_z)  
-
-
-    e_node2,t_ex1 = _find_e_node(cx,cy,cx*0.0,-np.min(sy),flag=False)
-    cx,cy,t  = _correct_(cx,cy,e_node2,-np.min(sy),cy*0.0,0.0)
-
-    cx_n = cx[(cx>=0.0) & (cy>=np.min(sy))]
-    cy_n = cy[(cx>=0.0) & (cy>=np.min(sy))]
-
-    return cx_n,cy_n
-
-#-----------------------------------------------------------------------------------------------------------------
-
-
-def function_create_subduction_bottom(sx:NDArray[np.float64],
+#---------------------------------------------------------------------------------------------
+def generate_parallel_layer_subducting_plate(sx:NDArray[np.float64],
                                       sy:NDArray[np.float64],
-                                      th:float,
+                                      th:NDArray[np.float64],
                                       lt:float)->tuple[NDArray[np.float64],NDArray[np.float64]]:
+    """
+    Compute the coordinates of an internal layer surface within the subducting plate.
+    
+    Given the slab top surface coordinates and a local slab bending angle, this
+    function constructs a parallel/offset surface at a distance `lt` (e.g., oceanic
+    crust thickness or slab thickness), representing an internal layer boundary
+    within the subducting plate.
+    
+    Parameters
+    ----------
+    sx : NDArray[np.float64]
+        x-coordinates of the slab top surface.
+    sy : NDArray[np.float64]
+        y-coordinates of the slab top surface.
+    th : float
+        Local slab bending angle associated with the surface points (degrees or
+        radians depending on the implementation; must be consistent with the
+        trigonometric functions used).
+    lt : float
+        Layer thickness used to offset the surface (e.g., oceanic crust thickness
+        or slab thickness) (SI units: [m]).
+    
+    Returns
+    -------
+    cx : NDArray[np.float64]
+        x-coordinates of the layer-defining surface.
+    cy : NDArray[np.float64]
+        y-coordinates of the layer-defining surface.
+    """
 
     cx = np.zeros([np.amax(sx.shape),1])
     cy = np.zeros([np.amax(sx.shape),1])
@@ -483,14 +735,6 @@ def function_create_subduction_bottom(sx:NDArray[np.float64],
     # Compute the top surface of the subduction channel
     cx = sx - lt*np.sin(th)
     cy = sy - lt*np.cos(th)
-    # Find the node that are lower than the left boundary [same function, but switching the position -> ca rotate ]
-    #cord_x = 0.0 
-    #cord_z = -lt/np.cos(th[0])
-    #cy = cy[cx>0.0]
-    #cx = cx[cx>0.0]
-    #cx = np.insert(cx,0,0.0)  
-    #cy = np.insert(cy,0,cord_z)  
-
 
     e_node2,t_ex1 = _find_e_node(cx,cy,cx*0.0,-np.min(sy),flag=False)
     cx,cy,t  = _correct_(cx,cy,e_node2,-np.min(sy),cy*0.0,0.0)
@@ -557,90 +801,77 @@ def _correct_(ax:NDArray[np.float64],
 def find_extra_node(ax:NDArray[np.float64],
                     ay:NDArray[np.float64],
                     t:NDArray[np.float64],
-                    c_phase:Geom_input)->tuple[NDArray[np.float64],NDArray[np.float64],NDArray[np.float64]]:
+                    g_input:Geom_input)->tuple[NDArray[np.float64],NDArray[np.float64],NDArray[np.float64]]:
 
     #-- Find nodes 
-    e_node_uc,t_ex1 = _find_e_node(ax,ay,t,c_phase.cr*(1-c_phase.lc))
-    ax,ay,t = _correct_(ax,ay,e_node_uc,c_phase.cr*(1-c_phase.lc),t,t_ex1)
+    e_node_uc,t_ex1 = _find_e_node(ax,ay,t,g_input.cr*(1-g_input.lc))
+    ax,ay,t = _correct_(ax,ay,e_node_uc,g_input.cr*(1-g_input.lc),t,t_ex1)
 
     
-    e_node_lc,t_ex2 = _find_e_node(ax,ay,t,c_phase.cr)
-    ax,ay,t = _correct_(ax,ay,e_node_lc,c_phase.cr,t,t_ex2)
+    e_node_lc,t_ex2 = _find_e_node(ax,ay,t,g_input.cr)
+    ax,ay,t = _correct_(ax,ay,e_node_lc,g_input.cr,t,t_ex2)
 
     
-    e_node_lit,t_ex3 = _find_e_node(ax,ay,t,c_phase.ns_depth)
-    ax,ay,t = _correct_(ax,ay,e_node_lit,c_phase.ns_depth,t,t_ex3)
+    e_node_lit,t_ex3 = _find_e_node(ax,ay,t,g_input.ns_depth)
+    ax,ay,t = _correct_(ax,ay,e_node_lit,g_input.ns_depth,t,t_ex3)
 
         
-    e_node_lit,t_ex3 = _find_e_node(ax,ay,t,c_phase.decoupling)
-    ax,ay,t = _correct_(ax,ay,e_node_lit,c_phase.decoupling,t,t_ex3)
+    e_node_lit,t_ex3 = _find_e_node(ax,ay,t,g_input.decoupling)
+    ax,ay,t = _correct_(ax,ay,e_node_lit,g_input.decoupling,t,t_ex3)
 
 
     return ax,ay,t
 
-
-def correct_channel(cx:NDArray[np.float64],
-                    cy:NDArray[np.float64],
-                    sx:NDArray[np.float64],
-                    sy:NDArray[np.float64],
-                    c_phase:Geom_input)->tuple[NDArray[np.float64],NDArray[np.float64],float,float]:
-    nr_channel_points = np.amax(cx.shape)
-    #-- Find nodes 
-    ' Dovevo alternare le cazzo di funzioni, ho perso 5-7 ore del mio tempo, per fortuna non ho il cancro, altrimenti che gioia' 
-    
-    
-    e_node_uc,t_ex1 = _find_e_node(cx,cy,np.zeros_like(cx),c_phase.cr*(1-c_phase.lc))
-    cx,cy,t = _correct_(cx,cy,e_node_uc,c_phase.cr*(1-c_phase.lc),cx*0.0,0)
-
-    e_node_lc,t_ex2 = _find_e_node(cx,cy,np.zeros_like(cx),c_phase.cr)
-    cx,cy,t = _correct_(cx,cy,e_node_lc,c_phase.cr,cx*0.0,0)
-
-    e_node_lit,t_ex3 = _find_e_node(cx,cy,np.zeros_like(cx),c_phase.ns_depth)
-    cx,cy,t = _correct_(cx,cy,e_node_lit,c_phase.ns_depth,cx*0.0,0)
-
-    e_node_dc,t_ex4 = _find_e_node(cx,cy,np.zeros_like(cx),c_phase.decoupling)
-    cx,cy,t = _correct_(cx,cy,e_node_dc,c_phase.decoupling,cx*0.0,0)
-
-
-   
-    cx = cx[cy>=-c_phase.decoupling]
-    cy = cy[cy>=-c_phase.decoupling]
-    
-
-    # we want to add an extra node in the middle of the channel so that we can easily assign boundary conditions and we control the mesh there
-    for i in range (0,len(sx)-1):
-        if sy[i] == - c_phase.ns_depth:
-            slab_x_extra_node = sx[i]
-    ex = (cx[e_node_lit] + slab_x_extra_node) / 2
-    ey = - c_phase.ns_depth
-
-
-    return cx,cy,ex,ey
-
 #----------------------------------------------------------------------------------------------------------------------------------
 
-def _create_points(mesh,                                            # I am not able to classify 
+def _create_points(mesh:gmsh.model,                                            # I am not able to classify 
                    x:float,                                         # coordinate point/points
                    y:float,                                         # coordinate point/points
                    res:float,                                       # resolution of the ppint
                    tag_pr:int,                                      # maximum tag of the previous group
                    point_flag:bool=False)-> tuple[int, int, float]: # a flag to highlight that there is only one point, yes, lame. 
     
-    """_summary_: Summary: function that creates the point using gmsh. 
-    gmsh   : the gmsh object(?)
-    x,y    : coordinate [float]-> can be an array as well as a single point
-    res    : the resolution of the triangular mesh 
-    tag_pr : previous tag -> i.e., since gmsh is internally assign a tag, I need to keep track of these points for then updating coherently
-    Returns:
-        max_tag  : -> the maximum tag of function call
-        tag_list : -> the list of tag for the point of this function call
-        coord    : -> the coordinates -> rather necessary for some functionality later on. Small modification {should I change the name?} -> Add also the tag,  
-    
-    Problem that solves: for a given list of points (from 1 to N) -> call gmsh function, create points, store information for the setup generation
-    -> Nothing sideral, but I try to document everything for the future generations. 
     """
-    
-    
+    Create Gmsh point(s) and keep track of their tags and coordinates.
+
+    This helper wraps the Gmsh point-creation call to support creating one or many
+    points, while explicitly tracking the assigned tags so they can be referenced
+    consistently later when building lines/surfaces.
+
+    Parameters
+    ----------
+    mesh : gmsh.model
+        the mesh model 
+    x : float | np.ndarray
+        x-coordinate(s) of the point(s) [m]. Can be a scalar or an array.
+    y : float | np.ndarray
+        y-coordinate(s) of the point(s) [m]. Can be a scalar or an array.
+    res : float
+        Target mesh size (characteristic length) assigned to the point(s).
+    tag_pr : int
+        Previous/starting tag used to track point IDs across calls. Since Gmsh
+        can assign tags internally, this value is used to keep bookkeeping
+        consistent.
+
+    Returns
+    -------
+    max_tag : int
+        Maximum tag assigned during this function call.
+    tag_list : list[int]
+        List of tags for the created point(s), ordered consistently with the input
+        coordinates.
+    coord : np.ndarray
+        Coordinates of the created point(s), typically shaped as (N, 2) for (x, y).
+        If useful downstream, you may include tags alongside coordinates (e.g.,
+        (N, 3) with [tag, x, y])—in that case, document the exact convention.
+
+    Notes
+    -----
+    This function solves the practical problem of creating a set of points (1..N)
+    in Gmsh while retaining a reliable mapping between coordinates and point tags,
+    so that subsequent geometry construction can reference points coherently.
+    """
+
     tag_list = []
 
     if point_flag == True:
@@ -673,6 +904,45 @@ def _create_lines(mesh_model:gmsh.model,
                   previous:int,
                   tag_p:list,
                   flag=False)-> tuple[int, list, NDArray[np.int32], gmsh.model]:
+
+    """
+    Create Gmsh line(s) from point tags and keep track of their tags and connectivity.
+    
+    This helper wraps the Gmsh line-creation call to support creating one or many
+    lines, while explicitly tracking the assigned line tags so they can be
+    referenced consistently later when building curve loops, surfaces, and physical
+    groups.
+    
+    Parameters
+    ----------
+    mesh : gmsh.model
+        Gmsh model object to be updated.
+    previous : int
+        Previous/starting line tag used for bookkeeping across calls.
+    tag_p : list[int]
+        Point tags used to create the lines. Typically an ordered list of point
+        tags where consecutive pairs define segments.
+    
+    Returns
+    -------
+    max_tag : int
+        Maximum line tag assigned during this function call.
+    tag_l : list[int]
+        List of tags for the created line(s), ordered consistently with the created
+        segments.
+    lines : np.ndarray
+        Array containing line metadata, typically shaped (N, 3) with rows
+        `[p1, p2, tag]`, where `p1` and `p2` are point tags and `tag` is the line tag.
+    mesh_model : gmsh.model
+        Updated Gmsh model containing the created line(s).
+    
+    Notes
+    -----
+    This function solves the practical problem of generating a set of lines from an
+    ordered list of point tags while keeping a reliable mapping between endpoint
+    tags and the created line tags for downstream geometry construction.
+    """
+    
     
     len_p = len(tag_p)-1
     tag_l = []
@@ -682,7 +952,7 @@ def _create_lines(mesh_model:gmsh.model,
         a = tag_p[i]
         b = tag_p[i+1]
         'it appears that the gmsh is an horrible person: i try to give the golden rule that the tag of the points are following an order,'
-        'which entails that the minimum of the two point defining a segment is the first -> such that it is always possible determine the fucking order'
+        'which entails that the minimum of the two point defining a segment is the first -> such that it is always possible determine the  order'
  
         tag_1 = np.min([a,b])
         tag_2 = np.max([a,b]) 
@@ -704,18 +974,16 @@ def assign_phases(dict_surf:dict,
         indices = cell_tags.find(value) 
         phase.x.array[indices] = np.full_like(indices,  value , dtype=PETSc.IntType)
     
+    phase.x.scatter_forward()
+    
     return phase 
-#----------------------------------------------------------------------------------------------------------------
-def debug_plot(target,global_line,global_point,color):
-    for i in range(len(target)):
-        line = np.abs(target[i])
-        
-        p0   = global_line[0,line-1]
-        p1   = global_line[1,line-1]
-        coord_x = [global_point[0,p0-1],global_point[0,p1-1]]            
-        coord_y = [global_point[1,p0-1],global_point[1,p1-1]]
-
-# End File ----
-#-----------------------------------------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+# Break this glass in case of needs. 
+# def debug_plot(target,global_line,global_point,color):
+#    for i in range(len(target)):
+#        line = np.abs(target[i])
+#        
+#        p0   = global_line[0,line-1]
+#        p1   = global_line[1,line-1]
+#        coord_x = [global_point[0,p0-1],global_point[0,p1-1]]            
+#        coord_y = [global_point[1,p0-1],global_point[1,p1-1]]

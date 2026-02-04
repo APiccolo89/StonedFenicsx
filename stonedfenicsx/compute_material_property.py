@@ -1,11 +1,6 @@
-# calculate the thermal structure of the ocean according to Richards et al., 2018 JGR: Solid Earth 
-# we use a time- and space-centered Crank-Nicholson finite-difference scheme with a predictor-corrector step (Press et al., 1992)
-
-# import all the constants and defined model setup parameters 
 
 # modules
 from .package_import import *
-from .utils import evaluate_material_property
 # ---------------------------------------------------------------------------------
 @dataclass
 class Functions_material_properties_global():

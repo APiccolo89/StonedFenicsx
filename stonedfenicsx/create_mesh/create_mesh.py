@@ -6,8 +6,7 @@ from stonedfenicsx.numerical_control import IOControls, NumericalControls
 from stonedfenicsx.scal              import _scaling_mesh,Scal
 from stonedfenicsx.utils             import timing_function, print_ph
 from dolfinx.mesh       import create_submesh
-from .aux_create_mesh   import Mesh, Domain, Class_Points, Class_Line, Geom_input, dict_tag_lines, dict_surf,find_line_index,create_loop,function_create_slab_channel
-from .Subducting_plate import find_slab_surface
+from .aux_create_mesh   import Mesh, Domain, Class_Points, Class_Line, Geom_input, dict_tag_lines, dict_surf,find_line_index,create_loop,function_create_subducting_plate_geometry
 from .aux_create_mesh import assign_phases
 
 #------------------------------------------------------------------------------------------------------
@@ -100,11 +99,15 @@ def create_gmesh(ioctrl   : IOControls,
         g_input.y[1]   = max_y
         g_input.y[0]   = min_y
     
+    # Create the subducting plate main geometrical point and lines using the information of g_input
+    (slab_x
+     ,slab_y
+     ,bot_x
+     ,bot_y
+     ,oc_cx
+     ,oc_cy
+     ,g_input) = function_create_subducting_plate_geometry(g_input)
     
-    slab_top, theta_mean = find_slab_surface(g_input)
-
-    # Create the subduction interfaces using either the real data set, or the slab class
-    slab_x, slab_y, bot_x, bot_y,oc_cx,oc_cy = function_create_slab_channel(slab_top,theta_mean,g_input)
     if slab_x[-1]>g_input.x[1]:
         print_ph('Shortcoming: the slab is out of the domain, please increase the domain size, I add 60 km to the domain along x direction, fear not')
         g_input.x[1] = slab_x[-1]+60e3
@@ -112,9 +115,7 @@ def create_gmesh(ioctrl   : IOControls,
         
     min_x           = g_input.x[0] # The beginning of the model is the trench of the slab
     max_x           = g_input.x[1]          
-    
-    g_input.theta_in_slab = theta_mean[0]
-    
+        
     if g_input.cr != 0:
         ind_oc_cr = np.where(slab_y == -g_input.cr)[0][0]
         if g_input.lc !=0:     
