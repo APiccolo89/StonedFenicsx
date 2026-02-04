@@ -433,6 +433,18 @@ class Class_Line():
 def create_loop(l_list:list,
                 mesh_model:gmsh.model,
                 tag:int) -> gmsh.model:
+    """_summary_
+
+    Args:
+        l_list (list): _description_
+        mesh_model (gmsh.model): _description_
+        tag (int): _description_
+
+    Returns:
+        gmsh.model: _description_
+    """
+    
+    
     a = []
     
     for i in range(len(l_list)):
