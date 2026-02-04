@@ -11,22 +11,22 @@ from .Subducting_plate import find_slab_surface
 from .aux_create_mesh import assign_phases
 
 #------------------------------------------------------------------------------------------------------
-def create_mesh(ioctrl, sc, g_input,ctrl):
-    import numpy as np 
-    import sys, os
-    sys.path.append(os.path.abspath("src"))
-    from stonedfenicsx.numerical_control import IOControls
+def create_mesh(ioctrl:IOControls
+                ,sc:Scal
+                ,g_input:Geom_input
+                ,ctrl:NumericalControls)->Mesh:
     
 
-        
+    # Collect the rank and comm 
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()  # 0, 1, ..., size-1
     size = comm.Get_size()  # total number of MPI processes
-    
+    # Perform the create mesh routines in the rank 0
     if rank == 0: 
         g_input = create_gmesh(ioctrl,g_input,ctrl)
-    
-    M = create_mesh_object(mesh,sc,ioctrl, g_input)
+    # Convert the mesh from gmsh to mesh objects 
+    M = create_mesh_object(sc,ioctrl, g_input)
+   
     M.comm = comm 
     M.rank = rank 
     M.size = size 
@@ -385,15 +385,59 @@ def create_gmsh(sx,        # subduction x
 
 #----------------------------------------------------------------------------------------------------------------------
 
-def extract_facet_boundary(Mesh
-                           ,Mfacet_tag
-                           ,submesh
-                           ,sm_vertex_maps
-                           ,boundary,m_id):
+def extract_facet_boundary(Mesh:dolfinx.mesh.Mesh
+                           ,Mfacet_tag:dolfinx.mesh.MeshTags
+                           ,submesh:dolfinx.mesh.Mesh
+                           ,sm_vertex_maps:np.ndarray
+                           ,boundary:list
+                           ,m_id:int)->tuple([np.ndarray,np.ndarray]):
     """
-    ]Function to create an array of list containing the facet of BC (from the parent mesh)
+    Extract facet indices for a submesh boundary from global boundary markers.
 
+    This function builds the facet-index array (and corresponding marker values) needed to
+    define boundary conditions on a *submesh*, starting from boundary tags defined on the
+    *global mesh*.
+
+    Why this is needed:
+    Some physical boundaries are represented by multiple tagged pieces on the global mesh
+    (e.g. the “top surface of the slab” may be split into separate segments depending on
+    which neighboring region it touches). When imposing a single boundary condition on a
+    subdomain, you often need to *merge* several of these tagged pieces into one boundary
+    set for that subdomain.
+
+    Example (schematic):
+        Overriding plate
+           \
+    S(1)    \
+             \__________
+    S(2)      \  Wedge
+               \
+
+    For the slab subdomain boundary, you may need to combine S(1) and S(2).
+
+    Parameters
+    ----------
+    mesh : dolfinx.mesh.Mesh
+        The global mesh.
+    mfacet_tag : dolfinx.mesh.meshtags.MeshTags
+        Facet MeshTags on the global mesh (dimension = tdim - 1).
+    submesh : dolfinx.mesh.Mesh
+        The subdomain mesh.
+    sm_vertex_maps : np.ndarray | list[int]
+        Mapping from submesh vertices to parent (global) mesh vertices.
+    boundary : Sequence[int]
+        List of global boundary marker IDs to be combined for this submesh boundary.
+    m_id : int
+        Marker ID to assign to the extracted facets on the submesh.
+
+    Returns
+    -------
+    chosen_facets : np.ndarray
+        Indices of submesh facets that belong to the extracted (internal/external) boundary.
+    values : np.ndarray
+        Array of shape (len(chosen_facets),) filled with `m_id`.
     """
+
 
     # Extract facet from the parent mesh. Boundary -> list of marker of the boundary [i.e., {5,6}].     
     chosen_one = []
@@ -461,25 +505,56 @@ def extract_facet_boundary(Mesh
 
     return  chosen_facet, values
 
+#--------------------------------------------------------------------------------------------------------
+def create_subdomain(mesh:dolfinx.mesh.Mesh
+                     ,mesh_tag:dolfinx.mesh.MeshTags
+                     ,facet_tag:dolfinx.mesh.MeshTags
+                     ,phase_set:list
+                     ,name:str
+                     ,phase:dolfinx.fem.function.Function)->Domain:
+    """Create the subdomain from the global mesh, and interpolate the phases from the global mesh to the local mesh
 
-@timing_function
-def create_subdomain(mesh, mesh_tag, facet_tag, phase_set, name, phase):
+    Args:
+        mesh (dolfinx.mesh.Mesh): global mesh information
+        mesh_tag (dolfinx.mesh.MeshTags): the mesh tag of the surface {i.e., phase}
+        facet_tag (dolfinx.mesh.MeshTags): the mesh tag of the linear feature (e.g., subducting top surface)
+        phase_set (list): the cell marker that constitute the subdomain
+        name (str): the name of the subdomain
+        phase (dolfinx.fem.function.Function): function that stores the information of the phase. 
+
+    Returns:
+        Domain: Class that contains the information of the subdomain. 
+    """
+    
+    
+    
+    
+    
     from dolfinx.mesh import meshtags
-
-    def facet_BC(mesh, facet_tag, submesh, vertex_maps, specs):
+    #--------------------------------------------------------------
+    def facet_BC(mesh:dolfinx.mesh.Mesh
+                 ,facet_tag:dolfinx.mesh.MeshTags
+                 ,submesh:dolfinx.mesh.Mesh
+                 ,vertex_maps:numpy.ndarray
+                 ,specs:list)->dolfinx.mesh.MeshTags:
+        # preparing the lists
         chosen_total = []
+        
         val_total = []
+        # 
         for boundary, m_id in specs:
             ch_f, val = extract_facet_boundary(mesh, facet_tag, submesh, vertex_maps, boundary, m_id)
             chosen_total.extend(ch_f)
             val_total.extend(val)
+        # 
         fac = np.asarray(chosen_total, dtype=np.int32)
+        # 
         val = np.asarray(val_total, dtype=np.int32)
+        # Create the mesh tag for the given domain
         FT = meshtags(submesh, 1, fac, val)
+        
         return FT
-
-
-
+    #--------------------------------------------------------------
     """
     https://fenicsproject.discourse.group/t/how-to-define-bcs-on-boundaries-of-submeshes-of-a-parent-mesh/5470/3
     """
@@ -545,35 +620,27 @@ def create_subdomain(mesh, mesh_tag, facet_tag, phase_set, name, phase):
     ph = fem.Function(Sol_Spaceph)
     ph.x.name = "phase"
     
-    
+    # Interpolate phase into submesh 
     ph.interpolate(phase, cells0=entity_maps, cells1=np.arange(len(entity_maps)))
-    
+    # Create the domain sub-class
     domain = Domain(hierarchy = 'Child', mesh = submesh, cell_par = entity_maps, node_par = vertex_maps, facets = bc , phase = ph,solPh = Sol_Spaceph , bc_dict = dict_local)
     
     return domain
-
-
-    
 #------------------------------------------------------------------------------------------------------
-def read_mesh(ioctrl,sc):
-
-
+def read_mesh(ioctrl:IOControls
+              ,sc:Scal)->tuple([dolfinx.mesh.Mesh,dolfinx.mesh.MeshTags,dolfinx.mesh.MeshTags]):
 
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()  # 0, 1, ..., size-1
-    size = comm.Get_size()  # total number of MPI processes
-
 
     mesh_name = os.path.join(ioctrl.path_save,'%s.msh'%ioctrl.sname)
 
     mesh, cell_markers, facet_markers = gmshio.read_from_msh(mesh_name, MPI.COMM_WORLD, gdim=2)
     
-    
     if rank == 0: 
         # Read in mesh
         mesh_name = os.path.join(ioctrl.path_save,'%s.msh'%ioctrl.sname)
         msh = meshio.read(mesh_name)
-
         
         pt_save = ioctrl.path_save
         if not os.path.exists(pt_save):
@@ -583,8 +650,6 @@ def read_mesh(ioctrl,sc):
         if not os.path.exists(pt_save):
             os.makedirs(pt_save)    
         
-
-
         # Create and save one file for the mesh, and one file for the facets
         triangle_mesh = create_mesh_fenicsx(msh, "triangle", prune_z=True)
         line_mesh = create_mesh_fenicsx(msh, "line", prune_z=True)
@@ -593,16 +658,41 @@ def read_mesh(ioctrl,sc):
         # Remove gmsh file, to save memory: every information of the mesh is already known by fenicsx
         os.remove(mesh_name)
         
-        
     mesh = _scaling_mesh(mesh,sc)
 
     return mesh, cell_markers, facet_markers
 #------------------------------------------------------------------------------------------------------
-@timing_function
-def create_mesh_object(mesh
-                       ,sc
-                       ,ioctrl
-                       ,g_input):    
+def create_mesh_object(sc:Scal
+                       ,ioctrl:IOControls
+                       ,g_input:Geom_input)->Mesh:    
+    """
+    Create a subdomain mesh from the global mesh and interpolate phase information.
+    
+    This function extracts a submesh corresponding to a given set of cell markers
+    (phases) from the global mesh. The phase function defined on the global mesh is
+    then interpolated or transferred onto the subdomain mesh.
+    
+    Parameters
+    ----------
+    mesh : dolfinx.mesh.Mesh
+        The global computational mesh.
+    mesh_tag : dolfinx.mesh.meshtags.MeshTags
+        Cell tags of the global mesh, typically used to identify material phases.
+    facet_tag : dolfinx.mesh.meshtags.MeshTags
+        Facet tags of the global mesh, defining boundary features (e.g. slab top surface).
+    phase_set : list[int]
+        List of cell marker IDs that define the subdomain to extract.
+    name : str
+        Name of the subdomain (used for identification and debugging).
+    phase : dolfinx.fem.Function
+        Cell-wise (or DG) function storing phase/material information on the global mesh.
+    
+    Returns
+    -------
+    Domain
+        A `Domain` object containing the submesh, associated tags, and interpolated
+        phase information.
+    """
     
     from stonedfenicsx.scal import dimensionless_ginput
     
@@ -621,10 +711,6 @@ def create_mesh_object(mesh
 
     #-- Create additional facet for the shear heating. Since this hell is requiring a lot of useless work, 
     #-- I need to create a yet another ad hoc function for this. 
-    
-    
-
-
     # -- 
     domainG = Domain(
             mesh=mesh,
@@ -634,14 +720,14 @@ def create_mesh_object(mesh
             solPh=Pph,
             bc_dict=dict_tag_lines,
             )    
-    
+    # Subducting plate domain
     domainA = create_subdomain(mesh, cell_markers, facet_markers, [1,2]  , 'Subduction',  phase)
-    
+    # Wedge plate domain    
     domainB = create_subdomain(mesh, cell_markers, facet_markers, [3]    , 'Wedge',       phase)
-    
+    # Overriding plate domain 
     domainC = create_subdomain(mesh, cell_markers, facet_markers, [4,5,6], 'Lithosphere', phase)
 
-    # --
+    # -- Fill the Mesh object
     
     MESH = Mesh
     
@@ -656,6 +742,6 @@ def create_mesh_object(mesh
     MESH.g_input              = g_input 
     
     return MESH
-
+#-----------------------------------------------------------------------------------------------
 
     
