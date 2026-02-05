@@ -1,8 +1,8 @@
 from .package_import import *
 
-from .utils                     import timing_function, print_ph,time_the_time
+from .utils                     import timing_function, print_ph
 from .compute_material_property import density_FX, heat_conductivity_FX, heat_capacity_FX, compute_viscosity_FX, compute_radiogenic 
-from .create_mesh               import Mesh,Domain
+from .create_mesh.aux_create_mesh   import Mesh,Domain
 from .phase_db                  import PhaseDataBase
 from dolfinx.fem.petsc          import assemble_matrix_block, assemble_vector_block
 from .numerical_control         import NumericalControls, ctrl_LHS, IOControls

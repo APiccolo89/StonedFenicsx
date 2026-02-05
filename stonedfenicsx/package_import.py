@@ -36,7 +36,7 @@ from ufl import exp, conditional, eq, as_ufl, Constant,sqrt,inner
 import basix
 import basix.ufl
 import dolfinx
-from dolfinx import mesh, fem, io, nls, log, plot
+from dolfinx import fem, io, nls, log, plot
 from dolfinx.mesh import CellType, create_rectangle, locate_entities_boundary, create_submesh
 from dolfinx.io import XDMFFile, gmshio
 from dolfinx.fem import Function, FunctionSpace, dirichletbc, locate_dofs_topological, form
