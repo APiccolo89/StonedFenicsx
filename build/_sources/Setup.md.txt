@@ -154,12 +154,12 @@ The geometry of the top surface slab can be either a parametrised curve or a rea
 - {math}`L_{b}` the critical along the slab distance in meters and always positive. 
 - {math}`F_{vk}` flag of constant bending angle. 
 - {math}`d\ell` length of the slab segment.
-- {math}`trench` coordinate of the trench in meters. 
+- {math}`X_{trench}` coordinate of the trench in meters. 
 
 
 if {math}`F_{vk}` is active, {math}`\theta_{max}` becomes the constant angle of the slab. This feature is mostly used for benchmarking purpose (i.e., for reproducing the benchmarks of {cite}`van2008community`). 
 
-The parametrised slab surface is computed using {math}`d\ell` and a function that describe {math}`\theta(\ell0)`. The function that describe the evolution of the bending angle as a function of the total distance from the trench ({math}`\ell`) is: 
+The parametrised slab surface is computed using {math}`d\ell` and a function that describe {math}`\theta(\ell0)`. The function that describe the evolution of the bending angle as a function of the cumulative arc-length distance along the slab surface from the trench ({math}`\ell`) is: 
 
 ```{math}
 \theta(\ell) =
@@ -170,23 +170,33 @@ The parametrised slab surface is computed using {math}`d\ell` and a function tha
 ```
 The algorithm starts from the trench. It computes {math}`\theta(\ell(trench))` at the trench position, and {math}`\theta(\ell(trench)+d\ell)`. It averages the two angle, and then compute the coordinate of the new point of the slab: 
 ```{math}
-\begin{aligned}
-x_{\text{new}} &= x_{\text{trench}} + d\ell \cos(\theta), \\
-y_{\text{new}} &= y_{\text{trench}} - d\ell \sin(\theta).
-\end{aligned}
+:label: eq:trench_update
+
+\mathbf{X}_{\text{new}}
+=
+\mathbf{X}_{\text{trench}}
++
+d\ell \, \hat{\mathbf{t}},
+\qquad
+\hat{\mathbf{t}} = (\cos\theta, -\sin\theta).
 ```
 Then repeat the same operation starting from the new coordinate points till the coordinate_y is equal to the maximum depth of the model.
 
 The bottom of the slab and the bottom of the potential oceanic crust layer are computed using the top surface using the following equations:
 ```{math}
-\begin{aligned}
-x_{oc|bot} &= x_{slab} - tk_{slab|oc} \sin(\theta), \\
-y_{oc|bot} &= y_{slab} - tk_{slab|oc} \cos(\theta).
-\end{aligned}
+:label: eq:bottom_slab
+\mathbf{X}_{\mathrm{bot}}(\ell)
+=
+\mathbf{X}_{\mathrm{top}}(\ell)
++
+s_{tk}\,\hat{\mathbf{n}}(\ell),
+\qquad
+\hat{\mathbf{n}}(\ell)=(-\sin\theta(\ell),\,-\cos\theta(\ell)).
 ```
-where {math}`x_{oc|bot}` and {math}`y_{oc|bot}` are the {math}`x` and {math}`y` coordinate of either the oceanic moho or the bottom of the subducting plate, while {math}`x_{slab}` and {math}`y_{slab}` are the coordinate of the top-surface of the slab. {math}`tk_{slab|oc}` is the thickness of either the subducting plate or the oceanic crust. 
+where {math}`\mathbf{X}_{bot}(\ell)` is the array containing the coordinate of either the bottom of the subducting plate or the oceanic crust's moho and {math}`\mathbf{X}_{top}(\ell)` is the coordinate array of the top surface of the subducting plate.  
 
 ## References
 
 ```{bibliography}
 :all:
+```

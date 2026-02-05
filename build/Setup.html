@@ -254,10 +254,10 @@ Velocity is imposed <strong>parallel to the slab surface</strong>, with magnitud
 <li><p><span class="math notranslate nohighlight">\(L_{b}\)</span> the critical along the slab distance in meters and always positive.</p></li>
 <li><p><span class="math notranslate nohighlight">\(F_{vk}\)</span> flag of constant bending angle.</p></li>
 <li><p><span class="math notranslate nohighlight">\(d\ell\)</span> length of the slab segment.</p></li>
-<li><p><span class="math notranslate nohighlight">\(trench\)</span> coordinate of the trench in meters.</p></li>
+<li><p><span class="math notranslate nohighlight">\(X_{trench}\)</span> coordinate of the trench in meters.</p></li>
 </ul>
 <p>if <span class="math notranslate nohighlight">\(F_{vk}\)</span> is active, <span class="math notranslate nohighlight">\(\theta_{max}\)</span> becomes the constant angle of the slab. This feature is mostly used for benchmarking purpose (i.e., for reproducing the benchmarks of <span id="id12">[<a class="reference internal" href="#id24" title="Peter E van Keken, Claire Currie, Scott D King, Mark D Behn, Amandine Cagnioncle, Jiangheng He, Richard F Katz, Shu-Chuan Lin, E Marc Parmentier, Marc Spiegelman, and others. A community benchmark for subduction zone modeling. Physics of the Earth and Planetary Interiors, 171(1-4):187–197, 2008.">vKCK+08</a>]</span>).</p>
-<p>The parametrised slab surface is computed using <span class="math notranslate nohighlight">\(d\ell\)</span> and a function that describe <span class="math notranslate nohighlight">\(\theta(\ell0)\)</span>. The function that describe the evolution of the bending angle as a function of the total distance from the trench (<span class="math notranslate nohighlight">\(\ell\)</span>) is:</p>
+<p>The parametrised slab surface is computed using <span class="math notranslate nohighlight">\(d\ell\)</span> and a function that describe <span class="math notranslate nohighlight">\(\theta(\ell0)\)</span>. The function that describe the evolution of the bending angle as a function of the cumulative arc-length distance along the slab surface from the trench (<span class="math notranslate nohighlight">\(\ell\)</span>) is:</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\theta(\ell) =
 \begin{cases}
@@ -265,19 +265,25 @@ Velocity is imposed <strong>parallel to the slab surface</strong>, with magnitud
 \theta_{\max}, &amp; \text{otherwise.}
 \end{cases}\end{split}\]</div>
 <p>The algorithm starts from the trench. It computes <span class="math notranslate nohighlight">\(\theta(\ell(trench))\)</span> at the trench position, and <span class="math notranslate nohighlight">\(\theta(\ell(trench)+d\ell)\)</span>. It averages the two angle, and then compute the coordinate of the new point of the slab:</p>
-<div class="math notranslate nohighlight">
-\[\begin{split}\begin{aligned}
-x_{\text{new}} &amp;= x_{\text{trench}} + d\ell \cos(\theta), \\
-y_{\text{new}} &amp;= y_{\text{trench}} - d\ell \sin(\theta).
-\end{aligned}\end{split}\]</div>
+<div class="math notranslate nohighlight" id="equation-eq-trench-update">
+<span class="eqno">(3)<a class="headerlink" href="#equation-eq-trench-update" title="Link to this equation">¶</a></span>\[\mathbf{X}_{\text{new}}
+=
+\mathbf{X}_{\text{trench}}
++
+d\ell \, \hat{\mathbf{t}},
+\qquad
+\hat{\mathbf{t}} = (\cos\theta, -\sin\theta).\]</div>
 <p>Then repeat the same operation starting from the new coordinate points till the coordinate_y is equal to the maximum depth of the model.</p>
 <p>The bottom of the slab and the bottom of the potential oceanic crust layer are computed using the top surface using the following equations:</p>
-<div class="math notranslate nohighlight">
-\[\begin{split}\begin{aligned}
-x_{oc|bot} &amp;= x_{slab} - tk_{slab|oc} \sin(\theta), \\
-y_{oc|bot} &amp;= y_{slab} - tk_{slab|oc} \cos(\theta).
-\end{aligned}\end{split}\]</div>
-<p>where <span class="math notranslate nohighlight">\(x_{oc|bot}\)</span> and <span class="math notranslate nohighlight">\(y_{oc|bot}\)</span> are the <span class="math notranslate nohighlight">\(x\)</span> and <span class="math notranslate nohighlight">\(y\)</span> coordinate of either the oceanic moho or the bottom of the subducting plate, while <span class="math notranslate nohighlight">\(x_{slab}\)</span> and <span class="math notranslate nohighlight">\(y_{slab}\)</span> are the coordinate of the top-surface of the slab. <span class="math notranslate nohighlight">\(tk_{slab|oc}\)</span> is the thickness of either the subducting plate or the oceanic crust.</p>
+<div class="math notranslate nohighlight" id="equation-eq-bottom-slab">
+<span class="eqno">(4)<a class="headerlink" href="#equation-eq-bottom-slab" title="Link to this equation">¶</a></span>\[\mathbf{X}_{\mathrm{bot}}(\ell)
+=
+\mathbf{X}_{\mathrm{top}}(\ell)
++
+s_{tk}\,\hat{\mathbf{n}}(\ell),
+\qquad
+\hat{\mathbf{n}}(\ell)=(-\sin\theta(\ell),\,-\cos\theta(\ell)).\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathbf{X}_{bot}(\ell)\)</span> is the array containing the coordinate of either the bottom of the subducting plate or the oceanic crust’s moho and <span class="math notranslate nohighlight">\(\mathbf{X}_{top}(\ell)\)</span> is the coordinate array of the top surface of the subducting plate.</p>
 </section>
 </section>
 <section id="references">
