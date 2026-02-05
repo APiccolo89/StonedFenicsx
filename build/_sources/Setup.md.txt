@@ -6,7 +6,7 @@
 
 Simplified initial computational domain.
 
-This section is based on the supplementary material section of the paper that is going to be published out of this project. 
+This section is based on the supplementary material section of the paper that is going to be published out of this project. This section has two part: one part that reads like a method section of a paper. The second part is explaining the discoursive implementation. The details of the API are integrated into a different section that will be more technical. 
 
 The computational domain is generated using `gmsh` and consists of an unstructured triangular mesh {cite}`geuzaine2009gmsh`.  
 In **{numref}`fig:f1_simplified_initial_setup`**, we sketch a simplified initial computational domain.  
@@ -127,10 +127,10 @@ At the top boundary (`[h]` in **Fig.** {ref}`fig:f1_simplified_initial_setup`), 
 At boundaries `[e]` and `[i]`, the temperature is prescribed as a function of depth. For `[i]`, the temperature varies linearly with depth, and the linear gradient is computed as
 
 ```{math}
-gr = \frac{(T_{p} - T_{s})}{d_c}
+gr = \frac{(T_{p} - T_{s})}{d_{lab}}
 ```
 
-where {math}`T_p` is the mantle potential temperature. Before initialisation of the experiment, an initial guess of the temperature field is computed assuming a continental-like thermal structure everywhere. This continental-like geotherm uses the decoupling depth (or the depth of point `L`) as the effective base of the lithosphere.
+where {math}`T_p` is the mantle potential temperature and {math}`d_{lab}` is the depth of the astenopshere and lithosphere boundary. Before initialisation of the experiment, an initial guess of the temperature field is computed assuming a continental-like thermal structure everywhere. This continental-like geotherm uses the decoupling depth (or the depth of point `L`) as the effective base of the lithosphere.
 
 For boundary `[e]`, the temperature structure is either computed analytically using a half-space cooling model with a given age {cite}`turcotte2014geodynamics,van2008community`, or computed numerically. We adopt the plate model described in {cite}`richards2020structure` and solve the numerical energy conservation equation without the advection term on a 1D numerical domain extending from −140 to 0 km. The temperature at the top is always the surface temperature, while the bottom temperature can be either the mantle potential temperature or the adiabatic temperature if adiabatic processes are active.
 
@@ -143,6 +143,10 @@ The overriding plate is composed of either mantle, or mantle and crustal unit, a
 ## Module create mesh 
 
 The mesh-generation submodule requires a set of geometric inputs, which are used to populate the Geom_input dataclass. This class stores the geometry needed to construct the computational domain. The create_mesh.py module first generates the slab top surface and then defines the geometric entities specified by the user. The mesh is generated with gmsh and written to the output directory. The resulting .msh file is then read, converted into a dolfinx mesh, and passed to the main solver.
+
+The computational domain is constructed starting from the subudcting plate geometry from this geometry the {math}`x` extend is decided three informations: the depth of the model (decided by the user) and by the coordinate x of the intersection of the top surface of the subducting plate and the maximum depth horizontal line and the intersection of the bottom of the subducting plate with the maximum depth (the default value is {math}`-600` km). 
+
+In **Fig.** {ref}`fig:f1_simplified_initial_setup` the computational domain is defined by `A`, `B`, `C` and `F`. `A` is the trench ({math}`X_{trench}` is the coordinate of the point). `B` is the intersection of the bottom of the subducting plate with the vertical axis located at {math}`X_{trench}`. `C` is the intersection between the bottom of the slab and the maximum depth. `E` is defined using `D` (the intersection of the top surface of the slab and the maximum depth), by adding {math}`60` km to the coordinate-x. `F` is defined using the coordinate-x of `E` and the coordinate-y of `A`. 
 
 ### Geometry of the subducting plate 
 
@@ -193,7 +197,27 @@ s_{tk}\,\hat{\mathbf{n}}(\ell),
 \qquad
 \hat{\mathbf{n}}(\ell)=(-\sin\theta(\ell),\,-\cos\theta(\ell)).
 ```
-where {math}`\mathbf{X}_{bot}(\ell)` is the array containing the coordinate of either the bottom of the subducting plate or the oceanic crust's moho and {math}`\mathbf{X}_{top}(\ell)` is the coordinate array of the top surface of the subducting plate.  
+where {math}`\mathbf{X}_{bot}(\ell)` is the array containing the coordinate of either the bottom of the subducting plate or the oceanic crust's moho and {math}`\mathbf{X}_{top}(\ell)` is the coordinate array of the top surface of the subducting plate. The slab can be composed of one or two rock-phase. In case the user does not define the oceanic crust, the subducting plate is composed only by the `subducting mantle phase` (see material property section). In case the thickness of the oceanic crust is different from zero, an additional layer of rocks is added from the top surface of the slab. This layer is composed of `oceanic crust phase`. 
+
+The geometry of the slab then is fully defined, and as explained above, the rest of main points that defines the computational domain are computed. 
+
+### Overriding plate 
+
+The overriding plate is defined using the following parameters: 
+
+- {math}`ns_{depth}`, the no-slip boundary depth [meters] always positive and internally converted into negative coordinate. 
+- {math}`cr`, the overriding crust thickness [meters] always positive. 
+- {math}`lc`, fraction of lower crust [n.d.] between {math}`0,0.5` 
+
+The {math}`ns_{depth}` define the depth at which the no-slip boundary condition is defined. The no-slip boundary condition is a horizontal line that ranges from right boundary (defined by the points `E`-`F`). `H` and `G` are the points in which the no-slip boundary condition intersect the right top-surface of the slab and the right boundary respectively. The small area defined by `A`,`F`,`G` and `H` can have a different rock-phase. If no crust is defined, the overriding plate is automatically considered `lithospheric mantle phase`. If the crustal unit is defined without any lower crust ({math}`lc = 0.0`), the overriding plate will be filled from the depth {math}`cr` with `overriding upper crust material` (this unit can be costumised to have more oceanic or continental-like material property). In case {math}`lc` is different from zero, then, the layer of the overriding plate spanning from {math}`cr` and {math}`cr*lc` is composed of `overriding lower crust material`, while from  {math}`cr*lc` to the surface is composed of `overriding upper crust material`.
+
+### Wedge
+
+The wedge is automatically defined after the definition of the Overriding plate. It is composed of only one rock-phase (`mantle wedge`). The mantle wedge phase can have non-linear rheologies and while the material properties are the same of the `subducting mantle phase`. 
+
+### Additional geometrical input 
+
+The user can define the decoupling depth ({math}`d_c`), and the LAB depth (({math}`d_{lab}`)). The decoupling depth is used for computing the velocity jump between wedge material and slab (at {math}`d_c` wedge and subudcting plate are fully coupled). The LAB depth, instead, is used to tune the right thermal boundary condition. If the user define a LAB depth whose value is higher than the `ns_{depth}`, the energy boundary condition from that depth and surface will be `no-flux`. Below {math}`d_{lab}` the thermal boundary condition is determined using the velocity field: if the velocity field is inward, the energy boundary condition is isothermal, with a temperature equal to the {math}`T_p`, if it is outward the energy boundary condition is `no-flux`.  
 
 ## References
 
