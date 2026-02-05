@@ -18,3 +18,5 @@ dependencies:
   - pip:
       - gmsh
       - e
+      - piccolo_theme
+      - sphinxcontrib-bibtex
