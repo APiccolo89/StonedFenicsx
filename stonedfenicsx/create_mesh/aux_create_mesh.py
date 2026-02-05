@@ -428,21 +428,59 @@ class Class_Line():
         self.line_global = np.hstack(arrays)
         
         return mesh_model
-                
+#--------------------------------------------------------------------------------------------------------
+def from_line_to_point_coordinate(L:int
+                                  ,LG:NDArray[np.int64]
+                                  ,GP:NDArray[np.float64])->tuple[int,int,float,float]:
+    """From a given line, retrieve the extreme points data
+
+    Args:
+        L (int): line id
+        LG (NDArray[np.int64]): global line database
+        GP (NDArray[np.float64]): global points database
+
+    Returns:
+        p0 : id point that defines the line
+        p1 : id point that defines the line
+        coord_x : coordinate-x of the points that define the given line
+        coord_y : coordinate-y of the points that define the given line
+    """
+    
+    
+    p0   = LG[0,L-1]
+    p1   = LG[1,L-1]
+
+    coord_x = [GP[0,p0-1],GP[0,p1-1]]            
+    coord_y = [GP[1,p0-1],GP[1,p1-1]]
+
+    return p0, p1, coord_x, coord_y                
 #-----------------------------------------------------------------------------------------------------------------
 def create_loop(l_list:list,
                 mesh_model:gmsh.model,
                 tag:int) -> gmsh.model:
-    """_summary_
-
-    Args:
-        l_list (list): _description_
-        mesh_model (gmsh.model): _description_
-        tag (int): _description_
-
-    Returns:
-        gmsh.model: _description_
     """
+    Create a closed curve loop from a list of contiguous lines.
+
+    This function takes an ordered list of line IDs forming a continuous boundary
+    and creates a Gmsh curve loop with the specified tag. The resulting loop can
+    then be used to define plane surfaces and physical groups.
+
+    Parameters
+    ----------
+    l_list : list[int]
+        Ordered list of line IDs defining the loop boundary. Lines must be
+        contiguous and oriented consistently to form a closed loop.
+    mesh_model : gmsh.model
+        Gmsh model object to be updated.
+    tag : int
+        Tag/ID assigned to the created curve loop.
+
+    Returns
+    -------
+    mesh_model : gmsh.model
+        Updated Gmsh model containing the newly created curve loop.
+    """
+
     
     
     a = []
@@ -464,6 +502,34 @@ def create_loop(l_list:list,
 def find_line_index(Lin_ar:NDArray,
                     point:NDArray,
                     d:float) -> int:
+    """
+    Find the line IDs associated with a given point.
+
+    From the coordinate-y to line index in the global database of line. 
+    From a given depth, loop over the line and check the coordinate. If the
+    coordinate is equal to d, stop the loop, and release the index of the 
+    global line database. 
+
+    Parameters
+    ----------
+    Lin_ar : NDArray[np.int64]
+        Global line database. 
+    point : NDArray[np.int64]
+        Global database of the points
+    d : float
+        coordinate-y to find the relative point
+
+    Returns
+    -------
+    index : int | list[int]
+        Line ID(s) (or indices in `Lin_ar`) of the line(s) to which the given point
+        belongs.
+
+    Notes
+    -----
+    A point may belong to multiple lines (e.g., at junctions or corners). In such
+    cases, returning a list of IDs is recommended.
+"""
     
     for i in range(len(Lin_ar[0,:])-1):
         # Select pint of the given line
@@ -490,13 +556,25 @@ def find_line_index(Lin_ar:NDArray,
 def find_tag_line(coord:NDArray,
                   x:float,
                   dir:str) -> int:
+    """_summary_
+
+    Args:
+        coord (NDArray): coordinate of
+        x (float): _description_
+        dir (str): _description_
+
+    Returns:
+        int: _description_
+    """
+    
     if dir == 'x':
         a = 0 
     else:
         a = 1 
     
     i = np.where(coord[a,:]==-x)
-    i = i[0][0];i = coord[2,i]
+    i = i[0][0];
+    i = coord[2,i]
     
     return np.int32(i)                 
 

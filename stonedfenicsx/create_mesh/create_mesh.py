@@ -4,7 +4,7 @@ from stonedfenicsx.package_import import *
 
 from stonedfenicsx.numerical_control import IOControls, NumericalControls
 from stonedfenicsx.scal              import _scaling_mesh,Scal
-from stonedfenicsx.utils             import timing_function, print_ph
+from stonedfenicsx.utils             import print_ph
 from dolfinx.mesh       import create_submesh
 from .aux_create_mesh   import Mesh, Domain, Class_Points, Class_Line, Geom_input, dict_tag_lines, dict_surf,find_line_index,create_loop,function_create_subducting_plate_geometry
 from .aux_create_mesh import assign_phases
@@ -156,17 +156,6 @@ def create_gmesh(ioctrl   : IOControls,
     gmsh.finalize()
     
     return g_input
-#--------------------------------------------------------------------------------------------------------
-def from_line_to_point_coordinate(L:int
-                                  ,LG:NDArray[np.int64]
-                                  ,GP:NDArray[np.float64])->tuple[int,int,float,float]:
-    p0   = LG[0,L-1]
-    p1   = LG[1,L-1]
-
-    coord_x = [GP[0,p0-1],GP[0,p1-1]]            
-    coord_y = [GP[1,p0-1],GP[1,p1-1]]
-
-    return p0, p1, coord_x, coord_y 
 #--------------------------------------------------------------------------------------------------------
 def create_domain_A(mesh_model:gmsh.model
                     ,CP:Class_Points
