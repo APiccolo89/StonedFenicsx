@@ -11,7 +11,8 @@ The project initially started as a Python script (using FieldStone educational f
 :caption: Contents:
 
 installation
-Setup
+Computational_domain
+Material_properties
 ```
 
 ## Indices and tables

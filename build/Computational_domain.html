@@ -16,6 +16,7 @@
     <script src="_static/js/petite-vue.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Material properties" href="Material_properties.html" />
     <link rel="prev" title="Installation" href="installation.html" /> 
   </head><body data-dark_mode_code_blocks="true">
 
@@ -122,6 +123,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Computational domain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Material_properties.html">Material properties</a></li>
 </ul>
 
         </div>
@@ -304,7 +306,7 @@ s_{tk}\,\hat{\mathbf{n}}(\ell),
 </section>
 <section id="additional-geometrical-input">
 <h3>Additional geometrical input<a class="headerlink" href="#additional-geometrical-input" title="Link to this heading">¶</a></h3>
-<p>The user can define the decoupling depth (<span class="math notranslate nohighlight">\(d_c\)</span>), and the LAB depth ((<span class="math notranslate nohighlight">\(d_{lab}\)</span>)). The decoupling depth is used for computing the velocity jump between wedge material and slab (at <span class="math notranslate nohighlight">\(d_c\)</span> wedge and subudcting plate are fully coupled). The LAB depth, instead, is used to tune the right thermal boundary condition. If the user define a LAB depth whose value is higher than the <code class="docutils literal notranslate"><span class="pre">ns_{depth}</span></code>, the energy boundary condition from that depth and surface will be <code class="docutils literal notranslate"><span class="pre">no-flux</span></code>. Below <span class="math notranslate nohighlight">\(d_{lab}\)</span> the thermal boundary condition is determined using the velocity field: if the velocity field is inward, the energy boundary condition is isothermal, with a temperature equal to the <span class="math notranslate nohighlight">\(T_p\)</span>, if it is outward the energy boundary condition is <code class="docutils literal notranslate"><span class="pre">no-flux</span></code>.</p>
+<p>The user can define the decoupling depth (<span class="math notranslate nohighlight">\(d_c\)</span>), and the LAB depth ((<span class="math notranslate nohighlight">\(d_{lab}\)</span>)). The decoupling depth is used for computing the velocity jump between wedge material and slab (at <span class="math notranslate nohighlight">\(d_c\)</span> wedge and subudcting plate are fully coupled). The LAB depth, instead, is used to tune the right thermal boundary condition. If the user define a LAB depth whose value is higher than the <code class="docutils literal notranslate"><span class="pre">ns_{depth}</span></code>, the energy boundary condition from that depth and surface will be <code class="docutils literal notranslate"><span class="pre">no-flux</span></code>. Below <span class="math notranslate nohighlight">\(d_{lab}\)</span> the thermal boundary condition is determined using the velocity field: if the velocity field is inward, the energy boundary condition is isothermal, with a temperature equal to the <span class="math notranslate nohighlight">\(T_p\)</span>, if it is outward the energy boundary condition is <code class="docutils literal notranslate"><span class="pre">no-flux</span></code>. An additional parameter is <span class="math notranslate nohighlight">\(\delta z_{tr}\)</span> which controls the partially-coupling fully coupling transition.</p>
 </section>
 </section>
 <section id="references">
@@ -463,6 +465,8 @@ s_{tk}\,\hat{\mathbf{n}}(\ell),
             </div>
 
             <div class="right">
+                
+                    <a href="Material_properties.html"><span>Material properties</span><span class="icon">&gt;</span></a>
                 
             </div>
         </div>
