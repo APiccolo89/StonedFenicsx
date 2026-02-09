@@ -364,7 +364,7 @@ spec_phase = [
 #-----------------------------------------------------------------------------------------------------------
 @jitclass(spec_phase)
 class PhaseDataBase:
-    def __init__(self, number_phases,friction_angle,d=0.5):
+    def __init__(self, number_phases,friction_angle,eta_max,d=0.5):
         # Initialize individual fields as arrays
         if number_phases>8: 
             raise ValueError("The number of phases should not exceed 7")
@@ -375,7 +375,7 @@ class PhaseDataBase:
         self.Pref           = 1e5     # Reference pressure [Pa]
         self.R              = 8.3145  # Universal gas constant [J/(mol K)]
         self.eta_min        = 1e18    # Min viscosity [Pas]
-        self.eta_max        = 1e26    # Max viscosity [Pas]
+        self.eta_max        = eta_max    # Max viscosity [Pas]
         self.eta_def        = 1e21    # Default viscosity [Pas]
         self.T_Scal         = 1.      # Default temperature scale
         self.P_Scal         = 1.      # Default Pressure scale 

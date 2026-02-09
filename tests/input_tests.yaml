@@ -3,10 +3,10 @@ Input:
     it_max: 20
     tol: 1.0e-5
     relax: 0.9
-    Tmax: 1333.0
+    Tmax: 1300.0
     Ttop: 0.0
     g: 9.81
-
+    eta_max : 1.0e26
     v_s: [5.0, 0.0] # cm/yr
     slab_age: 50.0 # Myr
     time_max: 2.0  # Myr
@@ -54,7 +54,7 @@ Input:
       name_density : 'Constant'
       name_capacity: 'Constant'
       name_conductivity: 'Constant'
-      eta : 1.0e20 
+      eta : 1.0e21 
       rho0 : 3300.0 
       k : 3.0
       Cp : 1250 
@@ -76,7 +76,7 @@ Input:
       name_density : 'Constant'
       name_capacity: 'Constant'
       name_conductivity: 'Constant'
-      eta : 1.0e20 
+      eta : 1.0e21 
       rho0 : 3300.0 
       k : 3.0
       Cp : 1250 
@@ -98,7 +98,7 @@ Input:
       name_density : 'Constant'
       name_capacity: 'Constant'
       name_conductivity: 'Constant'
-      eta : 1.0e20 
+      eta : 1.0e21 
       rho0 : 3300.0 
       k : 3.0
       Cp : 1250 
@@ -120,7 +120,7 @@ Input:
       name_density : 'Constant'
       name_capacity: 'Constant'
       name_conductivity: 'Constant'
-      eta : 1.0e20 
+      eta : 1.0e21 
       rho0 : 3300.0 
       k : 3.0
       Cp : 1250 
@@ -143,7 +143,7 @@ Input:
       name_density : 'Constant'
       name_capacity: 'Constant'
       name_conductivity: 'Constant'
-      eta : 1.0e20 
+      eta : 1.0e21 
       rho0 : 3300.0 
       k : 3.0
       Cp : 1250 
@@ -165,7 +165,7 @@ Input:
       name_density : 'Constant'
       name_capacity: 'Constant'
       name_conductivity: 'Constant'
-      eta : 1.0e20 
+      eta : 1.0e21 
       rho0 : 3300.0 
       k : 3.0
       Cp : 1250 
@@ -187,7 +187,7 @@ Input:
       name_density : 'Constant'
       name_capacity: 'Constant'
       name_conductivity: 'Constant'
-      eta : 1.0e20 
+      eta : 1.0e21 
       rho0 : 3300.0 
       k : 3.0
       Cp : 1250 

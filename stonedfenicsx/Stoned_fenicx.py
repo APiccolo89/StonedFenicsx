@@ -26,7 +26,7 @@ dict_options = {'NoShear':0,
 
 def generate_phase_database(IP,Phin)->PhaseDataBase:
     from stonedfenicsx.utils import Phase
-    pdb = PhaseDataBase(7,IP.phi*np.pi/180)
+    pdb = PhaseDataBase(7,friction_angle=IP.phi*np.pi/180,eta_max=IP.eta_max)
 
     phase = Phase()
     dict_ph_in = Phin.__dict__

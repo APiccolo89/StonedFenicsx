@@ -213,12 +213,12 @@ def read_data_base(option_viscous):
     test_3 = np.isclose(L2_B, v3,1e-4, 1e-4)
     
     print_ph(f'Test_viscous{option_viscous}, T_11_11 is {T_11_11:.4f}. Tested against {v1:.4f}.')
-    print_ph(f'                             Van Keken benchmark : mean T_11_11 = {db_vk1[0]:.2f}')
-    print_ph(f'                             Van Keken benchmark : range T_11_11 = {db_vk1[1]:.2f}-{db_vk1[2]:.2f}')
+    print_ph(f'                             Van Keken benchmark : mean T_11_11 = {db_vk1[0]:.2f}.')
+    print_ph(f'                             Van Keken benchmark : range T_11_11 = {db_vk1[1]:.2f}-{db_vk1[2]:.2f}.')
 
     print_ph(f'Test_viscous{option_viscous}, L2_A is {L2_A:.4f}. Tested against {v2:.4f}.')
-    print_ph(f'                             Van Keken benchmark : mean L2_A = {db_vk2[0]:.2f}')
-    print_ph(f'                             Van Keken benchmark : range L2_A = {db_vk2[1]:.2f}-{db_vk2[2]:.2f}')
+    print_ph(f'                             Van Keken benchmark : mean L2_A = {db_vk2[0]:.2f}.')
+    print_ph(f'                             Van Keken benchmark : range L2_A = {db_vk2[1]:.2f}-{db_vk2[2]:.2f}.')
     
     print_ph(f'Test_viscous{option_viscous}, L2_B is {L2_B:.4f}. Tested against {v3:.4f}.')
     print_ph(f'                             Van Keken benchmark : mean L2_A = {db_vk3[0]:.2f}.')
