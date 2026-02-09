@@ -1,4 +1,14 @@
 from .package_import import *
+
+"""  Note of developing: I know that the idea to generate an input file in yaml, for then filling up
+    a temporary class that will be used to fill the real objects of computation seems convoluted and redundant.
+    But 1st: I wanted to learn a bit the basic of yaml file
+    2nd: I wanted to create a flexible way to generate an input that is modified by scripts that 
+    then can costumise the simulation. Peeking in the repository of Hobson I had strong headache to 
+    understand the flow of input and output, I tried to just convert the approach for common mortals
+"""
+
+
 #---------------------------------------------------------------------------------------------------------
 def timing_function(fun):
     @wraps(fun)
@@ -270,6 +280,7 @@ class Phase:
     should be reusable for other problems.
     """
     name_phase:str = "Undefined Phase"
+    id : int = 0 
     # Viscosity / rheology
     name_diffusion: str = "Constant"
     Edif: float = -1e23
@@ -302,13 +313,13 @@ class Phase:
 
 class Ph_input():
     def __init__(self):
-        phase1 : Phase = Phase()
-        phase2 : Phase = Phase()
-        phase3 : Phase = Phase()
-        phase4 : Phase = Phase()
-        phase5 : Phase = Phase()
-        phase6 : Phase = Phase()
-        phase7 : Phase = Phase()
+        subducting_plate_mantle : Phase = Phase()
+        oceanic_crust : Phase = Phase()
+        wedge_mantle : Phase = Phase()
+        overriding_mantle : Phase = Phase()
+        overriding_upper_crust : Phase = Phase()
+        overriding_lower_crust : Phase = Phase()
+        virtual_weak_zone : Phase = Phase()
 
 
 def evaluate_material_property(expr, V):
@@ -409,18 +420,146 @@ class Input:
     lab_d: float = 100e3
     decoupling: float = 80e3
     resolution_normal: float = 2.0e3
+    resolution_refine: float = 2.0e3
     transition: float = 10e3
     wz_tk : float = 2e3
     
     # Slab Geometry 
-    Lb : float = 300e3 
-    dl : float = 1e3 
-    theta0 : float = 5 
-    theta_max : float = 45
-    trench :NDArray[float] = field(default_factory=lambda: np.array([0.0, 660e3]))
+    sub_Lb : float = 300e3 
+    sub_dl : float = 1e3 
+    sub_theta0 : float = 5 
+    sub_theta_max : float = 45
+    sub_trench :NDArray[float] = field(default_factory=lambda: np.array([0.0, 660e3]))
     slab_type : str = 'Costum'
-    sub_path = 'Not Defined'
+    sub_path:str = 'Not Defined'
      
     def __post_init__(self) -> None:
         if self.sname == "Output" and self.test_name != "Output":
             self.sname = self.test_name
+
+
+def parse_input(path:str)->tuple[Input,Ph_input]:
+    """
+    Read and parse a YAML input file.
+
+    Parameters
+    ----------
+    path : str
+        Path to the main input file.
+
+    Returns
+    -------
+    Input
+        Temporary container holding numerical and physical parameters.
+        The returned object can be modified programmatically before
+        starting the computation.
+
+    Ph_input
+        Temporary container storing material property definitions.
+
+    Notes
+    -----
+    The YAML input file can be used directly as a standalone model
+    configuration, or as a template for generating ensembles of models
+    through external Python scripts. The typical workflow is to define
+    a base scenario in YAML and then modify selected parameters
+    programmatically.
+    """
+    # import yamlv
+    import yaml 
+    
+    with open(f'{path}','r') as f:
+        input_file = yaml.safe_load(f)
+    
+    
+    IP = Input()
+    Ph = Ph_input()
+    
+    # Import numerical controls [basically structured data like numpy]
+    NC = input_file['Input']['NumericalControls'] # Numerical controls
+    IOCr = input_file['Input']['InputOutputControl'] # Input Controls
+    LHS = input_file['Input']['left_thermal_bc'] # left boundary condition
+    GEOM = input_file['Input']['geometry'] # Geometry
+    MP = input_file['Input']['Material_properties'] # Material property
+    SCAL = input_file['Input']['scaling'] # Scaling 
+    
+    filling_the_input(NC,IOCr,LHS,GEOM,MP,SCAL,IP)
+    filling_the_phase_data_base(MP,Ph)
+    
+    
+    
+    
+    
+    return IP, Ph 
+
+def filling_the_input(a:dict,b:dict,c:dict,d:dict,e:dict,f:dict,IP:Input)->Input: 
+    
+    """Read input.yaml file, and update of the input class
+    a : dictionary of subblock
+    b : dictionary of subblock
+    c : dictionary of subblock
+    d : dictionary of subblock
+    e : dictionary of subblock
+    IP data class with default values, that are ovewritten by the yaml file 
+    Returns:
+        IP: updated data classes 
+        
+        
+    Note: I divided the input in yaml file to explicitly state the number of data structure within
+    the numerical code. The Input data class is a object dumb, that can be flexibly modified. 
+    I know that is redundant, but I believed that an user would find easier to modify one or two classes
+    out of the yaml canvas. 
+     
+    """
+    
+    for k, v in a.items():
+        setattr(IP, k, v)
+    
+    for k, v in b.items():
+        setattr(IP, k, v)    
+        
+    for k, v in c.items():
+        setattr(IP, k, v)
+    
+    for k, v in d.items():
+        setattr(IP, k, v)
+    
+    return IP
+
+def filling_the_phase_data_base(MP : dict,Ph : Ph_input)->Ph_input:
+    """Function that fills the temporary class of the material properties
+
+    Args:
+        MP (dict): Material database coming from input.yaml
+        Ph (Ph_input): Phase database 
+
+    Returns:
+        Ph_input: Phase database 
+    """
+    dict_phase_id={'subducting_plate_mantle' : 1,
+                   'oceanic_crust' : 2,
+                   'wedge_mantle' : 3,
+                   'overriding_mantle' : 4,
+                   'overriding_upper_crust' : 5,
+                   'overriding_lower_crust' : 6,
+                   'virtual_weak_zone' : 7}
+    
+    
+    # Loop over the MP items. MP items, is a multilevel dictionary 
+    for k,v in MP.items():
+        buf = Phase()# Prepare a Phase class to fill up with the new properties 
+        for j,vv in v.items(): # Loop over the properties of the class phase
+            if vv != None:
+                setattr(buf, j, vv) # Set the attribute
+            else: 
+                if j == 'Hr' or j=='flag_radio':
+                    vv = 0.0
+                else:
+                    vv = -1e23
+        buf.name_phase = k 
+        buf.id = dict_phase_id[k]
+        setattr(Ph,k,buf)# Substitute the buf class with the default one 
+        
+    
+    
+    return Ph

@@ -8,7 +8,7 @@ import sys
 import numpy as np
 from numpy.typing import NDArray
 
-
+#-------------------------------------------------------------------------------
 def test_van_keken_mesh():
     """_summary_: Test for checking the generation of the van keken geometry for the
     benchmark. 
@@ -28,7 +28,7 @@ def test_van_keken_mesh():
     # Remove the crustal unit -> plain van keken model
     IP.ocr = 0.0 
     IP.cr = 0.0 
-    IP.dl = 10e3
+    IP.sub_dl = 10e3
     IP.decoupling = 50e3
     IP.ns_depth = 50e3 
     IP.lit_mt = 50e3 
@@ -65,7 +65,7 @@ def test_van_keken_mesh():
     assert (lg==90694) 
     assert (num_cell ==0) 
     assert len(M.domainG.Tagcells.indices) == 180247
-
+#-------------------------------------------------------------------------------
 def test_van_keken_mesh_crust():
     """_summary_: Test for checking the generation of the van keken geometry for the
     benchmark. 
@@ -85,7 +85,7 @@ def test_van_keken_mesh_crust():
     # Remove the crustal unit -> plain van keken model
     IP.ocr = 6e3 
     IP.cr = 30e3 
-    IP.dl = 10e3
+    IP.sub_dl = 10e3
     IP.decoupling = 50e3
     IP.ns_depth = 50e3 
     IP.lit_mt = 50e3 
@@ -117,12 +117,11 @@ def test_van_keken_mesh_crust():
     num_cell = len(M.domainG.Tagcells.indices)-(len(M.domainA.cell_par)+len(M.domainB.cell_par)+len(M.domainC.cell_par))
     
     
-    assert (la+lb+lc==91650) 
-    assert (lg==90915) 
+    assert (la+lb+lc==91699) 
+    assert (lg==90964) 
     assert (num_cell ==0) 
-    assert len(M.domainG.Tagcells.indices) == 180686
-
-
+    assert len(M.domainG.Tagcells.indices) == 180784
+#-------------------------------------------------------------------------------
 def test_van_keken_mesh_decoupling():
     """_summary_: Test for checking the generation of the van keken geometry for the
     benchmark. 
@@ -142,7 +141,7 @@ def test_van_keken_mesh_decoupling():
     # Remove the crustal unit -> plain van keken model
     IP.ocr = 6e3 
     IP.cr = 30e3 
-    IP.dl = 10e3
+    IP.sub_dl = 10e3
     IP.decoupling = 80e3
     IP.ns_depth = 50e3 
     IP.lit_mt = 50e3 
@@ -174,12 +173,11 @@ def test_van_keken_mesh_decoupling():
     num_cell = len(M.domainG.Tagcells.indices)-(len(M.domainA.cell_par)+len(M.domainB.cell_par)+len(M.domainC.cell_par))
     
     
-    assert (la+lb+lc==91825) 
-    assert (lg==91089) 
+    assert (la+lb+lc==91874) 
+    assert (lg==91138) 
     assert (num_cell ==0) 
-    assert len(M.domainG.Tagcells.indices) == 181034
-
-
+    assert len(M.domainG.Tagcells.indices) == 181132
+#-------------------------------------------------------------------------------
 def test_van_keken_mesh_curved():
     """_summary_: Test for checking the generation of the van keken geometry for the
     benchmark. 
@@ -199,7 +197,7 @@ def test_van_keken_mesh_curved():
     # Remove the crustal unit -> plain van keken model
     IP.ocr = 6e3 
     IP.cr = 30e3 
-    IP.dl = 10e3
+    IP.sub_dl = 10e3
     IP.decoupling = 80e3
     IP.ns_depth = 50e3 
     IP.lit_mt = 50e3 
@@ -232,11 +230,11 @@ def test_van_keken_mesh_curved():
     num_cell = len(M.domainG.Tagcells.indices)-(len(M.domainA.cell_par)+len(M.domainB.cell_par)+len(M.domainC.cell_par))
     
     
-    assert (la+lb+lc == 100949) 
-    assert (lg==100139) 
+    assert (la+lb+lc == 101322) 
+    assert (lg==100512) 
     assert (num_cell ==0) 
-    assert len(M.domainG.Tagcells.indices) == 198986
-
+    assert len(M.domainG.Tagcells.indices) == 199729
+#-------------------------------------------------------------------------------
 #if __name__ == '__main__': 
     #test_van_keken_mesh()
     #test_van_keken_mesh_crust()

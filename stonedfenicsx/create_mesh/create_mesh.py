@@ -7,7 +7,7 @@ from stonedfenicsx.scal              import _scaling_mesh,Scal
 from stonedfenicsx.utils             import print_ph
 from dolfinx.mesh       import create_submesh
 from .aux_create_mesh   import Mesh, Domain, Class_Points, Class_Line, Geom_input, dict_tag_lines, dict_surf,find_line_index,create_loop,function_create_subducting_plate_geometry
-from .aux_create_mesh import assign_phases
+from .aux_create_mesh import assign_phases,from_line_to_point_coordinate
 
 #------------------------------------------------------------------------------------------------------
 def create_mesh(ioctrl:IOControls

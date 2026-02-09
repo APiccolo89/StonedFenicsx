@@ -14,6 +14,7 @@ dependencies:
   - pytest
   - sphinx=9.1.0
   - myst-parser
+  - pyyaml
   - pip
   - pip:
       - gmsh

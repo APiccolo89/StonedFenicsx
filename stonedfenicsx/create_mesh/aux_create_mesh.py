@@ -831,6 +831,12 @@ def generate_parallel_layer_subducting_plate(sx:NDArray[np.float64],
 
     cx_n = cx[(cx>=0.0) & (cy>=np.min(sy))]
     cy_n = cy[(cx>=0.0) & (cy>=np.min(sy))]
+    # Shift the first node: 
+    
+    if cx_n[0] != 0.0: 
+        cx_n[0] = 0.0 
+        cy_n[0] = -lt/np.cos(th[0])
+    
 
     return cx_n,cy_n
     

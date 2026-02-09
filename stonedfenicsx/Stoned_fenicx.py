@@ -25,114 +25,114 @@ dict_options = {'NoShear':0,
                 'SelfConsistent':2}
 
 def generate_phase_database(IP,Phin)->PhaseDataBase:
-    
+    from stonedfenicsx.utils import Phase
     pdb = PhaseDataBase(7,IP.phi*np.pi/180)
-    
-    it = 1 
-    for i in dir(Phin):
-        if 'Phase' in i:
-            phase = getattr(Phin,i)
-            print_ph(f"Generating phase {it} : {i}, Phase Name : {phase.name_phase}")
-            
-            print_ph('-----Rheological Parameters------')
-            print_ph(f"Diffusion law  : {phase.name_diffusion if hasattr(phase, 'name_diffusion') else 'Constant'}")
-            if phase.Edif != -1e23:
-                print_ph(f"   Edif : {phase.Edif} ")
-            if phase.Vdif != -1e23:
-                print_ph(f"   Vdif : {phase.Vdif} ")
-            if phase.Bdif != -1e23:
-                print_ph(f"   Bdif : {phase.Bdif} ")
-            
-            
-            print_ph(f"Dislocation law: {phase.name_dislocation if hasattr(phase, 'name_dislocation') else 'Constant'}")
-            if phase.n != -1e23:
-                print_ph(f"   n    : {phase.n} ")
-            if phase.Edis != -1e23:
-                print_ph(f"   Edis : {phase.Edis} ")
-            if phase.Vdis != -1e23:
-                print_ph(f"   Vdis : {phase.Vdis} ")
-            if phase.Bdis != -1e23:
-                print_ph(f"   Bdis : {phase.Bdis} ")
-            if phase.name_diffusion == 'Constant' and phase.name_dislocation == 'Constant':
-                print_ph(f"   eta  : {phase.eta} [Pas] ")    
-            
+
+    phase = Phase()
+    dict_ph_in = Phin.__dict__
+    for i,ph in dict_ph_in.items():
+        phase = getattr(Phin,i)
+        print_ph(f"Generating phase {phase.id} : {i}, Phase Name : {phase.name_phase}")
+        
+        print_ph('-----Rheological Parameters------')
+        print_ph(f"Diffusion law  : {phase.name_diffusion if hasattr(phase, 'name_diffusion') else 'Constant'}")
+        if phase.Edif != -1e23:
+            print_ph(f"   Edif : {phase.Edif} ")
+        if phase.Vdif != -1e23:
+            print_ph(f"   Vdif : {phase.Vdif} ")
+        if phase.Bdif != -1e23:
+            print_ph(f"   Bdif : {phase.Bdif} ")
+        
+        
+        print_ph(f"Dislocation law: {phase.name_dislocation if hasattr(phase, 'name_dislocation') else 'Constant'}")
+        if phase.n != -1e23:
+            print_ph(f"   n    : {phase.n} ")
+        if phase.Edis != -1e23:
+            print_ph(f"   Edis : {phase.Edis} ")
+        if phase.Vdis != -1e23:
+            print_ph(f"   Vdis : {phase.Vdis} ")
+        if phase.Bdis != -1e23:
+            print_ph(f"   Bdis : {phase.Bdis} ")
+        if phase.name_diffusion == 'Constant' and phase.name_dislocation == 'Constant':
+            print_ph(f"   eta  : {phase.eta} [Pas] ")    
+        
+        print_ph('-----------------------------------')
+        
+        print_ph('-----Thermal Parameters------')
+        print_ph(f"Density law       : {phase.name_density if hasattr(phase, 'name_density') else 'Constant'}")
+        print_ph(f"Thermal capacity  : {phase.name_capacity if hasattr(phase, 'name_capacity') else 'Constant'}")
+        print_ph(f"Thermal conductivity : {phase.name_conductivity if hasattr(phase, 'name_conductivity') else 'Constant'}")
+        print_ph(f"Thermal expansivity : {phase.name_alpha if hasattr(phase, 'name_conductivity') else 'Constant'}")
+        print_ph(f"Radiogenic heating:  {phase.Hr if phase.Hr !=0.0 else 'Radiogenic heating is not active'}")
+        
+        if hasattr(phase, 'radio_flag'):
+            print_ph(f"   radiative conductivity flag : {phase.radio_flag} ")
+        if hasattr(phase, 'rho0'):
+            print_ph(f"   rho0 : {phase.rho0} ")
+        print_ph('-----------------------------------') 
+        if phase.name_capacity == 'Constant':
+            print_ph(f"Heat capacity {phase.Cp} J/kg/K")
             print_ph('-----------------------------------')
-            
-            print_ph('-----Thermal Parameters------')
-            print_ph(f"Density law       : {phase.name_density if hasattr(phase, 'name_density') else 'Constant'}")
-            print_ph(f"Thermal capacity  : {phase.name_capacity if hasattr(phase, 'name_capacity') else 'Constant'}")
-            print_ph(f"Thermal conductivity : {phase.name_conductivity if hasattr(phase, 'name_conductivity') else 'Constant'}")
-            print_ph(f"Thermal expansivity : {phase.name_alpha if hasattr(phase, 'name_conductivity') else 'Constant'}")
-            print_ph(f"Radiogenic heating:  {phase.Hr if phase.Hr !=0.0 else 'Radiogenic heating is not active'}")
-            
-            if hasattr(phase, 'radio_flag'):
-                print_ph(f"   radiative conductivity flag : {phase.radio_flag} ")
-            if hasattr(phase, 'rho0'):
-                print_ph(f"   rho0 : {phase.rho0} ")
+        if phase.name_conductivity == 'Constant':
+            print_ph(f"Thermal conductivity {phase.k} W/m/K")
             print_ph('-----------------------------------') 
-            if phase.name_capacity == 'Constant':
-                print_ph(f"Heat capacity {phase.Cp} J/kg/K")
-                print_ph('-----------------------------------')
-            if phase.name_conductivity == 'Constant':
-                print_ph(f"Thermal conductivity {phase.k} W/m/K")
-                print_ph('-----------------------------------') 
-            print_ph('\n')
-            
-            pdb = _generate_phase(pdb,
-                                  it, 
-                                    radio_flag        = phase.radio_flag if hasattr(phase, 'radio_flag') else 0.0,
-                                    rho0              = phase.rho0 if hasattr(phase, 'rho0') else 3300,
-                                    name_diffusion    = phase.name_diffusion if hasattr(phase, 'name_diffusion') else 'Constant',
-                                    name_dislocation  = phase.name_dislocation if hasattr(phase, 'name_dislocation') else 'Constant',
-                                    name_alpha        = phase.name_alpha if hasattr(phase, 'name_alpha') else 'Constant',
-                                    name_capacity     = phase.name_capacity if hasattr(phase, 'name_capacity') else 'Constant',
-                                    name_density      = phase.name_density if hasattr(phase, 'name_density') else 'Constant',
-                                    name_conductivity = phase.name_conductivity if hasattr(phase, 'name_conductivity') else 'Constant',
-                                    Edif              = phase.Edif if hasattr(phase, 'Edif') else -1e23,
-                                    Vdif              = phase.Vdif if hasattr(phase, 'Vdif') else -1e23,
-                                    Bdif              = phase.Bdif if hasattr(phase, 'Bdif') else -1e23,
-                                    n                 = phase.n if hasattr(phase, 'n') else -1e23,
-                                    Edis              = phase.Edis if hasattr(phase, 'Edis') else -1e23,
-                                    Vdis              = phase.Vdis if hasattr(phase, 'Vdis') else -1e23,
-                                    Bdis              = phase.Bdis if hasattr(phase, 'Bdis') else -1e23,
-                                    eta               = phase.eta if hasattr(phase, 'eta') else 1e20)
-            it += 1
+        print_ph('\n')
+        
+        pdb = _generate_phase(pdb,
+                              phase.id, 
+                                radio_flag        = phase.radio_flag if hasattr(phase, 'radio_flag') else 0.0,
+                                rho0              = phase.rho0 if hasattr(phase, 'rho0') else 3300,
+                                name_diffusion    = phase.name_diffusion if hasattr(phase, 'name_diffusion') else 'Constant',
+                                name_dislocation  = phase.name_dislocation if hasattr(phase, 'name_dislocation') else 'Constant',
+                                name_alpha        = phase.name_alpha if hasattr(phase, 'name_alpha') else 'Constant',
+                                name_capacity     = phase.name_capacity if hasattr(phase, 'name_capacity') else 'Constant',
+                                name_density      = phase.name_density if hasattr(phase, 'name_density') else 'Constant',
+                                name_conductivity = phase.name_conductivity if hasattr(phase, 'name_conductivity') else 'Constant',
+                                Edif              = phase.Edif if hasattr(phase, 'Edif') else -1e23,
+                                Vdif              = phase.Vdif if hasattr(phase, 'Vdif') else -1e23,
+                                Bdif              = phase.Bdif if hasattr(phase, 'Bdif') else -1e23,
+                                n                 = phase.n if hasattr(phase, 'n') else -1e23,
+                                Edis              = phase.Edis if hasattr(phase, 'Edis') else -1e23,
+                                Vdis              = phase.Vdis if hasattr(phase, 'Vdis') else -1e23,
+                                Bdis              = phase.Bdis if hasattr(phase, 'Bdis') else -1e23,
+                                eta               = phase.eta if hasattr(phase, 'eta') else 1e20)
 
     return pdb 
 
 def fill_geometrical_input(IP)->Geom_input: 
     from dataclasses import fields
-    """_summary_
-
-
+    
+    """Function that fills the geometrical input property
+    args: 
+        IP : input data class
+    
     Returns:
-        _type_: geometrical input dataclasses
-         
+        Geom_input: geometrical input
     """
     
     
     
     g_input = Geom_input
     
-    g_input.x = IP.x 
-    g_input.y = IP.y
+    g_input.x = np.asarray(IP.x) 
+    g_input.y = np.asarray(IP.y)
     g_input.cr = IP.cr
     g_input.ocr = IP.ocr
     g_input.lc = IP.lc 
     g_input.lit_mt = IP.lit_mt
     g_input.lab_d = IP.lab_d
     g_input.slab_tk = IP.slab_tk
-    g_input.resolution_normal = IP.wc
-    g_input.resolution_refine = IP.wc
+    g_input.resolution_normal = IP.resolution_normal
+    g_input.resolution_refine = IP.resolution_refine
     g_input.ns_depth = IP.ns_depth
     g_input.decoupling = IP.decoupling
     g_input.sub_constant_flag = IP.van_keken
     g_input.sub_type = IP.slab_type
-    g_input.sub_trench = IP.trench 
-    g_input.sub_dl = IP.dl 
-    g_input.sub_theta_0 = IP.theta0
-    g_input.sub_theta_max = IP.theta_max
-    g_input.sub_Lb = IP.Lb
+    g_input.sub_trench = np.asarray(IP.sub_trench) 
+    g_input.sub_dl = IP.sub_dl 
+    g_input.sub_theta_0 = IP.sub_theta0
+    g_input.sub_theta_max = IP.sub_theta_max
+    g_input.sub_Lb = IP.sub_Lb
     g_input.trans = IP.transition
     g_input.sub_path = IP.sub_path
     g_input.wz_tk = IP.wz_tk

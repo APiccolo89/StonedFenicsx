@@ -231,14 +231,7 @@ class Lattice_Diffusivity():
         
         self.g = g
 
-
-
-
-
-        
-
 #-----------------------------------------------------------------------------------------------------------
-
 class Rheological_flow_law():
     """
     Class that contains the rheological flow law parameters. 
