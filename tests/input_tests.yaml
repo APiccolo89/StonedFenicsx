@@ -1,0 +1,228 @@
+Input:
+  NumericalControls:
+    it_max: 20
+    tol: 1.0e-5
+    relax: 0.9
+    Tmax: 1333.0
+    Ttop: 0.0
+    g: 9.81
+
+    v_s: [5.0, 0.0] # cm/yr
+    slab_age: 50.0 # Myr
+    time_max: 2.0  # Myr
+    time_dependent_v: 0
+    steady_state: 1
+    slab_bc: 1
+    tol_innerPic: 1.0e-2
+    tol_innerNew: 1.0e-5
+    van_keken_case: 2
+    decoupling_ctrl: 1
+    model_shear: "NoShear"
+    time_dependent: 0
+    dt_sim: 0.015            # Myr (15000/1e6)
+    adiabatic_heating: 0
+    phi: 5.0
+    self_consistent_flag: 1
+
+  InputOutputControl:
+    test_name: "Output"
+    sname: "Output"
+    path_test: "../Results"
+
+  # Scaling parameters
+  scaling:
+    L: 600000.0
+    stress: 1.0e9
+    eta: 1.0e21
+    Temp: 1333.0
+
+  # Left boundary condition
+  left_thermal_bc:
+    nz: 108
+    end_time: 180.0
+    dt: 0.001
+    recalculate: 1
+    van_keken: 1
+    c_age_plate: 50.0
+
+  Material_properties: 
+  
+    subducting_plate_mantle:
+      name_diffusion : 'Constant'
+      name_dislocation : 'Constant'
+      name_alpha : 'Constant'
+      name_density : 'Constant'
+      name_capacity: 'Constant'
+      name_conductivity: 'Constant'
+      eta : 1.0e20 
+      rho0 : 3300.0 
+      k : 3.0
+      Cp : 1250 
+      alpha0 : 3e-5
+      Bdiff : null
+      Bdisl : null 
+      Ediff : null
+      Edisl : null 
+      Vdiff : null 
+      Vdisl : null
+      n : null
+      radio_flag : 0 
+      Hr : 0.0 
+
+    wedge_mantle: 
+      name_diffusion : 'Constant'
+      name_dislocation : 'Constant'
+      name_alpha : 'Constant'
+      name_density : 'Constant'
+      name_capacity: 'Constant'
+      name_conductivity: 'Constant'
+      eta : 1.0e20 
+      rho0 : 3300.0 
+      k : 3.0
+      Cp : 1250 
+      alpha0 : 3e-5
+      Bdiff : null
+      Bdisl : null 
+      Ediff : null
+      Edisl : null 
+      Vdiff : null 
+      Vdisl : null
+      n : null
+      radio_flag : 0 
+      Hr : 0.0 
+
+    overriding_mantle: 
+      name_diffusion : 'Constant'
+      name_dislocation : 'Constant'
+      name_alpha : 'Constant'
+      name_density : 'Constant'
+      name_capacity: 'Constant'
+      name_conductivity: 'Constant'
+      eta : 1.0e20 
+      rho0 : 3300.0 
+      k : 3.0
+      Cp : 1250 
+      alpha0 : 3e-5
+      Bdiff : null
+      Bdisl : null 
+      Ediff : null
+      Edisl : null 
+      Vdiff : null 
+      Vdisl : null
+      n : null
+      radio_flag : 0 
+      Hr : 0.0 
+
+    oceanic_crust: 
+      name_diffusion : 'Constant'
+      name_dislocation : 'Constant'
+      name_alpha : 'Constant'
+      name_density : 'Constant'
+      name_capacity: 'Constant'
+      name_conductivity: 'Constant'
+      eta : 1.0e20 
+      rho0 : 3300.0 
+      k : 3.0
+      Cp : 1250 
+      alpha0 : 3e-5
+      Bdiff : null
+      Bdisl : null 
+      Ediff : null
+      Edisl : null 
+      Vdiff : null 
+      Vdisl : null
+      n : null
+      radio_flag : 0 
+      Hr : 0.0 
+      
+
+    overriding_upper_crust:
+      name_diffusion : 'Constant'
+      name_dislocation : 'Constant'
+      name_alpha : 'Constant'
+      name_density : 'Constant'
+      name_capacity: 'Constant'
+      name_conductivity: 'Constant'
+      eta : 1.0e20 
+      rho0 : 3300.0 
+      k : 3.0
+      Cp : 1250 
+      alpha0 : 3e-5
+      Bdiff : null
+      Bdisl : null 
+      Ediff : null
+      Edisl : null 
+      Vdiff : null 
+      Vdisl : null
+      n : null
+      radio_flag : 0 
+      Hr : 0.0 
+
+    overriding_lower_crust:
+      name_diffusion : 'Constant'
+      name_dislocation : 'Constant'
+      name_alpha : 'Constant'
+      name_density : 'Constant'
+      name_capacity: 'Constant'
+      name_conductivity: 'Constant'
+      eta : 1.0e20 
+      rho0 : 3300.0 
+      k : 3.0
+      Cp : 1250 
+      alpha0 : 3e-5
+      Bdiff : null
+      Bdisl : null 
+      Ediff : null
+      Edisl : null 
+      Vdiff : null 
+      Vdisl : null
+      n : null  
+      radio_flag : 0 
+      Hr : 0.0 
+
+    virtual_weak_zone:
+      name_diffusion : 'Constant'
+      name_dislocation : 'Constant'
+      name_alpha : 'Constant'
+      name_density : 'Constant'
+      name_capacity: 'Constant'
+      name_conductivity: 'Constant'
+      eta : 1.0e20 
+      rho0 : 3300.0 
+      k : 3.0
+      Cp : 1250 
+      alpha0 : 3e-5
+      Bdiff : null
+      Bdisl : null 
+      Ediff : null
+      Edisl : null 
+      Vdiff : null 
+      Vdisl : null
+      n : null 
+      radio_flag : 0 
+      Hr : 0.0 
+
+
+  # Geometry
+  geometry:
+    x: [0.0, 660000.0] # Coordinate of X
+    y: [-600000.0, 0.0] # Coordinate of Y
+    slab_tk: 130000.0 # Slab Thickness
+    cr: 30000.0 # Overriding Crust {if lc==0.0 -> only overriding upper crust}
+    ocr: 7000.0 # Oceanic crust
+    lc: 0.3
+    resolution_normal: 2000.0
+    resolution_refine: 2000.0 
+    ns_depth: 50000.0
+    lab_d: 100000.0
+    decoupling: 80000.0
+    resolution_normal: 2000.0
+    transition: 10000.0
+    wz_tk: 2000.0
+    sub_Lb: 300000.0
+    sub_dl: 10000.0
+    sub_theta0: 5
+    sub_theta_max: 45
+    sub_trench: [0.0, 0.0]
+    slab_type: "Costum"
+    sub_path: "Not Defined"

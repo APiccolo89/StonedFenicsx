@@ -1,10 +1,11 @@
-from src.utils import Input, Phase, Ph_input, print_ph
-import time as timethis
-from src.Stoned_fenicx import StonedFenicsx
-# Create the script for the benchmark tests
-# Script for testing the van keken benchmark, and to do unit tests
+from stonedfenicsx.utils import parse_input,timing, print_ph, timing
+from stonedfenicsx.Stoned_fenicx import StonedFenicsx
 
+# Simple script for perfomring the ensemble of benchmarks of VanKeken with all the option avaiable of the code
 
+path_input = "input.yaml"
+
+inp,Ph = parse_input(path_input)
 
 
 # option for the benchmark
@@ -15,7 +16,6 @@ self_con = [0, 1]
 
 
 # Create input data - Input is a class populated by default dataset
-inp = Input()
 # A flag that generate the geometry of the benchmark
 van_keken = 1
 # The input path for saving the results
@@ -34,13 +34,14 @@ inp.Tmax = 1300.0  # mantle potential temperature
 inp.steady_state = 1
 print_ph('Starting the benchmark tests with different options')
 
-time_in = timethis.time()
+
+time_in = timing.time()
 
 for i in range(len(option_thermal)):
     for j in range(len(option_adiabatic)):
         for k in range(len(option_viscous)):
             for m in range(len(self_con)):
-                time_A = timethis.time()
+                time_A = timing.time()
                 radio_flag = 1 
 
                 if option_thermal[i] == 0: 
@@ -67,6 +68,7 @@ for i in range(len(option_thermal)):
                     conductivity_nameC = 'Mantle'
                     rho0_M = 3300.0
                     rho0_C = 3300.0
+                    
                 elif option_thermal[i] == 2 or option_thermal[i] == 3: 
                     alpha_nameC = 'Crust'
                     alpha_nameM = 'Mantle'
@@ -78,6 +80,7 @@ for i in range(len(option_thermal)):
                     conductivity_nameC = 'Oceanic_Crust'
                     rho0_M = 3300.0
                     rho0_C = 2900.0
+                    
                     if option_thermal[i] == 3:
                         inp.cr = 30e3                   
 
@@ -106,85 +109,67 @@ for i in range(len(option_thermal)):
                     inp.self_consistent_flag = 0
                 else:
                     inp.self_consistent_flag = 1
+                    
+                    
+                # Modify the phase with the new data: 
+                Ph.subducting_plate_mantle.rho0 = rho0_M
+                Ph.subducting_plate_mantle.name_capacity = capacity_nameM
+                Ph.subducting_plate_mantle.name_conductivity = conductivity_nameM
+                Ph.subducting_plate_mantle.name_alpha = alpha_nameM
+                Ph.subducting_plate_mantle.name_density = density_nameM
+                Ph.subducting_plate_mantle.radio_flag = radio_flag
+                
+                
+                Ph.oceanic_crust.rho0 = rho0_C
+                Ph.oceanic_crust.name_capacity = capacity_nameC
+                Ph.oceanic_crust.name_conductivity = conductivity_nameC
+                Ph.oceanic_crust.name_alpha = alpha_nameC
+                Ph.oceanic_crust.name_density = density_nameC
+                Ph.oceanic_crust.radio_flag = radio_flag
+                
+                Ph.wedge_mantle.name_diffusion = name_diffusion
+                Ph.wedge_mantle.name_dislocation = name_dislocation
+                Ph.wedge_mantle.rho0 = rho0_M
+                Ph.wedge_mantle.name_capacity = capacity_nameM 
+                Ph.wedge_mantle.name_conductivity = capacity_nameM
+                Ph.wedge_mantle.name_alpha = alpha_nameM
+                Ph.wedge_mantle.name_density = density_nameM
+                Ph.wedge_mantle.radio_flag = radio_flag
+                
+                Ph.overriding_mantle.rho0 = rho0_M 
+                Ph.overriding_mantle.name_capacity = capacity_nameM
+                Ph.overriding_mantle.name_conductivity = conductivity_nameM
+                Ph.overriding_mantle.name_alpha = alpha_nameM
+                Ph.overriding_mantle.name_density = density_nameM
+                Ph.overriding_mantle.radio_flag = radio_flag
+                
+                Ph.overriding_upper_crust.rho0 = rho0_C 
+                Ph.overriding_upper_crust.name_capacity = capacity_nameC
+                Ph.overriding_upper_crust.name_conductivity = conductivity_nameC
+                Ph.overriding_upper_crust.name_alpha = alpha_nameC
+                Ph.overriding_upper_crust.name_density = density_nameC
+                Ph.overriding_upper_crust.radio_flag = radio_flag
+                
+                Ph.overriding_lower_crust.rho0 = rho0_C 
+                Ph.overriding_lower_crust.name_capacity = capacity_nameC
+                Ph.overriding_lower_crust.name_conductivity = conductivity_nameC
+                Ph.overriding_lower_crust.name_alpha = alpha_nameC
+                Ph.overriding_lower_crust.name_density = density_nameC
+                Ph.overriding_lower_crust.radio_flag = radio_flag
+                
+                Ph.virtual_weak_zone.name_diffusion = 'Hirth_Wet_Olivine_disl'
+                Ph.virtual_weak_zone.name_dislocation = 'Hirth_Wet_Olivine_disl' 
+    
                 
                 inp.sname = 'T_%d_%d_%d_%d'%(option_viscous[k],option_thermal[i],option_adiabatic[j],self_con[m])
 
                 # Initialise the input
                 inp.van_keken = van_keken
 
-                Phase1 = Phase()
-                Phase1.name_phase = 'Mantle_Slab'
-                Phase1.rho0 = rho0_M
-                Phase1.name_alpha = alpha_nameM
-                Phase1.name_density = density_nameM
-                Phase1.name_capacity = capacity_nameM
-                Phase1.name_conductivity = conductivity_nameM
-                Phase1.radio_flag = radio_flag
+            
+                StonedFenicsx(inp, Ph)
 
-                Phase2 = Phase()
-                Phase2.name_phase = 'Crust_Slab'
-                Phase2.rho0 = rho0_C
-                Phase2.name_alpha = alpha_nameC
-                Phase2.name_density = density_nameC
-                Phase2.name_conductivity = conductivity_nameC
-                Phase2.name_capacity = capacity_nameM
-                Phase2.radio_flag = radio_flag
-
-                Phase3 = Phase()
-                Phase3.name_phase = 'Mantle_WG'
-                Phase3.rho0 = rho0_M
-                Phase3.name_diffusion = name_diffusion
-                Phase3.name_dislocation = name_dislocation
-                Phase3.name_alpha = alpha_nameM
-                Phase3.name_density = density_nameM
-                Phase3.name_capacity = capacity_nameM
-                Phase3.name_conductivity = conductivity_nameM
-                Phase3.radio_flag = radio_flag
-
-                Phase4 = Phase()
-                Phase4.name_phase = 'Mantle_Lithosphere'
-                Phase4.rho0 = rho0_M
-                Phase4.name_alpha = alpha_nameM
-                Phase4.name_density = density_nameM
-                Phase4.name_capacity = capacity_nameM
-                Phase4.name_conductivity = conductivity_nameM
-                Phase4.radio_flag = radio_flag 
-
-                Phase5 = Phase()
-                Phase5.name_phase = 'Crust_Lithosphere'
-                Phase5.rho0 = rho0_C
-                Phase5.name_alpha = alpha_nameC
-                Phase5.name_density = density_nameC
-                Phase5.name_capacity = capacity_nameC
-                Phase5.name_conductivity = conductivity_nameC
-                Phase5.radio_flag = radio_flag
-
-                Phase6 = Phase()
-                Phase6.name_phase = 'Lower_Crust_Lithosphere'
-                Phase6.rho0 = rho0_C
-                Phase6.name_alpha = alpha_nameC
-                Phase6.name_density = density_nameC
-                Phase6.name_capacity = capacity_nameC
-                Phase6.name_conductivity = conductivity_nameC
-                Phase6.radio_flag = radio_flag
-
-                Phase7 = Phase()
-                Phase7.name_phase = 'Weak_Zone'
-                Phase7.name_diffusion = 'Hirth_Wet_Olivine_diff'
-                Phase7.name_dislocation = 'Hirth_Wet_Olivine_disl'
-
-                Ph_inp = Ph_input()
-                Ph_inp.Phase1 = Phase1
-                Ph_inp.Phase2 = Phase2
-                Ph_inp.Phase3 = Phase3
-                Ph_inp.Phase4 = Phase4
-                Ph_inp.Phase5 = Phase5
-                Ph_inp.Phase6 = Phase6
-                Ph_inp.Phase7 = Phase7
-
-                StonedFenicsx(inp, Ph_inp)
-
-                time_B = timethis.time()
+                time_B = timing.time()
                 dt = time_B - time_A
                 print('#---------------------------------------------------#')
                 if dt > 60.0:
@@ -198,7 +183,7 @@ for i in range(len(option_thermal)):
                     print(f"{inp.sname} took  {dt:.2f} sec")
                 print('#---------------------------------------------------#')
 
-time_fin = timethis.time()
+time_fin = timing.time()
 
 dt = time_fin - time_in
 

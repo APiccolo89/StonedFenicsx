@@ -4,9 +4,6 @@ from src.Stoned_fenicx import StonedFenicsx
 # Create the script for the benchmark tests
 # Script for testing the van keken benchmark, and to do unit tests
 
-
-
-
 # option for the benchmark
 option_thermal = [1]
 option_adiabatic = [0]

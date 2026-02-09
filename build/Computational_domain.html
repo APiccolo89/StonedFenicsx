@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Computational domain &#8212; StonedFEniCSx</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+    <link rel="stylesheet" type="text/css" href="_static/basic_mod.css?v=9b2032db" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <script src="_static/js/petite-vue.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Material properties" href="Material_properties.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+  </head><body data-dark_mode_code_blocks="true">
+
+<div id="top_nav">
+    
+
+    <nav>
+        
+            
+        
+
+        <p id="toggle_sidebar">
+            <a href="#" title="Toggle sidebar">|||</a>
+        </p>
+        <h1><a href="index.html" title="Go to homepage">StonedFEniCSx</a></h1>
+
+        <a id="mode_toggle" href="#" @click.prevent="handleClick" :title="mode">
+    <template v-if="mode == 'light'">
+        <svg width="100%" height="100%" viewBox="0 0 79 80" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;"><g id="mode_light"><rect id="Bounds" x="0" y="-0" width="78.623" height="79.049" style="fill:none;"/><circle cx="39.311" cy="39.524" r="15.734" style="fill:#fff;"/><g id="beams"><g id="beam"><path id="beam1" serif:id="beam" d="M44.212,4.901c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.9,2.196 -4.9,4.901l-0,9.614c-0,2.705 2.196,4.901 4.9,4.901c2.705,0 4.901,-2.196 4.901,-4.901l0,-9.614Z" style="fill:#fff;"/></g><g id="beam2" serif:id="beam"><path id="beam3" serif:id="beam" d="M67.48,18.073c1.913,-1.912 1.913,-5.018 0,-6.931c-1.912,-1.912 -5.018,-1.912 -6.931,0l-6.798,6.799c-1.912,1.912 -1.912,5.018 0,6.931c1.913,1.912 5.018,1.912 6.931,-0l6.798,-6.799Z" style="fill:#fff;"/></g><g id="beam4" serif:id="beam"><path id="beam5" serif:id="beam" d="M25.728,61.108c1.912,-1.913 1.912,-5.018 -0,-6.931c-1.913,-1.913 -5.019,-1.913 -6.931,-0l-6.799,6.798c-1.912,1.913 -1.912,5.019 0,6.931c1.913,1.913 5.019,1.913 6.931,0l6.799,-6.798Z" style="fill:#fff;"/></g><g id="beam6" serif:id="beam"><path id="beam7" serif:id="beam" d="M60.682,54.177c-1.913,-1.913 -5.018,-1.913 -6.931,-0c-1.912,1.913 -1.912,5.018 0,6.931l6.798,6.798c1.913,1.913 5.019,1.913 6.931,0c1.913,-1.912 1.913,-5.018 0,-6.931l-6.798,-6.798Z" style="fill:#fff;"/></g><g id="beam8" serif:id="beam"><path id="beam9" serif:id="beam" d="M4.901,34.623c-2.705,0 -4.901,2.196 -4.901,4.901c0,2.705 2.196,4.901 4.901,4.901l9.614,0c2.705,0 4.901,-2.196 4.901,-4.901c0,-2.705 -2.196,-4.901 -4.901,-4.901l-9.614,0Z" style="fill:#fff;"/></g><g id="beam10" serif:id="beam"><path id="beam11" serif:id="beam" d="M44.212,64.534c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.9,2.196 -4.9,4.901l-0,9.614c-0,2.705 2.196,4.901 4.9,4.901c2.705,-0 4.901,-2.196 4.901,-4.901l0,-9.614Z" style="fill:#fff;"/></g><g id="beam12" serif:id="beam"><path id="beam13" serif:id="beam" d="M18.929,11.142c-1.912,-1.912 -5.018,-1.912 -6.931,0c-1.912,1.913 -1.912,5.019 0,6.931l6.799,6.799c1.912,1.912 5.018,1.912 6.931,-0c1.912,-1.913 1.912,-5.019 -0,-6.931l-6.799,-6.799Z" style="fill:#fff;"/></g><g id="beam14" serif:id="beam"><path id="beam15" serif:id="beam" d="M64.108,34.623c-2.705,0 -4.901,2.196 -4.901,4.901c-0,2.705 2.196,4.901 4.901,4.901l9.614,0c2.705,0 4.901,-2.196 4.901,-4.901c-0,-2.705 -2.196,-4.901 -4.901,-4.901l-9.614,0Z" style="fill:#fff;"/></g></g></g></svg>
+    </template>
+
+    <template v-if="mode == 'dark'">
+        <svg width="100%" height="100%" viewBox="0 0 79 80" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;"><g id="mode_dark"><rect id="Bounds" x="0" y="-0" width="78.623" height="79.049" style="fill:none;"/><circle cx="39.311" cy="39.524" r="15.734" style="fill:#fff;"/><g id="beams"><g id="beam"><path id="beam1" serif:id="beam" d="M44.212,14.515c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,0 -4.901,2.196 -4.901,4.901c0,2.705 2.197,4.901 4.901,4.901c2.705,0 4.901,-2.196 4.901,-4.901Z" style="fill:#fff;"/></g><g id="beam2" serif:id="beam"><path id="beam3" serif:id="beam" d="M60.662,24.892c1.902,-1.902 1.902,-4.99 0,-6.892l-0.04,-0.039c-1.901,-1.902 -4.989,-1.902 -6.891,-0c-1.901,1.901 -1.901,4.989 0,6.891l0.04,0.04c1.902,1.901 4.989,1.901 6.891,-0Z" style="fill:#fff;"/></g><g id="beam4" serif:id="beam"><path id="beam5" serif:id="beam" d="M25.732,61.103c1.91,-1.91 1.91,-5.011 0,-6.921l-0.009,-0.01c-1.91,-1.91 -5.012,-1.91 -6.921,-0c-1.91,1.91 -1.91,5.011 -0,6.921l0.01,0.01c1.909,1.91 5.011,1.91 6.92,-0Z" style="fill:#fff;"/></g><g id="beam6" serif:id="beam"><path id="beam7" serif:id="beam" d="M60.672,54.167c-1.907,-1.907 -5.004,-1.907 -6.911,0l-0.02,0.02c-1.907,1.907 -1.907,5.004 0,6.911c1.907,1.907 5.004,1.907 6.911,-0l0.02,-0.02c1.907,-1.907 1.907,-5.004 0,-6.911Z" style="fill:#fff;"/></g><g id="beam8" serif:id="beam"><path id="beam9" serif:id="beam" d="M14.52,34.623c-2.702,0 -4.896,2.194 -4.896,4.896l0,0.01c0,2.702 2.194,4.896 4.896,4.896c2.702,0 4.896,-2.194 4.896,-4.896l-0,-0.01c-0,-2.702 -2.194,-4.896 -4.896,-4.896Z" style="fill:#fff;"/></g><g id="beam10" serif:id="beam"><path id="beam11" serif:id="beam" d="M44.212,64.534c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.901,2.196 -4.901,4.901c0,2.704 2.197,4.9 4.901,4.9c2.705,0 4.901,-2.196 4.901,-4.9Z" style="fill:#fff;"/></g><g id="beam12" serif:id="beam"><path id="beam13" serif:id="beam" d="M25.73,17.943c-1.911,-1.911 -5.015,-1.911 -6.926,0l-0.005,0.005c-1.911,1.911 -1.911,5.015 0,6.926c1.911,1.911 5.015,1.911 6.926,0l0.005,-0.005c1.911,-1.911 1.911,-5.014 -0,-6.926Z" style="fill:#fff;"/></g><g id="beam14" serif:id="beam"><path id="beam15" serif:id="beam" d="M64.098,34.623c-2.699,0 -4.891,2.192 -4.891,4.892l-0,0.019c-0,2.699 2.192,4.891 4.891,4.891c2.7,0 4.892,-2.192 4.892,-4.891l0,-0.019c0,-2.7 -2.192,-4.892 -4.892,-4.892Z" style="fill:#fff;"/></g></g></g></svg>
+    </template>
+
+    <template v-if="mode == 'darkest'">
+        <svg width="100%" height="100%" viewBox="0 0 79 80" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;"><g id="mode_darkest"><rect id="Bounds" x="0" y="-0" width="78.623" height="79.049" style="fill:none;"/><path d="M39.315,23.791c8.684,-0 15.734,7.05 15.734,15.733c0,8.684 -7.05,15.734 -15.734,15.734c-8.683,0 -15.733,-7.05 -15.733,-15.734c-0,-8.683 7.05,-15.733 15.733,-15.733Zm0,4.737c6.069,0 10.997,4.927 10.997,10.996c-0,6.069 -4.928,10.996 -10.997,10.996c-6.068,0 -10.996,-4.927 -10.996,-10.996c0,-6.069 4.928,-10.996 10.996,-10.996Z" style="fill:#fff;"/><g id="beams"><g id="beam"><path id="beam1" serif:id="beam" d="M44.216,14.515c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,0 -4.9,2.196 -4.9,4.901c-0,2.705 2.196,4.901 4.9,4.901c2.705,0 4.901,-2.196 4.901,-4.901Z" style="fill:#fff;"/></g><g id="beam2" serif:id="beam"><path id="beam3" serif:id="beam" d="M60.666,24.892c1.902,-1.902 1.902,-4.99 0,-6.892l-0.04,-0.039c-1.901,-1.902 -4.989,-1.902 -6.891,-0c-1.901,1.901 -1.901,4.989 0,6.891l0.04,0.04c1.902,1.901 4.99,1.901 6.891,-0Z" style="fill:#fff;"/></g><g id="beam4" serif:id="beam"><path id="beam5" serif:id="beam" d="M25.737,61.103c1.909,-1.91 1.909,-5.011 -0,-6.921l-0.01,-0.01c-1.91,-1.91 -5.011,-1.91 -6.921,-0c-1.91,1.91 -1.91,5.011 -0,6.921l0.01,0.01c1.91,1.91 5.011,1.91 6.921,-0Z" style="fill:#fff;"/></g><g id="beam6" serif:id="beam"><path id="beam7" serif:id="beam" d="M60.676,54.167c-1.907,-1.907 -5.004,-1.907 -6.911,0l-0.02,0.02c-1.907,1.907 -1.907,5.004 0,6.911c1.907,1.907 5.004,1.907 6.911,-0l0.02,-0.02c1.907,-1.907 1.907,-5.004 0,-6.911Z" style="fill:#fff;"/></g><g id="beam8" serif:id="beam"><path id="beam9" serif:id="beam" d="M14.524,34.623c-2.702,0 -4.896,2.194 -4.896,4.896l0,0.01c0,2.702 2.194,4.896 4.896,4.896c2.702,0 4.896,-2.194 4.896,-4.896l0,-0.01c0,-2.702 -2.194,-4.896 -4.896,-4.896Z" style="fill:#fff;"/></g><g id="beam10" serif:id="beam"><path id="beam11" serif:id="beam" d="M44.216,64.534c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.9,2.196 -4.9,4.901c-0,2.704 2.196,4.9 4.9,4.9c2.705,0 4.901,-2.196 4.901,-4.9Z" style="fill:#fff;"/></g><g id="beam12" serif:id="beam"><path id="beam13" serif:id="beam" d="M25.734,17.943c-1.911,-1.911 -5.015,-1.911 -6.926,0l-0.005,0.005c-1.911,1.911 -1.911,5.015 0,6.926c1.911,1.911 5.015,1.911 6.926,0l0.005,-0.005c1.911,-1.911 1.911,-5.014 0,-6.926Z" style="fill:#fff;"/></g><g id="beam14" serif:id="beam"><path id="beam15" serif:id="beam" d="M64.103,34.623c-2.7,0 -4.892,2.192 -4.892,4.892l-0,0.019c-0,2.699 2.192,4.891 4.892,4.891c2.699,0 4.891,-2.192 4.891,-4.891l0,-0.019c0,-2.7 -2.192,-4.892 -4.891,-4.892Z" style="fill:#fff;"/></g></g></g></svg>
+    </template>
+</a>
+
+<script>
+(function() {
+    const LOCAL_STORAGE_KEY = 'piccoloThemeMode'
+
+    var initialMode = localStorage.getItem(LOCAL_STORAGE_KEY)
+
+    if (initialMode) {
+        // Make sure the value in local storage is valid
+        if (['light', 'dark', 'darkest'].indexOf(initialMode) == -1) {
+            initialMode = 'light'
+            localStorage.setItem(LOCAL_STORAGE_KEY, initialMode)
+        }
+    } else {
+        // Check if the client prefers dark mode
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            initialMode = 'dark'
+        } else {
+            initialMode = 'light'
+        }
+        localStorage.setItem(LOCAL_STORAGE_KEY, initialMode)
+    }
+
+    document.documentElement.dataset.mode = initialMode
+
+    PetiteVue.createApp({
+        'mode': initialMode,
+        handleClick() {
+            let currentMode = this.mode
+
+            if (currentMode == 'light') {
+                this.mode = 'dark'
+            } else if (currentMode == 'dark') {
+                this.mode = 'darkest'
+            } else if (currentMode == 'darkest') {
+                this.mode = 'light'
+            }
+
+            document.documentElement.dataset.mode = this.mode
+            localStorage.setItem(LOCAL_STORAGE_KEY, this.mode)
+
+            console.log(this.mode)
+        }
+    }).mount('#mode_toggle')
+})()
+</script>
+            <p class="mobile_search_link">
+                <a href="search.html" title="Search">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 65 64" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2">
+                        <path d="M14.873 40.009c-2.315-3.943-3.642-8.532-3.642-13.429C11.231 11.91 23.141 0 37.811 0s26.58 11.91 26.58 26.58-11.91 26.58-26.58 26.58a26.44 26.44 0 0 1-14.277-4.161L9.739 62.794a3.12 3.12 0 0 1-4.413 0L.913 58.382c-1.217-1.218-1.217-3.196 0-4.413l13.96-13.96zM37.811 8.054c10.225 0 18.526 8.301 18.526 18.526s-8.301 18.526-18.526 18.526-18.526-8.301-18.526-18.526S27.586 8.054 37.811 8.054z" fill="#fff" />
+                    </svg>
+                </a>
+            </p>
+        
+
+        <div class="searchbox_wrapper">
+            
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+    </nav>
+</div>
+
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper"><p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Computational domain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Material_properties.html">Material properties</a></li>
+</ul>
+
+        </div>
+      </div>
+
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="computational-domain">
+<h1>Computational domain<a class="headerlink" href="#computational-domain" title="Link to this heading">¶</a></h1>
+<figure class="align-default" id="id38">
+<span id="fig-f1-simplified-initial-setup"></span><a class="reference internal image-reference" href="_images/Initial_setup.png"><img alt="_images/Initial_setup.png" src="_images/Initial_setup.png" style="width: 500px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 1 </span><span class="caption-text">Simplified initial computational domain.</span><a class="headerlink" href="#id38" title="Link to this image">¶</a></p>
+<div class="legend">
+<p>This section is based on the supplementary material section of the paper that is going to be published out of this project. This section has two part: one part that reads like a method section of a paper. The second part is explaining the discoursive implementation. The details of the API are integrated into a different section that will be more technical.</p>
+<p>The computational domain is generated using <code class="docutils literal notranslate"><span class="pre">gmsh</span></code> and consists of an unstructured triangular mesh <span id="id1">[<a class="reference internal" href="#id21" title="Christophe Geuzaine and Jean-François Remacle. Gmsh: a 3-d finite element mesh generator with built-in pre-and post-processing facilities. International journal for numerical methods in engineering, 79(11):1309–1331, 2009.">GR09</a>]</span>.<br />
+In <strong><a class="reference internal" href="#fig-f1-simplified-initial-setup"><span class="std std-numref">Fig. 1</span></a></strong>, we sketch a simplified initial computational domain.<br />
+This sketch highlights the features that are common to all numerical realisations.</p>
+<p>The main portions of the numerical domain are shown using different colours, the points defining the physical boundaries are labelled with capital letters (<code class="docutils literal notranslate"><span class="pre">A–L</span></code>), and the boundaries are denoted by bracketed lowercase letters (<strong>[a–i]</strong>).</p>
+<p class="rubric" id="domain-geometry"><em>Domain geometry</em></p>
+<p>The main computational domain can be approximated by a trapezoid defined by <code class="docutils literal notranslate"><span class="pre">A</span></code>, <code class="docutils literal notranslate"><span class="pre">B</span></code>, <code class="docutils literal notranslate"><span class="pre">C</span></code>, <code class="docutils literal notranslate"><span class="pre">D</span></code>, <code class="docutils literal notranslate"><span class="pre">E</span></code>, and <code class="docutils literal notranslate"><span class="pre">F</span></code>.<br />
+The computational domain extends from the surface (0) km to a maximum depth of (-600) km.</p>
+<p>The horizontal extent of the numerical domain (i.e., the coordinate <code class="docutils literal notranslate"><span class="pre">x</span></code> of <code class="docutils literal notranslate"><span class="pre">F</span></code> and <code class="docutils literal notranslate"><span class="pre">E</span></code>) depends on the slab geometry.</p>
+<ul class="simple">
+<li><p>Point <code class="docutils literal notranslate"><span class="pre">A</span></code> represents the origin with coordinates (0, 0) km.</p></li>
+<li><p>Point <code class="docutils literal notranslate"><span class="pre">B</span></code> represents the base of the subducting plate at (0, -140)\ km.</p></li>
+<li><p>Points <code class="docutils literal notranslate"><span class="pre">C</span></code> and <code class="docutils literal notranslate"><span class="pre">D</span></code> have coordinates<br />
+(x_b, -600) km and (x_t, -600) km,<br />
+where (x_b)\ and (x_t) depend on the chosen slab geometry.</p></li>
+<li><p>Points <code class="docutils literal notranslate"><span class="pre">E</span></code> and <code class="docutils literal notranslate"><span class="pre">F</span></code> are the rightmost points with coordinates<br />
+(x_t + 60, -600) km and (x_t + 60, 0)\ km, respectively.</p></li>
+</ul>
+<p class="rubric" id="subdomains"><strong>Subdomains</strong></p>
+<p>The initial setup is divided into three subdomains:</p>
+<ul class="simple">
+<li><p><em>Slab (S)</em></p></li>
+<li><p><em>Wedge (W)</em></p></li>
+<li><p><em>Overriding plate (OP)</em></p></li>
+</ul>
+<p>These are coloured red, yellow, and grey, respectively.</p>
+<p>The subdivision is generated by two internal boundaries:</p>
+<ul class="simple">
+<li><p>the <em>top surface of the slab</em></p></li>
+<li><p>the <em>overriding-plate boundary</em></p></li>
+</ul>
+<p>corresponding to lines <code class="docutils literal notranslate"><span class="pre">[a]</span></code> and <code class="docutils literal notranslate"><span class="pre">[b]</span></code> in <strong><a class="reference internal" href="#fig-f1-simplified-initial-setup"><span class="std std-numref">Fig. 1</span></a></strong>.</p>
+<p>The top surface of the slab (<code class="docutils literal notranslate"><span class="pre">[a]</span></code>) represents the <strong>kinematic boundary condition</strong> that drives the velocity field of the entire numerical domain.<br />
+Velocity is imposed <strong>parallel to the slab surface</strong>, with magnitude equal to the prescribed convergence velocity.</p>
+<p>The base of the <em>overriding plate</em> is treated as a <em>no-slip boundary</em>.</p>
+<p class="rubric" id="governing-equation-domains"><strong>Governing-equation domains</strong></p>
+<p>The subdivision into three smaller domains simplifies the computation of the <strong>Stokes equations</strong>:</p>
+<ul class="simple">
+<li><p>‘Mass and momentum conservation’ are solved only in <em>S</em> and <em>W</em>.</p></li>
+<li><p>‘Lithostatic pressure’ and ‘energy conservation’ are solved in the <strong>entire domain</strong>.</p></li>
+</ul>
+<p>The subdomains are independent, non-overlapping computational regions, defined by boundaries that may be shared with neighbouring subdomains.</p>
+<p>Each subdomain can contain different material properties. For example, the overriding plate may include crustal units and lithospheric mantle, which primarily affect <strong>thermal properties</strong>.</p>
+<p>In the following sections, we first describe the Stokes subdomains (slab and wedge) and their boundary conditions. We then discuss the thermal boundary conditions applied to the global domain.</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{G} = \mathbf{OP} + \mathbf{S} + \mathbf{W}.\]</div>
+</div>
+</figcaption>
+</figure>
+<section id="domains">
+<h2>Domains<a class="headerlink" href="#domains" title="Link to this heading">¶</a></h2>
+<section id="slab">
+<h3>Slab<a class="headerlink" href="#slab" title="Link to this heading">¶</a></h3>
+<p>In <a class="reference internal" href="#fig-f1-simplified-initial-setup"><span class="std std-numref">Fig. 1</span></a>, <strong>S</strong> is shown in red and is defined by points <code class="docutils literal notranslate"><span class="pre">A</span></code>, <code class="docutils literal notranslate"><span class="pre">B</span></code>, <code class="docutils literal notranslate"><span class="pre">C</span></code>, and <code class="docutils literal notranslate"><span class="pre">D</span></code>. It is bounded by four boundaries: <code class="docutils literal notranslate"><span class="pre">[a]</span></code>, <code class="docutils literal notranslate"><span class="pre">[c]</span></code>, <code class="docutils literal notranslate"><span class="pre">[d]</span></code>, and <code class="docutils literal notranslate"><span class="pre">[e]</span></code>.</p>
+<p>On <code class="docutils literal notranslate"><span class="pre">[a]</span></code>, we prescribe an <strong>internal moving-wall boundary condition</strong>. The velocity (v_c) represents the convergence velocity and is locally parallel to the tangent of <code class="docutils literal notranslate"><span class="pre">[a]</span></code>. Its magnitude is constant and equal to (v_c). Boundary <code class="docutils literal notranslate"><span class="pre">[c]</span></code> is the <strong>base of the plate</strong>, where a <strong>free-slip boundary condition</strong> is applied using the Nitsche method <span id="id2">[<a class="reference internal" href="#id28" title="Nathan Sime and Cian R Wilson. Automatic weak imposition of free slip boundary conditions via nitsche's method: application to nonlinear problems in geodynamics. arXiv preprint arXiv:2001.10639, 2020.">SW20</a>, <a class="reference internal" href="#id27" title="Nathan Sime, Cian R Wilson, and Peter E van Keken. Thermal modeling of subduction zones with prescribed and evolving 2d and 3d slab geometries. Progress in Earth and Planetary Science, 11(1):14, 2024.">SWvK24</a>]</span>. Boundaries <code class="docutils literal notranslate"><span class="pre">[d]</span></code> and <code class="docutils literal notranslate"><span class="pre">[e]</span></code> are <strong>open boundaries</strong>, whose inflow or outflow velocities depend on the convergence velocity applied on <code class="docutils literal notranslate"><span class="pre">[a]</span></code>.</p>
+<p>The viscosity within <strong>S</strong> is constant and equal to <span class="math notranslate nohighlight">\(\eta_{\mathrm{slab}}\)</span>, regardless of the number of material phases. This allows the <strong>Stokes equations</strong> to be solved only once per numerical realisation, both for steady-state and time-dependent problems.</p>
+<p>The slab may contain different material phases (lithospheric mantle and oceanic crust), each with distinct <strong>heat capacity, density, and conductivity</strong>.</p>
+</section>
+<section id="wedge">
+<h3>Wedge<a class="headerlink" href="#wedge" title="Link to this heading">¶</a></h3>
+<p>The <strong>W</strong> subdomain is defined by points <code class="docutils literal notranslate"><span class="pre">H</span></code>, <code class="docutils literal notranslate"><span class="pre">D</span></code>, <code class="docutils literal notranslate"><span class="pre">E</span></code>, and <code class="docutils literal notranslate"><span class="pre">F</span></code> (see <a class="reference internal" href="#fig-f1-simplified-initial-setup"><span class="std std-numref">Fig. 1</span></a>).  It is bounded by a portion of <code class="docutils literal notranslate"><span class="pre">[a]</span></code> (from <code class="docutils literal notranslate"><span class="pre">H</span></code> to <code class="docutils literal notranslate"><span class="pre">D</span></code>) and by <code class="docutils literal notranslate"><span class="pre">[f]</span></code>, <code class="docutils literal notranslate"><span class="pre">[g]</span></code>, and <code class="docutils literal notranslate"><span class="pre">[b]</span></code>. Boundaries <code class="docutils literal notranslate"><span class="pre">[f]</span></code> and <code class="docutils literal notranslate"><span class="pre">[g]</span></code> are <strong>open (do-nothing) boundaries</strong>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">[f]</span></code> is mostly <strong>outflow</strong>, although inflow may occur depending on position.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[g]</span></code> can exhibit <strong>both inflow and outflow</strong> depending on wedge rheology.</p></li>
+</ul>
+<p>On <code class="docutils literal notranslate"><span class="pre">[b]</span></code>, a <strong>no-slip boundary condition</strong> is imposed. Only part of <code class="docutils literal notranslate"><span class="pre">[a]</span></code> controls the wedge kinematics. As in the slab, a <strong>moving-wall boundary condition</strong> is prescribed, but a shallow segment simulates <strong>partial decoupling</strong> between wedge and slab (similar to <span id="id3">[<a class="reference internal" href="#id25" title="Peter E van Keken and Cian R Wilson. An introductory review of the thermal structure of subduction zones: iii—comparison between models and observations. Progress in Earth and Planetary Science, 10(1):57, 2023.">vKW23</a>]</span>).</p>
+<p>Two approaches exist:</p>
+<ol class="arabic simple">
+<li><p>Introduce a <strong>weak phase</strong> between wedge and slab <span id="id4">[<a class="reference internal" href="#id30" title="Ikuko Wada and Kelin Wang. Common depth of slab-mantle decoupling: reconciling diversity and uniformity of subduction zones. Geochemistry, Geophysics, Geosystems, 2009.">WW09</a>]</span>.</p></li>
+<li><p>Explicitly define a <strong>decoupling depth</strong> (d_c) and smoothly vary the velocity<br />
+<span id="id5">[<a class="reference internal" href="#id24" title="Gabrielle M Hobson and Dave A May. Sensitivity analysis of the thermal structure within subduction zones using reduced-order modeling. Geochemistry, Geophysics, Geosystems, 26(5):e2024GC011937, 2025.">HM25</a>, <a class="reference internal" href="#id27" title="Nathan Sime, Cian R Wilson, and Peter E van Keken. Thermal modeling of subduction zones with prescribed and evolving 2d and 3d slab geometries. Progress in Earth and Planetary Science, 11(1):14, 2024.">SWvK24</a>, <a class="reference internal" href="#id25" title="Peter E van Keken and Cian R Wilson. An introductory review of the thermal structure of subduction zones: iii—comparison between models and observations. Progress in Earth and Planetary Science, 10(1):57, 2023.">vKW23</a>]</span>.</p></li>
+</ol>
+<p>Both are valid; here we adopt the <strong>explicit decoupling depth</strong>, as it is easier to treat as a free parameter <span id="id6">[<a class="reference internal" href="#id24" title="Gabrielle M Hobson and Dave A May. Sensitivity analysis of the thermal structure within subduction zones using reduced-order modeling. Geochemistry, Geophysics, Geosystems, 26(5):e2024GC011937, 2025.">HM25</a>]</span>.</p>
+<section id="velocity-scaling-along-the-slab">
+<h4>Velocity scaling along the slab<a class="headerlink" href="#velocity-scaling-along-the-slab" title="Link to this heading">¶</a></h4>
+<p>The decoupled portion of <code class="docutils literal notranslate"><span class="pre">[a]</span></code> lies between points <code class="docutils literal notranslate"><span class="pre">H</span></code> and <code class="docutils literal notranslate"><span class="pre">I</span></code>. The slab-parallel unit vector is multiplied by the convergence velocity and a <strong>scaling function</strong> adapted from <span id="id7">[<a class="reference internal" href="#id24" title="Gabrielle M Hobson and Dave A May. Sensitivity analysis of the thermal structure within subduction zones using reduced-order modeling. Geochemistry, Geophysics, Geosystems, 26(5):e2024GC011937, 2025.">HM25</a>]</span>.</p>
+<div class="math notranslate nohighlight" id="eq-scaling-function">
+\[sc(z) = \frac{1}{2}\left[1 + \tanh\!\left(\frac{z - d_c}{\delta z_{tr}}\right)\right]\]</div>
+<p>where <span class="math notranslate nohighlight">\(z\)</span> is the depth coordinate, <span class="math notranslate nohighlight">\(d_c\)</span> is the decoupling depth, and <span class="math notranslate nohighlight">\(\delta z_{tr}\)</span> is the transition distance from fully decoupled to fully coupled (<span class="math notranslate nohighlight">\(\delta z_{tr} = 10/4\)</span> km). The velocity along <code class="docutils literal notranslate"><span class="pre">[a]</span></code> in the wedge is then:</p>
+<div class="math notranslate nohighlight" id="eq-velocity-jump">
+\[\mathbf{v}_{slab} = sc(z)\, v_{mag}\, \hat{\mathbf{v}}_{slab}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathbf{v}_{slab}\)</span> is the effective slab velocity and <span class="math notranslate nohighlight">\(\hat{\mathbf{v}}_{slab}\)</span> is the unit vector parallel to the local tangent of the slab surface.</p>
+</section>
+</section>
+<section id="global-domains">
+<h3>Global domains<a class="headerlink" href="#global-domains" title="Link to this heading">¶</a></h3>
+<p>At each iteration and/or time step, the velocity and dynamic pressure field computed in <strong>S</strong> and <strong>W</strong> are interpolated back onto the global domain mesh. The velocity is used for solving the energy conservation equation. We briefly describe the boundary conditions prescribed at the external boundaries of the global domain.</p>
+<p>At the top boundary (<code class="docutils literal notranslate"><span class="pre">[h]</span></code> in <strong>Fig.</strong> <a class="reference internal" href="#fig-f1-simplified-initial-setup"><span class="std std-ref">Simplified initial computational domain.</span></a>), an isothermal boundary condition is imposed, where the temperature is equal to the surface temperature <span class="math notranslate nohighlight">\(T_{s}\)</span>. At the open boundaries, such as <code class="docutils literal notranslate"><span class="pre">[d]</span></code>, <code class="docutils literal notranslate"><span class="pre">[f]</span></code>, and <code class="docutils literal notranslate"><span class="pre">[g]</span></code>, the prescribed boundary conditions depend on the velocity vector: if there is an inflow velocity within these boundaries, the portion of the boundary becomes isothermal, with a temperature equal to the mantle potential temperature; if there is an outflow velocity field, the local boundary condition is no-flux. The only exception to this general rule is a portion of <code class="docutils literal notranslate"><span class="pre">[g]</span></code> (from point <code class="docutils literal notranslate"><span class="pre">L</span></code> to <code class="docutils literal notranslate"><span class="pre">F</span></code>). The depth of point <code class="docutils literal notranslate"><span class="pre">L</span></code> can be an independent parameter, but for convenience is always equal to <span class="math notranslate nohighlight">\(d_c\)</span>. Within this portion of <code class="docutils literal notranslate"><span class="pre">[g]</span></code>, the boundary condition is no-flux regardless of the velocity field. This strategy allows simulation of a realistic lithosphere temperature field.</p>
+<p>At boundaries <code class="docutils literal notranslate"><span class="pre">[e]</span></code> and <code class="docutils literal notranslate"><span class="pre">[i]</span></code>, the temperature is prescribed as a function of depth. For <code class="docutils literal notranslate"><span class="pre">[i]</span></code>, the temperature varies linearly with depth, and the linear gradient is computed as</p>
+<div class="math notranslate nohighlight">
+\[gr = \frac{(T_{p} - T_{s})}{d_{lab}}\]</div>
+<p>where <span class="math notranslate nohighlight">\(T_p\)</span> is the mantle potential temperature and <span class="math notranslate nohighlight">\(d_{lab}\)</span> is the depth of the astenopshere and lithosphere boundary. Before initialisation of the experiment, an initial guess of the temperature field is computed assuming a continental-like thermal structure everywhere. This continental-like geotherm uses the decoupling depth (or the depth of point <code class="docutils literal notranslate"><span class="pre">L</span></code>) as the effective base of the lithosphere.</p>
+<p>For boundary <code class="docutils literal notranslate"><span class="pre">[e]</span></code>, the temperature structure is either computed analytically using a half-space cooling model with a given age <span id="id8">[<a class="reference internal" href="#id26" title="Peter E van Keken, Claire Currie, Scott D King, Mark D Behn, Amandine Cagnioncle, Jiangheng He, Richard F Katz, Shu-Chuan Lin, E Marc Parmentier, Marc Spiegelman, and others. A community benchmark for subduction zone modeling. Physics of the Earth and Planetary Interiors, 171(1-4):187–197, 2008.">vKCK+08</a>]</span>, or computed numerically. We adopt the plate model described in <span id="id9">[<a class="reference internal" href="#id22" title="Fred Richards, Mark Hoggard, Alistair Crosby, Siavash Ghelichkhan, and Nicky White. Structure and dynamics of the oceanic lithosphere-asthenosphere system. Physics of the Earth and Planetary Interiors, 309:106559, 2020.">RHC+20</a>]</span> and solve the numerical energy conservation equation without the advection term on a 1D numerical domain extending from −140 to 0 km. The temperature at the top is always the surface temperature, while the bottom temperature can be either the mantle potential temperature or the adiabatic temperature if adiabatic processes are active.</p>
+<p>The numerical method used to compute the thermal structure of the incoming plate (i.e., the prescribed temperature at boundary <code class="docutils literal notranslate"><span class="pre">[e]</span></code>) is a finite-difference Crank–Nicolson scheme, similar to <span id="id10">[<a class="reference internal" href="#id22" title="Fred Richards, Mark Hoggard, Alistair Crosby, Siavash Ghelichkhan, and Nicky White. Structure and dynamics of the oceanic lithosphere-asthenosphere system. Physics of the Earth and Planetary Interiors, 309:106559, 2020.">RHC+20</a>, <a class="reference internal" href="#id23" title="Iris van Zelst, Cedric Thieulot, and Timothy J Craig. The effect of temperature-dependent material properties on simple thermal models of subduction zones. Solid Earth, 14(7):683–707, 2023.">vZTC23</a>]</span>. The numerical scheme is described in the appendix of <span id="id11">[<a class="reference internal" href="#id23" title="Iris van Zelst, Cedric Thieulot, and Timothy J Craig. The effect of temperature-dependent material properties on simple thermal models of subduction zones. Solid Earth, 14(7):683–707, 2023.">vZTC23</a>]</span>; in the present work, a Picard iteration scheme is added to handle nonlinearities and compute the lithostatic pressure. The lithostatic pressure is obtained from a depth-dependent integral of rock density. We solve the time-dependent energy conservation equation without the advective term, and the residual is evaluated using Eq. XX with a tolerance of <span class="math notranslate nohighlight">\(10^{-5}\)</span>. The lithostatic pressure is computed once per time step, prior to solving the energy equation, accounting for nonlinearities using the current temperature field.</p>
+</section>
+<section id="overriding-plate">
+<h3>Overriding plate<a class="headerlink" href="#overriding-plate" title="Link to this heading">¶</a></h3>
+<p>The overriding plate is composed of either mantle, or mantle and crustal unit, as a function of the input parameters. It is a separated domain, but without any specific FEM problem associated.</p>
+</section>
+</section>
+<section id="module-create-mesh">
+<h2>Module create mesh<a class="headerlink" href="#module-create-mesh" title="Link to this heading">¶</a></h2>
+<p>The mesh-generation submodule requires a set of geometric inputs, which are used to populate the Geom_input dataclass. This class stores the geometry needed to construct the computational domain. The create_mesh.py module first generates the slab top surface and then defines the geometric entities specified by the user. The mesh is generated with gmsh and written to the output directory. The resulting .msh file is then read, converted into a dolfinx mesh, and passed to the main solver.</p>
+<p>The computational domain is constructed starting from the subudcting plate geometry from this geometry the <span class="math notranslate nohighlight">\(x\)</span> extend is decided three informations: the depth of the model (decided by the user) and by the coordinate x of the intersection of the top surface of the subducting plate and the maximum depth horizontal line and the intersection of the bottom of the subducting plate with the maximum depth (the default value is <span class="math notranslate nohighlight">\(-600\)</span> km).</p>
+<p>In <strong>Fig.</strong> <a class="reference internal" href="#fig-f1-simplified-initial-setup"><span class="std std-ref">Simplified initial computational domain.</span></a> the computational domain is defined by <code class="docutils literal notranslate"><span class="pre">A</span></code>, <code class="docutils literal notranslate"><span class="pre">B</span></code>, <code class="docutils literal notranslate"><span class="pre">C</span></code> and <code class="docutils literal notranslate"><span class="pre">F</span></code>. <code class="docutils literal notranslate"><span class="pre">A</span></code> is the trench (<span class="math notranslate nohighlight">\(X_{trench}\)</span> is the coordinate of the point). <code class="docutils literal notranslate"><span class="pre">B</span></code> is the intersection of the bottom of the subducting plate with the vertical axis located at <span class="math notranslate nohighlight">\(X_{trench}\)</span>. <code class="docutils literal notranslate"><span class="pre">C</span></code> is the intersection between the bottom of the slab and the maximum depth. <code class="docutils literal notranslate"><span class="pre">E</span></code> is defined using <code class="docutils literal notranslate"><span class="pre">D</span></code> (the intersection of the top surface of the slab and the maximum depth), by adding <span class="math notranslate nohighlight">\(60\)</span> km to the coordinate-x. <code class="docutils literal notranslate"><span class="pre">F</span></code> is defined using the coordinate-x of <code class="docutils literal notranslate"><span class="pre">E</span></code> and the coordinate-y of <code class="docutils literal notranslate"><span class="pre">A</span></code>.</p>
+<section id="geometry-of-the-subducting-plate">
+<h3>Geometry of the subducting plate<a class="headerlink" href="#geometry-of-the-subducting-plate" title="Link to this heading">¶</a></h3>
+<p>The geometry of the top surface slab can be either a parametrised curve or a real slab geometry (not yet implemented). The parametrised curve requires the following parameters:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(s_{tk}\)</span> slab thickness, the thickness of the subudcting plate in meters, and always positive.</p></li>
+<li><p><span class="math notranslate nohighlight">\(\theta_{max}\)</span> the maximum bending angle.</p></li>
+<li><p><span class="math notranslate nohighlight">\(\theta_{0}\)</span> the minimum bending angle.</p></li>
+<li><p><span class="math notranslate nohighlight">\(L_{b}\)</span> the critical along the slab distance in meters and always positive.</p></li>
+<li><p><span class="math notranslate nohighlight">\(F_{vk}\)</span> flag of constant bending angle.</p></li>
+<li><p><span class="math notranslate nohighlight">\(d\ell\)</span> length of the slab segment.</p></li>
+<li><p><span class="math notranslate nohighlight">\(X_{trench}\)</span> coordinate of the trench in meters.</p></li>
+</ul>
+<p>if <span class="math notranslate nohighlight">\(F_{vk}\)</span> is active, <span class="math notranslate nohighlight">\(\theta_{max}\)</span> becomes the constant angle of the slab. This feature is mostly used for benchmarking purpose (i.e., for reproducing the benchmarks of <span id="id12">[<a class="reference internal" href="#id26" title="Peter E van Keken, Claire Currie, Scott D King, Mark D Behn, Amandine Cagnioncle, Jiangheng He, Richard F Katz, Shu-Chuan Lin, E Marc Parmentier, Marc Spiegelman, and others. A community benchmark for subduction zone modeling. Physics of the Earth and Planetary Interiors, 171(1-4):187–197, 2008.">vKCK+08</a>]</span>).</p>
+<p>The parametrised slab surface is computed using <span class="math notranslate nohighlight">\(d\ell\)</span> and a function that describe <span class="math notranslate nohighlight">\(\theta(\ell0)\)</span>. The function that describe the evolution of the bending angle as a function of the cumulative arc-length distance along the slab surface from the trench (<span class="math notranslate nohighlight">\(\ell\)</span>) is:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\theta(\ell) =
+\begin{cases}
+\theta_{\max}\, \ell^{2}\, \dfrac{3L_b - 2\ell}{L_b^{3}}, &amp; \text{if } \ell \le L_b, \\
+\theta_{\max}, &amp; \text{otherwise.}
+\end{cases}\end{split}\]</div>
+<p>The algorithm starts from the trench. It computes <span class="math notranslate nohighlight">\(\theta(\ell(trench))\)</span> at the trench position, and <span class="math notranslate nohighlight">\(\theta(\ell(trench)+d\ell)\)</span>. It averages the two angle, and then compute the coordinate of the new point of the slab:</p>
+<div class="math notranslate nohighlight" id="equation-eq-trench-update">
+<span class="eqno">(3)<a class="headerlink" href="#equation-eq-trench-update" title="Link to this equation">¶</a></span>\[\mathbf{X}_{\text{new}}
+=
+\mathbf{X}_{\text{trench}}
++
+d\ell \, \hat{\mathbf{t}},
+\qquad
+\hat{\mathbf{t}} = (\cos\theta, -\sin\theta).\]</div>
+<p>Then repeat the same operation starting from the new coordinate points till the coordinate_y is equal to the maximum depth of the model.</p>
+<p>The bottom of the slab and the bottom of the potential oceanic crust layer are computed using the top surface using the following equations:</p>
+<div class="math notranslate nohighlight" id="equation-eq-bottom-slab">
+<span class="eqno">(4)<a class="headerlink" href="#equation-eq-bottom-slab" title="Link to this equation">¶</a></span>\[\mathbf{X}_{\mathrm{bot}}(\ell)
+=
+\mathbf{X}_{\mathrm{top}}(\ell)
++
+s_{tk}\,\hat{\mathbf{n}}(\ell),
+\qquad
+\hat{\mathbf{n}}(\ell)=(-\sin\theta(\ell),\,-\cos\theta(\ell)).\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathbf{X}_{bot}(\ell)\)</span> is the array containing the coordinate of either the bottom of the subducting plate or the oceanic crust’s moho and <span class="math notranslate nohighlight">\(\mathbf{X}_{top}(\ell)\)</span> is the coordinate array of the top surface of the subducting plate. The slab can be composed of one or two rock-phase. In case the user does not define the oceanic crust, the subducting plate is composed only by the <code class="docutils literal notranslate"><span class="pre">subducting</span> <span class="pre">mantle</span> <span class="pre">phase</span></code> (see material property section). In case the thickness of the oceanic crust is different from zero, an additional layer of rocks is added from the top surface of the slab. This layer is composed of <code class="docutils literal notranslate"><span class="pre">oceanic</span> <span class="pre">crust</span> <span class="pre">phase</span></code>.</p>
+<p>The geometry of the slab then is fully defined, and as explained above, the rest of main points that defines the computational domain are computed.</p>
+</section>
+<section id="id13">
+<h3>Overriding plate<a class="headerlink" href="#id13" title="Link to this heading">¶</a></h3>
+<p>The overriding plate is defined using the following parameters:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(ns_{depth}\)</span>, the no-slip boundary depth [meters] always positive and internally converted into negative coordinate.</p></li>
+<li><p><span class="math notranslate nohighlight">\(cr\)</span>, the overriding crust thickness [meters] always positive.</p></li>
+<li><p><span class="math notranslate nohighlight">\(lc\)</span>, fraction of lower crust [n.d.] between <span class="math notranslate nohighlight">\(0,0.5\)</span></p></li>
+</ul>
+<p>The <span class="math notranslate nohighlight">\(ns_{depth}\)</span> define the depth at which the no-slip boundary condition is defined. The no-slip boundary condition is a horizontal line that ranges from right boundary (defined by the points <code class="docutils literal notranslate"><span class="pre">E</span></code>-<code class="docutils literal notranslate"><span class="pre">F</span></code>). <code class="docutils literal notranslate"><span class="pre">H</span></code> and <code class="docutils literal notranslate"><span class="pre">G</span></code> are the points in which the no-slip boundary condition intersect the right top-surface of the slab and the right boundary respectively. The small area defined by <code class="docutils literal notranslate"><span class="pre">A</span></code>,<code class="docutils literal notranslate"><span class="pre">F</span></code>,<code class="docutils literal notranslate"><span class="pre">G</span></code> and <code class="docutils literal notranslate"><span class="pre">H</span></code> can have a different rock-phase. If no crust is defined, the overriding plate is automatically considered <code class="docutils literal notranslate"><span class="pre">lithospheric</span> <span class="pre">mantle</span> <span class="pre">phase</span></code>. If the crustal unit is defined without any lower crust (<span class="math notranslate nohighlight">\(lc = 0.0\)</span>), the overriding plate will be filled from the depth <span class="math notranslate nohighlight">\(cr\)</span> with <code class="docutils literal notranslate"><span class="pre">overriding</span> <span class="pre">upper</span> <span class="pre">crust</span> <span class="pre">material</span></code> (this unit can be costumised to have more oceanic or continental-like material property). In case <span class="math notranslate nohighlight">\(lc\)</span> is different from zero, then, the layer of the overriding plate spanning from <span class="math notranslate nohighlight">\(cr\)</span> and <span class="math notranslate nohighlight">\(cr*lc\)</span> is composed of <code class="docutils literal notranslate"><span class="pre">overriding</span> <span class="pre">lower</span> <span class="pre">crust</span> <span class="pre">material</span></code>, while from  <span class="math notranslate nohighlight">\(cr*lc\)</span> to the surface is composed of <code class="docutils literal notranslate"><span class="pre">overriding</span> <span class="pre">upper</span> <span class="pre">crust</span> <span class="pre">material</span></code>.</p>
+</section>
+<section id="id14">
+<h3>Wedge<a class="headerlink" href="#id14" title="Link to this heading">¶</a></h3>
+<p>The wedge is automatically defined after the definition of the Overriding plate. It is composed of only one rock-phase (<code class="docutils literal notranslate"><span class="pre">mantle</span> <span class="pre">wedge</span></code>). The mantle wedge phase can have non-linear rheologies and while the material properties are the same of the <code class="docutils literal notranslate"><span class="pre">subducting</span> <span class="pre">mantle</span> <span class="pre">phase</span></code>.</p>
+</section>
+<section id="additional-geometrical-input">
+<h3>Additional geometrical input<a class="headerlink" href="#additional-geometrical-input" title="Link to this heading">¶</a></h3>
+<p>The user can define the decoupling depth (<span class="math notranslate nohighlight">\(d_c\)</span>), and the LAB depth ((<span class="math notranslate nohighlight">\(d_{lab}\)</span>)). The decoupling depth is used for computing the velocity jump between wedge material and slab (at <span class="math notranslate nohighlight">\(d_c\)</span> wedge and subudcting plate are fully coupled). The LAB depth, instead, is used to tune the right thermal boundary condition. If the user define a LAB depth whose value is higher than the <code class="docutils literal notranslate"><span class="pre">ns_{depth}</span></code>, the energy boundary condition from that depth and surface will be <code class="docutils literal notranslate"><span class="pre">no-flux</span></code>. Below <span class="math notranslate nohighlight">\(d_{lab}\)</span> the thermal boundary condition is determined using the velocity field: if the velocity field is inward, the energy boundary condition is isothermal, with a temperature equal to the <span class="math notranslate nohighlight">\(T_p\)</span>, if it is outward the energy boundary condition is <code class="docutils literal notranslate"><span class="pre">no-flux</span></code>. An additional parameter is <span class="math notranslate nohighlight">\(\delta z_{tr}\)</span> which controls the partially-coupling fully coupling transition.</p>
+</section>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">¶</a></h2>
+<div class="docutils container" id="id15">
+<div role="list" class="citation-list">
+<div class="citation" id="id37" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>AvKW20<span class="fn-bracket">]</span></span>
+<p>Geoffrey A Abers, Peter E van Keken, and Cian R Wilson. Deep decoupling in subduction zones: observations and temperature limits. <em>Geosphere</em>, 16(6):1408–1424, 2020.</p>
+</div>
+<div class="citation" id="id18" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>AlnaesLOlgaard+14<span class="fn-bracket">]</span></span>
+<p>Martin S Alnæs, Anders Logg, Kristian B Ølgaard, Marie E Rognes, and Garth N Wells. Unified form language: a domain-specific language for weak formulations of partial differential equations. <em>ACM Transactions on Mathematical Software (TOMS)</em>, 40(2):1–37, 2014.</p>
+</div>
+<div class="citation" id="id17" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>BDD+23<span class="fn-bracket">]</span></span>
+<p><strong>missing journal in baratta2023dolfinx</strong></p>
+</div>
+<div class="citation" id="id21" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">GR09</a><span class="fn-bracket">]</span></span>
+<p>Christophe Geuzaine and Jean-François Remacle. Gmsh: a 3-d finite element mesh generator with built-in pre-and post-processing facilities. <em>International journal for numerical methods in engineering</em>, 79(11):1309–1331, 2009.</p>
+</div>
+<div class="citation" id="id33" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>GA13<span class="fn-bracket">]</span></span>
+<p>Christopher J Grose and Juan Carlos Afonso. Comprehensive plate models for the thermal evolution of oceanic lithosphere. <em>Geochemistry, Geophysics, Geosystems</em>, 14(9):3751–3778, 2013.</p>
+</div>
+<div class="citation" id="id36" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>HDGassmollerB17<span class="fn-bracket">]</span></span>
+<p>Timo Heister, Juliane Dannberg, Rene Gassmöller, and Wolfgang Bangerth. High accuracy mantle convection simulation through modern numerical methods. II: Realistic models and problems. <em>Geophysical Journal International</em>, 210(2):833–851, 2017. URL: <a class="reference external" href="https://doi.org/10.1093/gji/ggx195">https://doi.org/10.1093/gji/ggx195</a>, <a class="reference external" href="https://doi.org/10.1093/gji/ggx195">doi:10.1093/gji/ggx195</a>.</p>
+</div>
+<div class="citation" id="id24" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>HM25<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id5">1</a>,<a role="doc-backlink" href="#id6">2</a>,<a role="doc-backlink" href="#id7">3</a>)</span>
+<p>Gabrielle M Hobson and Dave A May. Sensitivity analysis of the thermal structure within subduction zones using reduced-order modeling. <em>Geochemistry, Geophysics, Geosystems</em>, 26(5):e2024GC011937, 2025.</p>
+</div>
+<div class="citation" id="id35" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Hof05<span class="fn-bracket">]</span></span>
+<p>AM Hofmeister. Dependence of diffusive radiative transfer on grain-size, temperature, and fe-content: implications for mantle processes. <em>Journal of Geodynamics</em>, 40(1):51–72, 2005.</p>
+</div>
+<div class="citation" id="id32" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>HP11<span class="fn-bracket">]</span></span>
+<p>TJB Holland and R Powell. An improved and extended internally consistent thermodynamic dataset for phases of petrological interest, involving a new equation of state for solids. <em>Journal of metamorphic Geology</em>, 29(3):333–383, 2011.</p>
+</div>
+<div class="citation" id="id29" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>HC21<span class="fn-bracket">]</span></span>
+<p>Adam F Holt and Cailey Brown Condit. Slab temperature evolution over the lifetime of a subduction zone. <em>Geochemistry, Geophysics, Geosystems</em>, 22(6):e2020GC009476, 2021.</p>
+</div>
+<div class="citation" id="id16" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>JM22<span class="fn-bracket">]</span></span>
+<p>Anthony Jourdon and Dave A May. An efficient partial-differential-equation-based method to compute pressure boundary conditions in regional geodynamic models. <em>Solid Earth</em>, 13(6):1107–1125, 2022.</p>
+</div>
+<div class="citation" id="id34" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>KK16<span class="fn-bracket">]</span></span>
+<p>Tomoko Korenaga and Jun Korenaga. Evolution of young oceanic lithosphere and the meaning of seafloor subsidence rate. <em>Journal of Geophysical Research: Solid Earth</em>, 121(9):6315–6332, 2016.</p>
+</div>
+<div class="citation" id="id22" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>RHC+20<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id9">1</a>,<a role="doc-backlink" href="#id10">2</a>)</span>
+<p>Fred Richards, Mark Hoggard, Alistair Crosby, Siavash Ghelichkhan, and Nicky White. Structure and dynamics of the oceanic lithosphere-asthenosphere system. <em>Physics of the Earth and Planetary Interiors</em>, 309:106559, 2020.</p>
+</div>
+<div class="citation" id="id20" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>SBRW22<span class="fn-bracket">]</span></span>
+<p>Matthew W Scroggs, Igor A Baratta, Chris N Richardson, and Garth N Wells. Basix: a runtime finite element basis evaluation library. <em>Journal of Open Source Software</em>, 7(73):3982, 2022.</p>
+</div>
+<div class="citation" id="id19" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>SDRW22<span class="fn-bracket">]</span></span>
+<p>Matthew W Scroggs, Jørgen S Dokken, Chris N Richardson, and Garth N Wells. Construction of arbitrary order finite element degree-of-freedom maps on polygonal and polyhedral cell meshes. <em>ACM Transactions on Mathematical Software (TOMS)</em>, 48(2):1–23, 2022.</p>
+</div>
+<div class="citation" id="id28" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id2">SW20</a><span class="fn-bracket">]</span></span>
+<p>Nathan Sime and Cian R Wilson. Automatic weak imposition of free slip boundary conditions via nitsche's method: application to nonlinear problems in geodynamics. <em>arXiv preprint arXiv:2001.10639</em>, 2020.</p>
+</div>
+<div class="citation" id="id27" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>SWvK24<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id2">1</a>,<a role="doc-backlink" href="#id5">2</a>)</span>
+<p>Nathan Sime, Cian R Wilson, and Peter E van Keken. Thermal modeling of subduction zones with prescribed and evolving 2d and 3d slab geometries. <em>Progress in Earth and Planetary Science</em>, 11(1):14, 2024.</p>
+</div>
+<div class="citation" id="id31" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>TYdKW13<span class="fn-bracket">]</span></span>
+<p>Nicola Tosi, David A Yuen, Nico de Koker, and Renata M Wentzcovitch. Mantle dynamics with pressure-and temperature-dependent thermal expansivity and conductivity. <em>Physics of the Earth and Planetary Interiors</em>, 217:48–58, 2013.</p>
+</div>
+<div class="citation" id="id26" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>vKCK+08<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id8">1</a>,<a role="doc-backlink" href="#id12">2</a>)</span>
+<p>Peter E van Keken, Claire Currie, Scott D King, Mark D Behn, Amandine Cagnioncle, Jiangheng He, Richard F Katz, Shu-Chuan Lin, E Marc Parmentier, Marc Spiegelman, and others. A community benchmark for subduction zone modeling. <em>Physics of the Earth and Planetary Interiors</em>, 171(1-4):187–197, 2008.</p>
+</div>
+<div class="citation" id="id25" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>vKW23<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id3">1</a>,<a role="doc-backlink" href="#id5">2</a>)</span>
+<p>Peter E van Keken and Cian R Wilson. An introductory review of the thermal structure of subduction zones: iii—comparison between models and observations. <em>Progress in Earth and Planetary Science</em>, 10(1):57, 2023.</p>
+</div>
+<div class="citation" id="id23" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>vZTC23<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id10">1</a>,<a role="doc-backlink" href="#id11">2</a>)</span>
+<p>Iris van Zelst, Cedric Thieulot, and Timothy J Craig. The effect of temperature-dependent material properties on simple thermal models of subduction zones. <em>Solid Earth</em>, 14(7):683–707, 2023.</p>
+</div>
+<div class="citation" id="id30" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id4">WW09</a><span class="fn-bracket">]</span></span>
+<p>Ikuko Wada and Kelin Wang. Common depth of slab-mantle decoupling: reconciling diversity and uniformity of subduction zones. <em>Geochemistry, Geophysics, Geosystems</em>, 2009.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+    
+        <div id="show_right_sidebar">
+            <p><a class="toggle_right_sidebar" href="#"><span class="icon">&lt;</span><span>Page contents</span></a></p>
+        </div>
+
+        <div id="right_sidebar">
+            <p><a class="toggle_right_sidebar" href="#"><span class="icon">&gt;</span><span>Page contents:</span></a></p>
+            <div class="page_toc">
+                <ul>
+<li><a class="reference internal" href="#">Computational domain</a><ul>
+<li><a class="reference internal" href="#domains">Domains</a><ul>
+<li><a class="reference internal" href="#slab">Slab</a></li>
+<li><a class="reference internal" href="#wedge">Wedge</a><ul>
+<li><a class="reference internal" href="#velocity-scaling-along-the-slab">Velocity scaling along the slab</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#global-domains">Global domains</a></li>
+<li><a class="reference internal" href="#overriding-plate">Overriding plate</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-create-mesh">Module create mesh</a><ul>
+<li><a class="reference internal" href="#geometry-of-the-subducting-plate">Geometry of the subducting plate</a></li>
+<li><a class="reference internal" href="#id13">Overriding plate</a></li>
+<li><a class="reference internal" href="#id14">Wedge</a></li>
+<li><a class="reference internal" href="#additional-geometrical-input">Additional geometrical input</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </div>
+    
+
+      <div class="clearer"></div>
+    </div>
+    <div class="button_nav_wrapper">
+        <div class="button_nav">
+            <div class="left">
+                
+                <a href="installation.html">
+                    <span class="icon">&lt;</span><span>Installation</span></a>
+                
+            </div>
+
+            <div class="right">
+                
+                    <a href="Material_properties.html"><span>Material properties</span><span class="icon">&gt;</span></a>
+                
+            </div>
+        </div>
+    </div>
+
+
+    <div class="footer" role="contentinfo">
+    &#169; Copyright .
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    </div>
+
+<p id="theme_credit">Styled using the <a href="https://github.com/piccolo-orm/piccolo_theme">Piccolo Theme</a></p>
+  </body>
+</html>
