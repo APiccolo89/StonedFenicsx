@@ -375,7 +375,7 @@ class PhaseDataBase:
         self.Pref           = 1e5     # Reference pressure [Pa]
         self.R              = 8.3145  # Universal gas constant [J/(mol K)]
         self.eta_min        = 1e18    # Min viscosity [Pas]
-        self.eta_max        = 1e25    # Max viscosity [Pas]
+        self.eta_max        = 1e26    # Max viscosity [Pas]
         self.eta_def        = 1e21    # Default viscosity [Pas]
         self.T_Scal         = 1.      # Default temperature scale
         self.P_Scal         = 1.      # Default Pressure scale 

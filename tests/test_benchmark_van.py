@@ -184,6 +184,9 @@ def read_data_base(option_viscous):
         [581.30, 607.26, 1003.35],
         [584.20, 592.8, 1000.0],
         ])
+        v1 = 556.8637
+        v2 = 601.713
+        v3 = 1000.1816
 
     if option_viscous==2: 
         
@@ -196,6 +199,9 @@ def read_data_base(option_viscous):
         [583.11, 604.96, 1000.05],
         [585.70, 591.30, 996.60]
         ])
+        v1 = 575.8761
+        v2 = 601.0293
+        v3 = 999.1289 
 
     db_vk1 = [np.mean(data[:,0]), np.min(data[:,0]), np.max(data[:,0])]
     db_vk2 = [np.mean(data[:,1]), np.min(data[:,1]), np.max(data[:,1])]
@@ -258,7 +264,7 @@ def test_composite():
     
 #-------------------------------------------------------------------------------
 if __name__ == '__main__': 
-    #test_isoviscous()
+    test_isoviscous()
     test_diffusion()
     test_composite()
 
