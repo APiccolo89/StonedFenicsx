@@ -9,7 +9,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 #-------------------------------------------------------------------------------
-def test_setup(option_viscous):
+def perform_test(option_viscous):
     from stonedfenicsx.utils import parse_input, time_the_time, timing
     from stonedfenicsx.Stoned_fenicx import StonedFenicsx
     import os
@@ -242,20 +242,20 @@ def read_data_base(option_viscous):
 #-------------------------------------------------------------------------------
 def test_isoviscous():
     # Test Van Keken 
-    test_setup(0) # IsoViscous
+    perform_test(0) # IsoViscous
     # Read Data Base and compare data 
     read_data_base(0)
     
 
 def test_diffusion():
     # Test Van Keken
-    test_setup(1)
+    perform_test(1)
     # Read Data Base and compare data
     read_data_base(1)
     
 def test_composite():
     # Test Van Keken
-    test_setup(2)
+    perform_test(2)
     # Read Data Base and compare data
     read_data_base(2)
     
