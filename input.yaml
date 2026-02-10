@@ -201,6 +201,14 @@ Input:
       n : null 
       radio_flag : 0 
       Hr : 0.0 
+  # Place holder for time-dependent left boundary condition
+#  time_dependent_left_bc:
+#    constant_age: 1 
+#    constant_vel: 1
+#    t_age : [0.0,30.0]
+#    t_vel : [0.0,30.0]
+#    age_plate : [50.0, 25.0]
+#    vel_plate : [5.0, 2.5]
 
 
   # Geometry
