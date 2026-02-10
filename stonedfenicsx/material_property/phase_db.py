@@ -51,15 +51,17 @@ class alpha_law():
         
 
 def _check_alpha(tag:str) -> alpha_law:
+    """check the name of thermal expansivity
 
+    Args:
+        tag (str): name of the thermal expansivity law
 
-    if tag == '':
-        # empty rheological flow law to fill it
-        return Rheological_flow_law()
-    else: 
-        RB = thermal_expansivity()
-        A = getattr(RB,Dic_alpha[tag])
-        return A 
+    Returns:
+        alpha_law: thermal expansivity law
+    """
+    RB = thermal_expansivity()
+    A = getattr(RB,Dic_alpha[tag])
+    return A 
 
 
 class Rheological_data_Base():
@@ -206,7 +208,13 @@ class Thermal_diffusivity():
 #--------------------------------------------------------------------------------------------
 
 class Lattice_Diffusivity():
-    def __init__(self,a=0.0,b=0.0,c=1.0,d=0.0,e=1.0,f=0.0,g=1.0):
+    def __init__(self,a=0.0
+                 ,b=0.0
+                 ,c=1.0
+                 ,d=0.0
+                 ,e=1.0
+                 ,f=0.0
+                 ,g=1.0):
         
         self.a = a 
         
@@ -255,6 +263,21 @@ class Rheological_flow_law():
         self.taup = taup
     #-----------------------------------------------------------------------------------------------------------
     def _correction(self,B,F=0,n=1,m=0,MPa=0,d0=0,r=0,water=0):
+        """Correction for the rheological flow law parameters, to account for the typology of the experiment, the unit of measure and the water content and grain size.
+        Args:
+            B (float): pre-exponential factor [xPa^-n s^-1]-> converted to Pa^-n s^-1
+            F (int, optional): typology of the experiment. Defaults to 0. 0: no correction, 1: simple shear, 2: uniaxial.
+            n (float, optional): stress exponent. Defaults to 1.
+            m (float, optional): grain size exponent. Defaults to 0.
+            MPa (int, optional): unit of measure. Defaults to 0. 0: Pa, 1: MPa.
+            d0 (float, optional): reference grain size. Defaults to 0.
+            r (float, optional): water content exponent. Defaults to 0.
+            water (float, optional): water content. Defaults to 0.
+        Returns:   
+            float: corrected pre-exponential factor
+        """
+        
+        
         # Correct for accounting the typology of the experiment
         if F == 1: # Simple shear
             B = B*2**(n-1)
@@ -270,6 +293,24 @@ class Rheological_flow_law():
 #-----------------------------------------------------------------------------------------------------------
 
 def _check_rheological(tag:str) -> Rheological_flow_law:
+    """
+    Retrieve rheological flow-law parameters and return a structured data object
+    for insertion into the phase database.
+
+    The function interprets the provided ``tag`` and extracts the corresponding
+    rheological flow-law parameters from internally defined datasets, packaging
+    them into a ``Rheological_flow_law`` data class used by the material property
+    system.
+
+    Args:
+        tag (str):
+            Name of the rheological flow-law model to retrieve.
+
+    Returns:
+        Rheological_flow_law:
+            Data object containing the parameters of the selected rheological
+            flow law, formatted for direct use in the phase database.
+    """
 
 
     if tag == '':
@@ -283,7 +324,24 @@ def _check_rheological(tag:str) -> Rheological_flow_law:
 #-----------------------------------------------------------------------------------------------------------
 
 def _check_diffusivity(tag:str) ->Lattice_Diffusivity:
+    """
+    Retrieve thermal-diffusivity parameters and return a structured data object
+    suitable for insertion into the phase database.
 
+    The function interprets the provided ``tag`` and extracts the corresponding
+    thermal diffusivity law from internally defined datasets, packaging the
+    parameters into a ``Lattice_Diffusivity`` data class used by the material
+    property system.
+
+    Args:
+        tag (str):
+            Name of the thermal diffusivity model/law to retrieve.
+
+    Returns:
+        Lattice_Diffusivity:
+            Data object containing the parameters of the selected thermal
+            diffusivity law, formatted for direct use in the phase database.
+    """
 
     if tag == 'Constant':
         # empty rheological flow law to fill it
@@ -473,33 +531,44 @@ def _generate_phase(PD:PhaseDataBase,
                     name_density:str       = 'PT',
                     radio:float = 0.0,
                     radio_flag:float = 0)     -> PhaseDataBase:
-    """
-    Generate phase: 
-    id : phase id number [0->n] 
-    name_diffusion : name of the diffusion/dislocation creep law 
-    Edif: data of the diffusion creep [Energy of activation]  
-    Vdif: data of the diffusion creep [Activation volume]
-    Bdif: preexponential factor diffusion
-    name_dislocation: name of the dislocation creep law
-    Edis: data of dislocation [Energy of activation]
-    Vdis: data of dislocation [Activation volume]
-    Bdis: preexponential factor dislocation 
-    n   : stress exponent 
-    Cp  : heat capacity 
-    k   : heat conductivity 
-    alpha:  thermal expansivity
-    beta : compressibility 
-    rho : density 
-    => output -> update the id_th phase_db 
+    """ Generate a phase with the specified properties and add it to the phase database.
+    Args:
+        PD (PhaseDataBase): The phase database to which the new phase will be added.
+        id (int): The **identifier** for the new phase.
+        name_diffusion (str): The name of the diffusion creep rheology to use.
+        Edif (float): Activation energy for diffusion creep [J/mol].
+        Vdif (float): Activation volume for diffusion creep [m^3/mol].
+        Bdif (float): Pre-exponential factor for diffusion creep [Pa^-1 s^-1].
+        name_dislocation (str): The name of the dislocation creep rheology to use.
+        n (float): Stress exponent for dislocation creep.
+        Edis (float): Activation energy for dislocation creep [J/mol].
+        Vdis (float): Activation volume for dislocation creep [m^3/mol].
+        Bdis (float): Pre-exponential factor for dislocation creep [Pa^-n s^-1].
+        Cp (float): Heat capacity [J/kg/K]. 
+        k (float): Thermal conductivity [W/m/K].
+        rho0 (float): Reference density [kg/m^3]. It is a mandatory parameters in any case. 
+        eta (float): Constant viscosity [Pa s]. 
+        name_capacity (str): The name of the heat capacity model to use.
+        name_conductivity (str): The name of the thermal conductivity model to use.
+        name_alpha (str): The name of the thermal expansivity model to use.
+        name_density (str): The name of the density model to use.
+        radio (float): Radiogenic heat production [W/kg].
+        radio_flag (float): Flag for radiative conductivity production calculation.
+    Returns:
+        PhaseDataBase: The updated phase database with the new phase added.
+        
+    PhaseDataBase is a class that contains the properties of the different phases. 
+    Few parameters are constanst common to all the phases (e.g. eta_max,T_ref)
+    The other parameters are vector of 1xnumber_phases, where number_phases is the number of phases that we want to consider in the model.
     """
     
     
-    if (not name_diffusion in Dic_rheo) or (not name_dislocation in Dic_rheo):
+    if (name_diffusion not in Dic_rheo) or (name_dislocation not in Dic_rheo):
         print_ph('The avaiable options are: ')
         for k in Dic_rheo: 
             print_ph('%s; '%k)
         
-        if (not name_diffusion in Dic_rheo):
+        if (name_diffusion not in Dic_rheo):
             raise ValueError("Error: %s is not a heat a Rheological option"%name_diffusion)
         else: 
             raise ValueError("Error: %s is not a heat a Rheological option"%name_dislocation)
@@ -529,13 +598,25 @@ def _generate_phase(PD:PhaseDataBase,
         PD.n[id] = n 
         if PD.Bdis[id] != 0.0: 
             print('Warning: Stress pre-exponential factor has inconsistent measure [Pa^-ns^-1] wrt the original flow law')
-    elif Edis != -1e23: 
+    elif Edis != -1e23: # if the user specify the activation energy, overwrite the value of the flow law
         PD.Edis[id] = Edis 
-    elif Vdis !=-1e23:  
+    elif Vdis !=-1e23: # if the user specify the activation volume, overwrite the value of the flow law  
         PD.Vdis[id] = Vdis 
-    elif Bdis != -1e23:
+    elif Bdis != -1e23: # if the user specify the pre-exponential factor, overwrite the value of the flow law
         PD.Bdis[id] = Bdis  
-    PD.eta[id] = eta
+    
+    if name_diffusion == 'Constant' and name_dislocation == 'Constant' and eta == -1e23:
+        raise Warning("Warning: Both diffusion and dislocation creep are set to be constant, but the viscosity is not specified")
+        print_ph(f'The software will use the default viscosity value of {PD.eta_def:.1e} Pa s. If you want to specify a different value, please set the eta parameter.')
+    
+    if name_diffusion == 'Constant' and name_dislocation == 'Constant' and eta == -1e23:
+            PD.eta[id] = PD.eta_def
+    elif name_diffusion != 'Constant' and name_dislocation == 'Constant' and eta != -1e23:
+        PD.eta[id] = PD.eta_def # in case of constant viscosity, this value will be used. In case of non-constant viscosity, this value will be ignored.
+    else: 
+        PD.eta[id] = 0.0 # in case of non-constant viscosity, this value will be ignored. I set it to 0.0 to avoid any confusion.
+
+    
  
     if name_diffusion == 'Constant' and name_dislocation == 'Constant': 
         option_rheology = 0
@@ -543,6 +624,10 @@ def _generate_phase(PD:PhaseDataBase,
         option_rheology = 1
     else: 
         option_rheology = 2 
+    
+    if name_diffusion == 'Constant' and name_dislocation != 'Constant':
+        raise ValueError("Error: If the diffusion creep is constant, the dislocation creep should be constant as well. Please check your input.")
+        
         
     PD.option_eta[id] = option_rheology
     
@@ -550,7 +635,7 @@ def _generate_phase(PD:PhaseDataBase,
     # Heat capacity
 
     
-    if not name_capacity in Dic_Cp:
+    if name_capacity not in Dic_Cp:
         print_ph('The avaiable options are: ')
         for k in Dic_Cp: 
             print_ph('%s; '%k)
@@ -561,7 +646,7 @@ def _generate_phase(PD:PhaseDataBase,
     
     
     
-    if not name_conductivity in Dic_conductivity:
+    if name_conductivity not in Dic_conductivity:
         print_ph('The avaiable options are: ')
         for k in Dic_conductivity: 
             print_ph('%s; '%k)
@@ -582,7 +667,7 @@ def _generate_phase(PD:PhaseDataBase,
     
     # Density
     
-    if not name_alpha in Dic_alpha:
+    if name_alpha not in Dic_alpha:
         print_ph('The avaiable options are: ')
         for k in Dic_conductivity: 
             print_ph('%s; '%k)
@@ -601,53 +686,39 @@ def _generate_phase(PD:PhaseDataBase,
     
     
     return PD 
-
-    
-#-----------------------------------------------------------------------------------------------------------
-
-# Deprecated, but better to keep here. 
-def release_heat_conductivity_parameters(option_k: int) -> Tuple[float, float]:
-    '''
-    So, long story short: Hofmeister 1999 conductivity formulation is basically:
-    $k(T,P) = k_298(298/T)^a * exp([-(4/gamma+1/3)*\integral(0,T)alpha(\theta)d\theta])$ 
-    In the formulation that I found in Tosi, and also in Xu, they use this except with the exp 
-    term. 
-    Hofmeister 1999, claims that the k_tot(T,P) = k(T,P)+k_rad(T,P) -> So, I will use as 
-    constitutive model the $k(T,P) = (k_298 + k_298 * a * P)(298/T)^a$ Assuming that k_298 and a 
-    are accouting the exponential term. On the other hand, I need to check in Xu 2004, if it is the case. 
-    '''
-    
-    if option_k == 1 or option_k == 3: 
-        k    = 4.10 
-        n    = 0.493   
-        a    = 0.032/1e9*k #[Convert from 1/GPa to 1/Pa]
-    elif option_k == 2 or option_k == 3 :
-        k  = 2.47 # [Wm-1K-1]
-        a = 0.33/1e9 # [Wm-1K-1GPa-1] GPA PD!!!!
-        n  = 0.48 
-    
-        
-    else:
-        raise ValueError("The option for heat conductivity is not implemented")
-
-    return k, a, n 
 #-----------------------------------------------------------------------------------------------------------
 def release_heat_capacity_parameters(tag:str,C0:float)->Tuple[float,float,float,float]: 
-    """_summary_
-    Cp = C0 + C1 **(-1/2) + C2 ** (-2) + C3 ** (-3) ** C4 (1) ** C5 (2) 
+    """
+    From the name of the heat-capacity model, return the coefficients used to compute Cp(T).
+
+    This function checks the tag, and extracts the coefficients from the internal (hard-coded) databases. 
+
+    The (non-constant) model is:
+
+        Cp(T) = C0 + C1 * T**(-1/2) + C2 * T**(-2) + C3 * T**(-3) + C4 * T + C5 * T**2
+
     Args:
-        tag (str): _description_
-        C0 (float): _description_
+        tag (str): Name of the heat-capacity model. Available options:
+            - "Constant": Cp(T) = C0
+            - (other tags): return the corresponding polynomial coefficients (C0..C5).
+
+        C0 (float): Constant heat capacity [J/kg/K].
+            Used only if ``tag == "Constant"``.
+            If ``tag != "Constant"``, this value is ignored and the coefficients are taken from the model
+            specified by ``tag``.
 
     Returns:
-        Tuple[float,float,float,float]: _description_
-        
-        'Constant',
-
+        tuple[float, float, float, float, float, float]:
+            The coefficients (C0, C1, C2, C3, C4, C5). For ``tag == "Constant"``, returns
+            ``(C0, 0.0, 0.0, 0.0, 0.0, 0.0)``.
     """
     # Molar weight of fosterite and fayalite
     
-    C1 = 0.0; C2 = 0.0; C3 = 0.0; C4 = 0.0 ; C5 = 0.0
+    C1 = 0.0
+    C2 = 0.0
+    C3 = 0.0
+    C4 = 0.0
+    C5 = 0.0
     
     if tag == 'Constant': 
         C0 = C0  
@@ -696,17 +767,30 @@ def release_heat_capacity_parameters(tag:str,C0:float)->Tuple[float,float,float,
 
     return C0, C1, C2, C3, C4, C5
 
-
-
-
 #----------------------------------------------------------------------------------------------------------
 
 def compute_oceanic_crust() -> Tuple[float,float,float,float,float,float]:
-    
-    """_summary_
-    Following Fred Richard 2020, with an adaptation, such as it makes sense. 
+    """
+    Compute the heat-capacity polynomial coefficients for oceanic crust.
+
+    The oceanic crust is treated as a mixture of **olivine**, **augite**, and
+    **plagioclase**. The bulk heat capacity is calculated as a weighted average
+    of the heat capacities of these three minerals, following the compositional
+    proportions reported in *Richard et al. (2020)*.
+
+    The literature values are typically provided in **molar heat capacity**
+    [J/mol/K]. This function converts them to **mass-specific heat capacity**
+    [J/kg/K] by dividing by the molar mass of each mineral before computing
+    the weighted average.
+
     Returns:
-        _type_: _description_
+        tuple[float, float, float, float, float, float]:
+            Polynomial coefficients ``(C0, C1, C2, C3, C4, C5)`` describing the
+            temperature-dependent heat capacity:
+
+                Cp(T) = C0 + C1·T⁻¹ᐟ² + C2·T⁻² + C3·T⁻³ + C4·T + C5·T²
+
+            Units of Cp are **J/kg/K**.
     """
     # Olivine
     # ---- 
@@ -750,10 +834,45 @@ def compute_oceanic_crust() -> Tuple[float,float,float,float,float,float]:
 
 
 def mantle_heat_capacity(flag: list) -> Tuple[float,float,float,float,float,float]:
-    
-    # To do in the future: generalise -> Database of heat capacity parameters as a function of the major mineral molar composition
-    # The law of the heat capacity is only temperature dependent, and it is a polynomial. For now I keep the vision of Iris, and introduce a few options later on 
-    
+    """
+    Return heat-capacity coefficients for mantle mineralogy.
+
+    The mantle heat capacity is computed from the heat capacity of **forsterite**
+    and **fayalite**, either selecting one end-member or forming a weighted mixture.
+    Two datasets/models are supported: **Berman (1988)** and **Berman & Aranovich (1996)**.
+
+    Literature values are typically reported as **molar heat capacity** [J/mol/K].
+    This function converts them to **mass-specific heat capacity** [J/kg/K] by dividing
+    by the molar mass of the corresponding mineral before applying any mixing.
+
+    Args:
+        flag:
+            Model and composition selector. The expected structure is::
+
+                flag = [model_id, composition]
+
+            where:
+
+            - ``model_id`` (int):
+                ``0`` → Berman (1988)
+                ``1`` → Berman & Aranovich (1996)
+
+            - ``composition`` (str):
+                ``"Fosterite"`` → use forsterite end-member
+                ``"Fayalite"``  → use fayalite end-member
+                ``"Mix"``       → weighted mixture of forsterite and fayalite
+                (weights are defined internally from the chosen dataset)
+
+    Returns:
+        tuple[float, float, float, float, float, float]:
+            Heat-capacity polynomial coefficients ``(C0, C1, C2, C3, C4, C5)`` for
+            the selected model and composition, such that:
+
+                Cp(T) = C0 + C1·T**(-1/2) + C2·T**(-2) + C3·T**(-3) + C4·T + C5·T**2
+
+            Cp is returned in **J/kg/K**.
+    """
+
 
     mmfo = 1/(140.691/1000)
     mmfa = 1/(203.771/1000)

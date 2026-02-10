@@ -1,9 +1,22 @@
 
 # modules
-from .package_import import *
+from .stonedfenicsx.package_import import *
+from .phase_db import PhaseDataBase
+from stonedfenicsx.scaling import Scal
 # ---------------------------------------------------------------------------------
 @dataclass
 class Functions_material_properties_global():
+    """Function containing the fem.function per each of the parameter of material properties
+    Member variables:
+    k0: constant conductivity
+    fr: radiogenic flag
+    k_a, k_b, k_c, k_d, k_e, k_f: conductivity parameters
+    C0, C1, C2, C3, C4, C5: heat capacity parameters
+    rho0, alpha0, alpha1, alpha2, Kb: density parameters and alpha parameters
+    option_rho: flag to choose the density formulation
+    radio: radiogenic heating
+    Tref, R, A, B, T_A, x_A, T_B, x_B: parameters for the radiative conductivity    
+    """
     # Heat Conductivity properties
     k0 : fem.Function = None 
     fr : fem.Function = None
@@ -29,7 +42,7 @@ class Functions_material_properties_global():
     option_rho : fem.Function = None
     # Radiogenic heating properties
     radio   : fem.Function = None
-    # Other properties
+    # Other properties 
     Tref    : float = 0.0
     R       : float = 8.3145
     A       : float = 0.0
@@ -39,29 +52,42 @@ class Functions_material_properties_global():
     T_B     : float = 0.0
     x_B     : float = 0.0
 # ---------------------------------------------------------------------------------
-def populate_material_properties_thermal(CP,pdb,phase):
+def populate_material_properties_thermal(CP:Functions_material_properties_global
+                                         ,pdb:PhaseDataBase
+                                         ,phase:fem.Function)->Functions_material_properties_global:
+
+    """    Initialize all thermal properties as FEniCS functions.
+    Args:        
+        CP (Functions_material_properties_global): class of fem.function that will contain all the material properties as fem.function
+        pdb (PhaseDataBase): class containing the material properties as numpy arrays, indexed by phase ID
+        phase (fem.Function): function containing the phase ID for each cell, used to index the material properties from the PhaseDataBase
+    Returns:
+        CP (Function_material_properties): update CP with the material properties as fem.function
+        
+    Note: The field in this version of the code are static. They are not advected. It is necessary to call it 
+    once during a preprocessing step, after the phase is defined, and before the solver routine is called. 
+        
     """
-    Initialize all material properties as FEniCS functions.
-    """
+
     ph = np.int32(phase.x.array)
     P0 = phase.function_space
     
     # Heat Conductivity properties
     CP.k0 = fem.Function(P0)  ; CP.k0.x.array[:]    =  pdb.k0[ph]
-    CP.fr = fem.Function(P0)  ; CP.fr.x.array[:]     =  pdb.radio_flag[ph]
-    CP.k_a= fem.Function(P0)  ; CP.k_a.x.array[:]    = pdb.k_a[ph]
-    CP.k_b= fem.Function(P0)  ; CP.k_b.x.array[:]    = pdb.k_b[ph]
-    CP.k_c= fem.Function(P0)  ; CP.k_c.x.array[:]    = pdb.k_c[ph]
-    CP.k_d= fem.Function(P0)  ; CP.k_d.x.array[:]    = pdb.k_d[ph]
-    CP.k_e= fem.Function(P0)  ; CP.k_e.x.array[:]    = pdb.k_e[ph]
-    CP.k_f= fem.Function(P0)  ; CP.k_f.x.array[:]    = pdb.k_f[ph]
+    CP.fr = fem.Function(P0)  ; CP.fr.x.array[:] =  pdb.radio_flag[ph]
+    CP.k_a= fem.Function(P0)  ; CP.k_a.x.array[:] = pdb.k_a[ph]
+    CP.k_b= fem.Function(P0)  ; CP.k_b.x.array[:] = pdb.k_b[ph]
+    CP.k_c= fem.Function(P0)  ; CP.k_c.x.array[:] = pdb.k_c[ph]
+    CP.k_d= fem.Function(P0)  ; CP.k_d.x.array[:] = pdb.k_d[ph]
+    CP.k_e= fem.Function(P0)  ; CP.k_e.x.array[:] = pdb.k_e[ph]
+    CP.k_f= fem.Function(P0)  ; CP.k_f.x.array[:] = pdb.k_f[ph]
     # Heat Capacity properties
-    CP.C0  = fem.Function(P0) ; CP.C0.x.array[:]     = pdb.C0[ph]
-    CP.C1 = fem.Function(P0)  ; CP.C1.x.array[:]     = pdb.C1[ph]
-    CP.C2 = fem.Function(P0)  ; CP.C2.x.array[:]     = pdb.C2[ph]
-    CP.C3 = fem.Function(P0)  ; CP.C3.x.array[:]     = pdb.C3[ph]
-    CP.C4 = fem.Function(P0)  ; CP.C4.x.array[:]     = pdb.C4[ph]
-    CP.C5 = fem.Function(P0)  ; CP.C5.x.array[:]     = pdb.C5[ph]
+    CP.C0  = fem.Function(P0) ; CP.C0.x.array[:] = pdb.C0[ph]
+    CP.C1 = fem.Function(P0)  ; CP.C1.x.array[:] = pdb.C1[ph]
+    CP.C2 = fem.Function(P0)  ; CP.C2.x.array[:] = pdb.C2[ph]
+    CP.C3 = fem.Function(P0)  ; CP.C3.x.array[:] = pdb.C3[ph]
+    CP.C4 = fem.Function(P0)  ; CP.C4.x.array[:] = pdb.C4[ph]
+    CP.C5 = fem.Function(P0)  ; CP.C5.x.array[:] = pdb.C5[ph]
     # Density properties
     CP.rho0    = fem.Function(P0)     ; CP.rho0.x.array[:]    = pdb.rho0[ph]
     CP.alpha0  = fem.Function(P0)     ; CP.alpha0.x.array[:]  = pdb.alpha0[ph]
@@ -90,6 +116,11 @@ def populate_material_properties_thermal(CP,pdb,phase):
         
 @dataclass
 class Functions_material_rheology():
+    """Initialise the rheological properties 
+    
+    Note: Stokes equation can be evaluated in a sub-domain (wedge). The class
+    is separated from the main material properties dataclass for this reason. 
+    """
     Bdif    : fem.Function = None
     Bdis    : fem.Function = None
     n       : fem.Function = None
@@ -102,9 +133,18 @@ class Functions_material_rheology():
     eta_max : float = None
     R        : float = None
 
-def populate_material_properties_rheology(CP,pdb,phase):
-    """
-    Initialize all rheological properties as FEniCS functions.
+def populate_material_properties_rheology(CP:Functions_material_rheology
+                                          ,pdb:PhaseDataBase
+                                          ,phase:fem.Function)->Functions_material_rheology:
+    """Change the rheological properties as fem.function, given the phase distribution and the PhaseDataBase.
+
+    Args:
+        CP (Functions_material_rheology): Rheological properties as fem.function
+        pdb (PhaseDataBase): Phase Data Base containing the rheological properties as numpy arrays, indexed by phase ID
+        phase (fem.Function): function containing the phase ID for each cell, used to index the material properties from the PhaseDataBase
+
+    Returns:
+        Functions_material_rheology: updated Functions_material_rheology with the rheological properties as fem.function
     """
     ph = np.int32(phase.x.array)
     P0 = phase.function_space
@@ -122,56 +162,51 @@ def populate_material_properties_rheology(CP,pdb,phase):
     CP.R       = pdb.R
     CP.eta.x.scatter_forward()
     return CP 
-        
-    
-# ---------------------------------------------------------------------------------
-
-
-
-
-#----- 
-@njit 
-def compute_thermal_properties(pdb,T,p,ph):
-    
-    Cp   = heat_capacity(pdb,T,ph)
-    rho  = density(pdb,T,p,ph)
-    k    = heat_conductivity(pdb,T,p,rho,Cp,ph)
-    
-    return Cp, rho, k 
-
-
-#----------------------------------------------------------------------------------
-def heat_conductivity_FX(FG,T,p,Cp,rho):
+#---------------------------------------------------------------------------------
+def heat_conductivity_FX(FG : Functions_material_properties_global
+                         ,T : fem.Function 
+                         ,p : fem.Function
+                         ,Cp : fem.Expression
+                         ,rho: fem.Expression) -> fem.Expression:
     """Function that computes the heat conductivity for a given Pressure and Temperature
        k = k0 + kb*exp(-(T-Tr)/kc)+kd*exp(-(T-Tr)/ke)*exp(kf*P) + rad * flag
        if the phase has a constant conductivity, k0 is defined and positive, otherwise is 0.0 
        while while the other properties are set to be 0.0 
        kb*exp(T-Tr/0)=0.0 so no active. 
     Args:
-        FG (_type_) : Precomputed function spaces with the material properties
-        T (_type_)  : Input temperature
-        p (_type_)  : Input pressure
-        Cp (_type_) : Cp form 
-        rho (_type_): rho form
+        FG (Functions_material_properties_global) : Precomputed function spaces with the material properties
+        T (fem.Function)  : Temperature field or trial function
+        p (_type_)  : Lithostatic pressure field 
+        Cp (_type_) : Cp expression for the computation of the conductivity, it is an expression because it depends on T 
+        rho (_type_): rho expression for the computation of the conductivity, it is an expression because it depends on T and P 
 
     Returns:
-        k: fem.form
+        k: fem.form expression for the heat conductivity, to be used in the weak formulation of the heat equation.
     """
     
-
+    # Compute the radiative conductivity
     k_rad = FG.A * exp(-(T-FG.T_A)**2/ (2*FG.x_A ** 2 )) + FG.B * exp(-(T - FG.T_B)**2 / (2* FG.x_B**2))
-
+    # Compute the lattice conductivity
     kappa_lat = FG.k_a + FG.k_b * exp(-(T-FG.Tref)/FG.k_c) + FG.k_d * exp(-(T-FG.Tref)/FG.k_e)
-    
+    # Compute the pressure dependence of the conductivity
     kappa_p   = exp(FG.k_f * p)  
-
+    # Compute the total conductivity FG.k0 -> constant conductivity, if the phase has it, otherwise 0.0
     k = FG.k0  + (kappa_lat * kappa_p * Cp * rho + k_rad * FG.fr)  
 
     return k 
 #---------------------------------------------------------------------------------
-def heat_capacity_FX(FG, T): 
+def heat_capacity_FX(FG : Functions_material_properties_global
+                     ,T : fem.Function) -> fem.Expression: 
+    """Derive the heat capacity expression
 
-    
+    Args:
+        FG (Functions_material_properties_global): Precomputed function spaces with the material properties
+        T (fem.Function): Temperature field or trial function
+
+    Returns:
+        fem.Expression: expression for the heat capacity, to be used in the weak formulation of the heat equation.
+    """
+    # General formula for the heat capacity, it is an expression because it depends on T. C0 = Cp in case the heat capacity is constant, otherwise the other parameters are active.
     C_p = FG.C0 + FG.C1 * (T**(-0.5)) + FG.C2 * T**(-2.) + FG.C3 * (T**(-3.)) + FG.C4 * T + FG.C5 * T**2
 
     return C_p
@@ -181,51 +216,19 @@ def compute_radiogenic(FG, hs):
     return hs 
     
 #---------------------------------------------------------------------------------
-@njit
-def heat_conductivity(pdb,T,p,rho,Cp,ph):    
-
-
-    k_rad = pdb.A * np.exp(-(T-pdb.T_A)**2/ (2*pdb.x_A ** 2 )) + pdb.B * np.exp(-(T - pdb.T_B)**2 / (2* pdb.x_B**2))
-
-    kappa_lat = pdb.k_a[ph] + pdb.k_b[ph] * np.exp(-(T-pdb.Tref)/pdb.k_c[ph]) + pdb.k_d[ph] * np.exp(-(T-pdb.Tref)/pdb.k_e[ph])
+def density_FX(FG:Functions_material_properties_global
+               ,T:fem.Function
+               ,p:fem.Function)->fem.Expression:
     
-    kappa_p   = np.exp(pdb.k_f[ph] * p)  
-
-    k = pdb.k0[ph] + kappa_lat * kappa_p * Cp * rho + k_rad * pdb.radio_flag[ph]
-
-    return k 
-#---------------------------------------------------------------------------------
-
-@njit
-def heat_capacity(pdb,T,ph):
-
-    C_p = pdb.C0[ph] + pdb.C1[ph] * (T**(-0.5)) + pdb.C2[ph] * T**(-2.0) + pdb.C3[ph] * (T**(-3.)) + pdb.C4[ph]* T + pdb.C5[ph] * T**2
+    """Derive the density expression
+    Args:
+        FG (Functions_material_properties_global): Precomputed function spaces with the material properties
+        T (fem.Function): Temperature field or trial function
+        p (fem.Function): Pressure field or trial function
+    Returns:
+        fem.Expression: expression for the density, to be used in the weak formulation of the heat equation.
         
-    return C_p
-#---------------------------------------------------------------------------------
-@njit
-def density(pdb,T,p,ph):
-    rho_0 = pdb.rho0[ph] 
-    
-    if pdb.option_rho[ph] == 0:
-        # constant variables 
-        return rho_0 
-    else :
-        # calculate rho
-        rho     = rho_0 * (1 - np.exp(- p * pdb.alpha2[ph])*( pdb.alpha0[ph] * (T - pdb.Tref) + (pdb.alpha1[ph]/2.) * ( T**2 - pdb.Tref**2 )))
-        if pdb.option_rho[ph] == 2:
-            # calculate the pressure dependence of the density
-            Kb = pdb.Kb[ph]
-            rho = rho * np.exp(p/Kb)    
-    
-    return rho
-
-#-----
-def density_FX(FG, T, p):
     """
-    Compute density as a UFL expression, FEniCSx-compatible.
-    """
-
 
     # Base density (with temperature dependence)
     temp_term = exp(- p * FG.alpha2)*(FG.alpha0 * (T - FG.Tref) + (FG.alpha1 / 2.0) * (T**2 - FG.Tref**2))
@@ -242,12 +245,17 @@ def density_FX(FG, T, p):
 
     return rho 
 #----------------------------------
-
-
-#----------------------------------
-def alpha_FX(FG, T, p):
-    """
-    Compute density as a UFL expression, FEniCSx-compatible.
+def alpha_FX(FG : Functions_material_properties_global
+             ,T : fem.Function
+             ,p : fem.Function)->fem.Expression:
+    """Derive the thermal expansivity expression
+    Args:
+        FG (Functions_material_properties_global): Precomputed function spaces with the material properties
+        T (fem.Function): Temperature field or trial function
+        p (fem.Function): Pressure field or trial function
+    Returns:
+        fem.Expression: expression for the thermal expansivity, to be used in the weak formulation of the heat equation.
+        
     """
 
     # Base density (with temperature dependence)
@@ -257,12 +265,25 @@ def alpha_FX(FG, T, p):
     return alpha 
 
 
-#-----------------------------------
-def compute_viscosity_FX(e,T_in,P_in,FR,sc):
-    """
-    It is wrong, but frequently used: it does not change too much by the end the prediction. 
-    I use the minimum viscosity possible. The alternative is taking the average between eta_min and eta_av. So, 
-    since I do not understand how I can easily integrate a full local iteration, I prefer to use the "wrong" composite method
+#---------------------------------------------------------------------------------
+def compute_viscosity_FX(e:fem.Expression
+                        ,T_in:fem.Function
+                        ,P_in:fem.Function
+                        ,FR:Functions_material_rheology
+                        ,sc:Scal)->fem.Expression:
+    """Compute the viscosity for a given strain rate, Pressure and Temperature
+    The viscosity is computed as a composite of the diffusion and dislocation creep, with a maximum viscosity cutoff.
+    The composite is computed as the harmonic average of the diffusion and dislocation viscosity.
+    Args:
+        e (fem.Expression): strain rate invariant expression, to be computed in the weak formulation
+        T_in (fem.Function): Temperature field 
+        P_in (fem.Function): Pressure field 
+        FR (Functions_material_rheology): Precomputed function spaces with the rheological properties
+        sc (Scal): Scaling class containing the scaling factors for the problem, used to scale the input fields 
+        to the non-dimensional values used in the rheological laws. 
+    Returns:    
+        fem.Expression: expression for the viscosity, to be used in the weak formulation of the Stokes equation.
+    
     """    
     def ufl_pow(u, v, eps=0):
         return ufl.exp(v * ufl.ln(u + eps))
@@ -286,10 +307,7 @@ def compute_viscosity_FX(e,T_in,P_in,FR,sc):
     etadf     = 0.5 * cdf**(-1)
     eta_av    = 1 / (1 / etads + 1/etadf + 1/FR.eta_max)
     eta_df    = 1 / (1 / etadf + 1 / FR.eta_max) 
-    eta_ds    = 1 / (1 / etads + 1 / FR.eta_max)
-    
-    
-    
+        
     # check if the option_eta -> constant or not, otherwise release the composite eta 
     eta = ufl.conditional(
         ufl.eq(FR.option_eta, 0.0), FR.eta,
@@ -299,17 +317,24 @@ def compute_viscosity_FX(e,T_in,P_in,FR,sc):
         )
     )
 
-
     return eta
-
-def compute_plastic_strain(e_II,T_in,P_in,pdb,ph,phwz,sc):
+#---------------------------------------------------------------------------------
+def compute_plastic_strain(e_II:fem.Expression
+                           ,T_in:fem.Function
+                           ,P_in:fem.Function
+                           ,pdb:PhaseDataBase
+                           ,ph:int
+                           ,phwz:fem.Function
+                           ,sc)->tuple[fem.Expression, fem.Expression]:
     """
-    It is wrong, but frequently used: it does not change too much by the end the prediction. 
-    I use the minimum viscosity possible. The alternative is taking the average between eta_min and eta_av. So, 
-    since I do not understand how I can easily integrate a full local iteration, I prefer to use the "wrong" composite method
-    """    
 
-    e_II = e_II + 1e-15
+
+
+
+
+    """
+
+    e_II = e_II 
     
     
     # If your phase IDs are available per cell for mesh0:
@@ -330,14 +355,10 @@ def compute_plastic_strain(e_II,T_in,P_in,pdb,ph,phwz,sc):
     Vdif    = fem.Function(P0,name = 'Vdif')  ; Vdif.x.array[:]    =  pdb.Vdif[phwz]
     Vdis    = fem.Function(P0,name = 'Vdis')  ; Vdis.x.array[:]    =  pdb.Vdis[phwz]
     
-
-
     # In case the viscosity for the given phase is constant 
     eta_con     = fem.Function(P0) ; eta_con.x.array[:]     =  pdb.eta[phwz]
     # Option for eta for a given marker number ph 
     opt_eta = fem.Function(P0)  ; opt_eta.x.array[:] =  pdb.option_eta[phwz]
-    # Eta max 
-    Bd_max  = 1 / 2 / pdb.eta_max
     # strain indipendent  
     cdf = Bdif * exp(-(Edif + P * Vdif )/(pdb.R * T)) ; cds = Bdis * exp(-(Edis + P * Vdis)/(pdb.R * T))
     # compute tau guess
@@ -366,752 +387,97 @@ def compute_plastic_strain(e_II,T_in,P_in,pdb,ph,phwz,sc):
 
 
     return e_plr, tau_eff
+#-----------------------------------------------------------------------------
+@njit
+def heat_conductivity(pdb:PhaseDataBase
+                      ,T:NDArray[np.float64]
+                      ,p:NDArray[np.float64]
+                      ,rho:NDArray[np.float64]
+                      ,Cp:NDArray[np.float64]
+                      ,ph:int)->NDArray[np.float64]:    
 
-#-----------------------------------------------------------------------------------
-#@njit
-def compute_viscosity(e,T,P,B,n,E,V,R):
+    """Compute the heat conductivity for a given Pressure and Temperature
+    Args:
+        pdb (PhaseDataBase): Phase Data Base containing the material properties as numpy arrays, indexed by phase ID
+        T (NDArray[np.float64]): Temperature field as a numpy array
+        p (NDArray[np.float64]): Pressure field as a numpy array
+        rho (NDArray[np.float64]): Density field as a numpy array
+        Cp (NDArray[np.float64]): Heat capacity field as a numpy array
+        ph (int): phase ID for which to compute the conductivity, used to index the material properties from the PhaseDataBase
+    Returns:
+        NDArray[np.float64]: array containing the heat conductivity
+    
+    Function to compute the heat conductivity for a given Pressure and Temperature, used for the post-processing of the thermal properties.
+    It is used for computing the initial conductivity field for the oceanic plate thermal boundary condition.
+    """
 
-    t = -1+1/n
+    k_rad = pdb.A * np.exp(-(T-pdb.T_A)**2/ (2*pdb.x_A ** 2 )) + pdb.B * np.exp(-(T - pdb.T_B)**2 / (2* pdb.x_B**2))
 
-    eta = 0.5*B**(-1/n)*e**t*np.exp((E+P*V)/(n*R*T))
+    kappa_lat = pdb.k_a[ph] + pdb.k_b[ph] * np.exp(-(T-pdb.Tref)/pdb.k_c[ph]) + pdb.k_d[ph] * np.exp(-(T-pdb.Tref)/pdb.k_e[ph])
+    
+    kappa_p   = np.exp(pdb.k_f[ph] * p)  
 
-    return eta 
+    k = pdb.k0[ph] + kappa_lat * kappa_p * Cp * rho + k_rad * pdb.radio_flag[ph]
+
+    return k 
 #---------------------------------------------------------------------------------
-# TILL STOKES BETTER TO NOT TOUCH THIS FUNCTION
-#@njit
-def viscosity(exx:float,eyy:float,exy:float,T:float,P:float,p_data,it:int,ph:int):#,imat):
-    ck = 0
-    e=np.sqrt(0.5*(exx**2+eyy**2)+exy**2)
+@njit
+def density(pdb:PhaseDataBase
+            ,T:NDArray[np.float64]
+            ,p:NDArray[np.float64]
+            ,ph:int)->NDArray[np.float64]:
+    """Compute the density for a given Pressure and Temperature, used for oceanic plate thermal boundary condition.
     
+    Args:
+        pdb (PhaseDataBase): Phase Data Base containing the material properties as numpy arrays, indexed by phase ID
+        T (NDArray[np.float64]): Temperature field as a numpy array
+        p (NDArray[np.float64]): Pressure field as a numpy array
+        ph (int): phase ID for which to compute the density, used to index the material properties from the PhaseDataBase
+    Returns:
+        NDArray[np.float64]: array containing the density   
+    Function to compute the density for a given Pressure and Temperature. 
+    """
+    rho_0 = pdb.rho0[ph] 
     
+    if pdb.option_rho[ph] == 0:
+        # constant variables 
+        return rho_0 
+    else :
+        # calculate rho
+        rho     = rho_0 * (1 - np.exp(- p * pdb.alpha2[ph])*( pdb.alpha0[ph] * (T - pdb.Tref) + (pdb.alpha1[ph]/2.) * ( T**2 - pdb.Tref**2 )))
+        if pdb.option_rho[ph] == 2:
+            # calculate the pressure dependence of the density
+            Kb = pdb.Kb[ph]
+            rho = rho * np.exp(p/Kb)    
     
-    rheo_type = p_data.option_eta[ph]
-    eta_max   = p_data.eta_max
-    eta_min   = p_data.eta_min
-    Bdif = p_data.Bdif[ph]
-    Edif = p_data.Edif[ph]
-    Vdif = p_data.Vdif[ph]
-
-    R    = p_data.R
-    Bdis = p_data.Bdis[ph]
-    Edis = p_data.Edis[ph]
-    Vdis = p_data.Vdis[ph]
-    n    = p_data.n[ph]
-    T = p_data.T_Scal * T 
-    P = p_data.P_Scal * P
-    # Short explanation: I do not know how to not dimensionalise E, R and V all these quantities have 
-    # a dependency with mol which is a measure of mass, but, also specific to the chemical composition 
-    # of the element -> so, in principle, we can derive a measure in E/kg R -> E/kg and so forth 
-    # However seems arbitrary. Since the exponential exp(E+PV/RT)=> is by default dimensionless, I simply 
-    # unscale the temperature and pressure for computing the temperature dependency. In alterative -> I scale m^3/mol and 
-    # E/mol with the usual scale leaving E* V* to be 1/mol. This is an alternative strategy, but seems annoying. 
-
-    
-    # Certain area of the model does not have a real velocity field
-    if e == 0: 
-        e = 1e-21
-    
-    if (it == 0) or (rheo_type== 0):
-        return p_data.eta_def
-    
-    if (rheo_type) == 0: 
-        return p_data.eta[ph]
-
-          
-    if rheo_type== 1:
-        # diffusion creep 
-        eta_dif = compute_viscosity(e,T,P,Bdif,1,Edif,Vdif,R)
-
-        val=1/(1/eta_max+1/eta_dif)
-        
-    if rheo_type == 3: 
-        # dislocation creep 
-        eta_dis = compute_viscosity(e,T,P,Bdis,n,Edis,Vdis,R)
-        val=1/(1/eta_max+1/eta_dis)
-        
-    if rheo_type == 2:
-        # dislocation & diffusion creep 
-        eta_dif = compute_viscosity(e,T,P,Bdif,1,Edif,Vdif,R)
-        eta_dis = compute_viscosity(e,T,P,Bdis,n,Edis,Vdis,R)
-        eta_eff = (1/eta_dif+1/eta_dis)**(-1)
-        val=1/(1/eta_max+1/eta_eff)
-    
-    if rheo_type == 4: 
-
-        val,tau = point_iteration(eta_max,eta_min,e,T,P,Bdif,Edif,Vdif,Bdis,n,Edis,Vdis,R)
-          
-    return val
-#---------------------------------------------------------------------------------
-# Strain Partitioning 
-def strain_partitioning(e:float,T:float,P:float,p_data,ph:int):#,imat):
-    ck = 0
-    
-    
-    rheo_type = p_data.option_eta[ph]
-    eta_max   = p_data.eta_max
-    eta_min   = p_data.eta_min
-    Bdif = p_data.Bdif[ph]
-    Edif = p_data.Edif[ph]
-    Vdif = p_data.Vdif[ph]
-
-    R    = p_data.R
-    Bdis = p_data.Bdis[ph]
-    Edis = p_data.Edis[ph]
-    Vdis = p_data.Vdis[ph]
-    n    = p_data.n[ph]
-    T =  T 
-    P =  P
-
-    e_pl,e_dis, tau = point_iteration2(eta_max,eta_min,e,T,P,Bdif,Edif,Vdif,Bdis,n,Edis,Vdis,R,p_data.friction_angle)
-          
-    return e_pl,e_dis, tau
-
-
+    return rho
 
 #---------------------------------------------------------------------------------
+@njit
+def heat_capacity(pdb:PhaseDataBase
+                  ,T:NDArray[np.float64]
+                  ,ph:int)->NDArray[np.float64]:
+    """Compute heat capacity
 
-#@njit
-def _find_tau_guess(cdf,cds,n,eta_max,e):
+    Args:
+        pdb (PhaseDataBase): Phase Data Base containing the material properties as numpy arrays, indexed by phase ID
+        T (NDArray[np.float64]): Temperature field as a numpy array
+        ph (int): phase ID for which to compute the heat capacity, used to index the material properties from the PhaseDataBase
+
+    Returns:
+        NDArray[np.float64]: array containing the heat capacity
     """
-    input:
-    n -> stress exponent
-    Bdisl -> dislocation creep parameter
-    Qdisl -> dislocation activation energy
-    Bdif  -> diffusion creep parameter
-    Qdif  -> diffusion activation energy
-    eta_max -> maximum viscosity
-    e -> strain rate
-    T -> temperature
-    output:
-    t -> tau_guess
-    => First compute the minimum and maximum viscosity for the given 
-    input strain rate and temperature.
-    -> Then compute the relative stresses associated with these mecchanism 
-    -> compute the average value of the stresses
-    ---> The real stress is between the value defined by the armonic average viscosity and the 
-    value defined by the minimum viscosity between the involved mechanism 
-    """
-    # Compute the viscosity associated with the dislocation and diffusion creep
-    # mechanism
-    etads=0.5*cds**(-1/n)*e**((1-n)/n)
-    etadf=0.5*cdf**(-1)
-    # Compute the viscosity associated with the maximum viscosity
-    # mechanism
-    av_vis = (1/etadf+1/etads+1/eta_max)**(-1)
+
+    C_p = pdb.C0[ph] + pdb.C1[ph] * (T**(-0.5)) + pdb.C2[ph] * T**(-2.0) + pdb.C3[ph] * (T**(-3.)) + pdb.C4[ph]* T + pdb.C5[ph] * T**2
     
-    if etadf<etads:
-        min_vis = etadf
-    else:
-        min_vis = etads
-
-    if min_vis>eta_max:
-        min_vis = eta_max
-
-
-    tau_min = 2*av_vis*e
-    tau_max = 2*min_vis*e 
-
-    return tau_min,tau_max
-
-
+    return C_p
 #---------------------------------------------------------------------------------
-
-# Define the function f(tau) for root-finding
-##@njit
-def f(tau, compliance_disl, compliance_diff, B_max, e, n):
-    """Equation to solve for tau."""
-    return (e - (compliance_disl * tau**n + compliance_diff * tau + B_max * tau)) / e
-
-# Custom bisection method
-#@njit
-def bisection_method(a, b, tol, max_iter, compliance_disl, compliance_diff, B_max, e, n):
-    """Perform bisection method to find the root of f in the interval [a, b]."""
-    fa = f(a, compliance_disl, compliance_diff, B_max, e, n)
-    fb = f(b, compliance_disl, compliance_diff, B_max, e, n)
-    if (np.abs(fa)<tol) or (np.abs(fb)<tol):
-        return a if np.abs(fa)<tol else b
-    if fa * fb > 0:
-        raise ValueError("Function has the same sign at the endpoints a and b")
-
-    for _ in range(max_iter):
-        # Compute midpoint
-        c = (a + b) / 2
-        fc = f(c, compliance_disl, compliance_diff, B_max, e, n)
-
-        # Check for convergence
-        if abs(fc) < tol:
-            return c
-        elif fa * fc < 0:
-            b = c
-            fb = fc
-        else:
-            a = c
-            fa = fc
-
-    return (a + b) / 2  # Return midpoint after max_iter iterations
-#---------------------------------------------------------------------------------
-
-# Main point_iteration function
-#@njit
-def point_iteration(eta_max: float,
-                    eta_min: float,
-                    e: float,
-                    T: float,
-                    P: float,
-                    Bdif: float,
-                    Edif: float,
-                    Vdif: float,
-                    Bdis: float,
-                    n: float,
-                    Edis: float,
-                    Vdis: float,
-                    R: float) -> float:
-    """
-    Optimized point-wise iteration to compute viscosity, real stress.
-    """
-
-    # Precompute constant values to avoid repeated calculations
-    B_max = 1 / (2 * eta_max)
-    compliance_disl = Bdis * np.exp(-(Edis+P*Vdis) / (R * T))
-    compliance_diff = Bdif * np.exp(-(Edif+P*Vdif) / (R * T))
-
-    # Find tau_guess using custom bisection method
-    tau_min, tau_max = _find_tau_guess(compliance_diff, compliance_disl, n, eta_max, e)
-    if abs(tau_max - tau_min) / (tau_max + tau_min) < 1e-6:
-        tau = (tau_min + tau_max) / 2
-    else:
-        tol = 1e-8
-        max_iter = 100
-        tau = bisection_method(tau_min, tau_max, tol, max_iter, compliance_disl, compliance_diff, B_max, e, n)
-
-    # Compute the viscosity and real stress
-    e_diff = compliance_diff * tau
-    e_dis = compliance_disl * tau ** n
-    e_max = B_max * tau
-
-    tau_total = tau + 2 * eta_min * e
-    eta = tau_total / (2 * e)
-
-    return eta, tau_total
-#---------------------------------------------------------------------------------
-
-# Main point_iteration function
-#@njit
-def point_iteration2(eta_max: float,
-                    eta_min: float,
-                    e: float,
-                    T: float,
-                    P: float,
-                    Bdif: float,
-                    Edif: float,
-                    Vdif: float,
-                    Bdis: float,
-                    n: float,
-                    Edis: float,
-                    Vdis: float,
-                    R: float,
-                    phi: float) -> float:
-    """
-    Optimized point-wise iteration to compute viscosity, real stress.
-    """
-
-    # Precompute constant values to avoid repeated calculations
-    B_max = 1 / (2 * eta_max)
-    compliance_disl = Bdis * np.exp(-(Edis+P*Vdis) / (R * T))
-    compliance_diff = Bdif * np.exp(-(Edif+P*Vdif) / (R * T))
-    tau_lim = 10e6*np.cos(5*pi/180)+np.sin(phi)*P
-    # Find tau_guess using custom bisection method
-    tau_min, tau_max = _find_tau_guess(compliance_diff, compliance_disl, n, eta_max, e)
-    if tau_min >= tau_lim:
-        tau = tau_lim
-    elif abs(tau_max - tau_min) / (tau_max + tau_min) < 1e-6:
-        tau = (tau_min + tau_max) / 2
-    else:
-        tol = 1e-12
-        max_iter = 100
-        tau = bisection_method(tau_min, tau_max, tol, max_iter, compliance_disl, compliance_diff, B_max, e, n)
-
-
-    # Compute the viscosity and real stress
-    e_diff = compliance_diff * tau
-    e_dis = compliance_disl * tau ** n
-    e_max = B_max * tau
-    e_pl  = e-(e_diff+e_dis+e_max) 
-    e_vs = e_diff+e_dis+e_max 
-    
-
-    return e_pl, e_vs, tau
-
-
-
-
-
-
-
-
-
-
-
-
-def unit_test_thermal_properties(pt_save):    
-    """
-    Unit test for thermal properties functions. Function that the author used to test the thermal properties functions and debug -> by the end
-    I will introduce a few folder in which the data will be saved for being benchmarked in other system and being sure that the code is worked as
-    expected. On the other hand, there are a few shit with fenicx that I need to account for, fuck. 
-    """
-    import numpy as np 
-    import sys, os
-    sys.path.append(os.path.abspath("src"))
-    from phase_db import PhaseDataBase 
-    from phase_db import _generate_phase
-    from scal import Scal
-    
-    T = np.linspace(298.15,273.15+1500,num=1000) # Vector temperature
-    P = np.linspace(0.0, 15, num = 1000) * 1e9  # Vector pressure   
-    
-    # phase data base for the test 
-    
-    pdb = PhaseDataBase(1)
-    pdb = _generate_phase(pdb,0,option_rho = 2,option_rheology = 0, option_k = 3, option_Cp = 3,eta=1e21)
-    
-    rho_test = np.zeros([len(T),len(P)],dtype = np.float64); k_test = np.zeros_like(rho_test); Cp_test = np.zeros_like(rho_test)
-    
-    for i in range(len(T)):
-        for j in range(len(P)):
-            rho_test[i,j] = density(pdb,T[i],P[j],0)
-            k_test[i,j]   = heat_conductivity(pdb,T[i],P[j],0)
-            Cp_test[i,j]  = heat_capacity(pdb,T[i],P[j],0)
-    
-    thermal_diffusivity = k_test/rho_test/Cp_test
-    
-    base_cmap = plt.get_cmap('inferno')
-    from matplotlib.colors import ListedColormap
-
-    # Number of discrete colors
-    N = 20
-
-    # Create a new discrete colormap
-    colors = base_cmap(np.linspace(0, 1, N))
-    discrete_cmap = ListedColormap(colors)
-    
-    
-    fig = plt.figure()
-    ax = fig.gca()
-    a = ax.pcolormesh(T-273.15,P,rho_test.T,shading='gouraud',cmap = discrete_cmap)
-    plt.colorbar(a,label=r'$\varrho$ [$\frac{\mathrm{kg}}{\mathrm{m}^3}$]')
-    ax.set_xlabel(r'T [${\circ}^{C}$]')    
-    ax.set_ylabel(r'P [GPa]')
-    fig.savefig("%s/density.png"%pt_save)      
-    
-    
-        
-    fig = plt.figure()
-    ax = fig.gca()
-    a = ax.pcolormesh(T-273.15,P/1e9,rho_test.T,shading='gouraud',cmap = discrete_cmap)
-    plt.colorbar(a,label=r'$\varrho$ [$\frac{\mathrm{kg}}{\mathrm{m}^3}$]')
-    ax.set_xlabel(r'T [^${\circ}{C}$]')    
-    ax.set_ylabel(r'P [GPa]')
-    fig.savefig("%s/density.png"%pt_save)     
-    
-    
-        
-    fig = plt.figure()
-    ax = fig.gca()
-    a = ax.pcolormesh(T-273.15,P/1e9,k_test.T,shading='gouraud',cmap = discrete_cmap)
-    plt.colorbar(a,label=r'$k$ [$\frac{\mathrm{W}}{\mathrm{m}\mathrm{K}}$]')
-    ax.set_xlabel(r'T [^${\circ}{C}$]')    
-    ax.set_ylabel(r'P [GPa]')
-    fig.savefig("%s/conductivity.png"%pt_save)     
-    
-    fig = plt.figure()
-    ax = fig.gca()
-    a = ax.pcolormesh(T-273.15,P/1e9,Cp_test.T,shading='gouraud',cmap = discrete_cmap)
-    plt.colorbar(a,label=r'$C_p$ [$\frac{\mathrm{J}}{\mathrm{kg}\mathrm{K}}$]')
-    ax.set_xlabel(r'T [^${\circ}{C}$]')    
-    ax.set_ylabel(r'P [GPa]')
-    fig.savefig("%s/capacity.png"%pt_save)  
-    
-    fig = plt.figure()
-    ax = fig.gca()
-    a = ax.pcolormesh(T-273.15,P/1e9,np.log10(thermal_diffusivity.T),shading='gouraud',cmap = discrete_cmap)
-    plt.colorbar(a,label=r'$\kappa$ [$\frac{\mathrm{m^2}}{\mathrm{s}}$]')
-    ax.set_xlabel(r'T [^${\circ}{C}$]')    
-    ax.set_ylabel(r'P [GPa]')
-    fig.savefig("%s/diffusivity.png"%pt_save)  
-        
-    
-    plt.close('all')
-    return rho_test, k_test, Cp_test 
-    
-    
-def unit_test_thermal_properties_scaling(pt_save,dim_rho,dim_k,dim_Cp):    
-    """
-    Unit test for thermal properties functions. Function that the author used to test the thermal properties functions and debug -> by the end
-    I will introduce a few folder in which the data will be saved for being benchmarked in other system and being sure that the code is worked as
-    expected. On the other hand, there are a few shit with fenicx that I need to account for, fuck. 
-    """
-    import numpy as np 
-    import sys, os
-    sys.path.append(os.path.abspath("src"))
-    from phase_db import PhaseDataBase 
-    from phase_db import _generate_phase
-    from scal import Scal
-    from scal import _scaling_material_properties
-
-    sc = Scal(L=660e3, eta = 1e21, Temp = 1350, stress = 2e9) 
-    
-    T = np.linspace(298.15,273.15+1500,num=1000) # Vector temperature
-    P = np.linspace(0.0, 15, num = 1000) * 1e9  # Vector pressure   
-    
-    T /= sc.Temp 
-    P /= sc.stress 
-
-    
-    
-    # phase data base for the test 
-    
-    pdb = PhaseDataBase(1)
-    pdb = _generate_phase(pdb,0,option_rho = 2,option_rheology = 0, option_k = 3, option_Cp = 3,eta=1e21)
-    
-    
-    pdb = _scaling_material_properties(pdb,sc)
-    
-    rho_test = np.zeros([len(T),len(P)],dtype = np.float64); k_test = np.zeros_like(rho_test); Cp_test = np.zeros_like(rho_test)
-    
-    for i in range(len(T)):
-        for j in range(len(P)):
-            rho_test[i,j] = density(pdb,T[i],P[j],0)
-            k_test[i,j]   = heat_conductivity(pdb,T[i],P[j],0)
-            Cp_test[i,j]  = heat_capacity(pdb,T[i],P[j],0)
-    
-    thermal_diffusivity = k_test/rho_test/Cp_test
-    
-    base_cmap = plt.get_cmap('inferno')
-    from matplotlib.colors import ListedColormap
-
-    # Number of discrete colors
-    N = 20
-
-    # Create a new discrete colormap
-    colors = base_cmap(np.linspace(0, 1, N))
-    discrete_cmap = ListedColormap(colors)
-    
-    
-        
-    fig = plt.figure()
-    ax = fig.gca()
-    a = ax.pcolormesh(T,P,rho_test.T,shading='gouraud',cmap = discrete_cmap)
-    plt.colorbar(a,label=r'$\varrho^{\dagger}$')
-    ax.set_xlabel(r'$T^{\dagger}$')    
-    ax.set_ylabel(r'$P^{\dagger}$')
-    fig.savefig("%s/density_ND.png"%pt_save)     
-    
-    
-        
-    fig = plt.figure()
-    ax = fig.gca()
-    a = ax.pcolormesh(T,P,k_test.T,shading='gouraud',cmap = discrete_cmap)
-    plt.colorbar(a,label=r'$k^{\dagger}$')
-    ax.set_xlabel(r'$T^{\dagger}$')    
-    ax.set_ylabel(r'$P^{\dagger}$')
-    fig.savefig("%s/conductivity_ND.png"%pt_save)     
-    
-    fig = plt.figure()
-    ax = fig.gca()
-    a = ax.pcolormesh(T,P,Cp_test.T,shading='gouraud',cmap = discrete_cmap)
-    plt.colorbar(a,label=r'$C_p^{\dagger}$')
-    ax.set_xlabel(r'$T^{\dagger}$')    
-    ax.set_ylabel(r'$P^{\dagger}$')
-    fig.savefig("%s/capacity_ND.png"%pt_save)  
-    
-    fig = plt.figure()
-    ax = fig.gca()
-    a = ax.pcolormesh(T,P,np.log10(thermal_diffusivity.T),shading='gouraud',cmap = discrete_cmap)
-    plt.colorbar(a,label=r'$\kappa^{\dagger}$')
-    ax.set_xlabel(r'$T^{\dagger}$')    
-    ax.set_ylabel(r'$P^{\dagger}$')
-    fig.savefig("%s/diffusivity_ND.png"%pt_save)  
-
-    plt.close('all')
-    k_test   *= sc.k 
-    rho_test *= sc.rho 
-    Cp_test  *= sc.Cp 
-    res_Cp   = np.linalg.norm(Cp_test-dim_Cp,2)/np.linalg.norm(Cp_test+dim_Cp,2)
-    res_k    = np.linalg.norm(k_test-dim_k,2)/np.linalg.norm(k_test+dim_k,2)
-    res_rho  = np.linalg.norm(rho_test-dim_rho,2)/np.linalg.norm(rho_test+dim_rho,2)
-    
-    print('    { => Test <= }')
-    print('      res Cp   %.4e'%res_Cp)
-    print('      res rho  %.4e'%res_rho)
-    print('      res k    %.4e'%res_k)
-    print('    { <= Test => }') 
-    tol = 1e-12
-    if res_Cp > tol or res_k > tol or res_rho > tol : 
-        raise('Something wrong, wrong scaling, wrong computer, wrong everything')
-    else: 
-        assert('Pass')
-    
-    return 0    
-
-    
-    
-    
-def unit_test_viscosity(pt_save): 
-    
-    import numpy as np 
-    import sys, os
-    sys.path.append(os.path.abspath("src"))
-    from phase_db import PhaseDataBase 
-    from phase_db import _generate_phase
-    from scal import Scal
-    from scal import _scaling_material_properties
-
-    #sc = Scal(L=660e3, eta = 1e21, Temp = 1350, stress = 2e9) 
-    
-    
-    T = np.linspace(298.15,273.15+1500,num=1000) # Vector temperature
-    
-    P = np.linspace(0.0, 15, num = 1000) * 1e9  # Vector pressure   
-    # Strain rate {required}
-    
-    exx, eyy, exy = 1e-14,1e-14,1e-14 
-    
-    pdb = PhaseDataBase(1)
-    pdb = _generate_phase(pdb,0,option_rho = 2,option_rheology = 4, option_k = 3, option_Cp = 3,eta=1e21,name_diffusion='Van_Keken_diff',name_dislocation='Van_Keken_disl')
-    
-    eta_dim = np.zeros([len(T),len(P)],dtype = np.float64)
-    eta_nd  = np.zeros([len(T),len(P)],dtype = np.float64)
-
-    for i in range(len(T)):
-        for j in range(len(P)):#exx:float,eyy:float,exy:float,T:float,P:float,p_data,it:int,ph:int
-            eta_dim[i,j] = viscosity(exx,eyy,exy,T[i],P[i],pdb,1,0)
-    
-    
-    
-    from matplotlib.colors import ListedColormap
-    import cmcrameri as cmc
-    base_cmap = plt.get_cmap('cmc.oslo')
-
-    # Number of discrete colors
-    N = 20
-
-    # Create a new discrete colormap
-    colors = base_cmap(np.linspace(0, 1, N))
-    discrete_cmap = ListedColormap(colors)
-    
-    
-    
-    fig = plt.figure()
-    ax = fig.gca()
-    a = ax.pcolormesh(T-273.15,P/1e9,np.log10(eta_dim.T),shading='gouraud',cmap = discrete_cmap)
-    plt.colorbar(a,label=r'$\eta_{eff}$ [Pas]')
-    ax.set_xlabel(r'T [^${\circ}{C}$]')    
-    ax.set_ylabel(r'P [GPa]')
-    fig.savefig("%s/viscosity.png"%pt_save)
-        
-    sc = Scal(L=660e3, eta = 1e21, Temp = 1350, stress = 2e9) 
-    
-    T /= sc.Temp 
-    P /= sc.stress 
-    exx/= sc.strain ; exy /=sc.strain; eyy /= sc.strain  
-    pdb = _scaling_material_properties(pdb,sc)
-     
-    for i in range(len(T)):
-        for j in range(len(P)):#exx:float,eyy:float,exy:float,T:float,P:float,p_data,it:int,ph:int
-            eta_nd[i,j] = viscosity(exx,eyy,exy,T[i],P[i],pdb,1,0)
-    
-    err = np.linalg.norm(eta_dim - eta_nd*sc.eta,2)/np.linalg.norm(eta_dim + eta_nd*sc.eta,2)
-    print('Error is %.4e' %err)
-    if err > 1e-12:
-        raise ('Something wrong')
-    else: 
-        fig = plt.figure()
-        ax = fig.gca()
-        a = ax.pcolormesh(T,P,np.log10(eta_nd.T),shading='gouraud',cmap = discrete_cmap)
-        plt.colorbar(a,label=r'$\eta_{eff}^{\dagger}$')
-        ax.set_xlabel(r'$T^{\dagger}$')    
-        ax.set_ylabel(r'$P^{\dagger}$')
-        fig.savefig("%s/viscosity.png"%pt_save)
-    
-    
-    
-    
-    
-
-
-
-
-"""
-from pathlib import Path
-
-folder_path = Path("your_folder_name")
-folder_path.mkdir(parents=True, exist_ok=True)
-"""
-
-def _frictional_alternative(pt_save):
-    import numpy as np 
-    import sys, os
-    sys.path.append(os.path.abspath("src"))
-    from phase_db import PhaseDataBase 
-    from phase_db import _generate_phase
-    from scal import Scal
-    from scal import _scaling_material_properties
-    from scipy import special 
-
-    plt.rcParams.update({
-    "text.usetex": True,
-    "font.family": "serif",       # serif = Computer Modern
-    "font.serif": ["Computer Modern Roman"],
-    "axes.labelsize": 14,
-    "font.size": 12,
-    "legend.fontsize": 12,
-    "xtick.labelsize": 12,
-    "ytick.labelsize": 12,
-    })
-    
-    
-    z           = np.linspace(0,300e3,300)
-    rho         = 3000.0
-    Pl          = 9.81*rho*z     
-    Cp          = 1250
-    k           = 3.0
-    kappa       = k/rho/Cp 
-    t           = 50e6*365.25*24*60*60
-    T           = 20+(1350-20) * special.erf(z /2 /np.sqrt(t * kappa))+273.15
-    
-    lit   = 50e3
-    dec   = 100e3 
-    creep = 40e3 
-       
-    sub_channel = 1e3 
-    sub_channel2 = np.linspace(500,10e3,1000)
-    
-    jtanh       = np.zeros(len(z))
-    m           = (lit+dec)/2
-    ls          = (dec-m)
-    jtanh       = 1-0.5 * ((1)+(1)*np.tanh((z-dec)/(ls/4)))
-    
-    v_slab = 1.0/100/365.25/24/60/60
-
-
-    # Model Van Keken: From what I do understand from these war criminals 
-    
-    friction_coef = 0.06
-        
-    frictional_heatHob = jtanh * v_slab * Pl * friction_coef # Hobson uses only the jump function
-    
-           
-    pdb = PhaseDataBase(1,atan(friction_coef))
-    pdb = _generate_phase(pdb,0,option_rho = 2,option_rheology = 4, option_k = 3, option_Cp = 3,eta=1e21,name_diffusion='Hirth_Wet_Olivine_diff',name_dislocation='Hirth_Wet_Olivine_disl')
-
-    e_pl = np.zeros([len(z),len(sub_channel2)]); e_vs = np.zeros([len(z),len(sub_channel2)]);tau = np.zeros([len(z),len(sub_channel2)])
-    eplr = np.zeros([len(z),len(sub_channel2)]); evsr = np.zeros([len(z),len(sub_channel2)]);frictional_heating2=np.zeros([len(z),len(sub_channel2)])
-    max_depth_plastic = np.zeros(len(sub_channel2))
-    for k in range(len(sub_channel2)):
-        strain_rate = (v_slab * jtanh)/sub_channel2[k] # Compute the strain rate 
-        
-        for i in range(len(z)):
-           e_pl[i,k],e_vs[i,k],tau[i,k] = strain_partitioning(strain_rate[i],T[i],Pl[i],pdb,0)
-           if np.log10(e_pl[i,k]) < -20: 
-                e_pl[i,k] = 0.0
-           elif np.log10(e_vs[i,k]) < -20:  
-               e_vs[i,k] = 0.0
-        
-
-        eplr[:,k] = e_pl[:,k]/strain_rate ; evsr[:,k] = e_vs[:,k]/strain_rate 
-        frictional_heating2[:,k]  = eplr[:,k] * Pl * v_slab * jtanh * friction_coef #+ evsr[:,k] * tau[:,k] * strain_rate * sub_channel2[k] 
-        a = np.where(frictional_heating2[:,k]==np.nanmax(frictional_heating2[:,k]))[0][0]
-        max_depth_plastic[k] = z[a]
-
-
-
-    
-
-    
-
-    fig = plt.figure()
-    ax0 = plt.gca()
-    ax0.plot(frictional_heatHob,-z/1e3,c='forestgreen',linestyle=':',linewidth=1.0, label = 'Van Keken 2018')
-    #ax0.plot(strain_rate,-z/1e3,c='forestgreen',linewidth=1.0)
-    ax0.set_xlabel(r'Frictional heat flux $\frac{W}{m^2}$')
-    ax0.set_ylabel(r'Depth $[km]$')
-    ax0.legend()
-    ax0.set_xscale('linear')
-    ax0.set_ylim([-100,0.0])
-
-
-    
-    
-    fig = plt.figure()
-    ax0 = plt.gca()
-    ax0.plot(e_pl,-z/1e3,c='k',linestyle=':',linewidth=0.8, label=r'$\dot{\varepsilon}_{pl}$')
-    ax0.plot(e_vs,-z/1e3,c='r',linestyle='-.',linewidth=0.8,label=r'$\dot{\varepsilon}_{vs}$')
-    ax1 = ax0.twiny()
-    ax1.plot(tau/1e6,-z/1e3,c='b',linewidth=1.0,label=r'$\tau$ [MPa]')
-    #ax0.plot(strain_rate,-z/1e3,c='forestgreen',linewidth=1.0)
-    ax1.set_xlabel(r'${\tau}$ [MPa]')
-    ax0.set_xlabel(r'$\dot{\varepsilon}_{II}$ [$\frac{1}{s}$]')
-    ax0.set_ylabel(r'Depth $[km]$')
-    ax0.legend()
-    ax1.legend()
-    ax0.set_xscale('log')
-    ax0.set_ylim([-100,0.0])
-
-    
-    fig = plt.figure()
-    ax0 = plt.gca()
-    ax0.plot(frictional_heating2,-z/1e3,c='r',linestyle='-.',linewidth=0.8,label=r'$f_2(T,P,\varepsilon)$')
-    #ax1 = ax0.twiny()
-    #ax1.plot(tau/1e6,-z/1e3,c='b',linewidth=1.0,label=r'$\tau$ [MPa]')
-    #ax0.plot(strain_rate,-z/1e3,c='forestgreen',linewidth=1.0)
-    #ax1.set_xlabel(r'${\tau}$ [MPa]')
-    ax0.set_xlabel(r'Frictional heat flux $\frac{W}{m^2}$')
-    ax0.set_ylabel(r'Depth $[km]$')
-    ax0.legend()
-    #ax1.legend()
-    ax0.set_ylim([-100,0.0])
-
-    fig = plt.figure()
-    ax0 = plt.gca()
-    ax0.plot(frictional_heating2,-z/1e3,c='b',linestyle='-.',linewidth=1.0,label=r'$f_2(T,P,\varepsilon)$')
-    ax0.plot(frictional_heatHob,-z/1e3,c='forestgreen',linestyle=':',linewidth=1.0, label = 'Hobson and May 2025')
-    #ax1 = ax0.twiny()
-    #ax1.plot(tau/1e6,-z/1e3,c='b',linewidth=1.0,label=r'$\tau$ [MPa]')
-    #ax0.plot(strain_rate,-z/1e3,c='forestgreen',linewidth=1.0)
-    #ax1.set_xlabel(r'${\tau}$ [MPa]')
-    ax0.set_xlabel(r'Frictional heat flux $\frac{W}{m^2}$')
-    ax0.set_ylabel(r'Depth $[km]$')
-    ax0.legend()
-    #ax1.legend()
-    ax0.set_ylim([-100,0.0])    
-    
-        
-
-    print('bla')
-    
-
-
-
-
-if __name__ == '__main__':
-    
-    import numpy as np 
-    import sys, os
-    sys.path.append(os.path.abspath("src"))
-    from phase_db import PhaseDataBase 
-    from phase_db import _generate_phase
-    from scal import Scal
-    from scal import _scaling_material_properties
-    from scipy import special 
-    
-    pt_save = '../../debug'
-    
-    if not os.path.exists(pt_save): 
-        os.makedirs(pt_save)   
-
-    _frictional_alternative(pt_save)
-    
-    #rho_dim,k_dim,Cp_dim = unit_test_thermal_properties(pt_save)
-    
-    #unit_test_thermal_properties_scaling(pt_save,rho_dim,k_dim,Cp_dim)
-    
+@njit 
+def compute_thermal_properties(pdb,T,p,ph):
+    
+    Cp   = heat_capacity(pdb,T,ph)
+    rho  = density(pdb,T,p,ph)
+    k    = heat_conductivity(pdb,T,p,rho,Cp,ph)
+    
+    return Cp, rho, k 
+#----------------------------------------------------------------------------------
