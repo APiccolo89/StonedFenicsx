@@ -7,12 +7,14 @@ from stonedfenicsx.Stoned_fenicx import fill_geometrical_input
 import sys
 import numpy as np
 from numpy.typing import NDArray
+import os
 
+# Global flag to decide wether or not to remove the results -> debug reason. 
+DEBUG = False
 #-------------------------------------------------------------------------------
 def perform_test(option_viscous):
     from stonedfenicsx.utils import parse_input, time_the_time, timing
     from stonedfenicsx.Stoned_fenicx import StonedFenicsx
-    import os
     
     time_A = timing.time()
 
@@ -21,8 +23,6 @@ def perform_test(option_viscous):
     path_input = f"{path_test}/input_tests.yaml"
 
     inp,Ph = parse_input(path_input)
-
-
     # option for the benchmark
 
     # Create input data - Input is a class populated by default dataset
@@ -137,8 +137,7 @@ def perform_test(option_viscous):
     else:
         print(f"{inp.sname} took  {dt:.2f} sec")
     print('#---------------------------------------------------#')
-
-
+#-------------------------------------------------------------------------------
 def read_data_base(option_viscous):
     import h5py as h5 
     import os
@@ -173,7 +172,6 @@ def read_data_base(option_viscous):
         v3 = 852.6929
         
         # 
-
            
     if option_viscous == 1:
         data = np.array([
@@ -207,7 +205,6 @@ def read_data_base(option_viscous):
     db_vk2 = [np.mean(data[:,1]), np.min(data[:,1]), np.max(data[:,1])]
     db_vk3 = [np.mean(data[:,2]), np.min(data[:,2]), np.max(data[:,2])]
 
-
     test_1 = np.isclose(T_11_11, v1, 1e-4, 1e-4)
     test_2 = np.isclose(L2_A, v2,1e-4, 1e-4)
     test_3 = np.isclose(L2_B, v3,1e-4, 1e-4)
@@ -233,38 +230,46 @@ def read_data_base(option_viscous):
         assert test_3 
     
     f.close()
- 
-    
+        
     return pass_flag
-    
-
-
 #-------------------------------------------------------------------------------
 def test_isoviscous():
     # Test Van Keken 
     perform_test(0) # IsoViscous
     # Read Data Base and compare data 
     read_data_base(0)
-    
-
+    # Remove folder after completing the test
+    if DEBUG == False:
+        
+        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
+#-------------------------------------------------------------------------------
 def test_diffusion():
     # Test Van Keken
     perform_test(1)
     # Read Data Base and compare data
     read_data_base(1)
-    
+    # Remove folder after completing the test
+    if DEBUG == False:
+       
+        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
+#-------------------------------------------------------------------------------   
 def test_composite():
     # Test Van Keken
     perform_test(2)
     # Read Data Base and compare data
     read_data_base(2)
-    
-     
-    
-    
+    # Remove folder after completing the test
+    if DEBUG == False:
+        
+        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
 #-------------------------------------------------------------------------------
 if __name__ == '__main__': 
-    #test_isoviscous()
-    #test_diffusion()
+    
+    #DEBUG = True
+    
+    test_isoviscous()
+
+    test_diffusion()
+
     test_composite()
 
