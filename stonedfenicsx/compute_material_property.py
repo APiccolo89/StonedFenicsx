@@ -286,7 +286,6 @@ def compute_viscosity_FX(e,T_in,P_in,FR,sc):
     etadf     = 0.5 * cdf**(-1)
     eta_av    = 1 / (1 / etads + 1/etadf + 1/FR.eta_max)
     eta_df    = 1 / (1 / etadf + 1 / FR.eta_max) 
-    eta_ds    = 1 / (1 / etads + 1 / FR.eta_max)
     
     
     

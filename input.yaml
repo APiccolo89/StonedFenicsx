@@ -6,7 +6,7 @@ Input:
     Tmax: 1333.0
     Ttop: 0.0
     g: 9.81
-
+    eta_max: 1.0e26
     v_s: [5.0, 0.0] # cm/yr
     slab_age: 50.0 # Myr
     time_max: 2.0  # Myr

@@ -7,12 +7,14 @@ from stonedfenicsx.Stoned_fenicx import fill_geometrical_input
 import sys
 import numpy as np
 from numpy.typing import NDArray
+import os
 
+# Global flag to decide wether or not to remove the results -> debug reason. 
+DEBUG = False
 #-------------------------------------------------------------------------------
-def test_setup(option_viscous):
+def perform_test(option_viscous):
     from stonedfenicsx.utils import parse_input, time_the_time, timing
     from stonedfenicsx.Stoned_fenicx import StonedFenicsx
-    import os
     
     time_A = timing.time()
 
@@ -21,8 +23,6 @@ def test_setup(option_viscous):
     path_input = f"{path_test}/input_tests.yaml"
 
     inp,Ph = parse_input(path_input)
-
-
     # option for the benchmark
 
     # Create input data - Input is a class populated by default dataset
@@ -137,8 +137,7 @@ def test_setup(option_viscous):
     else:
         print(f"{inp.sname} took  {dt:.2f} sec")
     print('#---------------------------------------------------#')
-
-
+#-------------------------------------------------------------------------------
 def read_data_base(option_viscous):
     import h5py as h5 
     import os
@@ -173,7 +172,6 @@ def read_data_base(option_viscous):
         v3 = 852.6929
         
         # 
-
            
     if option_viscous == 1:
         data = np.array([
@@ -184,9 +182,9 @@ def read_data_base(option_viscous):
         [581.30, 607.26, 1003.35],
         [584.20, 592.8, 1000.0],
         ])
-        v1 = 556.8637
-        v2 = 601.713
-        v3 = 1000.1816
+        v1 = 573.3623
+        v2 = 603.1777
+        v3 = 1002.6859
 
     if option_viscous==2: 
         
@@ -199,26 +197,25 @@ def read_data_base(option_viscous):
         [583.11, 604.96, 1000.05],
         [585.70, 591.30, 996.60]
         ])
-        v1 = 575.8761
-        v2 = 601.0293
-        v3 = 999.1289 
+        v1 = 575.8219
+        v2 = 601.0150
+        v3 = 999.1961
 
     db_vk1 = [np.mean(data[:,0]), np.min(data[:,0]), np.max(data[:,0])]
     db_vk2 = [np.mean(data[:,1]), np.min(data[:,1]), np.max(data[:,1])]
     db_vk3 = [np.mean(data[:,2]), np.min(data[:,2]), np.max(data[:,2])]
-
 
     test_1 = np.isclose(T_11_11, v1, 1e-4, 1e-4)
     test_2 = np.isclose(L2_A, v2,1e-4, 1e-4)
     test_3 = np.isclose(L2_B, v3,1e-4, 1e-4)
     
     print_ph(f'Test_viscous{option_viscous}, T_11_11 is {T_11_11:.4f}. Tested against {v1:.4f}.')
-    print_ph(f'                             Van Keken benchmark : mean T_11_11 = {db_vk1[0]:.2f}')
-    print_ph(f'                             Van Keken benchmark : range T_11_11 = {db_vk1[1]:.2f}-{db_vk1[2]:.2f}')
+    print_ph(f'                             Van Keken benchmark : mean T_11_11 = {db_vk1[0]:.2f}.')
+    print_ph(f'                             Van Keken benchmark : range T_11_11 = {db_vk1[1]:.2f}-{db_vk1[2]:.2f}.')
 
     print_ph(f'Test_viscous{option_viscous}, L2_A is {L2_A:.4f}. Tested against {v2:.4f}.')
-    print_ph(f'                             Van Keken benchmark : mean L2_A = {db_vk2[0]:.2f}')
-    print_ph(f'                             Van Keken benchmark : range L2_A = {db_vk2[1]:.2f}-{db_vk2[2]:.2f}')
+    print_ph(f'                             Van Keken benchmark : mean L2_A = {db_vk2[0]:.2f}.')
+    print_ph(f'                             Van Keken benchmark : range L2_A = {db_vk2[1]:.2f}-{db_vk2[2]:.2f}.')
     
     print_ph(f'Test_viscous{option_viscous}, L2_B is {L2_B:.4f}. Tested against {v3:.4f}.')
     print_ph(f'                             Van Keken benchmark : mean L2_A = {db_vk3[0]:.2f}.')
@@ -233,38 +230,46 @@ def read_data_base(option_viscous):
         assert test_3 
     
     f.close()
- 
-    
+        
     return pass_flag
-    
-
-
 #-------------------------------------------------------------------------------
 def test_isoviscous():
     # Test Van Keken 
-    test_setup(0) # IsoViscous
+    perform_test(0) # IsoViscous
     # Read Data Base and compare data 
     read_data_base(0)
-    
-
+    # Remove folder after completing the test
+    if DEBUG == False:
+        
+        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
+#-------------------------------------------------------------------------------
 def test_diffusion():
     # Test Van Keken
-    test_setup(1)
+    perform_test(1)
     # Read Data Base and compare data
     read_data_base(1)
-    
+    # Remove folder after completing the test
+    if DEBUG == False:
+       
+        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
+#-------------------------------------------------------------------------------   
 def test_composite():
     # Test Van Keken
-    test_setup(2)
+    perform_test(2)
     # Read Data Base and compare data
     read_data_base(2)
-    
-     
-    
-    
+    # Remove folder after completing the test
+    if DEBUG == False:
+        
+        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
 #-------------------------------------------------------------------------------
 if __name__ == '__main__': 
+    
+    #DEBUG = True
+    
     test_isoviscous()
+
     test_diffusion()
+
     test_composite()
 

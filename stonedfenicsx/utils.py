@@ -355,9 +355,9 @@ class Input:
     phase_wz: int = 7               # Virtual weakzone phase
     time_dependent: int = 1         # Depecrated 
     dt_sim: float = 15000 / 1e6  # Myr #timestep simulation
-
+    eta_max: float = 1.0e26 # Maximum viscosity 
     adiabatic_heating: int = 0  # adiabatic heating flag -> to remove
-
+    
     phi: float = 5.0            # Friction angle
     self_consistent_flag:int = 1 # incoming plate thermal structure: 0 -> half space cooling model ; 1 -> self-consistent with material properties
     # -----------------------------------------------------------------------------------------------------
@@ -513,6 +513,9 @@ def filling_the_input(a:dict,b:dict,c:dict,d:dict,e:dict,f:dict,IP:Input)->Input
     """
     
     for k, v in a.items():
+        if type(getattr(IP,k)) is not str:
+            v = np.float64(v)
+            
         setattr(IP, k, v)
     
     for k, v in b.items():
