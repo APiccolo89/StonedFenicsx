@@ -14,7 +14,7 @@ DEBUG = False
 #-------------------------------------------------------------------------------
 def perform_test(option_viscous):
     from stonedfenicsx.utils import parse_input, time_the_time, timing
-    from stonedfenicsx.Stoned_fenicx import StonedFenicsx
+    from stonedfenicsx.Stoned_fenicx_ref import StonedFenicsx
     
     time_A = timing.time()
 
@@ -240,7 +240,6 @@ def test_isoviscous():
     read_data_base(0)
     # Remove folder after completing the test
     if DEBUG == False:
-        
         os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
 #-------------------------------------------------------------------------------
 def test_diffusion():
@@ -265,7 +264,7 @@ def test_composite():
 #-------------------------------------------------------------------------------
 if __name__ == '__main__': 
     
-    #DEBUG = True
+    DEBUG = True
     
     test_isoviscous()
 

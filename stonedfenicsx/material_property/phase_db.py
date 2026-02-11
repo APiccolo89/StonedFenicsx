@@ -1,6 +1,6 @@
 
-from .stonedfenicsx.package_import import *
-from .stonedfenicsx.utils import print_ph
+from stonedfenicsx.package_import import *
+from stonedfenicsx.utils import print_ph
 
 #-----
 Dic_rheo={'Constant'              :  'Linear', 
@@ -428,7 +428,11 @@ spec_phase = [
 #-----------------------------------------------------------------------------------------------------------
 @jitclass(spec_phase)
 class PhaseDataBase:
-    def __init__(self, number_phases,friction_angle,d=0.5):
+    def __init__(self
+                 ,number_phases:int
+                 ,friction_angle:float
+                 ,eta_max:float
+                 ,d=0.5):
         # Initialize individual fields as arrays
         if number_phases>8: 
             raise ValueError("The number of phases should not exceed 7")
@@ -452,6 +456,7 @@ class PhaseDataBase:
         self.T_B            = 2700.0 + 9000.0 * np.exp(-d**0.5 / 0.205)
         self.x_A            = 167.5 + 505.0 * np.exp(-d**0.5 / 0.85)
         self.x_B            = 465.0 + 1700.0 * np.exp(-d**0.94 / 0.175) 
+        self.eta_max = eta_max
         
         
         
@@ -611,7 +616,7 @@ def _generate_phase(PD:PhaseDataBase,
     
     if name_diffusion == 'Constant' and name_dislocation == 'Constant' and eta == -1e23:
             PD.eta[id] = PD.eta_def
-    elif name_diffusion != 'Constant' and name_dislocation == 'Constant' and eta != -1e23:
+    elif name_diffusion == 'Constant' and name_dislocation == 'Constant' and eta != -1e23:
         PD.eta[id] = PD.eta_def # in case of constant viscosity, this value will be used. In case of non-constant viscosity, this value will be ignored.
     else: 
         PD.eta[id] = 0.0 # in case of non-constant viscosity, this value will be ignored. I set it to 0.0 to avoid any confusion.

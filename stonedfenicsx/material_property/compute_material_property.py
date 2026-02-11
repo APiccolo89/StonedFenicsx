@@ -1,8 +1,8 @@
 
 # modules
-from .stonedfenicsx.package_import import *
+from stonedfenicsx.package_import import *
 from .phase_db import PhaseDataBase
-from stonedfenicsx.scaling import Scal
+from stonedfenicsx.scal import Scal
 # ---------------------------------------------------------------------------------
 @dataclass
 class Functions_material_properties_global():

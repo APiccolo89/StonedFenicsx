@@ -1,16 +1,240 @@
-from .package_import import *
+from stonedfenicsx.package_import import *
 
-from .utils                     import timing_function, print_ph
-from .compute_material_property import density_FX, heat_conductivity_FX, heat_capacity_FX, compute_viscosity_FX, compute_radiogenic 
-from .create_mesh.aux_create_mesh   import Mesh,Domain
-from .phase_db                  import PhaseDataBase
-from dolfinx.fem.petsc          import assemble_matrix_block, assemble_vector_block
+from stonedfenicsx.utils import timing_function, print_ph
+from stonedfenicsx.material_property.compute_material_property import density_FX, heat_conductivity_FX, heat_capacity_FX, compute_viscosity_FX, compute_radiogenic 
+from stonedfenicsx.create_mesh.aux_create_mesh import Mesh, Domain, Geom_input
+from stonedfenicsx.phase_db import PhaseDataBase
 from stonedfenicsx.numerical_control import NumericalControls, ctrl_LHS, IOControls
-from .utils                     import interpolate_from_sub_to_main
-from .scal                      import Scal
-from .output                    import OUTPUT
-from .utils                     import compute_strain_rate
-from .compute_material_property import Functions_material_properties_global, Functions_material_rheology
+from stonedfenicsx.utils import interpolate_from_sub_to_main
+from stonedfenicsx.scal import Scal
+from stonedfenicsx.output import OUTPUT
+from stonedfenicsx.utils import compute_strain_rate
+from stonedfenicsx.compute_material_property import Functions_material_properties_global, Functions_material_rheology
+#from stonedfenicsx.solver_module.solver import Solvers, ScalarSolver, SolverStokes
+from stonedfenicsx.scal import Scal
+from stonedfenicsx.solver_module.solution_routine import *
+from stonedfenicsx.solver_module.solver_utilities import *
+
+class Solvers():
+    pass
+
+
+class  ScalarSolver(Solvers):
+    """
+    class that store all the information for scalar like problems. Temperature and lithostatic pressure (potentially darcy like) are similar problem 
+    they diffuse and advect a scalar. 
+    --- 
+    So -> Solver are more or less the same, I can store a few things and update as a function of the needs. 
+    --- 
+    Solve function require the problem P -> and a decision between linear and non linear -> form are handled by p class, so I do not give a fuck in this class 
+    for now all the parameter will be default. 
+    """
+    def __init__(self,A ,b ,COMM, nl, J = None, r = None):
+        self.A = fem.petsc.create_matrix(fem.form(A)) # Store the sparsisity 
+        self.b = fem.petsc.create_vector(fem.form(b)) # Store the vector
+        self.ksp = PETSc.KSP().create(COMM)           # Create the ksp object 
+        self.ksp.setOperators(self.A)                # Set Operator
+        self.ksp.setType("gmres")
+        self.ksp.setTolerances(rtol=1e-4, atol=1e-3)
+        self.pc = self.ksp.getPC()
+        self.pc.setType("lu")
+        self.pc.setFactorSolverType("mumps")
+
+        self.J = None
+        self.r = None 
+    
+class SolverStokes(): 
+
+    
+    def __init__(self,a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0):
+        self.direct_solver = 1
+        if self.direct_solver == 1: 
+            self.set_direct_solver(a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0)
+            self.offset = F0.dofmap.index_map.size_local * F0.dofmap.index_map_bs
+        elif self.direct_solver ==0: 
+            self.set_iterative_solver(a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0)    
+    
+    def set_direct_solver(self,
+                          a,
+                          a_p,
+                          L,
+                          COMM, 
+                          nl,
+                          bcs,
+                          F0,
+                          F1, 
+                          ctrl,
+                          J = None, 
+                          r = None,
+                          it = 0, 
+                          ts = 0):
+        
+        if it == 0 or ts == 0:
+            self.set_block_operator(a, a_p, bcs, L, F0, F1)
+
+            # Create a solver
+            self.ksp = PETSc.KSP().create(COMM)
+            self.ksp.setOperators(self.A)
+            self.ksp.setType("preonly")
+
+            # Set the solver type to MUMPS (LU solver) and configure MUMPS to
+            # handle pressure nullspace
+            self.pc = self.ksp.getPC()
+            self.pc.setType("lu")
+            self.pc.setFactorSolverType("mumps")
+            self.pc.setFactorSetUpSolverType()
+            self.pc.getFactorMatrix().setMumpsIcntl(icntl=24, ival=1)
+            self.pc.getFactorMatrix().setMumpsIcntl(icntl=25, ival=0)
+
+    
+    def set_iterative_solver(self,a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0): 
+        #Return block operators and block RHS vector for the Stokes problem'
+        # nullspace vector [0_u; 1_p] locally
+        if it == 0 or ts == 0:
+            self.set_block_operator(a,a_p,bcs,L,F0,F1)
+            
+            
+            offset_u = 0
+            offset_p = self.nloc_u
+            # local starts in the *assembled block vector*
+
+            self.is_u = PETSc.IS().createStride(self.nloc_u, offset_u, 1, comm=PETSc.COMM_SELF)
+            self.is_p = PETSc.IS().createStride(self.nloc_p, offset_p, 1, comm=PETSc.COMM_SELF)
+            V_map = F0.dofmap.index_map
+            Q_map = F1.dofmap.index_map
+            bs_u  = F0.dofmap.index_map_bs  # = mesh.dim for vector CG
+            nloc_u = V_map.size_local * bs_u
+            nloc_p = Q_map.size_local
+
+            # local starts in the *assembled block vector*
+
+
+
+            self.is_u = PETSc.IS().createStride(nloc_u, offset_u, 1, comm=PETSc.COMM_SELF)
+            self.is_p = PETSc.IS().createStride(nloc_p, offset_p, 1, comm=PETSc.COMM_SELF)
+            
+            
+            self.ksp = PETSc.KSP().create(COMM)
+            self.ksp.setOperators(self.A, self.P)
+            self.ksp.setTolerances(rtol=1e-9)
+            self.ksp.setType("minres")
+            self.ksp.getPC().setType("fieldsplit")
+            self.ksp.getPC().setFieldSplitType(PETSc.PC.CompositeType.ADDITIVE)
+            self.ksp.getPC().setFieldSplitIS(("u", self.is_u), ("p", self.is_p))
+
+            # Configure velocity and pressure sub-solvers
+            self.ksp_u, self.ksp_p = self.ksp.getPC().getFieldSplitSubKSP()
+            self.ksp_u.setType("preonly")
+            self.ksp_u.getPC().setType("gamg")
+            self.ksp_p.setType("preonly")
+            self.ksp_p.getPC().setType("jacobi")
+
+            # The matrix A combined the vector velocity and scalar pressure
+            # parts, hence has a block size of 1. Unlike the MatNest case, GAMG
+            # cannot infer the correct near-nullspace from the matrix block
+            # size. Therefore, we set block size on the top-left block of the
+            # preconditioner so that GAMG can infer the appropriate near
+            # nullspace.
+            self.ksp.getPC().setUp()
+            self.Pu, _ = self.ksp_u.getPC().getOperators()
+            self.Pu.setBlockSize(2)
+
+    def set_block_operator(self,a,a_p,bcs,L,F0,F1):
+
+        self.A = assemble_matrix_block(a, bcs=bcs)   ; self.A.assemble()
+        self.P = assemble_matrix_block(a_p, bcs=bcs) ; self.P.assemble()
+        self.b = assemble_vector_block(L, a, bcs=bcs); self.b.assemble()
+        self.null_vec = self.A.createVecLeft()
+        self.nloc_u = F0.dofmap.index_map.size_local * F0.dofmap.index_map_bs
+        self.nloc_p = F1.dofmap.index_map.size_local
+        self.null_vec.array[:self.nloc_u]  = 0.0
+        self.null_vec.array[self.nloc_u:self.nloc_u+self.nloc_p] = 1.0
+        self.null_vec.normalize()
+        self.nsp = PETSc.NullSpace().create(vectors=[self.null_vec])
+        self.A.setNullSpace(self.nsp)
+
+        
+
+
+
+#--------------------------------------------------------------------------------------------------------------
+class Solution():
+    def __init__(self):
+        self.PL       : dolfinx.fem.function.Function 
+        self.T_i      : dolfinx.fem.function.Function
+        self.T_O      : dolfinx.fem.function.Function 
+        self.T_N      : dolfinx.fem.function.Function 
+        self.u_global : dolfinx.fem.function.Function
+        self.u_wedge  : dolfinx.fem.function.Function
+        self.p_lwedge : dolfinx.fem.function.Function
+        self.t_owedge : dolfinx.fem.function.Function
+        self.p_lslab  : dolfinx.fem.function.Function
+        self.t_oslab  : dolfinx.fem.function.Function
+        self.u_slab   : dolfinx.fem.function.Function
+        self.p_global : dolfinx.fem.function.Function 
+        self.p_wedge  : dolfinx.fem.function.Function 
+        self.p_slab   : dolfinx.fem.function.Function
+        self.Hs_wedge : dolfinx.fem.function.Function
+        self.Hs_slab  : dolfinx.fem.function.Function
+        self.Hs_global : dolfinx.fem.function.Function
+        self.T_ad      : dolfinx.fem.function.Function
+        self.outer_iteration : NDArray[:]
+        self.mT            : NDArray[:]
+        self.MT            : NDArray[:]     
+        self.ts            : NDArray[:]   
+        
+    def create_function(self,PG,PS,PW,elements): 
+        """
+        ======
+        I am pretty pissed off about this problem: it is impossible to have a generalised approach that can be flexible 
+        whoever had this diabolical idea, should be granted with a damnatio memoriae. So, inevitable, this class must 
+        be modified as a function of the problem at hand.
+        
+        Argument: 
+        PG : Global Problem 
+        PS : Slab Problem
+        PW : Wedge Problem
+        
+        -> update the solution functions that will be used later on. 
+        
+        =======
+        """
+        mixed_element = basix.ufl.mixed_element([elements[0], elements[1]])
+
+        space_GL = fem.functionspace(PG.FS.mesh,mixed_element) # PORCO DIO 
+        
+        
+        def gives_Function(space):
+            Va = space.sub(0)
+            Pa = space.sub(1)
+            V,_  = Va.collapse()
+            P,_  = Pa.collapse()
+            a = fem.Function(V)
+            b = fem.Function(P)
+            return a,b 
+        
+        self.PL       = fem.Function(PG.FS) # Thermal and Pressure problems share the same functional space -> Need to enforce this bullshit 
+        self.T_O      = fem.Function(PG.FS) 
+        self.T_N      = fem.Function(PG.FS)
+        self.Hs_global = fem.Function(PG.FS)
+        self.Hs_slab  = fem.Function(PS.FSPT)
+        self.Hs_wedge = fem.Function(PW.FSPT)
+        self.T_i      = fem.Function(PG.FS)
+        self.p_lwedge = fem.Function(PW.FSPT) # PW.SolPT -> It is the only part of this lovercraftian nightmare that needs to have temperature and pressure -> Viscosity depends pressure and temperature potentially
+        self.t_owedge = fem.Function(PW.FSPT) # same stuff as before, again, this is a nightmare: why the fuck. 
+        self.p_lslab = fem.Function(PS.FSPT) # PW.SolPT -> It is the only part of this lovercraftian nightmare that needs to have temperature and pressure -> Viscosity depends pressure and temperature potentially
+        self.t_oslab = fem.Function(PS.FSPT)
+        self.t_nslab = fem.Function(PS.FSPT)
+        self.u_global, self.p_global = gives_Function(space_GL)
+        self.u_slab  , self.p_slab   = gives_Function(PS.FS)
+        self.u_wedge , self.p_wedge  = gives_Function(PW.FS)
+        self.T_ad                     = fem.Function(PG.FS)   
+        self.mT    = np.zeros(1,dtype=float)
+        self.MT    = np.zeros(1,dtype=float) 
+        self.outer_iteration = np.zeros(1,dtype=float)
+        self.ts             = np.zeros(1,dtype=int)
+
+        return self 
 
 #----------------------------------------------------------------------------     
 class Problem:
@@ -680,19 +904,27 @@ class Global_thermal(Problem):
 #-------------------------------------------------------------------
 #-------------------------------------------------------------------
 class Global_pressure(Problem): 
-    def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
+    def __init__(self
+                 ,M:Mesh
+                 ,elements:tuple
+                 ,name:list
+                 ,pdb:PhaseDataBase):
         super().__init__(M,elements,name)
+        
         if np.all(pdb.option_rho<2):
             self.typology = 'LinearProblem'
         else:
             self.typology = 'NonlinearProblem'
 
         self.bc = [self.set_problem_bc(getattr(M,'domainG'))]
-    def set_problem_bc(self,M):
+    
+    def set_problem_bc(self
+                       ,D:Domain)->list[fem.DirichletBC]:
          
-        top_facets   = M.facets.find(M.bc_dict['Top'])
+        top_facets   = D.facets.find(D.bc_dict['Top'])
         top_dofs    = fem.locate_dofs_topological(self.FS, 1, top_facets)
         bc = [fem.dirichletbc(0.0, top_dofs, self.FS)]
+        
         return bc  
     
     def set_newton(self,p,D,T,g,pdb):
@@ -842,11 +1074,6 @@ class Stokes_Problem(Problem):
         super().__init__(M,elements,name)       
         M = getattr(M,name[1])
         self.FSPT = dolfinx.fem.functionspace(M.mesh, elements[2]) 
-        
-    def set_newton():
-        # Place holder -> Not finding useful tutorial for newton 
-     
-        pass
     
     def compute_shear_heating(self,ctrl,FR,S,D,sc,wedge=1):
         from .compute_material_property import compute_viscosity_FX
@@ -909,20 +1136,44 @@ class Stokes_Problem(Problem):
 
         return rmom, rdiv, divuL2
 
-    
-    
-    def set_linear_picard(self,u_slab,T,PL,D,FR,ctrl,sc, a_p = None,it=0, ts = 0):
+
+    def set_linear_picard(self
+                          ,u_s : dolfinx.fem.function.Function 
+                          ,T : dolfinx.fem.function.Function 
+                          ,PL : dolfinx.fem.function.Function 
+                          ,D : Domain
+                          ,FR : Functions_material_rheology
+                          ,ctrl : NumericalControls
+                          ,sc : Scal
+                          ,a_p = None
+                          ,it : int = 0
+                          ,ts : int = 0) -> tuple[dolfinx.fem.Form, dolfinx.fem.Form, dolfinx.fem.Form, dolfinx.fem.Form, dolfinx.fem.Form]:
         
-        """
-        The problem is always LINEAR when depends on T/P -> Becomes fairly 
-        non linear when the temperature is involved. 
+        """Function that set linear form (both for picard iteration and linear problem solution)
+        Args: 
+            u_slab : dolfinx.fem.function.Function -> Velocity field of the slab, used for computing the viscosity
+            T : dolfinx.fem.function.Function -> Temperature field, used for computing the viscosity
+            PL : dolfinx.fem.function.Function -> Lithostatic pressure field, used for computing the viscosity
+            D : Domain -> Domain object, used for extracting the mesh and the boundary conditions
+            FR : Functions_material_rheology -> Object containing the rheological functions, used for computing the viscosity
+            ctrl : NumericalControls -> Object containing the numerical controls, used for controlling the decoupling of the boundary condition
+            sc : Scal -> Object containing the scaling of the problem, used for computing the viscosity
+            a_p : dolfinx.fem.Form -> Pressure mass form, used for preconditioning the pressure Schur complement.
+            it : int -> Picard iteration number, used for controlling the decoupling of the boundary condition
+            ts : int -> Time step number, used for controlling the decoupling of the boundary
+        Returns: 
+            a1 : dolfinx.fem.Form -> Linear form for the momentum equation
+            a2 : dolfinx.fem.Form -> Linear form for the pressure equation (divergence of the test function)
+            a3 : dolfinx.fem.Form -> Linear form for the continuity equation (divergence of the trial function)
+            L : dolfinx.fem.Form -> Linear form for the right hand side of the momentum equation
+            a_p0 : dolfinx.fem.Form -> Linear form for the pressure mass matrix, used for preconditioning the pressure Schur complement.
         """
         
         u, p  = self.trial0, self.trial1
         v, q  = self.test0,  self.test1
         dx    = ufl.dx
 
-        e = compute_strain_rate(u_slab)
+        e = compute_strain_rate(u_s)
 
         eta = compute_viscosity_FX(e,T,PL,FR,sc)
 
@@ -936,19 +1187,115 @@ class Stokes_Problem(Problem):
         L  = fem.form([ufl.inner(f, v)*dx, ufl.inner(f2, q)*dx])    
     
         return a1, a2, a3 , L , a_p0       
+    
+    def compute_moving_wall(self
+                        ,D:Domain
+                        ,ctrl:NumericalControls
+                        ,facet:str
+                        )->None:
+        """Compute the moving wall function for the kinematic boundary condition of the slab. 
+        The function is computed once at the beginning of the simulation and cached for the entire simulation. 
+        The function is computed by solving a simple linear problem with a projection of the velocity on the slab as a source term. 
+        The velocity field of the moving wall is then used as a Dirichlet boundary condition for the velocity field on the slab domain.
 
+        Args:
+            D (Domain): Domain object, used for extracting the mesh and the boundary conditions
+            ctrl (NumericalControls): NumericalControls object, used for controlling the decoupling of the boundary condition
+            facet (str): the string that defines the facet on which the moving wall is applied.
+        """
+
+        u, p  = self.trial0, self.trial1
+        v, q  = self.test0,  self.test1
+
+
+        mesh = D.mesh
+        # exact facet normal in    weak   form
+        n = ufl.FacetNormal(D.mesh)       
+        # slab velocity magnitude (Assuming that velocity of the slab is unit vector)        
+        v_slab = float(1.0)  
+        # slab velocity vector (Assuming that velocity of the slab is along x direction)
+        v_const = ufl.as_vector((ctrl.v_s[0], 0.0))
+        # projector   onto  the  tangential plane
+        proj = ufl.Identity(mesh.geometry.dim) - ufl.outer(n, n)
+        # tangential     velocity    vector on  slab
+        t = ufl.dot(proj, v_const)   
+        # tangential   versor            
+        t_hat = t / ufl.sqrt(ufl.inner(t, t))    
+        # projected tangential velocity vector on   slab
+        v_project = v_slab * t_hat  
+        # Creating the function space that will host the unit vector of the velocity field along the slab
+        self.moving_wall = fem.Function(self.FS)
+        # Extract the trial and test function for the subspace of the slab domain
+        w = u
+        v = v
+        # Build the linear problem to compute the velocity field of the moving wall. The problem is a simple mass matrix with a projection of the velocity on the slab as a source term.
+        a = ufl.inner(w, v) * self.ds(D.bc_dict[facet])        #  boundary     mass    matrix (vector)
+        L = ufl.inner(v_project, v) * self.ds(D.bc_dict[facet])
+        # Solve the linar problem to compute the velocity field of the moving wall and cache it for the entire simulation 
+        self.moving_wall = fem.petsc.LinearProblem(
+            a, L,
+            petsc_options={
+            "ksp_type": "cg",
+            "pc_type": "jacobi",
+            "ksp_rtol": 1e-20,
+            }
+        ).solve()  # ut_h \in V
+        self.moving_wall.x.scatter_forward()
+        
+        return self 
+    
 #-------------------------------------------------------------------
 #-------------------------------------------------------------------
 class Wedge(Stokes_Problem): 
-    def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
+    def __init__(self
+                 ,M:Domain
+                 ,elements:tuple
+                 ,name:list
+                 ,pdb:PhaseDataBase)->None:
+        
+        """Wedge problem constructor.
+
+        The Wedge class inherits from ``Stokes_Problem`` and therefore
+        has all methods and attributes of the parent class.
+
+        This represents a specific Stokes problem defined on a wedge-shaped domain.
+
+        The wedge problem can be:
+        - linear
+        - non-linear
+        - non-linearT
+
+        depending on the rheology of the materials.
+
+        Linear:
+            The problem is solved only once for the entire time-dependent solution
+            if the velocity is constant in time.
+
+        Non-linear:
+            The problem is solved iteratively at each time step, and the viscosity
+            is updated at every outer iteration. This activates the internal
+            non-linear iterative scheme.
+
+        Non-linearT:
+            The problem is solved once per outer iteration to account for the
+            feedback from temperature evolution.
+
+        Args:
+            M (Mesh): Mesh object containing the mesh and related utilities.
+            elements (tuple): Tuple containing the elements of the function spaces.
+            name (list): Name of the problem, used to extract the domain from the mesh.
+            pdb (PhaseDataBase): Phase database used to determine the rheology type
+                and therefore whether the problem is linear or non-linear.
+        """
+
+        
         super().__init__(M,elements,name)
         
-        M = getattr(M,'domainB')
 
         comm = MPI.COMM_WORLD
 
         # Example: each rank has some local IDs
-        local_ids = np.int32(M.phase.x.array[:])
+        local_ids = np.int32(M.domainB.phase.x.array[:])
 
         # Gather arrays from all processes
         all_ids = comm.allgather(local_ids)
@@ -977,92 +1324,90 @@ class Wedge(Stokes_Problem):
         else:
             self.typology = 'LinearProblem'
         
+        # Cached boundary condition.     
+        self.bc_overriding = None
         
-            
-    
-    def setdirichlecht(self,ctrl,D,theta,V,g_input,it=0, ts = 0):
+        self.bc_moving_wall = dolfinx.fem.function.Function(self.FS)
+        
+    #------------------------------------------------------------------
+    def setdirichlecht(self
+                       ,ctrl : NumericalControls
+                       ,D : Domain 
+                       ,V : dolfinx.fem.FunctionSpace
+                       ,g_input : Geom_input
+                       ,it : int = 0
+                       ,ts : int = 0)-> list:
+        
+        # Extract the mesh from the function
         mesh = V.mesh 
         tdim = mesh.topology.dim
         fdim = tdim - 1
         
-    
-        # facet ids
-        slab_facets      = D.facets.find(D.bc_dict['slab'])
-        
+        if it == 0 and ts == 0:
+            # facet ids
+            slab_facets      = D.facets.find(D.bc_dict['slab'])
+            # Extract the dofs from the overriding plate and cache it.  
+            noslip = np.zeros(mesh.geometry.dim, dtype=PETSc.ScalarType)
+            dofs_over = fem.locate_dofs_topological(V, fdim, D.facets.find(D.bc_dict['overriding']))
+
+            self.bc_overriding = fem.dirichletbc(noslip, dofs_over, V)
+
+            #------------------------------------------------------------------------
+            # compute the velocity field of the moving wall and cache it for the entire simulation
+            self.compute_moving_wall(D,ctrl,'slab') 
+
+            # Correct the moving wall for the decoupling if needed.
+            if ctrl.decoupling == 1:
+                scaling = fem.Function(self.FSPT)
+                scaling = decoupling_function(self.FSPT.tabulate_dof_coordinates()[:,1],scaling,g_input)  
+                scaling.x.array[:] = 1.0 - scaling.x.array[:] 
+                # from :https://fenicsproject.discourse.group/t/scale-vector-function-by-scalar-function/10638
+                temp_buf = self.moving_wall.copy()
+                temp_buf.interpolate(fem.Expression(self.moving_wall*scaling
+                                                    ,self.moving_wall.function_space.element.interpolation_points()))
+                self.moving_wall = temp_buf.copy()
+                
+        # update the moving wall normalised field with the actual velocity of the slab.        
+        self.moving_wall.x.array[:] = self.moving_wall.x.array[:]*ctrl.v_s[0]
+        self.moving_wall.x.scatter_forward()
             
-        # Compute this crap only once @ the beginning of the simulation 
-
-
-        noslip = np.zeros(mesh.geometry.dim, dtype=PETSc.ScalarType)
-        dofs_over = fem.locate_dofs_topological(V, fdim, D.facets.find(D.bc_dict['overriding']))
-
-        bc_overriding = fem.dirichletbc(noslip, dofs_over, V)
-        
-        
-        #------------------------------------------------------------------------
-
-        n = ufl.FacetNormal(mesh)                    # exact facet normal in    weak   form
-        v_slab = float(1.0)  # slab velocity magnitude
-
-        v_const = ufl.as_vector((ctrl.v_s[0], 0.0))
-
-        proj = ufl.Identity(mesh.geometry.dim) - ufl.outer(n, n)  # projector   onto  the  tangential plane
-        t = ufl.dot(proj, v_const)                     # tangential     velocity    vector on  slab
-        t_hat = t / ufl.sqrt(ufl.inner(t, t))    
-        v_project = v_slab * t_hat  # projected tangential velocity vector on   slab
-        moving_wall_wedge = fem.Function(V)
-        w = self.trial0
-        v = self.test0
-        
-
-              
-        a = ufl.inner(w, v) * self.ds(D.bc_dict['slab'])        #  boundary     mass    matrix (vector)
-        
-        if ctrl.decoupling == 1:
-            scaling = fem.Function(self.FSPT)
-            scaling = decoupling_function(self.FSPT.tabulate_dof_coordinates()[:,1],scaling,g_input)  
-            scaling.x.array[:] = 1-scaling.x.array[:]
-            scaling.x.scatter_forward()
-            L = ufl.inner(v_project * scaling, v) * self.ds(D.bc_dict['slab'])
-        else: 
-            L = ufl.inner(v_project, v) * self.ds(D.bc_dict['slab'])
-
-        moving_wall_wedge = fem.petsc.LinearProblem(
-            a, L,
-            petsc_options={
-            "ksp_type": "cg",
-            "pc_type": "jacobi",
-            "ksp_rtol": 1e-20,
-            }
-        ).solve()
-            
-        self.moving_wall_wedge = moving_wall_wedge.copy()
-        self.moving_wall_wedge.x.array[:] = moving_wall_wedge.x.array[:]*ctrl.v_s[0] 
-
         dofs_s_x = fem.locate_dofs_topological(V.sub(0), fdim,slab_facets)
         dofs_s_y = fem.locate_dofs_topological(V.sub(1), fdim,slab_facets)
 
-        bcx = fem.dirichletbc(self.moving_wall_wedge.sub(0), dofs_s_x)
-        bcy = fem.dirichletbc(self.moving_wall_wedge.sub(1), dofs_s_y)
+        bcx = fem.dirichletbc(self.moving_wall.sub(0), dofs_s_x)
+        bcy = fem.dirichletbc(self.moving_wall.sub(1), dofs_s_y)
         
-    
-        return [bcx, bcy, bc_overriding]
+
+        return [bcx, bcy, self.bc_overriding]
                 
    
-    
-    def Solve_the_Problem(self,S,ctrl,FGW,M,g,sc,g_input,it=0,ts=0):
-        theta = M.g_input.theta_out_slab
-        M = getattr(M,'domainB')
+    def Solve_the_Problem(self
+                          ,S : Solution
+                          ,ctrl : NumericalControls
+                          ,FGW : Functions_material_rheology
+                          ,D : Domain 
+                          ,g : dolfinx.fem.function.Function
+                          ,sc : Scal
+                          ,g_input : Geom_input
+                          ,it : int =0
+                          ,ts : int=0)->Solution:
 
+        """Function that solve the stokes problem for the wedge domain.
+            Args:
+                S : Solution -> Object containing the solution of the problem, used for storing the solution of the stokes problem
+                ctrl : NumericalControls -> Object containing the numerical controls, used for controlling the decoupling of the boundary condition and the type of problem to solve
+                FGW : Functions_material_rheology -> Object containing the rheological functions, used for computing the viscosity
+                D : Domain -> Domain object, used for extracting the mesh and the boundary conditions
+                g : dolfinx.fem.function.Function -> Gravity vector, used for computing the right hand side of the momentum equation
+                sc : Scal -> Object containing the scaling of the problem, used for computing the viscosity
+                g_input : Geom_input -> Object containing the geometric input, used for computing the decoupling function for the boundary condition
+                it : int -> Outer iteration number
+                ts : int -> Time step number
+            Returns:
+                S : Solution -> Object containing the solution of the problem, used for storing the solution of
         
-        """
-        According to chatgpt, and I have already verified this notion before asking, 
-        I cannot create test and trial function from a previous instance. In case of mixed space
-        I need always to recreate on the spot, which is very annoying despite they are pretty much cheap 
-        in terms of computation. 
-        
-    
-        """
+        """     
+   
         V_subs0 = self.FS.sub(0)
         p_subs0 = self.FS.sub(1)
         V_subs, _ = V_subs0.collapse()
@@ -1075,10 +1420,16 @@ class Wedge(Stokes_Problem):
     
 
         # Create the linear problem
-        a1,a2,a3, L, a_p = self.set_linear_picard(S.u_wedge,S.t_owedge,S.p_lwedge,M,FGW,ctrl,sc)
+        a1,a2,a3, L, a_p = self.set_linear_picard(S.u_wedge
+                                                  ,S.t_owedge
+                                                  ,S.p_lwedge
+                                                  ,D
+                                                  ,FGW
+                                                  ,ctrl
+                                                  ,sc)
 
         # Create the dirichlecht boundary condition 
-        self.bc   = self.setdirichlecht(ctrl,M,theta,V_subs,g_input) 
+        self.bc   = self.setdirichlecht(ctrl,D,V_subs,g_input) 
         
         # Form the system 
         a   = [[a1, a2],[a3, None]]
@@ -1198,14 +1549,11 @@ class Wedge(Stokes_Problem):
         r.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
 
         abs_res = r.norm()
-
-
-
+        
         return S,abs_res 
 
 #-------------------------------------------------------------------
 #-------------------------------------------------------------------
-
 class Slab(Stokes_Problem): 
     """Slab problem class. 
 
@@ -1228,17 +1576,33 @@ class Slab(Stokes_Problem):
     - Inflow-Outflow left and bottom boundaries feature a do-nothing bouundary conditions.
 
     """
-    def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase):
+    def __init__(self
+                 ,M:Mesh 
+                 ,elements:tuple
+                 ,name:list):
         super().__init__(M,elements,name)
-        self.moving_wall : fem.Function = None # prepare the field. 
+        self.moving_wall : dolfinx.fem.function.Function = None
     
     def setdirichlecht(self
                        ,ctrl : NumericalControls
                        ,D : Domain
-                       ,theta : float
                        ,it : int = 0
                        ,ts:int = 0)-> list:
-        
+        """Set Dirichlet boundary condition (Subducting plate domain)
+
+        Args:
+            ctrl (NumericalControls): Numerical control structure containing the main information of the simulation
+            D (Domain): Subdomain meshes and boundary information
+            it (int, optional): iteration of the outer loop. Defaults to 0.
+            ts (int, optional): timestep. Defaults to 0.
+
+        Returns:
+            list of DirichletBC: List of Dirichlet boundary conditions to be applied on the slab domain. 
+            
+        [Explanation]: During the first timestep and first outer iteration the component of the unit vector of the velocity along the slab is computed
+        redundantly in the entire function space. Then if the velocity of the slab is changing over time, the dirchlecht boundary condition
+        is updated by scaling the pre-computed unit vector of the velocity along the slab with the current velocity of the slab.
+        """
         mesh = self.F0.mesh 
         
         tdim = mesh.topology.dim
@@ -1247,40 +1611,18 @@ class Slab(Stokes_Problem):
         
         # facet ids
         
-        slab_facets    = D.facets.find(D.bc_dict['top_subduction'])
         
         if (it == 0 or ts == 0 ):
+        
+            self.compute_moving_wall(D,ctrl,'top_subduction')
 
-            n = ufl.FacetNormal(mesh)                    # exact facet normal in    weak   form
-            v_slab = float(1.0)  # slab velocity magnitude
-
-            v_const = ufl.as_vector((ctrl.v_s[0], 0.0))
-
-            proj = ufl.Identity(mesh.geometry.dim) - ufl.outer(n, n)  # projector   onto  the  tangential plane
-            t = ufl.dot(proj, v_const)                     # tangential     velocity    vector on  slab
-            t_hat = t / ufl.sqrt(ufl.inner(t, t))    
-            v_project = v_slab * t_hat  # projected tangential velocity vector on   slab
-            self.moving_wall = fem.Function(self.F0)
-            w = self.trial0
-            v = self.test0
-            a = ufl.inner(w, v) * self.ds(D.bc_dict['top_subduction'])        #  boundary     mass    matrix (vector)
-            L = ufl.inner(v_project, v) * self.ds(D.bc_dict['top_subduction'])
-
-            self.moving_wall = fem.petsc.LinearProblem(
-                a, L,
-                petsc_options={
-                "ksp_type": "cg",
-                "pc_type": "jacobi",
-                "ksp_rtol": 1e-20,
-                }
-            ).solve()  # ut_h \in V
         
         # Update the velocity field of the moving wall according to the current velocity of the slab.
         self.moving_wall.x.array[:] = self.moving_wall.x.array[:] * ctrl.v_s[0] 
         self.moving_wall.x.scatter_forward()
         # locate the dofs on the slab boundary and create dirichlet bc for them.
-        dofs_s_x = fem.locate_dofs_topological(self.F0.sub(0), fdim, slab_facets)
-        dofs_s_y = fem.locate_dofs_topological(self.F0.sub(1), fdim, slab_facets)
+        dofs_s_x = fem.locate_dofs_topological(self.F0.sub(0), fdim, D.facets.find(D.bc_dict['top_subduction']))
+        dofs_s_y = fem.locate_dofs_topological(self.F0.sub(1), fdim, D.facets.find(D.bc_dict['top_subduction']))
         # create the dirichlet bc for the slab boundary using the computed velocity field of the moving wall.
         bcx = fem.dirichletbc(self.moving_wall.sub(0), dofs_s_x)
         bcy = fem.dirichletbc(self.moving_wall.sub(1), dofs_s_y)
@@ -1292,13 +1634,13 @@ class Slab(Stokes_Problem):
                            ,D:Domain
                            ,S:Solution
                            ,dS:ufl.measure.Measure  
-                           ,a1:ufl.expression
-                           ,a2:ufl.expression
-                           ,a3:ufl.expression
+                           ,a1:ufl.form.Form
+                           ,a2:ufl.form.Form
+                           ,a3:ufl.form.Form
                            ,FGS:Functions_material_properties_global
                            ,gamma:float
-                           ,sc:Scaling
-                           ,it:int = 0)->tuple([ufl.expression,ufl.expression,ufl.expression]):
+                           ,sc:Scal
+                           ,it:int = 0)->tuple([ufl.form.Form,ufl.form.Form,ufl.form.Form]):
 
         """Update the fem form to integrate the weak formulation of free slip boundary condition
         Args:
@@ -1314,18 +1656,19 @@ class Slab(Stokes_Problem):
             tuple: Updated forms (a1, a2, a3) with the Nitsche free slip boundary condition integrated.
         """
 
-
+        # Compute the shear stress tensor for a given viscosity and velocity field. 
         def tau(eta, u):
             return 2 * eta * ufl.sym(ufl.grad(u))
         
         
         # Linear 
         e   = compute_strain_rate(S.u_slab)   
+        # Viscosity computation
         eta = compute_viscosity_FX(e,S.t_oslab,S.p_lslab,FGS,sc)
-        
+        # Extract the facet normal and the cell diameter for the mesh to compute the Nitsche terms.
         n = ufl.FacetNormal(D.mesh)
         h = ufl.CellDiameter(D.mesh)
-
+        # Update the forms with the Nitsche terms.
         a1 += (
             - ufl.inner(tau(eta, self.trial0), ufl.outer(ufl.dot(self.test0, n) * n, n)) * self.ds(dS)
             - ufl.inner(ufl.outer(ufl.dot(self.trial0, n) * n, n), tau(eta, self.test0)) * self.ds(dS)
@@ -1340,11 +1683,22 @@ class Slab(Stokes_Problem):
             a2 += 0 
             a3 += 0 
         return a1, a2, a3 
-    
-    def Solve_the_Problem(self,S,ctrl,FGS,M,g,sc,it=0,ts=0):
-        theta = M.g_input.theta_out_slab
-        M = getattr(M,'domainA')
+    #-------------------------------------------------------------------
+    def Solve_the_Problem(self
+                          ,S:Solution
+                          ,ctrl:NumericalControls
+                          ,FGS:Functions_material_properties_global
+                          ,D:Domain
+                          ,g:fem.Function
+                          ,sc:Scal
+                          ,it=0
+                          ,ts=0):
+
         
+        # Recreate the test and trial function on the subspace of the slab
+        # Note: Initially, the problem was not solved because I was trying to reuse
+        # The test and trial function created at the beginning of the simulation. 
+        # However the composite spaces (V/P blocks) are not allowing to reuse these functions. 
         
         V_subs0 = self.FS.sub(0)
         p_subs0 = self.FS.sub(1)
@@ -1356,24 +1710,32 @@ class Slab(Stokes_Problem):
         self.trial1 = ufl.TrialFunction(p_subs)
         self.test1 = ufl.TestFunction(p_subs)
         # Create the linear problem
-        a1,a2,a3, L, a_p = self.set_linear_picard(S.u_slab,S.t_oslab,S.p_lslab,M,FGS,ctrl,sc)
+        a1,a2,a3, L, a_p = self.set_linear_picard(S.u_slab
+                                                  ,S.t_oslab
+                                                  ,S.p_lslab
+                                                  ,D
+                                                  ,FGS
+                                                  ,ctrl
+                                                  ,sc)
 
         # Create the dirichlecht boundary condition 
-        self.bc   = self.setdirichlecht(ctrl,M,theta) 
+        self.bc   = self.setdirichlecht(ctrl
+                                        ,D) 
         # Set Nietsche FS boundary condition 
-        dS_top = M.bc_dict["top_subduction"]
-        dS_bot = M.bc_dict["bot_subduction"]
+        dS_bot = D.bc_dict["bot_subduction"]
         # 1 Extract ds 
-        a1,a2,a3 = self.compute_nitsche_FS(M, S, dS_bot, a1, a2 ,a3,FGS ,50.0,sc)
-        
-        if ctrl.slab_bc == 0: 
-            a1,a2,a3 = self.compute_nitsche_FS(M, S, dS_top, a1, a2 ,a3,FGS ,50.0,sc)
-        
-        # Slab problem is ALWAYS LINEAR
-        
+        a1,a2,a3 = self.compute_nitsche_FS(D
+                                           ,S
+                                           ,dS_bot
+                                           ,a1
+                                           ,a2
+                                           ,a3
+                                           ,FGS
+                                           ,50.0
+                                           ,sc)
+                
         a   = fem.form([[a1, a2],[a3, None]])
         a_p0  = fem.form([[a1, None],[None, a_p]])
-
 
         self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,ctrl ,J = None, r = None,it = 0, ts = 0)
         
@@ -1403,7 +1765,6 @@ class Slab(Stokes_Problem):
             S.u_slab.x.scatter_forward()
             S.p_slab.x.scatter_forward()
         
-
         time_B = timing.time()
         print_ph(f'              // -- // --- Solution of Stokes problem in {time_B-time_A:.2f} sec // -- // --->')
         print_ph(f'')

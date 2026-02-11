@@ -1,6 +1,7 @@
 from stonedfenicsx.utils import *
 from stonedfenicsx.package_import import *
 from stonedfenicsx.scal import Scal
+from dolfinx.fem.petsc          import assemble_matrix_block, assemble_vector_block
 
 
 class Solvers():

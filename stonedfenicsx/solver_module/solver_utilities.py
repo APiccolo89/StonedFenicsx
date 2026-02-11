@@ -1,3 +1,7 @@
+from stonedfenicsx.utils import *
+from stonedfenicsx.package_import import *
+from stonedfenicsx.scal import Scal
+
 #-------------------------------------------------------------------------       
 def decoupling_function(z,fun,g_input):
     """
@@ -147,4 +151,35 @@ def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA,Tmax,ts):
     return res_total, sol 
 
 #------------------------------------------------------------------------------------------------------------
-   
+
+def compute_residuum(a,b):
+    dx = a.copy()
+    
+    dx1 = a.copy()
+    
+    dx.x.array[:]  = b.x.array[:] - a.x.array[:];dx.x.scatter_forward()
+    
+    dx1.x.array[:]  = b.x.array[:] + a.x.array[:];dx1.x.scatter_forward()
+    
+    
+    res = L2_norm_calculation(dx)/L2_norm_calculation(dx1)
+    
+    return res
+#------------------------------------------------------------------------------------------------------------
+def min_max_array(a, vel = False):
+    
+    if vel == True: 
+        a1 = a.sub(0).collapse()
+        a2 = a.sub(1).collapse()
+        array = np.sqrt(a1.x.array[:]**2 + a2.x.array[:]**2)
+    else: 
+        array = a.x.array[:]
+    
+    local_min = np.min(array[:])
+    local_max = np.max(array[:])
+    
+    global_min = a.function_space.mesh.comm.allreduce(local_min, op=MPI.MIN)
+    global_max = a.function_space.mesh.comm.allreduce(local_max, op=MPI.MAX)
+    
+    return np.array([global_min, global_max],dtype=np.float64)
+
