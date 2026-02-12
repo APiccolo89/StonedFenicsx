@@ -93,6 +93,8 @@ def initialise_the_simulation(M:Mesh,
     # Generate the initial guess for the temperature. 
     sol.T_O = energy_global.initial_temperature_field(M.domainG, ctrl, lhs_ctrl,M.g_input)
     
+
+    
     return lhs_ctrl,sol,energy_global,lithostatic_pressure_global,slab,wedge,g,FGpdb,FGWG_R,FGS_R,FGG_R
 #---------------------------------------------------------------------------------------------------
 def outerloop_operation(M:Mesh,
@@ -248,10 +250,15 @@ def time_loop(M,ctrl,ioctrl,sc,lhs,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g):
         #    sol.T_ad = compute_adiabatic_initial_adiabatic_contribution(M.domainG,sol.T_N,None,sol.PL,FGT,0)
 
         if ctrl.steady_state == 1 or (ts%10) == 0:
+            print_ph('OUTPUT...')
             output_class.print_output(sol,M.domainG,FGT,FGGR,ioctrl,sc,ctrl,it_outer=0,time=t*t*sc.T/sc.scale_Myr2sec,ts=ts)
+            print_ph('finished')
+
         
+    
         
         if ctrl.steady_state == 1: 
+            print_ph('End Steady State solution, printing the benchmarks')
             t = ctrl.time_max
             if ctrl.van_keken == 1: 
                 from stonedfenicsx.output import _benchmark_van_keken

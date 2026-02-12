@@ -111,10 +111,12 @@ def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA,Tmax,ts):
     res_T = compute_residuum(sol.T_N,T)
     res_PL= compute_residuum(sol.PL,PL)
     
-    minMaxU = min_max_array(sol.u_global, vel=True)
-    minMaxP = min_max_array(sol.p_global)
-    minMaxT = min_max_array(sol.T_N)
-    minMaxPL= min_max_array(sol.PL)
+    minMaxU = min_max_array(sol.u_global,sc, vel=True)
+    minMaxP = min_max_array(sol.p_global,sc)
+    minMaxT = min_max_array(sol.T_N,sc, printing=1)
+    minMaxTO = min_max_array(sol.T_O,sc, printing=1)
+
+    minMaxPL= min_max_array(sol.PL,sc)
     
     # scal back 
     
@@ -166,14 +168,18 @@ def compute_residuum(a,b):
     
     return res
 #------------------------------------------------------------------------------------------------------------
-def min_max_array(a, vel = False):
+def min_max_array(a,sc, vel = False, printing=0):
     
     if vel == True: 
         a1 = a.sub(0).collapse()
         a2 = a.sub(1).collapse()
         array = np.sqrt(a1.x.array[:]**2 + a2.x.array[:]**2)
     else: 
+        num_owned = a.function_space.dofmap.index_map.size_local
+        a.x.scatter_forward()
         array = a.x.array[:]
+        array = array[:num_owned]
+        
     
     local_min = np.min(array[:])
     local_max = np.max(array[:])
@@ -183,3 +189,27 @@ def min_max_array(a, vel = False):
     
     return np.array([global_min, global_max],dtype=np.float64)
 
+#if a.function_space.mesh.comm.rank  == 0 and printing==1: 
+#        print(f'len Array {len(a.x.array[:]):d} & len local {len(array):d}')
+#        print(f'Pr_0: {local_min*sc.Temp-273.15:.2f}')
+#        X = a.function_space.tabulate_dof_coordinates()
+#        X = X[:num_owned,:]
+#        X[:,0:1] *= sc.L/1e3
+#        X[:,2] = array[:]*sc.Temp-273.15
+#        print(X[array[:]*sc.Temp-273.15<0.0,:])
+#
+##    if a.function_space.mesh.comm.rank  == 1 and printing==1: 
+##        print(f'len Array {len(a.x.array[:]):d} & len local {len(array):d} ')
+##        print(f'Pr_1: {local_min*sc.Temp-273.15:.2f}')
+##        X = a.function_space.tabulate_dof_coordinates()
+##        X = X[:num_owned,:]
+##        X[:,0:1] *= sc.L/1e3
+##        X[:,2] = array[:]*sc.Temp-273.15
+##        print(X[array[:]*sc.Temp-273.15<0.0,:])
+##    
+##    if MPI.COMM_WORLD.rank == 0 and printing==1: 
+#        print(f'Pr_0: global {global_min*sc.Temp-273.15:.2f}')
+#    if MPI.COMM_WORLD.rank == 1 and printing==1: 
+#        print(f'Pr_1:global {global_min*sc.Temp-273.15:.2f}')
+    
+    

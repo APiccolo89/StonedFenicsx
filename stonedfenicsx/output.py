@@ -70,21 +70,21 @@ class OUTPUT():
         if ctrl.steady_state == 1:
             file_name = os.path.join(self.pt_save,'Steady_state')         
         file_name2 = os.path.join(self.pt_save,'MeshTag')
-
+        print_ph('... Velocity')
         # Velocity 
         u_T = fem.Function(self.vel_V)
         u_T.name = "Velocity  [cm/yr]"
         u_T.interpolate(S.u_global)
         u_T.x.array[:] = u_T.x.array[:]*(sc.L/sc.T)/sc.scale_vel
         u_T.x.scatter_forward()
-
+        print_ph('... Pressure')
         # Pressure
         p2 = fem.Function(self.temp_V)
         p2.name = "Pressure  [GPa]"
         p2.interpolate(S.p_global)
         p2.x.array[:] = p2.x.array[:]*sc.stress/1e9 
         p2.x.scatter_forward()  
-
+        print_ph('... Temperature')
         # Temperature
         T2 = fem.Function(self.temp_V)
         T2.name = "Temperature  [degC]"
@@ -101,7 +101,7 @@ class OUTPUT():
         T3.interpolate(S.T_O)
         T3.x.array[:] = T3.x.array[:]*sc.Temp - 273.15
         T3.x.scatter_forward()  
-
+        print_ph('... Lithostatic')
         # Lithostatic pressure
         PL2 = fem.Function(self.temp_V)
         PL2.name = "Lit Pres  [GPa]"
@@ -110,6 +110,7 @@ class OUTPUT():
         PL2.x.scatter_forward()
         
         # alpha 
+        print_ph('... Thermal Expansivity')
         alpha = alpha_FX(FGT,S.T_N,S.PL)
         alpha2 = evaluate_material_property(alpha, self.temp_V)
         alpha2.name = "alpha  [1/K]"
@@ -118,6 +119,7 @@ class OUTPUT():
 
 
         # density 
+        print_ph('...Density ')
         rho = density_FX(FGT,S.T_N,S.PL)
         rho2 = evaluate_material_property(rho, self.temp_V)
         rho2.name = "Density  [kg/m3]"
@@ -125,6 +127,7 @@ class OUTPUT():
         rho2.x.scatter_forward()
 
         # Cp 
+        print_ph('... Capacity')
         Cp = heat_capacity_FX(FGT,S.T_N)
         Cp2 = evaluate_material_property(Cp,self.temp_V)
         Cp2.name = "Cp  [J/kg]"
@@ -132,6 +135,7 @@ class OUTPUT():
         Cp2.x.scatter_forward()
 
         # k 
+        print_ph('... Conductivity')
         k = heat_conductivity_FX(FGT,S.T_N,S.PL,Cp,rho)
         k2 = evaluate_material_property(k,self.temp_V)
         k2.name = "k  [W/m/k]"
@@ -140,12 +144,14 @@ class OUTPUT():
 
 
         # kappa 
+        print_ph('... Diffusivity')
         kappa2 = fem.Function(self.temp_V)
         kappa2.name = "kappa  [m2/s]"
         kappa2.x.array[:] = k2.x.array[:]/(rho2.x.array[:]*Cp2.x.array[:])
         kappa2.x.scatter_forward()
 
         # strain rate 
+        print_ph('... Strain Rate')
         e = compute_strain_rate(S.u_global)
         eII = compute_eII(e)
         eII2 = evaluate_material_property(eII, self.temp_V)
@@ -158,45 +164,37 @@ class OUTPUT():
         e_T.x.scatter_forward()
 
         # viscosity (e,S.t_oslab,S.p_lslab,pdb,D.phase,D,sc)
+        print_ph('... Viscosity')
+
         eta = compute_viscosity_FX(eII,S.T_N,S.PL,FGR,sc)
         eta2 = evaluate_material_property(eta,self.temp_V)
         eta2.name = "eta  [Pa s]"
         eta2.x.array[:] = np.abs(eta2.x.array[:])*sc.eta
         eta2.x.scatter_forward()
 
-        T_ad    = fem.Function(self.temp_V)
-        if ctrl.adiabatic_heating == 0:
-            T_ad.interpolate(S.T_ad)
-            T_ad.x.array[:]    = T_ad.x.array[:]*sc.Temp -273.15
-        else:
-            T_ad.x.array[:]=-100 
-            T_ad.x.scatter_forward()
-        T_ad.name = 'Tad [C]'
-
         # heat flux 
+        print_ph('... Flux')
+
         q_expr = - ( heat_conductivity_FX(FGT,S.T_O,S.PL,Cp,rho)* ufl.grad(S.T_N))  
         flux = evaluate_material_property(q_expr,self.vel_V)
         flux.name = 'Heat flux [W/m2]'
         flux.x.array[:] *= sc.Watt/sc.L**2
         
-        # Line Tag for the mesh and post_processing 
+        print_ph('... MeshTag')
+        # Line Tag for the mesh and post_processing -> Translating in parallel -> gather and sending 
         tag = fem.Function(self.temp_V)
         tag.name = 'MeshTAG'
-        marker_unique = np.unique(D.facets.values)
-        for i in range(len(marker_unique)):
-            facet_indices = D.facets.find(marker_unique[i])   # numpy array of facet ids
+        
+        boundary_list = np.array(list(D.bc_dict.values()),dtype=np.int32)
+        
+        for i in range(len(D.bc_dict.values())):
+            facet_indices = D.facets.find(boundary_list[i])   # numpy array of facet ids
             dofs = fem.locate_dofs_topological(self.temp_V, 1, facet_indices)
-            tag.x.array[dofs] = marker_unique[i]
-            tag.x.scatter_forward()
+            tag.x.array[dofs] = boundary_list[i]
         
-        with XDMFFile(MPI.COMM_WORLD, "%s.xdmf"%file_name2, "w") as ufile_xdmf:
+        tag.x.scatter_forward()
         
-            coord = D.mesh.geometry.x.copy()
-            D.mesh.geometry.x[:] *= sc.L/1e3
-            ufile_xdmf.write_mesh(D.mesh)
-            ufile_xdmf.write_function(tag)
-            D.mesh.geometry.x[:] = coord
-
+        print_ph('... MeshTag')
 
         if ctrl.steady_state == 0:
             # transient: append to ongoing XDMF with time
@@ -218,7 +216,7 @@ class OUTPUT():
             self.xdmf_main.write_function(tag,          time)
         else:
             with XDMFFile(MPI.COMM_WORLD, "%s.xdmf"%file_name, "w") as ufile_xdmf:
-
+                print_ph('... Printing')
                 coord = D.mesh.geometry.x.copy()
                 D.mesh.geometry.x[:] *= sc.L/1e3
                 ufile_xdmf.write_mesh(D.mesh)
@@ -237,7 +235,8 @@ class OUTPUT():
                 ufile_xdmf.write_function(flux )
                 ufile_xdmf.write_function(tag )
                 D.mesh.geometry.x[:] = coord
-                
+                print_ph('... Finished')
+
 
 
 

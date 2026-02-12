@@ -17,48 +17,204 @@ from stonedfenicsx.solver_module.solver_utilities import *
 from stonedfenicsx.solver_module.solver import ScalarSolver, SolverStokes, Solvers
 
 
+def debug_boundary_condition(bc,name):
+    
+    if isinstance(bc.g ,dolfinx.fem.Function) or isinstance(bc.g ,dolfinx.cpp.fem.Function_float64):
+        dofs = bc.dof_indices()
+        dofs_array = dofs[:][0]
+        dofs_ghost = dofs[:][1]
+        if len(dofs_array) != 0: 
+            min_vl = np.nanmin(bc.g.x.array[dofs_array[:dofs_ghost]])
+            max_vl = np.nanmax(bc.g.x.array[dofs_array[:dofs_ghost]])
+        else: 
+            min_vl = -5.01 
+            max_vl = -5.01  
+    else: 
+        min_vl = np.nanmin(bc.g.value)
+        max_vl = np.nanmax(bc.g.value)
+    
+    print_ph(f'{name}')
+    if MPI.COMM_WORLD.rank == 0: 
+        print(f'Pr0: minV {min_vl:.2f} maxV {max_vl:.2f}')
+    if MPI.COMM_WORLD.rank == 1:
+        print(f'Pr1: minV {min_vl:.2f} maxV {max_vl:.2f}')
+        
+    
+    
+
+#----------------------------------------------------------------------------     
+class Problem:
+    """
+    Abstract problem super-class defining the common structure and metadata
+    for all FEM problems in the framework.
+
+    This class stores the function spaces, variational arguments, boundary
+    conditions, integration measures, and solver interface required to
+    assemble and solve a finite-element problem. Concrete problem classes
+    (e.g., thermal, Stokes, slab, wedge) should inherit from this class and
+    specialize the relevant fields.
+
+    Attributes:
+        name (list[str]):
+            Identifiers of the problem and associated computational domains
+            (e.g., ["global"], ["wedge"], ["slab"]).
+
+        mixed (bool):
+            Whether the problem is mixed (multiple coupled function spaces),
+            such as the Stokes problem with velocity and pressure.
+
+        FS (dolfinx.fem.FunctionSpace):
+            Primary function space of the problem.
+
+        F0 (dolfinx.fem.FunctionSpace | None):
+            First subspace of a mixed formulation, if present.
+
+        F1 (dolfinx.fem.FunctionSpace | None):
+            Second subspace of a mixed formulation, if present.
+
+        trial0 (ufl.Argument | None):
+            Trial function associated with `F0` or the primary space.
+
+        trial1 (ufl.Argument | None):
+            Trial function associated with `F1` in mixed problems.
+
+        test0 (ufl.Argument | None):
+            Test function associated with `F0` or the primary space.
+
+        test1 (ufl.Argument | None):
+            Test function associated with `F1` in mixed problems.
+
+        typology (str | None):
+            Problem type descriptor (e.g., "linear", "nonlinear").
+
+        dofs (np.ndarray | None):
+            Degrees of freedom constrained by boundary conditions.
+
+        bc (list):
+            Collection of Dirichlet boundary conditions applied to the problem.
+
+        ds (ufl.Measure):
+            Boundary integration measure (surface/edge integrals).
+
+        dx (ufl.Measure):
+            Domain integration measure (volume/area integrals).
+
+        solv (Solvers):
+            Solver interface or container defining the numerical solution
+            strategy for the problem.
+    """
+
+    name      : list                               # name of the problem, domain [global, domainA...]
+    mixed     : bool                               # is a mixed problem (e.g. Stokes problem has two function spaces: velocity and pressure)
+    FS        : dolfinx.fem.FunctionSpace          # Function space of the problem 
+    F0        : dolfinx.fem.FunctionSpace | None   # Function space of the subspace 
+    F1        : dolfinx.fem.FunctionSpace | None   # Function space of the subspace
+    trial0    : ufl.Argument | None                # Trial 
+    trial1    : ufl.Argument | None                # Trial
+    test0     : ufl.Argument | None                # Test
+    test1     : ufl.Argument | None                # Test 
+    typology  : str | None                         # Linear/Non Linear
+    dofs      : np.ndarray | None                  # Boundary dofs
+    bc        : list                               # Dirichlet BC list
+    ds        : ufl.measure.Measure                # measure surface/length 
+    dx        : ufl.measure.Measure
+    solv      : Solvers
+    # --
+    def __init__(self
+                 ,M: Mesh
+                 ,elements: tuple
+                 ,name: list):
+        """Initialize the problem
+
+        Args:
+            M (Mesh): Mesh object storing the computational domains of the experiment
+            elements (tuple): Finite elements that describe the main computational problem.
+                             Note: Certain problems require storing additional element and function space.
+            name (list): Identifiers of the problem and associated domains. 
+
+        Raises:
+            NameError: If the user changes the name. 
+        """
+
+
+        self.name = name 
+        if name[1] not in ("domainA", "domainB", "domainC", "domainG"):
+            raise NameError("Wrong domain name, check the spelling, in my case was it")
+        elif name[1] == "domainC":
+            print("Are you sure? DomainC is junk for this problem.")
+
+        M = getattr(M, name[1])
+
+        if len(elements) == 1: 
+            self.mixed    = False
+            self.FS       = dolfinx.fem.functionspace(M.mesh, elements[0]) 
+            self.trial0   = ufl.TrialFunction(self.FS)
+            self.test0    = ufl.TestFunction(self.FS)
+            self.trial1   = None
+            self.test1    = None
+        else: 
+            self.mixed    = True
+            mixed_element = basix.ufl.mixed_element([elements[0], elements[1]])
+            self.FS       = dolfinx.fem.functionspace(M.mesh, mixed_element) # MA cristoiddio, perche' cazzo hanno messo FunctionSpace and functionspace come nomi, ma sono degli stronzi?
+            # 
+            self.F0,_       = self.FS.sub(0).collapse()
+            self.F1,_       = self.FS.sub(1).collapse()
+            # Define trial/test on mixed FS
+            self.trial0   = ufl.TrialFunction(self.FS.sub(0).collapse()[0])
+            self.trial1   = ufl.TrialFunction(self.FS.sub(1).collapse()[0])
+            self.test0    = ufl.TestFunction(self.FS.sub(0).collapse()[0])
+            self.test1    = ufl.TestFunction(self.FS.sub(1).collapse()[0])
+        
+        self.dx       = ufl.Measure("dx", domain=M.mesh)
+        self.ds       = ufl.Measure("ds", domain=M.mesh, subdomain_data=M.facets) # Exterior -> for boundary external 
+        self.dS       = ufl.Measure("dS", domain=M.mesh, subdomain_data=M.facets) # Interior -> for boundary integral inside
+
 #--------------------------------------------------------------------------------------------------------------
 class Solution():
     def __init__(self):
-        self.PL       : dolfinx.fem.function.Function 
-        self.T_i      : dolfinx.fem.function.Function
-        self.T_O      : dolfinx.fem.function.Function 
-        self.T_N      : dolfinx.fem.function.Function 
+        self.PL : dolfinx.fem.function.Function 
+        self.T_i : dolfinx.fem.function.Function
+        self.T_O : dolfinx.fem.function.Function 
+        self.T_N : dolfinx.fem.function.Function 
         self.u_global : dolfinx.fem.function.Function
-        self.u_wedge  : dolfinx.fem.function.Function
+        self.u_wedge : dolfinx.fem.function.Function
         self.p_lwedge : dolfinx.fem.function.Function
         self.t_owedge : dolfinx.fem.function.Function
-        self.p_lslab  : dolfinx.fem.function.Function
-        self.t_oslab  : dolfinx.fem.function.Function
-        self.u_slab   : dolfinx.fem.function.Function
-        self.p_global : dolfinx.fem.function.Function 
-        self.p_wedge  : dolfinx.fem.function.Function 
-        self.p_slab   : dolfinx.fem.function.Function
+        self.p_lslab : dolfinx.fem.function.Function
+        self.t_oslab : dolfinx.fem.function.Function
+        self.u_slab : dolfinx.fem.function.Function
+        self.p_global: dolfinx.fem.function.Function 
+        self.p_wedge : dolfinx.fem.function.Function 
+        self.p_slab : dolfinx.fem.function.Function
         self.Hs_wedge : dolfinx.fem.function.Function
-        self.Hs_slab  : dolfinx.fem.function.Function
+        self.Hs_slab : dolfinx.fem.function.Function
         self.Hs_global : dolfinx.fem.function.Function
-        self.T_ad      : dolfinx.fem.function.Function
+        self.T_ad : dolfinx.fem.function.Function
         self.outer_iteration : NDArray[:]
-        self.mT            : NDArray[:]
-        self.MT            : NDArray[:]     
-        self.ts            : NDArray[:]   
+        self.mT : NDArray[:]
+        self.MT : NDArray[:]     
+        self.ts : NDArray[:]   
         
-    def create_function(self,PG,PS,PW,elements): 
+    def create_function(self
+                        ,PG:Problem 
+                        ,PS:Problem
+                        ,PW:Problem
+                        ,elements:list): 
+        """Create the 'fem.Function' for storing the solution of each of the problem 
+
+        Args:
+            PG Problem(Global_thermal|Global_lithostatic): Global problem (either Thermal or lithostatic)
+            PS Problem(Slab): Subducting plate problem
+            PW Problem(Wedge): Wedge problem 
+            elements list: Elements for each of the problem (i.e. -> vectorial or scalar)
+
+        Returns:
+            Solution: Updated solution class with cached function. 
+            
+        Notes: Creating a more general Solution class and create specific istance for any given problem
+
         """
-        ======
-        I am pretty pissed off about this problem: it is impossible to have a generalised approach that can be flexible 
-        whoever had this diabolical idea, should be granted with a damnatio memoriae. So, inevitable, this class must 
-        be modified as a function of the problem at hand.
-        
-        Argument: 
-        PG : Global Problem 
-        PS : Slab Problem
-        PW : Wedge Problem
-        
-        -> update the solution functions that will be used later on. 
-        
-        =======
-        """
+
         mixed_element = basix.ufl.mixed_element([elements[0], elements[1]])
 
         space_GL = fem.functionspace(PG.FS.mesh,mixed_element) # PORCO DIO 
@@ -96,64 +252,7 @@ class Solution():
 
         return self 
 
-#----------------------------------------------------------------------------     
-class Problem:
-    
-    name      : list                               # name of the problem, domain [global, domainA...]
-    mixed     : bool                               # is a mixed problem (e.g. Stokes problem has two function spaces: velocity and pressure)
-    FS        : dolfinx.fem.FunctionSpace          # Function space of the problem 
-    F0        : dolfinx.fem.FunctionSpace | None   # Function space of the subspace 
-    F1        : dolfinx.fem.FunctionSpace | None   # Function space of the subspace
-    trial0    : ufl.Argument | None                # Trial 
-    trial1    : ufl.Argument | None                # Trial
-    test0     : ufl.Argument | None                # Test
-    test1     : ufl.Argument | None                # Test 
-    typology  : str | None                         # Linear/Non Linear
-    dofs      : np.ndarray | None                  # Boundary dofs
-    bc        : list                               # Dirichlet BC list
-    ds        : ufl.measure.Measure                # measure surface/length 
-    dx        : ufl.measure.Measure
-    solv      : Solvers
-    # --
-    def __init__(self, M: Mesh, elements: tuple, name: list):
-        """
-        Arguments: 
-            M       : the mesh object 
-            elements: tuple containing the elements.
-                      If >1 -> assumes mixed problem
-            name    : list ['problem_name', 'domain']
-        """
-        self.name = name 
-        if name[1] not in ("domainA", "domainB", "domainC", "domainG"):
-            raise NameError("Wrong domain name, check the spelling, in my case was it")
-        elif name[1] == "domainC":
-            print("Are you sure? DomainC is junk for this problem.")
 
-        M = getattr(M, name[1])
-
-        if len(elements) == 1: 
-            self.mixed    = False
-            self.FS       = dolfinx.fem.functionspace(M.mesh, elements[0]) 
-            self.trial0   = ufl.TrialFunction(self.FS)
-            self.test0    = ufl.TestFunction(self.FS)
-            self.trial1   = None
-            self.test1    = None
-        else: 
-            self.mixed    = True
-            mixed_element = basix.ufl.mixed_element([elements[0], elements[1]])
-            self.FS       = dolfinx.fem.functionspace(M.mesh, mixed_element) # MA cristoiddio, perche' cazzo hanno messo FunctionSpace and functionspace come nomi, ma sono degli stronzi?
-            # 
-            self.F0,_       = self.FS.sub(0).collapse()
-            self.F1,_       = self.FS.sub(1).collapse()
-            # Define trial/test on mixed FS
-            self.trial0   = ufl.TrialFunction(self.FS.sub(0).collapse()[0])
-            self.trial1   = ufl.TrialFunction(self.FS.sub(1).collapse()[0])
-            self.test0    = ufl.TestFunction(self.FS.sub(0).collapse()[0])
-            self.test1    = ufl.TestFunction(self.FS.sub(1).collapse()[0])
-        
-        self.dx       = ufl.Measure("dx", domain=M.mesh)
-        self.ds       = ufl.Measure("ds", domain=M.mesh, subdomain_data=M.facets) # Exterior -> for boundary external 
-        self.dS       = ufl.Measure("dS", domain=M.mesh, subdomain_data=M.facets) # Interior -> for boundary integral inside
         
 #------------------------------------------------------------------- 
 #-------------------------------------------------------------------
@@ -189,6 +288,7 @@ class Global_thermal(Problem):
             # Interpolate temperature field: 
             T_bc_L.x.array[:] = griddata(z, LHS, cd_dof[:,1], method='nearest')
             T_bc_L.x.scatter_forward()
+
             self.bc_left = fem.dirichletbc(T_bc_L, dofs_left)
             
 
@@ -209,6 +309,7 @@ class Global_thermal(Problem):
         h_vel  = u_global.sub(0) # index 1 = y-direction (2D)
         vel_T  = fem.Function(self.FS)
         vel_T.interpolate(h_vel)
+        vel_T.x.scatter_forward()
         vel_bc = vel_T.x.array[dofs_right_wed]
         ind_z = np.where((vel_bc < 0.0) & (cd_dof[dofs_right_wed,1]<=-geom.lab_d))
         dofs_vel = dofs_right_wed[ind_z[0]]        
@@ -221,18 +322,33 @@ class Global_thermal(Problem):
             
         facets                 = M.facets.find(M.bc_dict['Bottom_wed'])                        
         dofs_bot_wed        = fem.locate_dofs_topological(self.FS, M.mesh.topology.dim-1, facets)
-        h_vel       = u_global.sub(0) # index 1 = y-direction (2D)   
-        v_vel       = u_global.sub(1) # index 1 = y-direction (2D)
-        vel_T  = fem.Function(self.FS)
+        h_vel = u_global.sub(0) # index 1 = y-direction (2D)   
+        v_vel = u_global.sub(1) # index 1 = y-direction (2D)
+        vel_T = fem.Function(self.FS)
         vel_T.interpolate(v_vel)
+        vel_T.x.scatter_forward()
         vel_bc = vel_T.x.array[dofs_bot_wed]
         ind_z = np.where((vel_bc > 0.0))
-        dofs_vel = dofs_bot_wed[ind_z[0]]                
+        dofs_vel = dofs_bot_wed[ind_z[0]]    
+                    
         
         self.bc_bot_wed = fem.dirichletbc(ctrl.Tmax, dofs_vel,self.FS)
         
-        bc = [self.bc_top, self.bc_left,  self.bc_right_wed,self.bc_bot_wed, self.bc_right_lit]
+        bc = [ self.bc_left,  self.bc_right_wed,self.bc_bot_wed, self.bc_right_lit,self.bc_top]
 
+        
+        DEBUG = 0
+        if DEBUG == 1: 
+            print_ph('DEBUGGING...')
+            debug_boundary_condition(self.bc_top,'top')
+            MPI.COMM_WORLD.barrier()
+            debug_boundary_condition(self.bc_left,'left')
+            MPI.COMM_WORLD.barrier()
+            debug_boundary_condition(self.bc_bot_wed,'bot_wedge')
+            MPI.COMM_WORLD.barrier()
+
+            debug_boundary_condition(self.bc_right_lit,'right_lit')
+        
         
         
         return bc 
@@ -521,8 +637,9 @@ class Global_thermal(Problem):
 
         if nl == 0: 
             S.T_N = self.solve_the_linear(S,a,L,S.T_N) 
+
         else: 
-            S = self.solve_the_non_linear(M,S,Hs,ctrl,pdb)
+            S = self.solve_the_non_linear(M,S,ctrl,pdb)
         
         time_B = timing.time()
         
@@ -533,98 +650,6 @@ class Global_thermal(Problem):
         return S 
 
     #------------------------------------------------------------------
-
-    def Solve_the_Problem_SS(self,S,ctrl,FG,M,lhs,geom,sc,it=0,ts=0): 
-        
-        nl = 0 
-        
-        # choose the problem: 
-
-        
-        
-        p_k = S.PL.copy()  # Previous lithostatic pressure 
-        T   = S.T_N # -> will not eventually update 
-        
-        if ctrl.adiabatic_heating ==2:
-            Hs = S.Hs_global # Shear heating
-        else:
-            Hs = 0.0
-            
-        if it == 0:         
-            self.shear_heating = self.compute_shear_heating(ctrl,FG, S,getattr(M,'domainG'),geom,sc)
-            self.compute_energy_source(getattr(M,'domainG'),FG)
-        
-        a,L = self.set_linear(p_k,T,S.u_global,Hs,getattr(M,'domainG'),FG,ctrl)
-        
-        self.bc = self.create_bc_temp(getattr(M,'domainG'),ctrl,geom,lhs,S.u_global,S.T_i,it)
-        if self.typology == 'NonlinearProblem':
-            F,J = self.set_newton_SS(p_k,getattr(M,'domainG'),T,S.u_global,pdb)
-            nl = 1 
-        else: 
-            F = None;J=None 
-
-        if it == 0 & ts == 0: 
-            self.solv = ScalarSolver(a,L,M.comm,nl,J,F)
-        
-        print_ph('              // -- // --- Temperature problem [GLOBAL] // -- // --->')
-        
-        time_A = timing.time()
-
-        if nl == 0: 
-            S = self.solve_the_linear(S,a,L,S.T_O) 
-        else: 
-            S = self.solve_the_non_linear_SS(M,S,Hs,ctrl,pdb)
-        
-        time_B = timing.time()
-        
-        print_ph(f'              // -- // --- Solution of Temperature  in {time_B-time_A:.2f} sec // -- // --->')
-
-
-
-        return S 
-    #------------------------------------------------------------------
-    
-    def Solve_the_Problem_TD(self,S,ctrl,pdb,M,lhs,geom,sc,it=0,ts=0): 
-
-        nl = 0 
-        p_k = S.PL.copy()  # Previous lithostatic pressure 
-
-
-
-        if it == 0:
-         
-            self.shear_heating = self.compute_shear_heating(ctrl,pdb, S,getattr(M,'domainG'),geom,sc)
-            self.compute_energy_source(getattr(M,'domainG'),pdb)
-
-
-        a,L = self.set_linear_picard_TD(p_k,S.T_N,S.T_O,S.u_global,getattr(M,'domainG'),pdb,ctrl.dt)
-
-        self.bc = self.create_bc_temp(getattr(M,'domainG'),ctrl,geom,lhs,S.u_global,it)
-        if self.typology == 'NonlinearProblem':
-            nl = 1 
-        F = None 
-        J = None 
-
-        if it == 0 & ts == 0: 
-            self.solv = ScalarSolver(a,L,M.comm,nl,J,F)
-        
-
-        print_ph('     // -- // --- Temperature problem [GLOBAL] // -- // --->')
-        
-        time_A = timing.time()
-
-        if nl == 0: 
-            S.T_N = self.solve_the_linear(S,a,L,S.T_O) 
-        else: 
-            S = self.solve_the_non_linear_TD(M,S,ctrl,pdb)
-        
-        time_B = timing.time()
-        
-        print_ph(f'. // -- // --- Solution of Temperature  in {time_B-time_A:.2f} sec // -- // --->')
-
-
-
-        return S 
     
     def solve_the_linear(self,S,a,L,fen_function,isPicard=0,it=0,ts=0):
         
@@ -636,14 +661,20 @@ class Global_thermal(Problem):
         self.solv.b.set(0.0)
         fem.petsc.assemble_vector(self.solv.b, fem.form(L))
         fem.petsc.apply_lifting(self.solv.b, [fem.form(a)], [self.bc])
-        self.solv.b.ghostUpdate()
+        
+        self.solv.b.ghostUpdate(addv=PETSc.InsertMode.ADD,
+                        mode=PETSc.ScatterMode.REVERSE)
+        
         fem.petsc.set_bc(self.solv.b, self.bc)
         self.solv.ksp.solve(self.solv.b, fen_function.x.petsc_vec)
+        fem.petsc.set_bc(fen_function.x.petsc_vec,bcs=self.bc)
         
         if isPicard == 0: # if it is a picard iteration the function gives the function 
             fen_function.x.scatter_forward()
+
             return fen_function 
         else:
+            fen_function.x.scatter_forward()
             return fen_function
 
 
@@ -759,6 +790,7 @@ class Global_thermal(Problem):
         )
         T_i.interpolate(fem.Expression(expr, X.element.interpolation_points()))
         T_i.x.array[ind_B] = ctrl.Tmax
+        T_i.x.scatter_forward()
         return T_i 
 
 #-------------------------------------------------------------------
@@ -1302,7 +1334,7 @@ class Wedge(Stokes_Problem):
 
         
         if self.typology == 'LinearProblem' or self.typology == 'NonlinearProblemT': 
-            S,r_al = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl, S)
+            S,r_al = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl, S,it=it,ts=ts)
 
         else: 
             print_ph('              [//] Picard iterations for the non linear lithostatic pressure problem')
@@ -1325,7 +1357,7 @@ class Wedge(Stokes_Problem):
                     a_p0[0][0] = a1 
                     a_p0       = fem.form(a_p0)
                 
-                S,r_al = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl, S,it)
+                S,r_al = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl, S,it,ts)
                 
                 
                 du0.x.array[:]  = S.u_wedge.x.array[:] - u_k.x.array[:];du0.x.scatter_forward()
@@ -1375,8 +1407,10 @@ class Wedge(Stokes_Problem):
     
     def solve_linear_picard(self,a,a_p0,L,ctrl, S,it=0,ts=0):
             
-
-        self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,ctrl ,J = None, r = None,it = 0, ts = 0)
+        if it == 0 and ts == 0: 
+            self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,ctrl ,J = None, r = None,it = it, ts = ts)
+        else: 
+            self.solv.update_block_operator(a,a_p0,self.bc,L,self.F0,self.F1)
         
         
         if self.solv.direct_solver==1:
@@ -1387,28 +1421,35 @@ class Wedge(Stokes_Problem):
         if self.solv.direct_solver == 0: 
             xu = x.getSubVector(self.solv.is_u)
             xp = x.getSubVector(self.solv.is_p)
-    
 
-            S.u_wedge.x.array[:] = xu.array_r[:]
-            S.p_wedge.x.array[:] = xp.array_r[:]
+            
+            # Copy OWNED entries only into the function PETSc Vecs
+            
+            with S.u_wedge.x.petsc_vec.localForm() as uloc:
+                uloc.array[:] = xu.array_r
+            with S.p_wedge.x.petsc_vec.localForm() as ploc:
+                ploc.array[:] = xp.array_r
+
+            # Fill ghosts
             S.u_wedge.x.scatter_forward()
             S.p_wedge.x.scatter_forward()
-            
 
-            
+            x.restoreSubVector(self.solv.is_u, xu)
+            x.restoreSubVector(self.solv.is_p, xp)
+      
         else: 
             S.u_wedge.x.array[:self.solv.offset] = x.array[:self.solv.offset]
             S.p_wedge.x.array[: (len(x.array_r) - self.solv.offset)] = x.array[self.solv.offset:]
             S.u_wedge.x.scatter_forward()
             S.p_wedge.x.scatter_forward()
         
-        r = self.solv.b.copy()
-        self.solv.A.mult(x, r)          # r = A x
-        r.scale(-1.0)         # r = -A x
-        r.axpy(1.0, self.solv.b)        # r = b - A x
-        r.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+        self.r = self.solv.b.copy()
+        self.solv.A.mult(x, self.r)          # r = A x
+        self.r.scale(-1.0)         # r = -A x
+        self.r.axpy(1.0, self.solv.b)        # r = b - A x
+        self.r.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
 
-        abs_res = r.norm()
+        abs_res = self.r.norm()
         
         return S,abs_res 
 
@@ -1609,16 +1650,22 @@ class Slab(Stokes_Problem):
         if self.solv.direct_solver == 0: 
             xu = x.getSubVector(self.solv.is_u)
             xp = x.getSubVector(self.solv.is_p)
-            u, p = fem.Function(self.F0), fem.Function(self.F1)
-    
-            u.x.array[:] = xu.array_r
-            p.x.array[:] = xp.array_r
-            p.x.scatter_forward()
-            u.x.scatter_forward()
-            S.u_slab.x.array[:] = u.x.array[:]
-            S.p_slab.x.array[:] = p.x.array[:]
+
+            
+            # Copy OWNED entries only into the function PETSc Vecs
+            
+            with S.u_slab.x.petsc_vec.localForm() as uloc:
+                uloc.array[:] = xu.array_r
+            with S.p_slab.x.petsc_vec.localForm() as ploc:
+                ploc.array[:] = xp.array_r
+
+            # Fill ghosts
             S.u_slab.x.scatter_forward()
             S.p_slab.x.scatter_forward()
+
+            x.restoreSubVector(self.solv.is_u, xu)
+            x.restoreSubVector(self.solv.is_p, xp)
+    
         else: 
             S.u_slab.x.array[:self.solv.offset] = x.array_r[:self.solv.offset]
             S.p_slab.x.array[: (len(x.array_r) - self.solv.offset)] = x.array_r[self.solv.offset:]
@@ -1633,3 +1680,23 @@ class Slab(Stokes_Problem):
     
 #-------------------------------------------------------------------
 #-------------------------------------------------------------------
+#             x = self.solv.A.createVecRight()
+#            self.solv.ksp.solve(self.solv.b, x)
+#            if self.solv.direct_solver == 0: 
+#                xu = x.getSubVector(self.solv.is_u)
+#                xp = x.getSubVector(self.solv.is_p)
+#            
+#                # Copy OWNED entries only into the function PETSc Vecs
+#            
+#                with S.u_slab.x.petsc_vec.localForm() as uloc:
+#                    uloc.array[:] = xu.array_r
+#                with S.p_slab.x.petsc_vec.localForm() as ploc:
+#                    ploc.array[:] = xp.array_r
+#
+#                # Fill ghosts
+#                S.u_slab.x.scatter_forward()
+#                S.p_slab.x.scatter_forward()
+#
+#                x.restoreSubVector(self.solv.is_u, xu)
+#                x.restoreSubVector(self.solv.is_p, xp)
+#        

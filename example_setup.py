@@ -19,7 +19,7 @@ self_con = [0, 1]
 # A flag that generate the geometry of the benchmark
 van_keken = 1
 # The input path for saving the results
-inp.path_test = '../Results/Tests_Van_keken'
+inp.path_test = '../Results/Tests_Van_keken_parallel'
 
 # Geometrical input
 inp.cr = 0.0   # Overriding crust 

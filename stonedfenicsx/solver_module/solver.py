@@ -38,10 +38,10 @@ class SolverStokes():
     def __init__(self,a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0):
         self.direct_solver = 1
         if self.direct_solver == 1: 
-            self.set_direct_solver(a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0)
+            self.set_direct_solver(a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it=it, ts = ts)
             self.offset = F0.dofmap.index_map.size_local * F0.dofmap.index_map_bs
         elif self.direct_solver ==0: 
-            self.set_iterative_solver(a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0)    
+            self.set_iterative_solver(a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = it, ts = ts)    
     
     def set_direct_solver(self,
                           a,
@@ -58,7 +58,7 @@ class SolverStokes():
                           it = 0, 
                           ts = 0):
         
-        if it == 0 or ts == 0:
+        if it == 0 and ts == 0:
             self.set_block_operator(a, a_p, bcs, L, F0, F1)
 
             # Create a solver
@@ -74,6 +74,9 @@ class SolverStokes():
             self.pc.setFactorSetUpSolverType()
             self.pc.getFactorMatrix().setMumpsIcntl(icntl=24, ival=1)
             self.pc.getFactorMatrix().setMumpsIcntl(icntl=25, ival=0)
+        else: 
+            self.update_block_operator(a,a_p,bcs,L,F0,F1)
+            
 
     
     def set_iterative_solver(self,a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0): 
@@ -87,8 +90,6 @@ class SolverStokes():
             offset_p = self.nloc_u
             # local starts in the *assembled block vector*
 
-            self.is_u = PETSc.IS().createStride(self.nloc_u, offset_u, 1, comm=PETSc.COMM_SELF)
-            self.is_p = PETSc.IS().createStride(self.nloc_p, offset_p, 1, comm=PETSc.COMM_SELF)
             V_map = F0.dofmap.index_map
             Q_map = F1.dofmap.index_map
             bs_u  = F0.dofmap.index_map_bs  # = mesh.dim for vector CG
@@ -99,9 +100,10 @@ class SolverStokes():
 
 
 
-            self.is_u = PETSc.IS().createStride(nloc_u, offset_u, 1, comm=PETSc.COMM_SELF)
-            self.is_p = PETSc.IS().createStride(nloc_p, offset_p, 1, comm=PETSc.COMM_SELF)
+            self.is_u = PETSc.IS().createStride(nloc_u, offset_u, 1, comm=MPI.COMM_WORLD)
+            self.is_p = PETSc.IS().createStride(nloc_p, offset_p, 1, comm=MPI.COMM_WORLD)
             
+            assert self.nloc_u + self.nloc_p == self.A.getLocalSize()[1]
             
             self.ksp = PETSc.KSP().create(COMM)
             self.ksp.setOperators(self.A, self.P)
@@ -127,6 +129,8 @@ class SolverStokes():
             self.ksp.getPC().setUp()
             self.Pu, _ = self.ksp_u.getPC().getOperators()
             self.Pu.setBlockSize(2)
+        else:
+            self.update_block_operator(a,a_p,bcs,L,F0,F1)
 
     def set_block_operator(self,a,a_p,bcs,L,F0,F1):
 
@@ -142,4 +146,31 @@ class SolverStokes():
         self.nsp = PETSc.NullSpace().create(vectors=[self.null_vec])
         self.A.setNullSpace(self.nsp)
 
+    def update_block_operator(self,a,a_p,bcs,L,F0,F1):
+
+        A_new = assemble_matrix_block(a, bcs=bcs);   A_new.assemble()
+        P_new = assemble_matrix_block(a_p, bcs=bcs); P_new.assemble()
+        b_new = assemble_vector_block(L, a, bcs=bcs); b_new.assemble()
+        b_new.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+    
+        # reattach nullspace if you use it
+        if getattr(self, "nsp", None) is not None:
+            A_new.setNullSpace(self.nsp)
+    
+        # destroy old PETSc objects to prevent memory growth
+        if getattr(self, "A", None) is not None: self.A.destroy()
+        if getattr(self, "P", None) is not None: self.P.destroy()
+        if getattr(self, "b", None) is not None: self.b.destroy()
+    
+        self.A, self.P, self.b = A_new, P_new, b_new
+    
+        # refresh KSP operators (and refactorize if direct)
+        if self.direct_solver == 1:
+            self.ksp.setOperators(self.A)
+            self.ksp.setUp()          # important for LU/MUMPS
+        else:
+            self.ksp.setOperators(self.A, self.P)
+
         
+        
+ 
