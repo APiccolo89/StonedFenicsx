@@ -5,7 +5,7 @@
     
 from .package_import import *
 from .utils import evaluate_material_property,compute_strain_rate,compute_eII,print_ph
-from .compute_material_property import compute_viscosity_FX,density_FX,heat_capacity_FX,heat_conductivity_FX,alpha_FX
+from .material_property.compute_material_property import compute_viscosity_FX,density_FX,heat_capacity_FX,heat_conductivity_FX,alpha_FX
 
 
 

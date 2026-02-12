@@ -33,14 +33,14 @@ Convergence criterion:
 
 """
 
-from .package_import import *
+from stonedfenicsx.package_import import *
 # modules
-from .compute_material_property import heat_capacity,heat_conductivity,density
-from .phase_db import PhaseDataBase
-from .utils import timing_function, print_ph
-from .compute_material_property import compute_thermal_properties
-from .scal import Scal
-from .numerical_control import NumericalControls,ctrl_LHS
+from stonedfenicsx.material_property.compute_material_property import heat_capacity,heat_conductivity,density
+from stonedfenicsx.material_property.phase_db import PhaseDataBase
+from stonedfenicsx.utils import timing_function, print_ph
+from stonedfenicsx.material_property.compute_material_property import compute_thermal_properties
+from stonedfenicsx.scal import Scal
+from stonedfenicsx.numerical_control import NumericalControls,ctrl_LHS
 
 start       = timing.time()
 zeros       = np.zeros

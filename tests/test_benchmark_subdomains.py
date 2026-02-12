@@ -14,7 +14,7 @@ DEBUG = False
 #-------------------------------------------------------------------------------
 def perform_test(option_viscous):
     from stonedfenicsx.utils import parse_input, time_the_time, timing
-    from stonedfenicsx.Stoned_fenicx_ref import StonedFenicsx
+    from stonedfenicsx.Stoned_fenicx import StonedFenicsx
     
     time_A = timing.time()
 

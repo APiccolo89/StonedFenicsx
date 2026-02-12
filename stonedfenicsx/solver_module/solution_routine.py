@@ -1,16 +1,15 @@
 from stonedfenicsx.package_import import *
 
 from stonedfenicsx.utils                     import timing_function, print_ph
-from stonedfenicsx.compute_material_property import density_FX, heat_conductivity_FX, heat_capacity_FX, compute_viscosity_FX, compute_radiogenic 
+from stonedfenicsx.material_property.compute_material_property import density_FX, heat_conductivity_FX, heat_capacity_FX, compute_viscosity_FX, compute_radiogenic 
 from stonedfenicsx.create_mesh.aux_create_mesh   import Mesh,Domain
-from stonedfenicsx.phase_db                  import PhaseDataBase
-from dolfinx.fem.petsc          import assemble_matrix_block, assemble_vector_block
+from stonedfenicsx.material_property.phase_db                  import PhaseDataBase
 from stonedfenicsx.numerical_control         import NumericalControls, ctrl_LHS, IOControls
 from stonedfenicsx.utils                     import interpolate_from_sub_to_main
-from stonedfenicsx.scal                      import Scal
-from stonedfenicsx.output                    import OUTPUT
-from stonedfenicsx.utils                     import compute_strain_rate
-from stonedfenicsx.compute_material_property import Functions_material_properties_global, Functions_material_rheology
+from stonedfenicsx.scal  import Scal
+from stonedfenicsx.output  import OUTPUT
+from stonedfenicsx.utils  import compute_strain_rate
+from stonedfenicsx.material_property.compute_material_property import Functions_material_properties_global, Functions_material_rheology
 from stonedfenicsx.solver_module.problems_solution import Global_thermal, Global_pressure, Wedge, Slab, Solution
 from stonedfenicsx.solver_module.solver_utilities import *
 

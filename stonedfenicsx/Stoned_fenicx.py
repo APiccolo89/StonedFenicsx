@@ -6,19 +6,19 @@ from .package_import import *
 #---------------------------------------------------------------------------------------------------------
 # My modules 
 #---------------------------------------------------------------------------------------------------------
-from stonedfenicsx.create_mesh.create_mesh     import create_mesh as cm 
-from stonedfenicsx.phase_db                    import PhaseDataBase 
-from stonedfenicsx.numerical_control           import ctrl_LHS 
-from stonedfenicsx.utils                       import print_ph
-from stonedfenicsx.phase_db                    import _generate_phase
-from stonedfenicsx.scal                        import Scal
-from stonedfenicsx.scal                        import _scaling_material_properties
-from stonedfenicsx.numerical_control           import NumericalControls
-from stonedfenicsx.numerical_control           import IOControls
-from stonedfenicsx.create_mesh.create_mesh     import Geom_input
-from stonedfenicsx.scal                        import _scaling_control_parameters
-from stonedfenicsx.scal                        import _scale_parameters
-from stonedfenicsx.solution                    import solution_routine
+from stonedfenicsx.create_mesh.create_mesh import create_mesh as cm 
+from stonedfenicsx.material_property.phase_db import PhaseDataBase 
+from stonedfenicsx.numerical_control import ctrl_LHS 
+from stonedfenicsx.utils import print_ph
+from stonedfenicsx.material_property.phase_db import _generate_phase
+from stonedfenicsx.scal import Scal
+from stonedfenicsx.scal import _scaling_material_properties
+from stonedfenicsx.numerical_control import NumericalControls
+from stonedfenicsx.numerical_control import IOControls
+from stonedfenicsx.create_mesh.create_mesh import Geom_input
+from stonedfenicsx.scal import _scaling_control_parameters
+from stonedfenicsx.scal import _scale_parameters
+from stonedfenicsx.solver_module.solution_routine import solution_routine
 
 dict_options = {'NoShear':0,
                 'Linear':1,
