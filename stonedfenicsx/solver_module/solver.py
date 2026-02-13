@@ -137,32 +137,6 @@ class SolverStokes():
         self.nsp = PETSc.NullSpace().create(vectors=[self.null_vec])
         self.A.setNullSpace(self.nsp)
 
-    def update_block_operator_deb(self,a,a_p,bcs,L,F0,F1):
-
-        A_new = assemble_matrix_block(a, bcs=bcs);   A_new.assemble()
-        P_new = assemble_matrix_block(a_p, bcs=bcs); P_new.assemble()
-        b_new = assemble_vector_block(L, a, bcs=bcs); b_new.assemble()
-        b_new.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
-
-        # reattach nullspace if you use it
-        if getattr(self, "nsp", None) is not None:
-            A_new.setNullSpace(self.nsp)
-
-        # destroy old PETSc objects to prevent memory growth
-        if getattr(self, "A", None) is not None: self.A.destroy()
-        if getattr(self, "P", None) is not None: self.P.destroy()
-        if getattr(self, "b", None) is not None: self.b.destroy()
-
-        self.A, self.P, self.b = A_new, P_new, b_new
-
-        # refresh KSP operators (and refactorize if direct)
-        if self.direct_solver == 1:
-            self.ksp.setOperators(self.A)
-            self.ksp.setUp()          # important for LU/MUMPS
-        else:
-            self.ksp.setOperators(self.A, self.P)
-
-        
 
     def update_block_operator(self,a,a_p,bcs,L,F0,F1):
         """
