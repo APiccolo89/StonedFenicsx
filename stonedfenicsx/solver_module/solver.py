@@ -36,10 +36,10 @@ class SolverStokes():
 
     
     def __init__(self,a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0):
-        self.direct_solver = 1
+        self.direct_solver = 0
+        self.offset = F0.dofmap.index_map.size_local * F0.dofmap.index_map_bs
         if self.direct_solver == 1: 
             self.set_direct_solver(a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it=it, ts = ts)
-            self.offset = F0.dofmap.index_map.size_local * F0.dofmap.index_map_bs
         elif self.direct_solver ==0: 
             self.set_iterative_solver(a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = it, ts = ts)    
     
@@ -84,39 +84,30 @@ class SolverStokes():
         # nullspace vector [0_u; 1_p] locally
         if it == 0 or ts == 0:
             self.set_block_operator(a,a_p,bcs,L,F0,F1)
-            
-            
-            offset_u = 0
-            offset_p = self.nloc_u
-            # local starts in the *assembled block vector*
-
             V_map = F0.dofmap.index_map
             Q_map = F1.dofmap.index_map
-            bs_u  = F0.dofmap.index_map_bs  # = mesh.dim for vector CG
-            nloc_u = V_map.size_local * bs_u
-            nloc_p = Q_map.size_local
+            
+            self.offset_u = V_map.local_range[0] * F0.dofmap.index_map_bs + \
+                   Q_map.local_range[0]
+            self.offset_p = self.offset_u + V_map.size_local * F0.dofmap.index_map_bs
+            self.is_u = PETSc.IS().createStride(V_map.size_local * F0.dofmap.index_map_bs, self.offset_u, 1,comm=COMM)
+            self.is_p = PETSc.IS().createStride(Q_map.size_local, self.offset_p, 1, comm=COMM)
 
-            # local starts in the *assembled block vector*
-
-
-
-            self.is_u = PETSc.IS().createStride(nloc_u, offset_u, 1, comm=MPI.COMM_WORLD)
-            self.is_p = PETSc.IS().createStride(nloc_p, offset_p, 1, comm=MPI.COMM_WORLD)
             
             assert self.nloc_u + self.nloc_p == self.A.getLocalSize()[1]
             
             self.ksp = PETSc.KSP().create(COMM)
             self.ksp.setOperators(self.A, self.P)
             self.ksp.setTolerances(rtol=1e-9)
-            self.ksp.setType("minres")
+            self.ksp.setType("fgmres")
             self.ksp.getPC().setType("fieldsplit")
-            self.ksp.getPC().setFieldSplitType(PETSc.PC.CompositeType.ADDITIVE)
+            self.ksp.getPC().setFieldSplitType(PETSc.PC.CompositeType.MULTIPLICATIVE)
             self.ksp.getPC().setFieldSplitIS(("u", self.is_u), ("p", self.is_p))
 
             # Configure velocity and pressure sub-solvers
             self.ksp_u, self.ksp_p = self.ksp.getPC().getFieldSplitSubKSP()
             self.ksp_u.setType("preonly")
-            self.ksp_u.getPC().setType("gamg")
+            self.ksp_u.getPC().setType("hypre")
             self.ksp_p.setType("preonly")
             self.ksp_p.getPC().setType("jacobi")
 
@@ -146,24 +137,24 @@ class SolverStokes():
         self.nsp = PETSc.NullSpace().create(vectors=[self.null_vec])
         self.A.setNullSpace(self.nsp)
 
-    def update_block_operator(self,a,a_p,bcs,L,F0,F1):
+    def update_block_operator_deb(self,a,a_p,bcs,L,F0,F1):
 
         A_new = assemble_matrix_block(a, bcs=bcs);   A_new.assemble()
         P_new = assemble_matrix_block(a_p, bcs=bcs); P_new.assemble()
         b_new = assemble_vector_block(L, a, bcs=bcs); b_new.assemble()
         b_new.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
-    
+
         # reattach nullspace if you use it
         if getattr(self, "nsp", None) is not None:
             A_new.setNullSpace(self.nsp)
-    
+
         # destroy old PETSc objects to prevent memory growth
         if getattr(self, "A", None) is not None: self.A.destroy()
         if getattr(self, "P", None) is not None: self.P.destroy()
         if getattr(self, "b", None) is not None: self.b.destroy()
-    
+
         self.A, self.P, self.b = A_new, P_new, b_new
-    
+
         # refresh KSP operators (and refactorize if direct)
         if self.direct_solver == 1:
             self.ksp.setOperators(self.A)
@@ -172,5 +163,53 @@ class SolverStokes():
             self.ksp.setOperators(self.A, self.P)
 
         
+
+    def update_block_operator(self,a,a_p,bcs,L,F0,F1):
+        """
+        Reassemble cached PETSc operators/vectors in-place.
+
+        Assumes:
+          - self.A, self.P, self.b were created once and match the block layout of (a, a_p, L)
+          - FunctionSpaces / dofmaps used by a, a_p, L, and bcs are NOT recreated each timestep
+        """
+
+        # -------------------------
+        # A (system / Jacobian)
+        # -------------------------
+        self.A.zeroEntries()
+        assemble_matrix_block(self.A, a, bcs=bcs)
+        self.A.assemble()
+
+        # -------------------------
+        # P (preconditioner matrix)
+        # -------------------------
+        self.P.zeroEntries()
+        assemble_matrix_block(self.P, a_p, bcs=bcs)
+        self.P.assemble()
+
+        # -------------------------
+        # b (RHS)
+        # -------------------------
+        with self.b.localForm() as b_u_local:
+            b_u_local.set(0.0)
         
- 
+        dolfinx.fem.petsc.assemble_vector_block(
+            self.b, L, a, bcs=bcs)
+    
+        # -------------------------
+        # KSP operators
+        # -------------------------
+        if self.direct_solver == 0:
+            # Nullspace (e.g., pressure) — set once if possible, but safe here too
+            if getattr(self, "nsp", None) is not None:
+                self.A.setNullSpace(self.nsp)
+
+            self.ksp.setOperators(self.A, self.P)
+
+            # Debug (optional)
+            # if MPI.COMM_WORLD.rank == 0:
+            #     print("A Fro norm:", self.A.norm(PETSc.NormType.FROBENIUS))
+
+        else:
+            # Direct solver: do NOT call ksp.setUp() every timestep (expensive)
+            self.ksp.setOperators(self.A)

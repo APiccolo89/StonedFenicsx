@@ -47,7 +47,8 @@ spec = [('it_max', int64),
     ('wz_tk',float64),
     ('time_dependent',int64),
     ('dt',float64),
-    ('adiabatic_heating',int32)
+    ('adiabatic_heating',int32),
+    ('stokes_solver_type',int32)
 ]
 
 @jitclass(spec)
@@ -76,7 +77,8 @@ class NumericalControls:
                  wz_tk = 1e3,
                  time_dependent = 0,
                  dt  = 500,
-                 adiabatic_heating=1):  # 0 -> inactive / linear 
+                 adiabatic_heating=1,
+                 stokes_solver_type = 1):  # 0 -> inactive / linear 
 
         # Direct initialization of class attributes
         self.it_max            = it_max 
@@ -102,6 +104,7 @@ class NumericalControls:
         self.time_dependent    = time_dependent
         self.dt                = dt # in years
         self.adiabatic_heating = adiabatic_heating
+        self.stokes_solver_type = stokes_solver_type
         
     
 

@@ -989,6 +989,11 @@ class Stokes_Problem(Problem):
             S.Hs_slab = evaluate_material_property(shear_heating,PT)
 
         return S
+
+    def fem_stokes_form(self,a1,a2,a3,a_p):
+        a   = fem.form([[a1, a2],[a3, None]])
+        a_p0  = fem.form([[a1, a2],[a3, a_p]])
+        return a,a_p0
     
     def compute_residuum_stokes(self, u_new, p_new, D, T, PL, FR, sc):
         V = u_new.function_space
@@ -1072,7 +1077,7 @@ class Stokes_Problem(Problem):
         a1 = ufl.inner(2*eta*ufl.sym(ufl.grad(u)), ufl.sym(ufl.grad(v))) * dx
         a2 = - ufl.inner(ufl.div(v), p) * dx             # build once
         a3 = - ufl.inner(q, ufl.div(u)) * dx             # build once
-        a_p0 = ufl.inner(q, p) * dx                      # pressure mass (precond)
+        a_p0 = - 1/eta * ufl.inner( q, p) * dx                      # pressure mass (precond)
 
         f  = fem.Constant(D.mesh, PETSc.ScalarType((0.0,)*D.mesh.geometry.dim))
         f2 = fem.Constant(D.mesh, PETSc.ScalarType(0.0))
@@ -1135,7 +1140,41 @@ class Stokes_Problem(Problem):
         self.moving_wall.x.scatter_forward()
         
         return self 
-    
+    def solve_linear_picard(self
+                            ,a
+                            ,a_p0
+                            ,L
+                            ,ctrl
+                            ,u
+                            ,p
+                            ,it=0
+                            ,ts=0):
+            
+        if it == 0 and ts == 0: 
+            self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,ctrl ,J = None, r = None,it = it, ts = ts)
+        else: 
+            self.solv.update_block_operator(a,a_p0,self.bc,L,self.F0,self.F1)
+        
+        
+        x = self.solv.A.createVecLeft()
+        self.solv.ksp.solve(self.solv.b, x)
+
+        u.x.array[:self.solv.offset] = x.array[:self.solv.offset]
+        p.x.array[: (len(x.array_r) - self.solv.offset)] = x.array[self.solv.offset:]
+        u.x.scatter_forward()
+        p.x.scatter_forward()
+        
+        self.r = self.solv.b.duplicate()
+        self.solv.A.mult(x, self.r)          # r = A x
+        self.r.scale(-1.0)         # r = -A x
+        self.r.axpy(1.0, self.solv.b)        # r = b - A x
+        self.r.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+
+        abs_res = self.r.norm()
+        
+        return u,p,abs_res 
+
+
 #-------------------------------------------------------------------
 #-------------------------------------------------------------------
 class Wedge(Stokes_Problem): 
@@ -1299,16 +1338,16 @@ class Wedge(Stokes_Problem):
                 S : Solution -> Object containing the solution of the problem, used for storing the solution of
         
         """     
-   
-        V_subs0 = self.FS.sub(0)
-        p_subs0 = self.FS.sub(1)
-        V_subs, _ = V_subs0.collapse()
-        p_subs, _ = p_subs0.collapse()
+        if (ts == 0) and (it == 0):
+            V_subs0 = self.FS.sub(0)
+            p_subs0 = self.FS.sub(1)
+            self.V_subs, _ = V_subs0.collapse()
+            self.p_subs, _ = p_subs0.collapse()
     
-        self.trial0 = ufl.TrialFunction(V_subs)
-        self.test0 = ufl.TestFunction(V_subs)
-        self.trial1 = ufl.TrialFunction(p_subs)
-        self.test1 = ufl.TestFunction(p_subs)
+            self.trial0 = ufl.TrialFunction(self.V_subs)
+            self.test0 = ufl.TestFunction(self.V_subs)
+            self.trial1 = ufl.TrialFunction(self.p_subs)
+            self.test1 = ufl.TestFunction(self.p_subs)
     
 
         # Create the linear problem
@@ -1321,11 +1360,10 @@ class Wedge(Stokes_Problem):
                                                   ,sc)
 
         # Create the dirichlecht boundary condition 
-        self.bc   = self.setdirichlecht(ctrl,D,V_subs,g_input) 
+        self.bc   = self.setdirichlecht(ctrl,D,self.V_subs,g_input) 
         
         # Form the system 
-        a   = [[a1, a2],[a3, None]]
-        a_p0  = [[a1, None],[None, a_p]]
+        a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)
 
         print_ph('              // -- // --- STOKES PROBLEM [WEDGE] // -- // --- > ')
 
@@ -1334,7 +1372,7 @@ class Wedge(Stokes_Problem):
 
         
         if self.typology == 'LinearProblem' or self.typology == 'NonlinearProblemT': 
-            S,r_al = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl, S,it=it,ts=ts)
+            S.u_wedge,S.p_wedge,r_al = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl, S.u_wedge,S.p_wedge,it=it,ts=ts)
 
         else: 
             print_ph('              [//] Picard iterations for the non linear lithostatic pressure problem')
@@ -1357,7 +1395,7 @@ class Wedge(Stokes_Problem):
                     a_p0[0][0] = a1 
                     a_p0       = fem.form(a_p0)
                 
-                S,r_al = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl, S,it,ts)
+                S.u_wedge, S.p_wedge ,r_al = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl,S.u_wedge,S.p_wedge,it,ts)
                 
                 
                 du0.x.array[:]  = S.u_wedge.x.array[:] - u_k.x.array[:];du0.x.scatter_forward()
@@ -1405,53 +1443,7 @@ class Wedge(Stokes_Problem):
 
         return S 
     
-    def solve_linear_picard(self,a,a_p0,L,ctrl, S,it=0,ts=0):
-            
-        if it == 0 and ts == 0: 
-            self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,ctrl ,J = None, r = None,it = it, ts = ts)
-        else: 
-            self.solv.update_block_operator(a,a_p0,self.bc,L,self.F0,self.F1)
-        
-        
-        if self.solv.direct_solver==1:
-            x = self.solv.A.createVecLeft()
-        else:
-            x = self.solv.A.createVecRight()
-        self.solv.ksp.solve(self.solv.b, x)
-        if self.solv.direct_solver == 0: 
-            xu = x.getSubVector(self.solv.is_u)
-            xp = x.getSubVector(self.solv.is_p)
 
-            
-            # Copy OWNED entries only into the function PETSc Vecs
-            
-            with S.u_wedge.x.petsc_vec.localForm() as uloc:
-                uloc.array[:] = xu.array_r
-            with S.p_wedge.x.petsc_vec.localForm() as ploc:
-                ploc.array[:] = xp.array_r
-
-            # Fill ghosts
-            S.u_wedge.x.scatter_forward()
-            S.p_wedge.x.scatter_forward()
-
-            x.restoreSubVector(self.solv.is_u, xu)
-            x.restoreSubVector(self.solv.is_p, xp)
-      
-        else: 
-            S.u_wedge.x.array[:self.solv.offset] = x.array[:self.solv.offset]
-            S.p_wedge.x.array[: (len(x.array_r) - self.solv.offset)] = x.array[self.solv.offset:]
-            S.u_wedge.x.scatter_forward()
-            S.p_wedge.x.scatter_forward()
-        
-        self.r = self.solv.b.copy()
-        self.solv.A.mult(x, self.r)          # r = A x
-        self.r.scale(-1.0)         # r = -A x
-        self.r.axpy(1.0, self.solv.b)        # r = b - A x
-        self.r.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
-
-        abs_res = self.r.norm()
-        
-        return S,abs_res 
 
 #-------------------------------------------------------------------
 #-------------------------------------------------------------------
@@ -1635,42 +1627,17 @@ class Slab(Stokes_Problem):
                                            ,50.0
                                            ,sc)
                 
-        a   = fem.form([[a1, a2],[a3, None]])
-        a_p0  = fem.form([[a1, None],[None, a_p]])
+        a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)
+        time_A = timing.time()
+        S.u_slab,S.p_slab, _ =  self.solve_linear_picard(fem.form(a)
+                                                         ,fem.form(a_p0)
+                                                         ,fem.form(L)
+                                                         ,ctrl
+                                                         ,S.u_slab
+                                                         ,S.p_slab
+                                                         ,it
+                                                         ,ts)
 
-        self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,ctrl ,J = None, r = None,it = 0, ts = 0)
-        
-        print_ph('              // -- // --- SLAB STOKES PROBLEM // -- // --->')    
-        time_A = timing.time()    
-        if self.solv.direct_solver==1:
-            x = self.solv.A.createVecLeft()
-        else:
-            x = self.solv.A.createVecRight()
-        self.solv.ksp.solve(self.solv.b, x)
-        if self.solv.direct_solver == 0: 
-            xu = x.getSubVector(self.solv.is_u)
-            xp = x.getSubVector(self.solv.is_p)
-
-            
-            # Copy OWNED entries only into the function PETSc Vecs
-            
-            with S.u_slab.x.petsc_vec.localForm() as uloc:
-                uloc.array[:] = xu.array_r
-            with S.p_slab.x.petsc_vec.localForm() as ploc:
-                ploc.array[:] = xp.array_r
-
-            # Fill ghosts
-            S.u_slab.x.scatter_forward()
-            S.p_slab.x.scatter_forward()
-
-            x.restoreSubVector(self.solv.is_u, xu)
-            x.restoreSubVector(self.solv.is_p, xp)
-    
-        else: 
-            S.u_slab.x.array[:self.solv.offset] = x.array_r[:self.solv.offset]
-            S.p_slab.x.array[: (len(x.array_r) - self.solv.offset)] = x.array_r[self.solv.offset:]
-            S.u_slab.x.scatter_forward()
-            S.p_slab.x.scatter_forward()
         
         time_B = timing.time()
         print_ph(f'              // -- // --- Solution of Stokes problem in {time_B-time_A:.2f} sec // -- // --->')

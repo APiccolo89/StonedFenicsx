@@ -665,13 +665,5 @@ def compute_initial_LHS(ctrl,lhs,scal,pdb,theta_in):
     else:
         lhs,_,_ = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb,theta_in)
         
-        
 
-        
-    
-    
-    
-
-        
-    
     return lhs

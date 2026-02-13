@@ -23,6 +23,8 @@ Input:
     adiabatic_heating: 0
     phi: 5.0
     self_consistent_flag: 1
+    stokes_solver_type : "Direct"
+
 
   InputOutputControl:
     test_name: "Output"

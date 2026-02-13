@@ -23,6 +23,8 @@ from stonedfenicsx.solver_module.solution_routine import solution_routine
 dict_options = {'NoShear':0,
                 'Linear':1,
                 'SelfConsistent':2}
+dict_stokes = {'Direct':np.int32(1),
+               'Iterative':np.int32(0)}
 
 def generate_phase_database(IP,Phin)->PhaseDataBase:
     from stonedfenicsx.utils import Phase
@@ -206,7 +208,8 @@ def StonedFenicsx(IP,Ph_input):
                             adiabatic_heating = IP.adiabatic_heating,
                             Tmax=IP.Tmax,
                             it_max=IP.it_max,
-                            tol=IP.tol)
+                            tol=IP.tol,
+                            stokes_solver_type=dict_stokes[IP.stokes_solver_type])
     # IO controls
     io_ctrl = IOControls(test_name = IP.test_name,
                         path_save = IP.path_test,
