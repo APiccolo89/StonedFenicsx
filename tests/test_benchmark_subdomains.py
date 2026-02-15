@@ -8,6 +8,7 @@ import sys
 import numpy as np
 from numpy.typing import NDArray
 import os
+from stonedfenicsx.package_import import *
 
 # Global flag to decide wether or not to remove the results -> debug reason. 
 DEBUG = False
@@ -237,7 +238,8 @@ def test_isoviscous():
     # Test Van Keken 
     perform_test(0) # IsoViscous
     # Read Data Base and compare data 
-    read_data_base(0)
+    if MPI.COMM_WORLD.rank == 0: 
+        read_data_base(0)
     # Remove folder after completing the test
     if DEBUG == False:
         os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
@@ -246,7 +248,8 @@ def test_diffusion():
     # Test Van Keken
     perform_test(1)
     # Read Data Base and compare data
-    read_data_base(1)
+    if MPI.COMM_WORLD.rank == 0: 
+        read_data_base(1)
     # Remove folder after completing the test
     if DEBUG == False:
        
@@ -256,7 +259,8 @@ def test_composite():
     # Test Van Keken
     perform_test(2)
     # Read Data Base and compare data
-    read_data_base(2)
+    if MPI.COMM_WORLD.rank == 0: 
+        read_data_base(2)
     # Remove folder after completing the test
     if DEBUG == False:
         
@@ -268,7 +272,7 @@ if __name__ == '__main__':
     
     #test_isoviscous()
 
-    test_diffusion()
+    #test_diffusion()
 
-    #test_composite()
+    test_composite()
 

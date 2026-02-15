@@ -5,8 +5,29 @@ from dolfinx.fem.petsc          import assemble_matrix_block, assemble_vector_bl
 
 
 class Solvers():
-    pass
-
+    def destroy(self):
+        """Explicitly free PETSc objects held by this solver."""
+        # Destroy in roughly reverse order of dependency.
+        for name in (
+            # KSPs first (they reference operators/PC)
+            "ksp_u", "ksp_p", "ksp",
+            # Index sets
+            "is_u", "is_p",
+            # Nullspace + vector
+            "nsp", "null_vec",
+            # Matrices / vectors
+            "A", "P", "b",
+        ):
+            obj = getattr(self, name, None)
+            if obj is None:
+                continue
+            try:
+                obj.destroy()
+            except Exception:
+                # Some PETSc wrappers may already be destroyed; ignore safely.
+                pass
+            finally:
+                setattr(self, name, None)
 
 class  ScalarSolver(Solvers):
     """
@@ -24,7 +45,7 @@ class  ScalarSolver(Solvers):
         self.ksp = PETSc.KSP().create(COMM)           # Create the ksp object 
         self.ksp.setOperators(self.A)                # Set Operator
         self.ksp.setType("gmres")
-        self.ksp.setTolerances(rtol=1e-4, atol=1e-3)
+        self.ksp.setTolerances(rtol=1e-8, atol=1e-9)
         self.pc = self.ksp.getPC()
         self.pc.setType("lu")
         self.pc.setFactorSolverType("mumps")
@@ -32,7 +53,7 @@ class  ScalarSolver(Solvers):
         self.J = None
         self.r = None 
     
-class SolverStokes(): 
+class SolverStokes(Solvers): 
 
     
     def __init__(self,a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0):

@@ -124,9 +124,13 @@ def outerloop_operation(M:Mesh,
         time_A_outer = timing.time()
         # Copy the old solution of the outer loop for computing the residual of the equations. 
         T_kouter        = sol.T_N.copy()
+        T_kouter.x.scatter_forward()
         PL_kouter       = sol.PL.copy()
+        PL_kouter.x.scatter_forward()
         u_global_kouter = sol.u_global.copy()
+        u_global_kouter.x.scatter_forward()
         p_global_kouter = sol.p_global.copy()
+        p_global_kouter.x.scatter_forward()
         
         
         if LG.typology == 'NonlinearProblem' or it_outer == 0:  
@@ -244,7 +248,22 @@ def time_loop(M,ctrl,ioctrl,sc,lhs,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g):
             print_ph('================ // =====================')
         
         # Prepare variable
-        sol = outerloop_operation(M,ctrl,ioctrl,sc,lhs,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g,ts=ts)
+        sol = outerloop_operation(M
+                                  ,ctrl
+                                  ,ioctrl
+                                  ,sc
+                                  ,lhs
+                                  ,FGT
+                                  ,FGWR
+                                  ,FGSR
+                                  ,FGGR
+                                  ,EG
+                                  ,LG
+                                  ,We
+                                  ,Sl
+                                  ,sol
+                                  ,g
+                                  ,ts=ts)
 
         #if ctrl.adiabatic_heating==0:
         #    sol.T_ad = compute_adiabatic_initial_adiabatic_contribution(M.domainG,sol.T_N,None,sol.PL,FGT,0)
@@ -279,6 +298,13 @@ def time_loop(M,ctrl,ioctrl,sc,lhs,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g):
         sol.T_O = sol.T_N
         
         ts = ts + 1
+
+    print_ph('Destroy Petsc Object and finish the simulation...')
+    EG.solv.destroy()
+    LG.solv.destroy()
+    Sl.solv.destroy()
+    We.solv.destroy()
+    print_ph('---- The End ----')
 
     return 0 
 

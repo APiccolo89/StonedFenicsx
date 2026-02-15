@@ -1,7 +1,7 @@
 Input:
   NumericalControls:
     it_max: 20
-    tol: 1.0e-5
+    tol: 1.0e-4
     relax: 0.9
     Tmax: 1300.0
     Ttop: 0.0

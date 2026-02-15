@@ -258,25 +258,33 @@ def _benchmark_van_keken(S,ctrl_io,sc):
     
     comm = MPI.COMM_WORLD
 
+
     lT = S.T_N.copy()
-    mpi_comm = lT.function_space.mesh.comm
-    array = lT.x.array
+    fs = lT.function_space
+    imap = fs.dofmap.index_map
+    n_owned = imap.size_local * fs.dofmap.bs  
+    array = lT.x.array[:n_owned].copy()
 
     # gather solution from all processes on proc 0
-    gT = mpi_comm.gather(array, root=0)
+    gT = comm.gather(array, root=0)
     
     XGl = S.T_N.function_space.tabulate_dof_coordinates()#gather_coordinates(S.T_O.function_space)
-    x  = XGl[:,0]
-    y  = XGl[:,1]
-    X_G = mpi_comm.gather(x,root=0)
-    Y_G = mpi_comm.gather(y,root=0)
+    x  = XGl[:n_owned,0]
+    y  = XGl[:n_owned,1]
+    X_G = comm.gather(x,root=0)
+    Y_G = comm.gather(y,root=0)
     
     if comm.rank == 0:
-        XG = np.zeros([len(X_G[0]),2])
-        XG[:,0] = X_G[0]
-        XG[:,1] = Y_G[0] 
-
-        T = gT[0]       
+        T_all = np.concatenate(gT)
+        X_global = np.concatenate(X_G)
+        Y_global = np.concatenate(Y_G)
+        
+        
+        
+        XG = np.zeros([len(X_global),2])
+        XG[:,0] = X_global
+        XG[:,1] = Y_global
+     
         x_g = np.array([np.min(XG[:,0]),np.max(XG[:,0])],dtype=np.float64)*sc.L
         y_g = np.array([np.min(XG[:,1]),np.max(XG[:,1])],dtype=np.float64)*sc.L
         nx   = 111 
@@ -293,8 +301,8 @@ def _benchmark_van_keken(S,ctrl_io,sc):
         p     = np.zeros((len(xt),2),dtype=np.float64)
         p[:,0] = xt 
         p[:,1] = yt
-        T_g   = griddata(p,T*sc.Temp,(X, Y), method='nearest')-273.15
-        T_g = T_g.transpose()
+        T_g   = griddata(p,T_all*sc.Temp,(X, Y), method='nearest')-273.15
+        T_g = T_g.T
         T = 0
         co = 0
         x_s=[]

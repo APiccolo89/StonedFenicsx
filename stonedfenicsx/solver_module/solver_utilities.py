@@ -30,8 +30,13 @@ def decoupling_function(z,fun,g_input):
     return fun
 
 #---------------------------------------------------------------------------------------------------          
+
 def L2_norm_calculation(f):
-    return fem.assemble_scalar(fem.form(ufl.inner(f, f) * ufl.dx))**0.5       
+    comm = f.function_space.mesh.comm
+    local = fem.assemble_scalar(fem.form(ufl.inner(f, f) * ufl.dx))
+    global_sq = comm.allreduce(local, op=MPI.SUM)
+    return np.sqrt(global_sq)
+
         
 #---------------------------------------------------------------------------------------------------       
 
@@ -114,8 +119,6 @@ def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA,Tmax,ts):
     minMaxU = min_max_array(sol.u_global,sc, vel=True)
     minMaxP = min_max_array(sol.p_global,sc)
     minMaxT = min_max_array(sol.T_N,sc, printing=1)
-    minMaxTO = min_max_array(sol.T_O,sc, printing=1)
-
     minMaxPL= min_max_array(sol.PL,sc)
     
     # scal back 
@@ -154,17 +157,11 @@ def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA,Tmax,ts):
 
 #------------------------------------------------------------------------------------------------------------
 
-def compute_residuum(a,b):
-    dx = a.copy()
+def compute_residuum(a:dolfinx.fem.Function,b:dolfinx.fem.Function)->float:
+    # Update with PETSC for making parallel safe: 
     
-    dx1 = a.copy()
-    
-    dx.x.array[:]  = b.x.array[:] - a.x.array[:];dx.x.scatter_forward()
-    
-    dx1.x.array[:]  = b.x.array[:] + a.x.array[:];dx1.x.scatter_forward()
-    
-    
-    res = L2_norm_calculation(dx)/L2_norm_calculation(dx1)
+    dxa = (a.x.petsc_vec + b.x.petsc_vec).norm(PETSc.NormType.NORM_2)    
+    res = (a.x.petsc_vec - b.x.petsc_vec).norm(PETSc.NormType.NORM_2)  / dxa
     
     return res
 #------------------------------------------------------------------------------------------------------------

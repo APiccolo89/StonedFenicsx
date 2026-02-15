@@ -610,7 +610,7 @@ class Global_thermal(Problem):
         
         
         p_k = S.PL.copy()  # Previous lithostatic pressure 
-        T   = S.T_N # -> will not eventually update 
+        T   = S.T_N.copy() # -> will not eventually update 
         
             
         if it == 0:         
@@ -637,6 +637,7 @@ class Global_thermal(Problem):
 
         if nl == 0: 
             S.T_N = self.solve_the_linear(S,a,L,S.T_N) 
+            S.T_N.x.scatter_forward()
 
         else: 
             S = self.solve_the_non_linear(M,S,ctrl,pdb)
@@ -669,6 +670,7 @@ class Global_thermal(Problem):
         self.solv.ksp.solve(self.solv.b, fen_function.x.petsc_vec)
         fem.petsc.set_bc(fen_function.x.petsc_vec,bcs=self.bc)
         
+        
         if isPicard == 0: # if it is a picard iteration the function gives the function 
             fen_function.x.scatter_forward()
 
@@ -696,7 +698,7 @@ class Global_thermal(Problem):
         it_inner = 0 
         time_A = timing.time()
         print_ph('              [//] Picard iterations for the non linear temperature problem')
-
+        omega = ctrl.relax
         while it_inner < max_it and tol > ctrl.tol:
             time_ita = timing.time()
             
@@ -728,16 +730,23 @@ class Global_thermal(Problem):
             T_k1 = self.solve_the_linear(S,A,L,T_k1,1,it,1)
             T_k1.x.scatter_forward()
             # L2 norm 
-            du.x.array[:]  = T_k1.x.array[:] - T_k.x.array[:];du.x.scatter_forward()
-            du2.x.array[:] = T_k1.x.array[:] + T_k.x.array[:];du2.x.scatter_forward()
-            tol= L2_norm_calculation(du)/L2_norm_calculation(du2)
+            tol = compute_residuum(T_k1,T_k)
+
             
             time_itb = timing.time()
             print_ph(f'              []Temperature L_2 norm is {tol:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
             
+            x  = T_k.x.petsc_vec
+            x1 = T_k1.x.petsc_vec
+
+            # x = (1-omega)*x + omega*x1
+            x.scale(1.0 - omega)
+            x.axpy(omega, x1)
+
+            T_k.x.scatter_forward()
             #update solution
-            T_k.x.array[:] = T_k1.x.array[:]*0.7 + T_k.x.array[:]*(1-0.7)
-            
+            #T_k.x.array[:] = T_k1.x.array[:]*0.7 + T_k.x.array[:]*(1-0.7)
+            #T_k.x.scatter_forward()
             it_inner = it_inner + 1 
         S.T_N.x.array[:] = T_k1.x.array[:]
         S.T_N.scatter_forward()
@@ -854,7 +863,7 @@ class Global_pressure(Problem):
         
         nl = 0 
         p_k = S.PL.copy()  # Previous lithostatic pressure 
-        T   = S.T_O # -> will not eventually update 
+        T   = S.T_N.copy() # -> will not eventually update 
         
         # If the problem is linear, p_k is not doing anything, it is there because I
         # design the density function to receive in anycase a pressure, potentially I
@@ -925,6 +934,7 @@ class Global_pressure(Problem):
         
         print_ph('              [//] Picard iterations for the non linear lithostatic pressure problem')
 
+        omega = ctrl.relax
         
         while it_inner < ctrl.it_max and tol > ctrl.tol_innerPic:
             time_ita = timing.time()
@@ -937,15 +947,14 @@ class Global_pressure(Problem):
             p_k1 = self.solve_the_linear(S,A,L,p_k1,1,it_inner,1) 
 
             # L2 norm 
-            du.x.array[:]  = p_k1.x.array[:] - p_k.x.array[:];du.x.scatter_forward()
-            du2.x.array[:] = p_k1.x.array[:] + p_k.x.array[:];du2.x.scatter_forward()
-            tol= L2_norm_calculation(du)/L2_norm_calculation(du2)
+            tol = compute_residuum(p_k1,p_k)
             
             time_itb = timing.time()
             print_ph(f'              []L_2 norm is {tol:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
             
             #update solution
-            p_k.x.array[:] = p_k1.x.array[:]*0.7 + p_k.x.array[:]*(1-0.7)
+            p_k.x.array[:] = p_k1.x.array[:]*omega + p_k.x.array[:]*(1-omega)
+            p_k.x.scatter_forward()
             
             it_inner = it_inner + 1 
         
@@ -1377,12 +1386,10 @@ class Wedge(Stokes_Problem):
         else: 
             print_ph('              [//] Picard iterations for the non linear lithostatic pressure problem')
 
-            u_k   = S.u_wedge.copy()
-            p_k   = S.p_wedge.copy()
-            du0   = S.u_wedge.copy()
-            dp0   = S.p_wedge.copy()
-            du1   = S.u_wedge.copy()
-            dp1   = S.p_wedge.copy()
+            u_k = S.u_wedge.copy()
+            u_k1 = S.u_wedge.copy()
+            p_k = S.p_wedge.copy()
+            p_k1 = S.p_wedge.copy() 
             
             res  = 1.0 
             it_inner   = 0 
@@ -1395,33 +1402,23 @@ class Wedge(Stokes_Problem):
                     a_p0[0][0] = a1 
                     a_p0       = fem.form(a_p0)
                 
-                S.u_wedge, S.p_wedge ,r_al = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl,S.u_wedge,S.p_wedge,it,ts)
+                u_k1, p_k1 ,r_al = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl,u_k,p_k,it,ts)
                 
-                
-                du0.x.array[:]  = S.u_wedge.x.array[:] - u_k.x.array[:];du0.x.scatter_forward()
-                
-                du1.x.array[:] = S.u_wedge.x.array[:] + u_k.x.array[:];du1.x.scatter_forward()
-                
-                dp0.x.array[:]  = S.p_wedge.x.array[:] - p_k.x.array[:];dp0.x.scatter_forward()
-                
-                dp1.x.array[:] = S.p_wedge.x.array[:] + p_k.x.array[:];dp1.x.scatter_forward()
-        
-                rmom, rdiv, divuL2 = self.compute_residuum_stokes(S.u_wedge,S.p_wedge,D,S.t_owedge,S.p_lwedge,FGW,sc)
+                tol_u = compute_residuum(u_k1,u_k)
+
+                tol_p = compute_residuum(p_k1,p_k)
+                rmom, rdiv, divuL2 = self.compute_residuum_stokes(u_k1,p_k1,D,S.t_owedge,S.p_lwedge,FGW,sc)
                 
                 if it_inner == 0:
                     rmom_0 = rmom
                     rdiv_0 = rdiv
                     r_al0 = r_al
                 
-        
-                tol_u = L2_norm_calculation(du0)/L2_norm_calculation(du1)
-                
-                tol_p = L2_norm_calculation(dp0)/L2_norm_calculation(dp1)
                                 
                 res   = np.sqrt(tol_u**2+tol_p**2)
                 
-                u_k.x.array[:] = ctrl.relax*S.u_wedge.x.array[:] + (1-ctrl.relax)*u_k.x.array[:]
-                p_k.x.array[:] = ctrl.relax*S.p_wedge.x.array[:] + (1-ctrl.relax)*p_k.x.array[:]
+                u_k.x.array[:] = ctrl.relax * u_k1.x.array[:] + (1-ctrl.relax) * u_k.x.array[:]
+                p_k.x.array[:] = ctrl.relax * p_k1.x.array[:] + (1-ctrl.relax) * p_k.x.array[:]
 
                 time_itb = timing.time()
 
@@ -1437,6 +1434,9 @@ class Wedge(Stokes_Problem):
             print_ph(f'                         [?] |F^mom|           {rmom:.3e}, abs div residuum |F^div| {rdiv:.3e}')
             print_ph('              []Converged ')
 
+            S.u_wedge = u_k1.copy()
+            S.p_wedge = p_k1.copy() 
+        
         time_B = timing.time()
         print_ph(f'              // -- // --- Solution of Wedge in {time_B-time_A:.2f} sec // -- // --- >')
         print_ph('')
