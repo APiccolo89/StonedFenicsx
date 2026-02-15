@@ -57,7 +57,7 @@ class SolverStokes(Solvers):
 
     
     def __init__(self,a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0):
-        self.direct_solver = 0
+        self.direct_solver = ctrl.stokes_solver_type
         self.offset = F0.dofmap.index_map.size_local * F0.dofmap.index_map_bs
         if self.direct_solver == 1: 
             self.set_direct_solver(a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it=it, ts = ts)
@@ -130,7 +130,7 @@ class SolverStokes(Solvers):
             self.ksp_u.setType("preonly")
             self.ksp_u.getPC().setType("hypre")
             self.ksp_p.setType("preonly")
-            self.ksp_p.getPC().setType("jacobi")
+            self.ksp_p.getPC().setType("bjacobi")
 
             # The matrix A combined the vector velocity and scalar pressure
             # parts, hence has a block size of 1. Unlike the MatNest case, GAMG

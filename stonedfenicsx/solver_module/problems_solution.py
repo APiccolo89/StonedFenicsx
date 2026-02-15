@@ -1000,8 +1000,8 @@ class Stokes_Problem(Problem):
         return S
 
     def fem_stokes_form(self,a1,a2,a3,a_p):
-        a   = fem.form([[a1, a2],[a3, None]])
-        a_p0  = fem.form([[a1, a2],[a3, a_p]])
+        a   = [[a1, a2],[a3, None]]
+        a_p0  = [[a1, a2],[a3, a_p]]
         return a,a_p0
     
     def compute_residuum_stokes(self, u_new, p_new, D, T, PL, FR, sc):
@@ -1164,14 +1164,15 @@ class Stokes_Problem(Problem):
         else: 
             self.solv.update_block_operator(a,a_p0,self.bc,L,self.F0,self.F1)
         
-        
+        u_solved = u.copy()
+        p_solved = p.copy()
         x = self.solv.A.createVecLeft()
         self.solv.ksp.solve(self.solv.b, x)
 
-        u.x.array[:self.solv.offset] = x.array[:self.solv.offset]
-        p.x.array[: (len(x.array_r) - self.solv.offset)] = x.array[self.solv.offset:]
-        u.x.scatter_forward()
-        p.x.scatter_forward()
+        u_solved.x.array[:self.solv.offset] = x.array[:self.solv.offset]
+        p_solved.x.array[: (len(x.array_r) - self.solv.offset)] = x.array[self.solv.offset:]
+        u_solved.x.scatter_forward()
+        p_solved.x.scatter_forward()
         
         self.r = self.solv.b.duplicate()
         self.solv.A.mult(x, self.r)          # r = A x
@@ -1181,7 +1182,7 @@ class Stokes_Problem(Problem):
 
         abs_res = self.r.norm()
         
-        return u,p,abs_res 
+        return u_solved,p_solved,abs_res 
 
 
 #-------------------------------------------------------------------
@@ -1388,6 +1389,7 @@ class Wedge(Stokes_Problem):
 
             u_k = S.u_wedge.copy()
             u_k1 = S.u_wedge.copy()
+            u_k1.x.array[:]=0.0
             p_k = S.p_wedge.copy()
             p_k1 = S.p_wedge.copy() 
             
@@ -1396,18 +1398,36 @@ class Wedge(Stokes_Problem):
             while (res > ctrl.tol_innerPic) and it_inner < ctrl.it_max: 
                 time_ita = timing.time()
                 if it_inner>0: 
-                    a1,_,_, _,_ = self.set_linear_picard(u_k,S.t_owedge,S.p_lwedge,D,FGW,ctrl,sc)
-                    a[0][0] = a1 
-                    a       = fem.form(a)
-                    a_p0[0][0] = a1 
-                    a_p0       = fem.form(a_p0)
+                    a1,_,_, _,a_p = self.set_linear_picard(u_k,
+                                                         S.t_owedge,
+                                                         S.p_lwedge
+                                                         ,D
+                                                         ,FGW
+                                                         ,ctrl
+                                                         ,sc)
+                    
+                    a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)
                 
-                u_k1, p_k1 ,r_al = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl,u_k,p_k,it,ts)
+                u_k1, p_k1 ,r_al = self.solve_linear_picard(fem.form(a)
+                                                            ,fem.form(a_p0)
+                                                            ,fem.form(L)
+                                                            ,ctrl,
+                                                            u_k,
+                                                            p_k,
+                                                            it
+                                                            ,ts)
                 
                 tol_u = compute_residuum(u_k1,u_k)
 
                 tol_p = compute_residuum(p_k1,p_k)
-                rmom, rdiv, divuL2 = self.compute_residuum_stokes(u_k1,p_k1,D,S.t_owedge,S.p_lwedge,FGW,sc)
+                
+                rmom, rdiv, divuL2 = self.compute_residuum_stokes(u_k1
+                                                                  ,p_k1
+                                                                  ,D
+                                                                  ,S.t_owedge
+                                                                  ,S.p_lwedge
+                                                                  ,FGW
+                                                                  ,sc)
                 
                 if it_inner == 0:
                     rmom_0 = rmom
@@ -1419,7 +1439,9 @@ class Wedge(Stokes_Problem):
                 
                 u_k.x.array[:] = ctrl.relax * u_k1.x.array[:] + (1-ctrl.relax) * u_k.x.array[:]
                 p_k.x.array[:] = ctrl.relax * p_k1.x.array[:] + (1-ctrl.relax) * p_k.x.array[:]
-
+                u_k.x.scatter_forward()
+                p_k.x.scatter_forward()
+                
                 time_itb = timing.time()
 
                 print_ph(f'              []Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
@@ -1434,8 +1456,8 @@ class Wedge(Stokes_Problem):
             print_ph(f'                         [?] |F^mom|           {rmom:.3e}, abs div residuum |F^div| {rdiv:.3e}')
             print_ph('              []Converged ')
 
-            S.u_wedge = u_k1.copy()
-            S.p_wedge = p_k1.copy() 
+            S.u_wedge = u_k.copy()
+            S.p_wedge = p_k.copy() 
         
         time_B = timing.time()
         print_ph(f'              // -- // --- Solution of Wedge in {time_B-time_A:.2f} sec // -- // --- >')

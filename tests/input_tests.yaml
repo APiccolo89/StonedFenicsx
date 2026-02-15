@@ -2,7 +2,7 @@ Input:
   NumericalControls:
     it_max: 20
     tol: 1.0e-4
-    relax: 0.9
+    relax: 0.8
     Tmax: 1300.0
     Ttop: 0.0
     g: 9.81
@@ -13,7 +13,7 @@ Input:
     time_dependent_v: 0
     steady_state: 1
     slab_bc: 1
-    tol_innerPic: 1.0e-2
+    tol_innerPic: 1.0e-3
     tol_innerNew: 1.0e-5
     van_keken_case: 2
     decoupling_ctrl: 1
@@ -23,8 +23,7 @@ Input:
     adiabatic_heating: 0
     phi: 5.0
     self_consistent_flag: 1
-    eta_max: 1.0e26
-    stokes_solver_type: "Direct"
+    stokes_solver_type: "Iterative"
 
   InputOutputControl:
     test_name: "Output"
