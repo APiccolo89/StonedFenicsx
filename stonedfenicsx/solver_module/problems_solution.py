@@ -1074,6 +1074,7 @@ class Stokes_Problem(Problem):
             L : dolfinx.fem.Form -> Linear form for the right hand side of the momentum equation
             a_p0 : dolfinx.fem.Form -> Linear form for the pressure mass matrix, used for preconditioning the pressure Schur complement.
         """
+        from stonedfenicsx.material_property.compute_material_property import cell_average_DG0
         
         u, p  = self.trial0, self.trial1
         v, q  = self.test0,  self.test1
@@ -1082,11 +1083,11 @@ class Stokes_Problem(Problem):
         e = compute_strain_rate(u_s)
 
         eta = compute_viscosity_FX(e,T,PL,FR,sc)
-
+        eta_av = cell_average_DG0(D.mesh, eta)
         a1 = ufl.inner(2*eta*ufl.sym(ufl.grad(u)), ufl.sym(ufl.grad(v))) * dx
         a2 = - ufl.inner(ufl.div(v), p) * dx             # build once
         a3 = - ufl.inner(q, ufl.div(u)) * dx             # build once
-        a_p0 = - 1/eta * ufl.inner( q, p) * dx                      # pressure mass (precond)
+        a_p0 =  -1/eta_av * ufl.inner( q, p) * dx                      # pressure mass (precond)
 
         f  = fem.Constant(D.mesh, PETSc.ScalarType((0.0,)*D.mesh.geometry.dim))
         f2 = fem.Constant(D.mesh, PETSc.ScalarType(0.0))
@@ -1433,6 +1434,7 @@ class Wedge(Stokes_Problem):
                     rmom_0 = rmom
                     rdiv_0 = rdiv
                     r_al0 = r_al
+                    divuL20 = divuL2 
                 
                                 
                 res   = np.sqrt(tol_u**2+tol_p**2)
@@ -1446,7 +1448,9 @@ class Wedge(Stokes_Problem):
 
                 print_ph(f'              []Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
                 print_ph(f'                         [x] |F^mom|/|F^mom_0| {rmom/rmom_0:.3e}, |F^div|/|F^div_0| {rdiv/rdiv_0:.3e}')
+                print_ph(f'                         [-]                                       |divLu2|/|divLu20| {divuL2/divuL20:0.3e}')
                 print_ph(f'                         [x] |F^mom|           {rmom:.3e},         |F^div| {rdiv:.3e}')
+                print_ph(f'                         [-]                                       |divLu2| {divuL2:0.3e}')
                 print_ph(f'                         [x] |r_al|/|r_al0|    {r_al/r_al0:.3e},         |r_al|  {r_al:.3e}')
 
                 it_inner = it_inner+1 

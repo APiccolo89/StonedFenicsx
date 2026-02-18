@@ -107,12 +107,21 @@ class SolverStokes(Solvers):
             self.set_block_operator(a,a_p,bcs,L,F0,F1)
             V_map = F0.dofmap.index_map
             Q_map = F1.dofmap.index_map
+        
+            offset_u = V_map.local_range[0] * F0.dofmap.index_map_bs + \
+                   Q_map.local_range[0]
+            offset_p = offset_u + V_map.size_local * F0.dofmap.index_map_bs
+            is_u = PETSc.IS().createStride(V_map.size_local * F0.dofmap.index_map_bs, offset_u, 1,
+            comm=PETSc.COMM_SELF)
+            is_p = PETSc.IS().createStride(
+            Q_map.size_local, offset_p, 1, comm=PETSc.COMM_SELF)
+            
             
             self.offset_u = V_map.local_range[0] * F0.dofmap.index_map_bs + \
                    Q_map.local_range[0]
             self.offset_p = self.offset_u + V_map.size_local * F0.dofmap.index_map_bs
-            self.is_u = PETSc.IS().createStride(V_map.size_local * F0.dofmap.index_map_bs, self.offset_u, 1,comm=COMM)
-            self.is_p = PETSc.IS().createStride(Q_map.size_local, self.offset_p, 1, comm=COMM)
+            self.is_u = is_u
+            self.is_p = is_p
 
             
             assert self.nloc_u + self.nloc_p == self.A.getLocalSize()[1]
@@ -190,6 +199,9 @@ class SolverStokes(Solvers):
         
         dolfinx.fem.petsc.assemble_vector_block(
             self.b, L, a, bcs=bcs)
+        
+        self.b.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES,
+                   mode=PETSc.ScatterMode.REVERSE)
     
         # -------------------------
         # KSP operators

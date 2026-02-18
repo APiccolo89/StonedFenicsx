@@ -264,7 +264,29 @@ def alpha_FX(FG : Functions_material_properties_global
 
     return alpha 
 
+def cell_average_DG0(mesh, expr_ufl):
+    V0 = dolfinx.fem.functionspace(mesh, ("DG", 0))
+    f0 = fem.Function(V0)
 
+    w = ufl.TestFunction(V0)
+    u = ufl.TrialFunction(V0)
+    dx = ufl.dx(domain=mesh)
+
+    a = fem.form(w * u * dx)
+    L = fem.form(w * expr_ufl * dx)
+
+    A = fem.petsc.assemble_matrix(a)
+    A.assemble()
+    b = fem.petsc.assemble_vector(L)
+
+    ksp = PETSc.KSP().create(mesh.comm)
+    ksp.setOperators(A)
+    ksp.setType("preonly")
+    ksp.getPC().setType("lu")
+    ksp.solve(b, f0.x.petsc_vec)
+    f0.x.petsc_vec.ghostUpdate(addv=PETSc.InsertMode.INSERT,
+                               mode=PETSc.ScatterMode.FORWARD)
+    return f0
 #---------------------------------------------------------------------------------
 def compute_viscosity_FX(e:fem.Expression
                         ,T_in:fem.Function
