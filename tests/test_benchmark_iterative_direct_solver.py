@@ -9,7 +9,7 @@ import numpy as np
 from numpy.typing import NDArray
 import os
 from stonedfenicsx.package_import import *
-
+import h5py as h5
 # Global flag to decide wether or not to remove the results -> debug reason. 
 DEBUG = False
 #-------------------------------------------------------------------------------
@@ -80,6 +80,11 @@ def perform_test(option_viscous:int=2
         inp.iterative_solver_tol = 1e-8 
     if rtol == 3: 
         inp.iterative_solver_tol = 1e-11 
+    if rtol == 4: 
+        inp.iterative_solver_tol = 1e-7
+    if rtol == 5: 
+        inp.iterative_solver_tol = 1e-6
+
         
     
 
@@ -155,15 +160,7 @@ def perform_test(option_viscous:int=2
         print(f"{inp.sname} took  {dt:.2f} sec")
     print('#---------------------------------------------------#')
 #-------------------------------------------------------------------------------
-def read_data_base(option_viscous):
-    import h5py as h5 
-    import os
-    def extract_relevant_information(direct, rtol):
-            
 
-    
-        
-    return pass_flag
 #-------------------------------------------------------------------------------   
 def test_composite_direct()->None:
     # Test Van Keken
@@ -171,9 +168,98 @@ def test_composite_direct()->None:
 
 
 def test_composite_iterative(rel_tol:int=0)->None:
-    perform_test(2,'Iterative',0)
+    perform_test(2,'Iterative',rel_tol)
+    
+def read_data_base(): 
+    file_h5 = f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken/benchmark_van_keken.h5'
+
+    def extract_information(solver:str, rtol:int)->tuple[NDArray,NDArray,NDArray,NDArray,float,float]:
+        name_file = f'T_viscous2_direct{solver}_rtol{rtol}'
+        
+        with h5.File(file_h5) as f: 
+            RMSv = np.array(f[f'{name_file}/RMSv'])
+            RMST = np.array(f[f'{name_file}/RMST'])
+            mv = np.array(f[f'{name_file}/minVel'])
+            Mv = np.array(f[f'{name_file}/maxVel'])
+            L_11_11 = np.array(f[f'{name_file}/T_11_11'])
+            if rtol == 0: 
+                r = 1e-10 
+            if rtol == 1: 
+                r = 1e-9 
+            if rtol == 2: 
+                r = 1e-8 
+            if rtol == 3: 
+                r = 1e-11
+            if solver == 'Direct': 
+                r = 1e-22  
+        return RMSv, RMST, mv, Mv, L_11_11, r 
+
+    def plot_iterative_series(data,r_v,label):
+        import matplotlib.pyplot as plt 
+        colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"]
+        fig = plt.figure()
+        ax = fig.gca()
+        for i in range(len(r_v)):
+            ax.plot(range(len(data[i])),data[i],c=colors[i],linewidth=1.0,label = f'tol = {np.log10(r_v[i])}')
+        plt.legend()
+        ax.set_xlabel(r'$it_{outer}$')
+        ax.set_ylabel(r'%s'%label)
+        ax.set_yscale('log')
+        ax.grid(visible='True',which='both',axis='both', color='k',linewidth=0.3,alpha=0.5,linestyle=':')
+        for spine in ax.spines.values():
+            spine.set_linewidth(1.2)
+            spine.set_color = 'k'
+        plt.show()
+        
+    def scatter_plot(r_v,L): 
+        import matplotlib.pyplot as plt 
+        fig = plt.figure()
+        ax = fig.gca()
+        ax.scatter(r_v,L)
+        ax.set_xscale('log')
+        ax.set_xlabel(r'$r_t$')
+        ax.set_ylabel(r'$L_{11}$')
+        ax.grid(visible='True',which='both',axis='both', color='k',linewidth=0.3,alpha=0.5,linestyle=':')
+        for spine in ax.spines.values():
+            spine.set_linewidth(1.2)
+            spine.set_color = 'k'
+
+        plt.show()
+        
+        
+        
+    direct_RMSv, direct_RMST, direct_mv, direct_MV, direct_L11, direct_r = extract_information('Direct', 0)
+    I0_RMSv, I0_RMST, I0_mv, I0_MV, I0_L11, I0_r = extract_information('Iterative', 0)
+    I1_RMSv, I1_RMST, I1_mv, I1_MV, I1_L11, I1_r = extract_information('Iterative', 1)
+    I2_RMSv, I2_RMST, I2_mv, I2_MV, I2_L11, I2_r = extract_information('Iterative', 2)
+    I3_RMSv, I3_RMST, I3_mv, I3_MV, I3_L11, I3_r = extract_information('Iterative', 3)
+    I4_RMSv, I4_RMST, I4_mv, I4_MV, I4_L11, I4_r = extract_information('Iterative', 4)
+    I5_RMSv, I5_RMST, I5_mv, I5_MV, I5_L11, I5_r = extract_information('Iterative', 5)
+
+    Data_0 = [direct_RMSv,I0_RMSv,I1_RMSv,I2_RMSv,I3_RMSv,I4_RMSv,I5_RMSv]
+    Data_1 = [direct_RMST,I0_RMST,I1_RMST,I2_RMST,I3_RMST,I4_RMST,I5_RMSv]
+    Data_3 = [direct_MV, I0_MV, I1_MV, I2_MV, I3_MV,I4_MV,I5_MV]
+    d_D0 = ([I0_RMSv,I1_RMSv,I2_RMSv,I3_RMSv,I4_RMSv,I5_RMSv]-direct_RMSv)/direct_RMSv
+    d_D1 = ([I0_RMST,I1_RMST,I2_RMST,I3_RMST,I4_RMST, I5_RMST]-direct_RMST)/direct_RMST
+    
+    L11 = [direct_L11, I0_L11, I1_L11, I2_L11, I3_L11,I4_L11,I5_L11]
+    dL11 = ([I0_L11, I1_L11, I2_L11, I3_L11,I4_L11,I5_L11]-direct_L11)/direct_L11
+
+    r_v = [direct_r, I0_r, I1_r, I2_r, I3_r,I4_r,I5_r]
+    
+    plot_iterative_series(Data_0,r_v,'$RMS_v$')
+    plot_iterative_series(np.abs(d_D0),r_v[1:],r'$\Delta RMS_v$')
+    plot_iterative_series(Data_1,r_v,'$RMS_T$')
+    plot_iterative_series(np.abs(d_D1),r_v[1:],r'$\Delta RMS_T$')
+    plot_iterative_series(Data_3,r_v, '$max(u)$')
+    scatter_plot(r_v,L11)
+    scatter_plot(r_v[1:],dL11)    
     
 
+
+
+    
+    
 
 
 #-------------------------------------------------------------------------------
@@ -181,13 +267,21 @@ if __name__ == '__main__':
     
     DEBUG = True
     
-    test_composite_direct()
+    #test_composite_direct()
     
-    test_composite_iterative(0)
+    #test_composite_iterative(0)
     
-    test_composite_iterative(1)
+    #test_composite_iterative(1)
     
-    test_composite_iterative(2)
+    #test_composite_iterative(2)
     
-    test_composite_iterative(3)
+    #test_composite_iterative(3)
+    
+    test_composite_iterative(4)
+    
+    test_composite_iterative(5)
+    
+    
+    read_data_base()
+    
 #---------------------------------------------------------------------------------

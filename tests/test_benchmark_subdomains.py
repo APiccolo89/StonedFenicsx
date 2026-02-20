@@ -222,7 +222,7 @@ def read_data_base(option_viscous):
     print_ph(f'                             Van Keken benchmark : mean L2_A = {db_vk3[0]:.2f}.')
     print_ph(f'                             Van Keken benchmark : range L2_A = {db_vk3[1]:.2f}-{db_vk3[2]:.2f}.')
 
-    if test_1 & test_2 & test_3:         
+    if test_1 and test_2 and test_3:         
         pass_flag = True
         print_ph(f'Test_viscous{option_viscous} passed... ')
     else: 

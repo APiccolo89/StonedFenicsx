@@ -386,6 +386,26 @@ def _benchmark_van_keken(S,ctrl_io,sc):
             del van_keken_db[name]
         van_keken_db.create_dataset(name,data = S.mT)
         
+        name = '%s/RMST'%group_name 
+        if name in van_keken_db.keys():
+            del van_keken_db[name]
+        van_keken_db.create_dataset(name,data = S.RMST)
+        
+        name = '%s/maxVel'%group_name 
+        if name in van_keken_db.keys():
+            del van_keken_db[name]
+        van_keken_db.create_dataset(name,data = S.Mv)
+        
+        name = '%s/minVel'%group_name 
+        if name in van_keken_db.keys():
+            del van_keken_db[name]
+        van_keken_db.create_dataset(name,data = S.mv)
+        
+        name = '%s/RMSv'%group_name 
+        if name in van_keken_db.keys():
+            del van_keken_db[name]
+        van_keken_db.create_dataset(name,data = S.RMSv)
+        
         name = '%s/ts'%group_name 
         if name in van_keken_db.keys():
             del van_keken_db[name]
