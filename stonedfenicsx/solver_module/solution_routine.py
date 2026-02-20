@@ -1,7 +1,6 @@
 from stonedfenicsx.package_import import *
 
 from stonedfenicsx.utils                     import timing_function, print_ph
-from stonedfenicsx.material_property.compute_material_property import density_FX, heat_conductivity_FX, heat_capacity_FX, compute_viscosity_FX, compute_radiogenic 
 from stonedfenicsx.create_mesh.aux_create_mesh   import Mesh,Domain
 from stonedfenicsx.material_property.phase_db                  import PhaseDataBase
 from stonedfenicsx.numerical_control         import NumericalControls, ctrl_LHS, IOControls
@@ -135,11 +134,11 @@ def outerloop_operation(M:Mesh,
         
         if LG.typology == 'NonlinearProblem' or it_outer == 0:  
             sol = LG.Solve_the_Problem(sol,
-                                                          ctrl,
-                                                          FGT,
-                                                          M,
-                                                          g,
-                                                          it_outer,ts=ts)
+                                       ctrl,
+                                       FGT,
+                                       M,
+                                       g,
+                                       it_outer,ts=ts)
 
         # Interpolate from global to wedge/slab
 
@@ -212,7 +211,8 @@ def outerloop_operation(M:Mesh,
                                      ,sc
                                      ,time_A_outer
                                      ,ctrl.Tmax
-                                     ,ts)
+                                     ,ts
+                                     ,ctrl)
 
 
         print_ph('   // -- // :( --- ------- ------- ------- :) // -- // --- > ')
@@ -225,8 +225,42 @@ def outerloop_operation(M:Mesh,
     return sol
 #---------------------------------------------------------------------------------------------------
 # Def time_loop 
-def time_loop(M,ctrl,ioctrl,sc,lhs,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g):
-    
+def time_loop(M: Mesh
+              ,ctrl: NumericalControls
+              ,ioctrl:IOControls
+              ,sc:Scal
+              ,lhs:ctrl_LHS
+              ,FGT : Functions_material_properties_global
+              ,FGWR : Functions_material_rheology
+              ,FGSR : Functions_material_rheology
+              ,FGGR : Functions_material_rheology
+              ,EG : Global_thermal
+              ,LG : Global_pressure
+              ,We : Wedge 
+              ,Sl : Slab
+              ,sol : Solution
+              ,g : dolfinx.fem.Function
+             ) -> None:
+    """time loop function
+
+    Args:
+        M (Mesh): _description_
+        ctrl (NumericalControls): _description_
+        ioctrl (IOControls): _description_
+        sc (Scal): _description_
+        lhs (ctrl_LHS): _description_
+        FGT (Functions_material_properties_global): _description_
+        FGWR (Functions_material_rheology): _description_
+        FGSR (Functions_material_rheology): _description_
+        FGGR (Functions_material_rheology): _description_
+        EG (Global_thermal): _description_
+        LG (Global_pressure): _description_
+        We (Wedge): _description_
+        Sl (Slab): _description_
+        sol (Solution): _description_
+        g (dolfinx.fem.Function): _description_
+        t_ctrl (time_controls): _description_
+    """
     if ctrl.steady_state == 1:
         print_ph('// -- // --- Steady   State  solution // -- // --- > ')
     else:
@@ -263,6 +297,7 @@ def time_loop(M,ctrl,ioctrl,sc,lhs,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g):
                                   ,Sl
                                   ,sol
                                   ,g
+
                                   ,ts=ts)
 
         #if ctrl.adiabatic_heating==0:
@@ -283,17 +318,11 @@ def time_loop(M,ctrl,ioctrl,sc,lhs,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g):
                 from stonedfenicsx.output import _benchmark_van_keken
                 _benchmark_van_keken(sol,ioctrl,sc)
 
-        if ctrl.steady_state == 0: 
-            sol.t_oslab = interpolate_from_sub_to_main(sol.t_oslab
-                                                    ,sol.T_O
-                                                    ,M.domainA.cell_par
-                                                    ,1)
-            sol.t_nslab = interpolate_from_sub_to_main(sol.t_nslab
-                                                    ,sol.T_O
-                                                    ,M.domainA.cell_par
-                                                    ,1)
-
         t = t+ctrl.dt
+        
+        #update_velocity_age(t_ctrl,t)
+        
+        
         
         sol.T_O = sol.T_N
         
@@ -306,10 +335,15 @@ def time_loop(M,ctrl,ioctrl,sc,lhs,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g):
     We.solv.destroy()
     print_ph('---- The End ----')
 
-    return 0 
 
 #------------------------------------------------------------------------------------------------------------
-def solution_routine(M:Mesh, ctrl:NumericalControls, lhs_ctrl:ctrl_LHS, pdb:PhaseDataBase, ioctrl:IOControls, sc:Scal):
+def solution_routine(M:Mesh
+                     ,ctrl:NumericalControls
+                     ,lhs_ctrl:ctrl_LHS
+                     ,pdb:PhaseDataBase
+                     ,ioctrl:IOControls
+                     ,sc:Scal
+                    ):
 
     # Initialise
     (lhs_ctrl,                      # Left Boundary controls

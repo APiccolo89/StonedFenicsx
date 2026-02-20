@@ -193,6 +193,12 @@ class Solution():
         self.outer_iteration : NDArray[:]
         self.mT : NDArray[:]
         self.MT : NDArray[:]     
+        self.RMST : NDArray[:]
+        self.mv : NDArray[:]
+        self.Mv : NDArray[:]     
+        self.RMSv : NDArray[:]
+        
+        
         self.ts : NDArray[:]   
         
     def create_function(self
@@ -247,6 +253,10 @@ class Solution():
         self.T_ad                     = fem.Function(PG.FS)   
         self.mT    = np.zeros(1,dtype=float)
         self.MT    = np.zeros(1,dtype=float) 
+        self.RMST    = np.zeros(1,dtype=float)
+        self.Mv    = np.zeros(1,dtype=float) 
+        self.mv   = np.zeros(1,dtype=float)
+        self.RMSv    = np.zeros(1,dtype=float) 
         self.outer_iteration = np.zeros(1,dtype=float)
         self.ts             = np.zeros(1,dtype=int)
 
@@ -1053,7 +1063,8 @@ class Stokes_Problem(Problem):
                           ,sc : Scal
                           ,a_p = None
                           ,it : int = 0
-                          ,ts : int = 0) -> tuple[dolfinx.fem.Form, dolfinx.fem.Form, dolfinx.fem.Form, dolfinx.fem.Form, dolfinx.fem.Form]:
+                          ,ts : int = 0
+                          ,slab = 1) -> tuple[dolfinx.fem.Form, dolfinx.fem.Form, dolfinx.fem.Form, dolfinx.fem.Form, dolfinx.fem.Form]:
         
         """Function that set linear form (both for picard iteration and linear problem solution)
         Args: 
@@ -1081,13 +1092,16 @@ class Stokes_Problem(Problem):
         dx    = ufl.dx
 
         e = compute_strain_rate(u_s)
-
-        eta = compute_viscosity_FX(e,T,PL,FR,sc)
-        eta_av = cell_average_DG0(D.mesh, eta)
+        # If we are in the first iteration of the first timestep -> use the default viscosity for creating an initial guess. fem.Constant(M.domainG.mesh, PETSc.ScalarType([0.0, -ctrl.g]))   
+        if it == 0 and ts == 0 and slab == 0:
+            eta = fem.Constant(D.mesh,PETSc.ScalarType(FR.eta_def))
+        else: 
+            eta = compute_viscosity_FX(e,T,PL,FR,sc)
+            eta_av = cell_average_DG0(D.mesh, eta)
         a1 = ufl.inner(2*eta*ufl.sym(ufl.grad(u)), ufl.sym(ufl.grad(v))) * dx
         a2 = - ufl.inner(ufl.div(v), p) * dx             # build once
         a3 = - ufl.inner(q, ufl.div(u)) * dx             # build once
-        a_p0 =  -1/eta_av * ufl.inner( q, p) * dx                      # pressure mass (precond)
+        a_p0 =  -1/eta * ufl.inner( q, p) * dx                      # pressure mass (precond)
 
         f  = fem.Constant(D.mesh, PETSc.ScalarType((0.0,)*D.mesh.geometry.dim))
         f2 = fem.Constant(D.mesh, PETSc.ScalarType(0.0))
@@ -1182,6 +1196,19 @@ class Stokes_Problem(Problem):
         self.r.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
 
         abs_res = self.r.norm()
+        
+        if ctrl.stokes_solver_type == 0: 
+            reason = self.solv.ksp.getConvergedReason()
+            its    = self.solv.ksp.getIterationNumber()
+            rnorm  = self.solv.ksp.getResidualNorm()
+            PETSc.Sys.Print(f"                       KSP reason/its/rnorm: {reason} {its} {rnorm:.3e}")
+
+        minMaxU = min_max_array(u_solved,vel=True)
+        print_ph(f'                       min vel = {minMaxU[0]:.5e}, max vel = {minMaxU[1]:.5e}, RMS = {minMaxU[2]:.5e}')
+            
+                
+        
+        
         
         return u_solved,p_solved,abs_res 
 
@@ -1368,8 +1395,11 @@ class Wedge(Stokes_Problem):
                                                   ,D
                                                   ,FGW
                                                   ,ctrl
-                                                  ,sc)
-
+                                                  ,sc
+                                                  ,it = it
+                                                  ,ts = ts 
+                                                  ,slab = 0)
+        # Iteration outer 0 -> Initial guess -> start linear
         # Create the dirichlecht boundary condition 
         self.bc   = self.setdirichlecht(ctrl,D,self.V_subs,g_input) 
         
@@ -1405,7 +1435,10 @@ class Wedge(Stokes_Problem):
                                                          ,D
                                                          ,FGW
                                                          ,ctrl
-                                                         ,sc)
+                                                         ,sc
+                                                         ,it = it
+                                                         ,ts = ts
+                                                         ,slab =0)
                     
                     a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)
                 

@@ -112,9 +112,9 @@ class SolverStokes(Solvers):
                    Q_map.local_range[0]
             offset_p = offset_u + V_map.size_local * F0.dofmap.index_map_bs
             is_u = PETSc.IS().createStride(V_map.size_local * F0.dofmap.index_map_bs, offset_u, 1,
-            comm=PETSc.COMM_SELF)
+            comm=PETSc.COMM_WORLD)
             is_p = PETSc.IS().createStride(
-            Q_map.size_local, offset_p, 1, comm=PETSc.COMM_SELF)
+            Q_map.size_local, offset_p, 1, comm=PETSc.COMM_WORLD)
             
             
             self.offset_u = V_map.local_range[0] * F0.dofmap.index_map_bs + \
@@ -128,7 +128,7 @@ class SolverStokes(Solvers):
             
             self.ksp = PETSc.KSP().create(COMM)
             self.ksp.setOperators(self.A, self.P)
-            self.ksp.setTolerances(rtol=1e-9)
+            self.ksp.setTolerances(rtol=ctrl.iterative_solver_tol)
             self.ksp.setType("fgmres")
             self.ksp.getPC().setType("fieldsplit")
             self.ksp.getPC().setFieldSplitType(PETSc.PC.CompositeType.MULTIPLICATIVE)
@@ -139,7 +139,7 @@ class SolverStokes(Solvers):
             self.ksp_u.setType("preonly")
             self.ksp_u.getPC().setType("hypre")
             self.ksp_p.setType("preonly")
-            self.ksp_p.getPC().setType("bjacobi")
+            self.ksp_p.getPC().setType("hypre")
 
             # The matrix A combined the vector velocity and scalar pressure
             # parts, hence has a block size of 1. Unlike the MatNest case, GAMG

@@ -13,7 +13,11 @@ from stonedfenicsx.package_import import *
 # Global flag to decide wether or not to remove the results -> debug reason. 
 DEBUG = False
 #-------------------------------------------------------------------------------
-def perform_test(option_viscous):
+def perform_test(option_viscous:int=2
+                 ,direct:str='Direct'
+                 ,rtol:int =0)->None:
+    
+    
     from stonedfenicsx.utils import parse_input, time_the_time, timing
     from stonedfenicsx.Stoned_fenicx import StonedFenicsx
     
@@ -43,6 +47,7 @@ def perform_test(option_viscous):
     inp.Tmax = 1300.0  # mantle potential temperature
     # inp.model_shear = 'SelfConsistent'
     inp.steady_state = 1
+    inp.stokes_solver_type = direct
     print_ph('Starting the benchmark tests with different options')
 
     alpha_nameC = 'Constant'
@@ -66,6 +71,17 @@ def perform_test(option_viscous):
     elif option_viscous == 2: 
         name_diffusion = 'Van_Keken_diff'
         name_dislocation = 'Van_Keken_disl'                 
+    
+    if rtol == 0: 
+        inp.iterative_solver_tol = 1e-10 
+    if rtol == 1: 
+        inp.iterative_solver_tol = 1e-9 
+    if rtol == 2: 
+        inp.iterative_solver_tol = 1e-8 
+    if rtol == 3: 
+        inp.iterative_solver_tol = 1e-11 
+        
+    
 
     # Modify the phase with the new data: 
     Ph.subducting_plate_mantle.rho0 = rho0_M
@@ -117,7 +133,7 @@ def perform_test(option_viscous):
     Ph.virtual_weak_zone.name_dislocation = 'Hirth_Wet_Olivine_disl' 
 
 
-    inp.sname = f'T_viscous{option_viscous}'
+    inp.sname = f'T_viscous{option_viscous}_direct{direct}_rtol{rtol}'
 
     # Initialise the input
     inp.van_keken = van_keken
@@ -142,137 +158,36 @@ def perform_test(option_viscous):
 def read_data_base(option_viscous):
     import h5py as h5 
     import os
-    
-    # File h5 that stores data of benchmarks
-    file_h5 = f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken/benchmark_van_keken.h5'
-    # Current test Name
-    Test_name = f'T_viscous{option_viscous}'
-    # Open the file 
-    f = h5.File(file_h5)
-    # Read the data from the database: 
-    field_a = f'{Test_name}/T_11_11'
-    T_11_11 = np.array(f[field_a])
-    field_b = f'{Test_name}/L2_A'
-    L2_A = np.array(f[field_b])
-    field_c = f'{Test_name}/L2_B'
-    L2_B = np.array(f[field_c])
-    
-    if option_viscous==0:  
-        
-        data = np.array([
-        [397.55, 505.70, 850.50],
-        [391.57, 511.09, 852.43],
-        [387.78, 503.10, 852.97],
-        [387.84, 503.13, 852.92],
-        [389.39, 503.04, 851.68],
-        [388.73, 504.03, 854.99],
-        [390.40, 488.0, 847.70],
-         ])
-        v1 = 383.1834
-        v2 = 500.3690
-        v3 = 852.6929
-        
-        # 
-           
-    if option_viscous == 1:
-        data = np.array([
-        [570.30, 614.09, 1007.31],
-        [580.52, 606.94, 1002.85],
-        [580.66, 607.11, 1003.20],
-        [577.59, 607.52, 1002.15],
-        [581.30, 607.26, 1003.35],
-        [584.20, 592.8, 1000.0],
-        ])
-        v1 = 573.3623
-        v2 = 603.1777
-        v3 = 1002.6859
+    def extract_relevant_information(direct, rtol):
+            
 
-    if option_viscous==2: 
-        
-        data = np.array([
-        [550.17, 593.48, 994.11],
-        [551.60, 608.85, 984.08],
-        [582.65, 604.51, 998.71],
-        [583.36, 605.11, 1000.01],
-        [574.84, 603.80, 995.24],
-        [583.11, 604.96, 1000.05],
-        [585.70, 591.30, 996.60]
-        ])
-        v1 = 575.8907
-        v2 = 601.0743
-        v3 = 999.3790
-
-    db_vk1 = [np.mean(data[:,0]), np.min(data[:,0]), np.max(data[:,0])]
-    db_vk2 = [np.mean(data[:,1]), np.min(data[:,1]), np.max(data[:,1])]
-    db_vk3 = [np.mean(data[:,2]), np.min(data[:,2]), np.max(data[:,2])]
-
-    test_1 = np.isclose(T_11_11, v1, 5e-1, 1e-1)
-    test_2 = np.isclose(L2_A, v2,5e-1, 1e-1)
-    test_3 = np.isclose(L2_B, v3,5e-1, 1e-1)
     
-    print_ph(f'Test_viscous{option_viscous}, T_11_11 is {T_11_11:.4f}. Tested against {v1:.4f}.')
-    print_ph(f'                             Van Keken benchmark : mean T_11_11 = {db_vk1[0]:.2f}.')
-    print_ph(f'                             Van Keken benchmark : range T_11_11 = {db_vk1[1]:.2f}-{db_vk1[2]:.2f}.')
-
-    print_ph(f'Test_viscous{option_viscous}, L2_A is {L2_A:.4f}. Tested against {v2:.4f}.')
-    print_ph(f'                             Van Keken benchmark : mean L2_A = {db_vk2[0]:.2f}.')
-    print_ph(f'                             Van Keken benchmark : range L2_A = {db_vk2[1]:.2f}-{db_vk2[2]:.2f}.')
-    
-    print_ph(f'Test_viscous{option_viscous}, L2_B is {L2_B:.4f}. Tested against {v3:.4f}.')
-    print_ph(f'                             Van Keken benchmark : mean L2_A = {db_vk3[0]:.2f}.')
-    print_ph(f'                             Van Keken benchmark : range L2_A = {db_vk3[1]:.2f}-{db_vk3[2]:.2f}.')
-
-    if test_1 & test_2 & test_3:         
-        pass_flag = True
-        print_ph(f'Test_viscous{option_viscous} passed... ')
-    else: 
-        assert test_1 
-        assert test_2
-        assert test_3 
-    
-    f.close()
         
     return pass_flag
-#-------------------------------------------------------------------------------
-def test_isoviscous():
-    # Test Van Keken 
-    perform_test(0) # IsoViscous
-    # Read Data Base and compare data 
-    if MPI.COMM_WORLD.rank == 0: 
-        read_data_base(0)
-    # Remove folder after completing the test
-    if DEBUG == False:
-        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
-#-------------------------------------------------------------------------------
-def test_diffusion():
-    # Test Van Keken
-    perform_test(1)
-    # Read Data Base and compare data
-    if MPI.COMM_WORLD.rank == 0: 
-        read_data_base(1)
-    # Remove folder after completing the test
-    if DEBUG == False:
-       
-        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
 #-------------------------------------------------------------------------------   
-def test_composite():
+def test_composite_direct()->None:
     # Test Van Keken
-    perform_test(2)
-    # Read Data Base and compare data
-    if MPI.COMM_WORLD.rank == 0: 
-        read_data_base(2)
-    # Remove folder after completing the test
-    if DEBUG == False:
-        
-        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
+    perform_test(2, 'Direct')
+
+
+def test_composite_iterative(rel_tol:int=0)->None:
+    perform_test(2,'Iterative',0)
+    
+
+
+
 #-------------------------------------------------------------------------------
 if __name__ == '__main__': 
     
     DEBUG = True
     
-    #test_isoviscous()
-
-    #test_diffusion()
-
-    test_composite()
+    test_composite_direct()
+    
+    test_composite_iterative(0)
+    
+    test_composite_iterative(1)
+    
+    test_composite_iterative(2)
+    
+    test_composite_iterative(3)
 #---------------------------------------------------------------------------------

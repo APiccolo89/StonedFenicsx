@@ -358,6 +358,7 @@ class Input:
     eta_max: float = 1.0e26 # Maximum viscosity 
     adiabatic_heating: int = 0  # adiabatic heating flag -> to remove
     stokes_solver_type : str = 'Direct'
+    iterative_solver_tol : float = 1e-10 
     phi: float = 5.0            # Friction angle
     self_consistent_flag:int = 1 # incoming plate thermal structure: 0 -> half space cooling model ; 1 -> self-consistent with material properties
     # -----------------------------------------------------------------------------------------------------
@@ -485,10 +486,6 @@ def parse_input(path:str)->tuple[Input,Ph_input]:
     
     filling_the_input(NC,IOCr,LHS,GEOM,MP,SCAL,IP)
     filling_the_phase_data_base(MP,Ph)
-    
-    
-    
-    
     
     return IP, Ph 
 

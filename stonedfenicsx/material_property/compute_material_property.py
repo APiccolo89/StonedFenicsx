@@ -129,7 +129,8 @@ class Functions_material_rheology():
     Vdif    : fem.Function = None
     Vdis    : fem.Function = None
     eta     : fem.Function = None
-    option_eta : fem.Function = None
+    eta_def : fem.Function = None 
+    option_eta : float = None
     eta_max : float = None
     R        : float = None
 
@@ -159,6 +160,7 @@ def populate_material_properties_rheology(CP:Functions_material_rheology
     CP.eta     = fem.Function(P0)     ; CP.eta.x.array[:]      = pdb.eta[ph]
     CP.option_eta = fem.Function(P0)  ; CP.option_eta.x.array[:] = pdb.option_eta[ph]
     CP.eta_max = pdb.eta_max
+    CP.eta_def = pdb.eta_def
     CP.R       = pdb.R
     CP.eta.x.scatter_forward()
     return CP 
