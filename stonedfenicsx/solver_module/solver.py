@@ -2,7 +2,10 @@ from stonedfenicsx.utils import *
 from stonedfenicsx.package_import import *
 from stonedfenicsx.scal import Scal
 from dolfinx.fem.petsc          import assemble_matrix_block, assemble_vector_block
-
+"""This section has been created using the default tutorials of FEniCSx. 
+I choose to use monolithic direct/iterative solvers. The choiche of the options depends
+on the preconditioner that I set up for the stokes for the given problem. 
+"""
 
 class Solvers():
     def destroy(self):

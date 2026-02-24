@@ -105,7 +105,17 @@ def initial_adiabatic_lithostatic_thermal_gradient(sol,lps,FGpdb,M,g,it_outer,ct
 
 #---------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------
-def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA,Tmax,ts,ctrl):
+def compute_residuum_outer(sol
+                           ,T
+                           ,PL
+                           ,u
+                           ,p
+                           ,it_outer
+                           ,sc
+                           ,tA
+                           ,Tmax
+                           ,ts
+                           ,ctrl):
     # Prepare the variables 
 
     
@@ -181,6 +191,19 @@ def compute_residuum_outer(sol,T,PL,u,p,it_outer,sc,tA,Tmax,ts,ctrl):
 #------------------------------------------------------------------------------------------------------------
 
 def compute_residuum(a:dolfinx.fem.Function,b:dolfinx.fem.Function)->float:
+    """Compute the residual of a given solution
+
+    Args:
+        a (dolfinx.fem.Function): new solution
+        b (dolfinx.fem.Function): old solution
+
+    Returns:
+        float: L2 norm residual 
+    
+    The residual is computed as ||(a-b)/(a+b)|| L2 norm
+    """
+    
+    
     
     dxa = (a.x.petsc_vec + b.x.petsc_vec).norm(PETSc.NormType.NORM_2)    
     res = (a.x.petsc_vec - b.x.petsc_vec).norm(PETSc.NormType.NORM_2)  / dxa

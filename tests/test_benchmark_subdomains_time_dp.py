@@ -12,36 +12,6 @@ from stonedfenicsx.package_import import *
 
 # Global flag to decide wether or not to remove the results -> debug reason. 
 DEBUG = False
-
-
-# The nonlinear stopping tolerance is set to 1e-1 for the following reasons:
-#
-# 1) Parallel floating-point round-off:
-#    In MPI parallel reductions (e.g., norms, dot products), floating-point
-#    operations are not strictly associative. The ordering of reductions
-#    differs between runs and processor counts, leading to unavoidable
-#    round-off variations (typically O(1e-5) in our tests).
-#    Therefore, convergence criteria below this threshold do not reflect
-#    physically meaningful changes in the solution.
-#
-# 2) Iterative vs direct Stokes solve:
-#    The Krylov (KSP) solver computes an approximate solution whose accuracy
-#    depends on the relative tolerance (rtol). For nonlinear rheologies,
-#    especially dislocation creep, the Picard fixed-point iteration becomes
-#    sensitive to the linear solver tolerance.
-#
-#    We observe that:
-#      - For linear viscosity and diffusion creep, the solution is robust
-#        across a wide range of KSP tolerances.
-#      - For dislocation creep, tightening or loosening the KSP rtol
-#        changes the nonlinear fixed-point trajectory.
-#
-#    Below a certain linear tolerance threshold, the nonlinear iteration
-#    may converge to a different fixed point or exhibit divergence,
-#    indicating sensitivity of the coupled nonlinear–linear scheme.
-#
-#    The chosen tolerance represents a compromise between numerical
-#    stability, physical consistency, and computational cost.
 #-------------------------------------------------------------------------------
 def perform_test(option_viscous):
     from stonedfenicsx.utils import parse_input, time_the_time, timing
@@ -72,7 +42,10 @@ def perform_test(option_viscous):
     inp.ns_depth = 50e3
     inp.Tmax = 1300.0  # mantle potential temperature
     # inp.model_shear = 'SelfConsistent'
-    inp.steady_state = 1
+    inp.steady_state = 0
+    inp.time_max = 1.0 
+    inp.tol = 1e-2
+    inp.it_max = 5
     print_ph('Starting the benchmark tests with different options')
 
     alpha_nameC = 'Constant'
@@ -235,7 +208,34 @@ def read_data_base(option_viscous):
     db_vk1 = [np.mean(data[:,0]), np.min(data[:,0]), np.max(data[:,0])]
     db_vk2 = [np.mean(data[:,1]), np.min(data[:,1]), np.max(data[:,1])]
     db_vk3 = [np.mean(data[:,2]), np.min(data[:,2]), np.max(data[:,2])]
-
+    # The nonlinear stopping tolerance is set to 1e-1 for the following reasons:
+    #
+    # 1) Parallel floating-point round-off:
+    #    In MPI parallel reductions (e.g., norms, dot products), floating-point
+    #    operations are not strictly associative. The ordering of reductions
+    #    differs between runs and processor counts, leading to unavoidable
+    #    round-off variations (typically O(1e-5) in our tests).
+    #    Therefore, convergence criteria below this threshold do not reflect
+    #    physically meaningful changes in the solution.
+    #
+    # 2) Iterative vs direct Stokes solve:
+    #    The Krylov (KSP) solver computes an approximate solution whose accuracy
+    #    depends on the relative tolerance (rtol). For nonlinear rheologies,
+    #    especially dislocation creep, the Picard fixed-point iteration becomes
+    #    sensitive to the linear solver tolerance.
+    #
+    #    We observe that:
+    #      - For linear viscosity and diffusion creep, the solution is robust
+    #        across a wide range of KSP tolerances.
+    #      - For dislocation creep, tightening or loosening the KSP rtol
+    #        changes the nonlinear fixed-point trajectory.
+    #
+    #    Below a certain linear tolerance threshold, the nonlinear iteration
+    #    may converge to a different fixed point or exhibit divergence,
+    #    indicating sensitivity of the coupled nonlinear–linear scheme.
+    #
+    #    The chosen tolerance represents a compromise between numerical
+    #    stability, physical consistency, and computational cost.
     test_1 = np.isclose(T_11_11, v1, 5e-1, 1e-1)
     test_2 = np.isclose(L2_A, v2,5e-1, 1e-1)
     test_3 = np.isclose(L2_B, v3,5e-1, 1e-1)
@@ -302,7 +302,7 @@ if __name__ == '__main__':
     
     test_isoviscous()
 
-    test_diffusion()
+    #test_diffusion()
 
-    test_composite()
+    #test_composite()
 #---------------------------------------------------------------------------------

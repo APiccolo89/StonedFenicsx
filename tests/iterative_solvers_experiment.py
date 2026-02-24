@@ -10,8 +10,34 @@ from numpy.typing import NDArray
 import os
 from stonedfenicsx.package_import import *
 import h5py as h5
-# Global flag to decide wether or not to remove the results -> debug reason. 
-DEBUG = False
+# The nonlinear stopping tolerance is set to 1e-1 for the following reasons:
+#
+# 1) Parallel floating-point round-off:
+#    In MPI parallel reductions (e.g., norms, dot products), floating-point
+#    operations are not strictly associative. The ordering of reductions
+#    differs between runs and processor counts, leading to unavoidable
+#    round-off variations (typically O(1e-5) in our tests).
+#    Therefore, convergence criteria below this threshold do not reflect
+#    physically meaningful changes in the solution.
+#
+# 2) Iterative vs direct Stokes solve:
+#    The Krylov (KSP) solver computes an approximate solution whose accuracy
+#    depends on the relative tolerance (rtol). For nonlinear rheologies,
+#    especially dislocation creep, the Picard fixed-point iteration becomes
+#    sensitive to the linear solver tolerance.
+#
+#    We observe that:
+#      - For linear viscosity and diffusion creep, the solution is robust
+#        across a wide range of KSP tolerances.
+#      - For dislocation creep, tightening or loosening the KSP rtol
+#        changes the nonlinear fixed-point trajectory.
+#
+#    Below a certain linear tolerance threshold, the nonlinear iteration
+#    may converge to a different fixed point or exhibit divergence,
+#    indicating sensitivity of the coupled nonlinear–linear scheme.
+#
+#    The chosen tolerance represents a compromise between numerical
+#    stability, physical consistency, and computational cost.DEBUG = False
 #-------------------------------------------------------------------------------
 def perform_test(option_viscous:int=2
                  ,direct:str='Direct'
@@ -84,6 +110,10 @@ def perform_test(option_viscous:int=2
         inp.iterative_solver_tol = 1e-7
     if rtol == 5: 
         inp.iterative_solver_tol = 1e-6
+    if rtol == 6: 
+        inp.iterative_solver_tol = 1e-5
+    if rtol == 7: 
+        inp.iterative_solver_tol = 1e-12 
 
         
     
@@ -162,12 +192,12 @@ def perform_test(option_viscous:int=2
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------   
-def test_composite_direct()->None:
+def composite_direct()->None:
     # Test Van Keken
     perform_test(2, 'Direct')
 
 
-def test_composite_iterative(rel_tol:int=0)->None:
+def composite_iterative(rel_tol:int=0)->None:
     perform_test(2,'Iterative',rel_tol)
     
 def read_data_base(): 
@@ -190,13 +220,25 @@ def read_data_base():
                 r = 1e-8 
             if rtol == 3: 
                 r = 1e-11
+            if rtol == 4: 
+                r = 1e-7
+            if rtol == 5 :
+                r = 1e-6
+                
             if solver == 'Direct': 
                 r = 1e-22  
         return RMSv, RMST, mv, Mv, L_11_11, r 
 
     def plot_iterative_series(data,r_v,label):
         import matplotlib.pyplot as plt 
-        colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"]
+        colors = [
+                "#003f5c",  # dark blue
+                "#58508d",  # indigo
+                "#bc5090",  # magenta
+                "#ff6361",  # coral red
+                "#ffa600",  # orange
+                "#2f4b7c",  # steel blue
+                "#8c564b"]        
         fig = plt.figure()
         ax = fig.gca()
         for i in range(len(r_v)):
@@ -267,19 +309,19 @@ if __name__ == '__main__':
     
     DEBUG = True
     
-    #test_composite_direct()
+    composite_direct()
     
-    #test_composite_iterative(0)
+    composite_iterative(0)
     
-    #test_composite_iterative(1)
+    composite_iterative(1)
     
-    #test_composite_iterative(2)
+    composite_iterative(2)
     
-    #test_composite_iterative(3)
+    composite_iterative(3)
     
-    test_composite_iterative(4)
+    composite_iterative(4)
     
-    test_composite_iterative(5)
+    composite_iterative(5)
     
     
     read_data_base()

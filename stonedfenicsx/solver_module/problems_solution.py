@@ -197,8 +197,6 @@ class Solution():
         self.mv : NDArray[:]
         self.Mv : NDArray[:]     
         self.RMSv : NDArray[:]
-        
-        
         self.ts : NDArray[:]   
         
     def create_function(self
