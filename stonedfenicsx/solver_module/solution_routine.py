@@ -111,11 +111,17 @@ def outerloop_operation(M:Mesh,
                         Sl:Slab,
                         sol:Solution,
                         g:dolfinx.fem.function.Function
-                        ,ts:int=0)->Solution:
+                        ,ts:int=0
+                        ,ioctrl:IOControls=None)->Solution:
     
     # Initialise the it outer and residual outer 
     it_outer = 0 
     res      = 1
+    debug =0 
+    if debug == 1: 
+        out_deb = OUTPUT(M.domainG,ioctrl,ctrl,sc)
+    
+ 
     while it_outer < ctrl.it_max and res > ctrl.tol: 
         
         print_ph(f'   // -- // --- Outer iteration {it_outer:d} for the coupled problem // -- // --- > ')
@@ -213,6 +219,10 @@ def outerloop_operation(M:Mesh,
                                      ,ctrl.Tmax
                                      ,ts
                                      ,ctrl)
+        if debug==1:
+            print_ph('OUTPUT...')
+            out_deb.print_output(sol,M.domainG,FGT,FGGR,ioctrl,sc,ctrl,it_outer=it_outer,time=0,ts=ts,debug=1)
+            print_ph('finished')
 
 
         print_ph('   // -- // :( --- ------- ------- ------- :) // -- // --- > ')
@@ -297,8 +307,8 @@ def time_loop(M: Mesh
                                   ,Sl
                                   ,sol
                                   ,g
-
-                                  ,ts=ts)
+                                  ,ts=ts
+                                  ,ioctrl=ioctrl)
 
         #if ctrl.adiabatic_heating==0:
         #    sol.T_ad = compute_adiabatic_initial_adiabatic_contribution(M.domainG,sol.T_N,None,sol.PL,FGT,0)

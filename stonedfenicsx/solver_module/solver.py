@@ -107,32 +107,41 @@ class SolverStokes(Solvers):
         #Return block operators and block RHS vector for the Stokes problem'
         # nullspace vector [0_u; 1_p] locally
         if it == 0 or ts == 0:
+            # Create the block operator and the pre-conditioner
             self.set_block_operator(a,a_p,bcs,L,F0,F1)
+            
+            # Map the dofs [Find the dofs that belongs to P, and the one that belongs to u]
             V_map = F0.dofmap.index_map
             Q_map = F1.dofmap.index_map
         
+            # Rhs = [vu,vp]-> where do they start 
+            # -> more over divided into the processors, so must find the layout for every processor
             offset_u = V_map.local_range[0] * F0.dofmap.index_map_bs + \
                    Q_map.local_range[0]
             offset_p = offset_u + V_map.size_local * F0.dofmap.index_map_bs
+            # Petsc black magic to create the index array for recognising what node is u or p 
             is_u = PETSc.IS().createStride(V_map.size_local * F0.dofmap.index_map_bs, offset_u, 1,
             comm=PETSc.COMM_WORLD)
             is_p = PETSc.IS().createStride(
             Q_map.size_local, offset_p, 1, comm=PETSc.COMM_WORLD)
             
-            
+            # Save the information
             self.offset_u = V_map.local_range[0] * F0.dofmap.index_map_bs + \
                    Q_map.local_range[0]
             self.offset_p = self.offset_u + V_map.size_local * F0.dofmap.index_map_bs
             self.is_u = is_u
             self.is_p = is_p
-
             
-            assert self.nloc_u + self.nloc_p == self.A.getLocalSize()[1]
-            
+            # Create the KSP object
             self.ksp = PETSc.KSP().create(COMM)
+            # Set the operator 
             self.ksp.setOperators(self.A, self.P)
+            # Set the tollerance of krylov solver
             self.ksp.setTolerances(rtol=ctrl.iterative_solver_tol)
+            # Set the type fgmres (global minimum residual) -> Iterative solver, solve an approximate inversion of A-> and the residual is the 
+            # the way to quantify how much the iterative solver is converged to real solution
             self.ksp.setType("fgmres")
+            # 
             self.ksp.getPC().setType("fieldsplit")
             self.ksp.getPC().setFieldSplitType(PETSc.PC.CompositeType.MULTIPLICATIVE)
             self.ksp.getPC().setFieldSplitIS(("u", self.is_u), ("p", self.is_p))
@@ -143,6 +152,12 @@ class SolverStokes(Solvers):
             self.ksp_u.getPC().setType("hypre")
             self.ksp_p.setType("preonly")
             self.ksp_p.getPC().setType("hypre")
+
+            monitor_n_digits = int(np.ceil(np.log10(self.ksp.max_it)))
+            def monitor(ksp, it, r):
+                PETSc.Sys.Print(f"{         it: {monitor_n_digits}d}: {r:.3e}")
+
+            self.ksp.setMonitor(monitor)
 
             # The matrix A combined the vector velocity and scalar pressure
             # parts, hence has a block size of 1. Unlike the MatNest case, GAMG
@@ -161,6 +176,11 @@ class SolverStokes(Solvers):
         self.A = assemble_matrix_block(a, bcs=bcs)   ; self.A.assemble()
         self.P = assemble_matrix_block(a_p, bcs=bcs) ; self.P.assemble()
         self.b = assemble_vector_block(L, a, bcs=bcs); self.b.assemble()
+        
+        
+        #self.b.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES,
+        #           mode=PETSc.ScatterMode.REVERSE)
+        
         self.null_vec = self.A.createVecLeft()
         self.nloc_u = F0.dofmap.index_map.size_local * F0.dofmap.index_map_bs
         self.nloc_p = F1.dofmap.index_map.size_local
@@ -201,11 +221,12 @@ class SolverStokes(Solvers):
             b_u_local.set(0.0)
         
         dolfinx.fem.petsc.assemble_vector_block(
-            self.b, L, a, bcs=bcs)
-        
-        self.b.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES,
-                   mode=PETSc.ScatterMode.REVERSE)
+            self.b, L, a,bcs=bcs)
+                
+        #self.b.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES,
+#                   mode=PETSc.ScatterMode.REVERSE)
     
+        #olfinx.fem.petsc.set_bc(self.b,bcs)
         # -------------------------
         # KSP operators
         # -------------------------
@@ -213,6 +234,7 @@ class SolverStokes(Solvers):
             # Nullspace (e.g., pressure) — set once if possible, but safe here too
             if getattr(self, "nsp", None) is not None:
                 self.A.setNullSpace(self.nsp)
+                self.nsp.remove(self.b)
 
             self.ksp.setOperators(self.A, self.P)
 

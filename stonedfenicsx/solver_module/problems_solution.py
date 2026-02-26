@@ -16,28 +16,33 @@ from stonedfenicsx.solver_module.solution_routine import *
 from stonedfenicsx.solver_module.solver_utilities import *
 from stonedfenicsx.solver_module.solver import ScalarSolver, SolverStokes, Solvers
 
+def debug_boundary_condition(bc, name):
+    comm = MPI.COMM_WORLD
 
-def debug_boundary_condition(bc,name):
-    
-    if isinstance(bc.g ,dolfinx.fem.Function) or isinstance(bc.g ,dolfinx.cpp.fem.Function_float64):
-        dofs = bc.dof_indices()
-        dofs_array = dofs[:][0]
-        dofs_ghost = dofs[:][1]
-        if len(dofs_array) != 0: 
-            min_vl = np.nanmin(bc.g.x.array[dofs_array[:dofs_ghost]])
-            max_vl = np.nanmax(bc.g.x.array[dofs_array[:dofs_ghost]])
-        else: 
-            min_vl = -5.01 
-            max_vl = -5.01  
-    else: 
-        min_vl = np.nanmin(bc.g.value)
-        max_vl = np.nanmax(bc.g.value)
-    
-    print_ph(f'{name}')
-    if MPI.COMM_WORLD.rank == 0: 
-        print(f'Pr0: minV {min_vl:.2f} maxV {max_vl:.2f}')
-    if MPI.COMM_WORLD.rank == 1:
-        print(f'Pr1: minV {min_vl:.2f} maxV {max_vl:.2f}')
+    # bc.dof_indices() returns (dofs, first_ghost) in many dolfinx versions
+    dofs, first_ghost = bc.dof_indices()
+
+    # owned dofs are dofs[:first_ghost] (this ordering IS guaranteed for dof_indices)
+    dofs_owned = dofs[:first_ghost]
+
+    if dofs_owned.size == 0:
+        local_min = np.inf
+        local_max = -np.inf
+    else:
+        if hasattr(bc.g, "x"):  # Function
+            vals = bc.g.x.array[dofs_owned]
+            vals = np.linalg.norm(vals, axis=1)
+        else:  # Constant / ndarray
+            vals = np.asarray(bc.g.value)
+        local_min = np.nanmin(vals)
+        local_max = np.nanmax(vals)
+
+    gmin = comm.allreduce(local_min, op=MPI.MIN)
+    gmax = comm.allreduce(local_max, op=MPI.MAX)
+
+    if comm.rank == 0:
+        print(f"{name}: global min {gmin:.6e} global max {gmax:.6e} "
+              f"(rank{comm.rank} local min {local_min:.6e} local max {local_max:.6e}, n_owned {dofs_owned.size})")
         
     
     
@@ -326,6 +331,7 @@ class Global_thermal(Problem):
         else: 
             function_bc = fem.Function(self.FS)
             function_bc.interpolate(T_i)
+        
             self.bc_right_wed  = fem.dirichletbc(function_bc,dofs_vel)
             
         facets                 = M.facets.find(M.bc_dict['Bottom_wed'])                        
@@ -345,17 +351,6 @@ class Global_thermal(Problem):
         bc = [ self.bc_left,  self.bc_right_wed,self.bc_bot_wed, self.bc_right_lit,self.bc_top]
 
         
-        DEBUG = 0
-        if DEBUG == 1: 
-            print_ph('DEBUGGING...')
-            debug_boundary_condition(self.bc_top,'top')
-            MPI.COMM_WORLD.barrier()
-            debug_boundary_condition(self.bc_left,'left')
-            MPI.COMM_WORLD.barrier()
-            debug_boundary_condition(self.bc_bot_wed,'bot_wedge')
-            MPI.COMM_WORLD.barrier()
-
-            debug_boundary_condition(self.bc_right_lit,'right_lit')
         
         
         
@@ -902,7 +897,7 @@ class Global_pressure(Problem):
 
         time_B = timing.time()
 
-        print_ph('              // -- // --- Solution of Lithostatic pressure problem finished in {time_B-time_A:.2f} sec // -- // --->')
+        print_ph(f'              // -- // --- Solution of Lithostatic pressure problem finished in {time_B-time_A:.2f} sec // -- // --->')
         print_ph('')
 
         return S 
@@ -1096,6 +1091,7 @@ class Stokes_Problem(Problem):
         else: 
             eta = compute_viscosity_FX(e,T,PL,FR,sc)
             eta_av = cell_average_DG0(D.mesh, eta)
+        
         a1 = ufl.inner(2*eta*ufl.sym(ufl.grad(u)), ufl.sym(ufl.grad(v))) * dx
         a2 = - ufl.inner(ufl.div(v), p) * dx             # build once
         a3 = - ufl.inner(q, ufl.div(u)) * dx             # build once
@@ -1161,7 +1157,7 @@ class Stokes_Problem(Problem):
         ).solve()  # ut_h \in V
         self.moving_wall.x.scatter_forward()
         
-        return self 
+        return self.moving_wall
     def solve_linear_picard(self
                             ,a
                             ,a_p0
@@ -1203,7 +1199,40 @@ class Stokes_Problem(Problem):
 
         minMaxU = min_max_array(u_solved,vel=True)
         print_ph(f'                       min vel = {minMaxU[0]:.5e}, max vel = {minMaxU[1]:.5e}, RMS = {minMaxU[2]:.5e}')
+    
+        if minMaxU[1] > 1.0: 
+            print_ph("Problem with the wedge stokes solver")
+
+            comm = MPI.COMM_WORLD
             
+            ux = u_solved.sub(0).collapse()
+            uy = u_solved.sub(1).collapse()
+            v  = np.sqrt(ux.x.array[:]**2+uy.x.array[:]**2)
+
+            # Get owned dofs only
+            n_owned =  ux.function_space.dofmap.index_map.size_local
+
+
+            # Coordinates of all dofs
+            X = ux.function_space.tabulate_dof_coordinates()
+
+            # Temperature values (owned only)
+            v_local = v[:n_owned]
+
+            # Mask where temperature < 0
+            mask = v_local > 1.0
+
+            # Select corresponding coordinates
+            x = X[:n_owned][mask] 
+
+            if x.shape[0] > 0:
+                coords_str = ", ".join(
+                    f"({xi[0]:.3f}, {xi[1]:.3f})" for xi in x
+                )
+                print(f"rank {comm.rank}: {coords_str}")
+            else:
+                print(f"rank {comm.rank}: no anomalous velocities")
+
                 
         
         
@@ -1310,6 +1339,9 @@ class Wedge(Stokes_Problem):
         tdim = mesh.topology.dim
         fdim = tdim - 1
         
+        Vx, Vx_to_V = V.sub(0).collapse()
+        Vy, Vy_to_V = V.sub(1).collapse()
+        
         if it == 0 and ts == 0:
             # facet ids
             slab_facets      = D.facets.find(D.bc_dict['slab'])
@@ -1321,31 +1353,33 @@ class Wedge(Stokes_Problem):
 
             #------------------------------------------------------------------------
             # compute the velocity field of the moving wall and cache it for the entire simulation
-            self.compute_moving_wall(D,ctrl,'slab') 
+            self.moving_wall_ref = self.compute_moving_wall(D,ctrl,'slab') 
 
             # Correct the moving wall for the decoupling if needed.
             if ctrl.decoupling == 1:
                 scaling = fem.Function(self.FSPT)
                 scaling = decoupling_function(self.FSPT.tabulate_dof_coordinates()[:,1],scaling,g_input)  
                 scaling.x.array[:] = 1.0 - scaling.x.array[:] 
+                scaling.x.scatter_forward()
                 # from :https://fenicsproject.discourse.group/t/scale-vector-function-by-scalar-function/10638
                 temp_buf = self.moving_wall.copy()
                 temp_buf.interpolate(fem.Expression(self.moving_wall*scaling
                                                     ,self.moving_wall.function_space.element.interpolation_points()))
-                self.moving_wall = temp_buf.copy()
+                temp_buf.x.scatter_forward()
+                self.moving_wall_ref.x.array[:] = self.moving_wall_ref.x.array[:] * temp_buf.x.array[:] 
+                self.moving_wall_ref.x.scatter_forward()
                 
         # update the moving wall normalised field with the actual velocity of the slab.        
-        self.moving_wall.x.array[:] = self.moving_wall.x.array[:]*ctrl.v_s[0]
+        self.moving_wall.x.array[:] = self.moving_wall_ref.x.array[:]*ctrl.v_s[0]
         self.moving_wall.x.scatter_forward()
             
-        dofs_s_x = fem.locate_dofs_topological(V.sub(0), fdim,slab_facets)
-        dofs_s_y = fem.locate_dofs_topological(V.sub(1), fdim,slab_facets)
+        dofs_wall = fem.locate_dofs_topological(V, fdim, slab_facets)
+        bc_wall = fem.dirichletbc(self.moving_wall, dofs_wall)
+    
 
-        bcx = fem.dirichletbc(self.moving_wall.sub(0), dofs_s_x)
-        bcy = fem.dirichletbc(self.moving_wall.sub(1), dofs_s_y)
-        
 
-        return [bcx, bcy, self.bc_overriding]
+
+        return [bc_wall, self.bc_overriding]
                 
    
     def Solve_the_Problem(self
@@ -1564,11 +1598,11 @@ class Slab(Stokes_Problem):
         
         if (it == 0 or ts == 0 ):
         
-            self.compute_moving_wall(D,ctrl,'top_subduction')
+            self.moving_wall_ref = self.compute_moving_wall(D,ctrl,'top_subduction')
 
         
         # Update the velocity field of the moving wall according to the current velocity of the slab.
-        self.moving_wall.x.array[:] = self.moving_wall.x.array[:] * ctrl.v_s[0] 
+        self.moving_wall.x.array[:] = self.moving_wall_ref.x.array[:] * ctrl.v_s[0] 
         self.moving_wall.x.scatter_forward()
         # locate the dofs on the slab boundary and create dirichlet bc for them.
         dofs_s_x = fem.locate_dofs_topological(self.F0.sub(0), fdim, D.facets.find(D.bc_dict['top_subduction']))

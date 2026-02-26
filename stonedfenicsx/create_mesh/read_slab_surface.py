@@ -19,112 +19,11 @@ def apply_Savitzky_Golay(yd,order,cf):
     
     return yd_smooth
 
-    
-    
-    
-    
-    
 
-
-
-def moving_average_distance(y, order, window):
-    """
-    Distance-based moving average.
-
-    Parameters
-    ----------
-    x : 1D array (must be sorted)
-    y : 1D array
-    window : float (physical window size)
-
-    Returns
-    -------
-    y_smooth : 1D array
-    """
-    y_smooth = np.zeros_like(y)
-    half_w = window / 2
-
-    for i in range(len(x)):
-        mask = np.abs(x - x[i]) <= half_w
-        y_smooth[i] = np.mean(y[mask])
-
-    return y_smooth
-
-def curve_fitting(xd:NDArray[float],yd:NDArray[float])->NDArray[float]:
+def curve_fitting(xd:NDArray[float],yd:NDArray[float],path:str , name:str)->NDArray[float]:
     """
     """
-    def quadratic(x,a,b,c):
-        return a * x**2 + b * x + c
-    
-    def cubic(x,a,b,c,d):
-        return a * x**3 + b * x**2 + c * x + d
-    
-    def quartic(x,a,b,c,d,e):
-        return a * x**4 + b * x**3 + c * x**2 + d * x + e   
-    
-    def quintic(x,a,b,c,d,e,f): 
-        return a * x**5 + b * x**4 + c * x**3 + d * x**2 + e * x + f  
-    
-    def logistic_function(x,A,L,k,a):
-        return A+ (L-A)/(1+expit(k * (x - a)))
-    
-    def spline_function(x,y): 
-        from scipy.interpolate import CubicSpline
-        cs = CubicSpline(x,y)
-        
-        x_range = np.linspace(np.min(x), np.max(x), 10000)
-        plt.plot(x_range, cs(x_range), label='Cubic Spline')
-        y_fit = cs(x_range)
-        
-        return y_fit
-    
-    def misfit(a,b):
-        
-        
-        
-        return np.sqrt(np.mean((a-b)**2))/(np.max(a)-np.min(a))
-    
-    def wrapper_function(f:callable,x_scale:float,y_scale:float , *args):
-        def f2(x): 
-            return y_scale * f(x/x_scale,*args)
-        
-        return f2 
-    
-    def perform_fitting(x:NDArray[float],y:NDArray[float],f:callable, theta_fit:bool = False):
-        
-        # Normalise x and y
-        xs = np.abs(x.copy())/np.max(np.abs(x))
-        ys = np.abs(y.copy())/np.max(np.abs(y))
-                
-        fit_curve, prm = curve_fit(f,xs,ys)
-        
-        y_ft = f(xs,*fit_curve) * np.max(np.abs(y)) * np.sign(y[-1])
-        if not theta_fit:
-            theta, ell, _, _  = compute_bending_angle_length(x,y_ft) 
-        else:
-            theta = None
-            ell = None
-        
-        return  theta, ell, fit_curve, y_ft        
-
-    def compute_misfit(a:NDArray[float],b:NDArray[float],c:NDArray[float],R0:NDArray[float],R1:NDArray[float],R2:NDArray[float])->tuple[float,float,float]:
-        
-        # compute misfit geometry
-        
-        r0 = misfit(R0,a)
-        
-        # compute misfit bending angle
-        r1 = misfit(R1,b)
-        
-        # compute misfit total length 
-        
-        r2 = misfit(R2,c)
-        
-    
-        
-        
-        return r0, r1, r2
-        
+    from .aux_create_mesh import create_slab_surface
         
     def function_bending_data(ell:NDArray[float],theta:NDArray[float])->float:
         
@@ -142,27 +41,50 @@ def curve_fitting(xd:NDArray[float],yd:NDArray[float])->NDArray[float]:
     
     theta, ell, xd,yd = compute_bending_angle_length(xd,yd)
 
-    theta_sgf = apply_Savitzky_Golay(theta,2,50)        
+    theta_sgf = apply_Savitzky_Golay(theta,2,100)        
     
     f_theta = function_bending_data(ell,theta_sgf)
 
-    slab_top,theta_mean,ell_s = create_slab_surface(f_theta,np.min(yd),stp = 10.0)
+    slab_top,theta_mean,ell_s = create_slab_surface(f_theta,np.min(yd),stp = 5.0)
     
     
     fig = plt.figure()
     ax = fig.gca()
-    ax.plot(ell,theta,c='k',alpha=0.1,label='original')
-    ax.plot(ell,theta_sgf, c='b', label = 'filtered data')
-    ax.plot(ell_s,theta_mean,c='r',label='post processed')
+    ax.plot(ell,theta*180/np.pi,c='k',alpha=0.1,label=r'$\theta$ original')
+    ax.plot(ell,theta_sgf*180/np.pi, c='b', label = r'$\theta$ filtered data')
+    ax.plot(ell_s,theta_mean*180/np.pi,c='r',label=r'$\theta$  post processed')
+    ax.set_xlabel(r'$\ell$ [km]')
+    ax.set_ylabel(r'$\vartheta$ [deg]')
+    # Set spine thickness
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.2)
+
+    # Set spine color
+    for spine in ax.spines.values():
+        spine.set_color("k")
+
+    ax.grid(visible=True,axis='both',which='both',color='k',linestyle=':',linewidth=0.5)
     plt.legend()
-    
-    
+    fig.savefig(f'{path}/{name}_bending_angle.png',dpi=600)
     
     fig = plt.figure()
     ax = fig.gca()
     ax.plot(xd,yd,c='k',alpha=0.1,label='original')
     ax.plot(slab_top[:,0],slab_top[:,1],c='r',label='post processed')
+    # Set spine thickness
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.2)
+
+    # Set spine color
+    for spine in ax.spines.values():
+        spine.set_color("k")
+
+    ax.set_xlabel(r'Distance [km]')
+    ax.set_ylabel(r'Depth [km]')
+
+    ax.grid(visible=True,axis='both',which='both',color='k',linestyle=':',linewidth=0.5)
     plt.legend()
+    fig.savefig(f'{path}/{name}_surface.png',dpi=600)
     
     
     
@@ -171,7 +93,7 @@ def curve_fitting(xd:NDArray[float],yd:NDArray[float])->NDArray[float]:
 
 
 
-    return np.array([0.0,0.0])
+    return slab_top,theta_mean
 
 
 
@@ -247,7 +169,6 @@ def compute_bending_angle_length(x:NDArray[float],z:NDArray[float])->tuple[NDArr
     ell_tail = np.zeros(imax)
     x_tail = np.zeros(imax)
     y_tail = np.zeros(imax)
-    alpha = (theta[0]-1.0)/dl
 
     theta = np.acos(theta)
     theta_0 = np.acos(theta_0)
@@ -281,6 +202,8 @@ def compute_bending_angle_length(x:NDArray[float],z:NDArray[float])->tuple[NDArr
 
 def read_file_slab(file_path:str)->tuple[NDArray[float],NDArray[float]]:
     
+    from pathlib import Path
+    
     slab= np.loadtxt(file_path)
     ax = slab[:,0]
     ay = -slab[:,1]
@@ -289,70 +212,19 @@ def read_file_slab(file_path:str)->tuple[NDArray[float],NDArray[float]]:
     ax = ax[ay<-10]
     dz = dz[ay<-10]
     ay = ay[ay<-10]
-
-    a = curve_fitting(ax,ay)
-
-
-    return ax, ay 
-
-
-
-def create_slab_surface(f:callable, y_min:float,stp=float)->tuple[NDArray[float],NDArray[float]]:
     
-    # Initialise the theta_mean and slab_top array
-    theta_mean = np.zeros([2],dtype=float)
-    ell_s = np.zeros([2],dtype=float)
-    slab_top   = np.zeros([2,2],dtype=float)
-        
-    # compute the bending angle as a function of L
-    slab_top[0,0] = 0.0
-    slab_top[0,1] = 0.0
-    dl = stp
-    lghn = 0.0 
-    lgh = 0.0
-    it = 0 
-    statement = True 
-    while statement:
-        lghn += dl
-        theta1 = f(lgh) # bending angle at the beginning of the segment
-        theta2 = f(lghn) # bending angle at the end of the segment
-        theta = theta1 # mean bending angle
-        theta_mean[it]= theta
-        theta_meani_1 = theta
-        # Find the middle of the slab
-        slab_topi_ix = slab_top[it,0]+dl*(np.cos(theta)) # middle of the slab at the end of the segment x
-        slab_topi_iz = slab_top[it,1]-dl*(np.sin(theta)) # middle of the slab at the end of the segment z
-        ell_s[it] = lgh
+    path = Path(file_path)
 
-        if it+1 > len(slab_top[:,0])-1:
-            slab_top = np.vstack([slab_top,[slab_topi_ix,slab_topi_iz]])
-            theta_mean = np.append(theta_mean,theta_meani_1)
-            ell_s = np.append(ell_s,lgh)
-        else: 
-            slab_top[it+1,0] = slab_topi_ix
-            slab_top[it+1,1] = slab_topi_iz
-            theta_mean[it] = theta
-            theta_mean[it+1] = theta
-        if y_min != -1e23: 
-            x = slab_top[it+1,1]
-            statement = x > y_min
-            if not statement:
-                dz = slab_top[it,1] - y_min
-                dx = dz / np.tan(theta)
-                slab_top[it+1,0] = slab_top[it,0] + dx
-                slab_top[it+1,1] = y_min
-        it = it+1
-        lgh = lghn
+    slab_top, theta_mean = curve_fitting(ax,ay,path.parent,path.stem)
 
-    
-    
-    
-    return slab_top,theta_mean,ell_s
+
+    return slab_top*1000, theta_mean 
+
 
 
 
 if __name__ == '__main__': 
     
-    read_file_slab('example_slab_surfaces/Mexico_slab.pz')
+    read_file_slab('example_slab_surfaces/Japan_slab.pz')
     
     

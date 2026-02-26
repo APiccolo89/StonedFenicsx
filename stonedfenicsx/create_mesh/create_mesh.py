@@ -9,6 +9,32 @@ from dolfinx.mesh       import create_submesh
 from .aux_create_mesh   import Mesh, Domain, Class_Points, Class_Line, Geom_input, dict_tag_lines, dict_surf,find_line_index,create_loop,function_create_subducting_plate_geometry
 from .aux_create_mesh import assign_phases,from_line_to_point_coordinate
 
+
+def write_partition(mesh, filename="partition.xdmf"):
+    comm = mesh.comm
+    tdim = mesh.topology.dim
+
+    # DG0 on cells
+    V0 = fem.functionspace(mesh, ("DG", 0))
+    part = fem.Function(V0, name="mpi_rank")
+
+    # Which cells are owned by this rank?
+    # cell index map: owned are [0, size_local)
+    imap = mesh.topology.index_map(tdim)
+    n_local = imap.size_local
+
+    # DG0 has one dof per cell, in the same ordering
+    # (this is true for standard DG0 on cells in dolfinx)
+    values = part.x.array
+    values[:n_local] = comm.rank
+    # ghosts (if present) can be left as-is; ParaView will still show partitioning
+    part.x.scatter_forward()
+
+    with io.XDMFFile(comm, filename, "w") as xdmf:
+        xdmf.write_mesh(mesh)
+        xdmf.write_function(part)
+
+
 #------------------------------------------------------------------------------------------------------
 def create_mesh(ioctrl:IOControls
                 ,sc:Scal
@@ -637,7 +663,8 @@ def create_subdomain(mesh:dolfinx.mesh.Mesh
                      ,facet_tag:dolfinx.mesh.MeshTags
                      ,phase_set:list
                      ,name:str
-                     ,phase:dolfinx.fem.function.Function)->Domain:
+                     ,phase:dolfinx.fem.function.Function
+                     ,ioctrl:IOControls)->Domain:
     """Create the subdomain from the global mesh, and interpolate the phases from the global mesh to the local mesh
 
     Parameters
@@ -702,6 +729,8 @@ def create_subdomain(mesh:dolfinx.mesh.Mesh
         val = np.asarray(val_total, dtype=np.int32)
         # Create the mesh tag for the given domain
         FT = meshtags(submesh, 1, fac, val)
+        
+        
         
         return FT
     #--------------------------------------------------------------
@@ -771,7 +800,10 @@ def create_subdomain(mesh:dolfinx.mesh.Mesh
     ph.interpolate(phase, cells0=entity_maps, cells1=np.arange(len(entity_maps)))
     # Create the domain sub-class
     domain = Domain(hierarchy = 'Child', mesh = submesh, cell_par = entity_maps, node_par = vertex_maps, facets = bc , phase = ph,solPh = Sol_Spaceph , bc_dict = dict_local)
-    
+
+    write_partition(submesh, filename=os.path.join(ioctrl.path_save,f'{ioctrl.sname}_{name}_partition.xdmf'))
+
+
     return domain
 #------------------------------------------------------------------------------------------------------
 def read_mesh(ioctrl:IOControls
@@ -888,12 +920,13 @@ def create_mesh_object(sc:Scal
             bc_dict=dict_tag_lines,
             )    
     # Subducting plate domain
-    domainA = create_subdomain(mesh, cell_markers, facet_markers, [1,2]  , 'Subduction',  phase)
+    domainA = create_subdomain(mesh, cell_markers, facet_markers, [1,2]  , 'Subduction',  phase,ioctrl)
     # Wedge plate domain    
-    domainB = create_subdomain(mesh, cell_markers, facet_markers, [3]    , 'Wedge',       phase)
+    domainB = create_subdomain(mesh, cell_markers, facet_markers, [3]    , 'Wedge',       phase, ioctrl)
     # Overriding plate domain 
-    domainC = create_subdomain(mesh, cell_markers, facet_markers, [4,5,6], 'Lithosphere', phase)
+    domainC = create_subdomain(mesh, cell_markers, facet_markers, [4,5,6], 'Lithosphere', phase, ioctrl)
 
+    write_partition(mesh,filename=os.path.join(ioctrl.path_save,'%s_global_partition.xdmf'%ioctrl.sname))
     # -- Fill the Mesh object
 
     MESH = Mesh(g_input = dimensionless_ginput(g_input,sc)

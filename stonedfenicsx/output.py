@@ -65,12 +65,16 @@ class OUTPUT():
                      ,ctrl             # Numerical control object
                      ,it_outer = 0     # outer iteration counter
                      ,time=0.0,        # current time
-                     ts=0):            # time step counter
+                     ts=0,
+                     debug=0):            # time step counter
         import os
         from dolfinx.io import XDMFFile
         if ctrl.steady_state == 1:
-            file_name = os.path.join(self.pt_save,'Steady_state')         
-        file_name2 = os.path.join(self.pt_save,'MeshTag')
+            file_name = os.path.join(self.pt_save,'Steady_state') 
+            if debug==1: 
+                file_name = os.path.join(self.pt_save,f'Steady_state{it_outer}') 
+
+                       
         # Velocity 
         u_T = fem.Function(self.vel_V)
         u_T.name = "Velocity  [cm/yr]"
@@ -182,6 +186,26 @@ class OUTPUT():
         
         tag.x.scatter_forward()
         
+        
+        
+        comm = D.mesh.comm
+        tdim = D.mesh.topology.dim
+
+        # DG0 on cells
+        V0 = fem.functionspace(D.mesh, ("DG", 0))
+        part = fem.Function(V0, name="mpi_rank")
+
+        # Which cells are owned by this rank?
+        # cell index map: owned are [0, size_local)
+        imap = D.mesh.topology.index_map(tdim)
+        n_local = imap.size_local
+
+        # DG0 has one dof per cell, in the same ordering
+        # (this is true for standard DG0 on cells in dolfinx)
+        values = part.x.array
+        values[:n_local] = comm.rank
+        # ghosts (if present) can be left as-is; ParaView will still show partitioning
+        part.x.scatter_forward()
 
         if ctrl.steady_state == 0:
             # transient: append to ongoing XDMF with time
@@ -201,6 +225,7 @@ class OUTPUT():
             self.xdmf_main.write_function(eta2,         time)
             self.xdmf_main.write_function(flux,         time)
             self.xdmf_main.write_function(tag,          time)
+        
         else:
             with XDMFFile(MPI.COMM_WORLD, "%s.xdmf"%file_name, "w") as ufile_xdmf:
                 print_ph('... Printing')
@@ -221,6 +246,7 @@ class OUTPUT():
                 ufile_xdmf.write_function(eta2 )
                 ufile_xdmf.write_function(flux )
                 ufile_xdmf.write_function(tag )
+                ufile_xdmf.write_function(part)
                 D.mesh.geometry.x[:] = coord
                 print_ph('... Finished')
 

@@ -141,6 +141,36 @@ def compute_residuum_outer(sol
     
     if minMaxT[1]-(Tmax * sc.Temp-273.15)>1.0: 
         print_ph('Temperature higher than the maximum temperature')
+    if minMaxT[0] < 0.0: 
+        print_ph("Problem with the thermal solver")
+
+    #    comm = MPI.COMM_WORLD
+#
+    #    # Get owned dofs only
+    #    n_owned =  sol.T_N.function_space.dofmap.index_map.size_local
+#
+#
+    #    # Coordinates of all dofs
+    #    X = sol.T_N.function_space.tabulate_dof_coordinates()
+#
+    #    # Temperature values (owned only)
+    #    T_local = sol.T_N.x.array[:n_owned] * sc.Temp - 273.15
+#
+    #    # Mask where temperature < 0
+    #    mask = T_local < 0.0
+#
+    #    # Select corresponding coordinates
+    #    x = X[:n_owned][mask] * sc.L/1e3
+#
+    #    if x.shape[0] > 0:
+    #        coords_str = ", ".join(
+    #            f"({xi[0]:.3f}, {xi[1]:.3f})" for xi in x
+    #        )
+    #        print(f"rank {comm.rank}: {coords_str}")
+    #    else:
+    #        print(f"rank {comm.rank}: no negative temperatures")
+#
+    #    comm.barrier()
     
     res_total = np.sqrt(res_u**2+res_p**2+res_T**2)
     if not np.isfinite(res_total):
@@ -225,8 +255,12 @@ def min_max_array(a:dolfinx.fem.function.Function
     
     if vel == True: 
         a1 = a.sub(0).collapse()
+        num_owned = a1.function_space.dofmap.index_map.size_local
+
         a2 = a.sub(1).collapse()
-        array = np.sqrt(a1.x.array[:]**2 + a2.x.array[:]**2)
+        num_owned2 = a2.function_space.dofmap.index_map.size_local
+
+        array = np.sqrt(a1.x.array[:num_owned]**2 + a2.x.array[:num_owned2]**2)
     else: 
         num_owned = a.function_space.dofmap.index_map.size_local
         a.x.scatter_forward()
