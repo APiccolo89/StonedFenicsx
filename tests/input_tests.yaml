@@ -16,7 +16,7 @@ Input:
     tol_innerPic: 1.0e-3
     tol_innerNew: 1.0e-5
     van_keken_case: 2
-    decoupling_ctrl: 0
+    decoupling_ctrl: 1
     model_shear: "NoShear"
     time_dependent: 0
     dt_sim: 0.015            # Myr (15000/1e6)

@@ -1361,11 +1361,9 @@ class Wedge(Stokes_Problem):
                 scaling.x.scatter_forward()
                 # from :https://fenicsproject.discourse.group/t/scale-vector-function-by-scalar-function/10638
                 temp_buf = self.moving_wall.copy()
-                temp_buf.interpolate(fem.Expression(self.moving_wall*scaling
-                                                    ,self.moving_wall.function_space.element.interpolation_points()))
-                temp_buf.x.scatter_forward()
-                self.moving_wall_ref.x.array[:] = self.moving_wall_ref.x.array[:] * temp_buf.x.array[:] 
-                self.moving_wall_ref.x.scatter_forward()
+                temp_buf.interpolate(fem.Expression(self.moving_wall_ref*scaling
+                                                    ,self.moving_wall_ref.function_space.element.interpolation_points()))
+                self.moving_wall_ref = temp_buf.copy()
                 
         # update the moving wall normalised field with the actual velocity of the slab.        
         self.moving_wall.x.array[:] = self.moving_wall_ref.x.array[:]*ctrl.v_s[0]
