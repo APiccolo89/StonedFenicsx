@@ -157,7 +157,7 @@ class SolverStokes(Solvers):
             def monitor(ksp, it, r):
                 PETSc.Sys.Print(f"{         it: {monitor_n_digits}d}: {r:.3e}")
 
-            self.ksp.setMonitor(monitor)
+            #self.ksp.setMonitor(monitor)
 
             # The matrix A combined the vector velocity and scalar pressure
             # parts, hence has a block size of 1. Unlike the MatNest case, GAMG
@@ -178,8 +178,8 @@ class SolverStokes(Solvers):
         self.b = assemble_vector_block(L, a, bcs=bcs); self.b.assemble()
         
         
-        #self.b.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES,
-        #           mode=PETSc.ScatterMode.REVERSE)
+        self.b.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES,
+                   mode=PETSc.ScatterMode.FORWARD)
         
         self.null_vec = self.A.createVecLeft()
         self.nloc_u = F0.dofmap.index_map.size_local * F0.dofmap.index_map_bs
@@ -224,7 +224,7 @@ class SolverStokes(Solvers):
             self.b, L, a,bcs=bcs)
                 
         #self.b.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES,
-#                   mode=PETSc.ScatterMode.REVERSE)
+        #           mode=PETSc.ScatterMode.FORWARD)
     
         #olfinx.fem.petsc.set_bc(self.b,bcs)
         # -------------------------
@@ -234,7 +234,7 @@ class SolverStokes(Solvers):
             # Nullspace (e.g., pressure) — set once if possible, but safe here too
             if getattr(self, "nsp", None) is not None:
                 self.A.setNullSpace(self.nsp)
-                self.nsp.remove(self.b)
+                #self.nsp.remove(self.b)
 
             self.ksp.setOperators(self.A, self.P)
 

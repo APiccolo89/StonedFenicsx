@@ -25,6 +25,9 @@ def decoupling_function(z,fun,g_input):
     
 
     fun.x.array[:] = 1-0.5 * ((1)+(1)*np.tanh((z2-dc)/(trans/4)))
+    # Parallel operation 
+    fun.x.scatter_forward()
+    
     
     
     return fun
@@ -117,15 +120,13 @@ def compute_residuum_outer(sol
                            ,ts
                            ,ctrl):
     # Prepare the variables 
-
-    
-    
     
     res_u = compute_residuum(sol.u_global,u)
     res_p = compute_residuum(sol.p_global,p)
     res_T = compute_residuum(sol.T_N,T)
     res_PL= compute_residuum(sol.PL,PL)
     
+    # Compute the ranges
     minMaxU = min_max_array(sol.u_global, vel=True)
     minMaxP = min_max_array(sol.p_global)
     minMaxT = min_max_array(sol.T_N)
@@ -144,35 +145,8 @@ def compute_residuum_outer(sol
     if minMaxT[0] < 0.0: 
         print_ph("Problem with the thermal solver")
 
-    #    comm = MPI.COMM_WORLD
-#
-    #    # Get owned dofs only
-    #    n_owned =  sol.T_N.function_space.dofmap.index_map.size_local
-#
-#
-    #    # Coordinates of all dofs
-    #    X = sol.T_N.function_space.tabulate_dof_coordinates()
-#
-    #    # Temperature values (owned only)
-    #    T_local = sol.T_N.x.array[:n_owned] * sc.Temp - 273.15
-#
-    #    # Mask where temperature < 0
-    #    mask = T_local < 0.0
-#
-    #    # Select corresponding coordinates
-    #    x = X[:n_owned][mask] * sc.L/1e3
-#
-    #    if x.shape[0] > 0:
-    #        coords_str = ", ".join(
-    #            f"({xi[0]:.3f}, {xi[1]:.3f})" for xi in x
-    #        )
-    #        print(f"rank {comm.rank}: {coords_str}")
-    #    else:
-    #        print(f"rank {comm.rank}: no negative temperatures")
-#
-    #    comm.barrier()
     
-    res_total = np.sqrt(res_u**2+res_p**2+res_T**2)
+    res_total = np.sqrt(res_u**2 + res_T**2)
     if not np.isfinite(res_total):
         raise ValueError("res_total is NaN/Inf; check inputs and residual computations.")
     
@@ -184,7 +158,8 @@ def compute_residuum_outer(sol
     print_ph(f'    []Res Temperature    =  {res_T:.3e} [n.d.], max = {minMaxT[1]:.6f}, min = {minMaxT[0]:.6f} [C], RMS = {minMaxT[2]:.6f} [n.d.] ')
     print_ph(f'    []Res pressure       =  {res_p:.3e} [n.d.], max = {minMaxP[1]:.3e}, min = {minMaxP[0]:.3e} [GPa]')
     print_ph(f'    []Res lithostatic    =  {res_PL:.3e}[n.d.], max = {minMaxPL[1]:.3e}, min = {minMaxPL[0]:.3e} [GPa]')
-    print_ph(f'    []Res total (sqrt(rp^2+rT^2+rPL^2+rv^2)) =  {res_total:.3e} [n.d.] ')
+    print_ph(f'    []Res total (sqrt(rT^2+rv^2)) =  {res_total:.3e} [n.d.] ')
+    print_ph('          [for avoiding parallel problems, pressure is removed from the residual]')
     print_ph('. =============================================// -- // --->')
     print_ph('')
 
@@ -201,20 +176,6 @@ def compute_residuum_outer(sol
     sol.outer_iteration = np.append(sol.outer_iteration,res_total)
     sol.ts = np.append(sol.ts,ts)
     
-    # update temperature solution for preventing viscosity blow-up 
-    
-    if it_outer > 0 and ctrl.steady_state: # under-relax the solution
-        """
-        potential remove.   
-        """
-        
-        
-        omega = 1 - ctrl.relax/2
-        
-        sol.T_N.x.array[:] = omega * sol.T_N.x.array[:] + (1-omega) * T.x.array[:]
-        sol.T_N.x.scatter_forward()
-        
-        
     
     return res_total, sol 
 

@@ -121,7 +121,10 @@ def outerloop_operation(M:Mesh,
     if debug == 1: 
         out_deb = OUTPUT(M.domainG,ioctrl,ctrl,sc)
     
- 
+    if LG.typology == 'LinearProblem' and EG.typology == 'LinearProblem' and We.typology == 'LinearProblem':
+        ctrl.it_max = 1
+    
+    
     while it_outer < ctrl.it_max and res > ctrl.tol: 
         
         print_ph(f'   // -- // --- Outer iteration {it_outer:d} for the coupled problem // -- // --- > ')

@@ -1339,8 +1339,6 @@ class Wedge(Stokes_Problem):
         tdim = mesh.topology.dim
         fdim = tdim - 1
         
-        Vx, Vx_to_V = V.sub(0).collapse()
-        Vy, Vy_to_V = V.sub(1).collapse()
         
         if it == 0 and ts == 0:
             # facet ids
@@ -1352,10 +1350,10 @@ class Wedge(Stokes_Problem):
             self.bc_overriding = fem.dirichletbc(noslip, dofs_over, V)
 
             #------------------------------------------------------------------------
-            # compute the velocity field of the moving wall and cache it for the entire simulation
+            # compute the unit-vector components of the moving wall
             self.moving_wall_ref = self.compute_moving_wall(D,ctrl,'slab') 
 
-            # Correct the moving wall for the decoupling if needed.
+            # scale the vector with the decoupling
             if ctrl.decoupling == 1:
                 scaling = fem.Function(self.FSPT)
                 scaling = decoupling_function(self.FSPT.tabulate_dof_coordinates()[:,1],scaling,g_input)  
@@ -1372,14 +1370,14 @@ class Wedge(Stokes_Problem):
         # update the moving wall normalised field with the actual velocity of the slab.        
         self.moving_wall.x.array[:] = self.moving_wall_ref.x.array[:]*ctrl.v_s[0]
         self.moving_wall.x.scatter_forward()
-            
-        dofs_wall = fem.locate_dofs_topological(V, fdim, slab_facets)
-        bc_wall = fem.dirichletbc(self.moving_wall, dofs_wall)
-    
+        # Set the the boundary condition    
+        dofs_s_x = fem.locate_dofs_topological(self.F0.sub(0), fdim, D.facets.find(D.bc_dict['slab']))
+        dofs_s_y = fem.locate_dofs_topological(self.F0.sub(1), fdim, D.facets.find(D.bc_dict['slab']))
+        # create the dirichlet bc for the slab boundary using the computed velocity field of the moving wall.
+        bcx = fem.dirichletbc(self.moving_wall.sub(0), dofs_s_x)
+        bcy = fem.dirichletbc(self.moving_wall.sub(1), dofs_s_y)
 
-
-
-        return [bc_wall, self.bc_overriding]
+        return [bcx,bcy, self.bc_overriding]
                 
    
     def Solve_the_Problem(self

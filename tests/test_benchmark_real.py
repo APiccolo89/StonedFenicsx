@@ -149,7 +149,7 @@ def perform_test(option_viscous, name = 'Tonga'):
     Ph.virtual_weak_zone.name_dislocation = 'Hirth_Wet_Olivine_disl' 
 
 
-    inp.sname = f'T_{name}_viscous{option_viscous}'
+    inp.sname = f'T_{name}_viscous{option_viscous}_{inp.stokes_solver_type}_{MPI.COMM_WORLD.Get_size():d}'
 
     # Initialise the input
     inp.van_keken = van_keken
