@@ -73,21 +73,21 @@ def perform_test(option_viscous, name = 'Tonga'):
     inp.Tmax = 1300.0  # mantle potential temperature
     # inp.model_shear = 'SelfConsistent'
     inp.steady_state = 1
-    inp.slab_type = 'Costum'
+    inp.slab_type = 'File'
     inp.sub_path = f'/Users/wlnw570/Work/Leeds/Fenics_tutorial/example_slab_surfaces/{name}_slab.pz'
     print_ph('Starting the benchmark tests with different options')
 
-    alpha_nameC = 'Constant'
-    alpha_nameM = 'Constant'
-    density_nameC = 'Constant'
-    density_nameM = 'Constant'
-    capacity_nameM = 'Constant'
-    capacity_nameC = 'Constant'
-    conductivity_nameM = 'Constant'
-    conductivity_nameC = 'Constant'
+    alpha_nameC = 'Mantle'
+    alpha_nameM = 'Mantle'
+    density_nameC = 'PT'
+    density_nameM = 'PT'
+    capacity_nameM = 'Bermann_Aranovich_Fo_Fa_0_1'
+    capacity_nameC = 'Bermann_Aranovich_Fo_Fa_0_1'
+    conductivity_nameM = 'Mantle'
+    conductivity_nameC = 'Mantle'
     rho0_M = 3300.0
     rho0_C = 3300.0
-    radio_flag = 0 
+    radio_flag = 1 
 
     if option_viscous == 0:
         name_diffusion = 'Constant'
@@ -119,7 +119,7 @@ def perform_test(option_viscous, name = 'Tonga'):
     Ph.wedge_mantle.name_dislocation = name_dislocation
     Ph.wedge_mantle.rho0 = rho0_M
     Ph.wedge_mantle.name_capacity = capacity_nameM 
-    Ph.wedge_mantle.name_conductivity = capacity_nameM
+    Ph.wedge_mantle.name_conductivity = conductivity_nameM
     Ph.wedge_mantle.name_alpha = alpha_nameM
     Ph.wedge_mantle.name_density = density_nameM
     Ph.wedge_mantle.radio_flag = radio_flag
@@ -301,10 +301,6 @@ def test_composite(name='Tonga'):
 if __name__ == '__main__': 
     
     DEBUG = True
-    
-    test_isoviscous()
 
-    test_diffusion()
-
-    #test_composite()
+    test_composite()
 #---------------------------------------------------------------------------------
