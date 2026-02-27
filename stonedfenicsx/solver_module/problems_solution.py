@@ -448,55 +448,56 @@ class Global_thermal(Problem):
         source = fem.Function(self.FS)
         source = compute_radiogenic(FG, source)
         self.energy_source = source.copy()
-
-    #------------------------------------------------------------------
-    def compute_adiabatic_heating(self,D,FG,u,T,p,ctrl):
-        from .compute_material_property import alpha_FX
-        
-        if ctrl.adiabatic_heating != 0: 
-            
-        
-            alpha = alpha_FX(FG,T,p)
-            adiabatic_heating = alpha * T * ufl.inner(ufl.grad(p), u) 
-        else: 
-            adiabatic_heating = (0.0)
-        
-        
-        self.adiabatic_heating = adiabatic_heating
+        self.energy_source.x.scatter_forward()
         
 
     #------------------------------------------------------------------
-    def compute_residual_SS(self,p_k,T,u_global,D,FG, ctrl):
-        # Function that set linear form and linear picard for picard iteration
+    def compute_residual_SS(self
+                            ,p :dolfinx.fem.function.Function = None
+                            ,T :dolfinx.fem.function.Function = None
+                            ,T_O :dolfinx.fem.function.Function = None
+                            ,u_global :dolfinx.fem.function.Function = None
+                            ,D :Domain = None
+                            ,FG: Functions_material_properties_global = None 
+                            ,ctrl: NumericalControls = None)->float:
         
-        rho_k = density_FX(FG, T, p_k)  # frozen
+        rho_k = density_FX(FG, T, p)  # frozen
         
         Cp_k = heat_capacity_FX(FG, T)  # frozen
 
-        k_k = heat_conductivity_FX(FG, T, p_k, Cp_k, rho_k)  # frozen
-
-        self.compute_adiabatic_heating(D,FG,u_global,T,p_k,ctrl)
+        k_k = heat_conductivity_FX(FG, T, p, Cp_k, rho_k)  # frozen
 
         f    = self.energy_source# source term
         
         dx  = self.dx
-        # Linear operator with frozen coefficients
             
         diff = ufl.inner(k_k * ufl.grad(T), ufl.grad(self.test0)) * dx
         
         adv  = rho_k * Cp_k *ufl.dot(u_global, ufl.grad(T)) * self.test0 * dx
             
-        L = fem.form((f + self.adiabatic_heating) * self.test0 * dx + self.shear_heating )      
+        L = ((f) * self.test0 * dx + self.shear_heating )      
         
         R = fem.form(diff + adv - L)
-                
+           
+           
+        RT = fem.petsc.assemble_vector(fem.form(R))
+        RT.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+        if getattr(self, "bc", None):
+            with RT.localForm() as lf:
+                r = lf.getArray(readonly=False)
+                for bc in self.bc:
+                    dofs = bc.dof_indices()[0]   # local dof indices
+                    r[dofs] = 0.0
 
-        return R
+        RTemp = RT.norm(PETSc.NormType.NORM_2)    
+        
+        
+        return RTemp
     
     
     def set_linear_picard_SS(self,
-                             p_k:dolfinx.fem.Function=None,
-                             T:dolfinx.fem.Function = None,
+                             p:dolfinx.fem.Function=None,
+                             T_k:dolfinx.fem.Function = None,
                              T_O:dolfinx.fem.Function=None,
                              u_global:dolfinx.fem.Function=None,
                              D:Domain =None,
@@ -504,32 +505,53 @@ class Global_thermal(Problem):
                              ctrl:NumericalControls=None,
                              dt:float = None,
                              it:int=0)->tuple[dolfinx.fem.Form,dolfinx.fem.Form]:
+        """Set up fem form for Steady state solution. 
+        Compute the coefficient from the current iteration temperature, form the bilinear form. 
+        if iteration > 0 not form the Linear one. 
+
+        Args:
+            p (dolfinx.fem.Function, optional): Lithostatic pressure function . Defaults to None.
+            T_k (dolfinx.fem.Function, optional): Current iteration/guess temperature. Defaults to None.
+            T_O (dolfinx.fem.Function, optional): Old temperature. Defaults to None.
+            u_global (dolfinx.fem.Function, optional): Global velocity. Defaults to None.
+            D (Domain, optional): Domain . Defaults to None.
+            FG (Functions_material_properties_global, optional):Cached material properties. Defaults to None.
+            ctrl (NumericalControls, optional): Numerical controls. Defaults to None.
+            dt (float, optional): dt . Defaults to None.
+            it (int, optional): outer iteration. Defaults to 0.
+
+        Returns:
+            tuple[dolfinx.fem.Form,dolfinx.fem.Form]: _description_
+        """
+        
+        
+        
+        
         # Function that set linear form and linear picard for picard iteration
         
-        rho_k = density_FX(FG, T, p_k)  # frozen
+        rho_k = density_FX(FG, T_k, p)  # frozen
         
-        Cp_k = heat_capacity_FX(FG, T)  # frozen
+        Cp_k = heat_capacity_FX(FG, T_k)  # frozen
 
-        k_k = heat_conductivity_FX(FG, T, p_k, Cp_k, rho_k)  # frozen
+        k_k = heat_conductivity_FX(FG, T_k, p, Cp_k, rho_k)  # frozen
 
 
         f    = self.energy_source# source term
         
-        dx  = self.dx
+        dx  = self.dx            
+        
+        diff = ufl.inner(k_k * ufl.grad(self.trial0), ufl.grad(self.test0)) * dx
+            
+        adv  = rho_k * Cp_k *ufl.dot(u_global, ufl.grad(self.trial0)) * self.test0 * dx
+            
+        a = fem.form(diff + adv)
+        
+        
         # Linear operator with frozen coefficients
         if it == 0: 
-            
-            diff = ufl.inner(k_k * ufl.grad(self.trial0), ufl.grad(self.test0)) * dx
-            
-            adv  = rho_k * Cp_k *ufl.dot(u_global, ufl.grad(self.trial0)) * self.test0 * dx
-            
-            a = fem.form(diff + adv)
-            
             L = fem.form((f) * self.test0 * dx + self.shear_heating )      
-        
         else: 
-        
-            a = fem.Form(None)
+            L = fem.Form(None)
                 
 
         return a, L
@@ -607,43 +629,53 @@ class Global_thermal(Problem):
         # choose the problem: 
         if ctrl.steady_state == 1: 
             self.set_linear = self.set_linear_picard_SS 
+            self.compute_residual = self.compute_residual_SS
         else: 
             self.set_linear = self.set_linear_picard_TD
-            dt = ctrl.dt
         
-        
-        p_k = S.PL.copy()  # Previous lithostatic pressure 
-        T   = S.T_N.copy() # -> will not eventually update 
         
             
         if it == 0:         
             self.shear_heating = self.compute_shear_heating(ctrl,FG, S,getattr(M,'domainG'),geom,sc)
             self.compute_energy_source(getattr(M,'domainG'),FG)
         
-        a,L = self.set_linear(p_k
-                              ,T
-                              ,S.T_O
-                              ,S.u_global
-                              ,getattr(M,'domainG')
-                              ,FG
-                              ,ctrl
-                              ,dt)
+        a,L = self.set_linear(p=S.PL
+                              ,T_k=S.T_N
+                              ,T_O=S.T_O
+                              ,u_global=S.u_global
+                              ,D=getattr(M,'domainG')
+                              ,FG=FG
+                              ,ctrl=ctrl
+                              ,dt=ctrl.dt)
         
         self.bc = self.create_bc_temp(getattr(M,'domainG'),ctrl,geom,lhs,S.u_global,S.T_i,it)
 
         if it == 0 & ts == 0: 
-            self.solv = ScalarSolver(a,L,M.comm,nl)
+            self.solv = ScalarSolver(a,L,self.bc,M.comm)
+            
         
         print_ph('              // -- // --- Temperature problem [GLOBAL] // -- // --->')
         
         time_A = timing.time()
 
-        if nl == 0: 
-            S.T_N = self.solve_the_linear(S,a,L,S.T_N) 
+        if self.typology == 'LinearProblem': 
+            S.T_N = self.solve_the_linear(S
+                                          ,a
+                                          ,L
+                                          ,S.T_N) 
             S.T_N.x.scatter_forward()
+            
+            self.compute_residual(p = S.PL
+                                  ,T_k = S.T_N
+                                  ,T_O = S.T_O
+                                  ,u_global = S.u_global
+                                  ,D = getattr(M,'domainG')
+                                  ,FG = FG
+                                  ,ctrl = ctrl)
 
         else: 
-            S = self.solve_the_non_linear(M,S,ctrl,pdb)
+            
+            S = self.solve_the_non_linear(M,S,ctrl,FG)
         
         time_B = timing.time()
         
@@ -657,12 +689,15 @@ class Global_thermal(Problem):
     
     def solve_the_linear(self,S,a,L,fen_function,isPicard=0,it=0,ts=0):
         
-
+        # Update the matrix
         self.solv.A.zeroEntries()
         fem.petsc.assemble_matrix(self.solv.A,fem.form(a),self.bc)
+        # Assemble
         self.solv.A.assemble()
-        # b -> can change as it is the part that depends on the pressure in case of nonlinearities
-        self.solv.b.set(0.0)
+        # Update b solve [IMPORTANT BEFORE I WAS NOT DOING AS PARALLEL] 
+        with self.solv.b.localForm() as loc:
+            loc.set(0.0)              
+        
         fem.petsc.assemble_vector(self.solv.b, fem.form(L))
         fem.petsc.apply_lifting(self.solv.b, [fem.form(a)], [self.bc])
         
@@ -673,86 +708,82 @@ class Global_thermal(Problem):
         self.solv.ksp.solve(self.solv.b, fen_function.x.petsc_vec)
         fem.petsc.set_bc(fen_function.x.petsc_vec,bcs=self.bc)
         
+ 
+        fen_function.x.scatter_forward()
         
-        if isPicard == 0: # if it is a picard iteration the function gives the function 
-            fen_function.x.scatter_forward()
-
-            return fen_function 
-        else:
-            fen_function.x.scatter_forward()
-            return fen_function
+        return fen_function
 
 
     def solve_the_non_linear(self
                             ,M
                             ,S
-                            ,Hs
                             ,ctrl
                             ,FGT
                             ,it=0):  
         
-        isPicard = 1 # Flag for the linear solver. 
         tol = 1.0 
         T_O = S.T_O
         T_k = S.T_N.copy() 
         T_k1 = S.T_N.copy()
-        du   = S.PL.copy()
-        du2  = S.PL.copy()
+
         it_inner = 0 
         time_A = timing.time()
         print_ph('              [//] Picard iterations for the non linear temperature problem')
-        omega = ctrl.relax
-        while it_inner < max_it and tol > ctrl.tol:
+        while it_inner < ctrl.it_max and tol > ctrl.tol:
             time_ita = timing.time()
             
             if it_inner == 0: 
-                A,L = self.set_linear_picard(S.PL
-                                            ,T_k
-                                            ,S.u_global
-                                            ,Hs,getattr(M,'domainG')
-                                            ,pdb
-                                            ,ctrl)
+                A,L = self.set_linear(p=S.PL
+                                    ,T_k=T_k
+                                    ,T_O=S.T_O
+                                    ,u_global=S.u_global
+                                    ,D=getattr(M,'domainG')
+                                    ,FG=FGT
+                                    ,ctrl=ctrl
+                                    ,dt=ctrl.dt)
+                          
             else: 
                 if ctrl.steady_state==1: 
-                    _,L = self.set_linear_picard(S.PL
-                                                ,T_k
-                                                ,S.u_global
-                                                ,Hs,getattr(M,'domainG')
-                                                ,pdb
-                                                ,ctrl
-                                                ,it=it_inner)
+                    A,_ = self.set_linear(p=S.PL
+                                    ,T_k=T_k
+                                    ,T_O=S.T_O
+                                    ,u_global=S.u_global
+                                    ,D=getattr(M,'domainG')
+                                    ,FG=FGT
+                                    ,ctrl=ctrl
+                                    ,dt=ctrl.dt
+                                    ,it = it_inner)
                 else: 
-                    A,_ = self.set_linear_picard(S.PL
-                             ,T_k
-                             ,S.u_global
-                             ,Hs,getattr(M,'domainG')
-                             ,pdb
-                             ,ctrl
-                             ,it_inner)
+                    A,_ = self.set_linear(p=S.PL
+                                    ,T_k=T_k
+                                    ,T_O=S.T_O
+                                    ,u_global=S.u_global
+                                    ,D=getattr(M,'domainG')
+                                    ,FG=FGT
+                                    ,ctrl=ctrl
+                                    ,dt=ctrl.dt
+                                    ,it = it_inner)
                     
-            T_k1 = self.solve_the_linear(S,A,L,T_k1,1,it,1)
+            T_k1 = self.solve_the_linear(S,A,L,T_k1,1,it)
             T_k1.x.scatter_forward()
             # L2 norm 
             tol = compute_residuum(T_k1,T_k)
-
+            
+            rT = self.compute_residual(S.PL,T_k1,T_O,S.u_global,M.domainG,FGT,ctrl)
+            
+            if it_inner == 0: 
+                rT0 = rT 
+            
             
             time_itb = timing.time()
             print_ph(f'              []Temperature L_2 norm is {tol:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
-            
-            x  = T_k.x.petsc_vec
-            x1 = T_k1.x.petsc_vec
+            print_ph(f'                          [\\] Residual L2 norm is {rT:.3e}, L2_rel is {rT/rT0:.3e}')
 
-            # x = (1-omega)*x + omega*x1
-            x.scale(1.0 - omega)
-            x.axpy(omega, x1)
+            T_k = update_solution(T_k1,T_k,ctrl.relax)
 
-            T_k.x.scatter_forward()
-            #update solution
-            #T_k.x.array[:] = T_k1.x.array[:]*0.7 + T_k.x.array[:]*(1-0.7)
-            #T_k.x.scatter_forward()
             it_inner = it_inner + 1 
         S.T_N.x.array[:] = T_k1.x.array[:]
-        S.T_N.scatter_forward()
+        S.T_N.x.scatter_forward()
         print_ph(f'')
         
         return S  
@@ -831,19 +862,6 @@ class Global_pressure(Problem):
         
         return bc  
     
-    def set_newton(self,p,D,T,g,pdb):
-        test   = self.test0                 # v
-        trial0 = self.trial0                # δp (TrialFunction) for Jacobian
-
-        a_lin = ufl.inner(ufl.grad(p), ufl.grad(test)) * self.dx
-        L     = ufl.inner(ufl.grad(test),
-                              density_FX(pdb, T, p) * g) * self.dx
-        # Nonlinear residual: F(p; v) = ∫ ∇p·∇v dx - ∫ ∇v·(ρ(T, p) g) dx
-        F = a_lin - L
-        # Jacobian dF/dp in direction δp (trial0)
-        J = ufl.derivative(F, p, trial0)
-        
-        return F,J 
     
     
     def set_linear_picard(self,p_k,T,D,FG,g, it=0):
@@ -864,7 +882,6 @@ class Global_pressure(Problem):
 
     def Solve_the_Problem(self,S,ctrl,pdb,M,g,it_outer=0,ts=0): 
         
-        nl = 0 
         p_k = S.PL.copy()  # Previous lithostatic pressure 
         T   = S.T_N.copy() # -> will not eventually update 
         
@@ -876,24 +893,20 @@ class Global_pressure(Problem):
         
         a,L = self.set_linear_picard(p_k,T,getattr(M,'domainG'),pdb,g)
         
-        if self.typology == 'NonlinearProblem':
-            F,J = self.set_newton(p_k,getattr(M,'domainG'),T,g,pdb)
-            nl = 1 
-        else: 
-            F = None;J=None 
+
 
         if it_outer == 0 & ts == 0: 
-            self.solv = ScalarSolver(a,L,M.comm,nl,J,F)
+            self.solv = ScalarSolver(a,L,self.bc,M.comm)
         
         print_ph('              // -- // --- LITHOSTATIC PROBLEM [GLOBAL] // -- // --- > ')
 
         time_A = timing.time()
 
         
-        if nl == 0: 
-            S = self.solve_the_linear(S,a,L,S.PL) 
+        if self.typology=='LinearProblem': 
+            S.PL = self.solve_the_linear(S,a,L,S.PL) 
         else: 
-            S = self.solve_the_non_linear(M,S,ctrl,pdb,g)
+            S.PL = self.solve_the_non_linear(M,S,ctrl,pdb,g)
 
         time_B = timing.time()
 
@@ -909,36 +922,29 @@ class Global_pressure(Problem):
             fem.petsc.assemble_matrix(self.solv.A,fem.form(a),self.bc[0])
             self.solv.A.assemble()
         # b -> can change as it is the part that depends on the pressure in case of nonlinearities
-        self.solv.b.set(0.0)
+        with self.solv.b.localForm() as loc:
+            loc.set(0.0)        
         fem.petsc.assemble_vector(self.solv.b, fem.form(L))
         fem.petsc.apply_lifting(self.solv.b, [fem.form(a)], self.bc)
-        self.solv.b.ghostUpdate()
+        self.solv.b.ghostUpdate(addv=PETSc.InsertMode.ADD,
+                        mode=PETSc.ScatterMode.REVERSE)        
         fem.petsc.set_bc(self.solv.b, self.bc[0])
         self.solv.ksp.solve(self.solv.b, function_fen.x.petsc_vec)
         function_fen.x.scatter_forward()
         
-        
-        if isPicard == 0: # if it is a picard iteration the function gives the function 
-            S.PL = function_fen 
-            return S
-        else:
-            return function_fen
+        return function_fen
     
     def solve_the_non_linear(self,M,S,ctrl,FG,g):  
-        
-        tol = 1e-3  # Tolerance Picard  
-        tol = 1.0 
+  
         p_k = S.PL.copy() 
         p_k1 = S.PL.copy()
-        du   = S.PL.copy()
-        du2  = S.PL.copy()
+
         it_inner = 0 
         
         
         print_ph('              [//] Picard iterations for the non linear lithostatic pressure problem')
 
-        omega = ctrl.relax
-        
+        tol = 1.0
         while it_inner < ctrl.it_max and tol > ctrl.tol_innerPic:
             time_ita = timing.time()
             
@@ -956,7 +962,7 @@ class Global_pressure(Problem):
             print_ph(f'              []L_2 norm is {tol:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
             
             #update solution
-            p_k.x.array[:] = p_k1.x.array[:]*omega + p_k.x.array[:]*(1-omega)
+            p_k = update_solution(p_k1,p_k,ctrl.relax)
             p_k.x.scatter_forward()
             
             it_inner = it_inner + 1 
@@ -966,10 +972,11 @@ class Global_pressure(Problem):
         # --- Newton =>         
         
         S.PL.x.array[:] = p_k.x.array[:]
+        S.PL.x.scatter_forward()
       
         
         
-        return S  
+        return S.PL
 
 #-------------------------------------------------------------------
 #-------------------------------------------------------------------
@@ -1033,17 +1040,14 @@ class Stokes_Problem(Problem):
                     dofs = bc.dof_indices()[0]   # local dof indices
                     r[dofs] = 0.0
 
-        rmom = Rm.norm()
+        rmom = Rm.norm(PETSc.NormType.NORM_2) 
 
-        # divergence residual: I'd rely on divuL2 instead
-        divuL2 = (fem.assemble_scalar(fem.form(ufl.inner(ufl.div(u_new), ufl.div(u_new))*dx)))**0.5
 
-        # optional: keep your Q-vector residual if you really want it
         Rd = fem.petsc.assemble_vector(fem.form(Fdiv))
         Rd.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
-        rdiv = Rd.norm()
+        rdiv = Rd.norm(PETSc.NormType.NORM_2) 
 
-        return rmom, rdiv, divuL2
+        return rmom, rdiv
 
 
     def set_linear_picard(self
@@ -1166,10 +1170,11 @@ class Stokes_Problem(Problem):
                             ,u
                             ,p
                             ,it=0
-                            ,ts=0):
+                            ,ts=0
+                            ,slab = 0):
             
         if it == 0 and ts == 0: 
-            self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,ctrl ,J = None, r = None,it = it, ts = ts)
+            self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,ctrl ,J = None, r = None,it = it, ts = ts, slab=slab)
         else: 
             self.solv.update_block_operator(a,a_p0,self.bc,L,self.F0,self.F1)
         
@@ -1182,14 +1187,7 @@ class Stokes_Problem(Problem):
         p_solved.x.array[: (len(x.array_r) - self.solv.offset)] = x.array[self.solv.offset:]
         u_solved.x.scatter_forward()
         p_solved.x.scatter_forward()
-        
-        self.r = self.solv.b.duplicate()
-        self.solv.A.mult(x, self.r)          # r = A x
-        self.r.scale(-1.0)         # r = -A x
-        self.r.axpy(1.0, self.solv.b)        # r = b - A x
-        self.r.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
-
-        abs_res = self.r.norm()
+    
         
         if ctrl.stokes_solver_type == 0: 
             reason = self.solv.ksp.getConvergedReason()
@@ -1199,45 +1197,8 @@ class Stokes_Problem(Problem):
 
         minMaxU = min_max_array(u_solved,vel=True)
         print_ph(f'                       min vel = {minMaxU[0]:.5e}, max vel = {minMaxU[1]:.5e}, RMS = {minMaxU[2]:.5e}')
-    
-        if minMaxU[1] > 1.0: 
-            print_ph("Problem with the wedge stokes solver")
-
-            comm = MPI.COMM_WORLD
-            
-            ux = u_solved.sub(0).collapse()
-            uy = u_solved.sub(1).collapse()
-            v  = np.sqrt(ux.x.array[:]**2+uy.x.array[:]**2)
-
-            # Get owned dofs only
-            n_owned =  ux.function_space.dofmap.index_map.size_local
-
-
-            # Coordinates of all dofs
-            X = ux.function_space.tabulate_dof_coordinates()
-
-            # Temperature values (owned only)
-            v_local = v[:n_owned]
-
-            # Mask where temperature < 0
-            mask = v_local > 1.0
-
-            # Select corresponding coordinates
-            x = X[:n_owned][mask] 
-
-            if x.shape[0] > 0:
-                coords_str = ", ".join(
-                    f"({xi[0]:.3f}, {xi[1]:.3f})" for xi in x
-                )
-                print(f"rank {comm.rank}: {coords_str}")
-            else:
-                print(f"rank {comm.rank}: no anomalous velocities")
-
                 
-        
-        
-        
-        return u_solved,p_solved,abs_res 
+        return u_solved,p_solved 
 
 
 #-------------------------------------------------------------------
@@ -1447,6 +1408,7 @@ class Wedge(Stokes_Problem):
             print_ph('              [//] Picard iterations for the non linear lithostatic pressure problem')
 
             u_k = S.u_wedge.copy()
+            ak = S.u_wedge.copy()
             u_k1 = S.u_wedge.copy()
             u_k1.x.array[:]=0.0
             p_k = S.p_wedge.copy()
@@ -1470,7 +1432,7 @@ class Wedge(Stokes_Problem):
                     
                     a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)
                 
-                u_k1, p_k1 ,r_al = self.solve_linear_picard(fem.form(a)
+                u_k1, p_k1  = self.solve_linear_picard(fem.form(a)
                                                             ,fem.form(a_p0)
                                                             ,fem.form(L)
                                                             ,ctrl,
@@ -1483,7 +1445,7 @@ class Wedge(Stokes_Problem):
 
                 tol_p = compute_residuum(p_k1,p_k)
                 
-                rmom, rdiv, divuL2 = self.compute_residuum_stokes(u_k1
+                rmom, rdiv = self.compute_residuum_stokes(u_k1
                                                                   ,p_k1
                                                                   ,D
                                                                   ,S.t_owedge
@@ -1494,14 +1456,15 @@ class Wedge(Stokes_Problem):
                 if it_inner == 0:
                     rmom_0 = rmom
                     rdiv_0 = rdiv
-                    r_al0 = r_al
-                    divuL20 = divuL2 
+
                 
                                 
                 res   = np.sqrt(tol_u**2+tol_p**2)
+                                
+                u_k = update_solution(u_k1,u_k1,ctrl.relax)
+                p_k =  update_solution(p_k1,p_k1,ctrl.relax)
                 
-                u_k.x.array[:] = ctrl.relax * u_k1.x.array[:] + (1-ctrl.relax) * u_k.x.array[:]
-                p_k.x.array[:] = ctrl.relax * p_k1.x.array[:] + (1-ctrl.relax) * p_k.x.array[:]
+                
                 u_k.x.scatter_forward()
                 p_k.x.scatter_forward()
                 
@@ -1509,16 +1472,12 @@ class Wedge(Stokes_Problem):
 
                 print_ph(f'              []Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
                 print_ph(f'                         [x] |F^mom|/|F^mom_0| {rmom/rmom_0:.3e}, |F^div|/|F^div_0| {rdiv/rdiv_0:.3e}')
-                print_ph(f'                         [-]                                       |divLu2|/|divLu20| {divuL2/divuL20:0.3e}')
                 print_ph(f'                         [x] |F^mom|           {rmom:.3e},         |F^div| {rdiv:.3e}')
-                print_ph(f'                         [-]                                       |divLu2| {divuL2:0.3e}')
-                print_ph(f'                         [x] |r_al|/|r_al0|    {r_al/r_al0:.3e},         |r_al|  {r_al:.3e}')
-
                 it_inner = it_inner+1 
         
             print_ph(f'              []Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
-            print_ph(f'                         [?] |F^mom|/|F^mom_0| {rmom/rmom_0:.3e}, |F^div|/|F^div_0| {rdiv/rdiv_0:.3e}')
-            print_ph(f'                         [?] |F^mom|           {rmom:.3e}, abs div residuum |F^div| {rdiv:.3e}')
+            print_ph(f'                         [?] |F^mom|L2/|F^mom_0|L2 {rmom/rmom_0:.3e}, |F^div|L2/|F^div_0|L2 {rdiv/rdiv_0:.3e}')
+            print_ph(f'                         [?] |F^mom|L2           {rmom:.3e}, abs div residuum |F^div|L2 {rdiv:.3e}')
             print_ph('              []Converged ')
 
             S.u_wedge = u_k.copy()
@@ -1716,14 +1675,15 @@ class Slab(Stokes_Problem):
                 
         a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)
         time_A = timing.time()
-        S.u_slab,S.p_slab, _ =  self.solve_linear_picard(fem.form(a)
+        S.u_slab,S.p_slab =  self.solve_linear_picard(fem.form(a)
                                                          ,fem.form(a_p0)
                                                          ,fem.form(L)
                                                          ,ctrl
                                                          ,S.u_slab
                                                          ,S.p_slab
                                                          ,it
-                                                         ,ts)
+                                                         ,ts
+                                                         ,slab=1)
 
         
         time_B = timing.time()
@@ -1734,23 +1694,4 @@ class Slab(Stokes_Problem):
     
 #-------------------------------------------------------------------
 #-------------------------------------------------------------------
-#             x = self.solv.A.createVecRight()
-#            self.solv.ksp.solve(self.solv.b, x)
-#            if self.solv.direct_solver == 0: 
-#                xu = x.getSubVector(self.solv.is_u)
-#                xp = x.getSubVector(self.solv.is_p)
-#            
-#                # Copy OWNED entries only into the function PETSc Vecs
-#            
-#                with S.u_slab.x.petsc_vec.localForm() as uloc:
-#                    uloc.array[:] = xu.array_r
-#                with S.p_slab.x.petsc_vec.localForm() as ploc:
-#                    ploc.array[:] = xp.array_r
-#
-#                # Fill ghosts
-#                S.u_slab.x.scatter_forward()
-#                S.p_slab.x.scatter_forward()
-#
-#                x.restoreSubVector(self.solv.is_u, xu)
-#                x.restoreSubVector(self.solv.is_p, xp)
 #        

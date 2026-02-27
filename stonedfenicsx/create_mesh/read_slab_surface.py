@@ -45,7 +45,12 @@ def curve_fitting(xd:NDArray[float],yd:NDArray[float],path:str , name:str)->NDAr
     
     f_theta = function_bending_data(ell,theta_sgf)
 
-    slab_top,theta_mean,ell_s = create_slab_surface(f_theta,np.min(yd),stp = 5.0)
+    if np.min(yd) > -500: 
+        mind = np.min(yd)
+    else: 
+        mind = -500 
+
+    slab_top,theta_mean,ell_s = create_slab_surface(f_theta,mind,stp = 5.0)
     
     
     fig = plt.figure()

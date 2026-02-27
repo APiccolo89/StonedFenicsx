@@ -42,25 +42,33 @@ class  ScalarSolver(Solvers):
     Solve function require the problem P -> and a decision between linear and non linear -> form are handled by p class, so I do not give a fuck in this class 
     for now all the parameter will be default. 
     """
-    def __init__(self,A ,b ,COMM, nl, J = None, r = None):
-        self.A = fem.petsc.create_matrix(fem.form(A)) # Store the sparsisity 
-        self.b = fem.petsc.create_vector(fem.form(b)) # Store the vector
+    def __init__(self,a ,L,bcs ,COMM):
+        self.A = fem.petsc.create_matrix(fem.form(a)) # Store the sparsisity 
+        self.b = fem.petsc.create_vector(fem.form(L)) # Store the vector
         self.ksp = PETSc.KSP().create(COMM)           # Create the ksp object 
         self.ksp.setOperators(self.A)                # Set Operator
-        self.ksp.setType("gmres")
-        self.ksp.setTolerances(rtol=1e-8, atol=1e-9)
-        self.pc = self.ksp.getPC()
-        self.pc.setType("lu")
-        self.pc.setFactorSolverType("mumps")
+        iterative = 1 
+        if iterative == 1: 
+        
+            self.ksp.setType("fgmres")
+            self.ksp.setTolerances(rtol=1e-10, atol=1e-12)
+            self.pc = self.ksp.getPC()
+            self.pc.setType("hypre")
+        else: 
+            self.ksp.setType("preonly")
+            self.pc = self.ksp.getPC()
+            self.pc.setType("lu")       
+            self.pc.setFactorSolverType('mumps')     
 
-        self.J = None
-        self.r = None 
     
 class SolverStokes(Solvers): 
 
     
-    def __init__(self,a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0):
-        self.direct_solver = ctrl.stokes_solver_type
+    def __init__(self,a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0,slab=0):
+        if slab == 1:
+            self.direct_solver = 1
+        else:
+            self.direct_solver = ctrl.stokes_solver_type
         self.offset = F0.dofmap.index_map.size_local * F0.dofmap.index_map_bs
         if self.direct_solver == 1: 
             self.set_direct_solver(a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it=it, ts = ts)

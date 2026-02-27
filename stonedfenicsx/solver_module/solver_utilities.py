@@ -196,7 +196,7 @@ def compute_residuum(a:dolfinx.fem.Function,b:dolfinx.fem.Function)->float:
     
     
     
-    dxa = (a.x.petsc_vec + b.x.petsc_vec).norm(PETSc.NormType.NORM_2)    
+    dxa = (a.x.petsc_vec+b.x.petsc_vec).norm(PETSc.NormType.NORM_2)
     res = (a.x.petsc_vec - b.x.petsc_vec).norm(PETSc.NormType.NORM_2)  / dxa
     
     return res
@@ -245,4 +245,26 @@ def min_max_array(a:dolfinx.fem.function.Function
     return np.array([global_min, global_max, RMS],dtype=np.float64)
 
 
+def update_solution(sk1:dolfinx.fem.function.Function
+                    ,sk0:dolfinx.fem.function.Function
+                    ,tol:dolfinx.fem.function.Function)->dolfinx.fem.function.Function:
+    """Relax the solution 
+        us = tol * sk1 + (1-tol) * sk
+
+    Args:
+        sk1 (dolfinx.fem.function.Function): new iteration solution
+        sk0 (dolfinx.fem.function.Function): old iteration solution
+        tol (dolfinx.fem.function.Function): tollerance
+
+    Returns:
+        dolfinx.fem.function.Function: _description_
+    """
+
     
+    # extract reference to sk1.x.petsc_vec => modify, then reintegrate
+    sk0.x.array[:] = tol * sk1.x.array[:] + (1-tol) * sk0.x.array[:]
+
+    sk0.x.scatter_forward()
+    
+    return sk0
+
