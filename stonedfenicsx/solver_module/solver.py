@@ -51,7 +51,7 @@ class  ScalarSolver(Solvers):
         if iterative == 1: 
         
             self.ksp.setType("fgmres")
-            self.ksp.setTolerances(rtol=1e-10, atol=1e-12)
+            self.ksp.setTolerances(rtol=1e-12, atol=1e-14)
             self.pc = self.ksp.getPC()
             self.pc.setType("hypre")
         else: 

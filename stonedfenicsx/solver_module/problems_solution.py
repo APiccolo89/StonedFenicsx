@@ -666,7 +666,7 @@ class Global_thermal(Problem):
             S.T_N.x.scatter_forward()
             
             self.compute_residual(p = S.PL
-                                  ,T_k = S.T_N
+                                  ,T = S.T_N
                                   ,T_O = S.T_O
                                   ,u_global = S.u_global
                                   ,D = getattr(M,'domainG')
@@ -1402,7 +1402,7 @@ class Wedge(Stokes_Problem):
 
         
         if self.typology == 'LinearProblem' or self.typology == 'NonlinearProblemT': 
-            S.u_wedge,S.p_wedge,r_al = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl, S.u_wedge,S.p_wedge,it=it,ts=ts)
+            S.u_wedge,S.p_wedge = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl, S.u_wedge,S.p_wedge,it=it,ts=ts)
 
         else: 
             print_ph('              [//] Picard iterations for the non linear lithostatic pressure problem')
