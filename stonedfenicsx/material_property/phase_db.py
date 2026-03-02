@@ -631,7 +631,7 @@ def _generate_phase(PD:PhaseDataBase,
         option_rheology = 2 
     
     if name_diffusion == 'Constant' and name_dislocation != 'Constant':
-        raise ValueError("Error: If the diffusion creep is constant, the dislocation creep should be constant as well. Please check your input.")
+        raise ValueError(f"Error Phase id = {id:d}:: If the diffusion creep is constant, the dislocation creep should be constant as well. Please check your input.")
         
         
     PD.option_eta[id] = option_rheology
@@ -645,7 +645,7 @@ def _generate_phase(PD:PhaseDataBase,
         for k in Dic_Cp: 
             print_ph('%s; '%k)
         
-        raise ValueError("Error: %s is not a heat Capacity option"%name_capacity)
+        raise ValueError(f"Error Phase id = {id:d}: {name_capacity} is not a heat Conductivity option")
     
     PD.C0[id],PD.C1[id],PD.C2[id],PD.C3[id],PD.C4[id],PD.C5[id] = release_heat_capacity_parameters(Dic_Cp[name_capacity], Cp)
     
@@ -656,7 +656,7 @@ def _generate_phase(PD:PhaseDataBase,
         for k in Dic_conductivity: 
             print_ph('%s; '%k)
         
-        raise ValueError("Error: %s is not a heat Conductivity option"%name_conductivity)
+        raise ValueError(f"Error Phase id = {id:d}: {name_conductivity} is not a heat Conductivity option")
     
     TD = _check_diffusivity(name_conductivity)
     PD.k_a[id] = TD.a 
@@ -677,7 +677,7 @@ def _generate_phase(PD:PhaseDataBase,
         for k in Dic_conductivity: 
             print_ph('%s; '%k)
 
-        raise ValueError("Error: %s is not a heat Conductivity option"%name_conductivity)
+        raise ValueError(f"Error Phase id = {id:d}: {name_conductivity} is not a heat Conductivity option")
     alpha = _check_alpha(name_alpha)
     PD.alpha0[id]     = alpha.alpha0
     PD.alpha1[id]     = alpha.alpha1

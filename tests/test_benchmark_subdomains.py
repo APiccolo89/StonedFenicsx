@@ -56,11 +56,11 @@ def evaluate_tests(option_viscous:int = 0
     if option_viscous ==2 and option_thermal == 0 and option_decoupling == 0 and option_shear_heating == 0:  
         vls=[575.8907, 601.0743, 999.3790]
     if option_viscous == 2 and option_thermal == 1 and option_decoupling == 0 and option_shear_heating == 0:  
-        vls = [0,0,0]
+        vls = [562.6966,612.0700,946.7930]
     if option_viscous == 2 and option_thermal == 2 and option_decoupling == 0 and option_shear_heating == 0: 
-        vls = [0,0,0] 
+        vls = [588.4029,629.3958,950.6547] 
     if option_viscous == 0 and option_thermal == 0 and option_decoupling == 1 and option_shear_heating == 0: 
-        vls = [0,0,0]
+        vls = [221.7751,491.4044,816.8154]
     if option_viscous == 0 and option_thermal == 0 and option_decoupling == 1 and option_shear_heating == 1: 
         vls = [0,0,0]    
                 
@@ -80,7 +80,7 @@ def evaluate_tests(option_viscous:int = 0
             raise Warning('Test 3 failed')
 
 
-    error = (keyvalues-vls)
+    error = [np.abs(vls[i]-keyvalues[i]) for i in range(len(keyvalues))]
 
     print_ph(f'Test_vi{option_viscous}_th{option_thermal}_dc{option_decoupling}_sh{option_shear_heating}    : Absolute error: ')
     print_ph(f'                                                                                      T_11_11: {error[0]:.3f} ')
@@ -195,9 +195,9 @@ def perform_test(option_viscous:int = 0
         density_nameC = 'PT'
         density_nameM = 'PT'
         capacity_nameM = 'Bermann_Aranovich_Fo_Fa_0_1'
-        capacity_nameC = 'Crust'
+        capacity_nameC = 'Oceanic_Crust'
         conductivity_nameM = 'Mantle'
-        conductivity_nameC = 'Crust'
+        conductivity_nameC = 'Oceanic_Crust'
         rho0_M = 3300.0
         rho0_C = 3300.0
         radio_flag = 1 
@@ -234,7 +234,7 @@ def perform_test(option_viscous:int = 0
     Ph.wedge_mantle.name_dislocation = name_dislocation
     Ph.wedge_mantle.rho0 = rho0_M
     Ph.wedge_mantle.name_capacity = capacity_nameM 
-    Ph.wedge_mantle.name_conductivity = capacity_nameM
+    Ph.wedge_mantle.name_conductivity = conductivity_nameM
     Ph.wedge_mantle.name_alpha = alpha_nameM
     Ph.wedge_mantle.name_density = density_nameM
     Ph.wedge_mantle.radio_flag = radio_flag
@@ -286,7 +286,7 @@ def perform_test(option_viscous:int = 0
         print(f"{inp.sname} took  {dt:.2f} sec")
     print('#---------------------------------------------------#')
 #-------------------------------------------------------------------------------
-def read_data_base(option_viscous:int = 0, option_thermal:int=1,option_decoupling:int = 0, option_shear_heating:int=0)->None:
+def read_data_base(option_viscous:int = 0, option_thermal:int=0,option_decoupling:int = 0, option_shear_heating:int=0)->None:
     import h5py as h5 
     import os
     
@@ -342,7 +342,14 @@ def read_data_base(option_viscous:int = 0, option_thermal:int=1,option_decouplin
         [585.70, 591.30, 996.60]
         ])
 
-
+    keyvalues = [T_11_11, L2_A, L2_B]
+    
+    pass_flag = evaluate_tests(option_viscous=option_viscous
+                               ,option_thermal=option_thermal
+                               ,option_decoupling=option_decoupling
+                               ,option_shear_heating=option_shear_heating
+                               ,keyvalues=keyvalues)
+    
 
 
     db_vk1 = [np.mean(data[:,0]), np.min(data[:,0]), np.max(data[:,0])]
@@ -351,19 +358,21 @@ def read_data_base(option_viscous:int = 0, option_thermal:int=1,option_decouplin
 
 
     
-    print_ph(f'Test_viscous{option_viscous}, T_11_11 is {T_11_11:.4f}. Tested against {v1:.4f}.')
+    print_ph(f'Test_viscous{option_viscous}, T_11_11 is {T_11_11:.4f}.')
     print_ph(f'                             Van Keken benchmark : mean T_11_11 = {db_vk1[0]:.2f}.')
     print_ph(f'                             Van Keken benchmark : range T_11_11 = {db_vk1[1]:.2f}-{db_vk1[2]:.2f}.')
 
-    print_ph(f'Test_viscous{option_viscous}, L2_A is {L2_A:.4f}. Tested against {v2:.4f}.')
+    print_ph(f'Test_viscous{option_viscous}, L2_A is {L2_A:.4f}.')
     print_ph(f'                             Van Keken benchmark : mean L2_A = {db_vk2[0]:.2f}.')
     print_ph(f'                             Van Keken benchmark : range L2_A = {db_vk2[1]:.2f}-{db_vk2[2]:.2f}.')
     
-    print_ph(f'Test_viscous{option_viscous}, L2_B is {L2_B:.4f}. Tested against {v3:.4f}.')
+    print_ph(f'Test_viscous{option_viscous}, L2_B is {L2_B:.4f}.')
     print_ph(f'                             Van Keken benchmark : mean L2_A = {db_vk3[0]:.2f}.')
     print_ph(f'                             Van Keken benchmark : range L2_A = {db_vk3[1]:.2f}-{db_vk3[2]:.2f}.')
 
     assert pass_flag
+    
+    print_ph('Test Passed ! ')
     
     f.close()
         
@@ -391,10 +400,10 @@ def test_diffusion():
 #-------------------------------------------------------------------------------   
 def test_composite():
     # Test Van Keken
-    perform_test(2,0)
+    perform_test(2)
     # Read Data Base and compare data
     if MPI.COMM_WORLD.rank == 0: 
-        read_data_base(option_viscous=2,opt)
+        read_data_base(option_viscous=2)
     # Remove folder after completing the test
     if DEBUG == False:
         
@@ -405,7 +414,7 @@ def test_composite_thermal_non_linear():
     perform_test(option_viscous=2,option_thermal=1)
     # Read Data Base and compare data
     if MPI.COMM_WORLD.rank == 0: 
-        read_data_base(2)
+        read_data_base(option_viscous=2,option_thermal=1)
     # Remove folder after completing the test
     if DEBUG == False:
         
@@ -416,7 +425,7 @@ def test_composite_thermal_non_linear_crust():
     perform_test(option_viscous=2,option_thermal=2)
     # Read Data Base and compare data
     if MPI.COMM_WORLD.rank == 0: 
-        read_data_base(2)
+        read_data_base(option_viscous=2,option_thermal=2)
     # Remove folder after completing the test
     if DEBUG == False:
         
@@ -425,10 +434,10 @@ def test_composite_thermal_non_linear_crust():
 #----------------------------------------------------------------------------------
 def test_composite_decoupling():
     # Test Van Keken
-    perform_test(option_viscous=0,option_thermal=0,option_decoupling=1)
+    perform_test(option_viscous=0, option_decoupling=1)
     # Read Data Base and compare data
     if MPI.COMM_WORLD.rank == 0: 
-        read_data_base(2)
+        read_data_base(option_viscous=0, option_decoupling=1)
     # Remove folder after completing the test
     if DEBUG == False:
         
@@ -436,10 +445,10 @@ def test_composite_decoupling():
 #-------------------------------------------------------------------------------
 def test_composite_shear_heating():
     # Test Van Keken
-    perform_test(option_viscous=0,option_thermal=0,option_decoupling=1,option_shear_heating=1)
+    perform_test(option_viscous=0,option_decoupling=1,option_shear_heating=1)
     # Read Data Base and compare data
     if MPI.COMM_WORLD.rank == 0: 
-        read_data_base(2)
+        read_data_base(option_viscous=0,option_decoupling=1,option_shear_heating=1)
     # Remove folder after completing the test
     if DEBUG == False:
         
@@ -448,11 +457,12 @@ def test_composite_shear_heating():
 if __name__ == '__main__': 
     
     DEBUG = True
-    test_composite_thermal_non_linear()
     
-    test_composite_thermal_non_linear_crust()
+    #test_composite_thermal_non_linear()
     
-    test_composite_decoupling()
+    #test_composite_thermal_non_linear_crust()
+    
+    #test_composite_decoupling()
     
     test_composite_shear_heating()
 

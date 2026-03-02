@@ -3,6 +3,7 @@
 from stonedfenicsx.package_import import *
 from .phase_db import PhaseDataBase
 from stonedfenicsx.scal import Scal
+from ufl import cos, sin, tan
 # ---------------------------------------------------------------------------------
 @dataclass
 class Functions_material_properties_global():
@@ -404,10 +405,11 @@ def compute_plastic_strain(e_II:fem.Expression
     
     tau_eff = ufl.conditional(tau_vis > tau_lim, tau_lim, tau_vis)
 
-    e_plr2    = (e_II - (tau_eff / 2 /eta_av)) / e_II
+    e_plr2    = (e_II - (tau_eff / 2 /eta_av)) / (e_II+1e-12)
     
     
     e_plr = ufl.conditional(e_plr2 < 0.0, 0.0, e_plr2)
+
 
 
     return e_plr, tau_eff

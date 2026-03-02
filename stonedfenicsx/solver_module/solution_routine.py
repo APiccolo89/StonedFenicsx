@@ -109,15 +109,16 @@ def outerloop_operation(M:Mesh,
                         LG:Global_pressure,
                         We:Wedge,
                         Sl:Slab,
-                        sol:Solution,
-                        g:dolfinx.fem.function.Function
+                        sol:Solution
+                        ,g:dolfinx.fem.function.Function
+                        ,pdb:PhaseDataBase
                         ,ts:int=0
                         ,ioctrl:IOControls=None)->Solution:
     
     # Initialise the it outer and residual outer 
     it_outer = 0 
     res      = 1
-    debug =1 
+    debug =0 
     if debug == 1: 
         out_deb = OUTPUT(M.domainG,ioctrl,ctrl,sc)
     
@@ -207,6 +208,7 @@ def outerloop_operation(M:Mesh,
                             ,lhs
                             ,M.g_input
                             ,sc
+                            ,pdb
                             ,it = it_outer
                             ,ts = ts)
         
@@ -253,6 +255,7 @@ def time_loop(M: Mesh
               ,Sl : Slab
               ,sol : Solution
               ,g : dolfinx.fem.Function
+              ,pdb: PhaseDataBase
              ) -> None:
     """time loop function
 
@@ -310,6 +313,7 @@ def time_loop(M: Mesh
                                   ,Sl
                                   ,sol
                                   ,g
+                                  ,pdb
                                   ,ts=ts
                                   ,ioctrl=ioctrl)
 
@@ -378,7 +382,7 @@ def solution_routine(M:Mesh
     
     # Time Loop 
     
-    time_loop(M,ctrl,ioctrl,sc,lhs_ctrl,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g)
+    time_loop(M,ctrl,ioctrl,sc,lhs_ctrl,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g,pdb)
     
     return 0 
 #--------------------------------------------------------------------------------------------
