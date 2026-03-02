@@ -146,7 +146,7 @@ def compute_residuum_outer(sol
         print_ph("Problem with the thermal solver")
 
     
-    res_total = np.sqrt(res_T**2)
+    res_total = np.sqrt(res_T**2+res_p**2+res_u**2+res_PL)
     if not np.isfinite(res_total):
         raise ValueError("res_total is NaN/Inf; check inputs and residual computations.")
     
@@ -158,8 +158,7 @@ def compute_residuum_outer(sol
     print_ph(f'    []Res Temperature    =  {res_T:.3e} [n.d.], max = {minMaxT[1]:.6f}, min = {minMaxT[0]:.6f} [C], RMS = {minMaxT[2]:.6f} [n.d.] ')
     print_ph(f'    []Res pressure       =  {res_p:.3e} [n.d.], max = {minMaxP[1]:.3e}, min = {minMaxP[0]:.3e} [GPa]')
     print_ph(f'    []Res lithostatic    =  {res_PL:.3e}[n.d.], max = {minMaxPL[1]:.3e}, min = {minMaxPL[0]:.3e} [GPa]')
-    print_ph(f'    []Res total (sqrt(rT^2)) =  {res_total:.3e} [n.d.] ')
-    print_ph('          [for avoiding parallel problems, pressure is removed from the residual]')
+    print_ph(f'    []Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  {res_total:.3e} [n.d.] ')
     print_ph('. =============================================// -- // --->')
     print_ph('')
 

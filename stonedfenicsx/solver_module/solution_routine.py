@@ -122,7 +122,7 @@ def outerloop_operation(M:Mesh,
         out_deb = OUTPUT(M.domainG,ioctrl,ctrl,sc)
     
     if LG.typology == 'LinearProblem' and EG.typology == 'LinearProblem' and We.typology == 'LinearProblem':
-        ctrl.it_max = 1
+        ctrl.it_max = 2
     
     
     while it_outer < ctrl.it_max and res > ctrl.tol: 
