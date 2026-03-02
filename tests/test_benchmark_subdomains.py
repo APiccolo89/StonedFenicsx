@@ -43,7 +43,77 @@ DEBUG = False
 #    The chosen tolerance represents a compromise between numerical
 #    stability, physical consistency, and computational cost.
 #-------------------------------------------------------------------------------
-def perform_test(option_viscous):
+def evaluate_tests(option_viscous:int = 0
+                   ,option_thermal:int = 0
+                   ,option_decoupling:int = 0
+                   ,option_shear_heating:int = 0
+                   ,keyvalues:list = [])-> bool:
+
+    if option_viscous == 0 and option_thermal == 0 and option_decoupling == 0 and option_shear_heating == 0: 
+        vls = [383.1834, 500.3690, 852.6929] 
+    if option_viscous ==1  and option_thermal == 0 and option_decoupling == 0 and option_shear_heating == 0:   
+        vls = [573.3623, 603.1777, 1002.6859]
+    if option_viscous ==2 and option_thermal == 0 and option_decoupling == 0 and option_shear_heating == 0:  
+        vls=[575.8907, 601.0743, 999.3790]
+    if option_viscous == 2 and option_thermal == 1 and option_decoupling == 0 and option_shear_heating == 0:  
+        vls = [0,0,0]
+    if option_viscous == 2 and option_thermal == 2 and option_decoupling == 0 and option_shear_heating == 0: 
+        vls = [0,0,0] 
+    if option_viscous == 0 and option_thermal == 0 and option_decoupling == 1 and option_shear_heating == 0: 
+        vls = [0,0,0]
+    if option_viscous == 0 and option_thermal == 0 and option_decoupling == 1 and option_shear_heating == 1: 
+        vls = [0,0,0]    
+                
+    test_1 = np.isclose(keyvalues[0], vls[0] ,5e-1, 1e-1)
+    test_2 = np.isclose(keyvalues[1], vls[1] ,5e-1, 1e-1)
+    test_3 = np.isclose(keyvalues[2], vls[2] ,5e-1, 1e-1)
+    
+    if test_1 and test_2 and test_3: 
+        pass_flag = True 
+    else: 
+        pass_flag = False 
+        if not test_1: 
+            raise Warning('Test 1 failed')
+        if not test_2: 
+            raise Warning('Test 2 failed')
+        if not test_3: 
+            raise Warning('Test 3 failed')
+
+
+    error = (keyvalues-vls)
+
+    print_ph(f'Test_vi{option_viscous}_th{option_thermal}_dc{option_decoupling}_sh{option_shear_heating}    : Absolute error: ')
+    print_ph(f'                                                                                      T_11_11: {error[0]:.3f} ')
+    print_ph(f'                                                                                      L2_A   : {error[1]:.3f} ')
+    print_ph(f'                                                                                      L2_B   : {error[2]:.3f} ')
+    print_ph(f'Test_vi{option_viscous}_th{option_thermal}_dc{option_decoupling}_sh{option_shear_heating}    : Relative error: ')
+    print_ph(f'                                                                                      T_11_11: {error[0]/vls[0]:.3e} ')
+    print_ph(f'                                                                                      L2_A   : {error[1]/vls[1]:.3e} ')
+    print_ph(f'                                                                                      L2_B   : {error[2]/vls[2]:.3e} ')
+
+
+    return pass_flag
+
+#-------------------------------------------------------------------------------
+def perform_test(option_viscous:int = 0
+                 ,option_thermal:int = 0
+                 ,option_decoupling:int = 0
+                 ,option_shear_heating:int = 0)->None:
+    """_summary_
+
+    Args:
+        option_viscous (int, optional): Define the rheology of the wedge. Defaults to 0.
+        
+        option_thermal (int, optional): Define if the material properties are constant or not, and if the crustal unit have different properties. Defaults to 0.
+                        [0]: Everything is constant 
+                        [1]: Non linear properties -> only mantle properties 
+                        [2]: Non linear properties -> crustal properties 
+        
+        option_decoupling (int, optional): Activate the decoupling. Defaults to 0. [0: not active, 1: active {decoupling depth = 80 km}]
+        
+        option_shear_heating (int, optional): Activate the shear heating. Defaults to 0. [0: not active, 1: active]
+    """
+    
     from stonedfenicsx.utils import parse_input, time_the_time, timing
     from stonedfenicsx.Stoned_fenicx import StonedFenicsx
     
@@ -68,24 +138,71 @@ def perform_test(option_viscous):
     inp.ocr = 6.0e3  # Crustal thickness
     inp.lit_mt = 50e3  # Lithospheric mantle depth 
     inp.lab_d = inp.lit_mt  # depth of the lab 
-    inp.decoupling = 50e3  # decoupling depth
+    if option_decoupling == 0: 
+    
+        inp.decoupling = 50e3  # decoupling depth
+        inp.decoupling_ctrl = 0 
+    
+    elif option_decoupling == 1: 
+    
+        inp.decoupling = 80e3 
+        inp.decoupling_ctrl = 1 
+        
     inp.ns_depth = 50e3
     inp.Tmax = 1300.0  # mantle potential temperature
-    # inp.model_shear = 'SelfConsistent'
+    
+    if option_shear_heating == 1: 
+        inp.model_shear = 'SelfConsistent'
+    
+    elif option_shear_heating==0: 
+        print_ph('!!!No Shear heating active!!!')
+    
     inp.steady_state = 1
+    
+    
     print_ph('Starting the benchmark tests with different options')
+    if option_thermal == 0: 
+    
+        alpha_nameC = 'Constant'
+        alpha_nameM = 'Constant'
+        density_nameC = 'Constant'
+        density_nameM = 'Constant'
+        capacity_nameM = 'Constant'
+        capacity_nameC = 'Constant'
+        conductivity_nameM = 'Constant'
+        conductivity_nameC = 'Constant'
+        rho0_M = 3300.0
+        rho0_C = 3300.0
+        radio_flag = 0 
+    elif option_thermal == 1: 
+        
+        alpha_nameC = 'Mantle'
+        alpha_nameM = 'Mantle'
+        density_nameC = 'PT'
+        density_nameM = 'PT'
+        capacity_nameM = 'Bermann_Aranovich_Fo_Fa_0_1'
+        capacity_nameC = 'Bermann_Aranovich_Fo_Fa_0_1'
+        conductivity_nameM = 'Mantle'
+        conductivity_nameC = 'Mantle'
+        rho0_M = 3300.0
+        rho0_C = 3300.0
+        radio_flag = 1 
+        
+    elif option_thermal == 2: 
 
-    alpha_nameC = 'Constant'
-    alpha_nameM = 'Constant'
-    density_nameC = 'Constant'
-    density_nameM = 'Constant'
-    capacity_nameM = 'Constant'
-    capacity_nameC = 'Constant'
-    conductivity_nameM = 'Constant'
-    conductivity_nameC = 'Constant'
-    rho0_M = 3300.0
-    rho0_C = 3300.0
-    radio_flag = 0 
+        alpha_nameC = 'Crust'
+        alpha_nameM = 'Mantle'
+        density_nameC = 'PT'
+        density_nameM = 'PT'
+        capacity_nameM = 'Bermann_Aranovich_Fo_Fa_0_1'
+        capacity_nameC = 'Crust'
+        conductivity_nameM = 'Mantle'
+        conductivity_nameC = 'Crust'
+        rho0_M = 3300.0
+        rho0_C = 3300.0
+        radio_flag = 1 
+        
+        
 
     if option_viscous == 0:
         name_diffusion = 'Constant'
@@ -147,7 +264,7 @@ def perform_test(option_viscous):
     Ph.virtual_weak_zone.name_dislocation = 'Hirth_Wet_Olivine_disl' 
 
 
-    inp.sname = f'T_viscous{option_viscous}'
+    inp.sname = f'Test_vi{option_viscous}_th{option_thermal}_dc{option_decoupling}_sh{option_shear_heating}'
 
     # Initialise the input
     inp.van_keken = van_keken
@@ -169,14 +286,14 @@ def perform_test(option_viscous):
         print(f"{inp.sname} took  {dt:.2f} sec")
     print('#---------------------------------------------------#')
 #-------------------------------------------------------------------------------
-def read_data_base(option_viscous):
+def read_data_base(option_viscous:int = 0, option_thermal:int=1,option_decoupling:int = 0, option_shear_heating:int=0)->None:
     import h5py as h5 
     import os
     
     # File h5 that stores data of benchmarks
     file_h5 = f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken/benchmark_van_keken.h5'
     # Current test Name
-    Test_name = f'T_viscous{option_viscous}'
+    Test_name = f'Test_vi{option_viscous}_th{option_thermal}_dc{option_decoupling}_sh{option_shear_heating}'
     # Open the file 
     f = h5.File(file_h5)
     # Read the data from the database: 
@@ -198,9 +315,7 @@ def read_data_base(option_viscous):
         [388.73, 504.03, 854.99],
         [390.40, 488.0, 847.70],
          ])
-        v1 = 383.1834
-        v2 = 500.3690
-        v3 = 852.6929
+
         
         # 
            
@@ -213,9 +328,7 @@ def read_data_base(option_viscous):
         [581.30, 607.26, 1003.35],
         [584.20, 592.8, 1000.0],
         ])
-        v1 = 573.3623
-        v2 = 603.1777
-        v3 = 1002.6859
+
 
     if option_viscous==2: 
         
@@ -228,17 +341,15 @@ def read_data_base(option_viscous):
         [583.11, 604.96, 1000.05],
         [585.70, 591.30, 996.60]
         ])
-        v1 = 575.8907
-        v2 = 601.0743
-        v3 = 999.3790
+
+
+
 
     db_vk1 = [np.mean(data[:,0]), np.min(data[:,0]), np.max(data[:,0])]
     db_vk2 = [np.mean(data[:,1]), np.min(data[:,1]), np.max(data[:,1])]
     db_vk3 = [np.mean(data[:,2]), np.min(data[:,2]), np.max(data[:,2])]
 
-    test_1 = np.isclose(T_11_11, v1, 5e-1, 1e-1)
-    test_2 = np.isclose(L2_A, v2,5e-1, 1e-1)
-    test_3 = np.isclose(L2_B, v3,5e-1, 1e-1)
+
     
     print_ph(f'Test_viscous{option_viscous}, T_11_11 is {T_11_11:.4f}. Tested against {v1:.4f}.')
     print_ph(f'                             Van Keken benchmark : mean T_11_11 = {db_vk1[0]:.2f}.')
@@ -252,21 +363,14 @@ def read_data_base(option_viscous):
     print_ph(f'                             Van Keken benchmark : mean L2_A = {db_vk3[0]:.2f}.')
     print_ph(f'                             Van Keken benchmark : range L2_A = {db_vk3[1]:.2f}-{db_vk3[2]:.2f}.')
 
-    if test_1 and test_2 and test_3:         
-        pass_flag = True
-        print_ph(f'Test_viscous{option_viscous} passed... ')
-    else: 
-        assert test_1 
-        assert test_2
-        assert test_3 
+    assert pass_flag
     
     f.close()
         
-    return pass_flag
 #-------------------------------------------------------------------------------
 def test_isoviscous():
     # Test Van Keken 
-    perform_test(0) # IsoViscous
+    perform_test(option_viscous=0) # IsoViscous
     # Read Data Base and compare data 
     if MPI.COMM_WORLD.rank == 0: 
         read_data_base(0)
@@ -276,10 +380,10 @@ def test_isoviscous():
 #-------------------------------------------------------------------------------
 def test_diffusion():
     # Test Van Keken
-    perform_test(1)
+    perform_test(option_viscous=1)
     # Read Data Base and compare data
     if MPI.COMM_WORLD.rank == 0: 
-        read_data_base(1)
+        read_data_base(option_viscous=2)
     # Remove folder after completing the test
     if DEBUG == False:
        
@@ -287,7 +391,52 @@ def test_diffusion():
 #-------------------------------------------------------------------------------   
 def test_composite():
     # Test Van Keken
-    perform_test(2)
+    perform_test(2,0)
+    # Read Data Base and compare data
+    if MPI.COMM_WORLD.rank == 0: 
+        read_data_base(option_viscous=2,opt)
+    # Remove folder after completing the test
+    if DEBUG == False:
+        
+        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
+#------------------------------------------------------------------------------------
+def test_composite_thermal_non_linear():
+    # Test Van Keken
+    perform_test(option_viscous=2,option_thermal=1)
+    # Read Data Base and compare data
+    if MPI.COMM_WORLD.rank == 0: 
+        read_data_base(2)
+    # Remove folder after completing the test
+    if DEBUG == False:
+        
+        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
+#----------------------------------------------------------------------------------
+def test_composite_thermal_non_linear_crust():
+    # Test Van Keken
+    perform_test(option_viscous=2,option_thermal=2)
+    # Read Data Base and compare data
+    if MPI.COMM_WORLD.rank == 0: 
+        read_data_base(2)
+    # Remove folder after completing the test
+    if DEBUG == False:
+        
+        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
+
+#----------------------------------------------------------------------------------
+def test_composite_decoupling():
+    # Test Van Keken
+    perform_test(option_viscous=0,option_thermal=0,option_decoupling=1)
+    # Read Data Base and compare data
+    if MPI.COMM_WORLD.rank == 0: 
+        read_data_base(2)
+    # Remove folder after completing the test
+    if DEBUG == False:
+        
+        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
+#-------------------------------------------------------------------------------
+def test_composite_shear_heating():
+    # Test Van Keken
+    perform_test(option_viscous=0,option_thermal=0,option_decoupling=1,option_shear_heating=1)
     # Read Data Base and compare data
     if MPI.COMM_WORLD.rank == 0: 
         read_data_base(2)
@@ -299,10 +448,14 @@ def test_composite():
 if __name__ == '__main__': 
     
     DEBUG = True
+    test_composite_thermal_non_linear()
     
-    test_isoviscous()
+    test_composite_thermal_non_linear_crust()
+    
+    test_composite_decoupling()
+    
+    test_composite_shear_heating()
 
-    test_diffusion()
+    
 
-    test_composite()
 #---------------------------------------------------------------------------------
