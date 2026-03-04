@@ -445,10 +445,10 @@ def test_composite_decoupling():
 #-------------------------------------------------------------------------------
 def test_composite_shear_heating():
     # Test Van Keken
-    perform_test(option_viscous=0,option_decoupling=1,option_shear_heating=1)
+    perform_test(option_viscous=2,option_decoupling=1,option_shear_heating=1)
     # Read Data Base and compare data
     if MPI.COMM_WORLD.rank == 0: 
-        read_data_base(option_viscous=0,option_decoupling=1,option_shear_heating=1)
+        read_data_base(option_viscous=2,option_decoupling=1,option_shear_heating=1)
     # Remove folder after completing the test
     if DEBUG == False:
         
