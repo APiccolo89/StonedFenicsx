@@ -3,7 +3,7 @@ from stonedfenicsx.package_import import *
 from stonedfenicsx.utils                     import timing_function, print_ph
 from stonedfenicsx.create_mesh.aux_create_mesh   import Mesh,Domain
 from stonedfenicsx.material_property.phase_db                  import PhaseDataBase
-from stonedfenicsx.numerical_control         import NumericalControls, ctrl_LHS, IOControls
+from stonedfenicsx.numerical_control         import NumericalControls, ctrl_LHS, IOControls,time_dependent_evolution
 from stonedfenicsx.utils                     import interpolate_from_sub_to_main
 from stonedfenicsx.scal  import Scal
 from stonedfenicsx.output  import OUTPUT
@@ -101,7 +101,8 @@ def outerloop_operation(M:Mesh,
                         ctrlio:IOControls,
                         sc:Scal,
                         lhs:ctrl_LHS,
-                        FGT:Functions_material_properties_global,
+                        constant_vel:int
+                        ,FGT:Functions_material_properties_global,
                         FGWR:Functions_material_rheology,
                         FGSR:Functions_material_rheology,
                         FGGR:Functions_material_rheology,
@@ -162,7 +163,7 @@ def outerloop_operation(M:Mesh,
                                                     ,M.domainB.cell_par
                                                     ,1)
 
-        if it_outer == 0 and ts == 0: 
+        if (ts == 0 and it_outer==0) or (it_outer == 0 and constant_vel == 0): 
             sol = Sl.Solve_the_Problem(sol,
                                    ctrl
                                    ,FGSR
@@ -245,6 +246,7 @@ def time_loop(M: Mesh
               ,ioctrl:IOControls
               ,sc:Scal
               ,lhs:ctrl_LHS
+              ,lhs_t:time_dependent_evolution
               ,FGT : Functions_material_properties_global
               ,FGWR : Functions_material_rheology
               ,FGSR : Functions_material_rheology
@@ -296,13 +298,36 @@ def time_loop(M: Mesh
         if ctrl.steady_state==0:
             print_ph(f'Time = {t*sc.T/sc.scale_Myr2sec:.3f} Myr, timestep = {ts:d}')
             print_ph('================ // =====================')
+            
+
+        if lhs_t.constant_age == 0: 
+            from stonedfenicsx.thermal_structure_ocean import update_age_lhs
+            
+            lhs_t.current_age = lhs_t.update_vel_age(t,'age')
+            lhs.c_age_plate = lhs_t.current_age
+            lhs = update_age_lhs(ctrl
+                                 ,lhs
+                                 ,sc
+                                 ,pdb
+                                 ,M.g_input.theta_in_slab)
+            print_ph(f'                            [{ts:d}]age plate = {lhs_t.current_age*sc.T/sc.scale_Myr2sec:3e} [Myr]')
+
+            
+        if lhs_t.constant_vel == 0: 
+            lhs_t.update_vel_age = lhs_t.update_velocity(t,'vel')
+            ctrl.v_s[0] = lhs_t.current_vel
+            print_ph(f'                            [{ts:d}]velocity plate = {lhs_t.current_vel*(sc.L/sc.T)/sc.scale_vel:3e} [cm/yr]')
         
+            
+            
+   
         # Prepare variable
         sol = outerloop_operation(M
                                   ,ctrl
                                   ,ioctrl
                                   ,sc
                                   ,lhs
+                                  ,lhs_t.constant_vel
                                   ,FGT
                                   ,FGWR
                                   ,FGSR
@@ -317,8 +342,7 @@ def time_loop(M: Mesh
                                   ,ts=ts
                                   ,ioctrl=ioctrl)
 
-        #if ctrl.adiabatic_heating==0:
-        #    sol.T_ad = compute_adiabatic_initial_adiabatic_contribution(M.domainG,sol.T_N,None,sol.PL,FGT,0)
+
 
         if ctrl.steady_state == 1 or (ts%10) == 0:
             print_ph('OUTPUT...')
@@ -336,11 +360,8 @@ def time_loop(M: Mesh
                 _benchmark_van_keken(sol,ioctrl,sc)
 
         t = t+ctrl.dt
-        
-        #update_velocity_age(t_ctrl,t)
-        
-        
-        
+            
+    
         sol.T_O = sol.T_N
         
         ts = ts + 1
@@ -357,6 +378,7 @@ def time_loop(M: Mesh
 def solution_routine(M:Mesh
                      ,ctrl:NumericalControls
                      ,lhs_ctrl:ctrl_LHS
+                     ,lhs_t:time_dependent_evolution
                      ,pdb:PhaseDataBase
                      ,ioctrl:IOControls
                      ,sc:Scal
@@ -382,7 +404,23 @@ def solution_routine(M:Mesh
     
     # Time Loop 
     
-    time_loop(M,ctrl,ioctrl,sc,lhs_ctrl,FGT,FGWR,FGSR,FGGR,EG,LG,We,Sl,sol,g,pdb)
+    time_loop(M
+              ,ctrl
+              ,ioctrl
+              ,sc
+              ,lhs_ctrl
+              ,lhs_t
+              ,FGT
+              ,FGWR
+              ,FGSR
+              ,FGGR
+              ,EG
+              ,LG
+              ,We
+              ,Sl
+              ,sol
+              ,g
+              ,pdb)
     
     return 0 
 #--------------------------------------------------------------------------------------------

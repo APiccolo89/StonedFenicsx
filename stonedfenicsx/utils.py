@@ -387,22 +387,17 @@ class Input:
     c_age_plate: float = 50.0
     flag_radio: float = 0.0
 
-    # -----------------------------------------------------------------------------------------------------
-    # Phase/property selection flags + defaults
-    # -----------------------------------------------------------------------------------------------------
-    capacity_nameM: str = "Constant"
-    conductivity_nameM: str = "Constant"
-    density_nameM: str = "Constant"
-    alpha_nameM: str = "Constant"
+    #-----------------------------------------------------------------------------------------------------
+    # Left bc time controls
+    #----------------------------------------------------------------------------------------------------
 
-    capacity_nameC: str = "Constant"
-    conductivity_nameC: str = "Constant"
-    density_nameC: str = "Constant"
-    alpha_nameC: str = "Constant"
-
-    rho0_M: float = 3300.0
-    rho0_C: float = 3300.0
-    radio_flag: float = 0.0
+    constant_age: int = 1 
+    constant_vel:int =  1
+    t_age : float = field(default_factory=lambda: np.array([0.0, 30.0]))
+    t_vel : float =  field(default_factory=lambda: np.array([0.0, 30.0]))
+    age_plate : float =  field(default_factory=lambda: np.array([0.0, 30.0]))
+    vel_plate : float = field(default_factory=lambda: np.array([0.0, 30.0]))
+    
 
     # -----------------------------------------------------------------------------------------------------
     # Geometry

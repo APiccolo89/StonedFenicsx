@@ -581,9 +581,9 @@ class Global_thermal(Problem):
             f    = (self.energy_source) * self.test0 * dx 
         
         # a -> New temperature 
-        diff_new = ( 1 / 2 ) * ufl.inner(k_k * ufl.grad(self.trial0), ufl.grad(self.test0)) * dx
+        diff_new = ( 1 / 2 ) * ufl.inner(k_k * ufl.grad(T), ufl.grad(self.test0)) * dx
         
-        adv_new  = (rhocp / 2 )* ufl.dot(u_global, ufl.grad(self.trial0)) * self.test0 * dx
+        adv_new  = (rhocp / 2 )* ufl.dot(u_global, ufl.grad(T)) * self.test0 * dx
         
         mass_new = (rhocp / dt) * self.trial0 * self.test0 * dx
         
@@ -603,7 +603,9 @@ class Global_thermal(Problem):
 
            
         RT = fem.petsc.assemble_vector(fem.form(R))
+        
         RT.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+        
         if getattr(self, "bc", None):
             with RT.localForm() as lf:
                 r = lf.getArray(readonly=False)
@@ -692,35 +694,40 @@ class Global_thermal(Problem):
         return a, L
     #------------------------------------------------------------------
 
-    def set_linear_picard_TD(self,
-                             p_k:dolfinx.fem.Function=None,
-                             T:dolfinx.fem.Function = None,
-                             T_O:dolfinx.fem.Function=None,
-                             u_global:dolfinx.fem.Function=None,
-                             D:Domain =None,
-                             FG:Functions_material_properties_global=None,
-                             ctrl:NumericalControls=None,
-                             dt:float = None,
-                             it:int=0):
+    def set_linear_picard_TD(self
+                             ,p:dolfinx.fem.Function=None
+                             ,T_k:dolfinx.fem.Function = None
+                             ,T_O:dolfinx.fem.Function=None
+                             ,u_global:dolfinx.fem.Function=None
+                             ,D:Domain =None
+                             ,FG:Functions_material_properties_global=None
+                             ,pdb:PhaseDataBase=None
+                             ,ctrl:NumericalControls=None
+                             ,g_input:Geom_input=None
+                             ,sc:Scal = None
+                             ,dt:float = None
+                             ,it:int=0
+                             ,it_inner:int =0
+                             ,ts:int = 0)->tuple[dolfinx.fem.Form,dolfinx.fem.Form]:
         # Function that set linear form and linear picard for picard iteration
         # Crank Nicolson scheme 
         # a - > New temperature 
         # L - > Old temperature
         # -> Source term is assumed constant in time and do not vary between the timesteps 
         
-        rho_k = density_FX(FG, T, p_k)  # frozen
+        rho_k = density_FX(FG, T_k, p)  # frozen
                 
-        Cp_k = heat_capacity_FX(FG, T)  # frozen
+        Cp_k = heat_capacity_FX(FG, T_k)  # frozen
 
-        k_k = heat_conductivity_FX(FG, T, p_k, Cp_k, rho_k)  # frozen
+        k_k = heat_conductivity_FX(FG, T_k, p, Cp_k, rho_k)  # frozen
 
 
         
-        rho_k0 = density_FX(FG, T_O, p_k)  # frozen
+        rho_k0 = density_FX(FG, T_O, p)  # frozen
                 
         Cp_k0 = heat_capacity_FX(FG, T_O)  # frozen
         
-        k_k0 = heat_conductivity_FX(FG, T_O, p_k, Cp_k, rho_k)  # frozen
+        k_k0 = heat_conductivity_FX(FG, T_O, p, Cp_k, rho_k)  # frozen
 
 
                 
@@ -1494,6 +1501,7 @@ class Wedge(Stokes_Problem):
                 
         # update the moving wall normalised field with the actual velocity of the slab.        
         self.moving_wall.x.array[:] = self.moving_wall_ref.x.array[:]*ctrl.v_s[0]
+        print_ph(f'              Slab velocity is {ctrl.v_s[0]:.3e} [n.d.]')
         self.moving_wall.x.scatter_forward()
         # Set the the boundary condition    
         dofs_s_x = fem.locate_dofs_topological(self.F0.sub(0), fdim, D.facets.find(D.bc_dict['slab']))
@@ -1556,7 +1564,7 @@ class Wedge(Stokes_Problem):
                                                   ,slab = 0)
         # Iteration outer 0 -> Initial guess -> start linear
         # Create the dirichlecht boundary condition 
-        self.bc   = self.setdirichlecht(ctrl,D,self.V_subs,g_input) 
+        self.bc   = self.setdirichlecht(ctrl,D,self.V_subs,g_input,ts=ts,it=it) 
         
         # Form the system 
         a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)

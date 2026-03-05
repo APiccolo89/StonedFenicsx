@@ -495,7 +495,7 @@ def compute_ocean_plate_temperature(ctrl:NumericalControls
         k     = 3.0/scal.k
         rho   = 3300/scal.rho
         kappa = k/rho/Cp 
-        t     = 50 * scal.scale_Myr2sec/scal.T
+        t     = lhs.c_age_plate
         T_lhs = Ttop+(Tmax-Ttop) * special.erf(z /2 /np.sqrt(t * kappa))
         lhs.z[:] = -z[:] 
         lhs.LHS[:] = T_lhs[:]
@@ -653,6 +653,27 @@ def compute_initial_LHS(ctrl,lhs,scal,pdb,theta_in):
     
     if lhs.van_keken == 0 or lhs.non_linearities == 0 :
         lhs,t, temperature = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb,theta_in)
+        from scipy.interpolate import RegularGridInterpolator
+ 
+        t_re = np.linspace(lhs.c_age_var[0],lhs.c_age_var[1], num = lhs.LHS_var.shape[1])
+        T,Z  = np.meshgrid(t_re,lhs.z,indexing='ij')
+        TT,ZZ = np.meshgrid(t,lhs.z,indexing='ij')
+        interp_func = RegularGridInterpolator((t[0], lhs.z), temperature)
+        points_coarse = np.column_stack((T.ravel(), Z.ravel()))
+        lhs.LHS_var = interp_func(points_coarse).reshape(len(t_re), len(lhs.z))
+        lhs.t_res_vec = t_re 
+    else:
+        lhs,_,_ = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb,theta_in)
+        
+
+    return lhs
+
+
+def update_age_lhs(ctrl,lhs,scal,pdb,theta_in):
+    
+
+    
+    if lhs.van_keken == 0 or lhs.non_linearities == 0 :
         from scipy.interpolate import RegularGridInterpolator
  
         t_re = np.linspace(lhs.c_age_var[0],lhs.c_age_var[1], num = lhs.LHS_var.shape[1])

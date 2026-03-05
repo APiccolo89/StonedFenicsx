@@ -8,7 +8,7 @@ from .package_import import *
 #---------------------------------------------------------------------------------------------------------
 from stonedfenicsx.create_mesh.create_mesh import create_mesh as cm 
 from stonedfenicsx.material_property.phase_db import PhaseDataBase 
-from stonedfenicsx.numerical_control import ctrl_LHS 
+from stonedfenicsx.numerical_control import ctrl_LHS,time_dependent_evolution
 from stonedfenicsx.utils import print_ph
 from stonedfenicsx.material_property.phase_db import _generate_phase
 from stonedfenicsx.scal import Scal
@@ -17,7 +17,7 @@ from stonedfenicsx.numerical_control import NumericalControls
 from stonedfenicsx.numerical_control import IOControls
 from stonedfenicsx.create_mesh.create_mesh import Geom_input
 from stonedfenicsx.scal import _scaling_control_parameters
-from stonedfenicsx.scal import _scale_parameters
+from stonedfenicsx.scal import _scale_parameters,scal_time_class
 from stonedfenicsx.solver_module.solution_routine import solution_routine
 
 dict_options = {'NoShear':0,
@@ -228,20 +228,25 @@ def StonedFenicsx(IP,Ph_input):
                     non_linearities=IP.self_consistent_flag,
                     c_age_plate = IP.c_age_plate)
     
+    t_lhs = time_dependent_evolution(constant_age = IP.constant_age
+                                     ,constant_vel = IP.constant_vel
+                                     ,current_age = 0.0 
+                                     ,current_vel=0.0
+                                     ,t_age = IP.t_age
+                                     ,t_vel = IP.t_vel
+                                     ,vel_plate=IP.vel_plate
+                                     ,age_plate=IP.age_plate)
+    
     Pdb = generate_phase_database(IP,Ph_input)                      
     # ---
     # Create mesh 
     g_input = fill_geometrical_input(IP)
 
-
-
-    
-
     # Scaling
     ctrl = _scaling_control_parameters(ctrl, sc)
     Pdb = _scaling_material_properties(Pdb,sc)
     lhs = _scale_parameters(lhs, sc)
-
+    t_lhs = scal_time_class(t_lhs,sc)
     M = cm(io_ctrl, sc,g_input,ctrl)
     
     M.element_p = basix.ufl.element("Lagrange","triangle", 1) 
@@ -249,9 +254,8 @@ def StonedFenicsx(IP,Ph_input):
     M.element_V = basix.ufl.element("Lagrange","triangle",2,shape=(2,))
     
     
-    solution_routine(M, ctrl, lhs, Pdb, io_ctrl, sc)
+    solution_routine(M, ctrl, lhs,t_lhs, Pdb, io_ctrl, sc)
 
-    # Create mesh
     return 0    
 
 #---------------------------------------------------------------------------

@@ -1,5 +1,4 @@
 from .package_import import *
-dict_temp_prob = {'Transient':0,'Steady_state':1}
 dict_k = {'base': 0,
            'T_hof_Mckenzie2005': 1,
            'T_Xu_2004':2,
@@ -173,7 +172,7 @@ class ctrl_LHS:
         option_1D_solve=1,    # flag to enable 1D solve
         dt=5e-3,              # time step
         c_age_plate=50.0,     # characteristic plate age
-        c_age_var=(30.0, 60.0),  # variation in plate age
+        c_age_var=(0.0, 100.0),  # variation in plate age
         t_res=1000,           # temporal resolution
         recalculate=0,        # flag for recomputation
         van_keken=1,          # benchmark flag
@@ -209,8 +208,44 @@ class ctrl_LHS:
         self.Cp  = Cp 
         self.k   = k 
         self.rho = rho
-        
 
+@dataclass(slots=True)
+class time_dependent_evolution:
+    constant_age: int = 1 
+    constant_vel:int =  1
+    current_age : float = None 
+    current_vel : float = None 
+    t_age : float = field(default_factory=lambda: np.array([0.0, 30.0]))
+    t_vel : float =  field(default_factory=lambda: np.array([0.0, 30.0]))
+    age_plate : float =  field(default_factory=lambda: np.array([0.0, 30.0]))
+    vel_plate : float = field(default_factory=lambda: np.array([0.0, 30.0]))    
+    
+    def update_vel_age(self,t:float,par:str)->float:
+        """Function that update the current age or velocity
+
+        Args:
+            t (float): current simulation time
+            par (str): parameter to update
+
+        Returns:
+            float: updated value
+        """
+        if par == 'vel':
+            dt = self.t_vel[1]-self.t_vel[0]
+            dp = self.vel_plate[1]-self.vel_plate[0]
+            p0 = self.vel_plate[0]
+        else: 
+            dt = self.t_age[1]-self.t_age[0]
+            dp = self.age_plate[1]-self.age_plate[0]
+            p0 = self.age_plate[0]
+        
+        val = p0+(dp/dt)*t 
+        
+        return val 
+            
+        
+         
+        
 
     
     

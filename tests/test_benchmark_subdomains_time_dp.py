@@ -13,7 +13,7 @@ from stonedfenicsx.package_import import *
 # Global flag to decide wether or not to remove the results -> debug reason. 
 DEBUG = False
 #-------------------------------------------------------------------------------
-def perform_test(option_viscous):
+def perform_test(option_viscous=0,option_time=0):
     from stonedfenicsx.utils import parse_input, time_the_time, timing
     from stonedfenicsx.Stoned_fenicx import StonedFenicsx
     
@@ -43,7 +43,7 @@ def perform_test(option_viscous):
     inp.Tmax = 1300.0  # mantle potential temperature
     # inp.model_shear = 'SelfConsistent'
     inp.steady_state = 0
-    inp.time_max = 1.0 
+    inp.time_max = 3.0
     inp.tol = 1e-2
     inp.it_max = 5
     print_ph('Starting the benchmark tests with different options')
@@ -68,7 +68,16 @@ def perform_test(option_viscous):
         name_dislocation = 'Constant'       
     elif option_viscous == 2: 
         name_diffusion = 'Van_Keken_diff'
-        name_dislocation = 'Van_Keken_disl'                 
+        name_dislocation = 'Van_Keken_disl'     
+        
+    if option_time == 1: 
+        inp.constant_vel = 0
+        inp.vel_plate = np.array([5.0,1.0],dtype=np.float64)
+        inp.t_vel = np.array([0.0,1.0],dtype=np.float64)    
+    elif option_time == 2: 
+        inp.constant_age = 0
+        inp.age_plate = np.array([20,70],dtype=np.float64)
+        inp.t_age = np.array([0.0,1.0],dtype=np.float64)    
 
     # Modify the phase with the new data: 
     Ph.subducting_plate_mantle.rho0 = rho0_M
@@ -120,7 +129,7 @@ def perform_test(option_viscous):
     Ph.virtual_weak_zone.name_dislocation = 'Hirth_Wet_Olivine_disl' 
 
 
-    inp.sname = f'T_viscous{option_viscous}'
+    inp.sname = f'T_vi{option_viscous}_to{option_time}'
 
     # Initialise the input
     inp.van_keken = van_keken
@@ -274,33 +283,37 @@ def test_isoviscous():
     if DEBUG == False:
         os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
 #-------------------------------------------------------------------------------
-def test_diffusion():
-    # Test Van Keken
-    perform_test(1)
-    # Read Data Base and compare data
+def test_isoviscous_cg_vel():
+    # Test Van Keken 
+    perform_test(0,1) # IsoViscous
+    # Read Data Base and compare data 
     if MPI.COMM_WORLD.rank == 0: 
-        read_data_base(1)
+        read_data_base(0,1)
     # Remove folder after completing the test
     if DEBUG == False:
-       
         os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
-#-------------------------------------------------------------------------------   
-def test_composite():
-    # Test Van Keken
-    perform_test(2)
-    # Read Data Base and compare data
+
+def test_isoviscous_cg_age():
+    # Test Van Keken 
+    perform_test(0,2) # IsoViscous
+    # Read Data Base and compare data 
     if MPI.COMM_WORLD.rank == 0: 
-        read_data_base(2)
+        read_data_base(0,2)
     # Remove folder after completing the test
     if DEBUG == False:
-        
         os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
+
 #-------------------------------------------------------------------------------
 if __name__ == '__main__': 
     
     DEBUG = True
     
-    test_isoviscous()
+    #test_isoviscous()
+    
+    #test_isoviscous_cg_vel()
+
+    test_isoviscous_cg_age()
+
 
     #test_diffusion()
 
