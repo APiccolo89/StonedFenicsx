@@ -1157,7 +1157,11 @@ class Stokes_Problem(Problem):
     def __init__(self,M,elements,name):
         super().__init__(M,elements,name)       
         M = getattr(M,name[1])
-        self.FSPT = dolfinx.fem.functionspace(M.mesh, elements[2]) 
+        self.FSPT = dolfinx.fem.functionspace(M.mesh, elements[2])     
+        # Create the moving wall functions: 
+        # Allocate memory
+        self.moving_wall_ref = fem.Function(self.F0)
+        self.moving_wall = fem.Function(self.F0)
     
     def compute_shear_heating(self,ctrl,FR,S,D,sc,wedge=1):
         from .compute_material_property import compute_viscosity_FX
@@ -1305,6 +1309,8 @@ class Stokes_Problem(Problem):
         n = ufl.FacetNormal(D.mesh)       
         # slab velocity magnitude (Assuming that velocity of the slab is unit vector)        
         v_slab = float(1.0)  
+        
+        
         # slab velocity vector (Assuming that velocity of the slab is along x direction)
         v_const = ufl.as_vector((ctrl.v_s[0], 0.0))
         # projector   onto  the  tangential plane
@@ -1316,25 +1322,25 @@ class Stokes_Problem(Problem):
         # projected tangential velocity vector on   slab
         v_project = v_slab * t_hat  
         # Creating the function space that will host the unit vector of the velocity field along the slab
-        self.moving_wall = fem.Function(self.FS)
         # Extract the trial and test function for the subspace of the slab domain
-        w = u
-        v = v
+
         # Build the linear problem to compute the velocity field of the moving wall. The problem is a simple mass matrix with a projection of the velocity on the slab as a source term.
-        a = ufl.inner(w, v) * self.ds(D.bc_dict[facet])        #  boundary     mass    matrix (vector)
+        a = ufl.inner(u, v) * self.ds(D.bc_dict[facet])        #  boundary     mass    matrix (vector)
         L = ufl.inner(v_project, v) * self.ds(D.bc_dict[facet])
         # Solve the linar problem to compute the velocity field of the moving wall and cache it for the entire simulation 
-        self.moving_wall = fem.petsc.LinearProblem(
+        problem = fem.petsc.LinearProblem(
             a, L,
+            u = self.moving_wall_ref, # Forcing the solution to using the same function space
             petsc_options={
             "ksp_type": "cg",
             "pc_type": "jacobi",
             "ksp_rtol": 1e-20,
             }
-        ).solve()  # ut_h \in V
-        self.moving_wall.x.scatter_forward()
+        )  # ut_h \in V
+        problem.solve()
+        self.moving_wall_ref.x.scatter_forward()
         
-        return self.moving_wall
+        return self.moving_wall_ref
     def solve_linear_picard(self
                             ,a
                             ,a_p0
@@ -1456,9 +1462,7 @@ class Wedge(Stokes_Problem):
         
         # Cached boundary condition.     
         self.bc_overriding = None
-        
-        self.bc_moving_wall = dolfinx.fem.function.Function(self.FS)
-        
+                
     #------------------------------------------------------------------
     def setdirichlecht(self
                        ,ctrl : NumericalControls
@@ -1494,14 +1498,15 @@ class Wedge(Stokes_Problem):
                 scaling.x.array[:] = 1.0 - scaling.x.array[:] 
                 scaling.x.scatter_forward()
                 # from :https://fenicsproject.discourse.group/t/scale-vector-function-by-scalar-function/10638
-                temp_buf = self.moving_wall.copy()
+                temp_buf = self.moving_wall_ref.copy()
                 temp_buf.interpolate(fem.Expression(self.moving_wall_ref*scaling
                                                     ,self.moving_wall_ref.function_space.element.interpolation_points()))
                 self.moving_wall_ref = temp_buf.copy()
                 
         # update the moving wall normalised field with the actual velocity of the slab.        
         self.moving_wall.x.array[:] = self.moving_wall_ref.x.array[:]*ctrl.v_s[0]
-        print_ph(f'              Slab velocity is {ctrl.v_s[0]:.3e} [n.d.]')
+        print_ph(f'                      Slab velocity is {ctrl.v_s[0]:.3e} [n.d.]')
+        
         self.moving_wall.x.scatter_forward()
         # Set the the boundary condition    
         dofs_s_x = fem.locate_dofs_topological(self.F0.sub(0), fdim, D.facets.find(D.bc_dict['slab']))
@@ -1549,6 +1554,13 @@ class Wedge(Stokes_Problem):
             self.test0 = ufl.TestFunction(self.V_subs)
             self.trial1 = ufl.TrialFunction(self.p_subs)
             self.test1 = ufl.TestFunction(self.p_subs)
+            
+            # Better to recreate 
+            self.moving_wall = fem.Function(self.V_subs)
+            self.moving_wall_ref = fem.Function(self.V_subs)
+            
+
+            
     
 
         # Create the linear problem
@@ -1694,7 +1706,6 @@ class Slab(Stokes_Problem):
                  ,elements:tuple
                  ,name:list):
         super().__init__(M,elements,name)
-        self.moving_wall : dolfinx.fem.function.Function = None
     
     def setdirichlecht(self
                        ,ctrl : NumericalControls
@@ -1812,16 +1823,20 @@ class Slab(Stokes_Problem):
         # Note: Initially, the problem was not solved because I was trying to reuse
         # The test and trial function created at the beginning of the simulation. 
         # However the composite spaces (V/P blocks) are not allowing to reuse these functions. 
-        
-        V_subs0 = self.FS.sub(0)
-        p_subs0 = self.FS.sub(1)
-        V_subs, _ = V_subs0.collapse()
-        p_subs, _ = p_subs0.collapse()
-    
-        self.trial0 = ufl.TrialFunction(V_subs)
-        self.test0 = ufl.TestFunction(V_subs)
-        self.trial1 = ufl.TrialFunction(p_subs)
-        self.test1 = ufl.TestFunction(p_subs)
+        if ts == 0: 
+            V_subs0 = self.FS.sub(0)
+            p_subs0 = self.FS.sub(1)
+            self.V_subs, _ = V_subs0.collapse()
+            self.p_subs, _ = p_subs0.collapse()
+
+            self.trial0 = ufl.TrialFunction(self.V_subs)
+            self.test0 = ufl.TestFunction(self.V_subs)
+            self.trial1 = ufl.TrialFunction(self.p_subs)
+            self.test1 = ufl.TestFunction(self.p_subs)
+                        # Better to recreate 
+            self.moving_wall = fem.Function(self.V_subs)
+            self.moving_wall_ref = fem.Function(self.V_subs)
+            
         # Create the linear problem
         a1,a2,a3, L, a_p = self.set_linear_picard(S.u_slab
                                                   ,S.t_oslab

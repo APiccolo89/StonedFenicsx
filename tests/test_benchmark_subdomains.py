@@ -458,6 +458,12 @@ if __name__ == '__main__':
     
     DEBUG = True
     
+    #test_isoviscous()
+    
+    test_diffusion()
+    
+    test_composite()
+    
     #test_composite_thermal_non_linear()
     
     #test_composite_thermal_non_linear_crust()
