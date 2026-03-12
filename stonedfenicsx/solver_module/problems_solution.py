@@ -486,7 +486,8 @@ class Global_thermal(Problem):
                             ,sc: Scal = None 
                             ,pdb: PhaseDataBase = None
                             ,FG: Functions_material_properties_global = None
-                            ,it_inner:int=0)->float:
+                            ,it_inner:int=0
+                            ,dt:float = 0.0)->float:
 
 
         self.shear_heating = self.compute_shear_heating(ctrl=ctrl
@@ -544,7 +545,8 @@ class Global_thermal(Problem):
                             ,sc: Scal = None 
                             ,pdb: PhaseDataBase = None
                             ,FG: Functions_material_properties_global = None
-                            ,it_inner:int=0)->float:
+                            ,it_inner:int=0
+                            ,dt:float=0.0)->float:
 
 
         self.shear_heating = self.compute_shear_heating(ctrl=ctrl
@@ -555,18 +557,18 @@ class Global_thermal(Problem):
                                                         ,g_input=g_input
                                                         ,sc=sc)
 
-        rho_k = density_FX(FG, T, p_k)  # frozen
+        rho_k = density_FX(FG, T, p)  # frozen
                 
         Cp_k = heat_capacity_FX(FG, T)  # frozen
 
-        k_k = heat_conductivity_FX(FG, T, p_k, Cp_k, rho_k)  # frozen
+        k_k = heat_conductivity_FX(FG, T, p, Cp_k, rho_k)  # frozen
 
 
-        rho_k0 = density_FX(FG, T_O, p_k)  # frozen
+        rho_k0 = density_FX(FG, T_O, p)  # frozen
                 
         Cp_k0 = heat_capacity_FX(FG, T_O)  # frozen
         
-        k_k0 = heat_conductivity_FX(FG, T_O, p_k, Cp_k, rho_k)  # frozen
+        k_k0 = heat_conductivity_FX(FG, T_O, p, Cp_k0, rho_k0)  # frozen
 
 
                 
@@ -585,7 +587,7 @@ class Global_thermal(Problem):
         
         adv_new  = (rhocp / 2 )* ufl.dot(u_global, ufl.grad(T)) * self.test0 * dx
         
-        mass_new = (rhocp / dt) * self.trial0 * self.test0 * dx
+        mass_new = (rhocp / dt) * T * self.test0 * dx
         
         new = diff_new + adv_new + mass_new  
                         
@@ -943,7 +945,8 @@ class Global_thermal(Problem):
                                   ,D = getattr(M,'domainG')
                                   ,FG = FGT
                                   ,pdb=pdb
-                                  ,it_inner=it_inner)            
+                                  ,it_inner=it_inner
+                                  ,dt=ctrl.dt)            
             if it_inner == 0: 
                 rT0 = rT 
             

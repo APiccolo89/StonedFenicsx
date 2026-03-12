@@ -13,7 +13,7 @@ from stonedfenicsx.package_import import *
 # Global flag to decide wether or not to remove the results -> debug reason. 
 DEBUG = False
 #-------------------------------------------------------------------------------
-def perform_test(option_viscous=0,option_time=0):
+def perform_test(option_viscous=0,option_time=0,option_thermal=0,option_self_consistent=0):
     from stonedfenicsx.utils import parse_input, time_the_time, timing
     from stonedfenicsx.Stoned_fenicx import StonedFenicsx
     
@@ -28,7 +28,10 @@ def perform_test(option_viscous=0,option_time=0):
 
     # Create input data - Input is a class populated by default dataset
     # A flag that generate the geometry of the benchmark
-    van_keken = 1
+    if option_self_consistent == 0: 
+        van_keken = 1
+    else: 
+        van_keken = 0 
     # The input path for saving the results
     inp.path_test = f'{path_test}/Tests_Van_keken'
 
@@ -43,22 +46,51 @@ def perform_test(option_viscous=0,option_time=0):
     inp.Tmax = 1300.0  # mantle potential temperature
     # inp.model_shear = 'SelfConsistent'
     inp.steady_state = 0
-    inp.time_max = 3.0
+    inp.time_max = 1.5
     inp.tol = 1e-2
     inp.it_max = 5
     print_ph('Starting the benchmark tests with different options')
 
-    alpha_nameC = 'Constant'
-    alpha_nameM = 'Constant'
-    density_nameC = 'Constant'
-    density_nameM = 'Constant'
-    capacity_nameM = 'Constant'
-    capacity_nameC = 'Constant'
-    conductivity_nameM = 'Constant'
-    conductivity_nameC = 'Constant'
-    rho0_M = 3300.0
-    rho0_C = 3300.0
-    radio_flag = 0 
+    if option_thermal == 0: 
+    
+        alpha_nameC = 'Constant'
+        alpha_nameM = 'Constant'
+        density_nameC = 'Constant'
+        density_nameM = 'Constant'
+        capacity_nameM = 'Constant'
+        capacity_nameC = 'Constant'
+        conductivity_nameM = 'Constant'
+        conductivity_nameC = 'Constant'
+        rho0_M = 3300.0
+        rho0_C = 3300.0
+        radio_flag = 0 
+    elif option_thermal == 1: 
+        
+        alpha_nameC = 'Mantle'
+        alpha_nameM = 'Mantle'
+        density_nameC = 'PT'
+        density_nameM = 'PT'
+        capacity_nameM = 'Bermann_Aranovich_Fo_Fa_0_1'
+        capacity_nameC = 'Bermann_Aranovich_Fo_Fa_0_1'
+        conductivity_nameM = 'Mantle'
+        conductivity_nameC = 'Mantle'
+        rho0_M = 3300.0
+        rho0_C = 3300.0
+        radio_flag = 1 
+        
+    elif option_thermal == 2: 
+
+        alpha_nameC = 'Crust'
+        alpha_nameM = 'Mantle'
+        density_nameC = 'PT'
+        density_nameM = 'PT'
+        capacity_nameM = 'Bermann_Aranovich_Fo_Fa_0_1'
+        capacity_nameC = 'Oceanic_Crust'
+        conductivity_nameM = 'Mantle'
+        conductivity_nameC = 'Oceanic_Crust'
+        rho0_M = 3300.0
+        rho0_C = 3300.0
+        radio_flag = 1 
 
     if option_viscous == 0:
         name_diffusion = 'Constant'
@@ -78,7 +110,11 @@ def perform_test(option_viscous=0,option_time=0):
         inp.constant_age = 0
         inp.age_plate = np.array([20,70],dtype=np.float64)
         inp.t_age = np.array([0.0,1.0],dtype=np.float64)    
-
+    
+    if option_self_consistent == 0:
+        inp.self_consistent_flag = 1
+    else: 
+        inp.self_consistent_flag = 0
     # Modify the phase with the new data: 
     Ph.subducting_plate_mantle.rho0 = rho0_M
     Ph.subducting_plate_mantle.name_capacity = capacity_nameM
@@ -99,7 +135,7 @@ def perform_test(option_viscous=0,option_time=0):
     Ph.wedge_mantle.name_dislocation = name_dislocation
     Ph.wedge_mantle.rho0 = rho0_M
     Ph.wedge_mantle.name_capacity = capacity_nameM 
-    Ph.wedge_mantle.name_conductivity = capacity_nameM
+    Ph.wedge_mantle.name_conductivity = conductivity_nameM
     Ph.wedge_mantle.name_alpha = alpha_nameM
     Ph.wedge_mantle.name_density = density_nameM
     Ph.wedge_mantle.radio_flag = radio_flag
@@ -129,7 +165,7 @@ def perform_test(option_viscous=0,option_time=0):
     Ph.virtual_weak_zone.name_dislocation = 'Hirth_Wet_Olivine_disl' 
 
 
-    inp.sname = f'T_vi{option_viscous}_to{option_time}'
+    inp.sname = f'T_vi{option_viscous}_th{option_thermal}_to{option_time}_geom{option_self_consistent}'
 
     # Initialise the input
     inp.van_keken = van_keken
@@ -303,6 +339,15 @@ def test_isoviscous_cg_age():
     if DEBUG == False:
         os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
 
+def test_non_linearties():
+    # Test Van Keken 
+    perform_test(option_self_consistent=1,option_thermal=2,option_viscous=2,option_time=1) # IsoViscous
+    # Read Data Base and compare data 
+    if MPI.COMM_WORLD.rank == 0: 
+        read_data_base(0,2)
+    # Remove folder after completing the test
+    if DEBUG == False:
+        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
 #-------------------------------------------------------------------------------
 if __name__ == '__main__': 
     
@@ -312,8 +357,9 @@ if __name__ == '__main__':
     
     #test_isoviscous_cg_vel()
 
-    test_isoviscous_cg_age()
+    #test_isoviscous_cg_age()
 
+    test_non_linearties()
 
     #test_diffusion()
 

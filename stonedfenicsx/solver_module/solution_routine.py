@@ -314,7 +314,7 @@ def time_loop(M: Mesh
 
             
         if lhs_t.constant_vel == 0: 
-            lhs_t.update_vel_age = lhs_t.update_velocity(t,'vel')
+            lhs_t.current_vel = lhs_t.update_vel_age(t,'vel')
             ctrl.v_s[0] = lhs_t.current_vel
             print_ph(f'                            [{ts:d}]velocity plate = {lhs_t.current_vel*(sc.L/sc.T)/sc.scale_vel:3e} [cm/yr]')
         
