@@ -220,26 +220,21 @@ class time_dependent_evolution:
     age_plate : float =  field(default_factory=lambda: np.array([0.0, 30.0]))
     vel_plate : float = field(default_factory=lambda: np.array([0.0, 30.0]))    
     
-    def update_vel_age(self,t:float,par:str)->float:
+    def update_vel_age(int_t:list,vls:list,t:float)->float:
         """Function that update the current age or velocity
 
-        Args:
-            t (float): current simulation time
-            par (str): parameter to update
-
-        Returns:
-            float: updated value
+        Args: 
+            int_t: list = interval of time 
+            vls: list = start vel/age and end vel/age
+            t: float = current time 
+            
         """
-        if par == 'vel':
-            dt = self.t_vel[1]-self.t_vel[0]
-            dp = self.vel_plate[1]-self.vel_plate[0]
-            p0 = self.vel_plate[0]
-        else: 
-            dt = self.t_age[1]-self.t_age[0]
-            dp = self.age_plate[1]-self.age_plate[0]
-            p0 = self.age_plate[0]
+        dt = int_t[1]-int_t[0]
+        dp = vls[1]-vls[0]
+        val = vls[0]+(dp/dt)*t 
         
-        val = p0+(dp/dt)*t 
+        if val > vls[1]: 
+            val = vls[1]
         
         return val 
             

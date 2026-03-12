@@ -43,6 +43,10 @@ class OUTPUT():
             self.xdmf_main = XDMFFile(comm,
                                       os.path.join(self.pt_save, "time_dependent.xdmf"),
                                       "w")
+            self.xdmf_main.parameters["flush_output"] = True        # ← key: flush after every write
+            self.xdmf_main.parameters["functions_share_mesh"] = True  # ← avoids re-writing mesh each step
+            self.xdmf_main.parameters["rewrite_function_mesh"] = False
+    
             # write mesh once
             coord = mesh.mesh.geometry.x.copy()
             mesh.mesh.geometry.x[:] *= sc.L/1e3

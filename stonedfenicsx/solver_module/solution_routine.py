@@ -303,7 +303,7 @@ def time_loop(M: Mesh
         if lhs_t.constant_age == 0: 
             from stonedfenicsx.thermal_structure_ocean import update_age_lhs
             
-            lhs_t.current_age = lhs_t.update_vel_age(t,'age')
+            lhs_t.current_age = lhs_t.update_vel_age(lhs_t.t_age,lhs_t.age_plate,t)
             lhs.c_age_plate = lhs_t.current_age
             lhs = update_age_lhs(ctrl
                                  ,lhs
@@ -314,7 +314,7 @@ def time_loop(M: Mesh
 
             
         if lhs_t.constant_vel == 0: 
-            lhs_t.current_vel = lhs_t.update_vel_age(t,'vel')
+            lhs_t.current_vel = lhs_t.update_vel_age(lhs_t.t_vel,lhs_t.vel_plate,t)
             ctrl.v_s[0] = lhs_t.current_vel
             print_ph(f'                            [{ts:d}]velocity plate = {lhs_t.current_vel*(sc.L/sc.T)/sc.scale_vel:3e} [cm/yr]')
         
