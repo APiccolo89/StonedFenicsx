@@ -1,7 +1,5 @@
 from stonedfenicsx.package_import import * 
 
-import matplotlib.pyplot as plt
-
 from scipy.optimize import curve_fit
 
 import numpy as np
@@ -52,50 +50,50 @@ def curve_fitting(xd:NDArray[float],yd:NDArray[float],path:str , name:str)->NDAr
 
     slab_top,theta_mean,ell_s = create_slab_surface(f_theta,mind,stp = 5.0)
     
-    
-    fig = plt.figure()
-    ax = fig.gca()
-    ax.plot(ell,theta*180/np.pi,c='k',alpha=0.1,label=r'$\theta$ original')
-    ax.plot(ell,theta_sgf*180/np.pi, c='b', label = r'$\theta$ filtered data')
-    ax.plot(ell_s,theta_mean*180/np.pi,c='r',label=r'$\theta$  post processed')
-    ax.set_xlabel(r'$\ell$ [km]')
-    ax.set_ylabel(r'$\vartheta$ [deg]')
-    # Set spine thickness
-    for spine in ax.spines.values():
-        spine.set_linewidth(1.2)
-
-    # Set spine color
-    for spine in ax.spines.values():
-        spine.set_color("k")
-
-    ax.grid(visible=True,axis='both',which='both',color='k',linestyle=':',linewidth=0.5)
-    plt.legend()
-    fig.savefig(f'{path}/{name}_bending_angle.png',dpi=600)
-    
-    fig = plt.figure()
-    ax = fig.gca()
-    ax.plot(xd,yd,c='k',alpha=0.1,label='original')
-    ax.plot(slab_top[:,0],slab_top[:,1],c='r',label='post processed')
-    # Set spine thickness
-    for spine in ax.spines.values():
-        spine.set_linewidth(1.2)
-
-    # Set spine color
-    for spine in ax.spines.values():
-        spine.set_color("k")
-
-    ax.set_xlabel(r'Distance [km]')
-    ax.set_ylabel(r'Depth [km]')
-
-    ax.grid(visible=True,axis='both',which='both',color='k',linestyle=':',linewidth=0.5)
-    plt.legend()
-    fig.savefig(f'{path}/{name}_surface.png',dpi=600)
-    
-    
-    
-
-    
-
+#  
+#    fig = plt.figure()
+#    ax = fig.gca()
+#    ax.plot(ell,theta*180/np.pi,c='k',alpha=0.1,label=r'$\theta$ original')
+#    ax.plot(ell,theta_sgf*180/np.pi, c='b', label = r'$\theta$ filtered data')
+#    ax.plot(ell_s,theta_mean*180/np.pi,c='r',label=r'$\theta$  post processed')
+#    ax.set_xlabel(r'$\ell$ [km]')
+#    ax.set_ylabel(r'$\vartheta$ [deg]')
+#    # Set spine thickness
+#    for spine in ax.spines.values():
+#        spine.set_linewidth(1.2)
+#
+#    # Set spine color
+#    for spine in ax.spines.values():
+#        spine.set_color("k")
+#
+#    ax.grid(visible=True,axis='both',which='both',color='k',linestyle=':',linewidth=0.5)
+#    plt.legend()
+#    fig.savefig(f'{path}/{name}_bending_angle.png',dpi=600)
+#    
+#    fig = plt.figure()
+#    ax = fig.gca()
+#    ax.plot(xd,yd,c='k',alpha=0.1,label='original')
+#    ax.plot(slab_top[:,0],slab_top[:,1],c='r',label='post processed')
+#    # Set spine thickness
+#    for spine in ax.spines.values():
+#        spine.set_linewidth(1.2)
+#
+#    # Set spine color
+#    for spine in ax.spines.values():
+#        spine.set_color("k")
+#
+#    ax.set_xlabel(r'Distance [km]')
+#    ax.set_ylabel(r'Depth [km]')
+#
+#    ax.grid(visible=True,axis='both',which='both',color='k',linestyle=':',linewidth=0.5)
+#    plt.legend()
+#    fig.savefig(f'{path}/{name}_surface.png',dpi=600)
+#    
+#    
+#    
+#
+#    
+#
 
 
     return slab_top,theta_mean

@@ -392,7 +392,7 @@ def test_diffusion():
     perform_test(option_viscous=1)
     # Read Data Base and compare data
     if MPI.COMM_WORLD.rank == 0: 
-        read_data_base(option_viscous=2)
+        read_data_base(option_viscous=1)
     # Remove folder after completing the test
     if DEBUG == False:
        
@@ -458,17 +458,17 @@ if __name__ == '__main__':
     
     DEBUG = True
     
-    #test_isoviscous()
+    test_isoviscous()
     
     test_diffusion()
     
     test_composite()
     
-    #test_composite_thermal_non_linear()
+    test_composite_thermal_non_linear()
     
-    #test_composite_thermal_non_linear_crust()
+    test_composite_thermal_non_linear_crust()
     
-    #test_composite_decoupling()
+    test_composite_decoupling()
     
     test_composite_shear_heating()
 
