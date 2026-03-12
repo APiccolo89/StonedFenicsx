@@ -43,15 +43,13 @@ class OUTPUT():
             self.xdmf_main = XDMFFile(comm,
                                       os.path.join(self.pt_save, "time_dependent.xdmf"),
                                       "w")
-            self.xdmf_main.parameters["flush_output"] = True        # ← key: flush after every write
-            self.xdmf_main.parameters["functions_share_mesh"] = True  # ← avoids re-writing mesh each step
-            self.xdmf_main.parameters["rewrite_function_mesh"] = False
     
             # write mesh once
             coord = mesh.mesh.geometry.x.copy()
             mesh.mesh.geometry.x[:] *= sc.L/1e3
             self.xdmf_main.write_mesh(mesh.mesh)
             mesh.mesh.geometry.x[:] = coord
+            self.xdmf_main.close()
 
         else:
             self.xdmf_main = None
@@ -215,6 +213,10 @@ class OUTPUT():
             # transient: append to ongoing XDMF with time
             # write each field at this physical_time
             # ...same for PL2, rho2, Cp2, k2, kappa2, e_T, eta2, flux
+            
+            self.xdmf_main = XDMFFile(comm, os.path.join(self.pt_save, "time_dependent.xdmf"),
+                                      "a")
+            
             self.xdmf_main.write_function(u_T,          time)
             self.xdmf_main.write_function(p2,           time)
             self.xdmf_main.write_function(T2,           time)
@@ -229,6 +231,8 @@ class OUTPUT():
             self.xdmf_main.write_function(eta2,         time)
             self.xdmf_main.write_function(flux,         time)
             self.xdmf_main.write_function(tag,          time)
+            
+            self.close()
         
         else:
             with XDMFFile(MPI.COMM_WORLD, "%s.xdmf"%file_name, "w") as ufile_xdmf:

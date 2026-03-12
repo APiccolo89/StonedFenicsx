@@ -220,6 +220,7 @@ class time_dependent_evolution:
     age_plate : float =  field(default_factory=lambda: np.array([0.0, 30.0]))
     vel_plate : float = field(default_factory=lambda: np.array([0.0, 30.0]))    
     
+    @staticmethod
     def update_vel_age(int_t:list,vls:list,t:float)->float:
         """Function that update the current age or velocity
 
@@ -233,8 +234,7 @@ class time_dependent_evolution:
         dp = vls[1]-vls[0]
         val = vls[0]+(dp/dt)*t 
         
-        if val > vls[1]: 
-            val = vls[1]
+        val = max(vls[1], val) if dp < 0 else min(vls[1], val)
         
         return val 
             
