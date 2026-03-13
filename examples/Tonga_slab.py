@@ -41,18 +41,21 @@ def perform_test(args:argparse.Namespace = None, plate:str = 'Tonga'):
     inp.decoupling_ctrl = 1
     inp.model_shear = args.shear_heating
     # Geometrical input
-    inp.cr = 30.0e3   # Overriding crust 
-    inp.lc = 0.3   # relative amount of lower crust
+    inp.cr = 7.0e3   # Overriding crust 
+    inp.lc = 0.0   # relative amount of lower crust
     inp.ocr = 6.0e3  # Crustal thickness
     inp.lit_mt = 50e3  # Lithospheric mantle depth 
     inp.lab_d = inp.lit_mt  # depth of the lab 
     inp.decoupling = 80e3  # decoupling depth
     inp.ns_depth = 50e3
     inp.Tmax = 1300.0  # mantle potential temperature
-    # inp.model_shear = 'SelfConsistent'
     inp.steady_state = args.steady_state
+    if args.steady_state == 0: 
+        inp.tol = 1e-2 
+        inp.tol_innerPic = 1e-2 
+        inp.it_max = 5
     inp.slab_type = 'File'
-    inp.sub_path = f'/mnt/scratch/wlnw570/StonedFenicsx/example_slab_surfaces/{plate}_slab.pz'
+    inp.sub_path = f'/Users/wlnw570/Work/Leeds/Fenics_tutorial/example_slab_surfaces/{plate}_slab.pz'
     print_ph('Starting the benchmark tests with different options')
 
     alpha_nameC = 'Crust'
@@ -64,7 +67,7 @@ def perform_test(args:argparse.Namespace = None, plate:str = 'Tonga'):
     conductivity_nameM = 'Mantle'
     conductivity_nameC = 'Oceanic_Crust'
     rho0_M = 3300.0
-    rho0_C = 3300.0
+    rho0_C = 2800.0
     radio_flag = 1 
 
 
@@ -164,7 +167,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--convergent_velocity",type=float,default=8.0)
     parser.add_argument("--steady_state",type=int,default=0)
-    parser.add_argument("--shear_heating",type=str,default='NoShear')
+    parser.add_argument("--shear_heating",type=str,default='SelfConsistent')
     parser.add_argument("--max_time",type=float,default=30.0)
     args = parser.parse_args()
     

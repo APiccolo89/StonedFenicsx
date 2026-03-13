@@ -346,7 +346,7 @@ def time_loop(M: Mesh
 
         if ctrl.steady_state == 1 or (ts%10) == 0:
             print_ph('OUTPUT...')
-            output_class.print_output(sol,M.domainG,FGT,FGGR,ioctrl,sc,ctrl,it_outer=0,time=t*t*sc.T/sc.scale_Myr2sec,ts=ts)
+            output_class.print_output(sol,M.domainG,FGT,FGGR,ioctrl,sc,ctrl,it_outer=0,time=t*sc.T/sc.scale_Myr2sec,ts=ts)
             print_ph('finished')
 
         

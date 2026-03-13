@@ -717,6 +717,15 @@ class Global_thermal(Problem):
         # L - > Old temperature
         # -> Source term is assumed constant in time and do not vary between the timesteps 
         
+        if it_inner != 0 and ctrl.model_shear>0:
+            self.shear_heating = self.compute_shear_heating(ctrl=ctrl
+                                                        ,pdb=pdb
+                                                        ,T_k=T_k
+                                                        ,p=p
+                                                        ,D=D
+                                                        ,g_input=g_input
+                                                        ,sc=sc)        
+
         rho_k = density_FX(FG, T_k, p)  # frozen
                 
         Cp_k = heat_capacity_FX(FG, T_k)  # frozen
@@ -739,7 +748,7 @@ class Global_thermal(Problem):
         
         dx  = self.dx
         
-        if ctrl.model_shear>0:
+        if ctrl.model_shear>0 & it_inner !=0:
         
             f    = (self.energy_source) * self.test0 * dx + self.shear_heating # source term {energy_source is radiogenic heating compute before hand, shear heating is frictional heating already a form}
 
@@ -917,7 +926,7 @@ class Global_thermal(Problem):
                                     ,sc=sc
                                     ,it = it_inner)
                 else: 
-                    A,L = self.set_linear(p=S.PL
+                    A,_ = self.set_linear(p=S.PL
                                     ,T_k=T_k
                                     ,T_O=S.T_O
                                     ,u_global=S.u_global
