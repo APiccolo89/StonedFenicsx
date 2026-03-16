@@ -196,7 +196,7 @@ class Solution():
         self.p_slab : dolfinx.fem.function.Function
         self.Hs_wedge : dolfinx.fem.function.Function
         self.Hs_slab : dolfinx.fem.function.Function
-        self.Hs_global : dolfinx.fem.function.Function
+        self.shear_heating : dolfinx.fem.function.Function
         self.T_ad : dolfinx.fem.function.Function
         self.outer_iteration : NDArray[:]
         self.mT : NDArray[:]
@@ -396,12 +396,14 @@ class Global_thermal(Problem):
                 # Place holder function
                 from stonedfenicsx.utils import evaluate_material_property
                 dS = ufl.Measure("dS", domain=D.mesh, subdomain_data=D.facets)
-                friction_heat = self.compute_friction_shear_expression(pdb,ctrl,D,T_k,p,ctrl.v_s[0],decoupling,sc)
-                fs = evaluate_material_property(friction_heat,T_k.function_space)
-                #fs.x.array[Z<-g_input.decoupling] = 0.0 
-                fs.x.scatter_forward()
+                tau_eff = self.compute_friction_shear_expression(pdb,ctrl,D,T_k,p,ctrl.v_s[0],decoupling,g_input.wz_tk,sc)
                 
-                expression = ufl.avg(fs) * ufl.avg(self.test0) * (dS(D.bc_dict['Subduction_top_lit']) + dS(D.bc_dict['Subduction_top_wed']))
+                from stonedfenicsx.utils import evaluate_material_property
+                
+                
+                friction_heat = tau_eff * decoupling * ctrl.v_s[0]
+                
+                expression = friction_heat('+') * self.test0('+') * (dS(D.bc_dict['Subduction_top_lit']) + dS(D.bc_dict['Subduction_top_wed']))
             else:  
                 phi = np.tan(pdb.friction_angle)
                 expression = decoupling * ufl.avg(S.PL) * ctrl.v_s[0] * phi * ufl.avg(self.test0) * (self.ds(D.bc_dict['Subduction_top_lit']) +self.ds(D.bc_dict['Subduction_top_wed']))
@@ -419,23 +421,19 @@ class Global_thermal(Problem):
                                           ,T:dolfinx.fem.function.Function
                                           ,P:dolfinx.fem.function.Function
                                           ,vs:float
-                                          ,decoupling:int
+                                          ,decoupling:dolfinx.fem.function.Function
+                                          ,wz_tk:float
                                           ,sc:Scal):
 
+        reg_strain = fem.Constant(decoupling.function_space.mesh,np.float64(1e-20 /(1/sc.T)))
 
-        e_II_fr = (vs * decoupling * 1 /ctrl.wz_tk)/2  # Second invariant strain rate
+        e_II_fr = reg_strain + (vs * decoupling * 1 /wz_tk)  # Second invariant strain rate
 
         # -> compute the plastic strain rate
 
-        e_pl, tau = compute_plastic_strain(e_II_fr,T,P,pdb,D.phase,ctrl.phase_wz-1,sc)
+        tau = compute_plastic_strain(e_II_fr,T,P,pdb,D.phase,ctrl.phase_wz-1,sc)
 
-        e_vs = 1 - e_pl 
-
-        phi = ufl.tan(pdb.friction_angle)
-
-        friction = (e_pl * vs * decoupling * phi * P + e_vs * e_II_fr * tau * ctrl.wz_tk) 
-
-        return friction 
+        return tau
             
     
     def set_newton_SS(self,p,D,T,u_global,pdb):
@@ -490,13 +488,6 @@ class Global_thermal(Problem):
                             ,dt:float = 0.0)->float:
 
 
-        self.shear_heating = self.compute_shear_heating(ctrl=ctrl
-                                                        ,pdb=pdb
-                                                        ,T_k=T
-                                                        ,p=p
-                                                        ,D=D
-                                                        ,g_input=g_input
-                                                        ,sc=sc)
 
        
         rho_k = density_FX(FG, T, p)  # frozen
@@ -512,7 +503,7 @@ class Global_thermal(Problem):
         diff = ufl.inner(k_k * ufl.grad(T), ufl.grad(self.test0)) * dx
         
         adv  = rho_k * Cp_k *ufl.dot(u_global, ufl.grad(T)) * self.test0 * dx
-        if it_inner != 0 and ctrl.model_shear>0:    
+        if it_inner > 0 and ctrl.model_shear>0:    
             L = ((f) * self.test0 * dx + self.shear_heating)      
         else: 
             L = ((f) * self.test0 * dx )   
@@ -548,14 +539,6 @@ class Global_thermal(Problem):
                             ,it_inner:int=0
                             ,dt:float=0.0)->float:
 
-
-        self.shear_heating = self.compute_shear_heating(ctrl=ctrl
-                                                        ,pdb=pdb
-                                                        ,T_k=T
-                                                        ,p=p
-                                                        ,D=D
-                                                        ,g_input=g_input
-                                                        ,sc=sc)
 
         rho_k = density_FX(FG, T, p)  # frozen
                 
@@ -655,17 +638,7 @@ class Global_thermal(Problem):
         Returns:
             tuple[dolfinx.fem.Form,dolfinx.fem.Form]: _description_
         """
-        if it_inner != 0 and ctrl.model_shear>0:
-            self.shear_heating = self.compute_shear_heating(ctrl=ctrl
-                                                        ,pdb=pdb
-                                                        ,T_k=T_k
-                                                        ,p=p
-                                                        ,D=D
-                                                        ,g_input=g_input
-                                                        ,sc=sc)
- 
         
-
         # Function that set linear form and linear picard for picard iteration
         
         rho_k = density_FX(FG, T_k, p)  # frozen
@@ -716,15 +689,6 @@ class Global_thermal(Problem):
         # a - > New temperature 
         # L - > Old temperature
         # -> Source term is assumed constant in time and do not vary between the timesteps 
-        
-        if it_inner != 0 and ctrl.model_shear>0:
-            self.shear_heating = self.compute_shear_heating(ctrl=ctrl
-                                                        ,pdb=pdb
-                                                        ,T_k=T_k
-                                                        ,p=p
-                                                        ,D=D
-                                                        ,g_input=g_input
-                                                        ,sc=sc)        
 
         rho_k = density_FX(FG, T_k, p)  # frozen
                 
@@ -801,7 +765,14 @@ class Global_thermal(Problem):
             self.set_linear = self.set_linear_picard_TD
             self.compute_residual = self.compute_residual_TD
         
-        
+    
+        self.shear_heating = self.compute_shear_heating(ctrl=ctrl
+                                                        ,pdb=pdb
+                                                        ,T_k=S.T_N
+                                                        ,p=S.PL
+                                                        ,D=M.domainG
+                                                        ,g_input=M.g_input
+                                                        ,sc=sc)
             
         if it == 0:         
             self.compute_energy_source(getattr(M,'domainG'),FG)
@@ -841,6 +812,21 @@ class Global_thermal(Problem):
             S = self.solve_the_non_linear(M,S,ctrl,FG,geom,sc,pdb)
         
         time_B = timing.time()
+        
+        f_viz = fem.Function(self.FS)
+
+        if ctrl.model_shear>0: 
+            b_shear = fem.petsc.assemble_vector(fem.form(self.shear_heating))
+            b_shear.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+
+            f_viz.x.array[:] = b_shear.array
+            f_viz.x.scatter_forward()
+
+            print_ph(f"shear min/max: {f_viz.x.array.min()*sc.Watt/sc.L**3:.3e}, {f_viz.x.array.max()*sc.Watt/sc.L**3:.3e}")
+            print_ph(f"nonzero: {np.count_nonzero(f_viz.x.array)}")
+            
+            
+        S.shear_heating = f_viz.copy()
         
         print_ph(f'              // -- // --- Solution of Temperature  in {time_B-time_A:.2f} sec // -- // --->')
 
@@ -895,7 +881,7 @@ class Global_thermal(Problem):
         it_inner = 0 
         time_A = timing.time()
         print_ph('              [//] Picard iterations for the non linear temperature problem')
-        while it_inner < ctrl.it_max and tol > ctrl.tol:
+        while (it_inner < ctrl.it_max and tol > ctrl.tol) or it_inner < 2:
             time_ita = timing.time()
             
             if it_inner == 0: 
@@ -924,7 +910,7 @@ class Global_thermal(Problem):
                                     ,g_input=g_input
                                     ,pdb=pdb
                                     ,sc=sc
-                                    ,it = it_inner)
+                                    ,it_inner = it_inner)
                 else: 
                     A,_ = self.set_linear(p=S.PL
                                     ,T_k=T_k
@@ -937,7 +923,7 @@ class Global_thermal(Problem):
                                     ,dt=ctrl.dt
                                     ,g_input=g_input
                                     ,sc=sc
-                                    ,it = it_inner)
+                                    ,it_inner = it_inner)
                     
             T_k1 = self.solve_the_linear(S,A,L,T_k1,1,it)
             T_k1.x.scatter_forward()

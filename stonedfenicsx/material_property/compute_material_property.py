@@ -393,7 +393,16 @@ def compute_plastic_strain(e_II:fem.Expression
     # sto modo creativo di fare gli esponenti. 
     etads     = 0.5 * cds**(-n_inv) * e_II**n_co
     etadf     = 0.5 * cdf**(-1)
-    eta_av    = 1 / (1 / etads + 1/etadf + 1/pdb.eta_max)
+    
+    if pdb.option_eta[phwz] == 0: 
+        eta_av = eta_con
+    if pdb.option_eta[phwz] == 1: 
+        eta_av = 1/(1/etadf + 1/pdb.eta_max)
+    if pdb.option_eta[phwz] == 3: 
+       eta_av = 1/(1/etads + 1/pdb.eta_max)
+    elif pdb.option_eta[phwz] == 2: 
+        eta_av    = 1 / (1 / etads + 1/etadf + 1/pdb.eta_max)
+
     
     # -> Compute the tau lim 
     tau_lim  = pdb.cohesion * cos(pdb.friction_angle) + P_in * sin (pdb.friction_angle)
@@ -405,14 +414,9 @@ def compute_plastic_strain(e_II:fem.Expression
     
     tau_eff = ufl.conditional(tau_vis > tau_lim, tau_lim, tau_vis)
 
-    e_plr2    = (e_II - (tau_eff / 2 /eta_av)) / (e_II+1e-12)
-    
-    
-    e_plr = ufl.conditional(e_plr2 < 0.0, 0.0, e_plr2)
+    # tau_eff = tau_vis * ufl.tanh(tau_lim/tau_vis)
 
-
-
-    return e_plr, tau_eff
+    return tau_eff
 #-----------------------------------------------------------------------------
 @njit
 def heat_conductivity(pdb:PhaseDataBase
@@ -507,3 +511,11 @@ def compute_thermal_properties(pdb,T,p,ph):
     
     return Cp, rho, k 
 #----------------------------------------------------------------------------------
+
+
+    
+    
+    
+    
+    
+    

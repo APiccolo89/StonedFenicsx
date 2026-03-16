@@ -47,7 +47,7 @@ class  ScalarSolver(Solvers):
         self.b = fem.petsc.create_vector(fem.form(L)) # Store the vector
         self.ksp = PETSc.KSP().create(COMM)           # Create the ksp object 
         self.ksp.setOperators(self.A)                # Set Operator
-        iterative = 1 
+        iterative = 0 
         if iterative == 1: 
         
             self.ksp.setType("fgmres")

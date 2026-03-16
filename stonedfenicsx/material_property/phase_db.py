@@ -9,7 +9,10 @@ Dic_rheo={'Constant'              :  'Linear',
           'Van_Keken_diff'         :  'Diffusion_vanKeken',
           'Van_Keken_disl'         :  'Dislocation_vanKeken',
           'Hirth_Wet_Olivine_diff' :  'Diffusion_WetOlivine',
-          'Hirth_Wet_Olivine_disl' :  'Dislocation_WetOlivine'
+          'Hirth_Wet_Olivine_disl' :  'Dislocation_WetOlivine',
+          'WetPlagio_diff' : 'Diffusion_WetPlagio',
+          'WetPlagio_disl' :'Dislocation_WetPlagio',
+          'Serpentinite_disl' : 'Serpentinite_disl',
           }
 #-----
 Dic_conductivity ={'Constant'     :  'Constant',
@@ -31,6 +34,39 @@ Dic_alpha = {'Constant'                               : 'Constant',
              'Crust'                                  : 'Crust'}
 
 #-----------------------------------------------------------------------------------------------------------
+@dataclass
+class Reference:
+    """Reference of data from literature.
+    
+    Attributes
+    ----------
+    name_original : str
+        The original source of the parameters
+    authors : str
+        Authors of the original work
+    year : int
+        Year of publication
+    source_data : str
+        Paper from which the data have been effectively taken
+    doi : str
+        Digital object identifier
+    journal : str
+        Journal of publication
+    notes : str
+        Additional notes required for understanding (verbose text).
+        e.g. errors from the source, additional corrections,
+        suspicious information, or lack of specific information.
+    """
+    name_original: str
+    authors: str
+    year: int
+    source_data: str
+    doi: str = ''
+    journal: str = ''
+    notes: str = ''
+    
+
+
 class thermal_expansivity():
     def __init__(self): 
         alpha0 = 2.832e-5
@@ -116,6 +152,39 @@ class Rheological_data_Base():
         d0 = 1
         water = 158.4893
         self.Dislocation_WetPlagio  = Rheological_flow_law(E,V,n,m,d0,B,2,1,r,water,q,gamma,taup)
+        E = 89000
+        V = 3.2e-6
+        n = 3.8
+        B = 2.82e-15
+        r = 0.0 
+        d0 = 0.0
+        ref_serpentinite = Reference(name_original='High-pressure creep of serpentine, interseismic deformation, and initiation of subduction',
+                                     year = 2007, 
+                                     authors='Hilairet, N., Reynard, B., Wang, Y., Daniel, I., Merkel, S., Nishiyama, N., & Petitgirard, S. (2007)',
+                                     doi='https://doi.org/10.1126/science.1148494',
+                                     source_data = 'Deep decoupling in subduction zones: Observations and temperature limits, Abers et al 2020. Table:S3',
+                                     journal='Science',
+                                     notes=(' Data from Abers comes from Table 1'
+                                            ', main source (1 and 4 GPa). Seems uniaxial because they used D-Dia deformation apparatus and according to wikipedia',
+                                            'is uniaxial: https://en.wikipedia.org/wiki/D-DIA',
+                                            'Additional note: I checked the real data, and if I do not apply the correction, yields the same result'))
+        self.Serpentinite_disl = Rheological_flow_law(E=E,V=V,n=n,B=B,F=2,MPa=1,r=r,ref=ref_serpentinite)
+        E = 135.0e3
+        V = 0.0 
+        n = 4.0 
+        B = 6.309573444801943e-12
+        r = 0.0
+        d0 = 0.0
+        ref_Wetquartzite = Reference(name_original='An evaluation of quartzite flow laws based on comparisons between experimentally and naturally deformed rocks',
+                                     authors='Hirth, G., Teyssier, C. & Dunlap, James W.',
+                                     year=2001,
+                                     doi='https://doi.org/10.1007/s005310000152',
+                                     source_data = 'Deep decoupling in subduction zones: Observations and temperature limits, Abers et al 2020. Table:S3',
+                                     journal='Int J Earth Sci',
+                                     notes = ('As usual: in Table S3, the pre-exponential factor is given in a unknown unit: MPa (n+r)/s.',
+                                              'The real unit is MPa^-n/s. I do not find any information on the type of experiment, so I put 0 F correction in the DB'))
+        self.wetquartzite = Rheological_flow_law(E=E,V=V,n=n,B=B,F=0,MPa=1,r=r,ref=ref_Wetquartzite)
+        
         # Diffusion creep 
         E = 375.0e3
         V = 5e-6
@@ -250,7 +319,36 @@ class Rheological_flow_law():
     """
     Class that contains the rheological flow law parameters. 
     """
-    def __init__(self,E=0.0,V=0.0,n=0.0,m=0.0,d0=0.0,B=0.0,F=0,MPa=0,r=0,water=1.0,q=0,gamma=0,taup=0):
+    """Class that stores the information of the rheological flow law 
+    
+    E = Activation energy [joule/mol] 
+    V = Activation volume [m3/mol]
+    m = grain size exponent [nd]
+    d = grain size 
+    B = Pre-exponential factor [Pa^-n,s^-1]
+    R = Gas constant
+    q = Peirls creep exponent
+    gamma = Peirls creep exponent
+    taup = Peirls creep critical stress [Pa]
+    ref = ref of of the current rheological law [Title and Doi]
+    """
+    
+    
+    def __init__(self
+                 ,E:float=0.0
+                 ,V:float=0.0
+                 ,n:float=0.0
+                 ,m:float=0.0
+                 ,d0:float=0.0
+                 ,B:float=0.0
+                 ,F:float=0
+                 ,MPa:int=0
+                 ,r:float=0
+                 ,water:float=1.0
+                 ,q:float=0
+                 ,gamma:float=0
+                 ,taup:float=0
+                 ,ref:str = ''):
         self.E = E
         self.V = V
         self.n = n
@@ -261,6 +359,7 @@ class Rheological_flow_law():
         self.q  = q
         self.gamma = gamma
         self.taup = taup
+        self.ref = ref
     #-----------------------------------------------------------------------------------------------------------
     def _correction(self,B,F=0,n=1,m=0,MPa=0,d0=0,r=0,water=0):
         """Correction for the rheological flow law parameters, to account for the typology of the experiment, the unit of measure and the water content and grain size.
@@ -617,7 +716,7 @@ def _generate_phase(PD:PhaseDataBase,
     if name_diffusion == 'Constant' and name_dislocation == 'Constant' and eta == -1e23:
             PD.eta[id] = PD.eta_def
     elif name_diffusion == 'Constant' and name_dislocation == 'Constant' and eta != -1e23:
-        PD.eta[id] = PD.eta_def # in case of constant viscosity, this value will be used. In case of non-constant viscosity, this value will be ignored.
+        PD.eta[id] = eta # in case of constant viscosity, this value will be used. In case of non-constant viscosity, this value will be ignored.
     else: 
         PD.eta[id] = 0.0 # in case of non-constant viscosity, this value will be ignored. I set it to 0.0 to avoid any confusion.
 
@@ -627,12 +726,12 @@ def _generate_phase(PD:PhaseDataBase,
         option_rheology = 0
     elif name_dislocation == 'Constant': 
         option_rheology = 1
-    else: 
+    elif name_dislocation != 'Constant' and name_diffusion != 'Constant': 
         option_rheology = 2 
+    elif name_dislocation != 'Constant' and name_diffusion == 'Constant': 
+        option_rheology = 3 
     
-    if name_diffusion == 'Constant' and name_dislocation != 'Constant':
-        raise ValueError(f"Error Phase id = {id:d}:: If the diffusion creep is constant, the dislocation creep should be constant as well. Please check your input.")
-        
+
         
     PD.option_eta[id] = option_rheology
     
@@ -927,3 +1026,33 @@ def mantle_heat_capacity(flag: list) -> Tuple[float,float,float,float,float,floa
       
     
 
+
+if __name__ == '__main__': 
+    
+    # Create a small rheology 
+    
+    T = np.linspace(273.15,1600,num=500)
+    P = np.linspace(0,3e9,num=1000)
+    TT,PP = np.meshgrid(T,P)
+    
+    A = _check_rheological('Serpentinite_disl')
+    
+    e_ii = 1e-12
+    
+    expt = (A.E + A.V * PP)/(A.R * TT)
+    
+    compl = A.B * np.exp(-expt)
+    nconv = (1-A.n)/A.n
+    eta = compl ** (-1/A.n) * e_ii ** (nconv) 
+    
+    import matplotlib.pyplot as plt 
+    
+    fig = plt.figure()
+    plt.pcolormesh(TT,PP,np.log10(eta));plt.colorbar()
+    
+    
+    
+    
+    
+    
+    

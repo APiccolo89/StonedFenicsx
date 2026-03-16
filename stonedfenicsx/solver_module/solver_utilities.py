@@ -24,7 +24,7 @@ def decoupling_function(z,fun,g_input):
     trans = g_input.trans/g_input.decoupling
     
 
-    fun.x.array[:] = 1-0.5 * ((1)+(1)*np.tanh((z2-dc)/(trans/4)))
+    fun.x.array[:] = 1-0.5 * ((1.0)+(1.0)*np.tanh((z2-dc)/(trans/4)))
     # Parallel operation 
     fun.x.scatter_forward()
     
@@ -161,6 +161,9 @@ def compute_residuum_outer(sol
     print_ph(f'    []Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  {res_total:.3e} [n.d.] ')
     print_ph('. =============================================// -- // --->')
     print_ph('')
+    
+    sol.T_N = update_solution(sol.T_N,T,ctrl.relax)
+    sol.u_global = update_solution(sol.u_global,u,ctrl.relax)
 
     sol.mT = np.append(sol.mT,minMaxT[0])
     sol.MT = np.append(sol.MT,minMaxT[1])

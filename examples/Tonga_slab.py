@@ -58,17 +58,17 @@ def perform_test(args:argparse.Namespace = None, plate:str = 'Tonga'):
     inp.sub_path = f'/Users/wlnw570/Work/Leeds/Fenics_tutorial/example_slab_surfaces/{plate}_slab.pz'
     print_ph('Starting the benchmark tests with different options')
 
-    alpha_nameC = 'Crust'
-    alpha_nameM = 'Mantle'
-    density_nameC = 'PT'
-    density_nameM = 'PT'
-    capacity_nameM = 'Bermann_Aranovich_Fo_Fa_0_1'
-    capacity_nameC = 'Oceanic_Crust'
-    conductivity_nameM = 'Mantle'
-    conductivity_nameC = 'Oceanic_Crust'
+    alpha_nameC = 'Constant'#'Crust'
+    alpha_nameM = 'Constant'#'Mantle'
+    density_nameC = 'Constant'#'PT'
+    density_nameM = 'Constant'#'PT'
+    capacity_nameM = 'Constant'#'Bermann_Aranovich_Fo_Fa_0_1'
+    capacity_nameC = 'Constant'#'Oceanic_Crust'
+    conductivity_nameM = 'Constant'#'Mantle'
+    conductivity_nameC = 'Constant'#'Oceanic_Crust'
     rho0_M = 3300.0
-    rho0_C = 2800.0
-    radio_flag = 1 
+    rho0_C = 3300.0
+    radio_flag = 0 
 
 
     name_diffusion = 'Van_Keken_diff'
@@ -120,11 +120,13 @@ def perform_test(args:argparse.Namespace = None, plate:str = 'Tonga'):
     Ph.overriding_lower_crust.name_density = density_nameC
     Ph.overriding_lower_crust.radio_flag = radio_flag
 
-    Ph.virtual_weak_zone.name_diffusion = 'Hirth_Wet_Olivine_disl'
-    Ph.virtual_weak_zone.name_dislocation = 'Hirth_Wet_Olivine_disl' 
+    #Ph.virtual_weak_zone.name_diffusion = 'WetPlagio_diff'
+    Ph.virtual_weak_zone.name_dislocation = 'WetPlagio_disl' 
+    #Ph.virtual_weak_zone.Vdis = 0.0 
+    #Ph.virtual_weak_zone.Vdif = 0.0 
+    #Ph.virtual_weak_zone.eta = 1e20
 
-
-    inp.sname = f'{plate}_tmax{int(np.floor(args.max_time))}_vc{int(np.floor(args.convergent_velocity))}_{args.shear_heating}_pr{MPI.COMM_WORLD.Get_size():d}'
+    inp.sname = f'{plate}_tmax{int(np.floor(args.max_time))}_vc{int(np.floor(args.convergent_velocity))}_{args.shear_heating}_pr{MPI.COMM_WORLD.Get_size():d}_wz{Ph.virtual_weak_zone.name_dislocation}_C'
 
     # Initialise the input
     inp.van_keken = van_keken
@@ -166,7 +168,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--convergent_velocity",type=float,default=8.0)
-    parser.add_argument("--steady_state",type=int,default=0)
+    parser.add_argument("--steady_state",type=int,default=1)
     parser.add_argument("--shear_heating",type=str,default='SelfConsistent')
     parser.add_argument("--max_time",type=float,default=30.0)
     args = parser.parse_args()

@@ -219,7 +219,7 @@ Input:
     decoupling: 80000.0
     resolution_normal: 2000.0
     transition: 10000.0
-    wz_tk: 2000.0
+    wz_tk: 500.0
     sub_Lb: 300000.0
     sub_dl: 10000.0
     sub_theta0: 5

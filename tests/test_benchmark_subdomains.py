@@ -458,17 +458,17 @@ if __name__ == '__main__':
     
     DEBUG = True
     
-    test_isoviscous()
+    #test_isoviscous()
     
-    test_diffusion()
+    #test_diffusion()
     
-    test_composite()
+    #test_composite()
     
-    test_composite_thermal_non_linear()
+    #test_composite_thermal_non_linear()
     
-    test_composite_thermal_non_linear_crust()
+    #test_composite_thermal_non_linear_crust()
     
-    test_composite_decoupling()
+    #test_composite_decoupling()
     
     test_composite_shear_heating()
 
