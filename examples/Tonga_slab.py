@@ -58,14 +58,14 @@ def perform_test(args:argparse.Namespace = None, plate:str = 'Tonga'):
     inp.sub_path = f'/Users/wlnw570/Work/Leeds/Fenics_tutorial/example_slab_surfaces/{plate}_slab.pz'
     print_ph('Starting the benchmark tests with different options')
 
-    alpha_nameC = 'Constant'#'Crust'
-    alpha_nameM = 'Constant'#'Mantle'
-    density_nameC = 'Constant'#'PT'
-    density_nameM = 'Constant'#'PT'
-    capacity_nameM = 'Constant'#'Bermann_Aranovich_Fo_Fa_0_1'
-    capacity_nameC = 'Constant'#'Oceanic_Crust'
-    conductivity_nameM = 'Constant'#'Mantle'
-    conductivity_nameC = 'Constant'#'Oceanic_Crust'
+    alpha_nameC = 'Crust'#'Constant'#
+    alpha_nameM = 'Mantle'#'Mantle'
+    density_nameC = 'PT'#'PT'
+    density_nameM = 'PT'#'PT'
+    capacity_nameM = 'Bermann_Aranovich_Fo_Fa_0_1'#'Bermann_Aranovich_Fo_Fa_0_1'
+    capacity_nameC = 'Oceanic_Crust'#'Oceanic_Crust'
+    conductivity_nameM = 'Mantle'#'Mantle'
+    conductivity_nameC = 'Oceanic_Crust'#'Oceanic_Crust'
     rho0_M = 3300.0
     rho0_C = 3300.0
     radio_flag = 0 
@@ -121,12 +121,12 @@ def perform_test(args:argparse.Namespace = None, plate:str = 'Tonga'):
     Ph.overriding_lower_crust.radio_flag = radio_flag
 
     #Ph.virtual_weak_zone.name_diffusion = 'WetPlagio_diff'
-    Ph.virtual_weak_zone.name_dislocation = 'WetPlagio_disl' 
+    Ph.virtual_weak_zone.name_dislocation = 'Serpentinite_disl' 
     #Ph.virtual_weak_zone.Vdis = 0.0 
     #Ph.virtual_weak_zone.Vdif = 0.0 
     #Ph.virtual_weak_zone.eta = 1e20
 
-    inp.sname = f'{plate}_tmax{int(np.floor(args.max_time))}_vc{int(np.floor(args.convergent_velocity))}_{args.shear_heating}_pr{MPI.COMM_WORLD.Get_size():d}_wz{Ph.virtual_weak_zone.name_dislocation}_C'
+    inp.sname = f'{plate}_tmax{int(np.floor(args.max_time))}_vc{int(np.floor(args.convergent_velocity))}_{args.shear_heating}_pr{MPI.COMM_WORLD.Get_size():d}_wz{Ph.virtual_weak_zone.name_dislocation}_NL'
 
     # Initialise the input
     inp.van_keken = van_keken

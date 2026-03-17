@@ -816,15 +816,15 @@ class Global_thermal(Problem):
         f_viz = fem.Function(self.FS)
 
         if ctrl.model_shear>0: 
-            b_shear = fem.petsc.assemble_vector(fem.form(self.shear_heating))
-            b_shear.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+            u_trial = ufl.TrialFunction(self.FS)
+            v_test  = ufl.TestFunction(self.FS)
+            dx = ufl.Measure("dx", domain=M.domainG.mesh)
 
-            f_viz.x.array[:] = b_shear.array
-            f_viz.x.scatter_forward()
+            a_mass = (u_trial * v_test * dx)
+            problem = LinearProblem(a_mass, (self.shear_heating))
+            f_viz = problem.solve()
 
-            print_ph(f"shear min/max: {f_viz.x.array.min()*sc.Watt/sc.L**3:.3e}, {f_viz.x.array.max()*sc.Watt/sc.L**3:.3e}")
-            print_ph(f"nonzero: {np.count_nonzero(f_viz.x.array)}")
-            
+            print("shear min/max:", f_viz.x.array.min(), f_viz.x.array.max())            
             
         S.shear_heating = f_viz.copy()
         
