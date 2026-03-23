@@ -21,11 +21,15 @@ Input:
     time_dependent: 0
     dt_sim: 0.015            # Myr (15000/1e6)
     adiabatic_heating: 0
-    phi: 5.0
     self_consistent_flag: 1
     stokes_solver_type : "Direct"
 
-
+  Shear_Heating: 
+    model_shear: "NoShear"
+    phi: 5.0 
+    cohesion: 10e6 
+    dislocation_creep_wz: "WetQuartzite"
+    
   InputOutputControl:
     test_name: "Output"
     sname: "Output"
@@ -182,30 +186,7 @@ Input:
       radio_flag : 0 
       Hr : 0.0 
 
-    virtual_weak_zone:
-      name_diffusion : 'Constant'
-      name_dislocation : 'Constant'
-      name_alpha : 'Constant'
-      name_density : 'Constant'
-      name_capacity: 'Constant'
-      name_conductivity: 'Constant'
-      eta : 1.0e20 
-      rho0 : 3300.0 
-      k : 3.0
-      Cp : 1250 
-      alpha0 : 3e-5
-      Bdiff : null
-      Bdisl : null 
-      Ediff : null
-      Edisl : null 
-      Vdiff : null 
-      Vdisl : null
-      n : null 
-      radio_flag : 0 
-      Hr : 0.0 
   # Place holder for time-dependent left boundary condition
-
-
   time_dependent_left_bc:
     constant_age: 1 
     constant_vel: 1

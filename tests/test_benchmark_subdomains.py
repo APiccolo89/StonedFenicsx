@@ -138,6 +138,8 @@ def perform_test(option_viscous:int = 0
     inp.ocr = 6.0e3  # Crustal thickness
     inp.lit_mt = 50e3  # Lithospheric mantle depth 
     inp.lab_d = inp.lit_mt  # depth of the lab 
+    inp.sub_constant_flag = 1 
+
     if option_decoupling == 0: 
     
         inp.decoupling = 50e3  # decoupling depth
@@ -211,7 +213,7 @@ def perform_test(option_viscous:int = 0
         name_diffusion = 'Van_Keken_diff'
         name_dislocation = 'Constant'       
     elif option_viscous == 2: 
-        name_diffusion = 'Van_Keken_diff'
+        name_diffusion = 'Constant'
         name_dislocation = 'Van_Keken_disl'                 
 
     # Modify the phase with the new data: 
@@ -260,15 +262,12 @@ def perform_test(option_viscous:int = 0
     Ph.overriding_lower_crust.name_density = density_nameC
     Ph.overriding_lower_crust.radio_flag = radio_flag
 
-    Ph.virtual_weak_zone.name_diffusion = 'Hirth_Wet_Olivine_disl'
-    Ph.virtual_weak_zone.name_dislocation = 'Hirth_Wet_Olivine_disl' 
-
 
     inp.sname = f'Test_vi{option_viscous}_th{option_thermal}_dc{option_decoupling}_sh{option_shear_heating}'
 
     # Initialise the input
     inp.van_keken = van_keken
-
+    
 
     StonedFenicsx(inp, Ph)
 
@@ -470,7 +469,6 @@ if __name__ == '__main__':
     
     #test_composite_decoupling()
     
-    test_composite_shear_heating()
 
     
 

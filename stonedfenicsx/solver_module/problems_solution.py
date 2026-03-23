@@ -396,11 +396,12 @@ class Global_thermal(Problem):
                 # Place holder function
                 from stonedfenicsx.utils import evaluate_material_property
                 dS = ufl.Measure("dS", domain=D.mesh, subdomain_data=D.facets)
-                tau_eff = self.compute_friction_shear_expression(pdb,ctrl,D,T_k,p,ctrl.v_s[0],decoupling,g_input.wz_tk,sc)
+                tau_eff, tau_vs,tau_lim = self.compute_friction_shear_expression(pdb,ctrl,D,T_k,p,ctrl.v_s[0],decoupling,g_input.wz_tk,sc)
                 
                 from stonedfenicsx.utils import evaluate_material_property
-                
-                
+
+
+
                 friction_heat = tau_eff * decoupling * ctrl.v_s[0]
                 
                 expression = friction_heat('+') * self.test0('+') * (dS(D.bc_dict['Subduction_top_lit']) + dS(D.bc_dict['Subduction_top_wed']))
@@ -427,13 +428,13 @@ class Global_thermal(Problem):
 
         reg_strain = fem.Constant(decoupling.function_space.mesh,np.float64(1e-20 /(1/sc.T)))
 
-        e_II_fr = reg_strain + (vs * decoupling * 1 /wz_tk)  # Second invariant strain rate
+        e_II_fr = reg_strain + 0.5 * (vs * decoupling * 1 /wz_tk)  # Second invariant strain rate
 
         # -> compute the plastic strain rate
 
-        tau = compute_plastic_strain(e_II_fr,T,P,pdb,D.phase,ctrl.phase_wz-1,sc)
+        tau, tau_vs, tau_lim = compute_plastic_strain(e_II_fr,T,P,pdb,D.phase,ctrl.phase_wz-1,sc)
 
-        return tau
+        return tau, tau_vs, tau_lim 
             
     
     def set_newton_SS(self,p,D,T,u_global,pdb):
@@ -764,16 +765,7 @@ class Global_thermal(Problem):
         else: 
             self.set_linear = self.set_linear_picard_TD
             self.compute_residual = self.compute_residual_TD
-        
-    
-        self.shear_heating = self.compute_shear_heating(ctrl=ctrl
-                                                        ,pdb=pdb
-                                                        ,T_k=S.T_N
-                                                        ,p=S.PL
-                                                        ,D=M.domainG
-                                                        ,g_input=M.g_input
-                                                        ,sc=sc)
-            
+                    
         if it == 0:         
             self.compute_energy_source(getattr(M,'domainG'),FG)
         
@@ -816,6 +808,15 @@ class Global_thermal(Problem):
         f_viz = fem.Function(self.FS)
 
         if ctrl.model_shear>0: 
+            
+            facets1                = M.domainG.facets.find(M.domainG.bc_dict['Subduction_top_lit'])
+            facets2                = M.domainG.facets.find(M.domainG.bc_dict['Subduction_top_wed'])
+
+            facet_seismogenic = np.unique(np.concatenate((facets1,facets2)))
+
+            dofs              = fem.locate_dofs_topological(self.FS, M.domainG.mesh.topology.dim-1, facet_seismogenic)
+            
+            
             u_trial = ufl.TrialFunction(self.FS)
             v_test  = ufl.TestFunction(self.FS)
             dx = ufl.Measure("dx", domain=M.domainG.mesh)
@@ -862,7 +863,7 @@ class Global_thermal(Problem):
         
         return fen_function
 
-
+#--------------------------------------------------------------------------------------------------------------
     def solve_the_non_linear(self
                             ,M
                             ,S
@@ -882,6 +883,15 @@ class Global_thermal(Problem):
         time_A = timing.time()
         print_ph('              [//] Picard iterations for the non linear temperature problem')
         while (it_inner < ctrl.it_max and tol > ctrl.tol) or it_inner < 2:
+            
+            self.shear_heating = self.compute_shear_heating(ctrl=ctrl
+                                                        ,pdb=pdb
+                                                        ,T_k=T_k
+                                                        ,p=S.PL
+                                                        ,D=M.domainG
+                                                        ,g_input=M.g_input
+                                                        ,sc=sc)
+
             time_ita = timing.time()
             
             if it_inner == 0: 

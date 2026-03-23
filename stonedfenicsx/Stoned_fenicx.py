@@ -28,6 +28,7 @@ dict_stokes = {'Direct':np.int32(1),
 
 def generate_phase_database(IP,Phin)->PhaseDataBase:
     from stonedfenicsx.utils import Phase
+    from stonedfenicsx.material_property.phase_db import fill_up_weakzone_data
     pdb = PhaseDataBase(7,friction_angle=IP.phi*np.pi/180,eta_max=IP.eta_max)
 
     phase = Phase()
@@ -98,6 +99,15 @@ def generate_phase_database(IP,Phin)->PhaseDataBase:
                                 Vdis              = phase.Vdis if hasattr(phase, 'Vdis') else -1e23,
                                 Bdis              = phase.Bdis if hasattr(phase, 'Bdis') else -1e23,
                                 eta               = phase.eta if hasattr(phase, 'eta') else 1e20)
+        
+        # Update the rheological data of the virtual weak zone. 
+    
+    
+    pdb = fill_up_weakzone_data(ch = IP.cohesion 
+                                    ,phi = np.radians(IP.phi)
+                                    ,eta_wz = IP.eta_wz 
+                                    ,dislocation_creep=IP.dislocation_creep_wz
+                                    ,pdb=pdb)
 
     return pdb 
 
@@ -138,7 +148,9 @@ def fill_geometrical_input(IP)->Geom_input:
     g_input.trans = IP.transition
     g_input.sub_path = IP.sub_path
     g_input.wz_tk = IP.wz_tk
-    g_input.sub_constant_flag = IP.van_keken
+    if IP.van_keken and not IP.sub_constant_flag:
+        raise ValueError("Error: Van Keken Benchmarks cannot run with a variable bending angle")
+    g_input.sub_constant_flag = IP.sub_constant_flag
     
     fields_g_input = fields(g_input)
     
@@ -203,7 +215,6 @@ def StonedFenicsx(IP,Ph_input):
                             van_keken        = IP.van_keken,
                             van_keken_case   = IP.van_keken_case,
                             model_shear      = dict_options[IP.model_shear],
-                            phase_wz         = IP.phase_wz,
                             dt = IP.dt_sim,
                             adiabatic_heating = IP.adiabatic_heating,
                             Tmax=IP.Tmax,
