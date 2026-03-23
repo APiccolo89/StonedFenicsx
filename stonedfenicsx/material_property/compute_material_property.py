@@ -369,54 +369,44 @@ def compute_plastic_strain(e_II:fem.Expression
     P = P_in.copy()
     T.x.array[:] = T.x.array[:]*sc.Temp  ;T.x.scatter_forward()
     P.x.array[:] = P.x.array[:]*sc.stress;P.x.scatter_forward()
-    P0    = T.function_space
     
     # Gather material parameters as UFL expressions via indexing
-    Bdif    = fem.Function(P0,name = 'Bdif')  ; Bdif.x.array[:]    =  pdb.Bdif[phwz]
-    Bdis    = fem.Function(P0,name = 'Bdis')  ; Bdis.x.array[:]    =  pdb.Bdis[phwz]
-    n       = fem.Function(P0,name = 'n')     ; n.x.array[:]       =  pdb.n[phwz]
-    Edif    = fem.Function(P0,name = 'Edif')  ; Edif.x.array[:]    =  pdb.Edif[phwz]
-    Edis    = fem.Function(P0,name = 'Edis')  ; Edis.x.array[:]    =  pdb.Edis[phwz]
-    Vdif    = fem.Function(P0,name = 'Vdif')  ; Vdif.x.array[:]    =  pdb.Vdif[phwz]
-    Vdis    = fem.Function(P0,name = 'Vdis')  ; Vdis.x.array[:]    =  pdb.Vdis[phwz]
+    Bdis =  pdb.Bdis_wz
+    n    =  pdb.n_wz
+    Edis =  pdb.Edis_wz
+    Vdis =  pdb.Vdis_wz
+    EH2O = pdb.EH20_wz
+    VH2O = pdb.VH20_wz
+    Tref = pdb.Tref * sc.Temp 
+    Pref = pdb.Pref * sc.stress 
+ 
     
     # In case the viscosity for the given phase is constant 
-    eta_con     = fem.Function(P0) ; eta_con.x.array[:]     =  pdb.eta[phwz]
+    Bcon     = 1/(2 * pdb.eta_wz)
     # Option for eta for a given marker number ph 
-    opt_eta = fem.Function(P0)  ; opt_eta.x.array[:] =  pdb.option_eta[phwz]
-    # strain indipendent  
-    cdf = Bdif * exp(-(Edif + P * Vdif )/(pdb.R * T)) ; cds = Bdis * exp(-(Edis + P * Vdis)/(pdb.R * T))
-    # compute tau guess
-    n_co  = (1-n)/n
-    n_inv = 1/n 
-    # Se esiste un cazzo di inferno in culo a Satana ci vanno quelli che hanno generato 
-    # sto modo creativo di fare gli esponenti. 
-    etads     = 0.5 * cds**(-n_inv) * e_II**n_co
-    etadf     = 0.5 * cdf**(-1)
-    
-    if pdb.option_eta[phwz] == 0: 
-        eta_av = eta_con
-    if pdb.option_eta[phwz] == 1: 
-        eta_av = 1/(1/etadf + 1/pdb.eta_max)
-    if pdb.option_eta[phwz] == 3: 
-       eta_av = 1/(1/etads + 1/pdb.eta_max)
-    elif pdb.option_eta[phwz] == 2: 
-        eta_av    = 1 / (1 / etads + 1/etadf + 1/pdb.eta_max)
 
+
+    # strain indipendent  
+    cds = Bdis * exp(-(Edis + P * Vdis)/(pdb.R * T)) 
+    # compute tau guess
+    
+    if pdb.water_cor == 2: 
+        water = exp(-(EH2O+P*VH2O)/(pdb.R * T))/exp(-(EH2O+Pref*VH2O)/(pdb.R * Tref))
+        cds = cds * water ** (pdb.r_wz)
+        
+    
     
     # -> Compute the tau lim 
     tau_lim  = pdb.cohesion * cos(pdb.friction_angle) + P_in * sin (pdb.friction_angle)
-    
-    tau_vis  = 2 * eta_av * e_II
-    
-    
-    # check if the option_eta -> constant or not, otherwise release the composite eta 
-    
-    tau_eff = ufl.conditional(tau_vis > tau_lim, tau_lim, tau_vis)
 
-    # tau_eff = tau_vis * ufl.tanh(tau_lim/tau_vis)
+    if pdb.vis_con_fl == 0: 
+        tau_vis  = cds ** (-1/n) * e_II**(1/n) 
+    else: 
+        tau_vis = Bcon ** (-1) * e_II 
 
-    return tau_eff
+    tau_eff = tau_vis * ufl.tanh(tau_lim/tau_vis)
+
+    return tau_eff, tau_vis, tau_lim
 #-----------------------------------------------------------------------------
 @njit
 def heat_conductivity(pdb:PhaseDataBase

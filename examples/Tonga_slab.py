@@ -70,7 +70,7 @@ def perform_test(args:argparse.Namespace = None, plate:str = 'Tonga'):
     rho0_C = 3300.0
     radio_flag = 0 
 
-
+    inp.dislocation_creep_wz = 'Serpentinite_disl'
     name_diffusion = 'Van_Keken_diff'
     name_dislocation = 'Van_Keken_disl'                 
 
@@ -121,17 +121,15 @@ def perform_test(args:argparse.Namespace = None, plate:str = 'Tonga'):
     Ph.overriding_lower_crust.radio_flag = radio_flag
 
     #Ph.virtual_weak_zone.name_diffusion = 'WetPlagio_diff'
-    Ph.virtual_weak_zone.name_dislocation = 'Serpentinite_disl' 
+    
     #Ph.virtual_weak_zone.Vdis = 0.0 
     #Ph.virtual_weak_zone.Vdif = 0.0 
     #Ph.virtual_weak_zone.eta = 1e20
 
-    inp.sname = f'{plate}_tmax{int(np.floor(args.max_time))}_vc{int(np.floor(args.convergent_velocity))}_{args.shear_heating}_pr{MPI.COMM_WORLD.Get_size():d}_wz{Ph.virtual_weak_zone.name_dislocation}_NL'
+    inp.sname = f'{plate}_tmax{int(np.floor(args.max_time))}_vc{int(np.floor(args.convergent_velocity))}_{args.shear_heating}_pr{MPI.COMM_WORLD.Get_size():d}_wz{inp.dislocation_creep_wz}_NL'
 
     # Initialise the input
     inp.van_keken = van_keken
-
-
     StonedFenicsx(inp, Ph)
 
     time_B = timing.time()
