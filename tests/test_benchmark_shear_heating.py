@@ -168,7 +168,7 @@ def perform_test(option_thermal:int = 0
 
 
 
-    inp.sname = f'Shear_heating_tests_oTh{option_thermal}_wz{inp.dislocation_creep_wz}_fr{int(np.degrees(friction_angle))}'
+    inp.sname = f'Shear_heating_tests_oTh{option_thermal}_wz{inp.dislocation_creep_wz}_fr{int(inp.phi)}'
 
     # Initialise the input
     inp.van_keken = 0
@@ -190,37 +190,20 @@ def perform_test(option_thermal:int = 0
         print(f"{inp.sname} took  {dt:.2f} sec")
     print('#---------------------------------------------------#')
 #-------------------------------------------------------------------------------
-def read_data_base(option_viscous:int = 0, option_thermal:int=0,option_decoupling:int = 0, option_shear_heating:int=0)->None:
-
-    # Test Van Keken
-    perform_test(option_viscous=0, option_decoupling=1)
-    # Read Data Base and compare data
-    if MPI.COMM_WORLD.rank == 0: 
-        read_data_base(option_viscous=0, option_decoupling=1)
-    # Remove folder after completing the test
-    if DEBUG == False:
-        
-        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
 #-------------------------------------------------------------------------------
 def test_composite_shear_heating(friction_angle = np.radians(0)):
     # Test Van Keken
-    perform_test(option_thermal=0,friction_angle=friction_angle)
+    perform_test(option_thermal=2,friction_angle=friction_angle)
     # Read Data Base and compare data
-    if MPI.COMM_WORLD.rank == 0: 
-        read_data_base(option_viscous=2,option_decoupling=1,option_shear_heating=1)
-    # Remove folder after completing the test
-    if DEBUG == False:
-        
-        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
 #-------------------------------------------------------------------------------
 if __name__ == '__main__': 
     
     DEBUG = True
     test_composite_shear_heating()
-    test_composite_shear_heating(friction_angle=np.radians(2))
-    test_composite_shear_heating(friction_angle=np.radians(5))
-    test_composite_shear_heating(friction_angle=np.radians(10))
-    test_composite_shear_heating(friction_angle=np.radians(15))
+    test_composite_shear_heating(friction_angle=2)
+    test_composite_shear_heating(friction_angle=5)
+    test_composite_shear_heating(friction_angle=10)
+    test_composite_shear_heating(friction_angle=15)
     
 
     

@@ -29,7 +29,7 @@ dict_stokes = {'Direct':np.int32(1),
 def generate_phase_database(IP,Phin)->PhaseDataBase:
     from stonedfenicsx.utils import Phase
     from stonedfenicsx.material_property.phase_db import fill_up_weakzone_data
-    pdb = PhaseDataBase(7,friction_angle=IP.phi*np.pi/180,eta_max=IP.eta_max)
+    pdb = PhaseDataBase(6,eta_max=IP.eta_max)
 
     phase = Phase()
     dict_ph_in = Phin.__dict__

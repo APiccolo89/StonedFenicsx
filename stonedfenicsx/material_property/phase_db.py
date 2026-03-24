@@ -666,8 +666,6 @@ spec_phase = [
     ("eta_min",float64),    # minimum viscosity [Pas]
     ("eta_max",float64),    # max viscosity [Pas]
     ("eta_def",float64),    # default viscosity [Pas]
-    ("friction_angle",float64),
-    ('cohesion',float64),
     
     # Weak Zone Parameters 
     ('Edis_wz',float64),
@@ -681,7 +679,9 @@ spec_phase = [
     ('water_cor',int32),
     ('r_wz',float64),
     ('vis_con_fl',int32),
-    ('eta_wz',float64)
+    ('eta_wz',float64),
+    ("phi",float64),
+    ('cohesion',float64),
 ]   
 
 #-----------------------------------------------------------------------------------------------------------
@@ -689,7 +689,6 @@ spec_phase = [
 class PhaseDataBase:
     def __init__(self
                  ,number_phases:int
-                 ,friction_angle:float
                  ,eta_max:float
                  ,d=0.5):
         # Initialize individual fields as arrays
@@ -706,9 +705,7 @@ class PhaseDataBase:
         self.eta_def        = 1e21    # Default viscosity [Pas]
         self.T_Scal         = 1.      # Default temperature scale
         self.P_Scal         = 1.      # Default Pressure scale 
-        self.friction_angle = friction_angle
         self.id             = np.zeros(number_phases, dtype=np.int32)
-        self.cohesion       = 10e6 
         self.A              = 1.8 * (1 - np.exp(-d**1.3 / 0.15)) - (1 - np.exp(-d**0.5 / 5.0))
         self.B              = 11.7 * np.exp(-d / 0.159) + 6.0 * np.exp(-d**3 / 10.0)
         self.T_A            = 490.0 + 1850.0 * np.exp(-d**0.315 / 0.825) + 875.0 * np.exp(-d / 0.18)
@@ -769,7 +766,7 @@ class PhaseDataBase:
         self.rho0       = np.zeros(number_phases, dtype=np.float64)               # Reference density [kg/m^3] {In case of constant density}
         self.option_rho = np.zeros(number_phases, dtype=np.int32)                 # Option for density calculation
         
-        
+        # Virtual Shear zone
         self.Edis_wz = 0.0
         self.Vdis_wz = 0.0
         self.n_wz = 0.0
@@ -782,6 +779,9 @@ class PhaseDataBase:
         self.vis_con_fl = 0 
         self.r_wz = 0.0
         self.eta_wz    = 0.0
+        self.phi = 0.0
+        self.cohesion  = 0
+
   
         
 
@@ -1226,6 +1226,9 @@ def fill_up_weakzone_data(ch:float = 10e6
     pdb.VH20_wz = A.VH20 
     if dislocation_creep == 'Constant':
         pdb.vis_con_fl = 1
+    pdb.phi = phi 
+    pdb.cohesion = ch
+        
             
     return pdb 
 

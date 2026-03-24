@@ -801,7 +801,7 @@ class Global_thermal(Problem):
 
         else: 
             
-            S = self.solve_the_non_linear(M,S,ctrl,FG,geom,sc,pdb)
+            S = self.solve_the_non_linear(M,S,ctrl,FG,geom,sc,pdb,it)
         
         time_B = timing.time()
         

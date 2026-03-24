@@ -369,7 +369,7 @@ def compute_plastic_strain(e_II:fem.Expression
     P = P_in.copy()
     T.x.array[:] = T.x.array[:]*sc.Temp  ;T.x.scatter_forward()
     P.x.array[:] = P.x.array[:]*sc.stress;P.x.scatter_forward()
-    
+    P0 = P_in.function_space
     # Gather material parameters as UFL expressions via indexing
     Bdis =  pdb.Bdis_wz
     n    =  pdb.n_wz
@@ -379,7 +379,9 @@ def compute_plastic_strain(e_II:fem.Expression
     VH2O = pdb.VH20_wz
     Tref = pdb.Tref * sc.Temp 
     Pref = pdb.Pref * sc.stress 
- 
+    Ch    = fem.Function(P0)     ; Ch.x.array[:]     = pdb.cohesion; Ch.x.scatter_forward()
+    FrA   = fem.Function(P0)     ; FrA.x.array[:]     = pdb.phi; FrA.x.scatter_forward()
+
     
     # In case the viscosity for the given phase is constant 
     Bcon     = 1/(2 * pdb.eta_wz)
@@ -397,7 +399,7 @@ def compute_plastic_strain(e_II:fem.Expression
     
     
     # -> Compute the tau lim 
-    tau_lim  = pdb.cohesion * cos(pdb.friction_angle) + P_in * sin (pdb.friction_angle)
+    tau_lim  = Ch * cos(FrA) + P_in * sin(FrA) #Ch * cos(FrA) +
 
     if pdb.vis_con_fl == 0: 
         tau_vis  = cds ** (-1/n) * e_II**(1/n) 
