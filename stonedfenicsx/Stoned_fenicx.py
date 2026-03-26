@@ -98,7 +98,9 @@ def generate_phase_database(IP,Phin)->PhaseDataBase:
                                 Edis              = phase.Edis if hasattr(phase, 'Edis') else -1e23,
                                 Vdis              = phase.Vdis if hasattr(phase, 'Vdis') else -1e23,
                                 Bdis              = phase.Bdis if hasattr(phase, 'Bdis') else -1e23,
-                                eta               = phase.eta if hasattr(phase, 'eta') else 1e20)
+                                eta               = phase.eta if hasattr(phase, 'eta') else 1e20,
+                                k = phase.k,
+                                radio=phase.Hr)
         
         # Update the rheological data of the virtual weak zone. 
     

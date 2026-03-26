@@ -119,7 +119,7 @@ def outerloop_operation(M:Mesh,
     # Initialise the it outer and residual outer 
     it_outer = 0 
     res      = 1
-    debug =1 
+    debug =0  
     if debug == 1: 
         out_deb = OUTPUT(M.domainG,ioctrl,ctrl,sc)
     

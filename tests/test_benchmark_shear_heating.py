@@ -44,7 +44,7 @@ def perform_test(option_thermal:int = 0
     # Create input data - Input is a class populated by default dataset
     # A flag that generate the geometry of the benchmark
     # The input path for saving the results
-    inp.path_test = f'{path_test}/Tests_Van_keken'
+    inp.path_test = f'{path_test}/ShearHeating'
 
     # Geometrical input
     inp.cr = 0.0   # Overriding crust 
@@ -200,7 +200,6 @@ if __name__ == '__main__':
     
     DEBUG = True
     test_composite_shear_heating()
-    test_composite_shear_heating(friction_angle=2)
     test_composite_shear_heating(friction_angle=5)
     test_composite_shear_heating(friction_angle=10)
     test_composite_shear_heating(friction_angle=15)

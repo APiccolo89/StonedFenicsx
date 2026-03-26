@@ -805,7 +805,7 @@ def _generate_phase(PD:PhaseDataBase,
                     name_conductivity:str  = 'Constant',
                     name_alpha:str         = 'Constant',
                     name_density:str       = 'PT',
-                    radio:float = 0.0,
+                    radio:float = 0.0,                    
                     radio_flag:float = 0)     -> PhaseDataBase:
     """ Generate a phase with the specified properties and add it to the phase database.
     Args:

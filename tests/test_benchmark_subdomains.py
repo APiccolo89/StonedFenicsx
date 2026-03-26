@@ -433,10 +433,10 @@ def test_composite_thermal_non_linear_crust():
 #----------------------------------------------------------------------------------
 def test_composite_decoupling():
     # Test Van Keken
-    perform_test(option_viscous=0, option_decoupling=1)
+    perform_test(option_viscous=2, option_decoupling=1)
     # Read Data Base and compare data
     if MPI.COMM_WORLD.rank == 0: 
-        read_data_base(option_viscous=0, option_decoupling=1)
+        read_data_base(option_viscous=2, option_decoupling=1)
     # Remove folder after completing the test
     if DEBUG == False:
         
@@ -467,7 +467,7 @@ if __name__ == '__main__':
     
     #test_composite_thermal_non_linear_crust()
     
-    #test_composite_decoupling()
+    test_composite_decoupling()
     
 
     
