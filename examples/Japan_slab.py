@@ -34,14 +34,14 @@ def perform_test(args:argparse.Namespace = None, plate:str = 'Tonga'):
     van_keken = 0
     # The input path for saving the results
     inp.path_test = f'{path_test}/{plate}'
-    inp.c_age_plate = 10.0 
+    inp.c_age_plate = 30.0 
     # Velocity of slab 
     inp.v_s = np.array([args.convergent_velocity,0],dtype=np.float64)
     inp.time_max = args.max_time
     inp.decoupling_ctrl = 1
     inp.model_shear = args.shear_heating
     # Geometrical input
-    inp.cr =45.0e3   # Overriding crust 
+    inp.cr =40.0e3   # Overriding crust 
     inp.lc = 0.2   # relative amount of lower crust
     inp.ocr = 6.0e3  # Crustal thickness
     inp.lit_mt = 80e3  # Lithospheric mantle depth 
@@ -176,7 +176,7 @@ def perform_test(args:argparse.Namespace = None, plate:str = 'Tonga'):
     print('#---------------------------------------------------#')
 #-------------------------------------------------------------------------------
 
-def test(args:argparse.Namespace=None,plate:str='Mexico'):
+def test(args:argparse.Namespace=None,plate:str='Japan'):
     perform_test(args, plate)
 
 #-------------------------------------------------------------------------------
@@ -185,11 +185,11 @@ if __name__ == '__main__':
     DEBUG = True
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--convergent_velocity",type=float,default=4.7)
+    parser.add_argument("--convergent_velocity",type=float,default=6.0)
     parser.add_argument("--steady_state",type=int,default=1)
     parser.add_argument("--shear_heating",type=str,default='SelfConsistent')
     parser.add_argument("--max_time",type=float,default=30.0)
-    parser.add_argument("--option_thermal",type=int,default = 1)
+    parser.add_argument("--option_thermal",type=int,default = 0)
     args = parser.parse_args()
     
     test(args)
