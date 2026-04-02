@@ -882,7 +882,7 @@ class Global_thermal(Problem):
         it_inner = 0 
         time_A = timing.time()
         print_ph('              [//] Picard iterations for the non linear temperature problem')
-        while (it_inner < ctrl.it_max and tol > ctrl.tol) or it_inner < 2:
+        while (it_inner < ctrl.it_max and tol > ctrl.tol_innerPic) or it_inner < 2:
             
             self.shear_heating = self.compute_shear_heating(ctrl=ctrl
                                                         ,pdb=pdb
@@ -1125,8 +1125,8 @@ class Global_pressure(Problem):
         
         print_ph('              [//] Picard iterations for the non linear lithostatic pressure problem')
 
-        tol = 1.0
-        while it_inner < ctrl.it_max and tol > ctrl.tol_innerPic:
+        res = 1.0
+        while it_inner < ctrl.it_max and res > ctrl.tol_innerPic:
             time_ita = timing.time()
             
             if it_inner == 0:
@@ -1137,7 +1137,7 @@ class Global_pressure(Problem):
             p_k1 = self.solve_the_linear(S,A,L,p_k1,1,it_inner,1) 
 
             # L2 norm 
-            tol = compute_residuum(p_k1,p_k)
+            res = compute_residuum(p_k1,p_k)
             
             time_itb = timing.time()
             print_ph(f'              []L_2 norm is {tol:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')

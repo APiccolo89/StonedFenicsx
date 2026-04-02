@@ -86,9 +86,9 @@ from data_extractor import Test
 import csv
 
 Peridotite = PseudoSection('/Users/wlnw570/Work/Leeds/Fenics_tutorial/examples/Petrological_routines/mantle_h2O/mantle_tab_def.tab')
-Basalt = PseudoSection('/Users/wlnw570/Work/Leeds/Fenics_tutorial/examples/Petrological_routines/basalt_h2O/basalt_tab_def.tab')
+Basalt = PseudoSection('/Users/wlnw570/Work/Leeds/Fenics_tutorial/examples/Petrological_routines/basalt_h2O/basalt_h2O_table_def.tab')
 
-Tst = Test('/Users/wlnw570/Work/Leeds/Fenics_tutorial/examples/Mexico/Mexico_tmax30_vc4_SelfConsistent_pr2_wzWetQuartzite_disl_0')
+Tst = Test('/Users/wlnw570/Work/Leeds/Fenics_tutorial/examples/Japan/Japan_tmax30_vc6_SelfConsistent_pr1_wzWetQuartzite_disl_0')
 # Extract Coordinate: 
 
 X = Tst.MeshData.X 
@@ -133,10 +133,14 @@ for i in range(n_points):
 fig = plt.figure()
 ax = fig.gca()
 
+fig = plt.figure()
+ax2 = fig.gca()
 
 
 while t < 10e6 * 365.25 * 24 * 60 * 60:
+    rho = np.zeros([n_points,],dtype=np.float64)
     water = np.zeros([n_points,],dtype=np.float64)
+    dwater = np.zeros([n_points,],dtype=np.float64)
     for i in range(n_points):
         Pt.v[i,0] = interp_vx(Pt.x[i],Pt.y[i])*0.01/(365.25 * 24 * 60 * 60)
         Pt.v[i,1] = interp_vy(Pt.x[i],Pt.y[i])*0.01/(365.25 * 24 * 60 * 60)
@@ -146,14 +150,27 @@ while t < 10e6 * 365.25 * 24 * 60 * 60:
         Pt.y[i] = Pt.y[i] + dy 
         Pt.T[i] = interp_T(Pt.x[i],Pt.y[i])+273.15
         Pt.P[i] = interp_P(Pt.x[i],Pt.y[i])*1e9
-        water[i] = inter_phase((Pt.T[i],Pt.P[i]))
+        if Pt.phase[i] == 0: 
+            water[i] = Basalt.inter_water((Pt.T[i],Pt.P[i]))
+            rho[i] = Basalt.rho_interp((Pt.T[i],Pt.P[i]))
+        elif Pt.phase[i] == 1:
+            water[i] = Peridotite.inter_water((Pt.T[i],Pt.P[i]))
+            rho[i] = Peridotite.rho_interp((Pt.T[i],Pt.P[i]))
 
-    
     a=ax.scatter(Pt.x,Pt.y,c=water,vmin=0,vmax=3)
+    a2 = ax2.scatter(Pt.x,Pt.y,c=rho,vmin=2800,vmax=3600)
     t = t + dt 
     print(f' t = {t/(365.25 * 24 * 60 * 60 * 1e6):.3f} Myr')
 
 plt.colorbar(a,ax=ax)
+plt.colorbar(a2,ax=ax2)
+ax.set_xlabel('x (km)')
+ax.set_ylabel('y (km)')
+ax2.set_xlabel('x (km)')
+ax2.set_ylabel('y (km)')
+ax.set_title('Water content (wt%)')
+ax2.set_title('Density (kg/m^3)')
+plt.show()
 
         
         
