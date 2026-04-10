@@ -874,11 +874,11 @@ def _generate_phase(PD:PhaseDataBase,
         PD.n[id] = n 
         if PD.Bdis[id] != 0.0: 
             print('Warning: Stress pre-exponential factor has inconsistent measure [Pa^-ns^-1] wrt the original flow law')
-    elif Edis != -1e23: # if the user specify the activation energy, overwrite the value of the flow law
+    if Edis != -1e23: # if the user specify the activation energy, overwrite the value of the flow law
         PD.Edis[id] = Edis 
-    elif Vdis !=-1e23: # if the user specify the activation volume, overwrite the value of the flow law  
+    if Vdis !=-1e23: # if the user specify the activation volume, overwrite the value of the flow law  
         PD.Vdis[id] = Vdis 
-    elif Bdis != -1e23: # if the user specify the pre-exponential factor, overwrite the value of the flow law
+    if Bdis != -1e23: # if the user specify the pre-exponential factor, overwrite the value of the flow law
         PD.Bdis[id] = Bdis  
     
     if name_diffusion == 'Constant' and name_dislocation == 'Constant' and eta == -1e23:

@@ -238,7 +238,6 @@ def StonedFenicsx(IP,Ph_input):
                     slab_tk=IP.slab_tk,
                     recalculate = IP.recalculate,
                     van_keken = IP.van_keken,
-                    non_linearities=IP.self_consistent_flag,
                     c_age_plate = IP.c_age_plate)
     
     t_lhs = time_dependent_evolution(constant_age = IP.constant_age

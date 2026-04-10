@@ -243,11 +243,9 @@ def _compute_Cp_k_rho(ph   : NDArray[np.float64]
     
     
     it = len(T)
-    if flagNL == 0:
-        for i in range(it):
-            Cp[i], rho[i], k[i] = compute_thermal_properties(pdb,T[i],p[i],ph[i])
-    else: 
-        Cp[:] = CValues[0]; k[:] = CValues[1]; rho[:] = CValues[2] 
+    
+    for i in range(it):
+        Cp[i], rho[i], k[i] = compute_thermal_properties(pdb,T[i],p[i],ph[i])
 
     return Cp,k,rho
 #-----------------------------------------------------------------------------------------
