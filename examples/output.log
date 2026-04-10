@@ -1,0 +1,170 @@
+Starting the benchmark tests with different options
+Directory created: /mnt/scratch/wlnw570/StonedFenicsx/examples/Tonga/Output
+Generating phase 1 : subducting_plate_mantle, Phase Name : subducting_plate_mantle
+-----Rheological Parameters------
+Diffusion law  : Constant
+Dislocation law: Constant
+   eta  : 1.0e21 [Pas] 
+-----------------------------------
+-----Thermal Parameters------
+Density law       : PT
+Thermal capacity  : Bermann_Aranovich_Fo_Fa_0_1
+Thermal conductivity : Mantle
+Thermal expansivity : Mantle
+Radiogenic heating:  Radiogenic heating is not active
+   radiative conductivity flag : 1 
+   rho0 : 3300.0 
+-----------------------------------
+
+
+Generating phase 3 : wedge_mantle, Phase Name : wedge_mantle
+-----Rheological Parameters------
+Diffusion law  : Van_Keken_diff
+Dislocation law: Van_Keken_disl
+-----------------------------------
+-----Thermal Parameters------
+Density law       : PT
+Thermal capacity  : Bermann_Aranovich_Fo_Fa_0_1
+Thermal conductivity : Mantle
+Thermal expansivity : Mantle
+Radiogenic heating:  Radiogenic heating is not active
+   radiative conductivity flag : 1 
+   rho0 : 3300.0 
+-----------------------------------
+
+
+Generating phase 4 : overriding_mantle, Phase Name : overriding_mantle
+-----Rheological Parameters------
+Diffusion law  : Constant
+Dislocation law: Constant
+   eta  : 1.0e21 [Pas] 
+-----------------------------------
+-----Thermal Parameters------
+Density law       : PT
+Thermal capacity  : Bermann_Aranovich_Fo_Fa_0_1
+Thermal conductivity : Mantle
+Thermal expansivity : Mantle
+Radiogenic heating:  Radiogenic heating is not active
+   radiative conductivity flag : 1 
+   rho0 : 3300.0 
+-----------------------------------
+
+
+Generating phase 2 : oceanic_crust, Phase Name : oceanic_crust
+-----Rheological Parameters------
+Diffusion law  : Constant
+Dislocation law: Constant
+   eta  : 1.0e21 [Pas] 
+-----------------------------------
+-----Thermal Parameters------
+Density law       : PT
+Thermal capacity  : Oceanic_Crust
+Thermal conductivity : Oceanic_Crust
+Thermal expansivity : Crust
+Radiogenic heating:  Radiogenic heating is not active
+   radiative conductivity flag : 1 
+   rho0 : 3300.0 
+-----------------------------------
+
+
+Generating phase 5 : overriding_upper_crust, Phase Name : overriding_upper_crust
+-----Rheological Parameters------
+Diffusion law  : Constant
+Dislocation law: Constant
+   eta  : 1.0e21 [Pas] 
+-----------------------------------
+-----Thermal Parameters------
+Density law       : PT
+Thermal capacity  : Oceanic_Crust
+Thermal conductivity : Oceanic_Crust
+Thermal expansivity : Crust
+Radiogenic heating:  Radiogenic heating is not active
+   radiative conductivity flag : 1 
+   rho0 : 3300.0 
+-----------------------------------
+
+
+Generating phase 6 : overriding_lower_crust, Phase Name : overriding_lower_crust
+-----Rheological Parameters------
+Diffusion law  : Constant
+Dislocation law: Constant
+   eta  : 1.0e21 [Pas] 
+-----------------------------------
+-----Thermal Parameters------
+Density law       : PT
+Thermal capacity  : Oceanic_Crust
+Thermal conductivity : Oceanic_Crust
+Thermal expansivity : Crust
+Radiogenic heating:  Radiogenic heating is not active
+   radiative conductivity flag : 1 
+   rho0 : 3300.0 
+-----------------------------------
+
+
+Generating phase 7 : virtual_weak_zone, Phase Name : virtual_weak_zone
+-----Rheological Parameters------
+Diffusion law  : Hirth_Wet_Olivine_disl
+Dislocation law: Hirth_Wet_Olivine_disl
+-----------------------------------
+-----Thermal Parameters------
+Density law       : Constant
+Thermal capacity  : Constant
+Thermal conductivity : Constant
+Thermal expansivity : Constant
+Radiogenic heating:  Radiogenic heating is not active
+   radiative conductivity flag : 0 
+   rho0 : 3300.0 
+-----------------------------------
+Heat capacity 1250 J/kg/K
+-----------------------------------
+Thermal conductivity 3.0 W/m/K
+-----------------------------------
+
+
+----:Geometric input of the numerical simulation: 
+          0. x = [0.000, 660000.000] [m]
+          1. y = [-600000.000, 0.000] [m]
+          2. slab_tk = 130000.000 [m]
+          3. cr = 30000.000 [m]
+          4. ocr = 6000.000 [m]
+          5. lit_mt = 50000.000 [m]
+          6. lc = 0.300 [m]
+          7. ns_depth = 50000.000 [m]
+          8. decoupling = 80000.000 [m]
+          9. resolution_normal = 2000.000 [m]
+          10. resolution_refine = 2000.000 [m]
+          13. trans = 10000.000 [m]
+          14. lab_d = 50000.000 [m]
+          15. sub_type = File
+          16. sub_path = /mnt/scratch/wlnw570/StonedFenicsx/example_slab_surfaces/Tonga_slab.pz
+          17. sub_Lb = 300000.000 [m]
+          18. sub_constant_flag = 0.000 [n.d.]
+          19. sub_theta_0 = 5.000 [n.d.]
+                          => converted in rad. 
+          20. sub_theta_max = 45.000 [n.d.]
+                          => converted in rad. 
+          21. sub_trench = [0.000, 0.000] [m]
+          22. sub_dl = 10000.000 [m]
+          23. wz_tk = 2000.000 [m]
+----://////:---- 
+{ :  -   > Scaling <  -  : }
+         Material properties has been scaled following: 
+         L [length]   = 600000.000 [m]
+         Stress       = 1000000000.000 [Pa]
+         eta          = 1.000e+21 [Pas]
+         Temp         = 1333.00 [K]
+The other unit of measure are derived from this set of scaling
+{ <  -   : Scaling :  -  > }
+PETSc Error --- Application was linked against both OpenMPI and MPICH based MPI libraries and will not run correctly
+Finished to generate the curved loop for domain A [Subducting plate]
+Finished to generate the curved loop for domain B [Wedge]
+Finished to generate the curved loop for domain C [Crust]
+gmsh finalized
+ Reading global mesh and creating the global domain
+reading the mesh and convert it ... 
+PETSc Error --- Application was linked against both OpenMPI and MPICH based MPI libraries and will not run correctly
+Info    : Reading '/mnt/scratch/wlnw570/StonedFenicsx/examples/Tonga/Tonga_tmax30_vc8_NoShear_pr1.msh'...
+Info    : 1055 entities
+Info    : 78043 nodes
+Info    : 157745 elements
+Info    : [  0%] Reading elements                                                                                Info    : [ 10%] Reading elements                                                                                Info    : [ 20%] Reading elements                                                                                Info    : [ 30%] Reading elements                                                                                Info    : [ 40%] Reading elements                                                                                Info    : [ 50%] Reading elements                                                                                Info    : [ 60%] Reading elements                                                                                Info    : [ 70%] Reading elements                                                                                Info    : [ 80%] Reading elements                                                                                Info    : [ 90%] Reading elements                                                                                                                                                                Info    : Done reading '/mnt/scratch/wlnw570/StonedFenicsx/examples/Tonga/Tonga_tmax30_vc8_NoShear_pr1.msh'
