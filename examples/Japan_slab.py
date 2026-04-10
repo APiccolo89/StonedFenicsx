@@ -118,6 +118,8 @@ def perform_test(args:argparse.Namespace = None, plate:str = 'Tonga'):
 
     Ph.wedge_mantle.name_diffusion = name_diffusion
     Ph.wedge_mantle.name_dislocation = name_dislocation
+    Ph.wedge_mantle.Edis = 300e3
+    Ph.wedge_mantle.Vdis = 10e-6
     Ph.wedge_mantle.rho0 = rho0_M
     Ph.wedge_mantle.name_capacity = capacity_nameM 
     Ph.wedge_mantle.name_conductivity = conductivity_nameM
