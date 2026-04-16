@@ -882,7 +882,7 @@ class Global_thermal(Problem):
         it_inner = 0 
         time_A = timing.time()
         print_ph('              [//] Picard iterations for the non linear temperature problem')
-        while (it_inner < 10 and tol > ctrl.tol_innerPic) or it_inner < 2:
+        while (it_inner < ctrl.it_inner_max and tol > ctrl.tol_innerPic) or it_inner < 2:
             
             self.shear_heating = self.compute_shear_heating(ctrl=ctrl
                                                         ,pdb=pdb
@@ -1126,7 +1126,7 @@ class Global_pressure(Problem):
         print_ph('              [//] Picard iterations for the non linear lithostatic pressure problem')
 
         res = 1.0
-        while it_inner < 10 and res > ctrl.tol_innerPic:
+        while it_inner < ctrl.it_inner_max and res > ctrl.tol_innerPic:
             time_ita = timing.time()
             
             if it_inner == 0:
@@ -1610,7 +1610,7 @@ class Wedge(Stokes_Problem):
             
             res  = 1.0 
             it_inner   = 0 
-            while (res > ctrl.tol_innerPic) and it_inner < 10: 
+            while (res > ctrl.tol_innerPic) and it_inner < ctrl.it_inner_max: 
                 time_ita = timing.time()
                 if it_inner>0: 
                     a1,_,_, _,a_p = self.set_linear_picard(u_k,
