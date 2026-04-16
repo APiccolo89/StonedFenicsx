@@ -134,10 +134,8 @@ def create_gmesh(ioctrl   : IOControls,
      ,oc_cy
      ,g_input) = function_create_subducting_plate_geometry(g_input)
     
-    if slab_x[-1]>g_input.x[1]:
-        print_ph('Shortcoming: the slab is out of the domain, please increase the domain size, I add 60 km to the domain along x direction, fear not')
-        g_input.x[1] = slab_x[-1]+60e3
-        max_x        = g_input.x[1]
+    
+    g_input.x[1] = slab_x[-1]+60e3
         
     min_x           = g_input.x[0] # The beginning of the model is the trench of the slab
     max_x           = g_input.x[1]          
