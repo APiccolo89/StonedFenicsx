@@ -1,6 +1,7 @@
 Input:
   NumericalControls:
     it_max: 20
+    it_inner_max : 10 
     tol: 1.0e-5
     relax: 0.9
     Tmax: 1333.0
@@ -23,6 +24,7 @@ Input:
     adiabatic_heating: 0
     self_consistent_flag: 1
     stokes_solver_type : "Direct"
+    energy_solver_type : "Direct"
 
   Shear_Heating: 
     model_shear: "NoShear"

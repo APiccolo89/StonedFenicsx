@@ -334,6 +334,7 @@ class Input:
     # Numerical Controls
     # -----------------------------------------------------------------------------------------------------
     it_max: int = 20             # It max outer iteration and inner iteration
+    it_inner_max : int = 10      # maximal inner iteration
     tol: float = 1e-5            # residual for the outer iteration
     relax: float = 0.9           # Correction factor for the solution
     Tmax: float = 1333.0         # maximum temperature (mantle temperature) [deg C]
@@ -356,6 +357,7 @@ class Input:
     eta_max: float = 1.0e26 # Maximum viscosity 
     adiabatic_heating: int = 0  # adiabatic heating flag -> to remove
     stokes_solver_type : str = 'Direct'
+    energy_solver_type : str = 'Direct'
     iterative_solver_tol : float = 1e-10 
     self_consistent_flag:int = 1 # incoming plate thermal structure: 0 -> half space cooling model ; 1 -> self-consistent with material properties
 
@@ -367,14 +369,12 @@ class Input:
     cohesion: float = 10e6 
     dislocation_creep_wz:str = 'Constant'
     eta_wz:float = 1.0e20
-    
     # -----------------------------------------------------------------------------------------------------
     # input/output control
     # -----------------------------------------------------------------------------------------------------
     test_name: str = "Output"
     sname: str = "Output"
     path_test: str = "../Results"
-
     # -----------------------------------------------------------------------------------------------------
     # Scaling parameters
     # -----------------------------------------------------------------------------------------------------
@@ -382,7 +382,6 @@ class Input:
     stress: float = 1e9
     eta: float = 1e21
     Temp: float = 1333.0
-
     # -----------------------------------------------------------------------------------------------------
     # Left boundary condition
     # -----------------------------------------------------------------------------------------------------
@@ -393,32 +392,28 @@ class Input:
     van_keken: int = 1
     c_age_plate: float = 50.0
     flag_radio: float = 0.0
-
     #-----------------------------------------------------------------------------------------------------
     # Left bc time controls
     #----------------------------------------------------------------------------------------------------
-
     constant_age: int = 1 
     constant_vel:int =  1
     t_age : float = field(default_factory=lambda: np.array([0.0, 30.0]))
     t_vel : float =  field(default_factory=lambda: np.array([0.0, 30.0]))
     age_plate : float =  field(default_factory=lambda: np.array([0.0, 30.0]))
     vel_plate : float = field(default_factory=lambda: np.array([0.0, 30.0]))
-    
-
     # -----------------------------------------------------------------------------------------------------
     # Geometry
     # -----------------------------------------------------------------------------------------------------
     x: NDArray[float] = field(default_factory=lambda: np.array([0.0, 660e3]))
     y: NDArray[float] = field(default_factory=lambda: np.array([-600e3, 0.0]))
-
+    
     slab_tk: float = 130e3
     cr: float = 30e3
     ocr: float = 7e3
     lit_mt: float = 20e3
     lc: float = 0.3
     wc: float = 2.0e3
-
+    
     ns_depth: float = 50e3
     lab_d: float = 100e3
     decoupling: float = 80e3

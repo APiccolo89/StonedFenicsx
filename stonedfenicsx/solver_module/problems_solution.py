@@ -784,7 +784,7 @@ class Global_thermal(Problem):
         self.bc = self.create_bc_temp(getattr(M,'domainG'),ctrl,geom,lhs,S.u_global,S.T_i,it)
 
         if it == 0 & ts == 0: 
-            self.solv = ScalarSolver(a,L,self.bc,M.comm)
+            self.solv = ScalarSolver(a,L,self.bc,M.comm,ctrl.energy_solver_type)
             
         
         print_ph('              // -- // --- Temperature problem [GLOBAL] // -- // --->')
@@ -1077,7 +1077,7 @@ class Global_pressure(Problem):
 
 
         if it_outer == 0 & ts == 0: 
-            self.solv = ScalarSolver(a,L,self.bc,M.comm)
+            self.solv = ScalarSolver(a,L,self.bc,M.comm,ctrl.energy_solver_type)
         
         print_ph('              // -- // --- LITHOSTATIC PROBLEM [GLOBAL] // -- // --- > ')
 

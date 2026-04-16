@@ -222,7 +222,9 @@ def StonedFenicsx(IP,Ph_input):
                             Tmax=IP.Tmax,
                             it_max=IP.it_max,
                             tol=IP.tol,
+                            it_inner_max = IP.it_inner_max,
                             stokes_solver_type=dict_stokes[IP.stokes_solver_type],
+                            energy_solver_type = dict_stokes[IP.stokes_solver_type],
                             rtolstokes = IP.iterative_solver_tol)
     # IO controls
     io_ctrl = IOControls(test_name = IP.test_name,

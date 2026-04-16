@@ -1,6 +1,7 @@
 Input:
   NumericalControls:
     it_max: 20
+    it_inner_max : 10 
     tol: 1.0e-5
     relax: 0.9
     Tmax: 1333.0
@@ -14,7 +15,7 @@ Input:
     steady_state: 1
     slab_bc: 1
     tol_innerPic: 1.0e-2
-    tol_innerNew: 1.0e-3
+    tol_innerNew: 1.0e-5
     van_keken_case: 2
     decoupling_ctrl: 1
     model_shear: "NoShear"
@@ -23,10 +24,11 @@ Input:
     adiabatic_heating: 0
     self_consistent_flag: 1
     stokes_solver_type : "Direct"
+    energy_solver_type : "Iterative"
 
   Shear_Heating: 
     model_shear: "NoShear"
-    phi: 10.0 
+    phi: 5.0 
     cohesion: 10e6 
     dislocation_creep_wz: "WetQuartzite"
     

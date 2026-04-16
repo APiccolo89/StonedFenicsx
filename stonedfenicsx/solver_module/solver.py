@@ -42,16 +42,16 @@ class  ScalarSolver(Solvers):
     Solve function require the problem P -> and a decision between linear and non linear -> form are handled by p class, so I do not give a fuck in this class 
     for now all the parameter will be default. 
     """
-    def __init__(self,a ,L,bcs ,COMM):
+    def __init__(self,a ,L, bcs ,COMM,direct =0):
         self.A = fem.petsc.create_matrix(fem.form(a)) # Store the sparsisity 
         self.b = fem.petsc.create_vector(fem.form(L)) # Store the vector
         self.ksp = PETSc.KSP().create(COMM)           # Create the ksp object 
         self.ksp.setOperators(self.A)                # Set Operator
-        iterative = 0 
-        if iterative == 1: 
+        direct_solver = direct 
+        if direct_solver == 0: 
         
             self.ksp.setType("fgmres")
-            self.ksp.setTolerances(rtol=1e-12, atol=1e-14)
+            self.ksp.setTolerances(rtol=1e-8, atol=1e-10, max_it=2000)
             self.pc = self.ksp.getPC()
             self.pc.setType("hypre")
         else: 
