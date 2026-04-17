@@ -358,7 +358,7 @@ class Input:
     adiabatic_heating: int = 0  # adiabatic heating flag -> to remove
     stokes_solver_type : str = 'Direct'
     energy_solver_type : str = 'Direct'
-    iterative_solver_tol : float = 1e-10 
+    iterative_solver_tol : float = 1e-9 
     self_consistent_flag:int = 1 # incoming plate thermal structure: 0 -> half space cooling model ; 1 -> self-consistent with material properties
 
     # -----------------------------------------------------------------------------------------------------
