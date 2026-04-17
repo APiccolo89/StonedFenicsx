@@ -656,15 +656,31 @@ class Global_thermal(Problem):
         diff = ufl.inner(k_k * ufl.grad(self.trial0), ufl.grad(self.test0)) * dx
             
         adv  = rho_k * Cp_k *ufl.dot(u_global, ufl.grad(self.trial0)) * self.test0 * dx
-            
-        a = fem.form(diff + adv)
+        
+        # SUPG 
+        
+        # --- SUPG parameter tau ---
+        h = ufl.CellDiameter(D.mesh)
+        
+        u_norm = ufl.sqrt(ufl.dot(u_global, u_global) + 1.0e-8)
+        # Simple tau based on advection
+        tau = h / (2.0 * u_norm+1e-12)
+        
+        
+        residual = (rho_k * Cp_k * ufl.dot(u_global, ufl.grad(self.trial0)))
+        
+        SUPG = tau * ufl.dot(u_global, ufl.grad(self.test0)) * residual * self.dx
+        
+        SUPG_L = tau * ufl.dot(u_global, ufl.grad(self.test0)) * f * self.dx
+
+        a = fem.form(diff + adv+SUPG)
         
         
         # Linear operator with frozen coefficients
         if it_inner != 0 and ctrl.model_shear>0:
-            L = fem.form((f) * self.test0 * dx + self.shear_heating) 
+            L = fem.form((f) * self.test0 * dx + SUPG_L +self.shear_heating) 
         else:     
-            L = fem.form((f) * self.test0 * dx ) 
+            L = fem.form((f) * self.test0 * dx +SUPG_L) 
                 
 
         return a, L
