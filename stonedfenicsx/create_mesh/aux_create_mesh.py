@@ -624,57 +624,73 @@ def find_slab_surface(g_input:Geom_input)->tuple([NDArray[float],NDArray[float]]
 
  
     if g_input.sub_type == 'Costum':
-        # Initialise the theta_mean and slab_top array
-        theta_mean = np.zeros([2],dtype=float)
-        slab_top   = np.zeros([2,2],dtype=float)
+        def wrapper_ribe(g_input):
+            def f(x):
+                return compute_bending_angle(g_input, x)
+            return f 
         
-        # compute the bending angle as a function of L
-        slab_top[0,0] = g_input.sub_trench[0]
-        slab_top[0,1] = 0.0
+        f_ribe = wrapper_ribe(g_input)
 
-        lgh = 0.0
-        lghn = 0.0
-
-        dl = g_input.sub_dl
-
-        it = 0 
-
-        statement = True 
-        while statement:
-            lghn += dl
-            theta1 = compute_bending_angle(g_input,lgh) # bending angle at the beginning of the segment
-            theta2 = compute_bending_angle(g_input,lghn) # bending angle at the end of the segment
-            theta = 0.5*(theta1+theta2) # mean bending angle
-            theta_mean[it]= theta
-            theta_meani_1 = theta
-            # Find the middle of the slab
-            slab_topi_ix = slab_top[it,0]+dl*(np.cos(theta)) # middle of the slab at the end of the segment x
-            slab_topi_iz = slab_top[it,1]-dl*(np.sin(theta)) # middle of the slab at the end of the segment z
-
-
-            if it+1 > len(slab_top[:,0])-1:
-                slab_top = np.vstack([slab_top,[slab_topi_ix,slab_topi_iz]])
-                theta_mean = np.append(theta_mean,theta_meani_1)
-            else: 
-                slab_top[it+1,0] = slab_topi_ix
-                slab_top[it+1,1] = slab_topi_iz
-                theta_mean[it] = theta
-                theta_mean[it+1] = theta
-            if g_input.y[0] != -1e23: 
-                x = slab_top[it+1,1]
-                statement = x > g_input.y[0]
-                if not statement:
-                    dz = slab_top[it,1] - g_input.y[0]
-                    dx = dz / np.tan(theta)
-                    slab_top[it+1,0] = slab_top[it,0] + dx
-                    slab_top[it+1,1] = g_input.y[0]
-            it = it+1
-            lgh = lghn
+        slab_top,theta_mean, _ = create_slab_surface(f_ribe,g_input.y[0],stp = g_input.sub_dl)
             
     else: 
-        raise ValueError("There is not yet any alternative to costum subduction yet, please, be patient")
+        from .read_slab_surface import read_file_slab
         
+        slab_top, theta_mean = read_file_slab(g_input.sub_path)
+        g_input.y[0] = np.min(slab_top[:,1])
+                
     return slab_top, theta_mean
+#-----------------------------------------------------------------------------------------------------------
+def create_slab_surface(f:callable, y_min:float,stp=float,depth:float=0.0)->tuple[NDArray[float],NDArray[float]]:
+    
+    # Initialise the theta_mean and slab_top array
+    theta_mean = np.zeros([2],dtype=float)
+    ell_s = np.zeros([2],dtype=float)
+    slab_top   = np.zeros([2,2],dtype=float)
+        
+    # compute the bending angle as a function of L
+    slab_top[0,0] = 0.0
+    slab_top[0,1] = depth
+    dl = stp
+    lghn = 0.0 
+    lgh = 0.0
+    it = 0 
+    statement = True 
+    while statement:
+        lghn += dl
+        theta1 = f(lgh) # bending angle at the beginning of the segment
+        theta = theta1 # mean bending angle
+        theta_mean[it]= theta
+        theta_meani_1 = theta
+        # Find the middle of the slab
+        slab_topi_ix = slab_top[it,0]+dl*(np.cos(theta)) # middle of the slab at the end of the segment x
+        slab_topi_iz = slab_top[it,1]-dl*(np.sin(theta)) # middle of the slab at the end of the segment z
+        ell_s[it] = lgh
+
+        if it+1 > len(slab_top[:,0])-1:
+            slab_top = np.vstack([slab_top,[slab_topi_ix,slab_topi_iz]])
+            theta_mean = np.append(theta_mean,theta_meani_1)
+            ell_s = np.append(ell_s,lgh)
+        else: 
+            slab_top[it+1,0] = slab_topi_ix
+            slab_top[it+1,1] = slab_topi_iz
+            theta_mean[it] = theta
+            theta_mean[it+1] = theta
+        if y_min != -1e23: 
+            x = slab_top[it+1,1]
+            statement = x > y_min
+            if not statement:
+                dz = slab_top[it,1] - y_min
+                dx = dz / np.tan(theta)
+                slab_top[it+1,0] = slab_top[it,0] + dx
+                slab_top[it+1,1] = y_min
+        it = it+1
+        lgh = lghn
+
+    
+    
+    
+    return slab_top,theta_mean,ell_s
 
 #------------------------------------------------------------------------------------------------------------
 def compute_bending_angle(g_input:Geom_input
@@ -761,11 +777,17 @@ def function_create_subducting_plate_geometry(g_input:Geom_input,
 
     ax = slab_top[:,0]
     ay = slab_top[:,1] 
-        
+
+    bx,by, lt = generate_parallel_layer_subducting_plate(ax,ay,theta_mean,g_input.slab_tk)
+    if lt != g_input.slab_tk: 
+        print('Warning: slab top surface have a curvature that is incompatible with the current slab thickness.')
+        print(f' Old Thickness: {g_input.slab_tk/1e3} [km] New Thickness: {lt/1e3} [km]')
+        g_input.slab_tk = lt
+
     # Create the channel using the subduction interface as guide
     #cx,cy = function_create_subduction_channel(ax,ay,theta_mean,g_input)
     if g_input.ocr != 0.0:
-        ox,oy = generate_parallel_layer_subducting_plate(ax,ay,theta_mean,g_input.ocr)
+        ox,oy,_ = generate_parallel_layer_subducting_plate(ax,ay,theta_mean,g_input.ocr)
     else: 
         ox = None
         oy = None 
@@ -776,7 +798,7 @@ def function_create_subducting_plate_geometry(g_input:Geom_input,
     # creating an unrealistic bending of the weak zone. Initially I was recomputing the angle 
     # between the linear segment, using an average. It is more convinient use two // lines and then 
     # correcting them. 
-    bx,by = generate_parallel_layer_subducting_plate(ax,ay,theta_mean,g_input.slab_tk)
+
 
     # update the g_input
     g_input.theta_in_slab = theta_mean[0]
@@ -823,6 +845,21 @@ def generate_parallel_layer_subducting_plate(sx:NDArray[np.float64],
     cy = np.zeros([np.amax(sx.shape),1])
     # Loop over the interface of the slab and find the points on the top of the surface of the subduction channel: the point on the of the top of the channel are perpendicular to the slab interface#
     # Compute the top surface of the subduction channel
+    
+    
+    ds    = np.sqrt(np.diff(sx)**2 + np.diff(sy)**2)
+    dth = np.diff(th)
+    dth_ds = dth/ds                  # [rad / m]
+
+
+    
+    kappa = np.zeros_like(sx)
+    kappa[1:] = np.abs(dth_ds)
+    
+    if 0.8 * np.nanmin(1/kappa) < lt: 
+        lt = np.floor(0.8 * np.min(1/kappa))
+    
+    
     cx = sx - lt*np.sin(th)
     cy = sy - lt*np.cos(th)
 
@@ -837,8 +874,10 @@ def generate_parallel_layer_subducting_plate(sx:NDArray[np.float64],
         cx_n[0] = 0.0 
         cy_n[0] = -lt/np.cos(th[0])
     
+    
+    
 
-    return cx_n,cy_n
+    return cx_n,cy_n,lt 
     
 #-----------------------------------------------------------------------------------------------------------------
   

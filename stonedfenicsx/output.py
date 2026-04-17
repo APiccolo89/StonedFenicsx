@@ -5,7 +5,8 @@
     
 from .package_import import *
 from .utils import evaluate_material_property,compute_strain_rate,compute_eII,print_ph
-from .compute_material_property import compute_viscosity_FX,density_FX,heat_capacity_FX,heat_conductivity_FX,alpha_FX
+from .material_property.compute_material_property import compute_viscosity_FX,density_FX,heat_capacity_FX,heat_conductivity_FX,alpha_FX
+
 
 
 
@@ -42,11 +43,13 @@ class OUTPUT():
             self.xdmf_main = XDMFFile(comm,
                                       os.path.join(self.pt_save, "time_dependent.xdmf"),
                                       "w")
+    
             # write mesh once
             coord = mesh.mesh.geometry.x.copy()
             mesh.mesh.geometry.x[:] *= sc.L/1e3
             self.xdmf_main.write_mesh(mesh.mesh)
             mesh.mesh.geometry.x[:] = coord
+            self.xdmf_main.close()
 
         else:
             self.xdmf_main = None
@@ -64,27 +67,28 @@ class OUTPUT():
                      ,ctrl             # Numerical control object
                      ,it_outer = 0     # outer iteration counter
                      ,time=0.0,        # current time
-                     ts=0):            # time step counter
+                     ts=0,
+                     debug=0):            # time step counter
         import os
         from dolfinx.io import XDMFFile
         if ctrl.steady_state == 1:
-            file_name = os.path.join(self.pt_save,'Steady_state')         
-        file_name2 = os.path.join(self.pt_save,'MeshTag')
+            file_name = os.path.join(self.pt_save,'Steady_state') 
+            if debug==1: 
+                file_name = os.path.join(self.pt_save,f'Steady_state{it_outer}') 
 
+                       
         # Velocity 
         u_T = fem.Function(self.vel_V)
         u_T.name = "Velocity  [cm/yr]"
         u_T.interpolate(S.u_global)
         u_T.x.array[:] = u_T.x.array[:]*(sc.L/sc.T)/sc.scale_vel
         u_T.x.scatter_forward()
-
         # Pressure
         p2 = fem.Function(self.temp_V)
         p2.name = "Pressure  [GPa]"
         p2.interpolate(S.p_global)
         p2.x.array[:] = p2.x.array[:]*sc.stress/1e9 
         p2.x.scatter_forward()  
-
         # Temperature
         T2 = fem.Function(self.temp_V)
         T2.name = "Temperature  [degC]"
@@ -101,7 +105,6 @@ class OUTPUT():
         T3.interpolate(S.T_O)
         T3.x.array[:] = T3.x.array[:]*sc.Temp - 273.15
         T3.x.scatter_forward()  
-
         # Lithostatic pressure
         PL2 = fem.Function(self.temp_V)
         PL2.name = "Lit Pres  [GPa]"
@@ -158,50 +161,69 @@ class OUTPUT():
         e_T.x.scatter_forward()
 
         # viscosity (e,S.t_oslab,S.p_lslab,pdb,D.phase,D,sc)
+
         eta = compute_viscosity_FX(eII,S.T_N,S.PL,FGR,sc)
         eta2 = evaluate_material_property(eta,self.temp_V)
         eta2.name = "eta  [Pa s]"
         eta2.x.array[:] = np.abs(eta2.x.array[:])*sc.eta
         eta2.x.scatter_forward()
 
-        T_ad    = fem.Function(self.temp_V)
-        if ctrl.adiabatic_heating == 0:
-            T_ad.interpolate(S.T_ad)
-            T_ad.x.array[:]    = T_ad.x.array[:]*sc.Temp -273.15
-        else:
-            T_ad.x.array[:]=-100 
-            T_ad.x.scatter_forward()
-        T_ad.name = 'Tad [C]'
-
         # heat flux 
+
         q_expr = - ( heat_conductivity_FX(FGT,S.T_O,S.PL,Cp,rho)* ufl.grad(S.T_N))  
         flux = evaluate_material_property(q_expr,self.vel_V)
         flux.name = 'Heat flux [W/m2]'
         flux.x.array[:] *= sc.Watt/sc.L**2
         
-        # Line Tag for the mesh and post_processing 
+        
+        shear_heating = fem.Function(self.temp_V)
+        shear_heating.name = 'H_s [W/m3]'
+        shear_heating.interpolate(S.shear_heating)
+        shear_heating.x.array[:] *= sc.Watt/sc.L**3
+        shear_heating.x.scatter_forward()
+        
+        # Line Tag for the mesh and post_processing -> Translating in parallel -> gather and sending 
         tag = fem.Function(self.temp_V)
         tag.name = 'MeshTAG'
-        marker_unique = np.unique(D.facets.values)
-        for i in range(len(marker_unique)):
-            facet_indices = D.facets.find(marker_unique[i])   # numpy array of facet ids
+        
+        boundary_list = np.array(list(D.bc_dict.values()),dtype=np.int32)
+        
+        for i in range(len(D.bc_dict.values())):
+            facet_indices = D.facets.find(boundary_list[i])   # numpy array of facet ids
             dofs = fem.locate_dofs_topological(self.temp_V, 1, facet_indices)
-            tag.x.array[dofs] = marker_unique[i]
-            tag.x.scatter_forward()
+            tag.x.array[dofs] = boundary_list[i]
         
-        with XDMFFile(MPI.COMM_WORLD, "%s.xdmf"%file_name2, "w") as ufile_xdmf:
+        tag.x.scatter_forward()
         
-            coord = D.mesh.geometry.x.copy()
-            D.mesh.geometry.x[:] *= sc.L/1e3
-            ufile_xdmf.write_mesh(D.mesh)
-            ufile_xdmf.write_function(tag)
-            D.mesh.geometry.x[:] = coord
+        
+        
+        comm = D.mesh.comm
+        tdim = D.mesh.topology.dim
 
+        # DG0 on cells
+        V0 = fem.functionspace(D.mesh, ("DG", 0))
+        part = fem.Function(V0, name="mpi_rank")
+
+        # Which cells are owned by this rank?
+        # cell index map: owned are [0, size_local)
+        imap = D.mesh.topology.index_map(tdim)
+        n_local = imap.size_local
+
+        # DG0 has one dof per cell, in the same ordering
+        # (this is true for standard DG0 on cells in dolfinx)
+        values = part.x.array
+        values[:n_local] = comm.rank
+        # ghosts (if present) can be left as-is; ParaView will still show partitioning
+        part.x.scatter_forward()
 
         if ctrl.steady_state == 0:
             # transient: append to ongoing XDMF with time
             # write each field at this physical_time
             # ...same for PL2, rho2, Cp2, k2, kappa2, e_T, eta2, flux
+            
+            self.xdmf_main = XDMFFile(comm, os.path.join(self.pt_save, "time_dependent.xdmf"),
+                                      "a")
+            
             self.xdmf_main.write_function(u_T,          time)
             self.xdmf_main.write_function(p2,           time)
             self.xdmf_main.write_function(T2,           time)
@@ -215,10 +237,14 @@ class OUTPUT():
             self.xdmf_main.write_function(e_T,          time)
             self.xdmf_main.write_function(eta2,         time)
             self.xdmf_main.write_function(flux,         time)
+            self.xdmf_main.write_function(shear_heating,         time)
             self.xdmf_main.write_function(tag,          time)
+            
+            self.close()
+        
         else:
             with XDMFFile(MPI.COMM_WORLD, "%s.xdmf"%file_name, "w") as ufile_xdmf:
-
+                print_ph('... Printing')
                 coord = D.mesh.geometry.x.copy()
                 D.mesh.geometry.x[:] *= sc.L/1e3
                 ufile_xdmf.write_mesh(D.mesh)
@@ -235,9 +261,12 @@ class OUTPUT():
                 ufile_xdmf.write_function(e_T  )
                 ufile_xdmf.write_function(eta2 )
                 ufile_xdmf.write_function(flux )
+                ufile_xdmf.write_function(shear_heating )
                 ufile_xdmf.write_function(tag )
+                ufile_xdmf.write_function(part)
                 D.mesh.geometry.x[:] = coord
-                
+                print_ph('... Finished')
+
 
 
 
@@ -253,31 +282,41 @@ class OUTPUT():
 #-----------------------------------------------------------------------------------------
 # Benchmarking functions    
 #-----------------------------------------------------------------------------------------
-def _benchmark_van_keken(S,ctrl_io,sc):
+def _benchmark_van_keken(S
+                         ,ctrl_io
+                         ,sc)->None:
     import h5py 
     from scipy.interpolate import griddata
     
     comm = MPI.COMM_WORLD
 
+
     lT = S.T_N.copy()
-    mpi_comm = lT.function_space.mesh.comm
-    array = lT.x.array
+    fs = lT.function_space
+    imap = fs.dofmap.index_map
+    n_owned = imap.size_local * fs.dofmap.bs  
+    array = lT.x.array[:n_owned].copy()
 
     # gather solution from all processes on proc 0
-    gT = mpi_comm.gather(array, root=0)
+    gT = comm.gather(array, root=0)
     
     XGl = S.T_N.function_space.tabulate_dof_coordinates()#gather_coordinates(S.T_O.function_space)
-    x  = XGl[:,0]
-    y  = XGl[:,1]
-    X_G = mpi_comm.gather(x,root=0)
-    Y_G = mpi_comm.gather(y,root=0)
+    x  = XGl[:n_owned,0]
+    y  = XGl[:n_owned,1]
+    X_G = comm.gather(x,root=0)
+    Y_G = comm.gather(y,root=0)
     
     if comm.rank == 0:
-        XG = np.zeros([len(X_G[0]),2])
-        XG[:,0] = X_G[0]
-        XG[:,1] = Y_G[0] 
-
-        T = gT[0]       
+        T_all = np.concatenate(gT)
+        X_global = np.concatenate(X_G)
+        Y_global = np.concatenate(Y_G)
+        
+        
+        
+        XG = np.zeros([len(X_global),2])
+        XG[:,0] = X_global
+        XG[:,1] = Y_global
+     
         x_g = np.array([np.min(XG[:,0]),np.max(XG[:,0])],dtype=np.float64)*sc.L
         y_g = np.array([np.min(XG[:,1]),np.max(XG[:,1])],dtype=np.float64)*sc.L
         nx   = 111 
@@ -294,8 +333,8 @@ def _benchmark_van_keken(S,ctrl_io,sc):
         p     = np.zeros((len(xt),2),dtype=np.float64)
         p[:,0] = xt 
         p[:,1] = yt
-        T_g   = griddata(p,T*sc.Temp,(X, Y), method='nearest')-273.15
-        T_g = T_g.transpose()
+        T_g   = griddata(p,T_all*sc.Temp,(X, Y), method='nearest')-273.15
+        T_g = T_g.T
         T = 0
         co = 0
         x_s=[]
@@ -352,6 +391,7 @@ def _benchmark_van_keken(S,ctrl_io,sc):
             del van_keken_db[name]
         
         van_keken_db.create_dataset(name,data=T_11_11)
+        
         name       = '%s/L2_A'%group_name
         
         if name in van_keken_db.keys():
@@ -379,6 +419,26 @@ def _benchmark_van_keken(S,ctrl_io,sc):
             del van_keken_db[name]
         van_keken_db.create_dataset(name,data = S.mT)
         
+        name = '%s/RMST'%group_name 
+        if name in van_keken_db.keys():
+            del van_keken_db[name]
+        van_keken_db.create_dataset(name,data = S.RMST)
+        
+        name = '%s/maxVel'%group_name 
+        if name in van_keken_db.keys():
+            del van_keken_db[name]
+        van_keken_db.create_dataset(name,data = S.Mv)
+        
+        name = '%s/minVel'%group_name 
+        if name in van_keken_db.keys():
+            del van_keken_db[name]
+        van_keken_db.create_dataset(name,data = S.mv)
+        
+        name = '%s/RMSv'%group_name 
+        if name in van_keken_db.keys():
+            del van_keken_db[name]
+        van_keken_db.create_dataset(name,data = S.RMSv)
+        
         name = '%s/ts'%group_name 
         if name in van_keken_db.keys():
             del van_keken_db[name]
@@ -386,4 +446,3 @@ def _benchmark_van_keken(S,ctrl_io,sc):
 
         van_keken_db.close()
 
-    return 0 

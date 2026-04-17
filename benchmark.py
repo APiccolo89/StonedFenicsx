@@ -8,9 +8,9 @@ from src.Stoned_fenicx import StonedFenicsx
 
 
 # option for the benchmark
-option_thermal = [0,1,2,3]
+option_thermal = [0]
 option_adiabatic = [0]
-option_viscous = [0, 1, 2]
+option_viscous = [2]
 self_con = [0, 1]
 
 
@@ -31,7 +31,7 @@ inp.decoupling = 50e3  # decoupling depth
 inp.ns_depth = 50e3
 inp.Tmax = 1300.0  # mantle potential temperature
 # inp.model_shear = 'SelfConsistent'
-inp.steady_state = 1
+inp.steady_state = 0
 print_ph('Starting the benchmark tests with different options')
 
 time_in = timethis.time()

@@ -1,4 +1,5 @@
 from .package_import import *
+from typing import get_type_hints, get_origin, get_args
 
 """  Note of developing: I know that the idea to generate an input file in yaml, for then filling up
     a temporary class that will be used to fill the real objects of computation seems convoluted and redundant.
@@ -319,7 +320,6 @@ class Ph_input():
         overriding_mantle : Phase = Phase()
         overriding_upper_crust : Phase = Phase()
         overriding_lower_crust : Phase = Phase()
-        virtual_weak_zone : Phase = Phase()
 
 
 def evaluate_material_property(expr, V):
@@ -334,6 +334,7 @@ class Input:
     # Numerical Controls
     # -----------------------------------------------------------------------------------------------------
     it_max: int = 20             # It max outer iteration and inner iteration
+    it_inner_max : int = 10      # maximal inner iteration
     tol: float = 1e-5            # residual for the outer iteration
     relax: float = 0.9           # Correction factor for the solution
     Tmax: float = 1333.0         # maximum temperature (mantle temperature) [deg C]
@@ -351,22 +352,29 @@ class Input:
     tol_innerNew: float = 1e-5      # To Remove
     van_keken_case: int = 2         # Van keken case -> to remove
     decoupling_ctrl: int = 1        # Activate the decoupling between overriding material and subducting slab
-    model_shear: str = "NoShear"    # Model for shear heating along the interaface
-    phase_wz: int = 7               # Virtual weakzone phase
     time_dependent: int = 1         # Depecrated 
     dt_sim: float = 15000 / 1e6  # Myr #timestep simulation
     eta_max: float = 1.0e26 # Maximum viscosity 
     adiabatic_heating: int = 0  # adiabatic heating flag -> to remove
-    
-    phi: float = 5.0            # Friction angle
+    stokes_solver_type : str = 'Direct'
+    energy_solver_type : str = 'Direct'
+    iterative_solver_tol : float = 1e-9 
     self_consistent_flag:int = 1 # incoming plate thermal structure: 0 -> half space cooling model ; 1 -> self-consistent with material properties
+
+    # -----------------------------------------------------------------------------------------------------
+    # Shear Heating controls 
+    # -----------------------------------------------------------------------------------------------------    
+    model_shear: str = "NoShear"
+    phi: float = 5.0 
+    cohesion: float = 10e6 
+    dislocation_creep_wz:str = 'Constant'
+    eta_wz:float = 1.0e20
     # -----------------------------------------------------------------------------------------------------
     # input/output control
     # -----------------------------------------------------------------------------------------------------
     test_name: str = "Output"
     sname: str = "Output"
     path_test: str = "../Results"
-
     # -----------------------------------------------------------------------------------------------------
     # Scaling parameters
     # -----------------------------------------------------------------------------------------------------
@@ -374,7 +382,6 @@ class Input:
     stress: float = 1e9
     eta: float = 1e21
     Temp: float = 1333.0
-
     # -----------------------------------------------------------------------------------------------------
     # Left boundary condition
     # -----------------------------------------------------------------------------------------------------
@@ -385,37 +392,28 @@ class Input:
     van_keken: int = 1
     c_age_plate: float = 50.0
     flag_radio: float = 0.0
-
-    # -----------------------------------------------------------------------------------------------------
-    # Phase/property selection flags + defaults
-    # -----------------------------------------------------------------------------------------------------
-    capacity_nameM: str = "Constant"
-    conductivity_nameM: str = "Constant"
-    density_nameM: str = "Constant"
-    alpha_nameM: str = "Constant"
-
-    capacity_nameC: str = "Constant"
-    conductivity_nameC: str = "Constant"
-    density_nameC: str = "Constant"
-    alpha_nameC: str = "Constant"
-
-    rho0_M: float = 3300.0
-    rho0_C: float = 3300.0
-    radio_flag: float = 0.0
-
+    #-----------------------------------------------------------------------------------------------------
+    # Left bc time controls
+    #----------------------------------------------------------------------------------------------------
+    constant_age: int = 1 
+    constant_vel:int =  1
+    t_age : float = field(default_factory=lambda: np.array([0.0, 30.0]))
+    t_vel : float =  field(default_factory=lambda: np.array([0.0, 30.0]))
+    age_plate : float =  field(default_factory=lambda: np.array([0.0, 30.0]))
+    vel_plate : float = field(default_factory=lambda: np.array([0.0, 30.0]))
     # -----------------------------------------------------------------------------------------------------
     # Geometry
     # -----------------------------------------------------------------------------------------------------
     x: NDArray[float] = field(default_factory=lambda: np.array([0.0, 660e3]))
     y: NDArray[float] = field(default_factory=lambda: np.array([-600e3, 0.0]))
-
+    
     slab_tk: float = 130e3
     cr: float = 30e3
     ocr: float = 7e3
     lit_mt: float = 20e3
     lc: float = 0.3
     wc: float = 2.0e3
-
+    
     ns_depth: float = 50e3
     lab_d: float = 100e3
     decoupling: float = 80e3
@@ -432,6 +430,7 @@ class Input:
     sub_trench :NDArray[float] = field(default_factory=lambda: np.array([0.0, 660e3]))
     slab_type : str = 'Costum'
     sub_path:str = 'Not Defined'
+    sub_constant_flag:int = 0
      
     def __post_init__(self) -> None:
         if self.sname == "Output" and self.test_name != "Output":
@@ -482,15 +481,60 @@ def parse_input(path:str)->tuple[Input,Ph_input]:
     GEOM = input_file['Input']['geometry'] # Geometry
     MP = input_file['Input']['Material_properties'] # Material property
     SCAL = input_file['Input']['scaling'] # Scaling 
+    SHeating = input_file['Input']['Shear_Heating'] # Shear Heating
     
-    filling_the_input(NC,IOCr,LHS,GEOM,MP,SCAL,IP)
+    filling_the_input(NC,IOCr,LHS,GEOM,SCAL,SHeating,IP)
     filling_the_phase_data_base(MP,Ph)
     
-    
-    
-    
-    
     return IP, Ph 
+
+def cast_type(v:any,tp:any)->any:
+
+    # Get the type of the input -> if it is a list -> list 
+    origin = get_origin(tp)
+    # if origin is a compound object like lists, tuple, array -> get the argument of each of the element. 
+    args = get_args(tp)   
+    
+    if tp is str:
+        return tp(v)
+    
+    if tp is int: 
+        return tp(v)
+    
+    if tp is float: 
+        return tp(v)
+    
+    if tp is np.float64: 
+        return np.float64(v)
+    
+    if tp is bool:
+        if isinstance(v,bool):    
+            return v 
+        if isinstance(v,str):
+            if v in ('true','yes','y',"True","TRUE","YES"):
+                return True 
+            if v in ('false','no','n','NO','FALSE',"False"):
+                return False 
+        if isinstance(v,int) or isinstance(v,float):
+            if int(v) == 1: 
+                return True 
+            else: 
+                return False 
+        
+    if origin is list: 
+            subtype = args[0] if args else object
+            return [cast_type(value, subtype) for value in v]
+
+    if origin is tuple: 
+            subtype = args[0] if args else object
+            return tuple(cast_type(value, subtype) for value in v)       
+
+    if origin is np.ndarray:
+        return np.asarray(v)
+    
+    
+    return tp(v)
+
 
 def filling_the_input(a:dict,b:dict,c:dict,d:dict,e:dict,f:dict,IP:Input)->Input: 
     
@@ -509,24 +553,25 @@ def filling_the_input(a:dict,b:dict,c:dict,d:dict,e:dict,f:dict,IP:Input)->Input
     the numerical code. The Input data class is a object dumb, that can be flexibly modified. 
     I know that is redundant, but I believed that an user would find easier to modify one or two classes
     out of the yaml canvas. 
-     
     """
     
-    for k, v in a.items():
-        if type(getattr(IP,k)) is not str:
-            v = np.float64(v)
-            
-        setattr(IP, k, v)
     
-    for k, v in b.items():
-        setattr(IP, k, v)    
+    
+    def update_IP_file(IP0:Input,block:dict)->Input:
+
+        hints = get_type_hints(IP0.__class__)
+
+        for k, v in block.items():
+            tp = hints[k]
+            setattr(IP0, k, cast_type(v,tp))       
         
-    for k, v in c.items():
-        setattr(IP, k, v)
+        return IP0
     
-    for k, v in d.items():
-        setattr(IP, k, v)
     
+    for block in (a,b,c,d,e,f):    
+   
+        IP = update_IP_file(IP,block)
+
     return IP
 
 def filling_the_phase_data_base(MP : dict,Ph : Ph_input)->Ph_input:
@@ -544,8 +589,7 @@ def filling_the_phase_data_base(MP : dict,Ph : Ph_input)->Ph_input:
                    'wedge_mantle' : 3,
                    'overriding_mantle' : 4,
                    'overriding_upper_crust' : 5,
-                   'overriding_lower_crust' : 6,
-                   'virtual_weak_zone' : 7}
+                   'overriding_lower_crust' : 6}
     
     
     # Loop over the MP items. MP items, is a multilevel dictionary 
@@ -563,6 +607,5 @@ def filling_the_phase_data_base(MP : dict,Ph : Ph_input)->Ph_input:
         buf.id = dict_phase_id[k]
         setattr(Ph,k,buf)# Substitute the buf class with the default one 
         
-    
     
     return Ph

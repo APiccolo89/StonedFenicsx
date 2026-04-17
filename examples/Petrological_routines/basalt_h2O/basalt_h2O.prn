@@ -1,0 +1,574 @@
+
+--------------------------------------------------------------------------------
+
+
+Problem title: basalt_h2O                                                                                                                                                        
+
+Thermodynamic data base from: Holland & Powell, JMG 2011 (TC-DS62, 20:08 Feb 6, 2012)                         
+
+Fluid equation of state: X(CO2) H2O-CO2 Modified Redlich-Kwong (MRK) DeSantis et al 74  
+
+Independently constrained potentials:
+
+   T(K)     P(bar)  
+
+Components with unconstrained potentials:
+
+   SiO2    TiO2    Al2O3   FeO     MgO     CaO     Na2O    K2O     H2O  
+
+Phases and (projected) compositions:
+
+            SiO2    TiO2    Al2O3   FeO     MgO     CaO     Na2O    K2O     H2O  
+   fo        0.333   0.000   0.000   0.000   0.667   0.000   0.000   0.000   0.000
+   fa        0.333   0.000   0.000   0.667   0.000   0.000   0.000   0.000   0.000
+   lrn       0.333   0.000   0.000   0.000   0.000   0.667   0.000   0.000   0.000
+   mont      0.333   0.000   0.000   0.000   0.333   0.333   0.000   0.000   0.000
+   chum      0.286   0.000   0.000   0.000   0.643   0.000   0.000   0.000   0.071
+   chdr      0.250   0.000   0.000   0.000   0.625   0.000   0.000   0.000   0.125
+   mwd       0.333   0.000   0.000   0.000   0.667   0.000   0.000   0.000   0.000
+   fwd       0.333   0.000   0.000   0.667   0.000   0.000   0.000   0.000   0.000
+   mrw       0.333   0.000   0.000   0.000   0.667   0.000   0.000   0.000   0.000
+   frw       0.333   0.000   0.000   0.667   0.000   0.000   0.000   0.000   0.000
+   mpv       0.500   0.000   0.000   0.000   0.500   0.000   0.000   0.000   0.000
+   fpv       0.500   0.000   0.000   0.500   0.000   0.000   0.000   0.000   0.000
+   apv       0.000   0.000   1.000   0.000   0.000   0.000   0.000   0.000   0.000
+   cpv       0.500   0.000   0.000   0.000   0.000   0.500   0.000   0.000   0.000
+   mak       0.500   0.000   0.000   0.000   0.500   0.000   0.000   0.000   0.000
+   fak       0.500   0.000   0.000   0.500   0.000   0.000   0.000   0.000   0.000
+   maj       0.500   0.000   0.000   0.000   0.500   0.000   0.000   0.000   0.000
+   py        0.429   0.000   0.143   0.000   0.429   0.000   0.000   0.000   0.000
+   alm       0.429   0.000   0.143   0.429   0.000   0.000   0.000   0.000   0.000
+   gr        0.429   0.000   0.143   0.000   0.000   0.429   0.000   0.000   0.000
+   osma      0.667   0.000   0.167   0.000   0.133   0.000   0.000   0.033   0.000
+   osmm      0.688   0.000   0.094   0.000   0.188   0.000   0.000   0.031   0.000
+   osfa      0.667   0.000   0.167   0.133   0.000   0.000   0.000   0.033   0.000
+   vsv       0.367   0.000   0.112   0.000   0.041   0.388   0.000   0.000   0.092
+   and       0.500   0.000   0.500   0.000   0.000   0.000   0.000   0.000   0.000
+   ky        0.500   0.000   0.500   0.000   0.000   0.000   0.000   0.000   0.000
+   sill      0.500   0.000   0.500   0.000   0.000   0.000   0.000   0.000   0.000
+   smul      0.500   0.000   0.500   0.000   0.000   0.000   0.000   0.000   0.000
+   amul      0.286   0.000   0.714   0.000   0.000   0.000   0.000   0.000   0.000
+   tpz       0.333   0.000   0.333   0.000   0.000   0.000   0.000   0.000   0.333
+   mst       0.333   0.000   0.400   0.000   0.178   0.000   0.000   0.000   0.089
+   fst       0.333   0.000   0.400   0.178   0.000   0.000   0.000   0.000   0.089
+   mctd      0.250   0.000   0.250   0.000   0.250   0.000   0.000   0.000   0.250
+   fctd      0.250   0.000   0.250   0.250   0.000   0.000   0.000   0.000   0.250
+   merw      0.333   0.000   0.000   0.000   0.167   0.500   0.000   0.000   0.000
+   zo        0.429   0.000   0.214   0.000   0.000   0.286   0.000   0.000   0.071
+   cz        0.429   0.000   0.214   0.000   0.000   0.286   0.000   0.000   0.071
+   law       0.333   0.000   0.167   0.000   0.000   0.167   0.000   0.000   0.333
+   mpm       0.353   0.000   0.147   0.000   0.059   0.235   0.000   0.000   0.206
+   fpm       0.353   0.000   0.147   0.059   0.000   0.235   0.000   0.000   0.206
+   geh       0.250   0.000   0.250   0.000   0.000   0.500   0.000   0.000   0.000
+   ak        0.400   0.000   0.000   0.000   0.200   0.400   0.000   0.000   0.000
+   rnk       0.400   0.000   0.000   0.000   0.000   0.600   0.000   0.000   0.000
+   crd       0.556   0.000   0.222   0.000   0.222   0.000   0.000   0.000   0.000
+   hcrd      0.500   0.000   0.200   0.000   0.200   0.000   0.000   0.000   0.100
+   fcrd      0.556   0.000   0.222   0.222   0.000   0.000   0.000   0.000   0.000
+   phA       0.167   0.000   0.000   0.000   0.583   0.000   0.000   0.000   0.250
+   sph       0.333   0.333   0.000   0.000   0.000   0.333   0.000   0.000   0.000
+   cstn      0.667   0.000   0.000   0.000   0.000   0.333   0.000   0.000   0.000
+   en        0.500   0.000   0.000   0.000   0.500   0.000   0.000   0.000   0.000
+   pren      0.500   0.000   0.000   0.000   0.500   0.000   0.000   0.000   0.000
+   cen       0.500   0.000   0.000   0.000   0.500   0.000   0.000   0.000   0.000
+   hen       0.500   0.000   0.000   0.000   0.500   0.000   0.000   0.000   0.000
+   fs        0.500   0.000   0.000   0.500   0.000   0.000   0.000   0.000   0.000
+   mgts      0.333   0.000   0.333   0.000   0.333   0.000   0.000   0.000   0.000
+   di        0.500   0.000   0.000   0.000   0.250   0.250   0.000   0.000   0.000
+   hed       0.500   0.000   0.000   0.250   0.000   0.250   0.000   0.000   0.000
+   jd        0.667   0.000   0.167   0.000   0.000   0.000   0.167   0.000   0.000
+   cats      0.333   0.000   0.333   0.000   0.000   0.333   0.000   0.000   0.000
+   caes      0.667   0.000   0.167   0.000   0.000   0.167   0.000   0.000   0.000
+   wo        0.500   0.000   0.000   0.000   0.000   0.500   0.000   0.000   0.000
+   pswo      0.500   0.000   0.000   0.000   0.000   0.500   0.000   0.000   0.000
+   wal       0.500   0.000   0.000   0.000   0.000   0.500   0.000   0.000   0.000
+   tr        0.500   0.000   0.000   0.000   0.312   0.125   0.000   0.000   0.062
+   ftr       0.500   0.000   0.000   0.312   0.000   0.125   0.000   0.000   0.062
+   fgl       0.571   0.000   0.071   0.214   0.000   0.000   0.071   0.000   0.071
+   anth      0.500   0.000   0.000   0.000   0.438   0.000   0.000   0.000   0.062
+   fanth     0.500   0.000   0.000   0.438   0.000   0.000   0.000   0.000   0.062
+   ged       0.429   0.000   0.143   0.000   0.357   0.000   0.000   0.000   0.071
+   spr4      0.200   0.000   0.400   0.000   0.400   0.000   0.000   0.000   0.000
+   spr5      0.111   0.000   0.556   0.000   0.333   0.000   0.000   0.000   0.000
+   fspr      0.200   0.000   0.400   0.400   0.000   0.000   0.000   0.000   0.000
+   mcar      0.333   0.000   0.167   0.000   0.167   0.000   0.000   0.000   0.333
+   fcar      0.333   0.000   0.167   0.167   0.000   0.000   0.000   0.000   0.333
+   mu        0.500   0.000   0.250   0.000   0.000   0.000   0.000   0.083   0.167
+   cel       0.571   0.000   0.071   0.000   0.143   0.000   0.000   0.071   0.143
+   fcel      0.571   0.000   0.071   0.143   0.000   0.000   0.000   0.071   0.143
+   pa        0.500   0.000   0.250   0.000   0.000   0.000   0.083   0.000   0.167
+   ma        0.333   0.000   0.333   0.000   0.000   0.167   0.000   0.000   0.167
+   phl       0.375   0.000   0.062   0.000   0.375   0.000   0.000   0.062   0.125
+   ann       0.375   0.000   0.062   0.375   0.000   0.000   0.000   0.062   0.125
+   east      0.286   0.000   0.214   0.000   0.286   0.000   0.000   0.071   0.143
+   naph      0.375   0.000   0.062   0.000   0.375   0.000   0.062   0.000   0.125
+   clin      0.231   0.000   0.077   0.000   0.385   0.000   0.000   0.000   0.308
+   ames      0.167   0.000   0.167   0.000   0.333   0.000   0.000   0.000   0.333
+   afchl     0.286   0.000   0.000   0.000   0.429   0.000   0.000   0.000   0.286
+   daph      0.231   0.000   0.077   0.385   0.000   0.000   0.000   0.000   0.308
+   sud       0.273   0.000   0.182   0.000   0.182   0.000   0.000   0.000   0.364
+   fsud      0.273   0.000   0.182   0.182   0.000   0.000   0.000   0.000   0.364
+   prl       0.667   0.000   0.167   0.000   0.000   0.000   0.000   0.000   0.167
+   ta        0.500   0.000   0.000   0.000   0.375   0.000   0.000   0.000   0.125
+   fta       0.500   0.000   0.000   0.375   0.000   0.000   0.000   0.000   0.125
+   tats      0.429   0.000   0.143   0.000   0.286   0.000   0.000   0.000   0.143
+   minn      0.500   0.000   0.000   0.375   0.000   0.000   0.000   0.000   0.125
+   minm      0.500   0.000   0.000   0.000   0.375   0.000   0.000   0.000   0.125
+   kao       0.400   0.000   0.200   0.000   0.000   0.000   0.000   0.000   0.400
+   pre       0.429   0.000   0.143   0.000   0.000   0.286   0.000   0.000   0.143
+   chr       0.286   0.000   0.000   0.000   0.429   0.000   0.000   0.000   0.286
+   liz       0.286   0.000   0.000   0.000   0.429   0.000   0.000   0.000   0.286
+   glt       0.286   0.000   0.000   0.429   0.000   0.000   0.000   0.000   0.286
+   fstp      0.390   0.000   0.049   0.244   0.000   0.000   0.000   0.012   0.305
+   mstp      0.390   0.000   0.049   0.000   0.244   0.000   0.000   0.012   0.305
+   atg       0.301   0.000   0.000   0.000   0.425   0.000   0.000   0.000   0.274
+   ab        0.750   0.000   0.125   0.000   0.000   0.000   0.125   0.000   0.000
+   abh       0.750   0.000   0.125   0.000   0.000   0.000   0.125   0.000   0.000
+   san       0.750   0.000   0.125   0.000   0.000   0.000   0.000   0.125   0.000
+   an        0.500   0.000   0.250   0.000   0.000   0.250   0.000   0.000   0.000
+   kcm       0.600   0.000   0.100   0.000   0.000   0.000   0.000   0.100   0.200
+   wa        0.800   0.000   0.000   0.000   0.000   0.000   0.000   0.200   0.000
+   hol       0.750   0.000   0.125   0.000   0.000   0.000   0.000   0.125   0.000
+   q         1.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000
+   trd       1.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000
+   crst      1.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000
+   coe       1.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000
+   stv       1.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000
+   ne        0.500   0.000   0.250   0.000   0.000   0.000   0.250   0.000   0.000
+   cg        0.500   0.000   0.250   0.000   0.000   0.000   0.250   0.000   0.000
+   cgh       0.500   0.000   0.250   0.000   0.000   0.000   0.250   0.000   0.000
+   kls       0.500   0.000   0.250   0.000   0.000   0.000   0.000   0.250   0.000
+   lc        0.667   0.000   0.167   0.000   0.000   0.000   0.000   0.167   0.000
+   wrk       0.500   0.000   0.125   0.000   0.000   0.125   0.000   0.000   0.250
+   lmt       0.400   0.000   0.100   0.000   0.000   0.100   0.000   0.000   0.400
+   heu       0.467   0.000   0.067   0.000   0.000   0.067   0.000   0.000   0.400
+   stlb      0.438   0.000   0.062   0.000   0.000   0.062   0.000   0.000   0.438
+   anl       0.500   0.000   0.125   0.000   0.000   0.000   0.125   0.000   0.250
+   lime      0.000   0.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000
+   ru        0.000   1.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000
+   per       0.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   0.000
+   fper      0.000   0.000   0.000   1.000   0.000   0.000   0.000   0.000   0.000
+   cor       0.000   0.000   1.000   0.000   0.000   0.000   0.000   0.000   0.000
+   mcor      0.500   0.000   0.000   0.000   0.500   0.000   0.000   0.000   0.000
+   geik      0.000   0.500   0.000   0.000   0.500   0.000   0.000   0.000   0.000
+   ilm       0.000   0.500   0.000   0.500   0.000   0.000   0.000   0.000   0.000
+   sp        0.000   0.000   0.500   0.000   0.500   0.000   0.000   0.000   0.000
+   herc      0.000   0.000   0.500   0.500   0.000   0.000   0.000   0.000   0.000
+   usp       0.000   0.333   0.000   0.667   0.000   0.000   0.000   0.000   0.000
+   br        0.000   0.000   0.000   0.000   0.500   0.000   0.000   0.000   0.500
+   dsp       0.000   0.000   0.500   0.000   0.000   0.000   0.000   0.000   0.500
+   H2O       0.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000   1.000
+   perL      0.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   0.000
+   limL      0.000   0.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000
+   corL      0.000   0.000   1.000   0.000   0.000   0.000   0.000   0.000   0.000
+   qL        1.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000
+   h2oL      0.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000   1.000
+   foL       0.333   0.000   0.000   0.000   0.667   0.000   0.000   0.000   0.000
+   faL       0.333   0.000   0.000   0.667   0.000   0.000   0.000   0.000   0.000
+   woL       0.500   0.000   0.000   0.000   0.000   0.500   0.000   0.000   0.000
+   enL       0.500   0.000   0.000   0.000   0.500   0.000   0.000   0.000   0.000
+   diL       0.500   0.000   0.000   0.000   0.250   0.250   0.000   0.000   0.000
+   silL      0.500   0.000   0.500   0.000   0.000   0.000   0.000   0.000   0.000
+   anL       0.500   0.000   0.250   0.000   0.000   0.250   0.000   0.000   0.000
+   kspL      0.750   0.000   0.125   0.000   0.000   0.000   0.000   0.125   0.000
+   abL       0.750   0.000   0.125   0.000   0.000   0.000   0.125   0.000   0.000
+   neL       0.500   0.000   0.250   0.000   0.000   0.000   0.250   0.000   0.000
+   lcL       0.667   0.000   0.167   0.000   0.000   0.000   0.000   0.167   0.000
+   ilm_nol   0.000   0.500   0.000   0.500   0.000   0.000   0.000   0.000   0.000
+   musp      0.000   0.333   0.000   0.000   0.667   0.000   0.000   0.000   0.000
+   fbr       0.000   0.000   0.000   0.500   0.000   0.000   0.000   0.000   0.500
+   fchum     0.286   0.000   0.000   0.643   0.000   0.000   0.000   0.000   0.071
+   fphA      0.167   0.000   0.000   0.583   0.000   0.000   0.000   0.000   0.250
+   fatg      0.301   0.000   0.000   0.425   0.000   0.000   0.000   0.000   0.274
+   atgts     0.275   0.000   0.037   0.000   0.404   0.000   0.000   0.000   0.284
+   ts_dqf    0.429   0.000   0.143   0.000   0.214   0.143   0.000   0.000   0.071
+   parg_dqf  0.400   0.000   0.100   0.000   0.267   0.133   0.033   0.000   0.067
+   gl_dqf    0.571   0.000   0.071   0.000   0.214   0.000   0.071   0.000   0.071
+   cumm_dqf  0.500   0.000   0.000   0.000   0.438   0.000   0.000   0.000   0.062
+   grun_dqf  0.500   0.000   0.000   0.438   0.000   0.000   0.000   0.000   0.062
+   ogl_dqf   0.571   0.000   0.071   0.000   0.214   0.000   0.071   0.000   0.071
+   fanth_dq  0.500   0.000   0.000   0.438   0.000   0.000   0.000   0.000   0.062
+   mpa       0.400   0.000   0.100   0.000   0.400   0.000   0.033   0.000   0.067
+   ged_dqf   0.429   0.000   0.143   0.000   0.357   0.000   0.000   0.000   0.071
+   tbit      0.429   0.143   0.071   0.000   0.286   0.000   0.000   0.071   0.000
+   ma_dqf    0.333   0.000   0.333   0.000   0.000   0.167   0.000   0.000   0.167
+   dilm      0.000   0.500   0.000   0.500   0.000   0.000   0.000   0.000   0.000
+   sil8L     0.500   0.000   0.500   0.000   0.000   0.000   0.000   0.000   0.000
+   fo8L      0.333   0.000   0.000   0.000   0.667   0.000   0.000   0.000   0.000
+   fa8L      0.333   0.000   0.000   0.667   0.000   0.000   0.000   0.000   0.000
+   q8L       1.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000
+   ma1_dqf   0.333   0.000   0.333   0.000   0.000   0.167   0.000   0.000   0.167
+   mstt      0.326   0.065   0.348   0.000   0.174   0.000   0.000   0.000   0.087
+   tbi       0.429   0.143   0.071   0.000   0.286   0.000   0.000   0.071   0.000
+   cfs       0.500   0.000   0.000   0.500   0.000   0.000   0.000   0.000   0.000
+   cenjh     0.500   0.000   0.000   0.000   0.500   0.000   0.000   0.000   0.000
+   odi       0.500   0.000   0.000   0.000   0.250   0.250   0.000   0.000   0.000
+   qjL       1.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000
+   dijL      0.500   0.000   0.000   0.000   0.250   0.250   0.000   0.000   0.000
+   jdjL      0.667   0.000   0.167   0.000   0.000   0.000   0.167   0.000   0.000
+   ctjL      0.333   0.000   0.333   0.000   0.000   0.333   0.000   0.000   0.000
+   fojL      0.333   0.000   0.000   0.000   0.667   0.000   0.000   0.000   0.000
+   fajL      0.333   0.000   0.000   0.667   0.000   0.000   0.000   0.000   0.000
+   foTL      0.333   0.000   0.000   0.000   0.667   0.000   0.000   0.000   0.000
+   faTL      0.333   0.000   0.000   0.667   0.000   0.000   0.000   0.000   0.000
+   kprg      0.400   0.000   0.100   0.000   0.267   0.133   0.000   0.033   0.067
+   tts       0.429   0.143   0.071   0.000   0.214   0.143   0.000   0.000   0.000
+   cfsg      0.500   0.000   0.000   0.500   0.000   0.000   0.000   0.000   0.000
+   mfpv      0.500   0.000   0.000   0.500   0.000   0.000   0.000   0.000   0.000
+   mcpv      0.500   0.000   0.000   0.000   0.000   0.500   0.000   0.000   0.000
+   cmpv      0.500   0.000   0.000   0.000   0.500   0.000   0.000   0.000   0.000
+   cfpv      0.500   0.000   0.000   0.500   0.000   0.000   0.000   0.000   0.000
+   capv      0.000   0.000   1.000   0.000   0.000   0.000   0.000   0.000   0.000
+   fcor      0.500   0.000   0.000   0.500   0.000   0.000   0.000   0.000   0.000
+   hmgts     0.333   0.000   0.333   0.000   0.333   0.000   0.000   0.000   0.000
+   mcbuf     0.286   0.143   0.143   0.000   0.143   0.286   0.000   0.000   0.000
+   kjdh      0.667   0.000   0.167   0.000   0.000   0.000   0.000   0.167   0.000
+   foHL      0.333   0.000   0.000   0.000   0.667   0.000   0.000   0.000   0.000
+   faHL      0.333   0.000   0.000   0.667   0.000   0.000   0.000   0.000   0.000
+   qHL       1.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000   0.000
+   jdL       0.667   0.000   0.167   0.000   0.000   0.000   0.167   0.000   0.000
+   kjL       0.667   0.000   0.167   0.000   0.000   0.000   0.000   0.167   0.000
+
+Excluded phases:
+
+ ts        parg      gl        cumm      grun    
+
+Phases:
+
+ cAmph(G)    Chl(W)      Opx(HP)     Gt(HP)      Omph(HP)  
+
+--------------------------------------------------------------------------------
+
+
+ Stable assemblages identified by assemblage index:
+
+   1 - Gt(HP) cAmph(G) Chl(W) cz sph fanth mu ab q 
+   2 - Gt(HP) Chl(W) fctd sph fanth mu q gl_dqf 
+   3 - Gt(HP) Chl(W) fctd sph fanth ann q gl_dqf 
+   4 - Gt(HP) Chl(W) fctd fpm sph fanth ann q gl_dqf 
+   5 - Gt(HP) cAmph(G) fctd fpm sph fanth ann q gl_dqf 
+   6 - Omph(HP) cAmph(G) fctd fpm sph fanth cel q gl_dqf 
+   7 - Omph(HP) Omph(HP) fctd fpm sph fanth cel ta q 
+   8 - Omph(HP) Omph(HP) fctd law sph fanth cel ta q 
+   9 - Omph(HP) Gt(HP) fctd law sph fanth cel ta q 
+  10 - Omph(HP) Gt(HP) law sph fanth cel ta coe ru 
+  11 - Omph(HP) Gt(HP) Opx(HP) law sph cel ta coe ru 
+  12 - Omph(HP) Omph(HP) Gt(HP) Opx(HP) law cel ta coe ru 
+  13 - Omph(HP) Omph(HP) Gt(HP) Opx(HP) law cel coe ru 
+  14 - Omph(HP) Omph(HP) Gt(HP) Opx(HP) law cel stv ru 
+  15 - Omph(HP) Omph(HP) Gt(HP) Opx(HP) frw law cel stv ru 
+  16 - Omph(HP) Omph(HP) Gt(HP) frw law hen cel stv ru 
+  17 - Gt(HP) cAmph(G) Chl(W) cz sph fanth ann ab q 
+  18 - Gt(HP) Chl(W) fctd sph fanth mu ab q gl_dqf 
+  19 - Omph(HP) Gt(HP) Chl(W) fctd sph mu ann q gl_dqf 
+  20 - Omph(HP) Gt(HP) cAmph(G) Chl(W) fctd sph ann q 
+  21 - Omph(HP) Omph(HP) Chl(W) fctd fpm sph fanth cel q 
+  22 - Omph(HP) Gt(HP) law sph fanth cel ta q ru 
+  23 - Omph(HP) cAmph(G) Chl(W) cz sph fanth ann ab q 
+  24 - Omph(HP) Gt(HP) Chl(W) sph fanth ann ab q gl_dqf 
+  25 - Omph(HP) Gt(HP) Chl(W) fctd sph mu q gl_dqf 
+  26 - Omph(HP) Gt(HP) Chl(W) fctd sph mu q 
+  27 - Omph(HP) Omph(HP) Chl(W) fctd fpm sph cel q 
+  28 - Omph(HP) Omph(HP) Chl(W) fctd law sph cel q 
+  29 - Omph(HP) Gt(HP) Chl(W) fctd cz sph mu q 
+  30 - Omph(HP) Gt(HP) Chl(W) fctd fpm sph mu q 
+  31 - Omph(HP) Omph(HP) Chl(W) fctd law sph cel ta q 
+  32 - Omph(HP) Gt(HP) Chl(W) cz sph mu ab q 
+  33 - Omph(HP) Gt(HP) Chl(W) fctd zo sph mu q 
+  34 - Omph(HP) Gt(HP) Chl(W) fctd law sph mu q 
+  35 - Omph(HP) Gt(HP) Chl(W) fctd law sph cel q 
+  36 - Omph(HP) Gt(HP) Chl(W) fctd law sph cel ta q 
+  37 - Omph(HP) Gt(HP) law sph fanth cel ta q gl_dqf 
+  38 - Omph(HP) Gt(HP) Opx(HP) law cel ta coe ru 
+  39 - Omph(HP) Chl(W) cz sph ann ab an q 
+  40 - Omph(HP) Gt(HP) cAmph(G) Chl(W) cz sph ann ab q 
+  41 - Omph(HP) Gt(HP) Chl(W) law sph cel ta q gl_dqf 
+  42 - Omph(HP) Gt(HP) law fanth cel ta q ru 
+  43 - Omph(HP) Chl(W) sph ann ab san an q 
+  44 - Omph(HP) cAmph(G) Chl(W) cz sph fanth phl ab q 
+  45 - Omph(HP) Gt(HP) Chl(W) cz sph phl ann ab q 
+  46 - Omph(HP) Gt(HP) Chl(W) zo sph mu pa q 
+  47 - Omph(HP) Gt(HP) Chl(W) zo sph mu q 
+  48 - Omph(HP) Gt(HP) Chl(W) law sph mu q 
+  49 - Omph(HP) Gt(HP) Chl(W) law sph cel q 
+  50 - Omph(HP) Gt(HP) Chl(W) law sph cel ta q ru 
+  51 - Omph(HP) Gt(HP) Opx(HP) law cel ta q ru 
+  52 - Omph(HP) Gt(HP) Chl(W) zo sph mu ab q 
+  53 - Omph(HP) Gt(HP) Chl(W) law sph mu cel q 
+  54 - Omph(HP) Gt(HP) Chl(W) law cel ta q ru 
+  55 - Omph(HP) Omph(HP) Gt(HP) Opx(HP) law cel stv ru H2O 
+  56 - Omph(HP) Gt(HP) Chl(W) zo law sph mu q 
+  57 - Omph(HP) Omph(HP) Gt(HP) Chl(W) law cel ta q ru 
+  58 - Omph(HP) Gt(HP) Chl(W) Opx(HP) law cel ta q ru 
+  59 - Omph(HP) Gt(HP) Opx(HP) law cel coe ru 
+  60 - Omph(HP) Chl(W) sph ann ab an q H2O 
+  61 - Omph(HP) Omph(HP) Gt(HP) Chl(W) zo sph mu ab q 
+  62 - Omph(HP) Gt(HP) Chl(W) law sph mu q ru 
+  63 - Omph(HP) Omph(HP) Gt(HP) Chl(W) law cel q ru 
+  64 - Omph(HP) Gt(HP) Opx(HP) law cel stv ru H2O 
+  65 - Omph(HP) Chl(W) phl ann ab an q ilm H2O 
+  66 - Omph(HP) Gt(HP) Chl(W) sph mu ab an q 
+  67 - Omph(HP) Gt(HP) Chl(W) law mstp q ru 
+  68 - Omph(HP) Gt(HP) law ta mstp q ru H2O 
+  69 - Omph(HP) Gt(HP) law cel ta q ru H2O 
+  70 - Omph(HP) Gt(HP) law cel ta coe ru H2O 
+  71 - Omph(HP) Gt(HP) Opx(HP) law cel ta coe ru H2O 
+  72 - Omph(HP) Gt(HP) Opx(HP) law cel coe ru H2O 
+  73 - Omph(HP) Omph(HP) Gt(HP) law cel ta coe ru H2O 
+  74 - Omph(HP) Omph(HP) Gt(HP) law cel ta stv ru H2O 
+  75 - Omph(HP) Omph(HP) Gt(HP) law cel stv ru H2O 
+  76 - Omph(HP) cAmph(G) Chl(W) Opx(HP) phl ab an ilm H2O 
+  77 - Omph(HP) Chl(W) ab san an q ilm H2O 
+  78 - Omph(HP) Chl(W) sph ab san an q ilm 
+  79 - Omph(HP) Gt(HP) Chl(W) zo sph mu pa q H2O 
+  80 - Omph(HP) Gt(HP) Chl(W) zo sph mu q ru H2O 
+  81 - Omph(HP) Gt(HP) Chl(W) zo mu q ru H2O 
+  82 - Omph(HP) Gt(HP) Chl(W) law mstp q ru H2O 
+  83 - Omph(HP) Opx(HP) phl naph ab an ilm H2O 
+  84 - Omph(HP) Chl(W) Opx(HP) phl ab an q ilm H2O 
+  85 - Omph(HP) Gt(HP) Chl(W) zo sph mu ab q H2O 
+  86 - Omph(HP) Gt(HP) Chl(W) zo mu pa q ru H2O 
+  87 - Omph(HP) Gt(HP) Chl(W) mu q ru H2O 
+  88 - Omph(HP) Gt(HP) Chl(W) mstp q ru H2O 
+  89 - Omph(HP) Gt(HP) Chl(W) mu ab an q ilm H2O 
+  90 - Omph(HP) Gt(HP) Chl(W) zo mu ab q ru H2O 
+  91 - Omph(HP) Gt(HP) Chl(W) mu ab q ru H2O 
+  92 - Omph(HP) Gt(HP) mstp q ru H2O 
+  93 - Omph(HP) Gt(HP) mu mstp q ru H2O 
+  94 - Omph(HP) Gt(HP) law cel mstp q ru H2O 
+  95 - Omph(HP) Omph(HP) Gt(HP) law cel ta coe ru h2oL 
+  96 - Omph(HP) Omph(HP) Gt(HP) law cel coe ru h2oL 
+  97 - Omph(HP) Omph(HP) Gt(HP) law cel stv ru h2oL 
+  98 - Omph(HP) Gt(HP) law cel stv ru h2oL 
+  99 - Omph(HP) Opx(HP) phl ab an ilm H2O 
+ 100 - Omph(HP) Gt(HP) Chl(W) phl ab an q ru H2O 
+ 101 - Omph(HP) Gt(HP) Chl(W) mu phl ab q ru H2O 
+ 102 - Omph(HP) Gt(HP) Chl(W) phl ab q ru H2O 
+ 103 - Omph(HP) Gt(HP) Chl(W) phl q ru H2O 
+ 104 - Omph(HP) Gt(HP) mu phl mstp q ru H2O 
+ 105 - Omph(HP) Gt(HP) mu q ru H2O 
+ 106 - Omph(HP) Gt(HP) mu cel coe ru H2O 
+ 107 - Omph(HP) Gt(HP) law cel coe ru H2O 
+ 108 - Omph(HP) Gt(HP) law cel coe ru h2oL 
+ 109 - Omph(HP) Gt(HP) Opx(HP) phl ab an q ilm H2O 
+ 110 - Omph(HP) Gt(HP) phl ab q ru H2O 
+ 111 - Omph(HP) Gt(HP) phl q ru H2O 
+ 112 - Omph(HP) Gt(HP) mu phl q ru H2O 
+ 113 - Omph(HP) Gt(HP) mu coe ru H2O 
+ 114 - Omph(HP) Gt(HP) cel coe ru H2O 
+ 115 - Omph(HP) Opx(HP) phl ab san an ilm H2O 
+ 116 - Omph(HP) Gt(HP) law cel stv ru H2O 
+ 117 - Omph(HP) Opx(HP) ab san an ilm H2O 
+ 118 - Omph(HP) Gt(HP) phl ab san q ru H2O 
+ 119 - Omph(HP) Opx(HP) phl ab an lc ilm H2O 
+ 120 - Omph(HP) Gt(HP) Opx(HP) ab san q ru H2O 
+ 121 - Omph(HP) Gt(HP) ab san q ru H2O 
+ 122 - Omph(HP) Gt(HP) san q ru H2O 
+ 123 - Omph(HP) Gt(HP) mu san q ru H2O 
+ 124 - Omph(HP) Gt(HP) cel stv ru H2O 
+ 125 - Omph(HP) Opx(HP) ab an lc ilm H2O 
+ 126 - Omph(HP) Opx(HP) ab san an q ilm H2O 
+ 127 - Omph(HP) Opx(HP) abh san an ilm H2O 
+ 128 - Omph(HP) Opx(HP) abh san an q ilm H2O 
+ 129 - Omph(HP) Gt(HP) Opx(HP) abh san q ru H2O 
+ 130 - Omph(HP) Gt(HP) abh san q ru H2O 
+ 131 - Omph(HP) Opx(HP) abh an lc ilm H2O 
+ 132 - Omph(HP) Gt(HP) Opx(HP) abh san an q ru H2O 
+ 133 - Omph(HP) Gt(HP) mu san coe ru H2O 
+ 134 - Omph(HP) Gt(HP) mu kcm coe ru H2O 
+ 135 - Omph(HP) Gt(HP) kcm coe ru H2O 
+ 136 - Omph(HP) Gt(HP) cel kcm coe ru H2O 
+ 137 - Omph(HP) Opx(HP) abh san an lc ilm H2O 
+ 138 - Omph(HP) Gt(HP) san coe ru H2O 
+ 139 - Omph(HP) Opx(HP) abh san an q ru ilm H2O 
+ 140 - Omph(HP) Opx(HP) an lc ilm H2O abL 
+ 141 - Omph(HP) Opx(HP) san an ilm H2O abL 
+ 142 - Omph(HP) Opx(HP) san an q ilm H2O abL 
+ 143 - Omph(HP) Opx(HP) an ilm H2O kspL abL 
+ 144 - Omph(HP) Opx(HP) san an q ru ilm H2O abL 
+ 145 - Omph(HP) Opx(HP) san an q ru H2O abL 
+ 146 - Omph(HP) Opx(HP) an lc H2O abL dilm 
+ 147 - Omph(HP) Opx(HP) an lc H2O kspL abL dilm 
+ 148 - Omph(HP) Opx(HP) an H2O kspL abL dilm 
+ 149 - Omph(HP) Opx(HP) an q H2O kspL abL dilm 
+ 150 - Omph(HP) Opx(HP) san an q ru H2O abL dilm 
+ 151 - Omph(HP) Gt(HP) Opx(HP) san q ru H2O abL 
+ 152 - Omph(HP) Opx(HP) an q ru H2O kspL abL dilm 
+ 153 - Omph(HP) Gt(HP) san q ru H2O abL 
+ 154 - Omph(HP) Opx(HP) an usp H2O kspL abL dilm 
+ 155 - Omph(HP) Opx(HP) an q ru H2O kspL abL 
+ 156 - Omph(HP) Gt(HP) Opx(HP) q ru H2O kspL abL 
+ 157 - Omph(HP) Opx(HP) an H2O kspL abL dilm fa8L 
+ 158 - Omph(HP) Gt(HP) coe ru H2O kjL 
+ 159 - Opx(HP) an H2O kspL abL dilm fa8L dijL 
+ 160 - Omph(HP) Gt(HP) q ru H2O kjL 
+ 161 - Opx(HP) an crst H2O kspL abL dilm fa8L dijL 
+ 162 - Omph(HP) Gt(HP) q ru H2O kspL abL 
+ 163 - Omph(HP) Gt(HP) q ru H2O abL kjL 
+ 164 - Opx(HP) crst H2O anL kspL abL dilm fa8L dijL 
+ 165 - Omph(HP) Opx(HP) an q H2O kspL abL dilm fa8L 
+ 166 - Omph(HP) Opx(HP) q ru H2O kspL abL 
+ 167 - Opx(HP) q H2O anL kspL abL dilm fa8L dijL 
+ 168 - Omph(HP) Opx(HP) q ru H2O anL kspL abL faTL 
+ 169 - Omph(HP) Gt(HP) Opx(HP) q ru H2O kspL abL faTL 
+ 170 - Gt(HP) Chl(W) cz sph fanth mu ab q gl_dqf 
+ 171 - Gt(HP) cAmph(G) Chl(W) sph fanth mu ab q gl_dqf 
+ 172 - Omph(HP) cAmph(G) fctd fpm sph fanth ann q gl_dqf 
+ 173 - Omph(HP) Gt(HP) Chl(W) fctd sph ann q gl_dqf 
+ 174 - Omph(HP) Omph(HP) cAmph(G) Chl(W) fctd fpm sph ann q 
+ 175 - Omph(HP) cAmph(G) fctd fpm sph fanth cel ta q 
+ 176 - Gt(HP) Chl(W) sph fanth mu ann ab q gl_dqf 
+ 177 - Omph(HP) Gt(HP) Chl(W) fctd sph fanth mu q gl_dqf 
+ 178 - Omph(HP) Gt(HP) Chl(W) cz sph fanth mu q gl_dqf 
+ 179 - Omph(HP) Gt(HP) Chl(W) fctd sph mu ann q 
+ 180 - Omph(HP) Omph(HP) Chl(W) fctd fpm sph mu ann q 
+ 181 - Omph(HP) Omph(HP) Chl(W) fctd law fpm sph cel q 
+ 182 - Omph(HP) Gt(HP) Chl(W) fctd cz sph mu q gl_dqf 
+ 183 - Omph(HP) Chl(W) cz sph fanth mu q gl_dqf 
+ 184 - Omph(HP) Chl(W) cz sph fanth mu ann ab q 
+ 185 - Omph(HP) Omph(HP) Gt(HP) Chl(W) cz sph ann ab q 
+ 186 - Omph(HP) Gt(HP) Chl(W) cz sph mu pa q 
+ 187 - Omph(HP) Gt(HP) Chl(W) fctd zo law sph mu q 
+ 188 - Omph(HP) Gt(HP) Chl(W) law fanth cel ta q ru 
+ 189 - Omph(HP) Gt(HP) Opx(HP) law fanth cel ta q ru 
+ 190 - Omph(HP) Chl(W) cz sph ann ab san an q 
+ 191 - Omph(HP) Chl(W) cz sph fanth ann ab an q 
+ 192 - Omph(HP) Gt(HP) Chl(W) law sph cel q ru 
+ 193 - Omph(HP) Chl(W) zo sph ann ab an q 
+ 194 - Omph(HP) Gt(HP) Chl(W) zo sph phl ann ab q 
+ 195 - Omph(HP) Gt(HP) Chl(W) zo sph ann ab an q 
+ 196 - Omph(HP) Chl(W) sph mu ann ab an q 
+ 197 - Omph(HP) Gt(HP) Opx(HP) law cel stv ru 
+ 198 - Omph(HP) Chl(W) sph ann ab san an q H2O 
+ 199 - Omph(HP) Gt(HP) Chl(W) law cel q ru 
+ 200 - Omph(HP) Gt(HP) Chl(W) law mu mstp q ru 
+ 201 - Omph(HP) Omph(HP) Gt(HP) Opx(HP) law cel coe ru H2O 
+ 202 - Omph(HP) Chl(W) sph mu ab an q ilm 
+ 203 - Omph(HP) Gt(HP) Chl(W) zo sph mu q H2O 
+ 204 - Omph(HP) Gt(HP) Chl(W) law sph mu q ru H2O 
+ 205 - Omph(HP) Gt(HP) Chl(W) law mu mstp q ru H2O 
+ 206 - Omph(HP) Gt(HP) Chl(W) law ta mstp q ru H2O 
+ 207 - Omph(HP) Gt(HP) law cel ta mstp q ru H2O 
+ 208 - Omph(HP) Chl(W) Opx(HP) phl ab an ilm H2O 
+ 209 - Omph(HP) Chl(W) sph ab san an q ilm H2O 
+ 210 - Omph(HP) Chl(W) phl ab san an q ilm H2O 
+ 211 - Omph(HP) Gt(HP) Chl(W) zo mu ab q ilm 
+ 212 - Omph(HP) Chl(W) mu ab an q ilm H2O 
+ 213 - Omph(HP) Gt(HP) Chl(W) zo mstp q ru H2O 
+ 214 - Omph(HP) Gt(HP) Chl(W) zo mu ab q ilm H2O 
+ 215 - Omph(HP) Gt(HP) Chl(W) phl ab an q ilm H2O 
+ 216 - Omph(HP) Gt(HP) law mstp q ru H2O 
+ 217 - Omph(HP) Gt(HP) law mu mstp q ru H2O 
+ 218 - Omph(HP) Omph(HP) Gt(HP) law cel coe ru H2O 
+ 219 - Omph(HP) Gt(HP) Chl(W) mu phl q ru H2O 
+ 220 - Omph(HP) Gt(HP) phl mstp q ru H2O 
+ 221 - Omph(HP) Gt(HP) mu cel q ru H2O 
+ 222 - Omph(HP) Gt(HP) Opx(HP) phl ab an q ru H2O 
+ 223 - Omph(HP) Opx(HP) phl ab an q ilm H2O 
+ 224 - Omph(HP) Gt(HP) phl ab an q ru H2O 
+ 225 - Omph(HP) Gt(HP) Opx(HP) ab san an q ru H2O 
+ 226 - Omph(HP) Gt(HP) phl san q ru H2O 
+ 227 - Omph(HP) Gt(HP) mu phl san q ru H2O 
+ 228 - Omph(HP) Opx(HP) abh san an q ru H2O 
+ 229 - Omph(HP) Opx(HP) san an lc ilm H2O abL 
+ 230 - Omph(HP) Opx(HP) an lc ilm H2O kspL abL 
+ 231 - Omph(HP) Opx(HP) an q ilm H2O kspL abL 
+ 232 - Omph(HP) Gt(HP) Opx(HP) san an q ru H2O abL 
+ 233 - Omph(HP) Opx(HP) an lc usp H2O kspL abL dilm 
+ 234 - Omph(HP) Opx(HP) an usp H2O kspL abL dilm fa8L 
+ 235 - Opx(HP) an q H2O kspL abL dilm fa8L dijL 
+ 236 - Omph(HP) Opx(HP) an q ru H2O kspL abL faTL 
+ 237 - Omph(HP) Opx(HP) q ru H2O anL kspL abL 
+ 238 - Omph(HP) Opx(HP) q H2O anL kspL abL dilm fa8L 
+ 239 - Omph(HP) Opx(HP) q H2O anL kspL abL dilm faTL 
+ 240 - Gt(HP) Chl(W) fctd sph fanth mu ann q gl_dqf 
+ 241 - Gt(HP) Chl(W) fctd sph mu ann q gl_dqf 
+ 242 - Omph(HP) Gt(HP) Chl(W) fctd sph fanth ann q gl_dqf 
+ 243 - Omph(HP) Gt(HP) cAmph(G) Chl(W) fctd fpm sph ann q 
+ 244 - Omph(HP) cAmph(G) Chl(W) fctd fpm sph fanth ann q 
+ 245 - Omph(HP) Gt(HP) fctd law sph fanth cel ta coe 
+ 246 - Gt(HP) Chl(W) sph fanth mu ab q gl_dqf 
+ 247 - Gt(HP) Chl(W) sph fanth ann ab q gl_dqf 
+ 248 - Omph(HP) Gt(HP) Chl(W) sph fanth mu ab q gl_dqf 
+ 249 - Omph(HP) Gt(HP) Chl(W) cz sph fanth ann q gl_dqf 
+ 250 - Omph(HP) Gt(HP) cAmph(G) Chl(W) fctd sph mu ann q 
+ 251 - Omph(HP) Omph(HP) Gt(HP) Chl(W) fctd sph mu ann q 
+ 252 - Omph(HP) Omph(HP) Chl(W) fctd fpm sph cel ann q 
+ 253 - Omph(HP) Omph(HP) Gt(HP) Chl(W) fctd sph mu q 
+ 254 - Omph(HP) Chl(W) cz sph fanth ann q gl_dqf 
+ 255 - Omph(HP) Chl(W) cz sph fanth ann ab q gl_dqf 
+ 256 - Omph(HP) Gt(HP) Chl(W) fctd fpm sph cel q 
+ 257 - Omph(HP) Chl(W) cz sph fanth mu ab q gl_dqf 
+ 258 - Omph(HP) Gt(HP) Chl(W) cz sph ann ab q 
+ 259 - Omph(HP) Gt(HP) Chl(W) cz sph mu ann ab q 
+ 260 - Omph(HP) Gt(HP) Chl(W) law sph cel q gl_dqf 
+ 261 - Omph(HP) Gt(HP) Chl(W) law sph cel ta q 
+ 262 - Omph(HP) Omph(HP) Gt(HP) Chl(W) cz sph mu ab q 
+ 263 - Omph(HP) Gt(HP) Chl(W) cz sph ann ab an q 
+ 264 - Omph(HP) Chl(W) zo sph ann ab san an q 
+ 265 - Omph(HP) Gt(HP) Chl(W) zo sph mu ab an q 
+ 266 - Omph(HP) Gt(HP) Chl(W) law cel mstp q ru 
+ 267 - Omph(HP) Gt(HP) Chl(W) law ta mstp q ru 
+ 268 - Omph(HP) Chl(W) zo sph mu ab an q ilm 
+ 269 - Omph(HP) Gt(HP) Chl(W) law mu q ru H2O 
+ 270 - Omph(HP) Chl(W) zo mu ab q ilm H2O 
+ 271 - Omph(HP) Chl(W) sph mu ab an q ilm H2O 
+ 272 - Omph(HP) Gt(HP) Chl(W) mu mstp q ru H2O 
+ 273 - Omph(HP) Gt(HP) Chl(W) zo mu mstp q ru H2O 
+ 274 - Omph(HP) Gt(HP) Chl(W) ab san an q ilm H2O 
+ 275 - Omph(HP) Gt(HP) Chl(W) mu pa ab q ru H2O 
+ 276 - Omph(HP) Gt(HP) Chl(W) mu ab an q ru H2O 
+ 277 - Omph(HP) Gt(HP) law mu cel mstp q ru H2O 
+ 278 - Omph(HP) Gt(HP) mu cel mstp q ru H2O 
+ 279 - Omph(HP) Gt(HP) Opx(HP) ab san an q ilm H2O 
+ 280 - Omph(HP) Opx(HP) phl ab san an lc ilm H2O 
+ 281 - Omph(HP) Opx(HP) phl abh san an ilm H2O 
+ 282 - Omph(HP) Opx(HP) san an q H2O abL dilm 
+ 283 - Omph(HP) Opx(HP) an lc usp H2O abL dilm 
+ 284 - Omph(HP) Opx(HP) an q H2O kspL abL dilm faTL 
+ 285 - Omph(HP) Opx(HP) q H2O anL kspL abL dilm 
+ 286 - Omph(HP) Opx(HP) q ru H2O anL kspL abL dilm 
+ 287 - Omph(HP) Gt(HP) Opx(HP) q ru H2O anL kspL abL 
+ 288 - Gt(HP) Chl(W) Chl(W) fctd sph fanth ann q gl_dqf 
+ 289 - Gt(HP) cAmph(G) fctd fpm sph fanth cel q gl_dqf 
+ 290 - Omph(HP) cAmph(G) Chl(W) fctd fpm sph fanth cel q 
+ 291 - Gt(HP) Chl(W) cz sph fanth ann ab q gl_dqf 
+ 292 - Gt(HP) cAmph(G) Chl(W) sph fanth ann ab q gl_dqf 
+ 293 - Omph(HP) Omph(HP) Chl(W) fctd fpm sph mu q 
+ 294 - Omph(HP) Omph(HP) Chl(W) fctd fpm sph cel ta q 
+ 295 - Omph(HP) Omph(HP) Gt(HP) Chl(W) fctd fpm sph cel q 
+ 296 - Omph(HP) Chl(W) cz sph fanth ann ab q 
+ 297 - Omph(HP) Chl(W) cz sph fanth mu ab q 
+ 298 - Omph(HP) Gt(HP) Chl(W) cz sph fanth ann ab q 
+ 299 - Omph(HP) Gt(HP) Chl(W) cz sph fanth mu ab q 
+ 300 - Omph(HP) Gt(HP) Chl(W) cz sph mu ab q gl_dqf 
+ 301 - Omph(HP) Gt(HP) Chl(W) fctd cz sph mu ab q 
+ 302 - Omph(HP) Gt(HP) Chl(W) fctd law sph mu cel q 
+ 303 - Omph(HP) Omph(HP) Gt(HP) Chl(W) fctd law sph cel q 
+ 304 - Omph(HP) Gt(HP) Opx(HP) law sph cel ta q ru 
+ 305 - Omph(HP) Gt(HP) Chl(W) cz sph fanth phl ab q 
+ 306 - Omph(HP) Gt(HP) Chl(W) zo sph mu phl ab q 
+ 307 - Omph(HP) Gt(HP) Chl(W) zo sph mu pa ab q 
+ 308 - Omph(HP) Gt(HP) Chl(W) law sph mu cel q ru 
+ 309 - Omph(HP) Chl(W) zo sph mu ann ab an q 
+ 310 - Omph(HP) Chl(W) sph ann ab an q ilm H2O 
+ 311 - Omph(HP) Chl(W) sph mu ann ab san an q 
+ 312 - Omph(HP) Gt(HP) Chl(W) law mu cel q ru 
+ 313 - Omph(HP) Gt(HP) Chl(W) law sph mu mstp q ru 
+ 314 - Omph(HP) Gt(HP) Chl(W) law cel ta q ru H2O 
+ 315 - Omph(HP) Gt(HP) Opx(HP) law cel ta q ru H2O 
+ 316 - Omph(HP) Chl(W) ann ab san an q ilm H2O 
+ 317 - Omph(HP) Chl(W) sph ann ab san an q ilm 
+ 318 - Omph(HP) Gt(HP) Chl(W) zo mu ab an q ilm 
+ 319 - Omph(HP) Gt(HP) Chl(W) zo sph mu ab q ilm 
+ 320 - Omph(HP) Gt(HP) Chl(W) law sph mu q H2O 
+ 321 - Omph(HP) Chl(W) zo sph mu ab q ilm 
+ 322 - Omph(HP) Chl(W) zo mu ab an q ilm 
+ 323 - Omph(HP) Gt(HP) Chl(W) mu pa q ru H2O 
+ 324 - Omph(HP) Gt(HP) law cel q ru H2O 
+ 325 - Omph(HP) Gt(HP) Chl(W) phl mstp q ru H2O 
+ 326 - Omph(HP) Opx(HP) phl ab san an q ilm H2O 
+ 327 - Omph(HP) Gt(HP) Opx(HP) ab san an ilm H2O 
+ 328 - Omph(HP) Gt(HP) Opx(HP) phl ab san q ru H2O 
+ 329 - Omph(HP) Gt(HP) mu cel kcm coe ru H2O 
+ 330 - Omph(HP) Gt(HP) Opx(HP) an q ru H2O kspL abL 

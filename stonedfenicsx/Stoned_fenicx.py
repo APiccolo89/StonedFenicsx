@@ -6,27 +6,30 @@ from .package_import import *
 #---------------------------------------------------------------------------------------------------------
 # My modules 
 #---------------------------------------------------------------------------------------------------------
-from stonedfenicsx.create_mesh.create_mesh     import create_mesh as cm 
-from stonedfenicsx.phase_db                    import PhaseDataBase 
-from stonedfenicsx.numerical_control           import ctrl_LHS 
-from stonedfenicsx.utils                       import print_ph
-from stonedfenicsx.phase_db                    import _generate_phase
-from stonedfenicsx.scal                        import Scal
-from stonedfenicsx.scal                        import _scaling_material_properties
-from stonedfenicsx.numerical_control           import NumericalControls
-from stonedfenicsx.numerical_control           import IOControls
-from stonedfenicsx.create_mesh.create_mesh     import Geom_input
-from stonedfenicsx.scal                        import _scaling_control_parameters
-from stonedfenicsx.scal                        import _scale_parameters
-from stonedfenicsx.solution                    import solution_routine
+from stonedfenicsx.create_mesh.create_mesh import create_mesh as cm 
+from stonedfenicsx.material_property.phase_db import PhaseDataBase 
+from stonedfenicsx.numerical_control import ctrl_LHS,time_dependent_evolution
+from stonedfenicsx.utils import print_ph
+from stonedfenicsx.material_property.phase_db import _generate_phase
+from stonedfenicsx.scal import Scal
+from stonedfenicsx.scal import _scaling_material_properties
+from stonedfenicsx.numerical_control import NumericalControls
+from stonedfenicsx.numerical_control import IOControls
+from stonedfenicsx.create_mesh.create_mesh import Geom_input
+from stonedfenicsx.scal import _scaling_control_parameters
+from stonedfenicsx.scal import _scale_parameters,scal_time_class
+from stonedfenicsx.solver_module.solution_routine import solution_routine
 
 dict_options = {'NoShear':0,
                 'Linear':1,
                 'SelfConsistent':2}
+dict_stokes = {'Direct':np.int32(1),
+               'Iterative':np.int32(0)}
 
 def generate_phase_database(IP,Phin)->PhaseDataBase:
     from stonedfenicsx.utils import Phase
-    pdb = PhaseDataBase(7,friction_angle=IP.phi*np.pi/180,eta_max=IP.eta_max)
+    from stonedfenicsx.material_property.phase_db import fill_up_weakzone_data
+    pdb = PhaseDataBase(6,eta_max=IP.eta_max)
 
     phase = Phase()
     dict_ph_in = Phin.__dict__
@@ -95,7 +98,18 @@ def generate_phase_database(IP,Phin)->PhaseDataBase:
                                 Edis              = phase.Edis if hasattr(phase, 'Edis') else -1e23,
                                 Vdis              = phase.Vdis if hasattr(phase, 'Vdis') else -1e23,
                                 Bdis              = phase.Bdis if hasattr(phase, 'Bdis') else -1e23,
-                                eta               = phase.eta if hasattr(phase, 'eta') else 1e20)
+                                eta               = phase.eta if hasattr(phase, 'eta') else 1e20,
+                                k = phase.k,
+                                radio=phase.Hr)
+        
+        # Update the rheological data of the virtual weak zone. 
+    
+    
+    pdb = fill_up_weakzone_data(ch = IP.cohesion 
+                                    ,phi = np.radians(IP.phi)
+                                    ,eta_wz = IP.eta_wz 
+                                    ,dislocation_creep=IP.dislocation_creep_wz
+                                    ,pdb=pdb)
 
     return pdb 
 
@@ -136,7 +150,9 @@ def fill_geometrical_input(IP)->Geom_input:
     g_input.trans = IP.transition
     g_input.sub_path = IP.sub_path
     g_input.wz_tk = IP.wz_tk
-    g_input.sub_constant_flag = IP.van_keken
+    if IP.van_keken and not IP.sub_constant_flag:
+        raise ValueError("Error: Van Keken Benchmarks cannot run with a variable bending angle")
+    g_input.sub_constant_flag = IP.sub_constant_flag
     
     fields_g_input = fields(g_input)
     
@@ -201,12 +217,15 @@ def StonedFenicsx(IP,Ph_input):
                             van_keken        = IP.van_keken,
                             van_keken_case   = IP.van_keken_case,
                             model_shear      = dict_options[IP.model_shear],
-                            phase_wz         = IP.phase_wz,
                             dt = IP.dt_sim,
                             adiabatic_heating = IP.adiabatic_heating,
                             Tmax=IP.Tmax,
                             it_max=IP.it_max,
-                            tol=IP.tol)
+                            tol=IP.tol,
+                            it_inner_max = IP.it_inner_max,
+                            stokes_solver_type=dict_stokes[IP.stokes_solver_type],
+                            energy_solver_type = dict_stokes[IP.stokes_solver_type],
+                            rtolstokes = IP.iterative_solver_tol)
     # IO controls
     io_ctrl = IOControls(test_name = IP.test_name,
                         path_save = IP.path_test,
@@ -221,23 +240,27 @@ def StonedFenicsx(IP,Ph_input):
                     slab_tk=IP.slab_tk,
                     recalculate = IP.recalculate,
                     van_keken = IP.van_keken,
-                    non_linearities=IP.self_consistent_flag,
                     c_age_plate = IP.c_age_plate)
+    
+    t_lhs = time_dependent_evolution(constant_age = IP.constant_age
+                                     ,constant_vel = IP.constant_vel
+                                     ,current_age = 0.0 
+                                     ,current_vel=0.0
+                                     ,t_age = IP.t_age
+                                     ,t_vel = IP.t_vel
+                                     ,vel_plate=IP.vel_plate
+                                     ,age_plate=IP.age_plate)
     
     Pdb = generate_phase_database(IP,Ph_input)                      
     # ---
     # Create mesh 
     g_input = fill_geometrical_input(IP)
 
-
-
-    
-
     # Scaling
     ctrl = _scaling_control_parameters(ctrl, sc)
     Pdb = _scaling_material_properties(Pdb,sc)
     lhs = _scale_parameters(lhs, sc)
-
+    t_lhs = scal_time_class(t_lhs,sc)
     M = cm(io_ctrl, sc,g_input,ctrl)
     
     M.element_p = basix.ufl.element("Lagrange","triangle", 1) 
@@ -245,9 +268,8 @@ def StonedFenicsx(IP,Ph_input):
     M.element_V = basix.ufl.element("Lagrange","triangle",2,shape=(2,))
     
     
-    solution_routine(M, ctrl, lhs, Pdb, io_ctrl, sc)
+    solution_routine(M, ctrl, lhs,t_lhs, Pdb, io_ctrl, sc)
 
-    # Create mesh
     return 0    
 
 #---------------------------------------------------------------------------

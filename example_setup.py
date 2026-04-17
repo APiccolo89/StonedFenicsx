@@ -19,7 +19,7 @@ self_con = [0, 1]
 # A flag that generate the geometry of the benchmark
 van_keken = 1
 # The input path for saving the results
-inp.path_test = '../Results/Tests_Van_keken'
+inp.path_test = '../Results/Tests_Van_keken_parallel'
 
 # Geometrical input
 inp.cr = 0.0   # Overriding crust 
@@ -131,7 +131,7 @@ for i in range(len(option_thermal)):
                 Ph.wedge_mantle.name_dislocation = name_dislocation
                 Ph.wedge_mantle.rho0 = rho0_M
                 Ph.wedge_mantle.name_capacity = capacity_nameM 
-                Ph.wedge_mantle.name_conductivity = capacity_nameM
+                Ph.wedge_mantle.name_conductivity = conductivity_nameC
                 Ph.wedge_mantle.name_alpha = alpha_nameM
                 Ph.wedge_mantle.name_density = density_nameM
                 Ph.wedge_mantle.radio_flag = radio_flag

@@ -1,5 +1,4 @@
 from .package_import import *
-dict_temp_prob = {'Transient':0,'Steady_state':1}
 dict_k = {'base': 0,
            'T_hof_Mckenzie2005': 1,
            'T_Xu_2004':2,
@@ -28,6 +27,7 @@ spec = [('it_max', int64),
     ('tol', float64),
     ('tol_innerPic', float64),
     ('tol_innerNew', float64),
+    ('it_inner_max',int32),
     ('relax', float64),
     ('Tmax', float64),
     ('Ttop', float64),
@@ -47,7 +47,10 @@ spec = [('it_max', int64),
     ('wz_tk',float64),
     ('time_dependent',int64),
     ('dt',float64),
-    ('adiabatic_heating',int32)
+    ('adiabatic_heating',int32),
+    ('stokes_solver_type',int32),
+    ('energy_solver_type',int32),
+    ('iterative_solver_tol',float64)
 ]
 
 @jitclass(spec)
@@ -76,10 +79,15 @@ class NumericalControls:
                  wz_tk = 1e3,
                  time_dependent = 0,
                  dt  = 500,
-                 adiabatic_heating=1):  # 0 -> inactive / linear 
+                 adiabatic_heating=1,
+                 stokes_solver_type = 1,
+                 energy_solver_type = 1,
+                 it_inner_max = 10,
+                 rtolstokes = 1e-10):  # 0 -> inactive / linear 
 
         # Direct initialization of class attributes
-        self.it_max            = it_max 
+        self.it_max            = it_max
+        self.it_inner_max      = it_inner_max 
         self.tol               = tol 
         self.relax             = relax
         self.Tmax              = Tmax + 273.15
@@ -88,20 +96,22 @@ class NumericalControls:
         self.v_s               = v_s  # Convert cm/yr to m/s
         self.slab_age          = slab_age
         self.time_max          = time_max
-        self.time_dependent_v  = time_dependent_v
+        self.time_dependent_v  = time_dependent_v 
         self.steady_state      = steady_state
         self.slab_bc           = 1 # 1 moving wall, 0 pipe-like slab 
         self.decoupling        = decoupling # 1 decoupled, 0 coupled
         self.tol_innerPic      = tol_innerPic
         self.tol_innerNew      = tol_innerNew
-        self.van_keken         = van_keken # 
-        self.van_keken_case    = van_keken_case # 
+        self.van_keken         = van_keken # REMOVE
+        self.van_keken_case    = van_keken_case # REMOVE
         self.model_shear       = model_shear# 1 linear decoupling, 0 nonlinear decoupling
-        self.phase_wz          = phase_wz
-        self.wz_tk             = wz_tk
+        self.phase_wz          = phase_wz # REMOVE
+        self.wz_tk             = wz_tk # REMOVE
         self.time_dependent    = time_dependent
         self.dt                = dt # in years
-        self.adiabatic_heating = adiabatic_heating
+        self.adiabatic_heating = adiabatic_heating # REMOVE (?)
+        self.stokes_solver_type = stokes_solver_type
+        self.iterative_solver_tol = rtolstokes
         
     
 
@@ -167,7 +177,7 @@ class ctrl_LHS:
         option_1D_solve=1,    # flag to enable 1D solve
         dt=5e-3,              # time step
         c_age_plate=50.0,     # characteristic plate age
-        c_age_var=(30.0, 60.0),  # variation in plate age
+        c_age_var=(0.0, 100.0),  # variation in plate age
         t_res=1000,           # temporal resolution
         recalculate=0,        # flag for recomputation
         van_keken=1,          # benchmark flag
@@ -203,8 +213,39 @@ class ctrl_LHS:
         self.Cp  = Cp 
         self.k   = k 
         self.rho = rho
-        
 
+@dataclass(slots=True)
+class time_dependent_evolution:
+    constant_age: int = 1 
+    constant_vel:int =  1
+    current_age : float = None 
+    current_vel : float = None 
+    t_age : float = field(default_factory=lambda: np.array([0.0, 30.0]))
+    t_vel : float =  field(default_factory=lambda: np.array([0.0, 30.0]))
+    age_plate : float =  field(default_factory=lambda: np.array([0.0, 30.0]))
+    vel_plate : float = field(default_factory=lambda: np.array([0.0, 30.0]))    
+    
+    @staticmethod
+    def update_vel_age(int_t:list,vls:list,t:float)->float:
+        """Function that update the current age or velocity
+
+        Args: 
+            int_t: list = interval of time 
+            vls: list = start vel/age and end vel/age
+            t: float = current time 
+            
+        """
+        dt = int_t[1]-int_t[0]
+        dp = vls[1]-vls[0]
+        val = vls[0]+(dp/dt)*t 
+        
+        val = max(vls[1], val) if dp < 0 else min(vls[1], val)
+        
+        return val 
+            
+        
+         
+        
 
     
     

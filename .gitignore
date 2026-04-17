@@ -79,3 +79,11 @@ Temp_plate.png
 slurm-3125458.out
 slurm-3126039.out
 slurm-3137331.out
+.conda
+examples/slurm-3991983.out
+examples/.slurm-3991543.out.swp
+examples/slurm-3991823.out
+examples/slurm-3991949.out
+examples/slurm-3992024.out
+examples/slurm-3992101.out
+.DS_Store

@@ -1,6 +1,7 @@
 from .package_import import *
 from .utils import timing_function, print_ph
 from stonedfenicsx.create_mesh.aux_create_mesh import Geom_input
+from stonedfenicsx.numerical_control import time_dependent_evolution
 
 data_scal = [('L',float64),
              ('v',float64),
@@ -77,6 +78,8 @@ def _scaling_material_properties(pdb,sc:Scal):
     scal_Bdif = (sc.stress*sc.T)**(-1)
     pdb.Bdif /= scal_Bdif 
     pdb.Bdis /= scal_Bdsl
+    pdb.Bdis_wz /= scal_Bdif
+
     
 
     
@@ -114,6 +117,9 @@ def _scaling_material_properties(pdb,sc:Scal):
     scal_radio = sc.Watt/sc.L**3 
     
     pdb.radio /= scal_radio 
+    
+    pdb.Bdis_wz /= scal_Bdsl
+    
     
     if MPI.COMM_WORLD.rank == 0: 
     
@@ -178,3 +184,12 @@ def dimensionless_ginput(g_input:Geom_input,sc:Scal):
     g_input.lab_d /= sc.L # Astenosphere-lithosphere 
     
     return g_input 
+
+def scal_time_class(t_lhs:time_dependent_evolution, sc: Scal)->time_dependent_evolution:
+    
+    t_lhs.age_plate *= sc.scale_Myr2sec * 1/sc.T 
+    t_lhs.vel_plate *= sc.scale_vel * (sc.T/sc.L)
+    t_lhs.t_age *= sc.scale_Myr2sec * 1/sc.T 
+    t_lhs.t_vel *= sc.scale_Myr2sec * 1/sc.T 
+    return t_lhs
+    

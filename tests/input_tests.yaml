@@ -3,10 +3,10 @@ Input:
     it_max: 20
     tol: 1.0e-5
     relax: 0.9
-    Tmax: 1300.0
+    Tmax: 1333.0
     Ttop: 0.0
     g: 9.81
-    eta_max : 1.0e26
+    eta_max: 1.0e26
     v_s: [5.0, 0.0] # cm/yr
     slab_age: 50.0 # Myr
     time_max: 2.0  # Myr
@@ -21,9 +21,15 @@ Input:
     time_dependent: 0
     dt_sim: 0.015            # Myr (15000/1e6)
     adiabatic_heating: 0
-    phi: 5.0
     self_consistent_flag: 1
+    stokes_solver_type : "Direct"
 
+  Shear_Heating: 
+    model_shear: "NoShear"
+    phi: 10.0 
+    cohesion: 10e6 
+    dislocation_creep_wz: "WetQuartzite_disl"
+    
   InputOutputControl:
     test_name: "Output"
     sname: "Output"
@@ -54,7 +60,7 @@ Input:
       name_density : 'Constant'
       name_capacity: 'Constant'
       name_conductivity: 'Constant'
-      eta : 1.0e21 
+      eta : 1.0e20 
       rho0 : 3300.0 
       k : 3.0
       Cp : 1250 
@@ -76,7 +82,7 @@ Input:
       name_density : 'Constant'
       name_capacity: 'Constant'
       name_conductivity: 'Constant'
-      eta : 1.0e21 
+      eta : 1.0e20 
       rho0 : 3300.0 
       k : 3.0
       Cp : 1250 
@@ -98,7 +104,7 @@ Input:
       name_density : 'Constant'
       name_capacity: 'Constant'
       name_conductivity: 'Constant'
-      eta : 1.0e21 
+      eta : 1.0e20 
       rho0 : 3300.0 
       k : 3.0
       Cp : 1250 
@@ -120,7 +126,7 @@ Input:
       name_density : 'Constant'
       name_capacity: 'Constant'
       name_conductivity: 'Constant'
-      eta : 1.0e21 
+      eta : 1.0e20 
       rho0 : 3300.0 
       k : 3.0
       Cp : 1250 
@@ -143,7 +149,7 @@ Input:
       name_density : 'Constant'
       name_capacity: 'Constant'
       name_conductivity: 'Constant'
-      eta : 1.0e21 
+      eta : 1.0e20 
       rho0 : 3300.0 
       k : 3.0
       Cp : 1250 
@@ -165,7 +171,7 @@ Input:
       name_density : 'Constant'
       name_capacity: 'Constant'
       name_conductivity: 'Constant'
-      eta : 1.0e21 
+      eta : 1.0e20 
       rho0 : 3300.0 
       k : 3.0
       Cp : 1250 
@@ -180,27 +186,14 @@ Input:
       radio_flag : 0 
       Hr : 0.0 
 
-    virtual_weak_zone:
-      name_diffusion : 'Constant'
-      name_dislocation : 'Constant'
-      name_alpha : 'Constant'
-      name_density : 'Constant'
-      name_capacity: 'Constant'
-      name_conductivity: 'Constant'
-      eta : 1.0e21 
-      rho0 : 3300.0 
-      k : 3.0
-      Cp : 1250 
-      alpha0 : 3e-5
-      Bdiff : null
-      Bdisl : null 
-      Ediff : null
-      Edisl : null 
-      Vdiff : null 
-      Vdisl : null
-      n : null 
-      radio_flag : 0 
-      Hr : 0.0 
+  # Place holder for time-dependent left boundary condition
+  time_dependent_left_bc:
+    constant_age: 1 
+    constant_vel: 1
+    t_age : [0.0,30.0]
+    t_vel : [0.0,30.0]
+    age_plate : [50.0, 25.0]
+    vel_plate : [5.0, 2.5]
 
 
   # Geometry
@@ -217,8 +210,8 @@ Input:
     lab_d: 100000.0
     decoupling: 80000.0
     resolution_normal: 2000.0
-    transition: 10000.0
-    wz_tk: 2000.0
+    transition: 2500.0
+    wz_tk: 500.0
     sub_Lb: 300000.0
     sub_dl: 10000.0
     sub_theta0: 5

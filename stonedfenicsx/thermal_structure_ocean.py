@@ -33,14 +33,14 @@ Convergence criterion:
 
 """
 
-from .package_import import *
+from stonedfenicsx.package_import import *
 # modules
-from .compute_material_property import heat_capacity,heat_conductivity,density
-from .phase_db import PhaseDataBase
-from .utils import timing_function, print_ph
-from .compute_material_property import compute_thermal_properties
-from .scal import Scal
-from .numerical_control import NumericalControls,ctrl_LHS
+from stonedfenicsx.material_property.compute_material_property import heat_capacity,heat_conductivity,density
+from stonedfenicsx.material_property.phase_db import PhaseDataBase
+from stonedfenicsx.utils import timing_function, print_ph
+from stonedfenicsx.material_property.compute_material_property import compute_thermal_properties
+from stonedfenicsx.scal import Scal
+from stonedfenicsx.numerical_control import NumericalControls,ctrl_LHS
 
 start       = timing.time()
 zeros       = np.zeros
@@ -243,11 +243,9 @@ def _compute_Cp_k_rho(ph   : NDArray[np.float64]
     
     
     it = len(T)
-    if flagNL == 0:
-        for i in range(it):
-            Cp[i], rho[i], k[i] = compute_thermal_properties(pdb,T[i],p[i],ph[i])
-    else: 
-        Cp[:] = CValues[0]; k[:] = CValues[1]; rho[:] = CValues[2] 
+    
+    for i in range(it):
+        Cp[i], rho[i], k[i] = compute_thermal_properties(pdb,T[i],p[i],ph[i])
 
     return Cp,k,rho
 #-----------------------------------------------------------------------------------------
@@ -489,13 +487,13 @@ def compute_ocean_plate_temperature(ctrl:NumericalControls
     ph   = np.zeros([nz],dtype = np.int32) # I assume that everything is mantle 
     ph[z<6000/scal.L] = np.int32(1)
 
-    if lhs.van_keken == 1 and lhs.non_linearities==1: 
+    if lhs.van_keken == 1: 
         from scipy import special
         Cp    = 1250/scal.Cp
         k     = 3.0/scal.k
         rho   = 3300/scal.rho
         kappa = k/rho/Cp 
-        t     = 50 * scal.scale_Myr2sec/scal.T
+        t     = lhs.c_age_plate
         T_lhs = Ttop+(Tmax-Ttop) * special.erf(z /2 /np.sqrt(t * kappa))
         lhs.z[:] = -z[:] 
         lhs.LHS[:] = T_lhs[:]
@@ -665,13 +663,26 @@ def compute_initial_LHS(ctrl,lhs,scal,pdb,theta_in):
     else:
         lhs,_,_ = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb,theta_in)
         
+
+    return lhs
+
+
+def update_age_lhs(ctrl,lhs,scal,pdb,theta_in):
+    
+
+    
+    if lhs.van_keken == 0 or lhs.non_linearities == 0 :
+        from scipy.interpolate import RegularGridInterpolator
+ 
+        t_re = np.linspace(lhs.c_age_var[0],lhs.c_age_var[1], num = lhs.LHS_var.shape[1])
+        T,Z  = np.meshgrid(t_re,lhs.z,indexing='ij')
+        TT,ZZ = np.meshgrid(t,lhs.z,indexing='ij')
+        interp_func = RegularGridInterpolator((t[0], lhs.z), temperature)
+        points_coarse = np.column_stack((T.ravel(), Z.ravel()))
+        lhs.LHS_var = interp_func(points_coarse).reshape(len(t_re), len(lhs.z))
+        lhs.t_res_vec = t_re 
+    else:
+        lhs,_,_ = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb,theta_in)
         
 
-        
-    
-    
-    
-
-        
-    
     return lhs

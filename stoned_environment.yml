@@ -7,7 +7,7 @@ dependencies:
   - petsc4py=3.23.4
   - mpi4py=4.1.0
   - numpy=2.2.6
-  - scipy=1.15.3
+  - scipy>=1.15
   - gmsh=4.13.1
   - meshio=5.3.5
   - numba=0.61.2
