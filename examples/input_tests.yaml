@@ -25,6 +25,7 @@ Input:
     self_consistent_flag: 1
     stokes_solver_type : "Iterative"
     energy_solver_type : "Direct"
+    
 
   Shear_Heating: 
     model_shear: "NoShear"

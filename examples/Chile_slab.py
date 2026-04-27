@@ -189,7 +189,7 @@ if __name__ == '__main__':
     parser.add_argument("--steady_state",type=int,default=1)
     parser.add_argument("--shear_heating",type=str,default='SelfConsistent')
     parser.add_argument("--max_time",type=float,default=30.0)
-    parser.add_argument("--option_thermal",type=int,default = 0)
+    parser.add_argument("--option_thermal",type=int,default = 1)
     args = parser.parse_args()
     
     test(args)
