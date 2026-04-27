@@ -863,6 +863,15 @@ def generate_parallel_layer_subducting_plate(sx:NDArray[np.float64],
     cx = sx - lt*np.sin(th)
     cy = sy - lt*np.cos(th)
 
+    # Find node where cx == 0 
+    if cx[0]<0:
+        node = np.where(cx>=0)[0][0]
+    
+        # find the extra ndoe: 
+        slope = (cy[node]-cy[node-1])/(cx[node]-cx[node-1])
+        y     = -slope * cx[node-1] + cy[node-1]
+    
+
     e_node2,t_ex1 = _find_e_node(cx,cy,cx*0.0,-np.min(sy),flag=False)
     cx,cy,t  = _correct_(cx,cy,e_node2,-np.min(sy),cy*0.0,0.0)
 
@@ -871,8 +880,8 @@ def generate_parallel_layer_subducting_plate(sx:NDArray[np.float64],
     # Shift the first node: 
     
     if cx_n[0] != 0.0: 
-        cx_n[0] = 0.0 
-        cy_n[0] = -lt/np.cos(th[0])
+        cx_n = np.insert(cx_n,0,0.0)
+        cy_n = np.insert(cy_n,0,y)
     
     
     
