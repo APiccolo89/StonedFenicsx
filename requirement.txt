@@ -1,0 +1,7 @@
+Package       Version  Editable project location
+------------- -------- ----------------------------------
+packaging     26.2
+pip           26.1.1
+setuptools    82.0.1
+StonedFenicsx 2026.0.1 /mnt/scratch/wlnw570/StonedFenicsx
+wheel         0.47.0

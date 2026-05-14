@@ -25,7 +25,7 @@ stonedfenicsx/solver_module/problems_solution.py
 stonedfenicsx/solver_module/solution_routine.py
 stonedfenicsx/solver_module/solver.py
 stonedfenicsx/solver_module/solver_utilities.py
-tests/test_benchmark_real.py
+tests/test_benchmark_shear_heating.py
 tests/test_benchmark_subdomains.py
 tests/test_benchmark_subdomains_time_dp.py
 tests/test_imports.py

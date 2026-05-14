@@ -1,4 +1,13 @@
-numpy<2.3,>=2.2
-meshio<5.4,>=5.3
-numba<0.62,>=0.61
-scipy<1.16,>=1.15
+numpy==2.2.6
+scipy>=1.15
+gmsh==4.13.1
+pandas==3.0.3
+meshio==5.3.5
+numba==0.61.2
+pytest
+sphinx==9.0.0
+myst-parser
+pyyaml
+piccolo_theme
+sphinxcontrib-bibtex
+pyyaml==6.0.3

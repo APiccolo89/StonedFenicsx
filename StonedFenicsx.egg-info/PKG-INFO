@@ -3,7 +3,16 @@ Name: StonedFenicsx
 Version: 2026.0.1
 Project-URL: Homepage, https://github.com/APiccolo89/StonedFenicsx
 Requires-Python: <3.14,>=3.10
-Requires-Dist: numpy<2.3,>=2.2
-Requires-Dist: meshio<5.4,>=5.3
-Requires-Dist: numba<0.62,>=0.61
-Requires-Dist: scipy<1.16,>=1.15
+Requires-Dist: numpy==2.2.6
+Requires-Dist: scipy>=1.15
+Requires-Dist: gmsh==4.13.1
+Requires-Dist: pandas==3.0.3
+Requires-Dist: meshio==5.3.5
+Requires-Dist: numba==0.61.2
+Requires-Dist: pytest
+Requires-Dist: sphinx==9.0.0
+Requires-Dist: myst-parser
+Requires-Dist: pyyaml
+Requires-Dist: piccolo_theme
+Requires-Dist: sphinxcontrib-bibtex
+Requires-Dist: pyyaml==6.0.3

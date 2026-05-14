@@ -9,18 +9,16 @@ requires-python = ">=3.10,<3.14"
 dependencies = [
     "numpy==2.2.6",
     "scipy>=1.15",
-    "gmsh==4.13.1",
     "pandas==3.0.3",
     "meshio==5.3.5",
     "numba==0.61.2",
     "pytest",
-    "sphinx==9.0.0",
+    "sphinx==9.1.0",
     "myst-parser",
     "pyyaml",
     "piccolo_theme",
     "sphinxcontrib-bibtex",
     "pyyaml==6.0.3",
-    "h5py==3.12.1"
 ]
 
 [project.urls]
@@ -33,11 +31,10 @@ include = ["stonedfenicsx*"]
 testpaths = ["tests"]
 
 [tool.spack]
-python = "3.11"
+python = "3.13"
 mpi = true
 petsc = true
 dolfinx = true
-h5py = true
 
 # FOR HPC user
 # -> Install the software, then load spack 
