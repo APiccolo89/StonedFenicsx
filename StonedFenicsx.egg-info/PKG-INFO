@@ -16,3 +16,5 @@ Requires-Dist: pyyaml
 Requires-Dist: piccolo_theme
 Requires-Dist: sphinxcontrib-bibtex
 Requires-Dist: pyyaml==6.0.3
+Requires-Dist: h5py==3.12.1
+Requires-Dist: shapely==2.1.2

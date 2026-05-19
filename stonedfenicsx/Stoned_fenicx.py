@@ -31,6 +31,12 @@ def generate_phase_database(IP,Phin)->PhaseDataBase:
     from stonedfenicsx.material_property.phase_db import fill_up_weakzone_data
     pdb = PhaseDataBase(6,eta_max=IP.eta_max)
 
+
+    if IP.Pressure_dependecy == 0:
+        print_ph('Pressure dependency of the material properties is deactivated. The material properties will not depend on the pressure and will be only temperature dependent.')
+    else: 
+        print_ph('Pressure dependency of the material properties is activated. The material properties will depend on the pressure and temperature.')
+    
     phase = Phase()
     dict_ph_in = Phin.__dict__
     for i,ph in dict_ph_in.items():
@@ -100,9 +106,11 @@ def generate_phase_database(IP,Phin)->PhaseDataBase:
                                 Bdis              = phase.Bdis if hasattr(phase, 'Bdis') else -1e23,
                                 eta               = phase.eta if hasattr(phase, 'eta') else 1e20,
                                 k = phase.k,
-                                radio=phase.Hr)
+                                radio=phase.Hr,
+                                Pressure_dependency = IP.Pressure_dependecy)
         
         # Update the rheological data of the virtual weak zone. 
+    
     
     
     pdb = fill_up_weakzone_data(ch = IP.cohesion 
