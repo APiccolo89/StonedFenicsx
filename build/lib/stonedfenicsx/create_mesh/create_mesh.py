@@ -134,10 +134,8 @@ def create_gmesh(ioctrl   : IOControls,
      ,oc_cy
      ,g_input) = function_create_subducting_plate_geometry(g_input)
     
-    if slab_x[-1]>g_input.x[1]:
-        print_ph('Shortcoming: the slab is out of the domain, please increase the domain size, I add 60 km to the domain along x direction, fear not')
-        g_input.x[1] = slab_x[-1]+60e3
-        max_x        = g_input.x[1]
+    
+    g_input.x[1] = slab_x[-1]+60e3
         
     min_x           = g_input.x[0] # The beginning of the model is the trench of the slab
     max_x           = g_input.x[1]          
@@ -180,7 +178,6 @@ def create_gmesh(ioctrl   : IOControls,
     gmsh.write("%s.msh"%mesh_name)
     
     gmsh.finalize()
-    print_ph("gmsh finalized")
     
     return g_input
 #--------------------------------------------------------------------------------------------------------
@@ -833,19 +830,32 @@ def read_mesh(ioctrl:IOControls
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()  # 0, 1, ..., size-1
 
-    print_ph('reading the mesh and convert it ... ')
-
     mesh_name = os.path.join(ioctrl.path_save,'%s.msh'%ioctrl.sname)
 
     mesh, cell_markers, facet_markers = gmshio.read_from_msh(mesh_name, MPI.COMM_WORLD, gdim=2)
     
-    print_ph('                               ... Finished ')
-
-    
-    mesh = _scaling_mesh(mesh,sc)
     if rank == 0: 
+        # Read in mesh
+        mesh_name = os.path.join(ioctrl.path_save,'%s.msh'%ioctrl.sname)
+        msh = meshio.read(mesh_name)
+        
+        pt_save = ioctrl.path_save
+        if not os.path.exists(pt_save):
+            os.makedirs(pt_save)
+    
+        pt_save = os.path.join(pt_save, ioctrl.sname)
+        if not os.path.exists(pt_save):
+            os.makedirs(pt_save)    
+        
+        # Create and save one file for the mesh, and one file for the facets
+        triangle_mesh = create_mesh_fenicsx(msh, "triangle", prune_z=True)
+        line_mesh = create_mesh_fenicsx(msh, "line", prune_z=True)
+        meshio.write("%s/mesh.xdmf"%pt_save, triangle_mesh) # Debug
+        meshio.write("%s/mt.xdmf"%pt_save, line_mesh) # Debug 
+        # Remove gmsh file, to save memory: every information of the mesh is already known by fenicsx
         os.remove(mesh_name)
-
+        
+    mesh = _scaling_mesh(mesh,sc)
 
     return mesh, cell_markers, facet_markers
 #------------------------------------------------------------------------------------------------------

@@ -32,7 +32,7 @@ def generate_phase_database(IP,Phin)->PhaseDataBase:
     pdb = PhaseDataBase(6,eta_max=IP.eta_max)
 
 
-    if IP.Pressure_dependecy == 0:
+    if IP.Pressure_dependency == 0:
         print_ph('Pressure dependency of the material properties is deactivated. The material properties will not depend on the pressure and will be only temperature dependent.')
     else: 
         print_ph('Pressure dependency of the material properties is activated. The material properties will depend on the pressure and temperature.')
@@ -107,7 +107,7 @@ def generate_phase_database(IP,Phin)->PhaseDataBase:
                                 eta               = phase.eta if hasattr(phase, 'eta') else 1e20,
                                 k = phase.k,
                                 radio=phase.Hr,
-                                Pressure_dependency = IP.Pressure_dependecy)
+                                Pressure_dependency = IP.Pressure_dependency)
         
         # Update the rheological data of the virtual weak zone. 
     

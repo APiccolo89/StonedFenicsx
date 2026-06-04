@@ -340,7 +340,7 @@ class Input:
     Tmax: float = 1333.0         # maximum temperature (mantle temperature) [deg C]
     Ttop: float = 0.0            # surface temperature [deg C]
     g: float = 9.81              # gravity module vector [m/s^2]
-    Pressure_dependecy: int = 1     # Flag to activate the pressure dependency of the material properties
+    Pressure_dependency: int = 1     # Flag to activate the pressure dependency of the material properties
     v_s: NDArray[float] = field(default_factory=lambda: np.array([5.0, 0.0]))  # slab velocity vector [cm/yr]
 
     slab_age: float = 50.0          # age of the slab [Myr]

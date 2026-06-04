@@ -641,7 +641,7 @@ def find_slab_surface(g_input:Geom_input)->tuple([NDArray[float],NDArray[float]]
                 
     return slab_top, theta_mean
 #-----------------------------------------------------------------------------------------------------------
-def create_slab_surface(f:callable, y_min:float,stp=float)->tuple[NDArray[float],NDArray[float]]:
+def create_slab_surface(f:callable, y_min:float,stp=float,depth:float=0.0)->tuple[NDArray[float],NDArray[float]]:
     
     # Initialise the theta_mean and slab_top array
     theta_mean = np.zeros([2],dtype=float)
@@ -650,7 +650,7 @@ def create_slab_surface(f:callable, y_min:float,stp=float)->tuple[NDArray[float]
         
     # compute the bending angle as a function of L
     slab_top[0,0] = 0.0
-    slab_top[0,1] = 0.0
+    slab_top[0,1] = depth
     dl = stp
     lghn = 0.0 
     lgh = 0.0
@@ -777,11 +777,17 @@ def function_create_subducting_plate_geometry(g_input:Geom_input,
 
     ax = slab_top[:,0]
     ay = slab_top[:,1] 
-        
+
+    bx,by, lt = generate_parallel_layer_subducting_plate(ax,ay,theta_mean,g_input.slab_tk)
+    if lt != g_input.slab_tk: 
+        print('Warning: slab top surface have a curvature that is incompatible with the current slab thickness.')
+        print(f' Old Thickness: {g_input.slab_tk/1e3} [km] New Thickness: {lt/1e3} [km]')
+        g_input.slab_tk = lt
+
     # Create the channel using the subduction interface as guide
     #cx,cy = function_create_subduction_channel(ax,ay,theta_mean,g_input)
     if g_input.ocr != 0.0:
-        ox,oy = generate_parallel_layer_subducting_plate(ax,ay,theta_mean,g_input.ocr)
+        ox,oy,_ = generate_parallel_layer_subducting_plate(ax,ay,theta_mean,g_input.ocr)
     else: 
         ox = None
         oy = None 
@@ -792,7 +798,7 @@ def function_create_subducting_plate_geometry(g_input:Geom_input,
     # creating an unrealistic bending of the weak zone. Initially I was recomputing the angle 
     # between the linear segment, using an average. It is more convinient use two // lines and then 
     # correcting them. 
-    bx,by = generate_parallel_layer_subducting_plate(ax,ay,theta_mean,g_input.slab_tk)
+
 
     # update the g_input
     g_input.theta_in_slab = theta_mean[0]
@@ -839,6 +845,21 @@ def generate_parallel_layer_subducting_plate(sx:NDArray[np.float64],
     cy = np.zeros([np.amax(sx.shape),1])
     # Loop over the interface of the slab and find the points on the top of the surface of the subduction channel: the point on the of the top of the channel are perpendicular to the slab interface#
     # Compute the top surface of the subduction channel
+    
+    
+    ds    = np.sqrt(np.diff(sx)**2 + np.diff(sy)**2)
+    dth = np.diff(th)
+    dth_ds = dth/ds                  # [rad / m]
+
+
+    
+    kappa = np.zeros_like(sx)
+    kappa[1:] = np.abs(dth_ds)
+    
+    if 0.8 * np.nanmin(1/kappa) < lt: 
+        lt = np.floor(0.8 * np.min(1/kappa))
+    
+    
     cx = sx - lt*np.sin(th)
     cy = sy - lt*np.cos(th)
 
@@ -856,7 +877,7 @@ def generate_parallel_layer_subducting_plate(sx:NDArray[np.float64],
     
     
 
-    return cx_n,cy_n
+    return cx_n,cy_n,lt 
     
 #-----------------------------------------------------------------------------------------------------------------
   

@@ -243,11 +243,9 @@ def _compute_Cp_k_rho(ph   : NDArray[np.float64]
     
     
     it = len(T)
-    if flagNL == 0:
-        for i in range(it):
-            Cp[i], rho[i], k[i] = compute_thermal_properties(pdb,T[i],p[i],ph[i])
-    else: 
-        Cp[:] = CValues[0]; k[:] = CValues[1]; rho[:] = CValues[2] 
+    
+    for i in range(it):
+        Cp[i], rho[i], k[i] = compute_thermal_properties(pdb,T[i],p[i],ph[i])
 
     return Cp,k,rho
 #-----------------------------------------------------------------------------------------
@@ -489,7 +487,7 @@ def compute_ocean_plate_temperature(ctrl:NumericalControls
     ph   = np.zeros([nz],dtype = np.int32) # I assume that everything is mantle 
     ph[z<6000/scal.L] = np.int32(1)
 
-    if lhs.van_keken == 1 and lhs.non_linearities==1: 
+    if lhs.van_keken == 1: 
         from scipy import special
         Cp    = 1250/scal.Cp
         k     = 3.0/scal.k

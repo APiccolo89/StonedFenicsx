@@ -4,12 +4,17 @@ from stonedfenicsx.utils import print_ph
 
 #-----
 Dic_rheo={'Constant'              :  'Linear', 
-          'Hirth_Dry_Olivine_diff' :  'Dislocation_DryOlivine',
-          'Hirth_Dry_Olivine_disl' :  'Diffusion_DryOlivine',
+          'Hirth_Dry_Olivine_diff' :  'Diffusion_DryOlivine',
+          'Hirth_Dry_Olivine_disl' :  'Dislocation_DryOlivine',
           'Van_Keken_diff'         :  'Diffusion_vanKeken',
           'Van_Keken_disl'         :  'Dislocation_vanKeken',
           'Hirth_Wet_Olivine_diff' :  'Diffusion_WetOlivine',
-          'Hirth_Wet_Olivine_disl' :  'Dislocation_WetOlivine'
+          'Hirth_Wet_Olivine_disl' :  'Dislocation_WetOlivine',
+          'WetPlagio_diff' : 'Diffusion_WetPlagio',
+          'WetPlagio_disl' :'Dislocation_WetPlagio',
+          'Serpentinite_disl' : 'Dislocation_serpentinite',
+          'WetQuartzite_disl' : 'Dislocation_wetquartzite',
+          'Glaucophane_disl'  : 'Dislocation_glaucophane'
           }
 #-----
 Dic_conductivity ={'Constant'     :  'Constant',
@@ -31,6 +36,39 @@ Dic_alpha = {'Constant'                               : 'Constant',
              'Crust'                                  : 'Crust'}
 
 #-----------------------------------------------------------------------------------------------------------
+@dataclass
+class Reference:
+    """Reference of data from literature.
+    
+    Attributes
+    ----------
+    name_original : str
+        The original source of the parameters
+    authors : str
+        Authors of the original work
+    year : int
+        Year of publication
+    source_data : str
+        Paper from which the data have been effectively taken
+    doi : str
+        Digital object identifier
+    journal : str
+        Journal of publication
+    notes : str
+        Additional notes required for understanding (verbose text).
+        e.g. errors from the source, additional corrections,
+        suspicious information, or lack of specific information.
+    """
+    name_original: str
+    authors: str
+    year: int
+    source_data: str
+    doi: str = ''
+    journal: str = ''
+    notes: str = ''
+    
+
+
 class thermal_expansivity():
     def __init__(self): 
         alpha0 = 2.832e-5
@@ -69,63 +107,193 @@ class Rheological_data_Base():
     Global data base of the rheology employed for the project 
     """
     def __init__(self):
-        # Dislocation creep
+        # Water fugacity 
+        # Since Water fugacity seems to have the same values in each of the Van Keken simulation
+        # the value are at the top of the file and then update where they are needed
+        
+        aH20 = 1.0
+        BH20 = 5521*1e6 
+        EH20 = 31.28e3 
+        VH20 = -2.009e-5 
+        
+        # Dislocation creep laws
         # Dry Olivine
+        
         E = 540e3
         V = 0.0
         n = 3.5
-        m = 0.0
+        F = 'NoCorrection'
         B = (2*28968.6)**(-n)
-        r = 1.0
-        d0 = 1
-        water = 1.0
-        q   = -1e23
-        taup = -1e23
-        gamma = -1e23
-        self.Dislocation_vanKeken = Rheological_flow_law(E,V,n,m,d0,B,0,0,r,water,q,gamma,taup)
+        ref_VK_DCR = Reference(name_original='Rheology of the Upper Mantle: A Synthesis',
+                               authors='Karato S.,& Wu,P',
+                               year=1993,
+                               journal = 'Science',
+                               doi ='10.1126/science.260.5109.771',
+                               source_data='A community benchmark for subduction zone modeling, Van Keken et al., 2008',
+                               notes = ('The data have been taken from Van Keken 2008. They call B, A, and divided by a factor 2.',
+                                       'The original pre-exponential factor has 1/s unit of measure. ',
+                                       'The law in Van Keken is wrong, ale porco dio! -> Futher explanation in supplementary material'))
+        self.Dislocation_vanKeken = Rheological_flow_law(E = E
+                                                         ,V = V 
+                                                         ,n = n
+                                                         ,B = B
+                                                         ,F = F
+                                                         ,MPa = 0)
+        
         #Dry Olivine Hirth 
+        
         E = 530.0e3
         V = 15e-6
         n = 3.5 
-        m = 0.0
+        F = 'SimpleShear'
+        MPa = 1
         B = 1.1e5
-        r = 1.0
-        d0 = 1
-        water = 1.0
-        q   = -1e23
-        taup = -1e23
-        gamma = -1e23 
-        self.Dislocation_DryOlivine = Rheological_flow_law(E,V,n,m,d0,B,1,1,r,water,q,gamma,taup)
+        self.Dislocation_DryOlivine = Rheological_flow_law(E = E
+                                                         ,V = V 
+                                                         ,n = n
+                                                         ,B = B
+                                                         ,F = F
+                                                         ,MPa = MPa )
         # Wet Olivine
+        
         E = 520.0e3
         V = 22e-6
         n = 3.5 
-        m = 0.0
+        F = 'SimpleShear'
+        MPa = 1
         B = 1600
         r = 1.2
-        d0 = 1
-        water = 1000.0
-        self.Dislocation_WetOlivine = Rheological_flow_law(E,V,n,m,d0,B,1,1,r,water,q,gamma,taup)
+        water_correction = 'COH'
+        self.Dislocation_WetOlivine =  Rheological_flow_law(E = E
+                                                         ,V = V 
+                                                         ,n = n
+                                                         ,B=B
+                                                         ,aH20=aH20
+                                                         ,EH20=BH20
+                                                         ,VH20=VH20
+                                                         ,BH20=BH20
+                                                         ,r = r
+                                                         ,F = F 
+                                                         ,MPa = MPa
+                                                         ,water_correction=water_correction)
         # Wet Plagio
+        
         E = 345.0e3
         V = 38e-6
         n = 3.0 
-        m = 0.0
+        F = 'UniAxial'
+        MPa = 1
         B = 1.5849
+        self.Dislocation_WetPlagio  = Rheological_flow_law(E = E
+                                                         ,V = V 
+                                                         ,n = n
+                                                         ,B = B
+                                                         ,F = F
+                                                         ,MPa = MPa)
+        # Serpentinite
+        
+        E = 8900
+        V = 3.2e-6
+        n = 3.8
+        B = 2.82e-15
+        F = 'UniAxial'
+        MPa = 1 
+        ref_serpentinite = Reference(name_original='High-pressure creep of serpentine, interseismic deformation, and initiation of subduction',
+                                     year = 2007, 
+                                     authors='Hilairet, N., Reynard, B., Wang, Y., Daniel, I., Merkel, S., Nishiyama, N., & Petitgirard, S. (2007)',
+                                     doi='https://doi.org/10.1126/science.1148494',
+                                     source_data = 'Deep decoupling in subduction zones: Observations and temperature limits, Abers et al 2020. Table:S3',
+                                     journal='Science',
+                                     notes=(' Data from Abers comes from Table 1'
+                                            ', main source (1 and 4 GPa). Seems uniaxial because they used D-Dia deformation apparatus and according to wikipedia',
+                                            'is uniaxial: https://en.wikipedia.org/wiki/D-DIA',
+                                            'Additional note: I checked the real data, and if I do not apply the correction, yields the same result'))
+        
+        self.Dislocation_serpentinite = Rheological_flow_law(E = E
+                                                      ,V = V
+                                                      ,n = n
+                                                      ,B = B
+                                                      ,r = r 
+                                                      ,F='UniAxial'
+                                                      ,MPa=1,
+                                                      ref=ref_serpentinite)
+        # Wet Quartzite
+        
+        E = 135.0e3
+        V = 0.0 
+        n = 4.0 
+        B = 6.309573444801943e-12
+        water_correction = 'Fugacity'
         r = 1.0
-        d0 = 1
-        water = 158.4893
-        self.Dislocation_WetPlagio  = Rheological_flow_law(E,V,n,m,d0,B,2,1,r,water,q,gamma,taup)
+        d0 = 0.0
+        ref_Wetquartzite = Reference(name_original='An evaluation of quartzite flow laws based on comparisons between experimentally and naturally deformed rocks',
+                                     authors='Hirth, G., Teyssier, C. & Dunlap, James W.',
+                                     year=2001,
+                                     doi='https://doi.org/10.1007/s005310000152',
+                                     source_data = 'Deep decoupling in subduction zones: Observations and temperature limits, Abers et al 2020. Table:S3',
+                                     journal='Int J Earth Sci',
+                                     notes = ('As usual: in Table S3, the pre-exponential factor is given in a unknown unit: MPa (n+r)/s.',
+                                              'The real unit is MPa^-n/s. I do not find any information on the type of experiment, so I put 0 F correction in the DB'))
+        
+        self.Dislocation_wetquartzite = Rheological_flow_law(E = E
+                                                      ,V = V
+                                                      ,n = n
+                                                      ,B = B
+                                                      ,r = r 
+                                                      ,F = 'UniAxial'
+                                                      ,MPa = 1
+                                                      ,aH20=aH20
+                                                      ,BH20=BH20
+                                                      ,EH20=EH20
+                                                      ,VH20=VH20
+                                                      ,water_correction=water_correction
+                                                      ,ref = ref_Wetquartzite)
+        
+        # Glaucofane dislocation creep
+        
+        E = 450e3
+        V = 0.0
+        B = 2.32e10 
+        n = 3.0 
+        r = 0.0 
+        d0 = 0.0 
+        ref_glaucofane_disl = Reference(name_original='Blueschist dislocation creep and glide in subduction systems: Constraints from glaucophane experiments',
+                                        authors='Hufford, L. J., Tokle, L., Behr, W. M., Morales, L. F. G., & Madonna, C.',
+                                        year = 2026,
+                                        source_data='Blueschist dislocation creep and glide in subduction systems: Constraints from glaucophane experiments',
+                                        doi='https://doi.org/10.1029/2025JB033622',
+                                        journal='Journal of Geophysical Research: Solid Earth',
+                                        notes=('Paper that specifically address the rheology of the glaucophane. I neglect the glide creep. ',
+                                               'The experiments have been performed with a Grigs apparatus, shear deformation configuration -> F==1',
+                                               'In theory there is an additional resources for the diffusion creep. Apperently this diffusion creep',
+                                               'has a stress exponent. Within the main source, they compare the results with this diffusion creep.',
+                                               'The diffusion creep in the other reference Tokle et al 2023 is microboudinage diffusion creep. An entirely',
+                                               'different deformation mechanism: merge the best of the two worlds: grain size and stress exponent dependency.'))
+        self.Dislocation_glaucophane = Rheological_flow_law(E = E
+                                                      ,V = V
+                                                      ,n = n
+                                                      ,B = B
+                                                      ,r = r 
+                                                      ,F = 'UniAxial'
+                                                      ,MPa = 1
+                                                      ,ref = ref_glaucofane_disl)
         # Diffusion creep 
         E = 375.0e3
         V = 5e-6
         n = 1.0 
         m = 3.0
         B = 1.5e9
-        r = 1.0
         d0 = 10e3
-        water = 1.0
-        self.Diffusion_DryOlivine   = Rheological_flow_law(E,V,n,m,d0,B,1,1,r,water,q,gamma,taup)
+        MPa = 1 
+        F = 'SimpleShear'
+        self.Diffusion_DryOlivine   = Rheological_flow_law(E = E
+                                                           ,V = V
+                                                           ,n = n 
+                                                           ,m = m
+                                                           ,d0 = d0 
+                                                           ,B = B 
+                                                           ,F = F 
+                                                           ,MPa = MPa)
         E = 375.0e3
         V = 10e-6
         n = 1.0 
@@ -133,26 +301,34 @@ class Rheological_data_Base():
         B = 2.5e7
         r = 0.8
         d0 = 10e3
-        water = 1000
-        self.Diffusion_WetOlivine   = Rheological_flow_law(E,V,n,m,d0,B,1,1,r,water,q,gamma,taup)
-        E = 159.0e3
-        V = 38e-6
-        n = 1.0 
-        m = 3.0
-        B = 0.1995
-        r = 1.0
-        d0 = 100
-        water = 158.4893
-        self.Diffusion_WetPlagio    = Rheological_flow_law(E,V,n,m,d0,B,2,1,r,water,q,gamma,taup)
+        self.Diffusion_WetOlivine   = Rheological_flow_law(E = E
+                                                           ,V = V
+                                                           ,n = n 
+                                                           ,m = m
+                                                           ,d0 = d0
+                                                           ,B = B
+                                                           ,aH20= aH20
+                                                           ,EH20=EH20 
+                                                           ,VH20=VH20
+                                                           ,r = r  
+                                                           ,F = F 
+                                                           ,MPa = 1
+                                                           ,water_correction='COH')
         E = 335e3
         V = 0. 
         n = 1.0
-        m = 3.0
+        m = 0.0
         B = (1/1.32043e9/2)
-        r = 1.0
-        d0 = 1
-        water = 1.0
-        self.Diffusion_vanKeken = Rheological_flow_law(E,V,n,m,d0,B,0,0,r,water,q,gamma,taup)
+        F = 'NoCorrection'
+        MPa = 0 
+        self.Diffusion_vanKeken = Rheological_flow_law(E = E
+                                                           ,V = V
+                                                           ,n = n 
+                                                           ,m = m
+                                                           ,d0 = d0 
+                                                           ,B = B 
+                                                           ,F = F 
+                                                           ,MPa = MPa)
 
 #----------------------------------------------------------------------------
 
@@ -240,29 +416,88 @@ class Lattice_Diffusivity():
 
 
 
-
-
-        
-
 #-----------------------------------------------------------------------------------------------------------
 
 class Rheological_flow_law():
     """
     Class that contains the rheological flow law parameters. 
     """
-    def __init__(self,E=0.0,V=0.0,n=0.0,m=0.0,d0=0.0,B=0.0,F=0,MPa=0,r=0,water=1.0,q=0,gamma=0,taup=0):
+    """Class that stores the information of the rheological flow law 
+    
+    E = Activation energy [joule/mol] 
+    V = Activation volume [m3/mol]
+    m = grain size exponent [nd]
+    d = grain size 
+    B = Pre-exponential factor [Pa^-n,s^-1]
+    R = Gas constant
+    q = Peirls creep exponent
+    gamma = Peirls creep exponent
+    taup = Peirls creep critical stress [Pa]
+    ref = ref of of the current rheological law [Title and Doi]
+    """
+    
+    
+    def __init__(self
+                 ,E:float=0.0
+                 ,V:float=0.0
+                 ,n:float=0.0
+                 ,m:float=0.0
+                 ,d0:float=1.0
+                 ,B:float=0.0
+                 ,B_SI:str = 'None'
+                 ,F:str='NoCorrection'
+                 ,MPa:int=0
+                 ,r:float=0
+                 ,aH20:float=1.0
+                 ,EH20:float=0.0
+                 ,VH20:float = 0.0 
+                 ,BH20:float = 1.0
+                 ,water_correction:str = 'None'
+                 ,ref:str = ''):
+        """_summary_
+
+        Args:
+            E (float, optional): Activation Energy [J/mol]. Defaults to 0.0.
+            V (float, optional): Activation Volume [m^3/mol]. Defaults to 0.0.
+            n (float, optional): Stress Exponent. Defaults to 0.0.
+            m (float, optional): Grain Size exponent. Defaults to 0.0.
+            d0 (float, optional): Initial Grain Size [m]. Defaults to 0.0.
+            B (float, optional): Pre-exponential Factor. Defaults to 0.0.
+            F (float, optional): Experimental Correction [0 = No Correction, 1 = Simple Shear, 2 = UniAxial]. Defaults to 0.
+            MPa (int, optional): Conversion Flag (MPa^n/s->Pa^n/s). Defaults to 0.
+            r (float, optional): Water exponent. Defaults to 0.
+            water_correction(int): Water correction is an ad hoc parameters that allows to compute the wet/dislocation creep olivine with concentration (constant). 
+                                 : rather necessary, as there is a big problem with unit of measure otherwise. 
+            ref (str, optional): Reference metadata. Defaults to ''.
+        """
+        Dictionary_correction = {'NoCorrection':0,
+                                 'SimpleShear':1,
+                                 'UniAxial':2}
+        
+        Dictionary_water_correction = {'None':0,
+                                       'COH':1,
+                                       'Fugacity':2}
+        
         self.E = E
         self.V = V
         self.n = n
         self.m = m
         self.d = d0
-        self.B = self._correction(B,F,n,m,MPa,d0,r,water)
         self.R = 8.3145
-        self.q  = q
-        self.gamma = gamma
-        self.taup = taup
+        self.B_or = B # Original value 
+        self.B_or_SI = B_SI
+        self.F = F 
+        self.MPa = MPa
+        self.aH20 = aH20
+        self.BH20 = BH20
+        self.EH20 = EH20
+        self.VH20 = VH20 
+        self.water_corr = Dictionary_water_correction[water_correction]
+        self.r  = r 
+        self.B = self._correction(B,Dictionary_correction[F],n,m,MPa,d0,Dictionary_water_correction[water_correction],r)
+        self.ref = ref
     #-----------------------------------------------------------------------------------------------------------
-    def _correction(self,B,F=0,n=1,m=0,MPa=0,d0=0,r=0,water=0):
+    def _correction(self,B,F=0,n=1,m=0,MPa=0,d0=1,water_correction =0, r=0):
         """Correction for the rheological flow law parameters, to account for the typology of the experiment, the unit of measure and the water content and grain size.
         Args:
             B (float): pre-exponential factor [xPa^-n s^-1]-> converted to Pa^-n s^-1
@@ -286,8 +521,15 @@ class Rheological_flow_law():
         # Convert the unit of measure
         if MPa == 1:
             B = B*10**(-n*6)
-        # Implicitly account the water content and the grain size
-        B = B*d0**(-m)*water**(r)
+        if water_correction==1: 
+            water_con = 1000**r 
+        elif water_correction==2: 
+            water_con = self.aH20 * self.BH20 * np.exp(- (self.EH20+self.VH20*1e5)/(self.R * 298.15))
+            water_con = water_con ** r
+        else: 
+            water_con = 1.0 
+            
+        B = B*d0**(-m) * water_con
         return B 
 
 #-----------------------------------------------------------------------------------------------------------
@@ -351,8 +593,11 @@ def _check_diffusivity(tag:str) ->Lattice_Diffusivity:
         A = getattr(RB,Dic_conductivity[tag])
         return A 
 
-#-----------------------------------------------------------------------------------------------------------
 
+
+
+
+#-----------------------------------------------------------------------------------------------------------
 spec_phase = [
     # Viscosity – Diffusion creep
     ("Edif", float64[:]),    # Activation energy diffusion creep [J/mol]
@@ -421,8 +666,22 @@ spec_phase = [
     ("eta_min",float64),    # minimum viscosity [Pas]
     ("eta_max",float64),    # max viscosity [Pas]
     ("eta_def",float64),    # default viscosity [Pas]
-    ("friction_angle",float64),
-    ('cohesion',float64)
+    
+    # Weak Zone Parameters 
+    ('Edis_wz',float64),
+    ('Vdis_wz',float64),
+    ('n_wz',float64),
+    ('Bdis_wz',float64),
+    ('EH20_wz',float64),
+    ('BH20_wz',float64),
+    ('aH20_wz',float64),
+    ('VH20_wz',float64),
+    ('water_cor',int32),
+    ('r_wz',float64),
+    ('vis_con_fl',int32),
+    ('eta_wz',float64),
+    ("phi",float64),
+    ('cohesion',float64),
 ]   
 
 #-----------------------------------------------------------------------------------------------------------
@@ -430,7 +689,6 @@ spec_phase = [
 class PhaseDataBase:
     def __init__(self
                  ,number_phases:int
-                 ,friction_angle:float
                  ,eta_max:float
                  ,d=0.5):
         # Initialize individual fields as arrays
@@ -447,9 +705,7 @@ class PhaseDataBase:
         self.eta_def        = 1e21    # Default viscosity [Pas]
         self.T_Scal         = 1.      # Default temperature scale
         self.P_Scal         = 1.      # Default Pressure scale 
-        self.friction_angle = friction_angle
         self.id             = np.zeros(number_phases, dtype=np.int32)
-        self.cohesion       = 10e6 
         self.A              = 1.8 * (1 - np.exp(-d**1.3 / 0.15)) - (1 - np.exp(-d**0.5 / 5.0))
         self.B              = 11.7 * np.exp(-d / 0.159) + 6.0 * np.exp(-d**3 / 10.0)
         self.T_A            = 490.0 + 1850.0 * np.exp(-d**0.315 / 0.825) + 875.0 * np.exp(-d / 0.18)
@@ -457,10 +713,8 @@ class PhaseDataBase:
         self.x_A            = 167.5 + 505.0 * np.exp(-d**0.5 / 0.85)
         self.x_B            = 465.0 + 1700.0 * np.exp(-d**0.94 / 0.175) 
         self.eta_max = eta_max
-        
-        
-        
-        
+
+    
         # Explanation: For testing the pressure and t scal are set to be 1.0 -> so, the software is not performing any 
         # scaling operation. 
         # -> When the property are automatically scaled these value will be update automatically. 
@@ -479,7 +733,7 @@ class PhaseDataBase:
         self.n          = np.ones (number_phases, dtype=np.float64)              # stress exponent  []
         self.eta        = np.zeros(number_phases, dtype=np.float64)              # constant viscosity [Pa s] - in case of constant viscosity 
         self.option_eta = np.zeros(number_phases, dtype=np.int32)                 # Option for viscosity calculation
-
+        
         # Thermal properties
         self.C0         = np.zeros(number_phases, dtype=np.float64)               # Reference heat capacity [J/mol/K]
         self.C1         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [J/mol/K^0.5]  -> CONVERTED INTO J/kg/K^0.5       
@@ -487,7 +741,6 @@ class PhaseDataBase:
         self.C3         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [(J*K^2)/mol]  -> CONVERTED INTO J/kg/K^3
         self.C4         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [(J*K^2)/mol]  -> CONVERTED INTO J/kg/K^3
         self.C5         = np.zeros(number_phases, dtype=np.float64)               # Temperature dependent heat capacity [(J*K^2)/mol]  -> CONVERTED INTO J/kg/K^3
-
         
         self.option_Cp  = np.zeros(number_phases, dtype=np.int32)                 # Option for heat capacity calculation
         
@@ -513,6 +766,24 @@ class PhaseDataBase:
         self.rho0       = np.zeros(number_phases, dtype=np.float64)               # Reference density [kg/m^3] {In case of constant density}
         self.option_rho = np.zeros(number_phases, dtype=np.int32)                 # Option for density calculation
         
+        # Virtual Shear zone
+        self.Edis_wz = 0.0
+        self.Vdis_wz = 0.0
+        self.n_wz = 0.0
+        self.Bdis_wz = 0.0
+        self.EH20_wz = 0.0
+        self.BH20_wz = 0.0
+        self.aH20_wz = 0.0
+        self.VH20_wz = 0.0 
+        self.water_cor = 0 
+        self.vis_con_fl = 0 
+        self.r_wz = 0.0
+        self.eta_wz    = 0.0
+        self.phi = 0.0
+        self.cohesion  = 0
+
+  
+        
 
 #-----------------------------------------------------------------------------------------------------------
 def _generate_phase(PD:PhaseDataBase,
@@ -534,8 +805,9 @@ def _generate_phase(PD:PhaseDataBase,
                     name_conductivity:str  = 'Constant',
                     name_alpha:str         = 'Constant',
                     name_density:str       = 'PT',
-                    radio:float = 0.0,
-                    radio_flag:float = 0)     -> PhaseDataBase:
+                    radio:float = 0.0,                    
+                    radio_flag:float = 0,
+                    Pressure_dependecy:int=1)     -> PhaseDataBase:
     """ Generate a phase with the specified properties and add it to the phase database.
     Args:
         PD (PhaseDataBase): The phase database to which the new phase will be added.
@@ -603,11 +875,11 @@ def _generate_phase(PD:PhaseDataBase,
         PD.n[id] = n 
         if PD.Bdis[id] != 0.0: 
             print('Warning: Stress pre-exponential factor has inconsistent measure [Pa^-ns^-1] wrt the original flow law')
-    elif Edis != -1e23: # if the user specify the activation energy, overwrite the value of the flow law
+    if Edis != -1e23: # if the user specify the activation energy, overwrite the value of the flow law
         PD.Edis[id] = Edis 
-    elif Vdis !=-1e23: # if the user specify the activation volume, overwrite the value of the flow law  
+    if Vdis !=-1e23: # if the user specify the activation volume, overwrite the value of the flow law  
         PD.Vdis[id] = Vdis 
-    elif Bdis != -1e23: # if the user specify the pre-exponential factor, overwrite the value of the flow law
+    if Bdis != -1e23: # if the user specify the pre-exponential factor, overwrite the value of the flow law
         PD.Bdis[id] = Bdis  
     
     if name_diffusion == 'Constant' and name_dislocation == 'Constant' and eta == -1e23:
@@ -617,7 +889,7 @@ def _generate_phase(PD:PhaseDataBase,
     if name_diffusion == 'Constant' and name_dislocation == 'Constant' and eta == -1e23:
             PD.eta[id] = PD.eta_def
     elif name_diffusion == 'Constant' and name_dislocation == 'Constant' and eta != -1e23:
-        PD.eta[id] = PD.eta_def # in case of constant viscosity, this value will be used. In case of non-constant viscosity, this value will be ignored.
+        PD.eta[id] = eta # in case of constant viscosity, this value will be used. In case of non-constant viscosity, this value will be ignored.
     else: 
         PD.eta[id] = 0.0 # in case of non-constant viscosity, this value will be ignored. I set it to 0.0 to avoid any confusion.
 
@@ -627,12 +899,12 @@ def _generate_phase(PD:PhaseDataBase,
         option_rheology = 0
     elif name_dislocation == 'Constant': 
         option_rheology = 1
-    else: 
+    elif name_dislocation != 'Constant' and name_diffusion != 'Constant': 
         option_rheology = 2 
+    elif name_dislocation != 'Constant' and name_diffusion == 'Constant': 
+        option_rheology = 3 
     
-    if name_diffusion == 'Constant' and name_dislocation != 'Constant':
-        raise ValueError(f"Error Phase id = {id:d}:: If the diffusion creep is constant, the dislocation creep should be constant as well. Please check your input.")
-        
+
         
     PD.option_eta[id] = option_rheology
     
@@ -659,6 +931,10 @@ def _generate_phase(PD:PhaseDataBase,
         raise ValueError(f"Error Phase id = {id:d}: {name_conductivity} is not a heat Conductivity option")
     
     TD = _check_diffusivity(name_conductivity)
+    if Pressure_dependecy == 0: 
+        TD.f = 0.0
+        
+    
     PD.k_a[id] = TD.a 
     PD.k_b[id] = TD.b 
     PD.k_c[id] = TD.c 
@@ -666,9 +942,7 @@ def _generate_phase(PD:PhaseDataBase,
     PD.k_e[id] = TD.e 
     PD.k_f[id] = TD.f 
     PD.k0[id] = k * TD.g 
-    d = 0.5
     PD.radio_flag[id] = radio_flag 
-    
     
     # Density
     
@@ -679,16 +953,21 @@ def _generate_phase(PD:PhaseDataBase,
 
         raise ValueError(f"Error Phase id = {id:d}: {name_conductivity} is not a heat Conductivity option")
     alpha = _check_alpha(name_alpha)
+    if Pressure_dependecy == 0: 
+        alpha.alpha2 = 0.0
+        Kb = 1e30
+    else: 
+        Kb = (2*100e9*(1+0.25))/(3*(1-0.25*2))  # Bulk modulus [Pa]
+    
     PD.alpha0[id]     = alpha.alpha0
     PD.alpha1[id]     = alpha.alpha1
     PD.alpha2[id]     = alpha.alpha2
-    PD.Kb[id]         = (2*100e9*(1+0.25))/(3*(1-0.25*2))  # Bulk modulus [Pa]
+    PD.Kb[id]         = Kb  # Bulk modulus [Pa]
     PD.rho0[id]       = rho0
     if name_density == 'Constant':
         PD.option_rho[id] = np.int32(0) 
     else: 
         PD.option_rho[id] = np.int32(2) 
-    
     
     return PD 
 #-----------------------------------------------------------------------------------------------------------
@@ -925,5 +1204,138 @@ def mantle_heat_capacity(flag: list) -> Tuple[float,float,float,float,float,floa
     
     return C0, C1, C2, C3, C4, C5
       
-    
+#-----------------------------------------------------------------------------------------------------------
 
+def fill_up_weakzone_data(ch:float = 10e6
+                      ,phi: float = np.radians(5)
+                      ,eta_wz: float = 1e20
+                      ,dislocation_creep: str = 'Constant'
+                      ,pdb:PhaseDataBase = None)->PhaseDataBase: 
+    """Function that updates the data of the shear zone that mimick the subduction interface. 
+    Args:
+        ch (float, optional): Cohesion. Defaults to 10e6.
+        phi (float, optional): Friction angle. Defaults to np.radians(5).
+        eta_wz (float, optional): Viscosity. Defaults to 1e20.
+        dislocation_creep (str, optional): Dislocation creep law. Defaults to 'Constant'.
+        pdb (PhaseDataBase, optional): Phase Defaults to None.
+
+    Returns:
+        PhaseDataBase: updated phasedatabase
+    """
+
+
+    pdb.cohesion = ch
+    pdb.eta_wz = eta_wz
+    A = _check_rheological(dislocation_creep)
+    pdb.Edis_wz = A.E 
+    pdb.Vdis_wz = A.V
+    pdb.Bdis_wz = A.B
+    pdb.n_wz = A.n
+    pdb.r_wz = A.r 
+    pdb.water_cor = A.water_corr 
+    pdb.EH20_wz = A.EH20
+    pdb.VH20_wz = A.VH20 
+    if dislocation_creep == 'Constant':
+        pdb.vis_con_fl = 1
+    pdb.phi = phi 
+    pdb.cohesion = ch
+        
+            
+    return pdb 
+
+#-----------------------------------------------------------------------------------------------------------
+
+
+   
+
+
+if __name__ == '__main__': 
+    
+    # Create a small rheology 
+    
+    import matplotlib.pyplot as plt 
+    
+    A = _check_rheological('WetQuartzite_disl')
+
+    gr = 1300 - 0.0
+    dz = 80e3 
+    z = np.linspace(0,80e3)
+    p = z * 3000 * 9.81 
+    T = 0 + gr/dz * z  +273.15
+    eii = (5 * 0.1 / 365.25/60/60/24)/500
+
+    water = (np.exp(- (A.EH20+A.VH20*p)/(A.R * T))/np.exp(- (A.EH20+A.VH20*1e5)/(A.R * 298.15)))
+
+    cds  = A.B * np.exp(-(A.E + p * A.V)/(A.R * T)) 
+    
+    cds2 = A.B * np.exp(-(A.E + p * A.V)/(A.R * T)) * water **(A.r)
+    
+    eta0 = 0.5 * cds**(-1/A.n) *  eii **((1-A.n)/A.n) 
+    
+    eta1 = 0.5 * cds2**(-1/A.n) *  eii **((1-A.n)/A.n)     
+    
+    tau0 = cds**(-1/A.n) * eii**(1/A.n)
+    tau1 = cds2**(-1/A.n) * eii**(1/A.n)
+    
+    tlim = 10e6 * np.cos(np.radians(5))+p*np.sin(np.radians(5))
+    
+    
+    
+    tau_eff0 = tau0 * np.tanh(tlim/tau0)
+    tau_eff1 = tau1 * np.tanh(tlim/tau1)
+    
+    hs0 = (tau_eff0 * (5 * 0.1 / 365.25/60/60/24))/500
+    hs1 = (tau_eff1 * (5 * 0.1 / 365.25/60/60/24))/500
+
+    
+    fg = plt.figure()
+    ax = plt.gca()
+    ax.plot(tau0,-z/1e3)
+    ax.plot(tlim,-z/1e3)
+    ax.plot(tau_eff0,-z/1e3)
+    ax.set_xscale('log')
+
+    fg = plt.figure()
+    ax = plt.gca()
+    ax.plot(tau1,-z/1e3)
+    ax.plot(tlim,-z/1e3)
+    ax.plot(tau_eff1,-z/1e3)
+    ax.set_xscale('log')
+
+    fg = plt.figure()
+    ax = plt.gca()
+    ax.plot(hs0,-z/1e3)
+    ax.plot(hs1,-z/1e3)
+    ax.set_xscale('log')
+    
+    fg = plt.figure()
+    ax = plt.gca()
+    ax.plot(tau_eff0,-z/1e3)
+    ax.plot(tau_eff1,-z/1e3)
+    ax.set_xscale('log')
+    
+    fg = plt.figure()
+    ax = plt.gca()
+    ax.plot(z/1e3, water )
+    #ax.set_xscale('log') 
+    
+        
+    fg = plt.figure()
+    ax = plt.gca()
+    ax.plot(eta0,-z/1e3)
+    ax.plot(eta1,-z/1e3)
+    ax.set_xscale('log') 
+    
+    
+    print('bla')
+    
+    
+    
+    
+        
+    
+    
+    
+    
+    
+    

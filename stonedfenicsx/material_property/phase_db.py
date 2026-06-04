@@ -807,7 +807,7 @@ def _generate_phase(PD:PhaseDataBase,
                     name_density:str       = 'PT',
                     radio:float = 0.0,                    
                     radio_flag:float = 0,
-                    Pressure_dependecy:int=1)     -> PhaseDataBase:
+                    Pressure_dependency:int=1)     -> PhaseDataBase:
     """ Generate a phase with the specified properties and add it to the phase database.
     Args:
         PD (PhaseDataBase): The phase database to which the new phase will be added.
@@ -931,7 +931,7 @@ def _generate_phase(PD:PhaseDataBase,
         raise ValueError(f"Error Phase id = {id:d}: {name_conductivity} is not a heat Conductivity option")
     
     TD = _check_diffusivity(name_conductivity)
-    if Pressure_dependecy == 0: 
+    if Pressure_dependency == 0: 
         TD.f = 0.0
         
     
@@ -953,7 +953,7 @@ def _generate_phase(PD:PhaseDataBase,
 
         raise ValueError(f"Error Phase id = {id:d}: {name_conductivity} is not a heat Conductivity option")
     alpha = _check_alpha(name_alpha)
-    if Pressure_dependecy == 0: 
+    if Pressure_dependency == 0: 
         alpha.alpha2 = 0.0
         Kb = 1e30
     else: 

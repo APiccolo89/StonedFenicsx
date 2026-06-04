@@ -175,6 +175,13 @@ class OUTPUT():
         flux.name = 'Heat flux [W/m2]'
         flux.x.array[:] *= sc.Watt/sc.L**2
         
+        
+        shear_heating = fem.Function(self.temp_V)
+        shear_heating.name = 'H_s [W/m3]'
+        shear_heating.interpolate(S.shear_heating)
+        shear_heating.x.array[:] *= sc.Watt/sc.L**3
+        shear_heating.x.scatter_forward()
+        
         # Line Tag for the mesh and post_processing -> Translating in parallel -> gather and sending 
         tag = fem.Function(self.temp_V)
         tag.name = 'MeshTAG'
@@ -230,6 +237,7 @@ class OUTPUT():
             self.xdmf_main.write_function(e_T,          time)
             self.xdmf_main.write_function(eta2,         time)
             self.xdmf_main.write_function(flux,         time)
+            self.xdmf_main.write_function(shear_heating,         time)
             self.xdmf_main.write_function(tag,          time)
             
             self.close()
@@ -253,6 +261,7 @@ class OUTPUT():
                 ufile_xdmf.write_function(e_T  )
                 ufile_xdmf.write_function(eta2 )
                 ufile_xdmf.write_function(flux )
+                ufile_xdmf.write_function(shear_heating )
                 ufile_xdmf.write_function(tag )
                 ufile_xdmf.write_function(part)
                 D.mesh.geometry.x[:] = coord

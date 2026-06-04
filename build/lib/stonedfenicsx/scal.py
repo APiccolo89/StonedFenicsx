@@ -78,6 +78,8 @@ def _scaling_material_properties(pdb,sc:Scal):
     scal_Bdif = (sc.stress*sc.T)**(-1)
     pdb.Bdif /= scal_Bdif 
     pdb.Bdis /= scal_Bdsl
+    pdb.Bdis_wz /= scal_Bdif
+
     
 
     
@@ -115,6 +117,9 @@ def _scaling_material_properties(pdb,sc:Scal):
     scal_radio = sc.Watt/sc.L**3 
     
     pdb.radio /= scal_radio 
+    
+    pdb.Bdis_wz /= scal_Bdsl
+    
     
     if MPI.COMM_WORLD.rank == 0: 
     
