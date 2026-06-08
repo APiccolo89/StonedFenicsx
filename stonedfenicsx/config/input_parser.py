@@ -1,11 +1,21 @@
-from .package_import import *
+from stonedfenicsx.package_import import *
 from typing import get_type_hints, get_origin, get_args, Callable
-from .numerical_control import NumericalControls, IOControls, CtrlLHS
-from .geometry import Geom_input, Mesh 
+from stonedfenicsx.config.numerical_control import (
+    NumericalControls,
+    IOControls,
+    CtrlLHS,
+)
+from stonedfenicsx.config.geometry import GeomInput, Mesh
 from stonedfenicsx.material_property.phase_db import PhaseDataBase
+from stonedfenicsx.config.scal import Scal
 import beartype
+from pathlib import Path
 
-#---------------------------------------------------------------------------------------------
+dict_options = {"NoShear": 0, "SelfConsistent": 1}
+dict_stokes = {"Direct": np.int32(1), "Iterative": np.int32(0)}
+
+
+# ---------------------------------------------------------------------------------------------
 @dataclass(slots=True)
 class Phase:
     """
@@ -140,12 +150,15 @@ class Phase:
     radiogenic_heat: float = 0.0
     # Internal heating
     radiative_conductivity: float = 0.0
-#–----------------------------------------------------------------------------------
+
+
+# –----------------------------------------------------------------------------------
 @dataclass
 class PhInput:
     """Container of the phases"""
-    shear_heating_disl_law: str 
-    shear_heating_disl_ch: str 
+
+    shear_heating_disl_law: str
+    shear_heating_disl_ch: str
     shear_heating_disl_phi: float
     subducting_plate_mantle: Phase
     oceanic_crust: Phase
@@ -153,36 +166,65 @@ class PhInput:
     overriding_mantle: Phase
     overriding_upper_crust: Phase
     overriding_lower_crust: Phase
-#-----------------------------------------------------------------------------------
-def filling_the_numerical_control(numerical_control_input)->NumericalControls:
-    
-    # Initialise the class with the default values: 
-    ctrl = NumericalControls()
-    
-    
-    
-    
-    
-    
-    return ctrl
 
-#-----------------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------------
+def correct_input(k: str, v: str) -> int | float | str:
+    """_summary_
+
+    Args:
+        k (str): _description_
+        v (str): _description_
+
+    Returns:
+        int|float|str: _description_
+    """
+    if k == "model_shear":
+        v = dict_options[v]
+    elif k == "stokes_solver_type" or k == "energy_solver_type":
+        v = dict_stokes[v]
+
+    return v
+
+
+# ----------------------------------------------------------------------------------
+def update_ip_file(obj: object, block: dict) -> object:
+    """_summary_
+
+    Args:
+        obj (object): Target portion of the input (e.g., NumericalControls)
+        block (dict): dictionary from the yaml file
+
+    Returns:
+        object: updated object
+    """
+    hints = get_type_hints(obj.__class__)
+    for k, v in block.items():
+        tp = hints[k]
+        if isinstance(v, str):
+            v = correct_input(k, v)
+        setattr(obj, k, cast_type(v, tp))
+    return obj
+
+
+# -----------------------------------------------------------------------------------
 @dataclass(slots=True)
 class Input:
-    """Data class containing all the input. 
+    """Data class containing all the input.
     The class stores all the information parsed from the input.yml file,
-    and can be called to be modified in 
-    other script for configure ensemble of numerical experiments. 
+    and can be called to be modified in
+    other script for configure ensemble of numerical experiments.
 
     """
+
     ctrl: NumericalControls
     ctrl_lhs: CtrlLHS
     ctrl_io: IOControls
-    phase_db: Phase
-    g_input: Geom_input
+    g_input: GeomInput
 
-#–-----------------------------------------------------------------------------------------------
-def parse_input(path: str) -> tuple[Input,PhInput]:
+
+# –-----------------------------------------------------------------------------------------------
+def parse_input(path: str) -> int:
     """
     Read and parse a YAML input file.
 
@@ -215,27 +257,51 @@ def parse_input(path: str) -> tuple[Input,PhInput]:
     with open(f"{path}", "r") as f:
         input_file = yaml.safe_load(f)
 
-    PhaseInput = PhInput()
-
     # Import numerical controls [basically structured data like numpy]
-    NC = input_file["Input"]["NumericalControls"]  # Numerical controls
-    IOCr = input_file["Input"]["InputOutputControl"]  # Input Controls
-    LHS = input_file["Input"]["left_thermal_bc"]  # left boundary condition
-    GEOM = input_file["Input"]["geometry"]  # Geometry
-    MP = input_file["Input"]["Material_properties"]  # Material property
-    SCAL = input_file["Input"]["scaling"]  # Scaling
-    SHeating = input_file["Input"]["Shear_Heating"]  # Shear Heating
+    nc = input_file["Input"]["NumericalControls"]  # Numerical controls
+    iocr = input_file["Input"]["InputOutputControl"]  # Input Controls
+    lhs = input_file["Input"]["thermal_boundary_condition"]  # left boundary condition
+    geom = input_file["Input"]["geometry"]  # Geometry
+    mp = input_file["Input"]["Material_properties"]  # Material property
+    scal = input_file["Input"]["scaling"]  # Scaling
+    sheating = input_file["Input"]["Shear_Heating"]  # Shear Heating
 
-    # Fill the 
-    ctrl = filling_the_numerical_control(NC)
-    g_input = filling_the_geometrical_input()
+    # Initialise the main classes:
+    ctrl = NumericalControls()
+    ctrl_lhs = CtrlLHS()
+    ctrl_io = IOControls()
+    sc = Scal()
+    g_input = GeomInput()
 
-    filling_the_input(NC, IOCr, LHS, GEOM, SCAL, SHeating, IP)
-    filling_the_phase_data_base(MP, PhaseInput)
+    # Fill the
+    ctrl = update_ip_file(ctrl, nc)
+    ctrl_io = update_ip_file(ctrl_io, iocr)
+    g_input = update_ip_file(g_input, geom)
+    sc = update_ip_file(sc, scal)
+    sc.compute_the_derivative_scal()
+    ctrl_lhs = update_ip_file(ctrl_lhs, lhs)
 
-    return IP, Ph
-#---------------------------------------------------------------------------------------------------
+    input_data = Input(ctrl=ctrl, ctrl_io=ctrl_io, ctrl_lhs=ctrl_lhs, g_input=g_input)
+
+    ph_input = PhInput
+
+    ph_input = filling_the_phase_data_base(
+        materialproperties=mp, shheating=sheating, phase_input=ph_input
+    )
+    return input_data, ph_input
+
+
+# ---------------------------------------------------------------------------------------------------
 def cast_type(v: any, tp: any) -> any:
+    """Ensure that the typing of input is the same of the target class
+
+    Args:
+        v (any): value of the class member
+        tp (any): type of the class member
+
+    Returns:
+        v: converted value
+    """
 
     # Get the type of the input -> if it is a list -> list
     origin = get_origin(tp)
@@ -280,52 +346,20 @@ def cast_type(v: any, tp: any) -> any:
         return np.asarray(v)
 
     return tp(v)
-#---------------------------------------------------------------------------------
-def filling_the_input(
-    a: dict, b: dict, c: dict, d: dict, e: dict, f: dict, IP: Input
-) -> Input:
-    """Read input.yaml file, and update of the input class
-    a : dictionary of subblock
-    b : dictionary of subblock
-    c : dictionary of subblock
-    d : dictionary of subblock
-    e : dictionary of subblock
-    IP data class with default values, that are ovewritten by the yaml file
-    Returns:
-        IP: updated data classes
 
 
-    Note: I divided the input in yaml file to explicitly state the number of data structure within
-    the numerical code. The Input data class is a object dumb, that can be flexibly modified.
-    I know that is redundant, but I believed that an user would find easier to modify one or two classes
-    out of the yaml canvas.
-    """
-
-    def update_IP_file(IP0: Input, block: dict) -> Input:
-
-        hints = get_type_hints(IP0.__class__)
-
-        for k, v in block.items():
-            tp = hints[k]
-            setattr(IP0, k, cast_type(v, tp))
-
-        return IP0
-
-    for block in (a, b, c, d, e, f):
-
-        IP = update_IP_file(IP, block)
-
-    return IP
-#-----------------------------------------------------------------------------------------
-def filling_the_phase_data_base(MP: dict, Ph: Ph_input) -> Ph_input:
+# -----------------------------------------------------------------------------------------
+def filling_the_phase_data_base(
+    materialproperties: dict, shheating: dict, phase_input: PhInput
+) -> PhInput:
     """Function that fills the temporary class of the material properties
 
     Args:
-        MP (dict): Material database coming from input.yaml
-        Ph (Ph_input): Phase database
+        materialproperties (dict): Material database coming from input.yaml
+        phase_input (PhInput): Phase database
 
     Returns:
-        Ph_input: Phase database
+        phase_input: Phase database
     """
     dict_phase_id = {
         "subducting_plate_mantle": 1,
@@ -336,22 +370,31 @@ def filling_the_phase_data_base(MP: dict, Ph: Ph_input) -> Ph_input:
         "overriding_lower_crust": 6,
     }
 
+
     # Loop over the MP items. MP items, is a multilevel dictionary
-    for k, v in MP.items():
+    for k, v in materialproperties.items():
         buf = Phase()  # Prepare a Phase class to fill up with the new properties
         for j, vv in v.items():  # Loop over the properties of the class phase
-            if vv != None:
+            if vv is not None:
                 setattr(buf, j, vv)  # Set the attribute
             else:
-                if j == "Hr" or j == "flag_radio":
+                if j == "radiogenic_heating" or j == "radiative_conductivity":
                     vv = 0.0
                 else:
                     vv = -1e23
         buf.name_phase = k
         buf.id = dict_phase_id[k]
-        setattr(Ph, k, buf)  # Substitute the buf class with the default one
-    return Ph
+        setattr(phase_input, k, buf)  # Substitute the buf class with the default one
+    return phase_input
 
-# Building the unit test for the configuration of the numerical simulation routine. 
-if __name__ == '__main__':
+
+# Building the unit test for the configuration of the numerical simulation routine.
+if __name__ == "__main__":
+    # Find the main folder of the package
+    PKG_ROOT = Path(__file__)
+    # Select the appropriate path for the input file
+    input_file = Path(PKG_ROOT.parents[2], "input.yaml")
+    # parse the input file
+    input_data, ph_in = parse_input(input_file)
+
     pass

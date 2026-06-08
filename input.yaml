@@ -4,8 +4,8 @@ Input:
     it_inner_max : 10 
     tol: 1.0e-5
     relax: 0.9
-    Tmax: 1333.0
-    Ttop: 0.0
+    temp_max: 1333.0
+    temp_top: 0.0
     g: 9.81
     eta_max: 1.0e26
     v_s: [5.0, 0.0] # cm/yr
@@ -13,22 +13,17 @@ Input:
     time_max: 2.0  # Myr
     time_dependent_v: 0
     steady_state: 1
-    slab_bc: 1
-    tol_innerPic: 1.0e-2
-    tol_innerNew: 1.0e-5
-    van_keken_case: 2
+    tol_innerpic: 1.0e-2
     decoupling_ctrl: 1
     model_shear: "NoShear"
     time_dependent: 0
-    dt_sim: 0.015            # Myr (15000/1e6)
+    dt: 0.015            # Myr (15000/1e6)
     adiabatic_heating: 0
-    self_consistent_flag: 1
     stokes_solver_type : "Iterative"
     energy_solver_type : "Direct"
-    Pressure_dependency: 1
+    pressure_dependency: 1
 
   Shear_Heating: 
-    model_shear: "NoShear"
     phi: 5.0 
     tau_min: 1e6 
     dislocation_creep_wz: "WetQuartzite"
@@ -44,19 +39,21 @@ Input:
 
   # Scaling parameters
   scaling:
-    L: 600000.0
+    length: 600
     stress: 1.0e9
     eta: 1.0e21
-    Temp: 1333.0
+    temp: 1333.0
 
   # Left boundary condition
-  left_thermal_bc:
+  thermal_boundary_condition:
     nz: 108
     end_time: 180.0
     dt: 0.001
     recalculate: 1
     van_keken: 1
     c_age_plate: 50.0
+    self_consistent_flag: 1
+    right_boundary : 'Continental'  # Oceanic 
 
   Material_properties: 
   
@@ -72,15 +69,15 @@ Input:
       k : 3.0
       Cp : 1250 
       alpha0 : 3e-5
-      Bdiff : null
-      Bdisl : null 
-      Ediff : null
-      Edisl : null 
-      Vdiff : null 
-      Vdisl : null
+      b_dif : null
+      b_dis : null 
+      e_dif : null
+      e_dis : null 
+      v_dis : null 
+      v_dis : null
       n : null
-      radio_flag : 0 
-      Hr : 0.0 
+      radiative_conductivity : 0 
+      radiogenic_heat : 0.0 
 
     wedge_mantle: 
       name_diffusion : 'Constant'
@@ -94,15 +91,15 @@ Input:
       k : 3.0
       Cp : 1250 
       alpha0 : 3e-5
-      Bdiff : null
-      Bdisl : null 
-      Ediff : null
-      Edisl : null 
-      Vdiff : null 
-      Vdisl : null
+      b_dif : null
+      b_dis : null 
+      e_dif : null
+      e_dis : null 
+      v_dis : null 
+      v_dis : null
       n : null
-      radio_flag : 0 
-      Hr : 0.0 
+      radiative_conductivity : 0 
+      radiogenic_heat : 0.0 
 
     overriding_mantle: 
       name_diffusion : 'Constant'
@@ -116,15 +113,15 @@ Input:
       k : 3.0
       Cp : 1250 
       alpha0 : 3e-5
-      Bdiff : null
-      Bdisl : null 
-      Ediff : null
-      Edisl : null 
-      Vdiff : null 
-      Vdisl : null
+      b_dif : null
+      b_dis : null 
+      e_dif : null
+      e_dis : null 
+      v_dis : null 
+      v_dis : null
       n : null
-      radio_flag : 0 
-      Hr : 0.0 
+      radiative_conductivity : 0 
+      radiogenic_heat : 0.0 
 
     oceanic_crust: 
       name_diffusion : 'Constant'
@@ -138,15 +135,15 @@ Input:
       k : 3.0
       Cp : 1250 
       alpha0 : 3e-5
-      Bdiff : null
-      Bdisl : null 
-      Ediff : null
-      Edisl : null 
-      Vdiff : null 
-      Vdisl : null
+      b_dif : null
+      b_dis : null 
+      e_dif : null
+      e_dis : null 
+      v_dis : null 
+      v_dis : null
       n : null
-      radio_flag : 0 
-      Hr : 0.0 
+      radiative_conductivity : 0 
+      radiogenic_heat : 0.0 
       
 
     overriding_upper_crust:
@@ -161,15 +158,15 @@ Input:
       k : 3.0
       Cp : 1250 
       alpha0 : 3e-5
-      Bdiff : null
-      Bdisl : null 
-      Ediff : null
-      Edisl : null 
-      Vdiff : null 
-      Vdisl : null
+      b_dif : null
+      b_dis : null 
+      e_dif : null
+      e_dis : null 
+      v_dis : null 
+      v_dis : null
       n : null
-      radio_flag : 0 
-      Hr : 0.0 
+      radiative_conductivity : 0 
+      radiogenic_heat : 0.0 
 
     overriding_lower_crust:
       name_diffusion : 'Constant'
@@ -183,15 +180,15 @@ Input:
       k : 3.0
       Cp : 1250 
       alpha0 : 3e-5
-      Bdiff : null
-      Bdisl : null 
-      Ediff : null
-      Edisl : null 
-      Vdiff : null 
-      Vdisl : null
-      n : null  
-      radio_flag : 0 
-      Hr : 0.0 
+      b_dif : null
+      b_dis : null 
+      e_dif : null
+      e_dis : null 
+      v_dis : null 
+      v_dis : null
+      n : null
+      radiative_conductivity : 0 
+      radiogenic_heat : 0.0 
 
   # Place holder for time-dependent left boundary condition
   time_dependent_left_bc:
@@ -218,10 +215,10 @@ Input:
     decoupling: 80000.0
     transition: 10000.0
     wz_tk: 2000.0
-    sub_Lb: 300000.0
+    sub_lb: 300000.0
     sub_dl: 10000.0
     sub_theta0: 5
     sub_theta_max: 45
-    sub_trench: [0.0, 0.0]
+    sub_trench: 0.0
     slab_type: "Costum"
     sub_path: "Not Defined"

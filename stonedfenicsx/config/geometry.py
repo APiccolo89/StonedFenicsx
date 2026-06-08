@@ -1,3 +1,9 @@
+from dataclasses import dataclass, field
+import dolfinx
+import numpy as np
+from numpy import ndarray
+from mpi4py import MPI
+
 #------------------------------------------------------------------------------------------------
 @dataclass(slots=True)
 class Domain:
@@ -54,106 +60,52 @@ class Domain:
     cell_par: np.ndarray = field(default_factory=lambda: np.array([], dtype=np.int32))
     node_par: np.ndarray = field(default_factory=lambda: np.array([], dtype=np.int32))
     facets: dolfinx.mesh.MeshTags = None
-    Tagcells: dolfinx.mesh.MeshTags = None
+    tagcells: dolfinx.mesh.MeshTags = None
     bc_dict: dict = field(default_factory=dict)
-    solPh: dolfinx.fem.FunctionSpace = None
+    solph: dolfinx.fem.FunctionSpace = None
     phase: dolfinx.fem.Function = None
 #---------------------------------------------------------------------------------------------------
 @dataclass(slots=True)
-class Geom_input:
+class GeomInput:
     """
     Geometric input parameters defining the subduction setup.
-
-    This dataclass stores the main geometric quantities required to build the
-    computational domain and prescribe the slab geometry.
-
-    Attributes
-    ----------
-    x : float
-        Main grid coordinate in the x-direction (SI units: [m]).
-    y : float
-        Main grid coordinate in the y-direction (SI units: [m]).
-        Can be negative.
-    slab_tk : float
-        Thickness of the subducting slab (SI units: [m]).
-    cr : float
-        Thickness of the overriding crust (SI units: [m]).
-    ocr : float
-        Thickness of the oceanic crust (SI units: [m]).
-    lit_mt : float
-        Depth of the lithospheric mantle (SI units: [m], always positive).
-    lc : float
-        Lower crust ratio of the overriding crust (dimensionless, value in [0, 1]).
-    ns_depth : float
-        Depth of the no-slip boundary condition (SI units: [m], always positive).
-    decoupling : float
-        Depth of the slab–mantle decoupling (SI units: [m], always positive).
-    resolution_normal : float
-        Minimum grid resolution (SI units: [m], always positive).
-    resolution_refine : float
-        Maximum grid refinement resolution (SI units: [m], always positive).
-    theta_out_slab : float
-        Slab bending angle at the bottom of the simulation domain (degrees).
-    theta_in_slab : float
-        Slab bending angle at the trench (degrees).
-    trans : float
-        Transition interval over which coupling/uncoupling occurs (SI units: [m]).
-    lab_d : float
-        Depth of the lithosphere–asthenosphere boundary (SI units: [m]).
-    sub_type : str
-        Geometry type, either `"Custom"` (internal geometry) or `"Real"`
-        (external geometry database).
-    sub_path : str
-        Path or URL of the external geometry database (used if `sub_type="Real"`).
-    sub_Lb : float
-        Along-slab distance where bending occurs (SI units: [m]).
-    sub_constant_flag : int
-        Flag controlling whether the slab bending angle is constant.
-    sub_theta_0 : float
-        Initial bending angle at the upper-left corner of the slab (degrees).
-    sub_theta_max : float
-        Maximum bending angle after the critical distance `sub_Lb` (degrees).
-    sub_trench : float
-        Horizontal position of the trench (SI units: [m]).
-    sub_dl : float
-        Segment length used to discretize the slab surface (SI units: [m]).
+    Lengths in [km]; angles in [degrees]; lc dimensionless.
+    ...
     """
+    x: ndarray[np.float64] = field(default_factory=lambda: np.array([0.0, 660.0]))
+    y: ndarray[np.float64] = field(default_factory=lambda: np.array([-600.0, 0.0]))
+    slab_tk: float = 130.0
+    cr: float = 30.0
+    ocr: float = 7.0
+    lit_mt: float = 20.0
+    lc: float = 0.3                    # adimensionale, invariato
+    ns_depth: float = 50.0
+    decoupling: float = 80.0
+    resolution_normal: float = 2.0
+    resolution_refine: float = 2.0
+    theta_out_slab: float = 45.0       # gradi, invariato
+    theta_in_slab: float = 10.0        # gradi, invariato
+    transition: float = 10.0
+    lab_d: float = 100.0
+    slab_type: str = "Custom"
+    sub_path: str = "Not Defined"
+    sub_lb: float = 300.0
+    sub_constant_flag: bool = False
+    sub_theta0: float = 5.0           # gradi, invariato
+    sub_theta_max: float = 45.0        # gradi, invariato
+    sub_trench: float = 0.0
+    sub_dl: float = 1.0
+    wz_tk: float = 2.0
 
-    x: NDArray[np.float64]
-    y: NDArray[np.float64]
+    def __post_init__(self) -> None:
+        if not 0.0 <= self.lc <= 1.0:
+            raise ValueError(f"lc must be in [0, 1], got {self.lc}")
+        if self.slab_type not in {"Custom", "Real"}:
+            raise ValueError(f'sub_type must be "Custom" or "Real", got {self.sub_type!r}')
 
-    slab_tk: float
-    cr: float
-    ocr: float
-    lit_mt: float
-    lc: float
-
-    ns_depth: float
-    decoupling: float
-
-    resolution_normal: float
-    resolution_refine: float
-
-    theta_out_slab: float
-    theta_in_slab: float
-
-    trans: float
-    lab_d: float
-
-    sub_type: str
-    sub_path: str
-    sub_Lb: float
-
-    sub_constant_flag: bool
-    sub_theta_0 : float 
-    sub_theta_max : float
-    
-    sub_trench : float 
-    sub_dl : float
-    wz_tk : float 
 #---------------------------------------------------------------------------------------------------
 @dataclass(slots=True)
-class Mesh:   
+class Mesh:
     """
     Mesh wrapper storing the global mesh, subdomains, and finite element definitions.
 
@@ -195,15 +147,14 @@ class Mesh:
         Finite element definition for the velocity field.
     """
 
-    g_input : Geom_input    # Geometric input
-    domainG : Domain                                # Domain
-    domainA : Domain                     
-    domainB : Domain
-    domainC : Domain
+    g_input : GeomInput    # Geometric input
+    global_domain : Domain                                # Domain
+    subduction_plate_domain : Domain
+    wedge_domain : Domain
+    crust_domain : Domain
     comm : MPI.Intracomm
     rank : int
-    element_p  : object   
-    element_PT : object
-    element_V  : object
-     
+    element_p  : object
+    element_pt : object
+    element_v  : object
 #-----------------------------------------------------------------------------------------------------------------
