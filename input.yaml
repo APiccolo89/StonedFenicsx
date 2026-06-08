@@ -24,13 +24,9 @@ Input:
     pressure_dependency: 1
 
   Shear_Heating: 
-    phi: 5.0 
-    tau_min: 1e6 
-    dislocation_creep_wz: "WetQuartzite"
-    tau_ref = 100e6 
-    eps_ref = 1e-11
-    n_ref = 3.0 
-    decay_vis_wz = 5.0
+    shear_heating_disl_phi: 5.0 
+    shear_heating_disl_ch: 0.0 
+    shear_heating_disl_law: "WetQuartzite"
     
   InputOutputControl:
     test_name: "Output"
@@ -67,7 +63,7 @@ Input:
       eta : 1.0e20 
       rho0 : 3300.0 
       k : 3.0
-      Cp : 1250 
+      cp : 1250 
       alpha0 : 3e-5
       b_dif : null
       b_dis : null 
@@ -89,7 +85,7 @@ Input:
       eta : 1.0e20 
       rho0 : 3300.0 
       k : 3.0
-      Cp : 1250 
+      cp : 1250 
       alpha0 : 3e-5
       b_dif : null
       b_dis : null 
@@ -111,7 +107,7 @@ Input:
       eta : 1.0e20 
       rho0 : 3300.0 
       k : 3.0
-      Cp : 1250 
+      cp : 1250 
       alpha0 : 3e-5
       b_dif : null
       b_dis : null 
@@ -133,7 +129,7 @@ Input:
       eta : 1.0e20 
       rho0 : 3300.0 
       k : 3.0
-      Cp : 1250 
+      cp : 1250 
       alpha0 : 3e-5
       b_dif : null
       b_dis : null 
@@ -156,7 +152,7 @@ Input:
       eta : 1.0e20 
       rho0 : 3300.0 
       k : 3.0
-      Cp : 1250 
+      cp : 1250 
       alpha0 : 3e-5
       b_dif : null
       b_dis : null 
@@ -178,7 +174,7 @@ Input:
       eta : 1.0e20 
       rho0 : 3300.0 
       k : 3.0
-      Cp : 1250 
+      cp : 1250 
       alpha0 : 3e-5
       b_dif : null
       b_dis : null 
