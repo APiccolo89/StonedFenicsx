@@ -1,40 +1,38 @@
-from .package_import import *
-from .utils import timing_function, print_ph
+from stonedfenicsx.utils import timing_function, print_ph
 from stonedfenicsx.create_mesh.aux_create_mesh import Geom_input
 from stonedfenicsx.numerical_control import time_dependent_evolution
+from dataclasses import dataclass,field
 
-data_scal = [('length',float64),
-             ('rho',float64),
-             ('mass',float64),
-             ('time',float64),
-             ('temp',float64),
-             ('stress',float64),
-             ('watt',float64),
-             ('force',float64),
-             ('cp',float64),
-             ('k',float64),
-             ('eta',float64),
-             ('cm2myr',float64),
-             ('strain',float64),
-             ('ac',float64),
-             ('energy',float64),
-             ('scale_Myr2sec',float64),
-             ('scale_vel',float64)]
-
-@jitclass(data_scal)
+@dataclass(slots=True)
 class Scal: 
     """Scaling class: 
         Class that stores the scaling value. From the input characteristic length, stress, viscosity and temperature
         it derives the other scaling for the other SI units.  
     """
-    def __init__(self,length=1.0,
-                 stress = 1e9,
-                 eta = 1e22,
-                 temp  = 1.0):      
-        self.length = length # Length
-        self.temp = temp # Temperature
-        self.eta = eta # Viscosity
-        self.stress  = stress # Stress 
+   
+    length:float = 1 # Length
+    temp:float = 1000 # Temperature
+    eta:float = 1e24 # Viscosity
+    stress:float  = 1e9 # Stress
+
+    time: float = field(init=False)         # [s]
+    mass: float = field(init=False)         # [kg]
+    ac: float = field(init=False)           # [m/s^2]
+    rho: float = field(init=False)          # [kg/m^3]
+    force: float = field(init=False)        # [N]
+    energy: float = field(init=False)       # [J]
+    watt: float = field(init=False)         # [W]
+    strain_rate: float = field(init=False)  # [1/s]
+    k: float = field(init=False)            # [W/(m K)]
+    cp: float = field(init=False)           # [J/(kg K)]
+    scale_vel: float = 1e-2 / 365.25 / 24 / 60 / 60 # scaling velocity from cm/yr to m/s
+    scale_myr2sec: float = 1e6 * 365.25 * 60 * 60 * 24 # scale Myr to second 
+    def compute_the_derivative_scal(self):
+        """_summary_
+
+        Returns:
+            self: _description_
+        """
         self.time = self.eta/self.stress # Time [eta/stress=Pas/Pa=s]
         self.mass = (self.stress*self.length**2) * \
             self.time**2 / self.length # Scaling mass [Pa L**2 = N = kgm/s2 /s2 /m = kg]
@@ -46,14 +44,11 @@ class Scal:
         self.strain_rate = 1 / self.time # Stress
         self.k  = self.watt / (self.length * self.temp) # Conductivity 
         self.cp = self.energy/(self.temp * self.mass) # Heat capacity 
-        self.scale_vel = 1e-2 / 365.25 / 24 / 60 / 60 # scaling velocity from cm/yr to m/s
-        self.scale_myr2sec = 1e6 * 365.25 * 60 * 60 * 24 # scale Myr to second 
+        
+        return self
 
-
-def _scaling_material_properties(pdb,sc:Scal):
-    
-    # scal the references values 
-     
+def _scaling_material_properties(pdb,sc:Scal): 
+    # scal the references values   
     pdb.Tref /= sc.Temp 
     pdb.Pref /= sc.stress
     pdb.T_Scal = sc.Temp 

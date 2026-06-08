@@ -353,7 +353,7 @@ class Ph_input:
 
 
 def evaluate_material_property(
-    expression: ufl.Expression, function_space: fem.FunctionSpace
+    expression, function_space
 ) -> fem.function:
     """Transform an ufl expression into a function
     Args:
