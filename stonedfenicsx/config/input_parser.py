@@ -1,4 +1,3 @@
-from stonedfenicsx.package_import import *
 from typing import get_type_hints, get_origin, get_args, Callable
 from stonedfenicsx.config.numerical_control import (
     NumericalControls,
@@ -10,6 +9,9 @@ from stonedfenicsx.material_property.phase_db import PhaseDataBase
 from stonedfenicsx.config.scal import Scal
 import beartype
 from pathlib import Path
+from dataclasses import field, dataclass
+import numpy as np
+
 
 dict_options = {"NoShear": 0, "SelfConsistent": 1}
 dict_stokes = {"Direct": np.int32(1), "Iterative": np.int32(0)}
@@ -137,10 +139,9 @@ class Phase:
     eta: float = 1e20  # constant viscosity
 
     # Thermal properties
-    c_p: float = 1250.0
+    cp: float = 1250.0
     k: float = 3.0
     rho0: float = 3300.0
-    radio_flag: float = 0.0
 
     name_capacity: str = "Constant"
     name_conductivity: str = "Constant"
@@ -153,19 +154,19 @@ class Phase:
 
 
 # –----------------------------------------------------------------------------------
-@dataclass
+@dataclass(slots=True)
 class PhInput:
     """Container of the phases"""
 
-    shear_heating_disl_law: str
-    shear_heating_disl_ch: str
-    shear_heating_disl_phi: float
-    subducting_plate_mantle: Phase
-    oceanic_crust: Phase
-    wedge_mantle: Phase
-    overriding_mantle: Phase
-    overriding_upper_crust: Phase
-    overriding_lower_crust: Phase
+    shear_heating_disl_law: str = 'WetQuartzite'
+    shear_heating_disl_ch: float = 0.0
+    shear_heating_disl_phi: float = 0.0
+    subducting_plate_mantle: Phase = field(init=False)
+    oceanic_crust: Phase = field(init=False)
+    wedge_mantle: Phase = field(init=False)
+    overriding_mantle: Phase = field(init=False)
+    overriding_upper_crust: Phase = field(init=False)
+    overriding_lower_crust: Phase = field(init=False)
 
 
 # -----------------------------------------------------------------------------------
@@ -283,7 +284,7 @@ def parse_input(path: str) -> int:
 
     input_data = Input(ctrl=ctrl, ctrl_io=ctrl_io, ctrl_lhs=ctrl_lhs, g_input=g_input)
 
-    ph_input = PhInput
+    ph_input = PhInput()
 
     ph_input = filling_the_phase_data_base(
         materialproperties=mp, shheating=sheating, phase_input=ph_input
@@ -370,6 +371,7 @@ def filling_the_phase_data_base(
         "overriding_lower_crust": 6,
     }
 
+    phase_input = update_ip_file(phase_input,shheating)       
 
     # Loop over the MP items. MP items, is a multilevel dictionary
     for k, v in materialproperties.items():
