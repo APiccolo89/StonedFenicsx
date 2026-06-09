@@ -1,5 +1,8 @@
-from stonedfenicsx.package_import import *
-
+from stonedfenicsx.config.geometry import GeomInput
+import gmsh
+import numpy as np
+from numpy import ndarray
+import dolfinx
 #---------------------------------------------------------
 
 dict_surf = {
@@ -27,216 +30,7 @@ dict_tag_lines = {
     'Overriding_mantle' : 11,
     'Crust_overplate'   : 12,
     'LCrust_overplate'  : 13,
-}
-
-#------------------------------------------------------------------------------------------------
-@dataclass(slots=True)
-class Domain:
-    """
-    Domain object storing the mesh and all associated metadata.
-
-    This dataclass represents either the full computational domain (global mesh)
-    or one of its subdomains (e.g., wedge, subducting plate, overriding plate).
-
-    It provides the necessary information to transfer data between the global mesh
-    and extracted submeshes, ensuring consistent handling of markers, facets,
-    material phases, and boundary conditions.
-
-    Attributes
-    ----------
-    hierarchy : str
-        Mesh hierarchy level:
-        - `"parent"` for the global mesh
-        - `"child"` for a submesh
-
-    cell_par : np.ndarray | None
-        Parent cell relationships mapping submesh cells to the global mesh cells.
-        Only defined if the domain is a submesh.
-
-    node_par : np.ndarray | None
-        Parent node relationships mapping submesh nodes to the global mesh nodes.
-        Only defined if the domain is a submesh.
-
-    facets : dolfinx.mesh.MeshTags | None
-        Tagged facet markers representing boundary features
-        (e.g., trench, free surface, inflow/outflow).
-
-    Tagcells : dolfinx.mesh.MeshTags | None
-        Tagged cell markers representing physical regions/material domains.
-
-    bc_dict : dict
-        Dictionary mapping boundary condition names to integer tags.
-
-    solPh : dolfinx.fem.FunctionSpace | None
-        Function space used to define material property fields or phase functions.
-
-    phase : dolfinx.fem.Function | None
-        Material phase indicator function defined on the domain.
-
-    Notes
-    -----
-    The `Domain` class is a lightweight container for all domain-specific mesh data.
-    It allows safe communication of field variables, markers, and boundary tags
-    between the global mesh and its corresponding subdomains.
-    """
-
-    hierarchy: str = "Parent"
-    mesh: dolfinx.mesh.Mesh = None
-    cell_par: np.ndarray = field(default_factory=lambda: np.array([], dtype=np.int32))
-    node_par: np.ndarray = field(default_factory=lambda: np.array([], dtype=np.int32))
-    facets: dolfinx.mesh.MeshTags = None
-    Tagcells: dolfinx.mesh.MeshTags = None
-    bc_dict: dict = field(default_factory=dict)
-    solPh: dolfinx.fem.FunctionSpace = None
-    phase: dolfinx.fem.Function = None
-#---------------------------------------------------------------------------------------------------
-@dataclass(slots=True)
-class Geom_input:
-    """
-    Geometric input parameters defining the subduction setup.
-
-    This dataclass stores the main geometric quantities required to build the
-    computational domain and prescribe the slab geometry.
-
-    Attributes
-    ----------
-    x : float
-        Main grid coordinate in the x-direction (SI units: [m]).
-    y : float
-        Main grid coordinate in the y-direction (SI units: [m]).
-        Can be negative.
-    slab_tk : float
-        Thickness of the subducting slab (SI units: [m]).
-    cr : float
-        Thickness of the overriding crust (SI units: [m]).
-    ocr : float
-        Thickness of the oceanic crust (SI units: [m]).
-    lit_mt : float
-        Depth of the lithospheric mantle (SI units: [m], always positive).
-    lc : float
-        Lower crust ratio of the overriding crust (dimensionless, value in [0, 1]).
-    ns_depth : float
-        Depth of the no-slip boundary condition (SI units: [m], always positive).
-    decoupling : float
-        Depth of the slab–mantle decoupling (SI units: [m], always positive).
-    resolution_normal : float
-        Minimum grid resolution (SI units: [m], always positive).
-    resolution_refine : float
-        Maximum grid refinement resolution (SI units: [m], always positive).
-    theta_out_slab : float
-        Slab bending angle at the bottom of the simulation domain (degrees).
-    theta_in_slab : float
-        Slab bending angle at the trench (degrees).
-    trans : float
-        Transition interval over which coupling/uncoupling occurs (SI units: [m]).
-    lab_d : float
-        Depth of the lithosphere–asthenosphere boundary (SI units: [m]).
-    sub_type : str
-        Geometry type, either `"Custom"` (internal geometry) or `"Real"`
-        (external geometry database).
-    sub_path : str
-        Path or URL of the external geometry database (used if `sub_type="Real"`).
-    sub_Lb : float
-        Along-slab distance where bending occurs (SI units: [m]).
-    sub_constant_flag : int
-        Flag controlling whether the slab bending angle is constant.
-    sub_theta_0 : float
-        Initial bending angle at the upper-left corner of the slab (degrees).
-    sub_theta_max : float
-        Maximum bending angle after the critical distance `sub_Lb` (degrees).
-    sub_trench : float
-        Horizontal position of the trench (SI units: [m]).
-    sub_dl : float
-        Segment length used to discretize the slab surface (SI units: [m]).
-    """
-
-    x: NDArray[np.float64]
-    y: NDArray[np.float64]
-
-    slab_tk: float
-    cr: float
-    ocr: float
-    lit_mt: float
-    lc: float
-
-    ns_depth: float
-    decoupling: float
-
-    resolution_normal: float
-    resolution_refine: float
-
-    theta_out_slab: float
-    theta_in_slab: float
-
-    trans: float
-    lab_d: float
-
-    sub_type: str
-    sub_path: str
-    sub_Lb: float
-
-    sub_constant_flag: bool
-    sub_theta_0 : float 
-    sub_theta_max : float
-    
-    sub_trench : float 
-    sub_dl : float
-    wz_tk : float 
-#---------------------------------------------------------------------------------------------------
-@dataclass(slots=True)
-class Mesh:   
-    """
-    Mesh wrapper storing the global mesh, subdomains, and finite element definitions.
-
-    This dataclass acts as a central container for all mesh-related objects used in
-    the simulation. It includes the geometric input parameters, the global domain,
-    its associated subdomains, and the finite element definitions required for the
-    numerical discretization of pressure, temperature, and velocity.
-
-    Attributes
-    ----------
-    g_input : Geom_input
-        Geometric input parameters defining the model setup.
-
-    domainG : Domain
-        Global computational domain (full mesh).
-
-    domainA : Domain
-        Subduction zone domain (submesh extracted from the global mesh).
-
-    domainB : Domain
-        Wedge domain (submesh extracted from the global mesh).
-
-    domainC : Domain
-        Overriding plate domain (submesh extracted from the global mesh).
-
-    rank : int
-        MPI rank of the current process.
-
-    size : int
-        Total number of MPI processes.
-
-    element_p : ufl.FiniteElement
-        Finite element definition for the pressure field.
-
-    element_PT : ufl.FiniteElement
-        Finite element definition for the temperature field.
-
-    element_V : ufl.FiniteElement
-        Finite element definition for the velocity field.
-    """
-
-    g_input : Geom_input    # Geometric input
-    domainG : Domain                                # Domain
-    domainA : Domain                     
-    domainB : Domain
-    domainC : Domain
-    comm : MPI.Intracomm
-    rank : int
-    element_p  : object   
-    element_PT : object
-    element_V  : object
-     
+}     
 #-----------------------------------------------------------------------------------------------------------------
 class Class_Points():
     def update_points(self,
@@ -247,7 +41,7 @@ class Class_Points():
                       by : np.ndarray,
                       oc_cx : np.ndarray | None,
                       oc_cy : np.ndarray | None,
-                      g_input : Geom_input) -> gmsh.model:
+                      g_input : GeomInput) -> gmsh.model:
 
         """
         Generate the physical points required to build the Gmsh geometry.
@@ -271,7 +65,7 @@ class Class_Points():
             x-coordinates of the oceanic Moho. Can be `None`/empty if the crust is not defined.
         oc_cy : np.ndarray | None
             y-coordinates of the oceanic Moho. Can be `None`/empty if the crust is not defined.
-        g_input : Geom_input
+        g_input : GeomInput
             Object containing all input geometric information.
         
         Returns
@@ -322,7 +116,7 @@ class Class_Line():
     def update_lines(self, 
                      mesh_model:gmsh.model, 
                      CP:Class_Points, 
-                     g_input:Geom_input)-> gmsh.model:
+                     g_input:GeomInput)-> gmsh.model:
         """
         Generate Gmsh lines and assign tags/IDs.
         
@@ -337,7 +131,7 @@ class Class_Line():
             Gmsh model object to be updated.
         CP : Class_Points
             Container storing the physical point tags and their coordinates.
-        g_input : Geom_input
+        g_input : GeomInput
             Object containing the geometric input parameters controlling which lines
             are created and how they are connected.
         
@@ -430,14 +224,14 @@ class Class_Line():
         return mesh_model
 #--------------------------------------------------------------------------------------------------------
 def from_line_to_point_coordinate(L:int
-                                  ,LG:NDArray[np.int64]
-                                  ,GP:NDArray[np.float64])->tuple[int,int,float,float]:
+                                  ,LG:ndarray[np.int64]
+                                  ,GP:ndarray[np.float64])->tuple[int,int,float,float]:
     """From a given line, retrieve the extreme points data
 
     Args:
         L (int): line id
-        LG (NDArray[np.int64]): global line database
-        GP (NDArray[np.float64]): global points database
+        LG (ndarray[np.int64]): global line database
+        GP (ndarray[np.float64]): global points database
 
     Returns:
         p0 : id point that defines the line
@@ -499,8 +293,8 @@ def create_loop(l_list:list,
    
     return mesh_model
 #-----------------------------------------------------------------------------------------------------------------
-def find_line_index(Lin_ar:NDArray,
-                    point:NDArray,
+def find_line_index(Lin_ar:ndarray,
+                    point:ndarray,
                     d:float) -> int:
     """
     Find the line IDs associated with a given point.
@@ -512,9 +306,9 @@ def find_line_index(Lin_ar:NDArray,
 
     Parameters
     ----------
-    Lin_ar : NDArray[np.int64]
+    Lin_ar : ndarray[np.int64]
         Global line database. 
-    point : NDArray[np.int64]
+    point : ndarray[np.int64]
         Global database of the points
     d : float
         coordinate-y to find the relative point
@@ -553,13 +347,13 @@ def find_line_index(Lin_ar:NDArray,
 
 #-----------------------------------------------------------------------------------------------------------------
 
-def find_tag_line(coord:NDArray,
+def find_tag_line(coord:ndarray,
                   x:float,
                   dir:str) -> int:
     """_summary_
 
     Args:
-        coord (NDArray): coordinate of
+        coord (ndarray): coordinate of
         x (float): _description_
         dir (str): _description_
 
@@ -579,7 +373,7 @@ def find_tag_line(coord:NDArray,
     return np.int32(i)                 
 
 #-----------------------------------------------------------------------------------------
-def find_slab_surface(g_input:Geom_input)->tuple([NDArray[float],NDArray[float]]):  
+def find_slab_surface(g_input:GeomInput)->tuple([ndarray[float],ndarray[float]]):  
     """
     Compute the top surface of a kinematic slab as a polyline starting from the trench.
 
@@ -623,7 +417,7 @@ def find_slab_surface(g_input:Geom_input)->tuple([NDArray[float],NDArray[float]]
     """
 
  
-    if g_input.sub_type == 'Costum':
+    if g_input.slab_type == 'Custom':
         def wrapper_ribe(g_input):
             def f(x):
                 return compute_bending_angle(g_input, x)
@@ -641,7 +435,7 @@ def find_slab_surface(g_input:Geom_input)->tuple([NDArray[float],NDArray[float]]
                 
     return slab_top, theta_mean
 #-----------------------------------------------------------------------------------------------------------
-def create_slab_surface(f:callable, y_min:float,stp=float,depth:float=0.0)->tuple[NDArray[float],NDArray[float]]:
+def create_slab_surface(f:callable, y_min:float,stp=float,depth:float=0.0)->tuple[ndarray[float],ndarray[float]]:
     
     # Initialise the theta_mean and slab_top array
     theta_mean = np.zeros([2],dtype=float)
@@ -693,7 +487,7 @@ def create_slab_surface(f:callable, y_min:float,stp=float,depth:float=0.0)->tupl
     return slab_top,theta_mean,ell_s
 
 #------------------------------------------------------------------------------------------------------------
-def compute_bending_angle(g_input:Geom_input
+def compute_bending_angle(g_input:GeomInput
                         ,lgh: float):
     
     """compute_bending_angle: 
@@ -706,13 +500,13 @@ def compute_bending_angle(g_input:Geom_input
     if g_input.sub_constant_flag:
         theta = g_input.sub_theta_max
     else:
-        if lgh > g_input.sub_Lb:
+        if lgh > g_input.sub_lb:
             theta = g_input.sub_theta_max
         else:
-            theta = ribe_angle(g_input.sub_theta_max, g_input.sub_Lb, lgh)
-            if theta<g_input.sub_theta_0: 
-                theta = g_input.sub_theta_0
-    
+            theta = ribe_angle(g_input.sub_theta_max, g_input.sub_lb, lgh)
+            if theta<g_input.sub_theta0:
+                theta = g_input.sub_theta0
+
     return theta
 
 #--------------------------------------------------------------------------------------------------------------
@@ -734,8 +528,8 @@ def ribe_angle(theta_max: float
 
     return theta
 
-def function_create_subducting_plate_geometry(g_input:Geom_input,
-                                 )-> tuple[NDArray[np.float64],NDArray[np.float64],NDArray[np.float64],NDArray[np.float64],NDArray[np.float64] | None,NDArray[np.float64] | None, Geom_input]: 
+def function_create_subducting_plate_geometry(g_input:GeomInput,
+                                 )-> tuple[ndarray[np.float64],ndarray[np.float64],ndarray[np.float64],ndarray[np.float64],ndarray[np.float64] | None,ndarray[np.float64] | None, GeomInput]: 
     """
     Create the main subducting-plate geometry from input parameters.
 
@@ -747,7 +541,7 @@ def function_create_subducting_plate_geometry(g_input:Geom_input,
 
     Parameters
     ----------
-    g_input : Geom_input
+    g_input : GeomInput
         Object containing all input geometric parameters required to construct the
         slab and associated interfaces.
 
@@ -767,7 +561,7 @@ def function_create_subducting_plate_geometry(g_input:Geom_input,
     oy : np.ndarray | None
         y-coordinates of the oceanic Moho. Can be `None`/empty if the crust is not
         defined or not requested.
-    g_input : Geom_input
+    g_input : GeomInput
         Updated geometry input object (may include derived or validated fields).
     """
     
@@ -776,19 +570,19 @@ def function_create_subducting_plate_geometry(g_input:Geom_input,
     slab_top, theta_mean = find_slab_surface(g_input)
 
     ax = slab_top[:,0]
-    ay = slab_top[:,1] 
+    ay = slab_top[:,1]
 
     bx,by, lt = generate_parallel_layer_subducting_plate(ax,ay,theta_mean,g_input.slab_tk)
     if lt != g_input.slab_tk: 
         print('Warning: slab top surface have a curvature that is incompatible with the current slab thickness.')
-        print(f' Old Thickness: {g_input.slab_tk/1e3} [km] New Thickness: {lt/1e3} [km]')
+        print(f' Old Thickness: {g_input.slab_tk} [km] New Thickness: {lt} [km]')
         g_input.slab_tk = lt
 
     # Create the channel using the subduction interface as guide
     #cx,cy = function_create_subduction_channel(ax,ay,theta_mean,g_input)
     if g_input.ocr != 0.0:
         ox,oy,_ = generate_parallel_layer_subducting_plate(ax,ay,theta_mean,g_input.ocr)
-    else: 
+    else:
         ox = None
         oy = None 
     # Correct the slab surface and find the extra node
@@ -807,10 +601,10 @@ def function_create_subducting_plate_geometry(g_input:Geom_input,
     return ax,ay,bx,by,ox,oy,g_input
 
 #---------------------------------------------------------------------------------------------
-def generate_parallel_layer_subducting_plate(sx:NDArray[np.float64],
-                                      sy:NDArray[np.float64],
-                                      th:NDArray[np.float64],
-                                      lt:float)->tuple[NDArray[np.float64],NDArray[np.float64]]:
+def generate_parallel_layer_subducting_plate(sx:ndarray[np.float64],
+                                      sy:ndarray[np.float64],
+                                      th:ndarray[np.float64],
+                                      lt:float)->tuple[ndarray[np.float64],ndarray[np.float64]]:
     """
     Compute the coordinates of an internal layer surface within the subducting plate.
     
@@ -821,9 +615,9 @@ def generate_parallel_layer_subducting_plate(sx:NDArray[np.float64],
     
     Parameters
     ----------
-    sx : NDArray[np.float64]
+    sx : ndarray[np.float64]
         x-coordinates of the slab top surface.
-    sy : NDArray[np.float64]
+    sy : ndarray[np.float64]
         y-coordinates of the slab top surface.
     th : float
         Local slab bending angle associated with the surface points (degrees or
@@ -835,9 +629,9 @@ def generate_parallel_layer_subducting_plate(sx:NDArray[np.float64],
     
     Returns
     -------
-    cx : NDArray[np.float64]
+    cx : ndarray[np.float64]
         x-coordinates of the layer-defining surface.
-    cy : NDArray[np.float64]
+    cy : ndarray[np.float64]
         y-coordinates of the layer-defining surface.
     """
 
@@ -869,19 +663,14 @@ def generate_parallel_layer_subducting_plate(sx:NDArray[np.float64],
     cx_n = cx[(cx>=0.0) & (cy>=np.min(sy))]
     cy_n = cy[(cx>=0.0) & (cy>=np.min(sy))]
     # Shift the first node: 
-    
     if cx_n[0] != 0.0: 
         cx_n[0] = 0.0 
         cy_n[0] = -lt/np.cos(th[0])
-    
-    
-    
-
     return cx_n,cy_n,lt 
     
 #-----------------------------------------------------------------------------------------------------------------
   
-def _find_e_node(ax:NDArray[np.float64],ay:NDArray[np.float64],t:NDArray[np.float64],lt:float,flag=False):
+def _find_e_node(ax:ndarray[np.float64],ay:ndarray[np.float64],t:ndarray[np.float64],lt:float,flag=False):
     if lt == 0.0 and flag == False: 
     
         return [],[]
@@ -910,12 +699,12 @@ def _find_e_node(ax:NDArray[np.float64],ay:NDArray[np.float64],t:NDArray[np.floa
 
 #-----------------------------------------------------------------------------------------------------------------
 
-def _correct_(ax:NDArray[np.float64],
-              ay:NDArray[np.float64],
+def _correct_(ax:ndarray[np.float64],
+              ay:ndarray[np.float64],
               index_extra_node:int,
               lt:float,
-              t:NDArray[np.float64],
-              tex:float)->tuple[NDArray[np.float64],NDArray[np.float64],NDArray[np.float64]]:
+              t:ndarray[np.float64],
+              tex:float)->tuple[ndarray[np.float64],ndarray[np.float64],ndarray[np.float64]]:
     
     if index_extra_node == []:
         return ax,ay,t
@@ -933,10 +722,10 @@ def _correct_(ax:NDArray[np.float64],
     
 #-----------------------------------------------------------------------------------------------------------------
 
-def find_extra_node(ax:NDArray[np.float64],
-                    ay:NDArray[np.float64],
-                    t:NDArray[np.float64],
-                    g_input:Geom_input)->tuple[NDArray[np.float64],NDArray[np.float64],NDArray[np.float64]]:
+def find_extra_node(ax:ndarray[np.float64],
+                    ay:ndarray[np.float64],
+                    t:ndarray[np.float64],
+                    g_input:GeomInput)->tuple[ndarray[np.float64],ndarray[np.float64],ndarray[np.float64]]:
 
     #-- Find nodes 
     e_node_uc,t_ex1 = _find_e_node(ax,ay,t,g_input.cr*(1-g_input.lc))
@@ -949,11 +738,6 @@ def find_extra_node(ax:NDArray[np.float64],
     
     e_node_lit,t_ex3 = _find_e_node(ax,ay,t,g_input.ns_depth)
     ax,ay,t = _correct_(ax,ay,e_node_lit,g_input.ns_depth,t,t_ex3)
-
-        
-    e_node_lit,t_ex3 = _find_e_node(ax,ay,t,g_input.decoupling)
-    ax,ay,t = _correct_(ax,ay,e_node_lit,g_input.decoupling,t,t_ex3)
-
 
     return ax,ay,t
 
@@ -1038,7 +822,7 @@ def _create_points(mesh:gmsh.model,                                            #
 def _create_lines(mesh_model:gmsh.model,
                   previous:int,
                   tag_p:list,
-                  flag=False)-> tuple[int, list, NDArray[np.int32], gmsh.model]:
+                  flag=False)-> tuple[int, list, ndarray[np.int32], gmsh.model]:
 
     """
     Create Gmsh line(s) from point tags and keep track of their tags and connectivity.
@@ -1111,14 +895,5 @@ def assign_phases(dict_surf:dict,
     
     phase.x.scatter_forward()
     
-    return phase 
+    return phase
 #---------------------------------------------------------------------------------------------------------------
-# Break this glass in case of needs. 
-# def debug_plot(target,global_line,global_point,color):
-#    for i in range(len(target)):
-#        line = np.abs(target[i])
-#        
-#        p0   = global_line[0,line-1]
-#        p1   = global_line[1,line-1]
-#        coord_x = [global_point[0,p0-1],global_point[0,p1-1]]            
-#        coord_y = [global_point[1,p0-1],global_point[1,p1-1]]
