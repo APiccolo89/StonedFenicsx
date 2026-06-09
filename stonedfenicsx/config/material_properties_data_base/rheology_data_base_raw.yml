@@ -1,0 +1,145 @@
+#The rheology works using the following formulation:
+#\eta = 0.5 * B^-1/n * \dot{\epsilon}^{(1-n)/n} * exp(-(E + PV)/nRT) * COH^-r/n/f_H20^r
+#
+#Where:
+#- \eta is the viscosity
+#- B is the pre-exponential factor
+#- n is the stress exponent
+#- E is the activation energy
+#- P is the pressure
+#- V is the activation volume
+#- r is the water content exponent
+#- COH is the water contentß
+#- R is the gas constant
+#- T is the temperature
+#The data most of the time have different rheological apparatus, are listed with weird unit of measure
+#the data base is conceived to put the relevant information to convert the pre-exponential factor into Pa^-n s^-1.
+
+Diffusion_creep: 
+  n: 1
+  aH20: 1.0
+  BH20: 5521e6 
+  EH20: 31.28e3 
+  VH20: -2.009e-5 
+
+  Diffusion_DryOlivine: 
+    B: 1.5e9
+    E: 375.0e3
+    V: 5e-6
+    F: 'SimpleShear'
+    d0: 10e3
+    MPa: 1
+    r: 0
+    m: 3.0
+    B_SI: 'MPa^-1s^-1'
+    water_correction: 'None'
+    ref: 'Hirth, Greg, and David Kohlstedt. "Rheology of the upper mantle and the mantle wedge: A view from the experimentalists." Geophysical monograph series 138 (2003): 83-105.'
+  Diffusion_WetOlivine: 
+    B: 2.7e7
+    E: 375.0e3
+    V: 10e-6
+    F: 'SimpleShear'
+    d0: 10e3
+    MPa: 1
+    r: 0.8
+    m: 3.0
+    B_SI: 'MPa^-1 s^-1 COH^-r'
+    water_correction: 'COH'
+    ref: 'Hirth, Greg, and David Kohlstedt. "Rheology of the upper mantle and the mantle wedge: A view from the experimentalists." Geophysical monograph series 138 (2003): 83-105.'
+  Diffusion_vanKeken: 
+    B: 3.7866452594987994e-10
+    E: 335.0e3
+    V: 0e-6
+    F: 'None'
+    d0: 1.0
+    MPa: 0
+    r: 0.8
+    m: 1.0
+    B_SI: 'Pa^-1 s^-1'
+    water_correction: 'None'
+    ref: 'van Keken, Peter E., et al. "A community benchmark for subduction zone modeling." Physics of the Earth and Planetary Interiors 171.1-4 (2008): 187-197.'
+    note: 'I did not find the original data for this flow law. I converted the value to be consistent with the formulation of the '
+
+
+Dislocation_creep:
+  m = 0.0 
+  aH20: 1.0
+  BH20: 5521e6 
+  EH20: 31.28e3 
+  VH20: -2.009e-5 
+  d0: 1.0 
+
+  Dislocation_DryOlivine: 
+    B: 1.1e5
+    E: 345.0e3
+    V: 15e-6
+    F: 'SimpleShear'
+    d0: 10e3
+    MPa: 1
+    r: 0.0
+    n: 3.5
+    B_SI: 'MPa^-n s^-1'
+    water_correction: 'None'
+    ref: 'Hirth, Greg, and David Kohlstedt. "Rheology of the upper mantle and the mantle wedge: A view from the experimentalists." Geophysical monograph series 138 (2003): 83-105.'
+
+  Dislocation_WetOlivine: 
+    B: 1600
+    E: 520.0e3
+    V: 22e-6
+    F: 'SimpleShear'
+    MPa: 1
+    r: 1.2
+    n: 3.5
+    B_SI: 'MPa^-ν s^-1 COH^-r'
+    water_correction: 'COH'
+    ref: 'Hirth, Greg, and David Kohlstedt. "Rheology of the upper mantle and the mantle wedge: A view from the experimentalists." Geophysical monograph series 138 (2003): 83-105.'
+
+  Dislocation_WetPlagio: 
+    B: 2.7e7
+    E: 345.0e3
+    V: 38e-6
+    F: 'Uniaxial'
+    d0: 10e3
+    MPa: 1
+    r: 0.0
+    n: 3.0
+    B_SI: 'MPa^-n s^-1'
+    water_correction: 'None'
+    ref: 'later'
+    note: 'Data have been pre-processed in the original source. Water is not explicitly listed'
+  
+  Dislocation_serpentinite:
+    B: 2.82e-15
+    E: 8900 
+    V: 3.2e-6
+    F: 'Uniaxial'
+    n: 3.8
+    MPa:1 
+    water_correction: 'None'
+    r: 0.0
+    B_SI: 'MPa^-n s^-1'
+    ref: 'Hilairet, N., et al. High-pressure creep of serpentine, interseismic deformation, and initiation of subduction. (2007)'
+  
+  Dislocation_wetquartzite: 
+    B: 6.309573444801943e-12
+    E: 135.0e3
+    V: 0e6
+    F: 'Uniaxial'
+    n: 4.0
+    MPa: 1
+    water_correction: 'Fugacity'
+    r: 0.0 
+    B_SI: 'MPa^-(n+r) s^-1'
+    ref: 'Hirth, G., Teyssier, C. & Dunlap, James W., An evaluation of quartzite flow laws based on comparisons between experimentally and naturally deformed rocks, 2001'
+
+  Dislocation_glaucophane: 
+    B: 2.32e10 
+    E: 450.0e3 
+    V: 0e-6
+    n: 3.0 
+    r: 0.0
+    F: 'Uniaxial'
+    MPa: 1
+    water_correction: 'None'
+    B_SI: 'MPa^-n s^-1'
+    ref: 'Blueschist dislocation creep and glide in subduction systems: Constraints from glaucophane experiments'

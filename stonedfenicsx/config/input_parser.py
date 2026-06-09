@@ -9,7 +9,7 @@ from stonedfenicsx.material_property.phase_db import PhaseDataBase
 from stonedfenicsx.config.scal import Scal
 import beartype
 from pathlib import Path
-from dataclasses import field, dataclass
+from dataclasses import field, dataclass, asdict
 import numpy as np
 # -----------------------------------------------------------------------------------
 # -----------------------------------------------------------------------------------
@@ -407,8 +407,7 @@ def test_function():
     # Select the appropriate path for the input file
     input_file = Path(pkg_root.parents[2], "input.yaml")
     # parse the input file
-    input_data, ph_in = parse_input(input_file)
-
+    input_data, ph_in = parse_input(input_file)  
 
 # Building the unit test for the configuration of the numerical simulation routine.
 if __name__ == "__main__":

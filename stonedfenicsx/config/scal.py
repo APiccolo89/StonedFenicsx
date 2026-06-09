@@ -1,7 +1,8 @@
 from stonedfenicsx.utils import timing_function, print_ph
-from stonedfenicsx.create_mesh.aux_create_mesh import Geom_input
+from stonedfenicsx.config.numerical_control import CtrlLHS, NumericalControls
 from stonedfenicsx.numerical_control import time_dependent_evolution
 from dataclasses import dataclass,field
+from stonedfenicsx.config.geometry import GeomInput
 
 @dataclass(slots=True)
 class Scal: 
@@ -44,27 +45,23 @@ class Scal:
         self.strain_rate = 1 / self.time # Stress
         self.k  = self.watt / (self.length * self.temp) # Conductivity 
         self.cp = self.energy/(self.temp * self.mass) # Heat capacity 
-        
+
         return self
 
 def _scaling_material_properties(pdb,sc:Scal): 
     # scal the references values   
-    pdb.Tref /= sc.Temp 
+    pdb.Tref /= sc.temp
     pdb.Pref /= sc.stress
-    pdb.T_Scal = sc.Temp 
-    pdb.P_Scal = sc.stress 
-    pdb.cohesion /= sc.stress 
+    pdb.T_Scal = sc.temp
+    pdb.P_Scal = sc.stress
+    pdb.cohesion /= sc.stress
     
-    # Radiative conductivity parameters 
-    
-    # The formula used by Richard and Grose yields a conductivity, thus, 
-    # thi
     pdb.A /= sc.k
-    pdb.B /= sc.k 
-    pdb.T_A /= sc.Temp
-    pdb.T_B /= sc.Temp 
-    pdb.x_A /= sc.Temp 
-    pdb.x_B /= sc.Temp
+    pdb.B /= sc.k
+    pdb.T_A /= sc.temp
+    pdb.T_B /= sc.temp
+    pdb.x_A /= sc.temp
+    pdb.x_B /= sc.temp
     
     # Viscosity
     pdb.eta /= sc.eta
@@ -72,22 +69,19 @@ def _scaling_material_properties(pdb,sc:Scal):
     pdb.eta_max /= sc.eta
     pdb.eta_def /= sc.eta
     
-    # B_dif/disl 
-    scal_bdsl = sc.stress**(-pdb.n)*sc.T**(-1)    # Pa^-ns-1
-    scal_bdif = (sc.stress*sc.T)**(-1)
-    pdb.bdif /= scal_bdif 
+    # B_dif/disl
+    scal_bdsl = sc.stress**(-pdb.n)*sc.time**(-1)    # Pa^-ns-1
+    scal_bdif = (sc.stress*sc.time)**(-1)
+    pdb.bdif /= scal_bdif
     pdb.bdis /= scal_bdsl
     pdb.bdis_wz /= scal_bdif
 
-    
-
-    
-    # Scal the heat capacity 
-    scal_c1 = sc.Energy/sc.M/sc.Temp**(0.5) 
-    scal_c2 = (sc.Energy*sc.Temp)/sc.M
-    scal_c3 = (sc.Energy*sc.Temp**2)/sc.M
-    scal_c4 = (sc.Energy)/sc.M/sc.Temp**2
-    scal_c5 = (sc.Energy)/sc.M/sc.Temp**3
+    # Scal the heat capacity
+    scal_c1 = sc.energy/sc.mass/sc.temp**(0.5)
+    scal_c2 = (sc.energy*sc.temp)/sc.M
+    scal_c3 = (sc.energy*sc.temp**2)/sc.M
+    scal_c4 = (sc.energy)/sc.mass/sc.temp**2
+    scal_c5 = (sc.energy)/sc.mass/sc.temp**3
 
     pdb.c0 /= sc.cp
     pdb.c1 /= scal_c1
@@ -95,24 +89,23 @@ def _scaling_material_properties(pdb,sc:Scal):
     pdb.c3 /= scal_c3
     pdb.c4 /= scal_c4
     pdb.c5 /= scal_c5
-    
     # conductivity      D = a + b * np.exp(-T/c) + d * np.exp(-T/e)
-   
+    
     pdb.k0 /= sc.k
 
-    pdb.k_a /= sc.L**2/sc.T           
-    pdb.k_b /= sc.L**2/sc.T           
-    pdb.k_c /= sc.Temp           
-    pdb.k_d /= sc.L**2/sc.T           
-    pdb.k_e /= sc.Temp           
+    pdb.k_a /= sc.length**2/sc.time           
+    pdb.k_b /= sc.length**2/sc.time
+    pdb.k_c /= sc.temp
+    pdb.k_d /= sc.length**2/sc.time
+    pdb.k_e /= sc.temp
     pdb.k_f /= sc.k/sc.stress
 
-    pdb.alpha0 /= 1/sc.Temp
-    pdb.alpha1 /= 1/sc.Temp**2
+    pdb.alpha0 /= 1/sc.temp
+    pdb.alpha1 /= 1/sc.temp**2
     pdb.alpha2 /= 1/sc.stress
     pdb.Kb /= sc.stress
     pdb.rho0 /= sc.rho
-    scal_radio = sc.Watt/sc.L**3
+    scal_radio = sc.watt/sc.length**3
     
     pdb.radio /= scal_radio
     
@@ -120,16 +113,28 @@ def _scaling_material_properties(pdb,sc:Scal):
     if MPI.COMM_WORLD.rank == 0: 
         print('{ :  -   > Scaling <  -  : }')
         print('         Material properties has been scaled following: ')
-        print(f'         L [length]   = {sc.L:.3f} [m]')
+        print(f'         L [length]   = {sc.length:.3f} [m]')
         print(f'         Stress       = {sc.stress:.3f} [Pa]')
         print(f'         eta          = {sc.eta:.3e} [Pas]')
-        print(f'         Temp         = {sc.Temp:.2f} [K]')
+        print(f'         Temp         = {sc.temp:.2f} [K]')
         print('The other unit of measure are derived from this set of scaling')
         print('{ <  -   : Scaling :  -  > }')
 
-    return pdb 
+    return pdb
 
-def scale_parameters(lhs,scal):
+def scale_parameters(lhs:CtrlLHS,scal:Scal)->CtrlLHS:
+    """_summary_
+
+    Args:
+        lhs (_type_): lhs:dataclass that handles the thermal boundary condition
+        scal (Scal): scal the scaling class
+
+    Returns:
+        lhs(): the scaled lhs dataclass 
+    """
+    
+    
+    
     scal_factor = (scal.scale_Myr2sec / scal.T)
     lhs.end_time = lhs.end_time * scal_factor
     lhs.dt = lhs.dt * scal_factor
@@ -162,11 +167,11 @@ def _scaling_mesh(M,scal):
    
     return M
 
-def dimensionless_ginput(g_input:Geom_input,sc:Scal):
+def dimensionless_ginput(g_input:GeomInput,sc:Scal):
     """_summary_
 
     Args:
-        g_input (Geom_input): geometrical input
+        g_input (GeomInput): geometrical input
         sc (Scal): scaling object
 
     Returns:
