@@ -11,13 +11,15 @@ import beartype
 from pathlib import Path
 from dataclasses import field, dataclass
 import numpy as np
-
-
+# -----------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------
 dict_options = {"NoShear": 0, "SelfConsistent": 1}
 dict_stokes = {"Direct": np.int32(1), "Iterative": np.int32(0)}
+# -----------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------
 
+# -----------------------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------------------------
 @dataclass(slots=True)
 class Phase:
     """
@@ -158,7 +160,7 @@ class Phase:
 class PhInput:
     """Container of the phases"""
 
-    shear_heating_disl_law: str = 'WetQuartzite'
+    shear_heating_disl_law: str = "WetQuartzite"
     shear_heating_disl_ch: float = 0.0
     shear_heating_disl_phi: float = 0.0
     subducting_plate_mantle: Phase = field(init=False)
@@ -171,18 +173,24 @@ class PhInput:
 
 # -----------------------------------------------------------------------------------
 def correct_input(k: str, v: str) -> int | float | str:
-    """_summary_
+    """function that convert the string into int-flag variable. 
+    Mode_shear or the solvers option are defined as string in the main input file. 
+    In the code these options are evaluated as a function of a 0-1 flag system. 
+    The dictionaries at the top of the file, convert the string into this flag system.
+    Certain value are naturally interpreted as a string (e.g., eta_max = 1e26). These variable
+    are not transformed, as an other function would handle the effective conversion
+    to the float number. 
 
     Args:
-        k (str): _description_
-        v (str): _description_
+        k (str): key of the block 
+        v (str): value 
 
     Returns:
-        int|float|str: _description_
+        v(int|float|str): transformed value. 
     """
     if k == "model_shear":
         v = dict_options[v]
-    elif k == "stokes_solver_type" or k == "energy_solver_type":
+    elif k in ("stokes_solver_type", "energy_solver_type"):
         v = dict_stokes[v]
 
     return v
@@ -222,10 +230,11 @@ class Input:
     ctrl_lhs: CtrlLHS
     ctrl_io: IOControls
     g_input: GeomInput
+    sc: Scal
 
 
-# –-----------------------------------------------------------------------------------------------
-def parse_input(path: str) -> int:
+# -----------------------------------------------------------------------------------
+def parse_input(path: str) -> tuple[Input,PhInput]:
     """
     Read and parse a YAML input file.
 
@@ -255,17 +264,19 @@ def parse_input(path: str) -> int:
     # import yamlv
     import yaml
 
-    with open(f"{path}", "r") as f:
+    with open(f"{path}", "r", encoding="utf-8") as f:
         input_file = yaml.safe_load(f)
 
-    # Import numerical controls [basically structured data like numpy]
-    nc = input_file["Input"]["NumericalControls"]  # Numerical controls
-    iocr = input_file["Input"]["InputOutputControl"]  # Input Controls
-    lhs = input_file["Input"]["thermal_boundary_condition"]  # left boundary condition
-    geom = input_file["Input"]["geometry"]  # Geometry
-    mp = input_file["Input"]["Material_properties"]  # Material property
-    scal = input_file["Input"]["scaling"]  # Scaling
-    sheating = input_file["Input"]["Shear_Heating"]  # Shear Heating
+        # Import numerical controls [basically structured data like numpy]
+        nc = input_file["Input"]["NumericalControls"]  # Numerical controls
+        iocr = input_file["Input"]["InputOutputControl"]  # Input Controls
+        lhs = input_file["Input"][
+            "thermal_boundary_condition"
+        ]  # left boundary condition
+        geom = input_file["Input"]["geometry"]  # Geometry
+        mp = input_file["Input"]["Material_properties"]  # Material property
+        scal = input_file["Input"]["scaling"]  # Scaling
+        sheating = input_file["Input"]["Shear_Heating"]  # Shear Heating
 
     # Initialise the main classes:
     ctrl = NumericalControls()
@@ -282,17 +293,18 @@ def parse_input(path: str) -> int:
     sc.compute_the_derivative_scal()
     ctrl_lhs = update_ip_file(ctrl_lhs, lhs)
 
-    input_data = Input(ctrl=ctrl, ctrl_io=ctrl_io, ctrl_lhs=ctrl_lhs, g_input=g_input)
+    input_obj = Input(
+        ctrl=ctrl, ctrl_io=ctrl_io, ctrl_lhs=ctrl_lhs, g_input=g_input, sc=sc
+    )
 
     ph_input = PhInput()
 
     ph_input = filling_the_phase_data_base(
         materialproperties=mp, shheating=sheating, phase_input=ph_input
     )
-    return input_data, ph_input
+    return input_obj, ph_input
 
 
-# ---------------------------------------------------------------------------------------------------
 def cast_type(v: any, tp: any) -> any:
     """Ensure that the typing of input is the same of the target class
 
@@ -303,50 +315,48 @@ def cast_type(v: any, tp: any) -> any:
     Returns:
         v: converted value
     """
+    def check_bool(vbuf:bool|str|int)->bool: 
+        """_summary_
+
+        Args:
+            vbuf (bool | str | int): check the bool branches
+
+        Returns:
+            bool: return a bool value
+        """
+
+        if isinstance(vbuf, bool):
+            pass
+        if isinstance(vbuf, str):
+            if vbuf in ("true", "yes", "y", "True", "TRUE", "YES"):
+                vbuf = True
+            if vbuf in ("false", "no", "n", "NO", "FALSE", "False"):
+                vbuf = False
+        if isinstance(vbuf, int) or isinstance(vbuf, float):
+            vbuf = bool(vbuf)
+
+        return vbuf
 
     # Get the type of the input -> if it is a list -> list
     origin = get_origin(tp)
     # if origin is a compound object like lists, tuple, array -> get the argument of each of the element.
     args = get_args(tp)
 
-    if tp is str:
-        return tp(v)
-
-    if tp is int:
-        return tp(v)
-
-    if tp is float:
-        return tp(v)
-
     if tp is np.float64:
-        return np.float64(v)
-
-    if tp is bool:
-        if isinstance(v, bool):
-            return v
-        if isinstance(v, str):
-            if v in ("true", "yes", "y", "True", "TRUE", "YES"):
-                return True
-            if v in ("false", "no", "n", "NO", "FALSE", "False"):
-                return False
-        if isinstance(v, int) or isinstance(v, float):
-            if int(v) == 1:
-                return True
-            else:
-                return False
-
-    if origin is list:
+        v = np.float64(v)
+    elif tp is bool:
+        v = check_bool(v)
+    elif origin is list:
         subtype = args[0] if args else object
-        return [cast_type(value, subtype) for value in v]
-
-    if origin is tuple:
+        v = [cast_type(value, subtype) for value in v]
+    elif origin is tuple:
         subtype = args[0] if args else object
-        return tuple(cast_type(value, subtype) for value in v)
-
-    if origin is np.ndarray:
-        return np.asarray(v)
-
-    return tp(v)
+        v = tuple(cast_type(value, subtype) for value in v)
+    elif origin is np.ndarray:
+        v =  np.asarray(v)
+    else:
+        v = tp(v)
+    return v
 
 
 # -----------------------------------------------------------------------------------------
@@ -371,32 +381,35 @@ def filling_the_phase_data_base(
         "overriding_lower_crust": 6,
     }
 
-    phase_input = update_ip_file(phase_input,shheating)       
+    phase_input = update_ip_file(phase_input, shheating)
 
     # Loop over the MP items. MP items, is a multilevel dictionary
     for k, v in materialproperties.items():
         buf = Phase()  # Prepare a Phase class to fill up with the new properties
         for j, vv in v.items():  # Loop over the properties of the class phase
-            if vv is not None:
-                setattr(buf, j, vv)  # Set the attribute
-            else:
-                if j == "radiogenic_heating" or j == "radiative_conductivity":
-                    vv = 0.0
-                else:
-                    vv = -1e23
+
+            if vv is None:
+                vv = (
+                    0.0 if j in ("radiogenic_heat", "radiative_conductivity") else -1e23
+                )
+
+            setattr(buf, j, vv)
         buf.name_phase = k
         buf.id = dict_phase_id[k]
         setattr(phase_input, k, buf)  # Substitute the buf class with the default one
     return phase_input
 
-
-# Building the unit test for the configuration of the numerical simulation routine.
-if __name__ == "__main__":
+def test_function():
+    """Test function for debugging the configuration routines. 
+    """
     # Find the main folder of the package
-    PKG_ROOT = Path(__file__)
+    pkg_root = Path(__file__)
     # Select the appropriate path for the input file
-    input_file = Path(PKG_ROOT.parents[2], "input.yaml")
+    input_file = Path(pkg_root.parents[2], "input.yaml")
     # parse the input file
     input_data, ph_in = parse_input(input_file)
 
-    pass
+
+# Building the unit test for the configuration of the numerical simulation routine.
+if __name__ == "__main__":
+    test_function()

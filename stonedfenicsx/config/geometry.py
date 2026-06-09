@@ -101,7 +101,7 @@ class GeomInput:
         if not 0.0 <= self.lc <= 1.0:
             raise ValueError(f"lc must be in [0, 1], got {self.lc}")
         if self.slab_type not in {"Custom", "Real"}:
-            raise ValueError(f'sub_type must be "Custom" or "Real", got {self.sub_type!r}')
+            raise ValueError(f'sub_type must be "Custom" or "Real", got {self.slab_type!r}')
 
 #---------------------------------------------------------------------------------------------------
 @dataclass(slots=True)
