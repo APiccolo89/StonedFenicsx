@@ -1,3 +1,12 @@
+# The input unit of measure: 
+# Length = km -> all the unit of measure are in km and internally change to meter then dimensionless.
+# Viscosity = Pas 
+# Temperature = degC
+# Velocity = cm/yr 
+# Stress = Pascal 
+# time = Myr 
+# -> list of rheology and thermal model is given in the guide. 
+
 Input:
   NumericalControls:
     it_max: 20
@@ -198,23 +207,25 @@ Input:
 
   # Geometry
   geometry:
-    x: [0.0, 660000.0] # Coordinate of X
-    y: [-600000.0, 0.0] # Coordinate of Y
-    slab_tk: 130000.0 # Slab Thickness
-    cr: 30000.0 # Overriding Crust {if lc==0.0 -> only overriding upper crust}
-    ocr: 7000.0 # Oceanic crust
+    x: [0.0, 660.0] # Coordinate of X
+    y: [-600.0, 0.0] # Coordinate of Y
+    van_keken: True
+    sub_constant_flag : True
+    slab_tk: 130.0 # Slab Thickness
+    cr: 30.0 # Overriding Crust {if lc==0.0 -> only overriding upper crust}
+    ocr: 7.0 # Oceanic crust
     lc: 0.3
-    resolution_normal: 3000.0
-    resolution_refine: 1500.0 
-    ns_depth: 50000.0
-    lab_d: 100000.0
-    decoupling: 80000.0
-    transition: 10000.0
-    wz_tk: 2000.0
-    sub_lb: 300000.0
-    sub_dl: 10000.0
-    sub_theta0: 5
-    sub_theta_max: 45
+    resolution_normal: 3.0
+    resolution_refine: 1.5 
+    ns_depth: 50.0
+    lab_d: 100.0
+    decoupling: 80.0
+    transition: 10.0
+    wz_tk: 0.5
+    sub_lb: 300.0
+    sub_dl: 10.0
+    sub_theta0: 5.0
+    sub_theta_max: 45.0
     sub_trench: 0.0
-    slab_type: "Costum"
+    slab_type: "Custom" 
     sub_path: "Not Defined"
