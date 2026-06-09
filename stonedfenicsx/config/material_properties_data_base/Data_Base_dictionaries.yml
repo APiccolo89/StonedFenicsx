@@ -1,0 +1,24 @@
+Rheology_name: 
+  Hirth_dry_Diffusion_creep : 'Diffusion_DryOlivine'
+  Hirth_dry_Dislocation_creep: 'Dislocation_DryOlivine'
+  VK_Diffusion_creep: 'Diffusion_vanKeken'
+  VK_Dislocation_creep: 'Dislocation_vanKeken'
+  Hirth_wet_Diffusion_creep : 'Diffusion_WetOlivine'
+  Hirth_wet_Dislocation_creep: 'Dislocation_WetOlivine'
+  Wet_Plagioclase_Dislocation_creep: 'Dislocation_WetPlagio'
+  Hirareth_Serpentinite_Dislocation_creep: 'Dislocation_serpentinite'
+  Wet_Quartzite_2001_Dislocation_creep: 'Dislocation_wetquartzite'
+  Glaucophane_2025_Dislocation_creep: 'Dislocation_glaucophane'
+
+Thermal_diffusivity: 
+  Mantle_Richards_2018 : ''
+  Crust_Richards_2018 : ''
+
+Heat_capacity: 
+  Mantle_Bernard_1988_FO : 'Mantle_bernard_FO'
+  Mantle_Bernard_1988_FA : 'Mantle_bernard_FA'
+  Mantle_Bernard_Ar_199x_FO : 'Mantle_bernard_ar_FO'
+  Mantle_Bernard_Ar_199x_FA : 'Mantle_bernard_ar_FA'
+  Mantle_Bernard_1988_FO_FA : 'Mantle_bernard_FO_FA'
+  Mantle_Bernard_Ar_199x_FO_FA: 'Mantle_bernard_ar_FO_FA'
+  Crust: 'Crust'

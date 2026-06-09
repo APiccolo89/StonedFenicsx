@@ -40,17 +40,17 @@ class IOControls:
     path_save: str = ""
     sname: str = ""
     ts_out: int = 10
-    dt_out: float = 1e6
+    dt_out: float = 1
     path_test: Path = field(init=False) 
     path_cached_information: Path = 'Cached_information'
 
-    def __post_init__(self) -> None:
-        self.path_test = Path(self.path_save) / self.test_name
-        self.path_cached_information = Path(self.path_save) / self.path_cached_information
-
     def generate_io(self) -> None:
         """Create the output directories if they don't exist."""
+        Path(self.path_save).mkdir(parents=True, exist_ok=True)
+        self.path_test = Path(self.path_save) / self.test_name
+        self.path_cached_information = Path(self.path_save) / self.path_cached_information
         self.path_test.mkdir(parents=True, exist_ok=True)
+        self.path_cached_information.mkdir(parents=True,exist_ok=True)
         print("Directory created:", self.path_test)
 
 

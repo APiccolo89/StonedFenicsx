@@ -88,7 +88,7 @@ class GeomInput:
     transition: float = 10.0
     lab_d: float = 100.0
     slab_type: str = "Custom"
-    sub_path: str = "Not Defined"
+    sub_path: str = "Not_Defined"
     sub_lb: float = 300.0
     sub_constant_flag: bool = False
     sub_theta0: float = 5.0           # gradi, invariato
@@ -96,12 +96,28 @@ class GeomInput:
     sub_trench: float = 0.0
     sub_dl: float = 1.0
     wz_tk: float = 2.0
+    van_keken : bool = True
 
-    def __post_init__(self) -> None:
+    def check_class_consistency(self):
+        """Check the integrity of the input, and if it respect 
+        the requirements
+        Convert the main bending angle into radians for computation.
+        Raises:
+            ValueError: Check if the lower crust fraction is a float between 0-1
+            ValueError: Check if the sub_type is something that is reasonable
+            ValueError: Check if the benchmark mode has the required flags activated
+        """
         if not 0.0 <= self.lc <= 1.0:
-            raise ValueError(f"lc must be in [0, 1], got {self.lc}")
+            raise ValueError(f"lc (lower crust fraction) must be in [0, 1], got {self.lc}")
         if self.slab_type not in {"Custom", "Real"}:
             raise ValueError(f'sub_type must be "Custom" or "Real", got {self.slab_type!r}')
+        if self.van_keken and not self.sub_constant_flag:
+            raise ValueError('Van Keken benchmark suite requires that the angle flag constant is true')
+        if self.slab_type == 'Real' and self.sub_path in ('Not_Defined', None):
+            raise ValueError('If you want to test a realistic geometry, why would you not inform me on its location?')
+        # Convert the angles in radians
+        self.sub_theta0 = np.radians(self.sub_theta0)
+        self.sub_theta_max = np.radians(self.sub_theta_max)
 
 #---------------------------------------------------------------------------------------------------
 @dataclass(slots=True)
