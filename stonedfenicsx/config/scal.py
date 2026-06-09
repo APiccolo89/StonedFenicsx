@@ -2,7 +2,7 @@ from stonedfenicsx.utils import timing_function, print_ph
 from stonedfenicsx.config.numerical_control import CtrlLHS, NumericalControls
 from stonedfenicsx.numerical_control import time_dependent_evolution
 from dataclasses import dataclass,field
-from stonedfenicsx.config.geometry import GeomInput
+from stonedfenicsx.config.geometry import GeomInput,Mesh
 
 @dataclass(slots=True)
 class Scal: 
@@ -29,7 +29,7 @@ class Scal:
     scale_vel: float = 1e-2 / 365.25 / 24 / 60 / 60 # scaling velocity from cm/yr to m/s
     scale_myr2sec: float = 1e6 * 365.25 * 60 * 60 * 24 # scale Myr to second 
     def compute_the_derivative_scal(self):
-        """_summary_
+        """During the configuration it fills the remnants unit of measure
 
         Returns:
             self: _description_
@@ -78,8 +78,8 @@ def _scaling_material_properties(pdb,sc:Scal):
 
     # Scal the heat capacity
     scal_c1 = sc.energy/sc.mass/sc.temp**(0.5)
-    scal_c2 = (sc.energy*sc.temp)/sc.M
-    scal_c3 = (sc.energy*sc.temp**2)/sc.M
+    scal_c2 = (sc.energy*sc.temp)/sc.mass
+    scal_c3 = (sc.energy*sc.temp**2)/sc.mass
     scal_c4 = (sc.energy)/sc.mass/sc.temp**2
     scal_c5 = (sc.energy)/sc.mass/sc.temp**3
 
@@ -93,7 +93,7 @@ def _scaling_material_properties(pdb,sc:Scal):
     
     pdb.k0 /= sc.k
 
-    pdb.k_a /= sc.length**2/sc.time           
+    pdb.k_a /= sc.length**2/sc.time      
     pdb.k_b /= sc.length**2/sc.time
     pdb.k_c /= sc.temp
     pdb.k_d /= sc.length**2/sc.time
@@ -135,37 +135,40 @@ def scale_parameters(lhs:CtrlLHS,scal:Scal)->CtrlLHS:
     
     
     
-    scal_factor = (scal.scale_Myr2sec / scal.T)
+    scal_factor = (scal.scale_Myr2sec / scal.time)
     lhs.end_time = lhs.end_time * scal_factor
     lhs.dt = lhs.dt * scal_factor
     lhs.c_age_plate = lhs.c_age_plate * scal_factor
     lhs.c_age_var = lhs.c_age_var * scal_factor  
-    lhs.dz = lhs.dz / scal.L 
-    lhs.alpha_g = lhs.alpha_g / (1 / scal.Temp)
+    lhs.dz = lhs.dz / scal.length 
+    lhs.alpha_g = lhs.alpha_g / (1 / scal.temp)
     lhs.k = lhs.k / scal.k
-    lhs.Cp = lhs.Cp / scal.Cp
+    lhs.Cp = lhs.cp / scal.cp
     lhs.rho = lhs.rho / scal.rho
     return lhs
     
-def scaling_control_parameters(ctrl,scal):
-    
-    ctrl.temp_top /= scal.temp 
-    ctrl.temp_max /= scal.temp 
-    ctrl.v_s = (ctrl.v_s * scal.scale_vel)/(scal.L/scal.T)
-    ctrl.g = ctrl.g / (scal.L/scal.T**2)
-    ctrl.wz_tk = ctrl.wz_tk / scal.L 
-    ctrl.slab_age = ctrl.slab_age * (scal.scale_Myr2sec/scal.T)
-    ctrl.time_max = ctrl.time_max * (scal.scale_Myr2sec/scal.T) 
-    ctrl.dt = ctrl.dt * (scal.scale_Myr2sec/scal.T)
+def scaling_control_parameters(ctrl:NumericalControls,scal:Scal)->NumericalControls:
+    """_summary_
+
+    Args:
+        ctrl (NumericalControls): numerical control class
+        scal (Scal): scaling class
+
+    Returns:
+        NumericalControls: adimensional numerical controls
+    """
+    ctrl.temp_top /= scal.temp
+    ctrl.temp_max /= scal.temp
+    ctrl.v_s = (ctrl.v_s * scal.scale_vel)/(scal.length/scal.time)
+    ctrl.g = ctrl.g / (scal.length/scal.time**2)
+    ctrl.slab_age = ctrl.slab_age * (scal.scale_Myr2sec/scal.time)
+    ctrl.time_max = ctrl.time_max * (scal.scale_Myr2sec/scal.time)
+    ctrl.dt = ctrl.dt * (scal.scale_Myr2sec/scal.time)
 
     return ctrl
-    
-    
-def _scaling_mesh(M,scal):
-
-    M.geometry.x[:] /= scal.length 
-   
-    return M
+def scaling_mesh(mesh:Mesh,sc:Scal)->Mesh:
+    mesh.geometry.x[:] /= sc.length
+    return mesh
 
 def dimensionless_ginput(g_input:GeomInput,sc:Scal):
     """_summary_
@@ -178,24 +181,24 @@ def dimensionless_ginput(g_input:GeomInput,sc:Scal):
         g_input: scaled geometrical input
     """
     g_input.x /= sc.length # main grid coordinate
-    g_input.y /= sc.length  
+    g_input.y /= sc.length
     g_input.cr /= sc.length # crust 
     g_input.ocr /= sc.length # oceanic crust
     g_input.lit_mt /= sc.length # lithosperic mantle  
     g_input.wz_tk /= sc.length # weak zone 
     g_input.ns_depth /= sc.length # total lithosphere thickness
     g_input.decoupling /= sc.length # decoupling depth -> i.e. where the weak zone is prolonged 
-    g_input.resolution_normal /= sc.lenght  # To Do
+    g_input.resolution_normal /= sc.length  # To Do
     g_input.resolution_refine /= sc.length  # To Do
-    g_input.trans /= sc.length # the transition between coupled and uncoupled
+    g_input.transition /= sc.length # the transition between coupled and uncoupled
     g_input.lab_d /= sc.length # Astenosphere-lithosphere 
 
     return g_input
 
 def scal_time_class(t_lhs:time_dependent_evolution, sc: Scal)->time_dependent_evolution:
 
-    t_lhs.age_plate *= sc.scale_Myr2sec * 1/sc.T 
-    t_lhs.vel_plate *= sc.scale_vel * (sc.T/sc.L)
-    t_lhs.t_age *= sc.scale_Myr2sec * 1/sc.T 
-    t_lhs.t_vel *= sc.scale_Myr2sec * 1/sc.T 
+    t_lhs.age_plate *= sc.scale_Myr2sec * 1/sc.time 
+    t_lhs.vel_plate *= sc.scale_vel * (sc.T/sc.length)
+    t_lhs.t_age *= sc.scale_Myr2sec * 1/sc.time 
+    t_lhs.t_vel *= sc.scale_Myr2sec * 1/sc.time
     return t_lhs

@@ -1,6 +1,6 @@
 # input for iFieldstone
 from stonedfenicsx.config.numerical_control import IOControls, NumericalControls
-from stonedfenicsx.config.scal import _scaling_mesh, Scal
+from stonedfenicsx.config.scal import scaling_mesh, Scal,dimensionless_ginput
 from stonedfenicsx.utils import print_ph
 from dolfinx.mesh import create_submesh
 from stonedfenicsx.create_mesh.aux_create_mesh import  Class_Points, Class_Line
@@ -12,6 +12,7 @@ from stonedfenicsx.create_mesh.aux_create_mesh import (
     function_create_subducting_plate_geometry,
 )
 from mpi4py import MPI
+from petsc4py import PETSc
 from pathlib import Path
 import gmsh
 from stonedfenicsx.utils import print_ph
@@ -20,6 +21,9 @@ import math
 import meshio
 import dolfinx
 from dataclasses import asdict
+from dolfinx.io import XDMFFile, gmshio
+from dolfinx import fem
+
 
 
 def _differs(cached, current) -> bool:
@@ -921,11 +925,11 @@ def create_subdomain(
 
     # Create the functionsubspace for the subdomain
 
-    Sol_Spaceph = fem.functionspace(
+    sol_spaceph = fem.functionspace(
         submesh, ("DG", 0)
     )  # Material ID function space # Defined in the cell space {element wise} apperently there is a black magic that
 
-    ph = fem.Function(Sol_Spaceph)
+    ph = fem.Function(sol_spaceph)
     ph.x.name = "phase"
 
     # Interpolate phase into submesh
@@ -938,7 +942,7 @@ def create_subdomain(
         node_par=vertex_maps,
         facets=bc,
         phase=ph,
-        solPh=Sol_Spaceph,
+        solph=sol_spaceph,
         bc_dict=dict_local,
     )
 
@@ -981,26 +985,19 @@ def read_mesh(
 
     if rank == 0:
         # Read in mesh
-        mesh_name = os.path.join(ioctrl.path_save, "%s.msh" % ioctrl.sname)
-        msh = meshio.read(mesh_name)
+        
+        msh = meshio.read(path_file)
 
-        pt_save = ioctrl.path_save
-        if not os.path.exists(pt_save):
-            os.makedirs(pt_save)
+        pt_save = ioctrl.path_cached_information
 
-        pt_save = os.path.join(pt_save, ioctrl.sname)
-        if not os.path.exists(pt_save):
-            os.makedirs(pt_save)
 
         # Create and save one file for the mesh, and one file for the facets
         triangle_mesh = create_mesh_fenicsx(msh, "triangle", prune_z=True)
         line_mesh = create_mesh_fenicsx(msh, "line", prune_z=True)
-        meshio.write("%s/mesh.xdmf" % pt_save, triangle_mesh)  # Debug
-        meshio.write("%s/mt.xdmf" % pt_save, line_mesh)  # Debug
+        meshio.write(Path(ioctrl.path_save,'mesh.xdmf'), triangle_mesh)  # Debug
+        meshio.write(Path(ioctrl.path_save,'boundary.xdmf'), line_mesh)  # Debug
         # Remove gmsh file, to save memory: every information of the mesh is already known by fenicsx
-        os.remove(mesh_name)
-
-    mesh = _scaling_mesh(mesh, sc)
+    mesh = scaling_mesh(mesh, sc)
 
     return mesh, cell_markers, facet_markers
 
@@ -1042,13 +1039,13 @@ def create_mesh_object(sc: Scal, ioctrl: IOControls, g_input: GeomInput) -> Mesh
 
     mesh, cell_markers, facet_markers = read_mesh(ioctrl, sc)
 
-    Pph = fem.functionspace(
+    pph = fem.functionspace(
         mesh, ("DG", 0)
     )  # Material ID function space # Defined in the cell space {element wise} apperently there is a black magic that
 
     # Define the material property field
 
-    phase = fem.Function(Pph)  # Create a function to hold the phase information
+    phase = fem.Function(pph)  # Create a function to hold the phase information
     phase.x.name = "phase"
     phase = assign_phases(
         dict_surf, cell_markers, phase
@@ -1062,52 +1059,52 @@ def create_mesh_object(sc: Scal, ioctrl: IOControls, g_input: GeomInput) -> Mesh
     # -- Create additional facet for the shear heating. Since this hell is requiring a lot of useless work,
     # -- I need to create a yet another ad hoc function for this.
     # --
-    domainG = Domain(
+    global_domain = Domain(
         mesh=mesh,
         facets=facet_markers,
-        Tagcells=cell_markers,
+        tagcells=cell_markers,
         phase=phase,
-        solPh=Pph,
+        solph=pph,
         bc_dict=dict_tag_lines,
     )
     # Subducting plate domain
     print_ph(" Creating the Subudcting plate domain")
 
-    domainA = create_subdomain(
+    subduction_plate = create_subdomain(
         mesh, cell_markers, facet_markers, [1, 2], "Subduction", phase, ioctrl
     )
     # Wedge plate domain
     print_ph(" Creating the Wedge domain")
 
-    domainB = create_subdomain(
+    wedge_plate = create_subdomain(
         mesh, cell_markers, facet_markers, [3], "Wedge", phase, ioctrl
     )
     # Overriding plate domain
     print_ph(" Creating the Overriding plate domain")
 
-    domainC = create_subdomain(
+    crust_domain = create_subdomain(
         mesh, cell_markers, facet_markers, [4, 5, 6], "Lithosphere", phase, ioctrl
     )
 
     # write_partition(mesh,filename=os.path.join(ioctrl.path_save,'%s_global_partition.xdmf'%ioctrl.sname))
     # -- Fill the Mesh object
 
-    MESH = Mesh(
+    mesh = Mesh(
         g_input=dimensionless_ginput(g_input, sc),
-        domainG=domainG,
-        domainA=domainA,
-        domainB=domainB,
-        domainC=domainC,
+        global_domain=global_domain,
+        subduction_plate_domain= subduction_plate,
+        wedge_domain=wedge_plate,
+        crust_domain=crust_domain,
         comm=MPI.COMM_WORLD,
         rank=MPI.COMM_WORLD.Get_rank(),
-        element_p=None,
-        element_PT=None,
-        element_V=None,
+        element_p =None,
+        element_pt =None,
+        element_v =None,
     )
 
     print_ph(" Computational mesh and domains have been created...")
 
-    return MESH
+    return mesh
 
 
 # -----------------------------------------------------------------------------------------------

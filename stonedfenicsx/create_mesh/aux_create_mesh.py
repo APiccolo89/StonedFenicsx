@@ -3,6 +3,8 @@ import gmsh
 import numpy as np
 from numpy import ndarray
 import dolfinx
+from petsc4py import PETSc
+
 #---------------------------------------------------------
 
 dict_surf = {

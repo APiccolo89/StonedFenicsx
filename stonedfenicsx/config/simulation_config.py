@@ -5,6 +5,7 @@ from stonedfenicsx.config.geometry import Mesh
 from stonedfenicsx.config.phase_db import PhaseDataBase
 from pathlib import Path
 from stonedfenicsx.create_mesh.create_mesh import create_mesh 
+from dolfinx.io import XDMFFile, gmshio
 
 def configure_simulation(ph_in:PhInput,inp:Input)\
     -> int: #tuple[NumericalControls,CtrlLHS,IOControls,PhaseDataBase,Mesh, Scal]:
@@ -23,13 +24,14 @@ def configure_simulation(ph_in:PhInput,inp:Input)\
     ctrl_io = inp.ctrl_io
     ctrl_lhs = inp.ctrl_lhs
     sc = inp.sc
+    sc.compute_the_derivative_scal()
     # Final Check 
     g_input = inp.g_input
     g_input.check_class_consistency()
     # update the input/output
     ctrl_io.generate_io()
     # Create the mesh    
-    mesh = create_mesh(ioctrl=ctrl_io, sc= Scal,g_input=g_input,ctrl=ctrl)
+    mesh = create_mesh(ioctrl=ctrl_io, sc= sc,g_input=g_input,ctrl=ctrl)
     
     # Generate the right boundary and left boundary thermal boundary condition
     
