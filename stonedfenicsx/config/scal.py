@@ -1,5 +1,8 @@
 from stonedfenicsx.utils import timing_function, print_ph
-from stonedfenicsx.config.numerical_control import CtrlLHS, NumericalControls
+from stonedfenicsx.config.numerical_control import (CtrlKy,
+                                                    CtrlTemperatureBC,
+                                                    SimulationControls,
+                                                    NumericalControls,)
 from stonedfenicsx.numerical_control import time_dependent_evolution
 from dataclasses import dataclass,field
 from stonedfenicsx.config.geometry import GeomInput,Mesh
@@ -122,7 +125,7 @@ def _scaling_material_properties(pdb,sc:Scal):
 
     return pdb
 
-def scale_parameters(lhs:CtrlLHS,scal:Scal)->CtrlLHS:
+def scale_parameters(ctrl_tbc:CtrlTemperatureBC,scal:Scal)->CtrlTemperatureBC:
     """_summary_
 
     Args:
@@ -136,16 +139,15 @@ def scale_parameters(lhs:CtrlLHS,scal:Scal)->CtrlLHS:
     
     
     scal_factor = (scal.scale_Myr2sec / scal.time)
-    lhs.end_time = lhs.end_time * scal_factor
-    lhs.dt = lhs.dt * scal_factor
-    lhs.c_age_plate = lhs.c_age_plate * scal_factor
-    lhs.c_age_var = lhs.c_age_var * scal_factor  
-    lhs.dz = lhs.dz / scal.length 
-    lhs.alpha_g = lhs.alpha_g / (1 / scal.temp)
-    lhs.k = lhs.k / scal.k
-    lhs.Cp = lhs.cp / scal.cp
-    lhs.rho = lhs.rho / scal.rho
-    return lhs
+    ctrl_tbc.end_time = ctrl_tbc.end_time * scal_factor
+    ctrl_tbc.dt = ctrl_tbc.dt * scal_factor
+    ctrl_tbc.c_age_plate = ctrl_tbc.c_age_plate * scal_factor
+    ctrl_tbc.c_age_var = ctrl_tbc.c_age_var * scal_factor  
+    ctrl_tbc.dz = ctrl_tbc.dz / scal.length 
+    ctrl_tbc.k = ctrl_tbc.k / scal.k
+    ctrl_tbc.Cp = ctrl_tbc.cp / scal.cp
+    ctrl_tbc.rho = ctrl_tbc.rho / scal.rho
+    return ctrl_tbc
     
 def scaling_control_parameters(ctrl:NumericalControls,scal:Scal)->NumericalControls:
     """_summary_
@@ -195,10 +197,10 @@ def dimensionless_ginput(g_input:GeomInput,sc:Scal):
 
     return g_input
 
-def scal_time_class(t_lhs:time_dependent_evolution, sc: Scal)->time_dependent_evolution:
+def scal_time_class(ctrl_ky:CtrlKy, sc: Scal)->time_dependent_evolution:
 
-    t_lhs.age_plate *= sc.scale_Myr2sec * 1/sc.time 
-    t_lhs.vel_plate *= sc.scale_vel * (sc.T/sc.length)
-    t_lhs.t_age *= sc.scale_Myr2sec * 1/sc.time 
-    t_lhs.t_vel *= sc.scale_Myr2sec * 1/sc.time
-    return t_lhs
+    ctrl_ky.age_plate *= sc.scale_Myr2sec * 1/sc.time 
+    ctrl_ky.vel_plate *= sc.scale_vel * (sc.T/sc.length)
+    ctrl_ky.t_age *= sc.scale_Myr2sec * 1/sc.time 
+    ctrl_ky.t_vel *= sc.scale_Myr2sec * 1/sc.time
+    return ctrl_ky
