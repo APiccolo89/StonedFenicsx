@@ -1,6 +1,9 @@
 from stonedfenicsx.config.input_parser import PhInput,Input,parse_input
 from stonedfenicsx.config.scal import Scal 
-from stonedfenicsx.config.numerical_control import NumericalControls, CtrlTemperatureBC, CtrlK
+from stonedfenicsx.config.numerical_control import (NumericalControls, 
+                                                    CtrlTemperatureBC, 
+                                                    CtrlKy,
+                                                    SimulationControls)
 from stonedfenicsx.config.geometry import Mesh
 from stonedfenicsx.config.phase_db import PhaseDataBase
 from pathlib import Path
@@ -19,10 +22,10 @@ def configure_simulation(ph_in:PhInput,inp:Input)\
     Returns:
         tuple[NumericalControl,CtrlLHS,IOControls,PhaseDataBase,Mesh]: computational classes
     """
-    
+
     ctrl = inp.ctrl
     ctrl_io = inp.ctrl_io
-    ctrl_lhs = inp.ctrl_lhs
+    ctrl_tbc = inp.ctrl_tbc
     sc = inp.sc
     sc.compute_the_derivative_scal()
     # Final Check 
@@ -30,7 +33,7 @@ def configure_simulation(ph_in:PhInput,inp:Input)\
     g_input.check_class_consistency()
     # update the input/output
     ctrl_io.generate_io()
-    # Create the mesh    
+    # Create the mesh
     mesh = create_mesh(ioctrl=ctrl_io, sc= sc,g_input=g_input,ctrl=ctrl)
     
     # Generate the right boundary and left boundary thermal boundary condition
@@ -63,7 +66,7 @@ def test_configure()->int:
     input_data.ctrl_io.test_name = test_name
     input_data.ctrl_io.path_save = path_save
     
-    ctrl, ctrl_lhs, ctrl_io, pdb, mesh, sc = configure_simulation(ph_in,input_data)
+    configure_simulation(ph_in,input_data)
     
 
     return 0

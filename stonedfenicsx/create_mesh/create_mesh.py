@@ -138,7 +138,7 @@ def create_mesh(
     rank = MPI.COMM_WORLD.Get_rank()  # 0, 1, ..., size-1
     # Perform the create mesh routines in the rank 0
     if rank == 0:
-        g_input = create_gmesh(ioctrl, g_input, ctrl)
+        g_input = create_gmesh(ioctrl, g_input)
     # Convert the mesh from gmsh to mesh objects
     mesh = create_mesh_object(sc, ioctrl, g_input)
 
@@ -146,7 +146,7 @@ def create_mesh(
 
 
 # -----------------------------------------------------------------------------------------------
-def create_gmesh(ioctrl: IOControls, g_input: GeomInput, ctrl: NumericalControls):
+def create_gmesh(ioctrl: IOControls, g_input: GeomInput):
     """
     Create a Gmsh geometry model from the provided geometrical input.
 
@@ -232,7 +232,7 @@ def create_gmesh(ioctrl: IOControls, g_input: GeomInput, ctrl: NumericalControls
 
 
 # --------------------------------------------------------------------------------------------------------
-def create_domain_A(
+def create_domain_subduction_plate(
     mesh_model: gmsh.model, CP: Class_Points, LC: Class_Line, g_input: GeomInput
 ) -> gmsh.model:
     """
@@ -288,7 +288,7 @@ def create_domain_A(
 
 
 # --------------------------------------------------------------------------------------------------------
-def create_domain_B(mesh_model, CP, LC, g_input):
+def create_domain_wedge(mesh_model, CP, LC, g_input):
     """
     Create the Wedge loop in the Gmsh model.
 
@@ -323,7 +323,7 @@ def create_domain_B(mesh_model, CP, LC, g_input):
 
 
 # -------------------------------------------------------------------------------------------------------------
-def create_domain_C(mesh_model, CP, LC, g_input):
+def create_domain_crust(mesh_model, CP, LC, g_input):
     """
     Create the Overriding plate loop in the Gmsh model.
 
@@ -565,9 +565,9 @@ def create_gmsh(
     # Create the physical lines
     mesh_model = create_physical_line(CP, LC, g_input, mesh_model)
     # Create the sub-domains of the mesh
-    mesh_model = create_domain_A(mesh_model, CP, LC, g_input)
-    mesh_model = create_domain_B(mesh_model, CP, LC, g_input)
-    mesh_model = create_domain_C(mesh_model, CP, LC, g_input)
+    mesh_model = create_domain_subduction_plate(mesh_model, CP, LC, g_input)
+    mesh_model = create_domain_wedge(mesh_model, CP, LC, g_input)
+    mesh_model = create_domain_crust(mesh_model, CP, LC, g_input)
     # Create the  surface
     if g_input.ocr != 0.0:
         Left_side_of_subduction_surf = gmsh.model.geo.addPlaneSurface(
@@ -997,8 +997,6 @@ def read_mesh(
         meshio.write(Path(ioctrl.path_save,'mesh.xdmf'), triangle_mesh)  # Debug
         meshio.write(Path(ioctrl.path_save,'boundary.xdmf'), line_mesh)  # Debug
         # Remove gmsh file, to save memory: every information of the mesh is already known by fenicsx
-    mesh = scaling_mesh(mesh, sc)
-
     return mesh, cell_markers, facet_markers
 
 
@@ -1090,7 +1088,7 @@ def create_mesh_object(sc: Scal, ioctrl: IOControls, g_input: GeomInput) -> Mesh
     # -- Fill the Mesh object
 
     mesh = Mesh(
-        g_input=dimensionless_ginput(g_input, sc),
+        g_input=g_input,
         global_domain=global_domain,
         subduction_plate_domain= subduction_plate,
         wedge_domain=wedge_plate,
