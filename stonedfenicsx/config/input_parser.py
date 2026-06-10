@@ -1,17 +1,16 @@
-from typing import get_type_hints, get_origin, get_args, Callable
+"""Modules"""
+from typing import get_type_hints, get_origin, get_args
 from stonedfenicsx.config.numerical_control import (
     NumericalControls,
     IOControls,
     CtrlTemperatureBC,
-    CtrlKy,
-    SimulationControls,
+    CtrlKy
 )
-from stonedfenicsx.config.geometry import GeomInput, Mesh
-from stonedfenicsx.material_property.phase_db import PhaseDataBase
+from stonedfenicsx.config.geometry import GeomInput
 from stonedfenicsx.config.scal import Scal
-import beartype
+from stonedfenicsx.utils import timing_function
 from pathlib import Path
-from dataclasses import field, dataclass, asdict
+from dataclasses import field, dataclass
 import numpy as np
 # -----------------------------------------------------------------------------------
 # -----------------------------------------------------------------------------------
@@ -234,6 +233,7 @@ class Input:
     g_input: GeomInput = field(default_factory=GeomInput)
     sc: Scal = field(default_factory=Scal)
 # -----------------------------------------------------------------------------------
+@timing_function
 def parse_input(path: str) -> tuple[Input,PhInput]:
     """
     Read and parse a YAML input file.
