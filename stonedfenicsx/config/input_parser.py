@@ -2,7 +2,9 @@ from typing import get_type_hints, get_origin, get_args, Callable
 from stonedfenicsx.config.numerical_control import (
     NumericalControls,
     IOControls,
-    CtrlLHS,
+    CtrlTemperatureBC,
+    CtrlKy,
+    SimulationControls,
 )
 from stonedfenicsx.config.geometry import GeomInput, Mesh
 from stonedfenicsx.material_property.phase_db import PhaseDataBase
@@ -225,14 +227,12 @@ class Input:
     other script for configure ensemble of numerical experiments.
 
     """
-
-    ctrl: NumericalControls
-    ctrl_lhs: CtrlLHS
-    ctrl_io: IOControls
-    g_input: GeomInput
-    sc: Scal
-
-
+    ctrl: NumericalControls = field(default_factory=NumericalControls)
+    ctrl_io: IOControls = field(default_factory = IOControls)
+    ctrl_tbc: CtrlTemperatureBC = field(default_factory = CtrlTemperatureBC)
+    ctrl_ky: CtrlKy = field(default_factory=CtrlKy)
+    g_input: GeomInput = field(default_factory=GeomInput)
+    sc: Scal = field(default_factory=Scal)
 # -----------------------------------------------------------------------------------
 def parse_input(path: str) -> tuple[Input,PhInput]:
     """
@@ -273,6 +273,7 @@ def parse_input(path: str) -> tuple[Input,PhInput]:
         lhs = input_file["Input"][
             "thermal_boundary_condition"
         ]  # left boundary condition
+        ky = input_file["Input"]['kinematic_boundary_condition']
         geom = input_file["Input"]["geometry"]  # Geometry
         mp = input_file["Input"]["Material_properties"]  # Material property
         scal = input_file["Input"]["scaling"]  # Scaling
@@ -280,7 +281,8 @@ def parse_input(path: str) -> tuple[Input,PhInput]:
 
     # Initialise the main classes:
     ctrl = NumericalControls()
-    ctrl_lhs = CtrlLHS()
+    ctrl_tbc = CtrlTemperatureBC()
+    ctrl_ky = CtrlKy()
     ctrl_io = IOControls()
     sc = Scal()
     g_input = GeomInput()
@@ -291,11 +293,10 @@ def parse_input(path: str) -> tuple[Input,PhInput]:
     g_input = update_ip_file(g_input, geom)
     sc = update_ip_file(sc, scal)
     sc.compute_the_derivative_scal()
-    ctrl_lhs = update_ip_file(ctrl_lhs, lhs)
+    ctrl_tbc = update_ip_file(ctrl_tbc, lhs)
+    ctrl_ky = update_ip_file(ctrl_ky,ky)
 
-    input_obj = Input(
-        ctrl=ctrl, ctrl_io=ctrl_io, ctrl_lhs=ctrl_lhs, g_input=g_input, sc=sc
-    )
+    input_obj = Input(ctrl=ctrl,ctrl_io = ctrl_io,ctrl_ky=ctrl_ky,ctrl_tbc=ctrl_tbc,g_input=g_input,sc=sc)
 
     ph_input = PhInput()
 
@@ -407,7 +408,10 @@ def test_function():
     # Select the appropriate path for the input file
     input_file = Path(pkg_root.parents[2], "input.yaml")
     # parse the input file
-    input_data, ph_in = parse_input(input_file)  
+    input_data, ph_in = parse_input(input_file)
+    # Destroy the input data 
+    del input_data
+    del ph_in
 
 # Building the unit test for the configuration of the numerical simulation routine.
 if __name__ == "__main__":

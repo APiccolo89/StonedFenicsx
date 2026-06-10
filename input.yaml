@@ -13,19 +13,13 @@ Input:
     it_inner_max : 10 
     tol: 1.0e-5
     relax: 0.9
-    temp_max: 1333.0
-    temp_top: 0.0
     g: 9.81
     eta_max: 1.0e26
-    v_s: [5.0, 0.0] # cm/yr
-    slab_age: 50.0 # Myr
     time_max: 2.0  # Myr
-    time_dependent_v: 0
     steady_state: 1
     tol_innerpic: 1.0e-2
     decoupling_ctrl: 1
     model_shear: "NoShear"
-    time_dependent: 0
     dt: 0.015            # Myr (15000/1e6)
     adiabatic_heating: 0
     stokes_solver_type : "Iterative"
@@ -51,14 +45,23 @@ Input:
 
   # Left boundary condition
   thermal_boundary_condition:
+    temp_max: 1300.0
+    temp_top: 0.0
+    constant: 1 
+    interval_val : [50.0,30]
+    interval_time: [20,40]
     nz: 108
     end_time: 180.0
     dt: 0.001
-    recalculate: 1
-    van_keken: 1
-    c_age_plate: 50.0
+    slab_age: 50.0
     self_consistent_flag: 1
     right_boundary : 'Continental'  # Oceanic 
+
+  kinematic_boundary_condition:
+    v_s : [5.0,0.0]
+    constant : 1 
+    interval_val : [5.0,1.0]
+    interval_time : [20,40]
 
   Material_properties: 
   
@@ -196,15 +199,6 @@ Input:
       radiogenic_heat : 0.0 
 
   # Place holder for time-dependent left boundary condition
-  time_dependent_left_bc:
-    constant_age: 1 
-    constant_vel: 1
-    t_age : [0.0,30.0]
-    t_vel : [0.0,30.0]
-    age_plate : [50.0, 25.0]
-    vel_plate : [5.0, 2.5]
-
-
   # Geometry
   geometry:
     x: [0.0, 660.0] # Coordinate of X

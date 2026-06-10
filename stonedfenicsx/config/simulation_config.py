@@ -1,6 +1,6 @@
 from stonedfenicsx.config.input_parser import PhInput,Input,parse_input
 from stonedfenicsx.config.scal import Scal 
-from stonedfenicsx.config.numerical_control import NumericalControls, CtrlLHS, IOControls
+from stonedfenicsx.config.numerical_control import NumericalControls, CtrlTemperatureBC, CtrlK
 from stonedfenicsx.config.geometry import Mesh
 from stonedfenicsx.config.phase_db import PhaseDataBase
 from pathlib import Path
