@@ -1,14 +1,8 @@
+"""Modules"""
 from stonedfenicsx.config.input_parser import PhInput,Input,parse_input
-from stonedfenicsx.config.scal import Scal 
-from stonedfenicsx.config.numerical_control import (NumericalControls, 
-                                                    CtrlTemperatureBC, 
-                                                    CtrlKy,
-                                                    SimulationControls)
-from stonedfenicsx.config.geometry import Mesh
-from stonedfenicsx.config.phase_db import PhaseDataBase
 from pathlib import Path
-from stonedfenicsx.create_mesh.create_mesh import create_mesh 
-from dolfinx.io import XDMFFile, gmshio
+from stonedfenicsx.create_mesh.create_mesh import create_mesh
+from stonedfenicsx.config.phase_db import generate_phase_database
 
 def configure_simulation(ph_in:PhInput,inp:Input)\
     -> int: #tuple[NumericalControls,CtrlLHS,IOControls,PhaseDataBase,Mesh, Scal]:
@@ -26,22 +20,30 @@ def configure_simulation(ph_in:PhInput,inp:Input)\
     ctrl = inp.ctrl
     ctrl_io = inp.ctrl_io
     ctrl_tbc = inp.ctrl_tbc
+    ctrl_ky = inp.ctrl_ky
     sc = inp.sc
+    # Update the classes after the pre-processing
     sc.compute_the_derivative_scal()
-    # Final Check 
+    # Final Check
     g_input = inp.g_input
     g_input.check_class_consistency()
+    ctrl_tbc.update_thermal_bc()
+    ctrl_ky.check_kinematic_bc()
     # update the input/output
     ctrl_io.generate_io()
     # Create the mesh
-    mesh = create_mesh(ioctrl=ctrl_io, sc= sc,g_input=g_input,ctrl=ctrl)
+    #mesh = create_mesh(ioctrl=ctrl_io, sc= sc,g_input=g_input,ctrl=ctrl)
+    # Generate the phase data base
+    pdb = generate_phase_database(pressure_dependency=ctrl.pressure_dependency,
+                                  eta_max=ctrl.eta_max,
+                                  Phin=ph_in)
+    
+    # Call the function to not-dimensionalise 
+    
+    # 
     
     # Generate the right boundary and left boundary thermal boundary condition
-    
-    # Create the phase input
-    
-    # Scale the properties
-    
+            
     # print the information
     
     # release the new pre-processed class
