@@ -1,8 +1,20 @@
+"""Modules"""
 from numba import float64,int32
 from numba.experimental import jitclass
 import numpy as np
 from stonedfenicsx.utils import print_ph
-from stonedfenicsx.config.input_parser import Phase,PhInput,Input
+from stonedfenicsx.config.input_parser import Phase,PhInput,update_ip_file
+from pathlib import Path
+import yaml
+from dataclasses import dataclass, field
+
+# Global variable
+_F_CODE = {"None": 0, "Simpleshear": 1, "Uniaxial": 2}
+_WATER_CODE = {"None": 0, "COH": 1, "Fugacity": 2}
+_PATH_DATA_BASE_ = Path(Path(__file__).parents[0],'material_properties_data_base')
+_GAS_CONSTANT_ = 8.3145
+_P_REF_ = 1e5 
+_T_REF_ = 298.15
 
 spec_phase = [
     # Viscosity – Diffusion creep
@@ -50,12 +62,12 @@ spec_phase = [
     # radiogenic heat
     ("radiogenic_heat",float64[:]),
     
-    ("A",float64), # Ref conductivity A 
-    ("B",float64), # Ref conductivity B 
-    ("T_A",float64), # T [K]
-    ("T_B",float64), # T [K]
-    ("x_A",float64), # T [K]
-    ("x_B",float64), # T [K]
+    ("a_rad",float64), # Ref conductivity A 
+    ("b_rad",float64), # Ref conductivity B 
+    ("temp_A",float64), # T [K]
+    ("temp_B",float64), # T [K]
+    ("x_a",float64), # T [K]
+    ("x_b",float64), # T [K]
     ("radiative_conductivity",float64[:]), # radio flag 
 
     
@@ -91,6 +103,9 @@ spec_phase = [
 #-----------------------------------------------------------------------------------------------------------
 @jitclass(spec_phase)
 class PhaseDataBase:
+    """Phase database: 
+    
+    """
     def __init__(self
                  ,number_phases:int
                  ,eta_max:float
@@ -112,9 +127,9 @@ class PhaseDataBase:
             raise ValueError("The number of phases should not exceed 7")
         
         
-        self.temp_ref           = 298.15  # Reference temperature [K]
-        self.pres_ref           = 1e5     # Reference pressure [Pa]
-        self.gas_constant             = 8.3145  # Universal gas constant [J/(mol K)]
+        self.temp_ref           = _P_REF_  # Reference temperature [K]
+        self.pres_ref           = _T_REF_     # Reference pressure [Pa]
+        self.gas_constant = _GAS_CONSTANT_  # Universal gas constant [J/(mol K)]
         self.eta_min        = 1e18    # Min viscosity [Pas]
         self.eta_max        = 1e25    # Max viscosity [Pas]
         self.eta_def        = 1e21    # Default viscosity [Pas]
@@ -197,12 +212,11 @@ class PhaseDataBase:
         self.phi = 0.0
         self.cohesion  = 0
 #---------------------------------------------------------------------------------
-def generate_phase_database(Pressure_dependency:int,eta_max:float, Phin:PhInput) -> PhaseDataBase:
-    from stonedfenicsx.material_property.phase_db import fill_up_weakzone_data
+def generate_phase_database(pressure_dependency:int,eta_max:float, phin:PhInput) -> PhaseDataBase:
 
-    pdb = PhaseDataBase(6, eta_max=IP.eta_max)
+    pdb = PhaseDataBase(6, eta_max=eta_max)
 
-    if IP.Pressure_dependency == 0:
+    if pressure_dependency == 0:
         print_ph(
             "Pressure dependency of the material properties is deactivated. The material properties will not depend on the pressure and will be only temperature dependent."
         )
@@ -324,163 +338,133 @@ def generate_phase_database(Pressure_dependency:int,eta_max:float, Phin:PhInput)
 
     return pdb
 
-#----------------------------------------------------------------------------
-class Rheological_flow_law():
-    """
-    Class that contains the rheological flow law parameters. 
-    """
-    """Class that stores the information of the rheological flow law 
-    
-    E = Activation energy [joule/mol] 
-    V = Activation volume [m3/mol]
-    m = grain size exponent [nd]
-    d = grain size 
-    B = Pre-exponential factor [Pa^-n,s^-1]
-    R = Gas constant
-    q = Peirls creep exponent
-    gamma = Peirls creep exponent
-    taup = Peirls creep critical stress [Pa]
-    ref = ref of of the current rheological law [Title and Doi]
-    """
-    
-    
-    def __init__(self
-                 ,E:float=0.0
-                 ,V:float=0.0
-                 ,n:float=0.0
-                 ,m:float=0.0
-                 ,d0:float=1.0
-                 ,B:float=0.0
-                 ,B_SI:str = 'None'
-                 ,F:str='NoCorrection'
-                 ,MPa:int=0
-                 ,r:float=0
-                 ,aH20:float=1.0
-                 ,EH20:float=0.0
-                 ,VH20:float = 0.0 
-                 ,BH20:float = 1.0
-                 ,water_correction:str = 'None'
-                 ,ref:str = ''):
-        """_summary_
 
-        Args:
-            E (float, optional): Activation Energy [J/mol]. Defaults to 0.0.
-            V (float, optional): Activation Volume [m^3/mol]. Defaults to 0.0.
-            n (float, optional): Stress Exponent. Defaults to 0.0.
-            m (float, optional): Grain Size exponent. Defaults to 0.0.
-            d0 (float, optional): Initial Grain Size [m]. Defaults to 0.0.
-            B (float, optional): Pre-exponential Factor. Defaults to 0.0.
-            F (float, optional): Experimental Correction [0 = No Correction, 1 = Simple Shear, 2 = UniAxial]. Defaults to 0.
-            MPa (int, optional): Conversion Flag (MPa^n/s->Pa^n/s). Defaults to 0.
-            r (float, optional): Water exponent. Defaults to 0.
-            water_correction(int): Water correction is an ad hoc parameters that allows to compute the wet/dislocation creep olivine with concentration (constant). 
-                                 : rather necessary, as there is a big problem with unit of measure otherwise. 
-            ref (str, optional): Reference metadata. Defaults to ''.
-        """
-        Dictionary_correction = {'NoCorrection':0,
-                                 'SimpleShear':1,
-                                 'UniAxial':2}
-        
-        Dictionary_water_correction = {'None':0,
-                                       'COH':1,
-                                       'Fugacity':2}
-        
-        self.E = E
-        self.V = V
-        self.n = n
-        self.m = m
-        self.d = d0
-        self.R = 8.3145
-        self.B_or = B # Original value 
-        self.B_or_SI = B_SI
-        self.F = F 
-        self.MPa = MPa
-        self.aH20 = aH20
-        self.BH20 = BH20
-        self.EH20 = EH20
-        self.VH20 = VH20 
-        self.water_corr = Dictionary_water_correction[water_correction]
-        self.r  = r 
-        self.B = self._correction(B,Dictionary_correction[F],n,m,MPa,d0,Dictionary_water_correction[water_correction],r)
-        self.ref = ref
-    #-----------------------------------------------------------------------------------------------------------
-    def _correction(self,B,F=0,n=1,m=0,MPa=0,d0=1,water_correction =0, r=0):
-        """Correction for the rheological flow law parameters, to account for the typology of the experiment, the unit of measure and the water content and grain size.
-        Args:
-            B (float): pre-exponential factor [xPa^-n s^-1]-> converted to Pa^-n s^-1
-            F (int, optional): typology of the experiment. Defaults to 0. 0: no correction, 1: simple shear, 2: uniaxial.
-            n (float, optional): stress exponent. Defaults to 1.
-            m (float, optional): grain size exponent. Defaults to 0.
-            MPa (int, optional): unit of measure. Defaults to 0. 0: Pa, 1: MPa.
-            d0 (float, optional): reference grain size. Defaults to 0.
-            r (float, optional): water content exponent. Defaults to 0.
-            water (float, optional): water content. Defaults to 0.
-        Returns:   
-            float: corrected pre-exponential factor
-        """
-        
-        
-        # Correct for accounting the typology of the experiment
-        if F == 1: # Simple shear
-            B = B*2**(n-1)
-        if F == 2 : # Uniaxial
-            B = B*(3**(n+1)/2)/2
-        # Convert the unit of measure
-        if MPa == 1:
-            B = B*10**(-n*6)
-        if water_correction==1: 
-            water_con = 1000**r 
-        elif water_correction==2: 
-            water_con = self.aH20 * self.BH20 * np.exp(- (self.EH20+self.VH20*1e5)/(self.R * 298.15))
-            water_con = water_con ** r
-        else: 
-            water_con = 1.0 
-            
-        B = B*d0**(-m) * water_con
-        return B 
+@dataclass(slots=True)
+class RheologicalFlowLaw:
 
-#-----------------------------------------------------------------------------------------------------------
+    e: float = field(init=False)        # activation energy [J/mol]
+    v: float = field(init=False)        # activation volume [m^3/mol]
+    n: float = field(init=False)        # stress exponent
+    m: float = field(init=False)        # grain-size exponent
+    d: float = field(init=False)        # grain size [m]
+    b: float = field(init=False)   # pre-exponential factor (raw)
+    b_si: str = field(init=False)
+    b_or: float= field(init=False)
+    f: str = field(init=False)          # experiment type ('NoCorrection'|'SimpleShear'|'UniAxial')
+    mpa: int = field(init=False)
+    ah2o: float = field(init=False)
+    bh2o: float = field(init=False)
+    eh2o: float = field(init=False)
+    vh2o: float = field(init=False)
+    r: float = field(init=False)        # water exponent
+    water_correction: str = field(init=False)  # 'None'|'COH'|'Fugacity'
+    b: float = field(init=False)        # corrected pre-exponential factor
+    ref: str = field(init=False)
 
-def _check_rheological(tag:str) -> Rheological_flow_law:
-    """
-    Retrieve rheological flow-law parameters and return a structured data object
-    for insertion into the phase database.
+    def apply_correction(self) -> None:
 
-    The function interprets the provided ``tag`` and extracts the corresponding
-    rheological flow-law parameters from internally defined datasets, packaging
-    them into a ``Rheological_flow_law`` data class used by the material property
-    system.
+        b = self.b
+        self.b_si = b 
+        f_code = _F_CODE[self.f]
+        w_code = _WATER_CODE[self.water_correction]
+        if f_code == 1:                 # simple shear
+            b *= 2 ** (self.n - 1)
+        elif f_code == 2:               # uniaxial
+            b *= (3 ** (self.n + 1) / 2) / 2
+        if self.mpa == 1:               # MPa -> Pa
+            b *= 10 ** (-self.n * 6)
+        if w_code == 1:                 # COH
+            water_con = 1000 ** self.r
+        elif w_code == 2:               # fugacity
+            water_con = (self.ah2o * self.bh2o
+                         * np.exp(-(self.eh2o + self.vh2o * _P_REF_) / (_GAS_CONSTANT_ * _T_REF_))) ** self.r
+        else:
+            water_con = 1.0
+        self.b = b * self.d ** (-self.m) * water_con
+
+# --- 
+def check_data_base(tag:str,property_m:str)->str: 
+    """_summary_
 
     Args:
-        tag (str):
-            Name of the rheological flow-law model to retrieve.
+        tag (str): _description_
+        property_m (str): _description_
+
+    Raises:
+        ValueError: _description_
 
     Returns:
-        Rheological_flow_law:
-            Data object containing the parameters of the selected rheological
-            flow law, formatted for direct use in the phase database.
+        str: _description_
     """
 
+    # Read the dictionary
+    with open(Path(_PATH_DATA_BASE_,'Data_Base_dictionaries.yml'),encoding='utf-8') as dictionary_db: 
+        file_db = yaml.safe_load(dictionary_db)
+        db = file_db[property_m]
+        keys = db.keys()
+        if tag not in keys:
+            print_ph(f'Valid {property_m} Name')
+            for i in keys:
+                print_ph(i)
+            raise ValueError(f'{tag} is not a {property_m}.')
+        else:
+            name = db[tag]
+    return name
 
-    if tag == '':
-        # empty rheological flow law to fill it
-        return Rheological_flow_law()
-    else: 
-        A = getattr(RB,Dic_rheo[tag])
-        return A 
+# --- 
+def read_rheology(tag:str,dis_dif:0)->RheologicalFlowLaw:
+    """Read rheology 
 
-def _generate_phase(PD:PhaseDataBase,
+    Args:
+        tag (str): the name of the rheology from the input file
+        type (0): flag indicating if the rheology is diffusion or dislocation
+
+    Raises:
+        ValueError:f'{tag} is not a rheology flow law.') -> The name used in the input
+        file or in the pre-processing script is wrong. 
+
+    Returns:
+        Rheological_flow_law: class containing all the rheological data for a given rheology. 
+        
+    """
+
+    name = check_data_base(tag,'Rheology_name')
+    
+
+    with open(Path(_PATH_DATA_BASE_,'rheology_data_base_raw.yml'),encoding='utf-8') as dictionary_db:
+        file = yaml.safe_load(dictionary_db)
+        common = file['Common']
+        if dis_dif == 0:
+            db_rheo = file['Diffusion_creep']
+        elif dis_dif == 1: 
+            db_rheo = file['Dislocation_creep']
+        else:
+            raise ValueError('Wrong flag value')
+
+    buf = RheologicalFlowLaw()
+    
+    buf = update_ip_file(buf,common)
+    
+    buf = update_ip_file(buf,db_rheo[name])
+    
+    buf.apply_correction()
+
+    return buf
+# --- 
+
+
+def _generate_phase(pdb:PhaseDataBase,
                     id:int                 = -100,
                     name_diffusion:str     = 'Constant',
-                    Edif:float             = -1e23, 
-                    Vdif:float             = -1e23,
-                    Bdif:float             = -1e23, 
+                    e_dif:float             = -1e23, 
+                    v_dif:float             = -1e23,
+                    b_dif:float             = -1e23, 
                     name_dislocation:float = 'Constant',
                     n:float                = -1e23,
-                    Edis:float             = -1e23,
-                    Vdis:float             = -1e23, 
-                    Bdis:float             = -1e23, 
-                    Cp:float               = 1250,
+                    e_dis:float             = -1e23,
+                    v_dis:float             = -1e23, 
+                    b_dis:float             = -1e23, 
+                    cp:float               = 1250,
                     k:float                = 3.0,
                     rho0:float             = 3300,
                     eta:float              = 1e20,
@@ -488,12 +472,12 @@ def _generate_phase(PD:PhaseDataBase,
                     name_conductivity:str  = 'Constant',
                     name_alpha:str         = 'Constant',
                     name_density:str       = 'PT',
-                    radio:float = 0.0,                    
-                    radio_flag:float = 0,
-                    Pressure_dependency:int=1)     -> PhaseDataBase:
+                    radiogenic_heat:float = 0.0,                    
+                    radiative_conductivity:float = 0,
+                    pressure_dependency:int=1)     -> PhaseDataBase:
     """ Generate a phase with the specified properties and add it to the phase database.
     Args:
-        PD (PhaseDataBase): The phase database to which the new phase will be added.
+        pdb (PhaseDataBase): The phase database to which the new phase will be added.
         id (int): The **identifier** for the new phase.
         name_diffusion (str): The name of the diffusion creep rheology to use.
         Edif (float): Activation energy for diffusion creep [J/mol].
@@ -535,66 +519,62 @@ def _generate_phase(PD:PhaseDataBase,
 
             
     
-    PD.id[id-1] = id 
+    pdb.id[id-1] = id 
     id = id - 1 
     if name_diffusion != 'Constant':
-        A = _check_rheological(name_diffusion)
-        PD.Edif[id] = A.E 
-        PD.Vdif[id] = A.V
-        PD.Bdif[id] = A.B 
-    if Edif != -1e23: 
-        PD.Edif[id] = Edif 
-    elif Vdif !=-1e23:  
-        PD.Vdif[id] = Vdif 
-    elif Bdif != -1e23:
-        PD.Bdif[id] = Bdif  
+        data_buf = _check_rheological(name_diffusion)
+        pdb.e_dif[id] = data_buf.e
+        pdb.v_dif[id] = data_buf.v
+        pdb.b_dif[id] = data_buf.b 
+    if e_dif != -1e23: 
+        pdb.Edif[id] = e_dif
+    elif v_dif !=-1e23:  
+        pdb.Vdif[id] = v_dif
+    elif b_dif != -1e23:
+        pdb.Bdif[id] = b_dif 
     if name_dislocation != 'Constant':
-        A = _check_rheological(name_dislocation)
-        PD.Edis[id] = A.E 
-        PD.Vdis[id] = A.V
-        PD.Bdis[id] = A.B 
-        PD.n[id]    = A.n 
+        buf_data = _check_rheological(name_dislocation)
+        pdb.e_dis[id] = buf_data.e
+        pdb.v_dis[id] = buf_data.v
+        pdb.b_dis[id] = buf_data.b
+        pdb.n[id]    = buf_data.n
     if n!= -1e23: 
-        PD.n[id] = n 
-        if PD.Bdis[id] != 0.0: 
+        pdb.n[id] = n 
+        if pdb.b_dis[id] != 0.0: 
             print('Warning: Stress pre-exponential factor has inconsistent measure [Pa^-ns^-1] wrt the original flow law')
-    if Edis != -1e23: # if the user specify the activation energy, overwrite the value of the flow law
-        PD.Edis[id] = Edis 
-    if Vdis !=-1e23: # if the user specify the activation volume, overwrite the value of the flow law  
-        PD.Vdis[id] = Vdis 
-    if Bdis != -1e23: # if the user specify the pre-exponential factor, overwrite the value of the flow law
-        PD.Bdis[id] = Bdis  
+    if e_dis != -1e23: # if the user specify the activation energy, overwrite the value of the flow law
+        pdb.Edis[id] = e_dis
+    if v_dis !=-1e23: # if the user specify the activation volume, overwrite the value of the flow law  
+        pdb.Vdis[id] = v_dis
+    if b_dis != -1e23: # if the user specify the pre-exponential factor, overwrite the value of the flow law
+        pdb.b_dis[id] = b_dis
     
     if name_diffusion == 'Constant' and name_dislocation == 'Constant' and eta == -1e23:
-        raise Warning("Warning: Both diffusion and dislocation creep are set to be constant, but the viscosity is not specified")
-        print_ph(f'The software will use the default viscosity value of {PD.eta_def:.1e} Pa s. If you want to specify a different value, please set the eta parameter.')
+        print_ph("Warning: Both diffusion and dislocation creep are set to be constant, but the viscosity is not specified")
+        print_ph(f'The software will use the default viscosity value of {pdb.eta_def:.1e} Pa s. \
+                 If you want to specify a different value, please set the eta parameter.')
     
     if name_diffusion == 'Constant' and name_dislocation == 'Constant' and eta == -1e23:
-            PD.eta[id] = PD.eta_def
+            pdb.eta[id] = pdb.eta_def
     elif name_diffusion == 'Constant' and name_dislocation == 'Constant' and eta != -1e23:
-        PD.eta[id] = eta # in case of constant viscosity, this value will be used. In case of non-constant viscosity, this value will be ignored.
-    else: 
-        PD.eta[id] = 0.0 # in case of non-constant viscosity, this value will be ignored. I set it to 0.0 to avoid any confusion.
+        pdb.eta[id] = eta # in case of constant viscosity, this value will be used. In case of non-constant viscosity, this value will be ignored.
+    else:
+        pdb.eta[id] = 0.0 # in case of non-constant viscosity, this value will be ignored. I set it to 0.0 to avoid any confusion.
 
     
- 
+    option_rheology = None
     if name_diffusion == 'Constant' and name_dislocation == 'Constant': 
         option_rheology = 0
     elif name_dislocation == 'Constant': 
         option_rheology = 1
     elif name_dislocation != 'Constant' and name_diffusion != 'Constant': 
-        option_rheology = 2 
+        option_rheology = 2
     elif name_dislocation != 'Constant' and name_diffusion == 'Constant': 
-        option_rheology = 3 
-    
-
-        
-    PD.option_eta[id] = option_rheology
-    
-    PD.radio[id] = radio 
+        option_rheology = 3
+    pdb.option_eta[id] = option_rheology
+    pdb.radiogenic_heat[id] = radiogenic_heat
     # Heat capacity
-
-    
+    # To remove
     if name_capacity not in Dic_Cp:
         print_ph('The avaiable options are: ')
         for k in Dic_Cp: 
@@ -602,7 +582,7 @@ def _generate_phase(PD:PhaseDataBase,
         
         raise ValueError(f"Error Phase id = {id:d}: {name_capacity} is not a heat Conductivity option")
     
-    PD.C0[id],PD.C1[id],PD.C2[id],PD.C3[id],PD.C4[id],PD.C5[id] = release_heat_capacity_parameters(Dic_Cp[name_capacity], Cp)
+    pdb.C0[id],pdb.C1[id],pdb.C2[id],pdb.C3[id],pdb.C4[id],pdb.C5[id] = release_heat_capacity_parameters(Dic_Cp[name_capacity], Cp)
     
     
     
@@ -613,19 +593,19 @@ def _generate_phase(PD:PhaseDataBase,
         
         raise ValueError(f"Error Phase id = {id:d}: {name_conductivity} is not a heat Conductivity option")
     
-    TD = _check_diffusivity(name_conductivity)
-    if Pressure_dependency == 0: 
-        TD.f = 0.0
+    buf_data_diffusivity = _check_diffusivity(name_conductivity)
+    if pressure_dependency == 0: 
+        buf_data_diffusivity.f = 0.0
         
     
-    PD.k_a[id] = TD.a 
-    PD.k_b[id] = TD.b 
-    PD.k_c[id] = TD.c 
-    PD.k_d[id] = TD.d 
-    PD.k_e[id] = TD.e 
-    PD.k_f[id] = TD.f 
-    PD.k0[id] = k * TD.g 
-    PD.radio_flag[id] = radio_flag 
+    pdb.k_a[id] = buf_data_diffusivity.a
+    pdb.k_b[id] = buf_data_diffusivity.b
+    pdb.k_c[id] = buf_data_diffusivity.c
+    pdb.k_d[id] = buf_data_diffusivity.d
+    pdb.k_e[id] = buf_data_diffusivity.e
+    pdb.k_f[id] = buf_data_diffusivity.f
+    pdb.k0[id] = k * buf_data_diffusivity.g
+    pdb.radiative_conductivity[id] = radiative_conductivity
     
     # Density
     
@@ -636,20 +616,37 @@ def _generate_phase(PD:PhaseDataBase,
 
         raise ValueError(f"Error Phase id = {id:d}: {name_conductivity} is not a heat Conductivity option")
     alpha = _check_alpha(name_alpha)
-    if Pressure_dependency == 0: 
+    if pressure_dependency == 0:
         alpha.alpha2 = 0.0
-        Kb = 1e30
+        kb = 1e30
     else: 
-        Kb = (2*100e9*(1+0.25))/(3*(1-0.25*2))  # Bulk modulus [Pa]
+        kb = (2*100e9*(1+0.25))/(3*(1-0.25*2))  # Bulk modulus [Pa]
     
-    PD.alpha0[id]     = alpha.alpha0
-    PD.alpha1[id]     = alpha.alpha1
-    PD.alpha2[id]     = alpha.alpha2
-    PD.Kb[id]         = Kb  # Bulk modulus [Pa]
-    PD.rho0[id]       = rho0
+    pdb.alpha0[id]     = alpha.alpha0
+    pdb.alpha1[id]     = alpha.alpha1
+    pdb.alpha2[id]     = alpha.alpha2
+    pdb.kb[id]         = kb  # Bulk modulus [Pa]
+    pdb.rho0[id]       = rho0
     if name_density == 'Constant':
-        PD.option_rho[id] = np.int32(0) 
+        pdb.option_rho[id] = np.int32(0)
     else: 
-        PD.option_rho[id] = np.int32(2) 
+        pdb.option_rho[id] = np.int32(2)
     
-    return PD 
+    return pdb
+
+def test_phase_pdb():
+    
+    # Test rheology 
+    rqrtz = read_rheology('Wet_Quartzite_2001_Dislocation_creep',1)
+    rolivinedsl = read_rheology('Hirth_wet_Dislocation_creep',1)
+    rolivinedff = read_rheology('Hirth_wet_Diffusion_creep',0)
+
+    
+    
+    return 0
+
+if __name__ == '__main__':
+    
+    test_phase_pdb()
+    
+    pass
