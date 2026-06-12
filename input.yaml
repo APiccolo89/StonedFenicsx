@@ -29,7 +29,7 @@ Input:
   Shear_Heating: 
     shear_heating_disl_phi: 5.0 
     shear_heating_disl_ch: 0.0 
-    shear_heating_disl_law: "WetQuartzite"
+    shear_heating_disl_law: "Wet_Quartzite_2001_Dislocation_creep"
     
   InputOutputControl:
     test_name: "Output"

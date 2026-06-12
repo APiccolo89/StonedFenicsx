@@ -61,7 +61,6 @@ Diffusion_creep:
     b_si: 'Pa^-1 s^-1'
     water_correction: 'None'
     ref: 'van Keken, Peter E., et al. "A community benchmark for subduction zone modeling." Physics of the Earth and Planetary Interiors 171.1-4 (2008): 187-197.'
-    note: 'I did not find the original data for this flow law. I converted the value to be consistent with the formulation of the '
 
 
 Dislocation_creep:
@@ -89,6 +88,18 @@ Dislocation_creep:
     water_correction: 'COH'
     ref: 'Hirth, Greg, and David Kohlstedt. "Rheology of the upper mantle and the mantle wedge: A view from the experimentalists." Geophysical monograph series 138 (2003): 83-105.'
 
+  Dislocation_vanKeken: 
+    b: 2.1362335945103194e-17
+    e: 540.0e3
+    v: 0.0
+    f: 'None'
+    mpa: 0
+    r: 0.0
+    n: 3.5
+    b_si: 'MPa^-n s^-1 COH^-r'
+    water_correction: 'None'
+    ref: 'Hirth, Greg, and David Kohlstedt. "Rheology of the upper mantle and the mantle wedge: A view from the experimentalists." Geophysical monograph series 138 (2003): 83-105.'
+
   Dislocation_WetPlagio: 
     b: 2.7e7
     e: 345.0e3
@@ -101,7 +112,6 @@ Dislocation_creep:
     b_si: 'MPa^-n s^-1'
     water_correction: 'None'
     ref: 'later'
-    note: 'Data have been pre-processed in the original source. Water is not explicitly listed'
   
   Dislocation_serpentinite:
     b: 2.82e-15

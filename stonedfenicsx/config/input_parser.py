@@ -126,18 +126,18 @@ class Phase:
     """
 
     name_phase: str = "Undefined Phase"
-    id: int = 0
+    id_ph: int = 0
     # Viscosity / rheology
     name_diffusion: str = "Constant"
-    e_dif: float = -1e23
-    v_dif: float = -1e23
-    b_dif: float = -1e23
+    e_dif: float | None = None
+    v_dif: float | None = None
+    b_dif: float | None = None
 
     name_dislocation: str = "Constant"
-    n: float = -1e23
-    e_dis: float = -1e23
-    v_dis: float = -1e23
-    b_dis: float = -1e23
+    n: float | None = None
+    e_dis: float | None = None
+    v_dis: float | None = None
+    b_dis: float | None = None
 
     eta: float = 1e20  # constant viscosity
 
@@ -391,12 +391,12 @@ def filling_the_phase_data_base(
 
             if vv is None:
                 vv = (
-                    0.0 if j in ("radiogenic_heat", "radiative_conductivity") else -1e23
+                    0.0 if j in ("radiogenic_heat", "radiative_conductivity") else None
                 )
 
             setattr(buf, j, vv)
         buf.name_phase = k
-        buf.id = dict_phase_id[k]
+        buf.id_ph = dict_phase_id[k]
         setattr(phase_input, k, buf)  # Substitute the buf class with the default one
     return phase_input
 

@@ -1,5 +1,4 @@
 Thermal_diffusivity: 
-  f: 0.05e-9
 
   Fosterite_Faylite90:
     a: 0.565e-6
@@ -7,13 +6,17 @@ Thermal_diffusivity:
     c: 590.0 
     d: 1.4e-6
     e: 135.0
+    f: 0.05e-9
+
   
   Augite: 
     a: 0.59e-6
     b: 1.03e-6
     c: 386.0 
     d: 0.928e-6
-    e: 125.0 
+    e: 125.0
+    f: 0.05e-9
+ 
   
   AnAb: 
     a: 0.36e-6
@@ -21,31 +24,36 @@ Thermal_diffusivity:
     c: 300.0
     d: 0.0
     e : 1.0
-  
+    f: 0.05e-9
+
   Oceanic_crust:
     a: 0.432e-6
     b: 0.44e-6
     c: 380
     d: 0.305e-6
     e: 145.0
+    f: 0.05e-9
 
 Thermal_expansivity: 
-  alpha2: 3.63e-11
   Mantle: 
     alpha0: 2.832e-5
     alpha1: 3.79e-8
-  Crust: 
+    alpha2: 3.63e-11
+  Oceanic_crust: 
     alpha0: 1.639e-5
     alpha1: 1.322e-8
+    alpha2: 3.63e-11
+
 
 Heat_capacity: 
-  Berman_Fosterite:
+  Bermann_Fosterite:
     c0 : 1696.1994726030803
     c1 : -14224.790498326116
     c2 : 0.0
     c3 : -826207788.7000589
     c4 : 0.0 
     c5 : 0.0 
+  
   Bermann_Fayalite: 
     c0 : 1221.616422356469
     c1 : -9441.480878044473
@@ -53,13 +61,15 @@ Heat_capacity:
     c3 : -682629029.6460243
     c4 : 0.0 
     c5 : 0.0 
+  
   Bermann_Aranovich_Fosterite: 
-    c0 : 1221.616422356469
+    c0 : 1657.3910200368182
     c1 : -12805.367791827477
     c2 : 0.0 
     c3 : -1904457285.8249636
-    c4 : 0.0 
+    c4 : 0.0
     c5 : 0.0   
+  
   Bermann_Aranovich_Fayalite: 
     c0 : 1236.6823542113452
     c1 : -9882.171653473753
@@ -67,6 +77,7 @@ Heat_capacity:
     c3 : -305195538.1285856
     c4 : 0.0 
     c5 : 0.0      
+  
   olivine:
     c0: 1.6108e3
     c1: -1.24788e4
