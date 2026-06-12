@@ -11,8 +11,8 @@ Rheology_name:
   Glaucophane_2025_Dislocation_creep: 'Dislocation_glaucophane'
 
 Thermal_diffusivity: 
-  Mantle_Richards_2018 : ''
-  Crust_Richards_2018 : ''
+  Mantle_Richards_2018 : 'Fosterite_Faylite90'
+  Crust_Richards_2018 : 'Oceanic_crust'
 
 Heat_capacity: 
   Mantle_Bernard_1988_FO : 'Mantle_bernard_FO'
@@ -21,4 +21,8 @@ Heat_capacity:
   Mantle_Bernard_Ar_199x_FA : 'Mantle_bernard_ar_FA'
   Mantle_Bernard_1988_FO_FA : 'Mantle_bernard_FO_FA'
   Mantle_Bernard_Ar_199x_FO_FA: 'Mantle_bernard_ar_FO_FA'
-  Crust: 'Crust'
+  Oceanic_crust: 'Crust'
+
+Thermal_expansivity: 
+  Mantle : 'Mantle'
+  Oceanic_crust : 'Oceanic_crust'
