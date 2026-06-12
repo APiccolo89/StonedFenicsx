@@ -36,9 +36,9 @@ class IOControls: # ctrlio
     Data class that stores the information of the outputs (simulation's results and temporary file)
     instance name: ctrlio
     """
-    test_name: str = ""
-    path_save: str = ""
-    sname: str = ""
+    test_name: str =""
+    path_save: str =""
+    sname: str = "MockTest"
     ts_out: int = 10
     dt_out: float = 1
     path_test: Path = field(init=False)
