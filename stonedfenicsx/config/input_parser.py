@@ -210,7 +210,12 @@ def update_ip_file(obj: object, block: dict) -> object:
     """
     hints = get_type_hints(obj.__class__)
     for k, v in block.items():
+        
+        if k not in hints: 
+            raise ValueError(f"Unknown field '{k}' for {obj.__class__.__name__}")
+        
         tp = hints[k]
+
         if isinstance(v, str):
             v = correct_input(k, v)
         setattr(obj, k, cast_type(v, tp))
