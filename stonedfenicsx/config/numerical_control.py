@@ -118,7 +118,7 @@ class CtrlTemperatureBC(CTRLBC): # ctrltbc
     dz: float = field(init=False)
     end_time:float = 180
     right_boundary : str = 'Continental'
-    right_age : float = 30 # Useful in case the right boundary condition is a oceanic lithosphere. 
+    right_age : float = 30.0 # Useful in case the right boundary condition is a oceanic lithosphere. 
     z: ndarray[np.float64] = field(init=False)
     temperature_1d: ndarray[np.float64] = field(init=False)
     temperature_2d_field: ndarray[np.float64] = field(init=False)
