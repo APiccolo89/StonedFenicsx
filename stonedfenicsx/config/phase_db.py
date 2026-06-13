@@ -3,7 +3,7 @@ from numba import float64,int32
 from numba.experimental import jitclass
 import numpy as np
 from stonedfenicsx.utils import print_ph
-from stonedfenicsx.config.input_parser import Phase,PhInput,update_ip_file
+from stonedfenicsx.config.config_utils import update_ip_file
 from pathlib import Path
 import yaml
 from dataclasses import dataclass, field, asdict
@@ -32,6 +32,156 @@ _T_REF_ = np.float64(298.15)
 _ETA_DEF_ = np.float64(1e20)
 # ---
 # ---
+
+@dataclass(slots=True)
+class Phase:
+    """
+    Phase: container for rheological and thermal material parameters.
+
+    ------------------
+    Rheology (viscosity)
+    ------------------
+    name_diffusion : str
+        Diffusion creep flow law name.
+        Options include (non-exhaustive):
+          - 'Constant'                : constant viscosity
+          - 'Hirth_Dry_Olivine_diff'  : Hirth & Kohlstedt (2003), dry olivine
+          - 'Van_Keken_diff'          : Van Keken et al. (2008) style diffusion
+          - 'Hirth_Wet_Olivine_diff'  : Hirth & Kohlstedt (2003), wet olivine
+
+    e_dif : float
+        Activation energy for diffusion creep [J/mol].
+    v_dif : float
+        Activation volume for diffusion creep [m³/mol].
+    b_dif : float
+        Pre-exponential factor for diffusion creep [1/Pa/s].
+
+    name_dislocation : str
+        Dislocation creep flow law name.
+        Options include:
+          - 'Constant'
+          - 'Hirth_Dry_Olivine_disl'
+          - 'Van_Keken_disl'
+          - 'Hirth_Wet_Olivine_disl'
+
+    n : float
+        Stress exponent. **NB**: if you change this, Bdis must be updated consistently.
+    e_dis : float
+        Activation energy for dislocation creep [J/mol].
+    v_dis : float
+        Activation volume for dislocation creep [m³/mol].
+    b_dis : float
+        Pre-exponential factor for dislocation creep [1/Pa^n/s].
+
+    eta : float
+        Constant viscosity [Pa·s] (used if rheology is 'Constant').
+
+    ------------------
+    Thermal properties
+    ------------------
+    Cp : float
+        constant heat capacity [J/kg/K].
+    k : float
+        constant thermal conductivity [W/m/K].
+    rho0 : float
+        Reference / constant density [kg/m³].
+
+    name_capacity : str
+        Heat capacity law.
+        Options:
+          - 'Constant'
+          - 'Berman_Forsterite'
+          - 'Berman_Fayalite'
+          - 'Berman_Aranovich_Forsterite'
+          - 'Berman_Aranovich_Fayalite'
+          - 'Berman_Fo_Fa_01'
+          - 'Bermann_Aranovich_Fo_Fa_0_1'
+          - 'Oceanic_Crust'
+          - 'ContinentalCrust' (not implemented / to be removed).
+
+    name_density : str
+        Density law.
+        Options:
+          - 'Constant' : ρ = ρ0.
+          - 'PT'       : ρ(P,T) with constant bulk modulus K₀ ≈ 130e9 Pa and
+                         thermal expansivity consistent with `name_alpha`.
+
+    name_alpha : str
+        Thermal expansivity law (α).
+        Options:
+          - 'Constant'      : α = 3e-5 K⁻¹.
+          - 'Mantle'        : olivine / mantle α (e.g., Groose & Afonso 2013;
+                              Richardson et al. 2020).
+          - 'Oceanic_Crust' : basaltic crustal α.
+
+    name_conductivity : str
+        Thermal conductivity law (k).
+        Options:
+          - 'Constant'
+          - 'Mantle'
+          - 'Oceanic_Crust'
+
+    ------------------
+    Internal heating
+    ------------------
+    radiogenic_heat: float
+        Radiogenic heat production [W/m³] (or [Pa/s] if used as source in σ units).
+    radiative_conductivity: float
+        Activation flag for radiogenic heating / radiative conductivity
+        (0.0 = off, 1.0 = on, or a more general scaling factor).
+
+    Notes
+    -----
+    This class is intended as a flexible container for building a PhaseDataBase.
+    For your current kinematic slab work it may be somewhat overkill, but it
+    should be reusable for other problems.
+    """
+
+    name_phase: str = "Undefined Phase"
+    id_ph: int = 0
+    # Viscosity / rheology
+    name_diffusion: str = "Constant"
+    e_dif: float | None = None
+    v_dif: float | None = None
+    b_dif: float | None = None
+
+    name_dislocation: str = "Constant"
+    n: float | None = None
+    e_dis: float | None = None
+    v_dis: float | None = None
+    b_dis: float | None = None
+
+    eta: float = 1e20  # constant viscosity
+
+    # Thermal properties
+    cp: float = 1250.0
+    k: float = 3.0
+    rho0: float = 3300.0
+
+    name_capacity: str = "Constant"
+    name_conductivity: str = "Constant"
+    name_alpha: str = "Constant"
+    name_density: str = "Constant"
+    alpha0: float = 3e-5  # constant thermal expansivity
+    radiogenic_heat: float = 0.0
+    # Internal heating
+    radiative_conductivity: float = 0.0
+
+
+# –----------------------------------------------------------------------------------
+@dataclass(slots=True)
+class PhInput:
+    """Container of the phases"""
+
+    shear_heating_disl_law: str = "WetQuartzite"
+    shear_heating_disl_ch: float = 0.0
+    shear_heating_disl_phi: float = 0.0
+    subducting_plate_mantle: Phase = field(init=False)
+    oceanic_crust: Phase = field(init=False)
+    wedge_mantle: Phase = field(init=False)
+    overriding_mantle: Phase = field(init=False)
+    overriding_upper_crust: Phase = field(init=False)
+    overriding_lower_crust: Phase = field(init=False)
 
 spec_phase = [
     # Viscosity – Diffusion creep

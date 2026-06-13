@@ -1,14 +1,15 @@
-from stonedfenicsx.utils import timing_function, print_ph
+"""Modules"""
+from stonedfenicsx.utils import timing_function
 from stonedfenicsx.config.numerical_control import (CtrlKy,
                                                     CtrlTemperatureBC,
-                                                    SimulationControls,
-                                                    NumericalControls,)
-from stonedfenicsx.numerical_control import time_dependent_evolution
+                                                    NumericalControls,
+                                                    SimulationControls)
+from stonedfenicsx.config.phase_db import PhaseDataBase
 from dataclasses import dataclass,field
 from stonedfenicsx.config.geometry import GeomInput,Mesh
 
 @dataclass(slots=True)
-class Scal: 
+class Scal:
     """Scaling class: 
         Class that stores the scaling value. From the input characteristic length, stress, viscosity and temperature
         it derives the other scaling for the other SI units.  
@@ -51,20 +52,33 @@ class Scal:
 
         return self
 
-def _scaling_material_properties(pdb,sc:Scal): 
+@timing_function
+def scaling_simulation_physical(
+    ctrl_sim: SimulationControls, pdb: PhaseDataBase, mesh: Mesh
+,sc:Scal) -> tuple[SimulationControls, PhaseDataBase, Mesh]:
+    
+    ctrl_sim.ctrl_ky = scale_kinematic_bc(ctrl_ky=ctrl_sim.ctrl_ky,sc=sc)
+    ctrl_sim.ctrl_tbc = scale_parameters(ctrl_tbc=ctrl_sim.ctrl_tbc,sc=sc)
+    ctrl_sim.ctrl = scaling_control_parameters(ctrl=ctrl_sim.ctrl,sc=sc)
+    mesh = scaling_mesh(mesh=mesh,sc=sc)
+    pdb = scaling_material_properties(pdb=pdb,sc=sc)
+    return ctrl_sim, pdb, mesh
+
+
+def scaling_material_properties(pdb:PhaseDataBase,sc:Scal)->PhaseDataBase: 
     # scal the references values   
-    pdb.Tref /= sc.temp
-    pdb.Pref /= sc.stress
-    pdb.T_Scal = sc.temp
-    pdb.P_Scal = sc.stress
+    pdb.temp_ref /= sc.temp
+    pdb.pres_ref /= sc.stress
+    pdb.temp_scal = sc.temp
+    pdb.pres_scal = sc.stress
     pdb.cohesion /= sc.stress
     
-    pdb.A /= sc.k
-    pdb.B /= sc.k
-    pdb.T_A /= sc.temp
-    pdb.T_B /= sc.temp
-    pdb.x_A /= sc.temp
-    pdb.x_B /= sc.temp
+    pdb.a_rad /= sc.k
+    pdb.b_rad /= sc.k
+    pdb.temp_a /= sc.temp
+    pdb.temp_b /= sc.temp
+    pdb.x_a /= sc.temp
+    pdb.x_b /= sc.temp
     
     # Viscosity
     pdb.eta /= sc.eta
@@ -75,8 +89,8 @@ def _scaling_material_properties(pdb,sc:Scal):
     # B_dif/disl
     scal_bdsl = sc.stress**(-pdb.n)*sc.time**(-1)    # Pa^-ns-1
     scal_bdif = (sc.stress*sc.time)**(-1)
-    pdb.bdif /= scal_bdif
-    pdb.bdis /= scal_bdsl
+    pdb.b_dif /= scal_bdif
+    pdb.b_dis /= scal_bdsl
     pdb.bdis_wz /= scal_bdif
 
     # Scal the heat capacity
@@ -106,26 +120,17 @@ def _scaling_material_properties(pdb,sc:Scal):
     pdb.alpha0 /= 1/sc.temp
     pdb.alpha1 /= 1/sc.temp**2
     pdb.alpha2 /= 1/sc.stress
-    pdb.Kb /= sc.stress
+    pdb.kb /= sc.stress
     pdb.rho0 /= sc.rho
     scal_radio = sc.watt/sc.length**3
     
-    pdb.radio /= scal_radio
+    pdb.radiogenic_heat /= scal_radio
     
     pdb.bdis_wz /= scal_bdsl
-    if MPI.COMM_WORLD.rank == 0: 
-        print('{ :  -   > Scaling <  -  : }')
-        print('         Material properties has been scaled following: ')
-        print(f'         L [length]   = {sc.length:.3f} [m]')
-        print(f'         Stress       = {sc.stress:.3f} [Pa]')
-        print(f'         eta          = {sc.eta:.3e} [Pas]')
-        print(f'         Temp         = {sc.temp:.2f} [K]')
-        print('The other unit of measure are derived from this set of scaling')
-        print('{ <  -   : Scaling :  -  > }')
 
     return pdb
 
-def scale_parameters(ctrl_tbc:CtrlTemperatureBC,scal:Scal)->CtrlTemperatureBC:
+def scale_parameters(ctrl_tbc:CtrlTemperatureBC,sc:Scal)->CtrlTemperatureBC:
     """_summary_
 
     Args:
@@ -136,20 +141,22 @@ def scale_parameters(ctrl_tbc:CtrlTemperatureBC,scal:Scal)->CtrlTemperatureBC:
         lhs(): the scaled lhs dataclass 
     """
     
-    
-    
-    scal_factor = (scal.scale_Myr2sec / scal.time)
+    scal_factor = (sc.scale_myr2sec / sc.time)
+    ctrl_tbc.temp_top /= sc.temp
+    ctrl_tbc.temp_max /= sc.temp
     ctrl_tbc.end_time = ctrl_tbc.end_time * scal_factor
     ctrl_tbc.dt = ctrl_tbc.dt * scal_factor
-    ctrl_tbc.c_age_plate = ctrl_tbc.c_age_plate * scal_factor
-    ctrl_tbc.c_age_var = ctrl_tbc.c_age_var * scal_factor  
-    ctrl_tbc.dz = ctrl_tbc.dz / scal.length 
-    ctrl_tbc.k = ctrl_tbc.k / scal.k
-    ctrl_tbc.Cp = ctrl_tbc.cp / scal.cp
-    ctrl_tbc.rho = ctrl_tbc.rho / scal.rho
+    ctrl_tbc.slab_age = ctrl_tbc.slab_age * scal_factor
+    ctrl_tbc.interval_time = ctrl_tbc.interval_time * scal_factor
+    ctrl_tbc.interval_val = ctrl_tbc.interval_val * scal_factor
+    ctrl_tbc.dz = ctrl_tbc.dz / sc.length
+    ctrl_tbc.k = ctrl_tbc.k / sc.k
+    ctrl_tbc.cp = ctrl_tbc.cp / sc.cp
+    ctrl_tbc.rho = ctrl_tbc.rho / sc.rho
+    ctrl_tbc.right_age = ctrl_tbc.right_age * scal_factor
     return ctrl_tbc
     
-def scaling_control_parameters(ctrl:NumericalControls,scal:Scal)->NumericalControls:
+def scaling_control_parameters(ctrl:NumericalControls,sc:Scal)->NumericalControls:
     """_summary_
 
     Args:
@@ -159,17 +166,32 @@ def scaling_control_parameters(ctrl:NumericalControls,scal:Scal)->NumericalContr
     Returns:
         NumericalControls: adimensional numerical controls
     """
-    ctrl.temp_top /= scal.temp
-    ctrl.temp_max /= scal.temp
-    ctrl.v_s = (ctrl.v_s * scal.scale_vel)/(scal.length/scal.time)
-    ctrl.g = ctrl.g / (scal.length/scal.time**2)
-    ctrl.slab_age = ctrl.slab_age * (scal.scale_Myr2sec/scal.time)
-    ctrl.time_max = ctrl.time_max * (scal.scale_Myr2sec/scal.time)
-    ctrl.dt = ctrl.dt * (scal.scale_Myr2sec/scal.time)
+
+    ctrl.g = ctrl.g / (sc.length/sc.time**2)
+    ctrl.time_max = ctrl.time_max * (sc.scale_myr2sec/sc.time)
+    ctrl.dt = ctrl.dt * (sc.scale_myr2sec/sc.time)
 
     return ctrl
 def scaling_mesh(mesh:Mesh,sc:Scal)->Mesh:
-    mesh.geometry.x[:] /= sc.length
+    """_summary_
+
+    Args:
+        mesh (Mesh): Mesh object
+        sc (Scal): scaling object
+
+    Returns:
+        Mesh: updated mesh object
+    """
+    
+    domain = tuple(['global_domain','crust_domain',
+                    'subduction_plate_domain','wedge_domain'])
+    
+    for i in domain: 
+        sub = getattr(mesh, i)
+        sub.mesh.geometry.x[:] /= sc.length
+    
+    mesh.g_input = dimensionless_ginput(mesh.g_input,sc)
+    
     return mesh
 
 def dimensionless_ginput(g_input:GeomInput,sc:Scal):
@@ -194,13 +216,13 @@ def dimensionless_ginput(g_input:GeomInput,sc:Scal):
     g_input.resolution_refine /= sc.length  # To Do
     g_input.transition /= sc.length # the transition between coupled and uncoupled
     g_input.lab_d /= sc.length # Astenosphere-lithosphere 
+    g_input.slab_tk /= sc.length
 
     return g_input
 
-def scal_time_class(ctrl_ky:CtrlKy, sc: Scal)->time_dependent_evolution:
+def scale_kinematic_bc(ctrl_ky:CtrlKy, sc: Scal)->CtrlKy:
 
-    ctrl_ky.age_plate *= sc.scale_Myr2sec * 1/sc.time 
-    ctrl_ky.vel_plate *= sc.scale_vel * (sc.T/sc.length)
-    ctrl_ky.t_age *= sc.scale_Myr2sec * 1/sc.time 
-    ctrl_ky.t_vel *= sc.scale_Myr2sec * 1/sc.time
+    ctrl_ky.v_s *= sc.scale_vel * (sc.time/sc.length)
+    ctrl_ky.interval_val *= sc.scale_myr2sec * 1/sc.time
+    ctrl_ky.interval_val *= sc.scale_myr2sec * 1/sc.time
     return ctrl_ky
