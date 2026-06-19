@@ -555,7 +555,7 @@ def _check_rheological(tag:str) -> Rheological_flow_law:
     """
 
 
-    if tag == '':
+    if tag in ('','Constant') :
         # empty rheological flow law to fill it
         return Rheological_flow_law()
     else: 
