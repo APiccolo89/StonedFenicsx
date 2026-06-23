@@ -101,9 +101,6 @@ def parse_input(path: str) -> tuple[Input,PhInput]:
     )
     return input_obj, ph_input
 
-
-
-
 # -----------------------------------------------------------------------------------------
 def filling_the_phase_data_base(
     materialproperties: dict, shheating: dict, phase_input: PhInput
