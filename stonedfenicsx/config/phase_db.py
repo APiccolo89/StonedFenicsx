@@ -6,7 +6,7 @@ from stonedfenicsx.utils import print_ph
 from stonedfenicsx.config.config_utils import update_ip_file
 from pathlib import Path
 import yaml
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field, asdict,InitVar
 
 #TO DO in the future. 
 #The jit class is a pain in the ass. I used to use the numba routine for creating the left boundary condition and right 
@@ -1031,6 +1031,62 @@ def read_expansivity(tag:str)->ThermalExpansivity:
         
     return buf_dif
 # --- 
+
+def compute_effective_stress(eps: float, eta: float) -> float:
+    """
+    Function to compute the effective stress using the reference viscosity and actual strain rate
+    eps: strain rate
+    eta: reference viscosity
+    """
+    return 2 * eta * eps
+
+
+def effective_stress(tau_fr: np.ndarray, tau_v: np.ndarray) -> np.ndarray:
+    """_summary_
+
+    Args:
+        tau_fr (np.ndarray): array containing the frictional stress
+        tau_v (np.ndarray): viscous stresses
+
+    Returns:
+        np.ndarray: effective stress
+    """
+    return tau_v * np.tanh(tau_fr / tau_v)
+
+
+def compute_tau_fr(pres: np.ndarray, phi: float) -> np.ndarray:
+    """_summary_
+
+    Args:
+        pres (np.ndarray): lithostatic pressure
+        phi (float): friction angle
+
+    Returns:
+        np.ndarray: failure shear stress
+    """
+    return pres * np.sin(np.radians(phi))
+
+
+def convert_velocity_strain_rate(wz: float, velocity: np.ndarray) -> np.ndarray:
+    """_summary_
+
+    Args:
+        wz (float): thickness of the weak zone
+        velocity (np.ndarray): velocity of convergence
+
+    Returns:
+        strain rate: array with strain rate
+    """
+    scal = 1e-2 / 365.25 / 60 / 60 / 24
+    v = velocity * scal
+    eps = v / wz
+    return eps
+
+
+
+
+
+
 def test_phase_pdb():
 
     
@@ -1057,8 +1113,175 @@ def test_phase_pdb():
         
     return 0
 
+def compute_effective_stress_rheological(A:RheologicalFlowLaw,eps:float,pres:np.ndarray,temp:np.ndarray)->np.ndarray:
+    
+    # strain indipendent  
+    cds = A.b * np.exp(-(A.e + pres * A.v)/(_GAS_CONSTANT_ * temp)) 
+    # compute tau guess
+    
+   
+    water = np.exp(-(A.eh2o+pres *A.vh2o)/(_GAS_CONSTANT_ * temp))/np.exp(-(A.eh2o+_P_REF_*A.vh2o)/(_GAS_CONSTANT_ * _T_REF_))
+    cds = cds * water ** (A.r)
+    
+    tau_eff_v = cds ** (-1/A.n) * eps**(1/A.n)
+    
+    
+    return tau_eff_v 
+
+
+def compute_bn(eps_ref:float,tau_ref:float,n)->float:
+    
+    return eps_ref * tau_ref**(-n)
+
+def compute_stress(eps:np.ndarray,bn:float,n:float)->np.ndarray:
+
+
+    return bn**(-1/n)*eps**(1/n)
+
+
+
+
+@dataclass
+class Profile_Slab: 
+    z: InitVar[np.ndarray]
+    a: np.float32 
+    k:float = 3.1 
+    Tp: float = 1350+273.15 
+    kappa: float = 1e-7    
+    crd: np.ndarray = field(init=False)
+    temp_slab: np.ndarray = field(init=False)
+    dip : np.ndarray = field(init=False)
+    length :np.ndarray =field(init=False)
+    def __post_init__(self,z:np.ndarray[np.float32])->None:
+        """ post init routine: generate the quadratic surface
+        of the slab using a vector (1,n) and the curvature of 
+        the parabula. 
+
+        Args:
+            z (np.ndarray[np.float32]): z coordinates
+
+        """
+        # Compute the coordinate x
+        x = np.abs(np.sqrt(z/self.a))
+        # Compute the dip angle (radians)
+        dip = self.compute_dip(x,z) # len = len(x)-1
+        # Compute the cumulative distance
+        x,z,dist = self.cumulative_distance(x,z)# len = len(x)-1
+        # Create the main vector
+        self.crd = np.zeros([2,len(x)],dtype=np.float32)
+        self.dip = dip 
+        self.length = dist * 1e3
+        # Correct the coordinate 
+        # -> Necessary because the new x,z has as initial coordinate (x[0]+x[1])/2
+        self.crd[0,:] = (x - x[0]) * 1e3
+        self.crd[1,:] = (z - z[0]) * 1e3
+        return None
+    @staticmethod
+    def cumulative_distance(x:np.ndarray,z:np.ndarray)->tuple[np.ndarray,np.ndarray,np.ndarray]:
+
+        dist = np.cumsum(np.sqrt(np.diff(x)**2+np.diff(z)**2))
+        x_m = (x[:-1]+x[1:])/2 
+        z_m = (z[:-1]+z[1:])/2 
+        
+        return x_m,z_m,dist
+    @staticmethod 
+    def compute_dip(x:np.ndarray,z:np.ndarray)->np.ndarray:
+        
+        dx = np.diff(x)
+        dz = np.diff(z)
+        dip = np.arctan2(dz,dx)
+    
+        return dip
+    def compute_slab_surface_temperature(self,gamma:float,vel:float,age:float,bq:float)->None:
+        vel = convert_velocity(vel)
+        age = convert_age(age)
+        Pe = (vel * self.crd[1,:]**2)/self.kappa/self.length
+        Q = (self.k*self.Tp)/(np.sqrt(np.pi * self.kappa * (age + self.length/vel)))
+        Sq = np.cos(self.dip)+ bq*np.sqrt(Pe)
+
+        self.temp_slab = 273.15 + (Q*self.crd[1,:])/(self.k*Sq)     
+    
+
+def convert_velocity(vel:np.ndarray)->np.ndarray:
+    
+    vel = vel * 1e-2/365.25/60/60/24
+    
+    return vel 
+
+def convert_age(age:float)->float: 
+    
+    age = age * 1e6 * 365.25*60*60*24
+    
+    return age
+
+
+    
+         
+
+def shear_heating_slab_interface():
+    from scipy.special import gamma
+    import matplotlib.pyplot as plt
+    n_fk = 4.0
+    phi = 5.0
+    wz = 500
+    slab = Profile_Slab(np.linspace(0,80,1000),3.5/1e3)   
+    m = 3
+    bq = gamma(m/2+1)/gamma(m/2+1/2)
+    vel  = np.linspace(1.0,10,10)
+    eps = convert_velocity(vel)/wz
+    rqrzt =  read_rheology('Wet_Quartzite_2001_Dislocation_creep',1)
+    bn = compute_bn(1e-11,120e6,n_fk)
+    pres = slab.crd[1,:]*3300*9.81
+    tau_fr = pres*np.sin(np.radians(phi))
+    tau_min = 0.01e6
+    
+    fig = plt.figure()
+    ax = fig.gca()
+    
+    fig2 = plt.figure()
+    ax1 = fig2.gca()
+    
+    fig3 = plt.figure()
+    ax2 = fig3.gca()
+    
+    for i in enumerate(eps): 
+        slab.compute_slab_surface_temperature(bq,vel[i[0]],30,bq)
+        tau_v = compute_stress(i[1],bn,n_fk)
+        tau_v_rh = compute_effective_stress_rheological(rqrzt,i[1],pres,slab.temp_slab)
+        p_crit = tau_v/np.sin(np.radians(phi))
+        p_norm = (pres-p_crit)/p_crit 
+        tau_v_dmn = tau_min+(tau_v-tau_min)*np.exp(-5.0*p_norm)
+        tau_eff_fk = tau_v_dmn * np.tanh(tau_fr/tau_v_dmn)
+        tau_eff_rh = tau_v_rh * np.tanh(tau_fr/tau_v_rh)
+        ax.plot(tau_eff_fk/1e6,-slab.crd[1,:]/1e3, c='forestgreen',linewidth=i[0]*0.1+0.1)
+        ax.plot(tau_eff_rh/1e6,-slab.crd[1,:]/1e3,c='firebrick',linewidth=i[0]*0.1+0.1)
+        ax1.plot(tau_eff_rh*convert_velocity(vel[i[0]]),-slab.crd[1,:]/1e3,c='firebrick',linewidth=i[0]*0.1+.1)
+        ax1.plot(tau_eff_fk*convert_velocity(vel[i[0]]),-slab.crd[1,:]/1e3,c='forestgreen',linewidth=i[0]*0.1+.1)
+        ax2.plot(tau_eff_rh/pres,-slab.crd[1,:]/1e3,c='firebrick',linewidth=i[0]*0.1+.1)
+        ax2.plot(tau_eff_fk/pres,-slab.crd[1,:]/1e3,c='forestgreen',linewidth=i[0]*0.1+.1)
+        
+        
+        print(f'max tau fake rheology {np.nanmax(tau_eff_fk/1e6):.3f}, mean {np.nanmean(tau_eff_fk/1e6):.3f}')
+        print(f'max tau real rheology {np.nanmax(tau_eff_rh/1e6):.3f}, mean {np.nanmean(tau_eff_rh/1e6):.3f}')
+    ax.set_ylabel('Depth [km]')
+    ax1.set_ylabel('Depth [km]')
+    ax2.set_ylabel('Depth [km]')
+    ax2.set_xlabel(r'$\mu_{eff}$ []')
+    ax.set_xlabel(r'$\tau$ [MPa]')
+    ax1.set_xlabel(r'$log_{10} \Psi$ [W/m2]')
+    ax1.set_xscale('log')
+    fig.savefig('tau_eff.png')
+    fig2.savefig('shear_heating.png')
+    fig3.savefig('effective_mu.png')
+    print('')
+
+
+    return 0
+
+
+
 if __name__ == '__main__':
     
-    test_phase_pdb()
+    shear_heating_slab_interface()
     
     pass
