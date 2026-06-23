@@ -555,7 +555,7 @@ def _check_rheological(tag:str) -> Rheological_flow_law:
     """
 
 
-    if tag in ('','Constant') :
+    if tag in ('','Constant','Parametrised') :
         # empty rheological flow law to fill it
         return Rheological_flow_law()
     else: 
@@ -681,7 +681,8 @@ spec_phase = [
     ('vis_con_fl',int32),
     ('eta_wz',float64),
     ("phi",float64),
-    ('cohesion',float64),
+    ('tau_min_wz',float64),
+    ("decay_vis_wz",float64)
 ]   
 
 #-----------------------------------------------------------------------------------------------------------
@@ -780,7 +781,8 @@ class PhaseDataBase:
         self.r_wz = 0.0
         self.eta_wz    = 0.0
         self.phi = 0.0
-        self.cohesion  = 0
+        self.tau_min_wz  = 0
+        self.decay_vis_wz = 5.0
 
   
         
@@ -1209,6 +1211,10 @@ def mantle_heat_capacity(flag: list) -> Tuple[float,float,float,float,float,floa
 def fill_up_weakzone_data(ch:float = 10e6
                       ,phi: float = np.radians(5)
                       ,eta_wz: float = 1e20
+                      ,eps_ref: float|None = None 
+                      ,tau_ref: float|None = None 
+                      ,n_ref: float|None = None 
+                      ,decay_vis_wz : float | None = None
                       ,dislocation_creep: str = 'Constant'
                       ,pdb:PhaseDataBase = None)->PhaseDataBase: 
     """Function that updates the data of the shear zone that mimick the subduction interface. 
@@ -1224,7 +1230,7 @@ def fill_up_weakzone_data(ch:float = 10e6
     """
 
 
-    pdb.cohesion = ch
+    pdb.tau_min_wz = tau_min
     pdb.eta_wz = eta_wz
     A = _check_rheological(dislocation_creep)
     pdb.Edis_wz = A.E 
@@ -1237,8 +1243,13 @@ def fill_up_weakzone_data(ch:float = 10e6
     pdb.VH20_wz = A.VH20 
     if dislocation_creep == 'Constant':
         pdb.vis_con_fl = 1
+    elif dislocation_creep == 'Parametrised':
+        pdb.vis_con_fl = 2 
+        pdb.n_wz = n_ref
+        pdb.Bdis_wz = eps_ref/tau_ref**(n_ref)
+    pdb.decay_vis_wz = decay_vis_wz
+    
     pdb.phi = phi 
-    pdb.cohesion = ch
         
             
     return pdb 

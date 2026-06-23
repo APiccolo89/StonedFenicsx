@@ -366,9 +366,13 @@ class Input:
     # -----------------------------------------------------------------------------------------------------    
     model_shear: str = "NoShear"
     phi: float = 5.0 
-    cohesion: float = 10e6 
+    tau_min: float = 10e6 
     dislocation_creep_wz:str = 'Constant'
     eta_wz:float = 1.0e20
+    tau_ref:float = 100e6
+    eps_ref:float = 1e-11 
+    n_ref:float = 3.0 
+    decay_vis_wz:float = 5.0
     # -----------------------------------------------------------------------------------------------------
     # input/output control
     # -----------------------------------------------------------------------------------------------------

@@ -54,7 +54,7 @@ def _scaling_material_properties(pdb,sc:Scal):
     pdb.Pref /= sc.stress
     pdb.T_Scal = sc.Temp 
     pdb.P_Scal = sc.stress 
-    pdb.cohesion /= sc.stress 
+    pdb.tau_min_wz /= sc.stress 
     
     # Radiative conductivity parameters 
     

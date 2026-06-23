@@ -428,7 +428,7 @@ class Global_thermal(Problem):
 
         reg_strain = fem.Constant(decoupling.function_space.mesh,np.float64(1e-20 /(1/sc.T)))
 
-        e_II_fr = reg_strain + 0.5 * (vs * decoupling * 1 /wz_tk)  # Second invariant strain rate
+        e_II_fr = reg_strain + 0.5 * (vs *  1 /wz_tk)  # Second invariant strain rate
 
         # -> compute the plastic strain rate
 

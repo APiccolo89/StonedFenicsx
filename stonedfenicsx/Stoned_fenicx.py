@@ -113,10 +113,14 @@ def generate_phase_database(IP,Phin)->PhaseDataBase:
     
     
     
-    pdb = fill_up_weakzone_data(ch = IP.cohesion 
+    pdb = fill_up_weakzone_data(tau_min = IP.tau_min 
                                     ,phi = np.radians(IP.phi)
                                     ,eta_wz = IP.eta_wz 
                                     ,dislocation_creep=IP.dislocation_creep_wz
+                                    ,eps_ref = IP.eps_ref 
+                                    ,tau_ref = IP.tau_ref 
+                                    ,n_ref = IP.n_ref 
+                                    ,decay_vis_wz=IP.decay_vs_wz
                                     ,pdb=pdb)
 
     return pdb 

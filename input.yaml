@@ -30,8 +30,12 @@ Input:
   Shear_Heating: 
     model_shear: "NoShear"
     phi: 5.0 
-    cohesion: 10e6 
+    tau_min: 1e6 
     dislocation_creep_wz: "WetQuartzite"
+    tau_ref = 100e6 
+    eps_ref = 1e-11
+    n_ref = 3.0 
+    decay_vis_wz = 5.0
     
   InputOutputControl:
     test_name: "Output"
