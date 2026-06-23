@@ -120,7 +120,7 @@ def generate_phase_database(IP,Phin)->PhaseDataBase:
                                     ,eps_ref = IP.eps_ref 
                                     ,tau_ref = IP.tau_ref 
                                     ,n_ref = IP.n_ref 
-                                    ,decay_vis_wz=IP.decay_vs_wz
+                                    ,decay_vis_wz=IP.decay_vis_wz
                                     ,pdb=pdb)
 
     return pdb 
