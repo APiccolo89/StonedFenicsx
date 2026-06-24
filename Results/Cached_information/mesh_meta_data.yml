@@ -1,0 +1,29 @@
+cr: 30.0
+decoupling: 80.0
+lab_d: 100.0
+lc: 0.3
+lit_mt: 20.0
+ns_depth: 50.0
+ocr: 7.0
+resolution_normal: 3.0
+resolution_refine: 1.5
+slab_tk: 130.0
+slab_type: Custom
+sub_constant_flag: true
+sub_dl: 10.0
+sub_lb: 300.0
+sub_path: Not Defined
+sub_theta0: 0.08726646259971647
+sub_theta_max: 0.7853981633974483
+sub_trench: 0.0
+theta_in_slab: 0.7853981633974483
+theta_out_slab: 45.0
+transition: 10.0
+van_keken: true
+wz_tk: 0.5
+x:
+- 0.0
+- 660.0000000000014
+y:
+- -600.0
+- 0.0
