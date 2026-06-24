@@ -405,7 +405,7 @@ def compute_plastic_strain(e_II:fem.Expression
         tau_v = cds**(-1/pdb.n_wz) * e_II**(1/pdb.n_wz)
         P_crit = tau_v/sin(pdb.phi)
         P_norm = (P_in - P_crit)/P_crit
-        tau_vis = pdb.tau_min_wz + (tau_v-pdb.tau_min_wz)* exp(-pdb.decay_vis_wz*P_crit)
+        tau_vis = pdb.tau_min_wz + (tau_v-pdb.tau_min_wz)* exp(-pdb.decay_vis_wz*P_norm)
         
     # -> Compute the tau lim 
     tau_lim  = P_in * sin(pdb.phi) 
