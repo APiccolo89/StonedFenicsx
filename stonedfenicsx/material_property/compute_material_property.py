@@ -380,8 +380,6 @@ def compute_plastic_strain(e_II:fem.Expression
         VH2O = pdb.VH20_wz
         Tref = pdb.Tref * sc.Temp 
         Pref = pdb.Pref * sc.stress 
-        Ch    = fem.Function(P0)     ; Ch.x.array[:]     = pdb.cohesion; Ch.x.scatter_forward()
-        FrA   = fem.Function(P0)     ; FrA.x.array[:]     = pdb.phi; FrA.x.scatter_forward()
       
         # strain indipendent  
         cds = Bdis * exp(-(Edis + P * Vdis)/(pdb.R * T)) 

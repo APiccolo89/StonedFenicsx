@@ -1211,7 +1211,7 @@ def mantle_heat_capacity(flag: list) -> Tuple[float,float,float,float,float,floa
 def fill_up_weakzone_data(ch:float = 10e6
                       ,phi: float = np.radians(5)
                       ,eta_wz: float = 1e20
-                      ,tau_min: float|None = None
+                      ,tau_min: float = np.float64(1.0e6)
                       ,eps_ref: float|None = None 
                       ,tau_ref: float|None = None 
                       ,n_ref: float|None = None 
@@ -1230,7 +1230,7 @@ def fill_up_weakzone_data(ch:float = 10e6
         PhaseDataBase: updated phasedatabase
     """
 
-
+    print(tau_min)
     pdb.tau_min_wz = tau_min
     pdb.eta_wz = eta_wz
     A = _check_rheological(dislocation_creep)
