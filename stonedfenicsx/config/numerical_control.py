@@ -1,7 +1,7 @@
 from pathlib import Path
+from dataclasses import field, dataclass
 import numpy as np
 from numpy import ndarray
-from dataclasses import field, dataclass
 from stonedfenicsx.config.geometry import GeomInput
 # --- #
 # --- #
