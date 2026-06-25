@@ -33,17 +33,18 @@ Convergence criterion:
 
 """
 
-from stonedfenicsx.package_import import *
 # modules
-from stonedfenicsx.material_property.compute_material_property import heat_capacity,heat_conductivity,density
 from stonedfenicsx.material_property.phase_db import PhaseDataBase
-from stonedfenicsx.utils import timing_function, print_ph
 from stonedfenicsx.material_property.compute_material_property import compute_thermal_properties
-from stonedfenicsx.scal import Scal
-from stonedfenicsx.numerical_control import NumericalControls,ctrl_LHS
+from stonedfenicsx.config.scal import Scal
+from stonedfenicsx.config.numerical_control import CtrlTemperatureBC,NumericalControls,IOControls
+from stonedfenicsx.config.geometry import GeomInput
+from stonedfenicsx.create_mesh.create_mesh import dict_surf
+import h5py 
+import numpy as np 
+from numba import njit
 
-start       = timing.time()
-zeros       = np.zeros
+
 power       = np.power
 exp         = np.exp
 transpose   = np.transpose 
@@ -127,13 +128,13 @@ def _compute_lithostatic_pressure(
     return lit_p
     
         
-# we will solve the system Mx = D with
+# we will solve the system Mx = d_vct with
 # x = the temperature vector (our unknowns)
-# M = our matrix of coefficients in front of the temperature (known)
-# D = the right hand side vector (known)
+# mass_matrix = our matrix of coefficients in front of the temperature (known)
+# d_vct = the right hand side vector (known)
 
-# first, we need to build M and D
-# M and D are different in the predictor and corrector step 
+# first, we need to build mass_matrix and d_vct
+# mass_matrix and d_vct are different in the predictor and corrector step 
 #-----------------------------------------------------------------------------------------
 @njit
 def _compute_Cp_k_rho(ph   : NDArray[np.float64]
@@ -166,47 +167,67 @@ def _compute_Cp_k_rho(ph   : NDArray[np.float64]
     it = len(T)
     
     for i in range(it):
-        Cp[i], rho[i], k[i] = compute_thermal_properties(pdb,T[i],p[i],ph[i])
+        cp[i], rho[i], k[i] = compute_thermal_properties(pdb,T[i],p[i],ph[i])
 
-    return Cp,k,rho
+    return cp,k,rho
 #-----------------------------------------------------------------------------------------
 @njit
-def build_coefficient_matrix(A,
-                             B,
-                             D,
-                             Q,
-                             M,
-                             pdb,
-                             ph,
-                             ctrl,
-                             lhs,
-                             TO,
-                             TG,
-                             TPr,
-                             k_m,
-                             density_m,
-                             heat_capacity_m,
-                             step,
-                             lit_p,
-                             sc,
-                             ind_z,
-                             Ttop,
-                             Tmax):
+def build_coefficient_matrix(a_vct:np.ndarray,
+                             b_vct:np.ndarray,
+                             d_vct:np.ndarray,
+                             q_vct:np.ndarray,
+                             mass_matrix:np.ndarray,
+                             pdb:PhaseDataBase,
+                             ph:np.ndarray,
+                             temp_old:np.ndarray,
+                             temp_guess:np.ndarray,
+                             temp_pr:np.ndarray,
+                             k_m:np.ndarray,
+                             density_m:np.ndarray,
+                             heat_capacity_m:np.ndarray,
+                             step:int,
+                             lit_p:np.ndarray,
+                             temp_min:np.float64,
+                             temp_max:np.float64,
+                             nz:int,
+                             dt:np.float64,
+                             dz:np.float64)->tuple[np.ndarray,np.ndarray]:
+    """Assembly the system of equation
 
-    nz         = lhs.nz 
-    dt         = lhs.dt 
-    dz         = lhs.dz
-    NLflag     = lhs.non_linearities
-    CVal       = np.array([lhs.Cp,lhs.k,lhs.rho],dtype = np.float64)
+    Args:
+        a_vct (np.ndarray): _description_
+        b_vct (np.ndarray): _description_
+        d_vct (np.ndarray): _description_
+        q_vct (np.ndarray): _description_
+        mass_matrix (np.ndarray): _description_
+        pdb (PhaseDataBase): _description_
+        ph (np.ndarray): _description_
+        temp_old (np.ndarray): _description_
+        temp_guess (np.ndarray): _description_
+        temp_pr (np.ndarray): _description_
+        k_m (np.ndarray): _description_
+        density_m (np.ndarray): _description_
+        heat_capacity_m (np.ndarray): _description_
+        step (int): _description_
+        lit_p (np.ndarray): _description_
+        temp_min (np.float64): _description_
+        temp_max (np.float64): _description_
+        nz (int): _description_
+        dt (np.float64): _description_
+        dz (np.float64): _description_
 
-    
+    Returns:
+        tuple[np.ndarray,np.ndarray]: _description_
+    """
+
+
     if step == 0:
 
         # predictor step
 
         # m = n
 
-        heat_capacity_m,k_m,density_m=_compute_Cp_k_rho(ph,pdb,heat_capacity_m,k_m,density_m,TG,lit_p,NLflag,CVal,ind_z)
+        heat_capacity_m,k_m,density_m=_compute_Cp_k_rho(ph,pdb,heat_capacity_m,k_m,density_m,temp_guess,lit_p,NLflag,CVal,ind_z)
 
         dz_m               = full((nz), dz) # current assumption: incompressible
 
@@ -216,9 +237,9 @@ def build_coefficient_matrix(A,
 
         # m = n+1/2
 
-        Cp_m0,k_m0,rho_m0=_compute_Cp_k_rho(ph,pdb,heat_capacity_m,k_m,density_m,TG,lit_p,NLflag,CVal,ind_z)
+        Cp_m0,k_m0,rho_m0=_compute_Cp_k_rho(ph,pdb,heat_capacity_m,k_m,density_m,temp_guess,lit_p,NLflag,CVal,ind_z)
 
-        Cp_m1,k_m1,rho_m1=_compute_Cp_k_rho(ph,pdb,heat_capacity_m,k_m,density_m,TG,lit_p,NLflag,CVal,ind_z)
+        Cp_m1,k_m1,rho_m1=_compute_Cp_k_rho(ph,pdb,heat_capacity_m,k_m,density_m,temp_guess,lit_p,NLflag,CVal,ind_z)
 
         heat_capacity_m = (Cp_m1+Cp_m0)/2
 
@@ -256,18 +277,18 @@ def build_coefficient_matrix(A,
 
             if j == 0:
 
-                # calculate A  
+                # calculate a_vct  
 
-                A[j] = (dt / ( density_m[j] * heat_capacity_m[j] * ( dz_m[j] + dz_m[j] ) ))
+                a_vct[j] = (dt / ( density_m[j] * heat_capacity_m[j] * ( dz_m[j] + dz_m[j] ) ))
 
             elif j > 0:
 
-                # calculate A 
+                # calculate a_vct 
 
-                A[j] = (dt / ( density_m[j] * heat_capacity_m[j] * ( dz_m[j] + dz_m[j-1] ) ))  
+                a_vct[j] = (dt / ( density_m[j] * heat_capacity_m[j] * ( dz_m[j] + dz_m[j-1] ) ))  
 
 
-            # ========== BUILD M ========== - coefficient matrix 
+            # ========== BUILD mass_matrix ========== - coefficient matrix 
 
             # ========== boundary conditions ==========
 
@@ -275,21 +296,21 @@ def build_coefficient_matrix(A,
 
                 # boundary condition at the top 
 
-                M[i,j] = 1. 
+                mass_matrix[i,j] = 1. 
 
-                D[j]   = Ttop 
+                d_vct[j]   = Ttop 
 
             elif (i == nz-1 and j == nz-1):
 
                 # boundary condition at the bottom 
 
-                M[i,j] = 1. 
+                mass_matrix[i,j] = 1. 
 
-                D[j]   = Tmax 
+                d_vct[j]   = Tmax 
 
             else:
 
-                # ========== BUILD M ========== - coefficient matrix 
+                # ========== BUILD mass_matrix ========== - coefficient matrix 
 
                 if i - j == 1 and j < nz - 2:
 
@@ -297,17 +318,17 @@ def build_coefficient_matrix(A,
 
                     if j > 0:
 
-                        M[i,j] = -A[j] * ( (k_m[j] + k_m[j+1] ) / 2. ) / dz_m[j]
+                        mass_matrix[i,j] = -a_vct[j] * ( (k_m[j] + k_m[j+1] ) / 2. ) / dz_m[j]
 
                     elif j == 0:
 
-                        M[i,j] = -A[j] * ( (k_m[j] + k_m[j] ) / 2. ) / dz_m[j]
+                        mass_matrix[i,j] = -a_vct[j] * ( (k_m[j] + k_m[j] ) / 2. ) / dz_m[j]
 
                 elif i == j:
 
                     # diagonal: T_j
 
-                    M[i,j] = 1. + A[j] * ( ( (k_m[j] + k_m[j+1] ) / 2. ) / dz_m[j] + ( (k_m[j] + k_m[j-1] ) / 2. ) / dz_m[j-1])
+                    mass_matrix[i,j] = 1. + a_vct[j] * ( ( (k_m[j] + k_m[j+1] ) / 2. ) / dz_m[j] + ( (k_m[j] + k_m[j-1] ) / 2. ) / dz_m[j-1])
 
                 elif i - j == -1 and j > 1 and j < nz:
 
@@ -315,257 +336,254 @@ def build_coefficient_matrix(A,
 
                     if j < nz - 1:
 
-                        M[i,j] = -A[j] * ( (k_m[j] + k_m[j-1] ) / 2. ) / dz_m[j-1]
+                        mass_matrix[i,j] = -a_vct[j] * ( (k_m[j] + k_m[j-1] ) / 2. ) / dz_m[j-1]
 
                     elif j == nz - 1:
 
-                        M[i, j] = -A[j] * ((k_m[j] + k_m[j]) / 2.) / dz_m[j]
+                        mass_matrix[i, j] = -a_vct[j] * ((k_m[j] + k_m[j]) / 2.) / dz_m[j]
 
 
-                # ========== BUILD D ========== - right hand side vector 
+                # ========== BUILD d_vct ========== - right hand side vector 
 
-                # D consists of multiple components
+                # d_vct consists of multiple components
 
-                # we say D = T + A * Q + B
+                # we say d_vct = T + a_vct * q_vct + b_vct
 
                 if j > 0 and j < nz-1:
 
-                    Q[j] = ( ( (k_m[j] + k_m[j+1] ) / 2. ) / dz_m[j] )*TO[j+1] - (( ( (k_m[j] + k_m[j+1] ) / 2. ) / dz_m[j] ) + ( ( (k_m[j] + k_m[j-1] ) / 2. ) / dz_m[j-1] )) * TO[j] + ( ( (k_m[j] + k_m[j-1] ) / 2. ) / dz_m[j-1] )*TO[j-1]
+                    q_vct[j] = ( ( (k_m[j] + k_m[j+1] ) / 2. ) / dz_m[j] )*temp_old[j+1] - (( ( (k_m[j] + k_m[j+1] ) / 2. ) / dz_m[j] ) + ( ( (k_m[j] + k_m[j-1] ) / 2. ) / dz_m[j-1] )) * temp_old[j] + ( ( (k_m[j] + k_m[j-1] ) / 2. ) / dz_m[j-1] )*temp_old[j-1]
 
 
-                    # B - correction that represents the second term on the right-hand side on the equation 
+                    # b_vct - correction that represents the second term on the right-hand side on the equation 
                     if NLflag == 0:
-                        rho_A = density(pdb, TO[j], lit_p[j], ph[j])
-                        Cp_A  = heat_capacity(pdb, TO[j], ph[j])
+                        rho_A = density(pdb, temp_old[j], lit_p[j], ph[j])
+                        Cp_A  = heat_capacity(pdb, temp_old[j], ph[j])
                     else: 
                         rho_A = lhs.rho
                         Cp_A = lhs.Cp
            
                     if step == 0:
                         if NLflag == 0:
-                            rho_B = density(pdb,TO[j],lit_p[j],ph[j])
-                            Cp_B = heat_capacity(pdb,TO[j],ph[j])
+                            rho_B = density(pdb,temp_old[j],lit_p[j],ph[j])
+                            Cp_B = heat_capacity(pdb,temp_old[j],ph[j])
                         else: 
                             rho_B = lhs.rho 
                             Cp_B = lhs.Cp 
-                        # B - predictor step 
-                        B[j] = -TO[j] * ( rho_A * Cp_A - rho_B * Cp_B) / (rho_A * Cp_A)
+                        # b_vct - predictor step 
+                        b_vct[j] = -temp_old[j] * ( rho_A * Cp_A - rho_B * Cp_B) / (rho_A * Cp_A)
 
                     elif step == 1: 
                         if NLflag == 0:
-                            rho_B = density(pdb,TO[j],lit_p[j],ph[j])
-                            Cp_B = heat_capacity(pdb,TO[j],ph[j])
+                            rho_B = density(pdb,temp_old[j],lit_p[j],ph[j])
+                            Cp_B = heat_capacity(pdb,temp_old[j],ph[j])
                         else: 
                             rho_B = lhs.rho 
                             Cp_B = lhs.Cp 
 
-                        # B - corrector step 
+                        # b_vct - corrector step 
 
-                        B[j] = - ((TPr[j] + TO[j]) * ( rho_B*Cp_B - rho_A*Cp_A ) / ( rho_B*Cp_A + rho_B*Cp_A))
+                        b_vct[j] = - ((temp_pr[j] + temp_old[j]) * ( rho_B*Cp_B - rho_A*Cp_A ) / ( rho_B*Cp_A + rho_B*Cp_A))
 
 
-                    D[j] = TO[j] + A[j] * Q[j] + B[j]
-    return M,D
+                    d_vct[j] = temp_old[j] + a_vct[j] * q_vct[j] + b_vct[j]
+    return mass_matrix,d_vct
+# --- 
+def fill_phase_properties(g_input:GeomInput,z:np.ndarray,left_right:bool,ph:np.ndarray)->np.ndarray:
+    
+    if left_right:
+        ph[z<g_input.ocr] = dict_surf['oceanic_crust']
+        ph[z>=g_input.ocr] = dict_surf['sub_plate']
+    elif not left_right:
+        if g_input.lc != 0.0:
+            ph[z<g_input.cr*(1-g_input.lc)] = dict_surf['upper_crust']
+            ph[(z>=g_input.cr*(1-g_input.lc))
+               and (z<g_input.cr)] = dict_surf['lower_crust']
+        elif g_input.lc == 0.0:
+            ph[z<g_input.cr] = dict_surf['upper_crust']
+        ph[(z>=g_input.cr) and  (z<g_input.lit_mt+g_input.cr)] = dict_surf['overriding_lm']
+        ph[(z>=g_input.lit_mt+g_input.cr)] = dict_surf['wedge']
+    
+    return ph-1
 
-#-----------------------------------------------------------------------------------------
 #@njit 
-def compute_ocean_plate_temperature(ctrl:NumericalControls
-                                    ,lhs:ctrl_LHS
-                                    ,scal:Scal
-                                    ,pdb:PhaseDataBase
-                                    ,theta_in:float)->tuple[ctrl_LHS, NDArray[np.float64], NDArray[np.float64]]:
-    
+def compute_half_space_cooling_model(ctrl_tbc:CtrlTemperatureBC
+                                 ,ctrl:NumericalControls
+                                 ,ioctrl:IOControls
+                                 ,pdb:PhaseDataBase
+                                 ,g_input:GeomInput
+                                 ,save_data:bool
+                                 ,left_right:bool)->CtrlTemperatureBC:
+    """_summary_
+
+    Args:
+        ctrl_tbc (CtrlTemperatureBC): Thermal boundary condition
+        ctrl (NumericalControls): Numerical Control
+        ioctrl (IOControls): Input/Output control
+        pdb (PhaseDataBase): Phase database
+        g_input (GeomInput): input geometry
+        save_data (bool): save h5py file with all the data 
+        left_right (bool): True:left , False: Right 
+
+    Returns:
+        CtrlTemperatureBC: Updated boundary control 
     """
+
+    # Spell out the structure
+    dz = ctrl_tbc.dz
+    dt = ctrl_tbc.dt
+    end_time = ctrl_tbc.end_time
+    nz = ctrl_tbc.nz
+    g = ctrl.g
+    temp_max = ctrl_tbc.temp_max
+    temp_min = ctrl_tbc.temp_top
+    van_keken = g_input.van_keken
+    theta_in = g_input.theta_in_slab
     
-    """
-
-    # Spell out the structure 
-    dz          = lhs.dz # m 
-    dt          = lhs.dt # year
-    end_time    = lhs.end_time    # million years 
-    nz          = lhs.nz                 # size of the spatial array (in km; max depth, assuming dz = 1km) 
-    depth_melt = lhs.depth_melt
-    alpha_g    = lhs.alpha_g
-    g          = ctrl.g
-    Tmax       = ctrl.Tmax
-    Ttop       = ctrl.Ttop
-    van_keken_option = lhs.van_keken
-
-    
-    option_1D_solve = lhs.option_1D_solve 
-
     nt = int(end_time / dt + 1)
 
     t = zeros((1,nt))
 
+    z = np.linspace(0,(nz*dz),nz)
 
-    # ========== initial conditions ========== 
-
-    if theta_in !=0: 
-        z    = np.linspace(0,nz*dz,nz)
-    else: 
-        z    = np.linspace(0,(nz*dz)/np.cos(theta_in),nz)
-    ph   = np.zeros([nz],dtype = np.int32) # I assume that everything is mantle 
-    ph[z<6000/scal.L] = np.int32(1)
-
-    if lhs.van_keken == 1: 
+    if van_keken:
         from scipy import special
-        Cp    = 1250/scal.Cp
-        k     = 3.0/scal.k
-        rho   = 3300/scal.rho
-        kappa = k/rho/Cp 
-        t     = lhs.c_age_plate
-        T_lhs = Ttop+(Tmax-Ttop) * special.erf(z /2 /np.sqrt(t * kappa))
-        lhs.z[:] = -z[:] 
-        lhs.LHS[:] = T_lhs[:]
-        P = ctrl.g * z * rho
-        if ctrl.adiabatic_heating == 1: 
-            T_lhs = T_lhs * np.exp((3e-5/rho/Cp) * P )
+        print('         Computing the temperature field using'
+              'the analytical half-space cooling model...')
 
-        return lhs,[],[]
+        cp    = ctrl_tbc.cp
+        k     = ctrl_tbc.k
+        rho   = ctrl_tbc.rho
+        kappa = k/rho/cp
+        t     = ctrl_tbc.slab_age
+        temperature_bc = temp_min+(temp_max-temp_min) * special.erf(z /2 /np.sqrt(t * kappa))
+        ctrl_tbc.z[:] = -z[:]
+        ctrl_tbc.temperature_1d = temperature_bc
+    else:
 
+        if theta_in != 0 and left_right:
+            z    = np.linspace(0,(nz*dz)/np.cos(theta_in),nz)
+            dz = np.diff(z)
+            ctrl_tbc.dz = dz
+            print('         The z vector of the left boundary condition has been'
+                  'corrected with the initial slab angle.')
 
+        ph   = np.zeros([nz],dtype = np.int32)
+
+        ph = fill_phase_properties(g_input,z,left_right,ph)
     
-
+        temp_old = np.ones((len(z)),dtype=np.float64) * temp_max
     
-    Told = compute_initial_geotherm(ctrl.Tmax,z,scal,ctrl.adiabatic_heating)
+        lit_p = _compute_lithostatic_pressure(nz,ph,g,dz,temp_old,pdb)
     
-    
+        temperature       = np.zeros([nt,nz],dtype=np.float64)
+        pressure          = np.zeros([nt,nz],dtype=np.float64)
+        conductivity      = np.zeros([nt,nz],dtype=np.float64)
+        capacity          = np.zeros([nt,nz],dtype=np.float64)
+        density           = np.zeros([nt,nz],dtype=np.float64)
 
-    
-    lit_p = _compute_lithostatic_pressure(nz,ph,g,dz,Told,pdb)
-    
-
-
-    temperature       = zeros([nt,nz],dtype=np.float64)
-    pressure          = zeros([nt,nz],dtype=np.float64)
-    conductivity      = zeros([nt,nz],dtype=np.float64)
-    capacity          = zeros([nt,nz],dtype=np.float64)
-    density           = zeros([nt,nz],dtype=np.float64)
-
-    T_1t = zeros([nt,nz],dtype=np.float64)
-    temperature[0,:] = Told
-    pressure[0,:] = lit_p
-    # print(Told)
+        temperature[0,:] = temp_old
+        pressure[0,:] = lit_p
 
 
-    k_m = zeros((nz),dtype=np.float64)
-    heat_capacity_m = zeros((nz),dtype=np.float64)
-    density_m = zeros((nz),dtype=np.float64)
-    k_tmp = zeros((nz),dtype=np.float64)
-    Cp_tmp = zeros((nz),dtype=np.float64)
-    rho_tmp = zeros((nz),dtype=np.float64)
+        k_m = np.zeros((nz),dtype=np.float64)
+        heat_capacity_m = np.zeros((nz),dtype=np.float64)
+        density_m = np.zeros((nz),dtype=np.float64)
+        k_tmp = np.zeros((nz),dtype=np.float64)
+        cp_tmp = np.zeros((nz),dtype=np.float64)
+        rho_tmp = np.zeros((nz),dtype=np.float64)
 
-    Ttop = ctrl.Ttop
-    Tmax = np.max(Told)
+        for time in range(1,nt):
 
-    ind_z_lit = np.where(z>=120e3/scal.L)[0][0] # I force the temperature to be T_max at this dept -> Otherwise I have a temperature jump, and i do not know how much
-    for time in range(1,nt):
-          
-        t[0,time] = t[0,time] + time*dt
-        TO = temperature[time-1,:] # temperature at the previous time step
-        TG  = TO
+            t[0,time] = t[0,time] + time*dt
+            temp_old_tl = temperature[time-1,:] # temperature at the previous time step
+            temp_guess  = temp_old_tl
 
-        M = zeros((nz, nz),dtype=np.float64)     # pre-allocate M array
+            mass_matrix = np.zeros((nz, nz),dtype=np.float64)     # pre-allocate mass_matrix array
 
 
-        A               = zeros((nz),dtype=np.float64)
+            a_vct  = np.zeros((nz),dtype=np.float64)
+            d_vct  = np.zeros((nz),dtype=np.float64)     # pre-allocate D column vector
+            q_vct  = np.zeros((nz),dtype=np.float64)
+            b_vct  = np.zeros((nz),dtype=np.float64)
 
-        D               = zeros((nz),dtype=np.float64)     # pre-allocate D column vector
+            temp_pr = np.zeros(nz,dtype=np.float64)
 
-        Q               = zeros((nz),dtype=np.float64)
+            it = 0
+            res = 1.0
+            # Fixed point iteration
+            while res > 1e-6 and it < 10:
+                for step in range(2):
+                        mass_matrix,d_vct = build_coefficient_matrix(a_vct=a_vct
+                                                                     ,b_vct=b_vct
+                                                                     ,d_vct=d_vct
+                                                                     ,q_vct=q_vct
+                                                                     ,mass_matrix=mass_matrix
+                                                                     ,pdb=pdb
+                                                                     ,ph=ph
+                                                                     ,temp_old = temp_old
+                                                                     ,temp_guess=temp_guess
+                                                                     ,temp_pr=temp_pr
+                                                                     ,k_m=k_m
+                                                                     ,density_m = density_m
+                                                                     ,heat_capacity_m=heat_capacity_m
+                                                                     ,step=step
+                                                                     ,lit_p=lit_p
+                                                                     ,temp_min=temp_min
+                                                                     ,temp_max=temp_max
+                                                                     ,dt = ctrl_tbc.dt
+                                                                     ,dz = ctrl_tbc.dz
+                                                                     ,nz = ctrl_tbc.nz)
+                        temp_new = transpose(np.linalg.solve(mass_matrix, d_vct))    # solve Mx = d_vct for x
 
-        B               = zeros((nz),dtype=np.float64)
+                        if step == 0:
+                            temp_pr = temp_new
 
-        TPr = np.zeros(nz,dtype=np.float64)
+                res = np.linalg.norm(temp_new-temp_guess,2)/np.linalg.norm(temp_new+temp_guess,2)
+                if np.isnan(res):
+                    raise ValueError("NaN detected in the residual")
+                temp_guess = temp_new * 0.8 + temp_guess * (0.2)
+                lit_p = _compute_lithostatic_pressure(nz,ph,g,dz,temp_old,pdb)
+                it += 1
 
-        it = 0 
-        res = 1.0
-        while res > 1e-6 and it < 10:
-            for step in range(2):   
 
-
-                    M,D = build_coefficient_matrix(A,B,D,Q,M,pdb,ph,ctrl,lhs,TO,TG,TPr,k_m,density_m,heat_capacity_m,step,lit_p,scal,ind_z_lit,Ttop,Tmax)
-                    # ========== Solve system of equations using numpy.linalg.solve ==========
-
-                    if option_1D_solve == 1:
-                        # brute force solve
-                        Tnew = transpose(np.linalg.solve(M, D))    # solve Mx = D for x
-                    elif option_1D_solve == 2:    
-                        # make ordered banded diagonal matrix MD from M 
-                        upper = 1
-                        lower = 1
-                        n = M.shape[1]
-                        assert(all(M.shape ==(n,n)))
-
-                        ab = zeros((2*n-1, n))
-
-                        for i in range(n):
-                            ab[i,(n-1)-i:] = diagonal(M,(n-1)-i)
-
-                        for i in range(n-1): 
-                            ab[(2*n-2)-i,:i+1] = diagonal(M,i-(n-1))
-
-                        mid_row_inx = int(ab.shape[0]/2)
-                        upper_rows = [mid_row_inx - i for i in range(1, upper+1)]
-                        upper_rows.reverse()
-                        upper_rows.append(mid_row_inx)
-                        lower_rows = [mid_row_inx + i for i in range(1, lower+1)]
-                        keep_rows = upper_rows+lower_rows
-                        ab = ab[keep_rows,:]
-
-                        Tnew = transpose(solve_banded((1,1),ab, D))
-
-                    if step == 0:
-                        TPr = Tnew 
-                    elif step == 1 and it == 0:
-                        T_1t[time,:] = Tnew
-            res = np.linalg.norm(Tnew-TG,2)/np.linalg.norm(Tnew+TG,2)
-            if np.isnan(res) == True:
-                print("NaN detected in the residual")
-                sys.exit(1)
-            TG = Tnew * 0.8 + TG * (0.2) 
-            lit_p = _compute_lithostatic_pressure(nz,ph,g,dz,Told,pdb)
-            it += 1
-
-            # end for-loop predictor-corrector step 
-        #print_ph('Time %d, it %d'%(time,it))
-        lit_p = _compute_lithostatic_pressure(nz,ph,g,dz,Told,pdb)
-        Cp_tmp,k_tmp,rho_tmp = _compute_Cp_k_rho(ph,pdb,Cp_tmp,k_tmp,rho_tmp,Tnew,lit_p,lhs.non_linearities,[lhs.Cp,lhs.k,lhs.rho],0)
-        temperature[time,:] = Tnew
-        pressure[time,:]    = lit_p
-        capacity[time,:]    = Cp_tmp
-        conductivity[time,:] = k_tmp 
-        density[time,:]      = rho_tmp
-        
-    # -> Save the actual LHS 
-    # Correction 
-    #temperature[:,-z<-120e3/scal.L] = ctrl.Tmax
-
-    # Current age index
-    current_age_index = np.where(t[0] >= lhs.c_age_plate)[0][0]
-    lhs.LHS[:] = temperature[current_age_index]
-    lhs.z[:] = - z
-
-    TTime,ZZ = np.meshgrid(t[0],z)
-    TTime = TTime*scal.T/365.25/60/60/24/1e6
-    TTime = TTime[:,1::]
-    ZZ    = ZZ[:,1::] 
-    ZZ    = ZZ*scal.L/1e3
-    Tem   = temperature.T[:,1::]*scal.Temp - 273.15
-    Cp    = capacity.T[:,1::]*scal.Cp 
-    k     = conductivity.T[:,1::]*scal.k 
-    rho   = density.T[:,1::]*scal.rho 
-    LP    = pressure.T[:,1::]*scal.stress/1e9
+            lit_p = _compute_lithostatic_pressure(nz,ph,g,dz,temp_new,pdb)
+            cp_tmp,k_tmp,rho_tmp = _compute_Cp_k_rho(ph,pdb,cp_tmp,k_tmp,rho_tmp,temp_new,lit_p,0)
+            temperature[time,:] = temp_new
+            pressure[time,:]    = lit_p
+            capacity[time,:]    = cp_tmp
+            conductivity[time,:] = k_tmp 
+            density[time,:]      = rho_tmp
 
 
 
-    return lhs, t, temperature
+        # Current age index
+        current_age_index = np.where(t[0] >= ctrl_tbc.slab_age)[0][0]
+        ctrl_tbc.temperature_1d = temperature[current_age_index]
+        ctrl_tbc.z[:] = - z
+        ctrl_tbc.temperature_2d_field[:,:] = temperature
+
+
+        if data_base: 
+            
+
+        TTime,ZZ = np.meshgrid(t[0],z)
+        TTime = TTime*scal.T/365.25/60/60/24/1e6
+        TTime = TTime[:,1::]
+        ZZ    = ZZ[:,1::] 
+        ZZ    = ZZ*scal.L/1e3
+        Tem   = temperature.T[:,1::]*scal.Temp - 273.15
+        Cp    = capacity.T[:,1::]*scal.Cp 
+        k     = conductivity.T[:,1::]*scal.k 
+        rho   = density.T[:,1::]*scal.rho 
+        LP    = pressure.T[:,1::]*scal.stress/1e9
+
+
+
+    return ctrl_tbc,g_input
 
 
 
 
-@timing_function
 def compute_initial_LHS(ctrl,lhs,scal,pdb,theta_in):
     
 
@@ -607,3 +625,73 @@ def update_age_lhs(ctrl,lhs,scal,pdb,theta_in):
         
 
     return lhs
+
+def configure_right_boundary_condition(ctrl_tbc:CtrlTemperatureBC
+                                 ,ctrl:NumericalControls
+                                 ,ioctrl:IOControls
+                                 ,pdb:PhaseDataBase
+                                 ,g_input:GeomInput)->CtrlTemperatureBC:
+    
+    if ctrl_tbc.right_boundary == 'Continental':
+        # Compute the continental boundary condition
+        print('')
+    elif ctrl_tbc.right_boundary == 'Oceanic': 
+        if ctrl_tbc.right_age is None: 
+            raise ValueError('Age of the right boundary condition has not been set.')
+        # -> change the g_input 
+        if g_input.lab_d != g_input.slab_tk:
+            raise Warning('The lithosphere depth of the right boundary condition is not the same of the slab thickness. '
+                          'The Geom_Input has been modified')
+
+            g_input.lab_d = g_input.slab_tk
+        
+        if ctrl_tbc.recalculate: 
+            # Compute half space cooling model 
+            print('')
+        else: 
+            # read database -> if same data -> import from h5py -> and set up the boundary condition
+            print('')
+    
+    
+    
+    
+    return ctrl_tbc 
+# --- # 
+
+def configure_left_boundary_condition(ctrl_tbc:CtrlTemperatureBC
+                                 ,ctrl:NumericalControls
+                                 ,ioctrl:IOControls
+                                 ,pdb:PhaseDataBase
+                                 ,g_input:GeomInput)->CtrlTemperatureBC:
+    
+    if ctrl_tbc.recalculate:
+        # Compute lhs 
+        print('')
+    elif not ctrl_tbc.recalculate: 
+        # read cache database -> are the data of the involved the phase the same? 
+        # if not -> compute and save 
+        print('')
+    
+    
+    return ctrl_tbc
+
+# --- # 
+def configure_boundary_condition(ctrl_tbc:CtrlTemperatureBC
+                                 ,ctrl:NumericalControls
+                                 ,ioctrl:IOControls
+                                 ,pdb:PhaseDataBase
+                                 ,g_input:GeomInput)->CtrlTemperatureBC:
+    
+    # Configure left boundary condition
+    
+    
+    # Configure right boundary condition 
+    
+    
+    
+    
+    
+    
+    
+    return ctrl_tbc
+# --- # 
