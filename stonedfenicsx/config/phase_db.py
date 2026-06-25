@@ -2,6 +2,7 @@
 from numba import float64,int32
 from numba.experimental import jitclass
 import numpy as np
+from numpy.typing import NDArray
 from stonedfenicsx.utils import print_ph
 from stonedfenicsx.config.config_utils import update_ip_file
 from pathlib import Path
@@ -1034,19 +1035,19 @@ def read_expansivity(tag:str)->ThermalExpansivity:
 #-----------------------------------------------------------------------------
 @njit
 def heat_conductivity(pdb:PhaseDataBase
-                      ,temp:NDArray[np.float64]
-                      ,pres:NDArray[np.float64]
-                      ,rho:NDArray[np.float64]
-                      ,cp:NDArray[np.float64]
-                      ,ph:int)->NDArray[np.float64]:    
+                      ,temp:NDArray[np.float64]|np.float64
+                      ,pres:NDArray[np.float64]|np.float64
+                      ,rho:NDArray[np.float64]|np.float64
+                      ,cp:NDArray[np.float64]|np.float64
+                      ,ph:int)->NDArray[np.float64]:
 
     """Compute the heat conductivity for a given Pressure and Temperature
     Args:
         pdb (PhaseDataBase): Phase Data Base containing the material properties as numpy arrays, indexed by phase ID
-        T (NDArray[np.float64]): Temperature field as a numpy array
-        p (NDArray[np.float64]): Pressure field as a numpy array
-        rho (NDArray[np.float64]): Density field as a numpy array
-        Cp (NDArray[np.float64]): Heat capacity field as a numpy array
+        T (NDArray[np.float64] | np.float64): Temperature field as a numpy array
+        p (NDArray[np.float64] | np.float64): Pressure field as a numpy array
+        rho (NDArray[np.float64] | np.float64): Density field as a numpy array
+        Cp (NDArray[np.float64] | np.float64): Heat capacity field as a numpy array
         ph (int): phase ID for which to compute the conductivity, used to index the material properties from the PhaseDataBase
     Returns:
         NDArray[np.float64]: array containing the heat conductivity
@@ -1055,82 +1056,83 @@ def heat_conductivity(pdb:PhaseDataBase
     It is used for computing the initial conductivity field for the oceanic plate thermal boundary condition.
     """
 
-    k_rad = pdb.A * np.exp(-(T-pdb.T_A)**2/ (2*pdb.x_A ** 2 )) + pdb.B * np.exp(-(T - pdb.T_B)**2 / (2* pdb.x_B**2))
+    k_rad = pdb.a_rad * np.exp(-(temp-pdb.temp_a)**2/ (2*pdb.x_a ** 2 )) + pdb.b_rad * np.exp(-(temp - pdb.temp_b)**2 / (2* pdb.x_b**2))
 
-    kappa_lat = pdb.k_a[ph] + pdb.k_b[ph] * np.exp(-(T-pdb.Tref)/pdb.k_c[ph]) + pdb.k_d[ph] * np.exp(-(T-pdb.Tref)/pdb.k_e[ph])
+    kappa_lat = pdb.k_a[ph] + pdb.k_b[ph] * np.exp(-(temp-pdb.temp_ref)/pdb.k_c[ph]) + pdb.k_d[ph] * np.exp(-(temp-pdb.temp_ref)/pdb.k_e[ph])
     
-    kappa_p   = np.exp(pdb.k_f[ph] * p)  
+    kappa_p   = np.exp(pdb.k_f[ph] * pres)
 
-    k = pdb.k0[ph] + kappa_lat * kappa_p * Cp * rho + k_rad * pdb.radio_flag[ph]
+    k = pdb.k0[ph] + kappa_lat * kappa_p * cp * rho + k_rad * pdb.radio_flag[ph]
 
-    return k 
+    return k
 #---------------------------------------------------------------------------------
 @njit
 def density(pdb:PhaseDataBase
-            ,T:NDArray[np.float64]
-            ,p:NDArray[np.float64]
+            ,temp:NDArray[np.float64]|np.float64
+            ,pres:NDArray[np.float64]|np.float64
             ,ph:int)->NDArray[np.float64]:
     """Compute the density for a given Pressure and Temperature, used for oceanic plate thermal boundary condition.
     
     Args:
         pdb (PhaseDataBase): Phase Data Base containing the material properties as numpy arrays, indexed by phase ID
-        T (NDArray[np.float64]): Temperature field as a numpy array
-        p (NDArray[np.float64]): Pressure field as a numpy array
+        T (NDArray[np.float64] | np.float64): Temperature field as a numpy array
+        p (NDArray[np.float64] | np.float64): Pressure field as a numpy array
         ph (int): phase ID for which to compute the density, used to index the material properties from the PhaseDataBase
     Returns:
         NDArray[np.float64]: array containing the density   
     Function to compute the density for a given Pressure and Temperature. 
     """
-    rho_0 = pdb.rho0[ph] 
+    rho_0 = pdb.rho0[ph]
     
     if pdb.option_rho[ph] == 0:
-        # constant variables 
-        return rho_0 
+        # constant variables
+        return rho_0
     else :
         # calculate rho
-        rho     = rho_0 * (1 - np.exp(- p * pdb.alpha2[ph])*( pdb.alpha0[ph] * (T - pdb.Tref) + (pdb.alpha1[ph]/2.) * ( T**2 - pdb.Tref**2 )))
+        rho     = rho_0 * (1 - np.exp(- pres * pdb.alpha2[ph])
+                           *( pdb.alpha0[ph] * (temp - pdb.Tref) + (pdb.alpha1[ph]/2.) * ( temp**2 - pdb.temp_ref**2 )))
         if pdb.option_rho[ph] == 2:
             # calculate the pressure dependence of the density
-            Kb = pdb.Kb[ph]
-            rho = rho * np.exp(p/Kb)    
+            kb = pdb.kb[ph]
+            rho = rho * np.exp(pres/kb)
     
     return rho
 
 #---------------------------------------------------------------------------------
 @njit
 def heat_capacity(pdb:PhaseDataBase
-                  ,T:NDArray[np.float64]
-                  ,ph:int)->NDArray[np.float64]:
+                  ,temp:NDArray[np.float64]|np.float64
+                  ,ph:int)->NDArray[np.float64]|np.float64:
     """Compute heat capacity
 
     Args:
         pdb (PhaseDataBase): Phase Data Base containing the material properties as numpy arrays, indexed by phase ID
-        T (NDArray[np.float64]): Temperature field as a numpy array
+        T (NDArray[np.float64] | np.float64): Temperature field as a numpy array
         ph (int): phase ID for which to compute the heat capacity, used to index the material properties from the PhaseDataBase
 
     Returns:
-        NDArray[np.float64]: array containing the heat capacity
+        NDArray[np.float64] | np.float64: array containing the heat capacity
     """
 
-    C_p = pdb.C0[ph] + pdb.C1[ph] * (T**(-0.5)) + pdb.C2[ph] * T**(-2.0) + pdb.C3[ph] * (T**(-3.)) + pdb.C4[ph]* T + pdb.C5[ph] * T**2
+    cp = pdb.c0[ph] + pdb.c1[ph] * (temp**(-0.5)) + pdb.c2[ph] * temp**(-2.0) + pdb.c3[ph] * (temp**(-3.)) + pdb.c4[ph]* temp + pdb.c5[ph] * temp**2
     
-    return C_p
+    return cp
 
-# --- 
+# ---
 @njit
-def compute_thermal_properties(pdb:PhaseDataBase,temp:np.ndarray|np.float64
-                               ,pres:np.ndarray|np.float64,
-                               ph:int)->tuple[np.ndarray|np.float64,np.ndarray|np.float64,np.ndarray|np.float64]:
+def compute_thermal_properties(pdb:PhaseDataBase,temp:NDArray[np.float64]|np.float64
+                               ,pres:NDArray[np.float64]|np.float64,
+                               ph:int)->tuple[NDArray[np.float64]|np.float64,NDArray[np.float64]|np.float64,NDArray[np.float64]|np.float64]:
     """_summary_
 
     Args:
         pdb (PhaseDataBase): _description_
-        temp (np.ndarray | np.float64): _description_
-        pres (np.ndarray | np.float64): _description_
+        temp (NDArray[np.float64] | np.float64): _description_
+        pres (NDArray[np.float64] | np.float64): _description_
         ph (int): _description_
 
     Returns:
-        tuple[np.ndarray|np.float64,np.ndarray|np.float64,np.ndarray|np.float64]: _description_
+        tuple[NDArray[np.float64]|np.float64,NDArray[np.float64]|np.float64,NDArray[np.float64]|np.float64]: _description_
     """
     
     cp   = heat_capacity(pdb,temp,ph)
@@ -1138,8 +1140,6 @@ def compute_thermal_properties(pdb:PhaseDataBase,temp:np.ndarray|np.float64
     k    = heat_conductivity(pdb,temp,pres,rho,cp,ph)
     
     return cp, rho, k
-
-# ---
 
 # ---
 
@@ -1152,38 +1152,38 @@ def compute_effective_stress(eps: float, eta: float) -> float:
     return 2 * eta * eps
 
 
-def effective_stress(tau_fr: np.ndarray, tau_v: np.ndarray) -> np.ndarray:
+def effective_stress(tau_fr: NDArray[np.float64], tau_v: NDArray[np.float64]) -> NDArray[np.float64]:
     """_summary_
 
     Args:
-        tau_fr (np.ndarray): array containing the frictional stress
-        tau_v (np.ndarray): viscous stresses
+        tau_fr (NDArray[np.float64]): array containing the frictional stress
+        tau_v (NDArray[np.float64]): viscous stresses
 
     Returns:
-        np.ndarray: effective stress
+        NDArray[np.float64]: effective stress
     """
     return tau_v * np.tanh(tau_fr / tau_v)
 
 
-def compute_tau_fr(pres: np.ndarray, phi: float) -> np.ndarray:
+def compute_tau_fr(pres: NDArray[np.float64], phi: float) -> NDArray[np.float64]:
     """_summary_
 
     Args:
-        pres (np.ndarray): lithostatic pressure
+        pres (NDArray[np.float64]): lithostatic pressure
         phi (float): friction angle
 
     Returns:
-        np.ndarray: failure shear stress
+        NDArray[np.float64]: failure shear stress
     """
     return pres * np.sin(np.radians(phi))
 
 
-def convert_velocity_strain_rate(wz: float, velocity: np.ndarray) -> np.ndarray:
+def convert_velocity_strain_rate(wz: float, velocity: NDArray[np.float64]) -> NDArray[np.float64]:
     """_summary_
 
     Args:
         wz (float): thickness of the weak zone
-        velocity (np.ndarray): velocity of convergence
+        velocity (NDArray[np.float64]): velocity of convergence
 
     Returns:
         strain rate: array with strain rate
@@ -1222,7 +1222,7 @@ def test_phase_pdb():
         
     return 0
 
-def compute_effective_stress_rheological(A:RheologicalFlowLaw,eps:float,pres:np.ndarray,temp:np.ndarray)->np.ndarray:
+def compute_effective_stress_rheological(A:RheologicalFlowLaw,eps:float,pres:NDArray[np.float64],temp:NDArray[np.float64])->NDArray[np.float64]:
     
     # strain indipendent  
     cds = A.b * np.exp(-(A.e + pres * A.v)/(_GAS_CONSTANT_ * temp)) 
@@ -1242,7 +1242,7 @@ def compute_bn(eps_ref:float,tau_ref:float,n)->float:
     
     return eps_ref * tau_ref**(-n)
 
-def compute_stress(eps:np.ndarray,bn:float,n:float)->np.ndarray:
+def compute_stress(eps:NDArray[np.float64],bn:float,n:float)->NDArray[np.float64]:
 
 
     return bn**(-1/n)*eps**(1/n)
@@ -1252,22 +1252,22 @@ def compute_stress(eps:np.ndarray,bn:float,n:float)->np.ndarray:
 
 @dataclass
 class Profile_Slab: 
-    z: InitVar[np.ndarray]
-    a: np.float32 
-    k:float = 3.1 
-    Tp: float = 1350+273.15 
-    kappa: float = 1e-7    
-    crd: np.ndarray = field(init=False)
-    temp_slab: np.ndarray = field(init=False)
-    dip : np.ndarray = field(init=False)
-    length :np.ndarray =field(init=False)
-    def __post_init__(self,z:np.ndarray[np.float32])->None:
+    z: InitVar[NDArray[np.float32]]
+    a: np.float32
+    k:float = 3.1
+    Tp: float = 1350+273.15
+    kappa: float = 1e-7
+    crd: NDArray[np.float32] = field(init=False)
+    temp_slab: NDArray[np.float32] = field(init=False)
+    dip : NDArray[np.float32] = field(init=False)
+    length :NDArray[np.float32] =field(init=False)
+    def __post_init__(self,z:NDArray[np.float32])->None:
         """ post init routine: generate the quadratic surface
-        of the slab using a vector (1,n) and the curvature of 
-        the parabula. 
+        of the slab using a vector (1,n) and the curvature of
+        the parabula.
 
         Args:
-            z (np.ndarray[np.float32]): z coordinates
+            z (NDArray[np.float32]): z coordinates
 
         """
         # Compute the coordinate x
@@ -1286,7 +1286,7 @@ class Profile_Slab:
         self.crd[1,:] = (z - z[0]) * 1e3
         return None
     @staticmethod
-    def cumulative_distance(x:np.ndarray,z:np.ndarray)->tuple[np.ndarray,np.ndarray,np.ndarray]:
+    def cumulative_distance(x:NDArray[np.float32],z:NDArray[np.float32])->tuple[NDArray[np.float32],NDArray[np.float32],NDArray[np.float32]]:
 
         dist = np.cumsum(np.sqrt(np.diff(x)**2+np.diff(z)**2))
         x_m = (x[:-1]+x[1:])/2 
@@ -1294,7 +1294,7 @@ class Profile_Slab:
         
         return x_m,z_m,dist
     @staticmethod 
-    def compute_dip(x:np.ndarray,z:np.ndarray)->np.ndarray:
+    def compute_dip(x:NDArray[np.float32],z:NDArray[np.float32])->NDArray[np.float32]:
         
         dx = np.diff(x)
         dz = np.diff(z)
@@ -1311,7 +1311,7 @@ class Profile_Slab:
         self.temp_slab = 273.15 + (Q*self.crd[1,:])/(self.k*Sq)     
     
 
-def convert_velocity(vel:np.ndarray)->np.ndarray:
+def convert_velocity(vel:NDArray[np.float64])->NDArray[np.float64]:
     
     vel = vel * 1e-2/365.25/60/60/24
     

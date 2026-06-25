@@ -1,7 +1,7 @@
 from pathlib import Path
 from dataclasses import field, dataclass
 import numpy as np
-from numpy import ndarray
+from numpy.typing import NDArray
 from stonedfenicsx.config.geometry import GeomInput
 # --- #
 # --- #
@@ -60,8 +60,8 @@ class CTRLBC:
     """General class for the controls associated to the boundary condition
     """
     constant: int = 1
-    interval_val: ndarray[np.float64] =  field(default_factory=lambda: np.array([5.0, 0.0])) #[age/velocity][Myr|cm/yr]
-    interval_time:ndarray[np.float64] = field(default_factory=lambda: np.array([5.0, 0.0])) # [Myr]
+    interval_val: NDArray[np.float64] =  field(default_factory=lambda: np.array([5.0, 0.0])) #[age/velocity][Myr|cm/yr]
+    interval_time:NDArray[np.float64] = field(default_factory=lambda: np.array([5.0, 0.0])) # [Myr]
     def check_time_variation(self, ctrl:NumericalControls):
         """Raise errors in case there are inconsistent option activated
 
@@ -119,10 +119,10 @@ class CtrlTemperatureBC(CTRLBC): # ctrltbc
     end_time:float = 180
     right_boundary : str = 'Continental'
     right_age : float = 30.0 # Useful in case the right boundary condition is a oceanic lithosphere. 
-    z: ndarray[np.float64] = field(init=False)
-    temperature_1d: ndarray[np.float64] = field(init=False)
-    temperature_2d_field: ndarray[np.float64] = field(init=False)
-    t_res_vec: ndarray[np.float64] = field(init=False)
+    z: NDArray[np.float64] = field(init=False)
+    temperature_1d: NDArray[np.float64] = field(init=False)
+    temperature_2d_field: NDArray[np.float64] = field(init=False)
+    t_res_vec: NDArray[np.float64] = field(init=False)
     self_consistent_flag: int = 1
 
     def update_thermal_bc(self,g_input:GeomInput,ctrl:NumericalControls) -> None:
@@ -156,7 +156,7 @@ class CtrlKy(CTRLBC):
         CTRLBC (_type_): The superclass
     main instance name: ctrlky  
     """
-    v_s:  ndarray[np.float64] = field(
+    v_s:  NDArray[np.float64] = field(
         default_factory=lambda: np.array([5.0, 0.0], dtype=np.float64)
     )
     def check_kinematic_bc(self,ctrl:NumericalControls):

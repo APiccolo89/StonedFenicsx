@@ -34,16 +34,21 @@ Convergence criterion:
 """
 
 # modules
-from stonedfenicsx.material_property.phase_db import PhaseDataBase
-from stonedfenicsx.material_property.compute_material_property import compute_thermal_properties
+from stonedfenicsx.config.phase_db import PhaseDataBase,compute_thermal_properties,density,heat_capacity
 from stonedfenicsx.config.scal import Scal
 from stonedfenicsx.config.numerical_control import CtrlTemperatureBC,NumericalControls,IOControls
 from stonedfenicsx.config.geometry import GeomInput
 from stonedfenicsx.create_mesh.create_mesh import dict_surf
-import h5py 
-import numpy as np 
+import h5py
+import numpy as np
+from numpy.typing import NDArray
 from numba import njit
+import mpi4py 
+import psutil as pst
+import pathlib 
+from pathlib import Path
 
+_NAME_H5_FILE_TMP = 'temporary_file.h5'
 
 power       = np.power
 exp         = np.exp
@@ -54,6 +59,48 @@ all         = np.all
 diagonal    = np.diagonal
 solve_banded= la.solve_banded
 
+def save_data_set(f:h5py.File,buf:any,name:str)->None:
+    """save the cached file
+
+    Args:
+        f (h5py.File): 
+        buf (any): _description_
+        name (str): _description_
+    """
+
+    if name in f:
+        del f[name]
+    else:
+        f.create_dataset(name,data=buf)
+
+def check_race_condition(ioctrl:IOControls)->bool:
+    """Check if the file is opened by an other process 
+    if not -> go and open
+
+    Args:
+        ioctrl (IOControls): _description_
+
+    Returns:
+        bool: _description_
+    """
+
+    path_cached = ioctrl.path_cached_information
+
+    path_h5 = path_cached/_NAME_H5_FILE_TMP
+    
+    race = False
+    
+    for proc in pst.process_iter(['pid', 'name']):
+        try:
+            for f in proc.open_files():
+                if Path(f.path).resolve() == Path(path_h5):
+                    race = True
+        except (pst.NoSuchProcess,
+                pst.AccessDenied,
+                pst.ZombieProcess):
+            pass
+
+    return race
 
 @njit
 def _compute_lithostatic_pressure(
@@ -61,7 +108,7 @@ def _compute_lithostatic_pressure(
                                  ph: NDArray[np.int32],          # (nz,) phase id per level (or per cell)
                                  g: float,                       # m/s^2, vertical component
                                  dz: float,                      # m
-                                 T: NDArray[np.float64],         # (nz,) K
+                                 temp: NDArray[np.float64],         # (nz,) K
                                  pdb: "PhaseDataBase",
                                 )  -> NDArray[np.float64]:
     """
@@ -81,23 +128,23 @@ def _compute_lithostatic_pressure(
     ----------
     nz : int
         Number of grid points in the vertical direction.
-    ph : ndarray
+    ph : NDArray[np.int32]
         Phase identifier array along the 1D column (length ``nz``). Used to select
         material laws/properties from ``pdb``.
     g : float
         Vertical component of gravitational acceleration (m/s^2). Use sign
         consistently with your z-axis convention.
-    T : ndarray
+    T : NDArray[np.float64]
         Temperature profile along the column (K), length ``nz``.
     pdb : object
         Material database/dataset providing density and other thermodynamic/elastic
         properties as functions of phase, temperature and pressure.
 
-    NB: the parameters are usually scaled within the numerical routines
+    NB: the parameters are usually sced within the numerical routines
     
     Returns
     -------
-    lit_p : ndarray
+    lit_p : NDArray[np.float64]
         Lithostatic pressure profile (Pa), length ``nz``.
 
     Notes
@@ -111,42 +158,31 @@ def _compute_lithostatic_pressure(
     """
 
     #compute lithostatic pressure:
-    lit_p_o =  zeros((nz))
-    lit_p   = zeros((nz))
+    lit_p_o =  np.zeros((nz))
+    lit_p   = np.zeros((nz))
     res = 1.0
     while res>1e-6:
         for i in range(0,nz):
-            rho = density(pdb,T[i],lit_p_o[i],ph[i])
+            rho = density(pdb,temp[i],lit_p_o[i],ph[i])
             rhog = rho*g
             if i == 0:
                 lit_p[i] = 0.0
             else: 
-                lit_p[i] = lit_p[i-1]+rhog*dz 
+                lit_p[i] = lit_p[i-1]+rhog*dz
         
         res =  np.linalg.norm(lit_p-lit_p_o,2)/np.linalg.norm(lit_p+lit_p_o,2)
-        lit_p_o[:]=lit_p 
+        lit_p_o[:]=lit_p
     return lit_p
-    
-        
-# we will solve the system Mx = d_vct with
-# x = the temperature vector (our unknowns)
-# mass_matrix = our matrix of coefficients in front of the temperature (known)
-# d_vct = the right hand side vector (known)
 
-# first, we need to build mass_matrix and d_vct
-# mass_matrix and d_vct are different in the predictor and corrector step 
 #-----------------------------------------------------------------------------------------
 @njit
-def _compute_Cp_k_rho(ph   : NDArray[np.float64]
+def compute_cp_k_rho(ph   : NDArray[np.float64]
                       ,pdb : PhaseDataBase
-                      ,Cp  : NDArray[np.float64]
+                      ,cp  : NDArray[np.float64]
                       ,k   : NDArray[np.float64]
                       ,rho : NDArray[np.float64]
-                      ,T   : NDArray[np.float64]
-                      ,p   : NDArray[np.float64]
-                      ,flagNL : int 
-                      ,CValues: NDArray[np.float64]
-                      ,ind_z: int)->tuple[NDArray[np.float64],NDArray[np.float64],NDArray[np.float64]]:
+                      ,temp : NDArray[np.float64]
+                      ,pres  : NDArray[np.float64])->tuple[NDArray[np.float64],NDArray[np.float64],NDArray[np.float64]]:
     
     """Compute the thermal material properties 
     Function that compute all the three material properties that are required for solving the energy equation. 
@@ -158,58 +194,55 @@ def _compute_Cp_k_rho(ph   : NDArray[np.float64]
         rho : rho vector
         T   : temperature vector
         p   : pressure vector 
-        ind_z: must be removed i don't remember what does 
     Returns:
         Cp,k,rho => vector containing density, heat capacity, and conductivities that are computed using pressure and temperature vector
     """
     
-    
-    it = len(T)
-    
-    for i in range(it):
-        cp[i], rho[i], k[i] = compute_thermal_properties(pdb,T[i],p[i],ph[i])
+    for jj in enumerate(temp):
+        i = jj[0]
+        cp[i], rho[i], k[i] = compute_thermal_properties(pdb,jj[1],pres[i],ph[i])
 
     return cp,k,rho
 #-----------------------------------------------------------------------------------------
 @njit
-def build_coefficient_matrix(a_vct:np.ndarray,
-                             b_vct:np.ndarray,
-                             d_vct:np.ndarray,
-                             q_vct:np.ndarray,
-                             mass_matrix:np.ndarray,
+def build_coefficient_matrix(a_vct:NDArray[np.float64],
+                             b_vct:NDArray[np.float64],
+                             d_vct:NDArray[np.float64],
+                             q_vct:NDArray[np.float64],
+                             mass_matrix:NDArray[np.float64],
                              pdb:PhaseDataBase,
-                             ph:np.ndarray,
-                             temp_old:np.ndarray,
-                             temp_guess:np.ndarray,
-                             temp_pr:np.ndarray,
-                             k_m:np.ndarray,
-                             density_m:np.ndarray,
-                             heat_capacity_m:np.ndarray,
+                             ph:NDArray[np.int32],
+                             temp_old:NDArray[np.float64],
+                             temp_guess:NDArray[np.float64],
+                             temp_pr:NDArray[np.float64],
+                             k_m:NDArray[np.float64],
+                             density_m:NDArray[np.float64],
+                             heat_capacity_m:NDArray[np.float64],
                              step:int,
-                             lit_p:np.ndarray,
+                             lit_p:NDArray[np.float64],
                              temp_min:np.float64,
                              temp_max:np.float64,
                              nz:int,
                              dt:np.float64,
-                             dz:np.float64)->tuple[np.ndarray,np.ndarray]:
+                             dz:np.float64)->tuple[NDArray[np.float64],NDArray[np.float64]]:
     """Assembly the system of equation
 
     Args:
-        a_vct (np.ndarray): _description_
-        b_vct (np.ndarray): _description_
-        d_vct (np.ndarray): _description_
-        q_vct (np.ndarray): _description_
-        mass_matrix (np.ndarray): _description_
+        a_vct (NDArray[np.float64]): _description_
+        b_vct (NDArray[np.float64]): _description_
+        d_vct (NDArray[np.float64]): _description_
+        q_vct (NDArray[np.float64]): _description_
+        mass_matrix (NDArray[np.float64]): _description_
         pdb (PhaseDataBase): _description_
-        ph (np.ndarray): _description_
-        temp_old (np.ndarray): _description_
-        temp_guess (np.ndarray): _description_
-        temp_pr (np.ndarray): _description_
-        k_m (np.ndarray): _description_
-        density_m (np.ndarray): _description_
-        heat_capacity_m (np.ndarray): _description_
+        ph (NDArray[np.int32]): _description_
+        temp_old (NDArray[np.float64]): _description_
+        temp_guess (NDArray[np.float64]): _description_
+        temp_pr (NDArray[np.float64]): _description_
+        k_m (NDArray[np.float64]): _description_
+        density_m (NDArray[np.float64]): _description_
+        heat_capacity_m (NDArray[np.float64]): _description_
         step (int): _description_
-        lit_p (np.ndarray): _description_
+        lit_p (NDArray[np.float64]): _description_
         temp_min (np.float64): _description_
         temp_max (np.float64): _description_
         nz (int): _description_
@@ -217,9 +250,10 @@ def build_coefficient_matrix(a_vct:np.ndarray,
         dz (np.float64): _description_
 
     Returns:
-        tuple[np.ndarray,np.ndarray]: _description_
+        tuple[NDArray[np.float64],NDArray[np.float64]]: _description_
     """
 
+    dz_m               = np.full((nz), dz) # current assumption: incompressible
 
     if step == 0:
 
@@ -227,28 +261,40 @@ def build_coefficient_matrix(a_vct:np.ndarray,
 
         # m = n
 
-        heat_capacity_m,k_m,density_m=_compute_Cp_k_rho(ph,pdb,heat_capacity_m,k_m,density_m,temp_guess,lit_p,NLflag,CVal,ind_z)
+        heat_capacity_m,k_m,density_m=compute_cp_k_rho(ph=ph
+                                                       ,pdb=pdb
+                                                       ,cp=heat_capacity_m
+                                                       ,k=k_m
+                                                       ,rho = density_m
+                                                       ,temp=temp_guess
+                                                       ,pres=lit_p)
 
-        dz_m               = full((nz), dz) # current assumption: incompressible
+    elif step == 1:
 
-    elif step == 1: 
-
-        # corrector step 
+        # corrector step
 
         # m = n+1/2
 
-        Cp_m0,k_m0,rho_m0=_compute_Cp_k_rho(ph,pdb,heat_capacity_m,k_m,density_m,temp_guess,lit_p,NLflag,CVal,ind_z)
+        cp_m0,k_m0,rho_m0=compute_cp_k_rho(ph=ph
+                                           ,pdb=pdb
+                                           ,cp=heat_capacity_m
+                                           ,k=k_m
+                                           ,rho = density_m
+                                           ,temp = temp_guess
+                                           ,pres = lit_p)
 
-        Cp_m1,k_m1,rho_m1=_compute_Cp_k_rho(ph,pdb,heat_capacity_m,k_m,density_m,temp_guess,lit_p,NLflag,CVal,ind_z)
-
-        heat_capacity_m = (Cp_m1+Cp_m0)/2
+        cp_m1,k_m1,rho_m1=compute_cp_k_rho(ph=ph
+                                           ,pdb=pdb
+                                           ,cp=heat_capacity_m
+                                           ,k=k_m
+                                           ,rho = density_m
+                                           ,temp = temp_pr
+                                           ,pres = lit_p)
+        heat_capacity_m = (cp_m1+cp_m0)/2
 
         k_m              = (k_m0+k_m1)/2
 
         density_m        = (rho_m0+rho_m1)/2
-
-        dz_m           = (full((nz), dz) + full((nz), dz) ) / 2.  # current assumption: incompressible
-
 
     for i in range(0,nz):
 
@@ -268,16 +314,13 @@ def build_coefficient_matrix(a_vct:np.ndarray,
 
             start_loop = i-1
 
-            end_loop   = i+1  
+            end_loop   = i+1
 
 
-        for j in range(start_loop,end_loop+1): 
-
-        
-
+        for j in range(start_loop,end_loop+1):
             if j == 0:
 
-                # calculate a_vct  
+                # calculate a_vct
 
                 a_vct[j] = (dt / ( density_m[j] * heat_capacity_m[j] * ( dz_m[j] + dz_m[j] ) ))
 
@@ -288,7 +331,7 @@ def build_coefficient_matrix(a_vct:np.ndarray,
                 a_vct[j] = (dt / ( density_m[j] * heat_capacity_m[j] * ( dz_m[j] + dz_m[j-1] ) ))  
 
 
-            # ========== BUILD mass_matrix ========== - coefficient matrix 
+            # ========== BUILD mass_matrix ========== - coefficient matrix
 
             # ========== boundary conditions ==========
 
@@ -296,17 +339,17 @@ def build_coefficient_matrix(a_vct:np.ndarray,
 
                 # boundary condition at the top 
 
-                mass_matrix[i,j] = 1. 
+                mass_matrix[i,j] = 1.
 
-                d_vct[j]   = Ttop 
+                d_vct[j]   = temp_min
 
             elif (i == nz-1 and j == nz-1):
 
-                # boundary condition at the bottom 
+                # boundary condition at the bottom
 
-                mass_matrix[i,j] = 1. 
+                mass_matrix[i,j] = 1.
 
-                d_vct[j]   = Tmax 
+                d_vct[j]   = temp_max
 
             else:
 
@@ -343,7 +386,7 @@ def build_coefficient_matrix(a_vct:np.ndarray,
                         mass_matrix[i, j] = -a_vct[j] * ((k_m[j] + k_m[j]) / 2.) / dz_m[j]
 
 
-                # ========== BUILD d_vct ========== - right hand side vector 
+                # ========== BUILD d_vct ========== - right hand side vector
 
                 # d_vct consists of multiple components
 
@@ -355,40 +398,44 @@ def build_coefficient_matrix(a_vct:np.ndarray,
 
 
                     # b_vct - correction that represents the second term on the right-hand side on the equation 
-                    if NLflag == 0:
-                        rho_A = density(pdb, temp_old[j], lit_p[j], ph[j])
-                        Cp_A  = heat_capacity(pdb, temp_old[j], ph[j])
-                    else: 
-                        rho_A = lhs.rho
-                        Cp_A = lhs.Cp
-           
+
+                    rho_a = density(pdb, temp_old[j], lit_p[j], ph[j])
+                    cp_a  = heat_capacity(pdb, temp_old[j], ph[j])
+
                     if step == 0:
-                        if NLflag == 0:
-                            rho_B = density(pdb,temp_old[j],lit_p[j],ph[j])
-                            Cp_B = heat_capacity(pdb,temp_old[j],ph[j])
-                        else: 
-                            rho_B = lhs.rho 
-                            Cp_B = lhs.Cp 
+
+                        rho_b = density(pdb,temp_guess[j],lit_p[j],ph[j])
+                        cp_b = heat_capacity(pdb,temp_guess[j],ph[j])
+ 
                         # b_vct - predictor step 
-                        b_vct[j] = -temp_old[j] * ( rho_A * Cp_A - rho_B * Cp_B) / (rho_A * Cp_A)
+                        b_vct[j] = -temp_old[j] * ( rho_b * cp_a - rho_b * cp_b) / (rho_b * cp_b)
 
                     elif step == 1: 
-                        if NLflag == 0:
-                            rho_B = density(pdb,temp_old[j],lit_p[j],ph[j])
-                            Cp_B = heat_capacity(pdb,temp_old[j],ph[j])
-                        else: 
-                            rho_B = lhs.rho 
-                            Cp_B = lhs.Cp 
+                        rho_b = density(pdb,temp_pr[j],lit_p[j],ph[j])
+                        cp_b = heat_capacity(pdb,temp_pr[j],ph[j])
+
 
                         # b_vct - corrector step 
 
-                        b_vct[j] = - ((temp_pr[j] + temp_old[j]) * ( rho_B*Cp_B - rho_A*Cp_A ) / ( rho_B*Cp_A + rho_B*Cp_A))
+                        b_vct[j] = - ((temp_pr[j] + temp_old[j]) * ( rho_b*cp_b - rho_a*cp_a ) / ( rho_b*cp_b + rho_a*cp_a))
 
 
-                    d_vct[j] = temp_old[j] + a_vct[j] * q_vct[j] + b_vct[j]
+                    d_vct[j] = temp_old[j] + a_vct[j] * q_vct[j] + b_vct[j] + dt * (pdb.radiogenic_heat[ph[j]]/(density_m[j]*heat_capacity_m[j]))
+                    
     return mass_matrix,d_vct
 # --- 
-def fill_phase_properties(g_input:GeomInput,z:np.ndarray,left_right:bool,ph:np.ndarray)->np.ndarray:
+def fill_phase_properties(g_input:GeomInput,z:NDArray[np.float64],left_right:bool,ph:NDArray[np.int32])->NDArray[np.int32]:
+    """_summary_
+
+    Args:
+        g_input (GeomInput): _description_
+        z (NDArray[np.float64]): _description_
+        left_right (bool): _description_
+        ph (NDArray[np.int32]): _description_
+
+    Returns:
+        NDArray[np.int32]: _description_
+    """
     
     if left_right:
         ph[z<g_input.ocr] = dict_surf['oceanic_crust']
@@ -409,6 +456,7 @@ def fill_phase_properties(g_input:GeomInput,z:np.ndarray,left_right:bool,ph:np.n
 def compute_half_space_cooling_model(ctrl_tbc:CtrlTemperatureBC
                                  ,ctrl:NumericalControls
                                  ,ioctrl:IOControls
+                                 ,sc:sc
                                  ,pdb:PhaseDataBase
                                  ,g_input:GeomInput
                                  ,save_data:bool
@@ -441,7 +489,7 @@ def compute_half_space_cooling_model(ctrl_tbc:CtrlTemperatureBC
     
     nt = int(end_time / dt + 1)
 
-    t = zeros((1,nt))
+    t = np.zeros((1,nt))
 
     z = np.linspace(0,(nz*dz),nz)
 
@@ -547,11 +595,17 @@ def compute_half_space_cooling_model(ctrl_tbc:CtrlTemperatureBC
 
 
             lit_p = _compute_lithostatic_pressure(nz,ph,g,dz,temp_new,pdb)
-            cp_tmp,k_tmp,rho_tmp = _compute_Cp_k_rho(ph,pdb,cp_tmp,k_tmp,rho_tmp,temp_new,lit_p,0)
+            cp_tmp,k_tmp,rho_tmp = compute_cp_k_rho(ph=ph
+                                                    ,pdb=pdb
+                                                    ,cp=cp_tmp
+                                                    ,k=k_tmp
+                                                    ,rho=rho_tmp
+                                                    ,temp=temp_new
+                                                    ,pres=lit_p)
             temperature[time,:] = temp_new
             pressure[time,:]    = lit_p
             capacity[time,:]    = cp_tmp
-            conductivity[time,:] = k_tmp 
+            conductivity[time,:] = k_tmp
             density[time,:]      = rho_tmp
 
 
@@ -562,80 +616,94 @@ def compute_half_space_cooling_model(ctrl_tbc:CtrlTemperatureBC
         ctrl_tbc.z[:] = - z
         ctrl_tbc.temperature_2d_field[:,:] = temperature
 
+        rank = mpi4py.MPI.Comm.rank
 
-        if data_base: 
-            
-
-        TTime,ZZ = np.meshgrid(t[0],z)
-        TTime = TTime*scal.T/365.25/60/60/24/1e6
-        TTime = TTime[:,1::]
-        ZZ    = ZZ[:,1::] 
-        ZZ    = ZZ*scal.L/1e3
-        Tem   = temperature.T[:,1::]*scal.Temp - 273.15
-        Cp    = capacity.T[:,1::]*scal.Cp 
-        k     = conductivity.T[:,1::]*scal.k 
-        rho   = density.T[:,1::]*scal.rho 
-        LP    = pressure.T[:,1::]*scal.stress/1e9
-
-
+        if rank == 0:      
+            race_condition = check_race_condition(ioctrl)
+            if not race_condition: 
+                print('    The file is opened for an other process, skip the save.')
+            if save_data and race_condition:
+                ttime,zz = np.meshgrid(t[0],z)
+                ttime = ttime*sc.time/365.25/60/60/24/1e6
+                ttime = ttime[:,1::]
+                zz    = zz[:,1::] 
+                zz    = zz*sc.length/1e3
+                temp_save = temperature.T[:,1::]*sc.temp - 273.15
+                cp    = capacity.T[:,1::]*sc.cp
+                k     = conductivity.T[:,1::]*sc.k
+                rho   = density.T[:,1::]*sc.rho
+                lit_p = pressure.T[:,1::]*sc.stress/1e9
+                id_phase = np.unique(ph)
+                path_cache = ioctrl.path_cached_information
+                path_h5_file = path_cache/_NAME_H5_FILE_TMP
+                with h5py.File(path_h5_file,'a') as f:
+                    if left_right:
+                        grp = 'left_bc'
+                    else:
+                        grp = 'right_bc'
+                    save_data_set(f,temp_save,f'{grp}/temp_save')
+                    save_data_set(f,ttime,f'{grp}/time_2d')
+                    save_data_set(f,cp,f'{grp}/cp')
+                    save_data_set(f,k,f'{grp}/k')
+                    save_data_set(f,rho,f'{grp}/rho')
+                    save_data_set(f,lit_p,f'{grp}/lithostatic_pr')
+                    save_data_set(f,id_phase,f'{grp}/phases')
+                    for i in enumerate(id_phase):
+                        array_cp = [pdb.c0[i[1]],
+                                    pdb.c1[i[1]],
+                                    pdb.c2[i[1]],
+                                    pdb.c3[i[1]],
+                                    pdb.c4[i[1]],
+                                    pdb.c5[i[1]]]
+                        array_k = [pdb.k0[i[1]],
+                                   pdb.k_a[i[1]],
+                                   pdb.k_b[i[1]],
+                                   pdb.k_c[i[1]],
+                                   pdb.k_d[i[1]],
+                                   pdb.k_e[i[1]],
+                                   pdb.k_f[i[1]],
+                                   pdb.radiative_conductivity[i[1]]]
+                        array_rho = [pdb.rho0[i[1]],
+                                     pdb.alpha0[i[1]],
+                                     pdb.alpha1[i[1]],
+                                     pdb.alpha2[i[1]],
+                                     pdb.kb[i[1]]]
+                        hr = pdb.radiogenic_heat[i[1]]
+                        name = f'{grp}/phase_properties_{i[1]}'
+                        save_data_set(f,hr,f'{name}/hr')
+                        save_data_set(f,array_rho,f'{name}/rho_prop')
+                        save_data_set(f,array_cp,f'{name}/array_cp')
+                        save_data_set(f,array_k,f'{name}/array_cond')
+                        print('             temporary data base is saved...')
 
     return ctrl_tbc,g_input
-
-
-
-
-def compute_initial_LHS(ctrl,lhs,scal,pdb,theta_in):
-    
-
-    
-    if lhs.van_keken == 0 or lhs.non_linearities == 0 :
-        lhs,t, temperature = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb,theta_in)
-        from scipy.interpolate import RegularGridInterpolator
- 
-        t_re = np.linspace(lhs.c_age_var[0],lhs.c_age_var[1], num = lhs.LHS_var.shape[1])
-        T,Z  = np.meshgrid(t_re,lhs.z,indexing='ij')
-        TT,ZZ = np.meshgrid(t,lhs.z,indexing='ij')
-        interp_func = RegularGridInterpolator((t[0], lhs.z), temperature)
-        points_coarse = np.column_stack((T.ravel(), Z.ravel()))
-        lhs.LHS_var = interp_func(points_coarse).reshape(len(t_re), len(lhs.z))
-        lhs.t_res_vec = t_re 
-    else:
-        lhs,_,_ = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb,theta_in)
-        
-
-    return lhs
-
-
-def update_age_lhs(ctrl,lhs,scal,pdb,theta_in):
-    
-
-    
-    if lhs.van_keken == 0 or lhs.non_linearities == 0 :
-        from scipy.interpolate import RegularGridInterpolator
- 
-        t_re = np.linspace(lhs.c_age_var[0],lhs.c_age_var[1], num = lhs.LHS_var.shape[1])
-        T,Z  = np.meshgrid(t_re,lhs.z,indexing='ij')
-        TT,ZZ = np.meshgrid(t,lhs.z,indexing='ij')
-        interp_func = RegularGridInterpolator((t[0], lhs.z), temperature)
-        points_coarse = np.column_stack((T.ravel(), Z.ravel()))
-        lhs.LHS_var = interp_func(points_coarse).reshape(len(t_re), len(lhs.z))
-        lhs.t_res_vec = t_re 
-    else:
-        lhs,_,_ = compute_ocean_plate_temperature(ctrl,lhs,scal,pdb,theta_in)
-        
-
-    return lhs
 
 def configure_right_boundary_condition(ctrl_tbc:CtrlTemperatureBC
                                  ,ctrl:NumericalControls
                                  ,ioctrl:IOControls
                                  ,pdb:PhaseDataBase
                                  ,g_input:GeomInput)->CtrlTemperatureBC:
+    """_summary_
+
+    Args:
+        ctrl_tbc (CtrlTemperatureBC): _description_
+        ctrl (NumericalControls): _description_
+        ioctrl (IOControls): _description_
+        pdb (PhaseDataBase): _description_
+        g_input (GeomInput): _description_
+
+    Raises:
+        ValueError: _description_
+        Warning: _description_
+
+    Returns:
+        CtrlTemperatureBC: _description_
+    """
     
     if ctrl_tbc.right_boundary == 'Continental':
         # Compute the continental boundary condition
         print('')
-    elif ctrl_tbc.right_boundary == 'Oceanic': 
+    elif ctrl_tbc.right_boundary == 'Oceanic':
         if ctrl_tbc.right_age is None: 
             raise ValueError('Age of the right boundary condition has not been set.')
         # -> change the g_input 

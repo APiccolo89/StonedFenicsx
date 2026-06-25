@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 import dolfinx
 import numpy as np
-from numpy import ndarray
+from numpy.typing import NDArray
 from mpi4py import MPI
 
 #------------------------------------------------------------------------------------------------
@@ -24,11 +24,11 @@ class Domain:
         - `"parent"` for the global mesh
         - `"child"` for a submesh
 
-    cell_par : np.ndarray | None
+    cell_par : NDArray[np.int32] | None
         Parent cell relationships mapping submesh cells to the global mesh cells.
         Only defined if the domain is a submesh.
 
-    node_par : np.ndarray | None
+    node_par : NDArray[np.int32] | None
         Parent node relationships mapping submesh nodes to the global mesh nodes.
         Only defined if the domain is a submesh.
 
@@ -57,8 +57,8 @@ class Domain:
 
     hierarchy: str = "Parent"
     mesh: dolfinx.mesh.Mesh = None
-    cell_par: np.ndarray = field(default_factory=lambda: np.array([], dtype=np.int32))
-    node_par: np.ndarray = field(default_factory=lambda: np.array([], dtype=np.int32))
+    cell_par: NDArray[np.int32] = field(default_factory=lambda: np.array([], dtype=np.int32))
+    node_par: NDArray[np.int32] = field(default_factory=lambda: np.array([], dtype=np.int32))
     facets: dolfinx.mesh.MeshTags = None
     tagcells: dolfinx.mesh.MeshTags = None
     bc_dict: dict = field(default_factory=dict)
@@ -72,8 +72,8 @@ class GeomInput:
     Lengths in [km]; angles in [degrees]; lc dimensionless.
     ...
     """
-    x: ndarray[np.float64] = field(default_factory=lambda: np.array([0.0, 660.0]))
-    y: ndarray[np.float64] = field(default_factory=lambda: np.array([-600.0, 0.0]))
+    x: NDArray[np.float64] = field(default_factory=lambda: np.array([0.0, 660.0]))
+    y: NDArray[np.float64] = field(default_factory=lambda: np.array([-600.0, 0.0]))
     slab_tk: float = 130.0
     cr: float = 30.0
     ocr: float = 7.0
