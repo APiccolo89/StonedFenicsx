@@ -101,7 +101,7 @@ def check_race_condition(ioctrl:IOControls)->bool:
             pass
 
     return race
-
+# --- 
 @njit
 def _compute_lithostatic_pressure(
                                  nz: int,
@@ -453,10 +453,10 @@ def fill_phase_properties(g_input:GeomInput,z:NDArray[np.float64],left_right:boo
     return ph-1
 
 #@njit 
-def compute_half_space_cooling_model(ctrl_tbc:CtrlTemperatureBC
+def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
                                  ,ctrl:NumericalControls
                                  ,ioctrl:IOControls
-                                 ,sc:sc
+                                 ,sc:Scal
                                  ,pdb:PhaseDataBase
                                  ,g_input:GeomInput
                                  ,save_data:bool
@@ -490,10 +490,15 @@ def compute_half_space_cooling_model(ctrl_tbc:CtrlTemperatureBC
     nt = int(end_time / dt + 1)
 
     t = np.zeros((1,nt))
-
-    z = np.linspace(0,(nz*dz),nz)
-
-    if van_keken:
+    if left_right:
+        z = np.linspace(0,(nz*dz),nz)
+    else: 
+        z = np.linspace(0,g_input.lab_d,nz)
+        nt = int(ctrl_tbc.right_age / dt + 1)
+        
+        
+        
+    if van_keken and left_right:
         from scipy import special
         print('         Computing the temperature field using'
               'the analytical half-space cooling model...')
@@ -518,9 +523,13 @@ def compute_half_space_cooling_model(ctrl_tbc:CtrlTemperatureBC
         ph   = np.zeros([nz],dtype = np.int32)
 
         ph = fill_phase_properties(g_input,z,left_right,ph)
-    
-        temp_old = np.ones((len(z)),dtype=np.float64) * temp_max
-    
+        if left_right or ctrl_tbc.right_boundary == 'Oceanic':
+            temp_old = np.ones((len(z)),dtype=np.float64) * temp_max
+        else: 
+            # Initial guess linear
+            gr = (temp_max-temp_min)/(g_input.lab_d) 
+            temp_old = temp_min + gr * z
+            
         lit_p = _compute_lithostatic_pressure(nz,ph,g,dz,temp_old,pdb)
     
         temperature       = np.zeros([nt,nz],dtype=np.float64)
@@ -678,88 +687,76 @@ def compute_half_space_cooling_model(ctrl_tbc:CtrlTemperatureBC
 
     return ctrl_tbc,g_input
 
-def configure_right_boundary_condition(ctrl_tbc:CtrlTemperatureBC
+# --- 
+def configure_thermal_bc(ctrl_tbc:CtrlTemperatureBC
                                  ,ctrl:NumericalControls
                                  ,ioctrl:IOControls
+                                 ,sc:Scal
                                  ,pdb:PhaseDataBase
-                                 ,g_input:GeomInput)->CtrlTemperatureBC:
+                                 ,g_input:GeomInput
+                                 ,left_right:bool)->CtrlTemperatureBC:
     """_summary_
 
     Args:
         ctrl_tbc (CtrlTemperatureBC): _description_
         ctrl (NumericalControls): _description_
         ioctrl (IOControls): _description_
+        sc (Scal): _description_
         pdb (PhaseDataBase): _description_
         g_input (GeomInput): _description_
-
-    Raises:
-        ValueError: _description_
-        Warning: _description_
+        left_right (bool): _description_
 
     Returns:
         CtrlTemperatureBC: _description_
     """
     
-    if ctrl_tbc.right_boundary == 'Continental':
-        # Compute the continental boundary condition
-        print('')
-    elif ctrl_tbc.right_boundary == 'Oceanic':
-        if ctrl_tbc.right_age is None: 
-            raise ValueError('Age of the right boundary condition has not been set.')
-        # -> change the g_input 
-        if g_input.lab_d != g_input.slab_tk:
-            raise Warning('The lithosphere depth of the right boundary condition is not the same of the slab thickness. '
-                          'The Geom_Input has been modified')
-
-            g_input.lab_d = g_input.slab_tk
-        
-        if ctrl_tbc.recalculate: 
-            # Compute half space cooling model 
-            print('')
-        else: 
-            # read database -> if same data -> import from h5py -> and set up the boundary condition
-            print('')
-    
-    
-    
-    
-    return ctrl_tbc 
-# --- # 
-
-def configure_left_boundary_condition(ctrl_tbc:CtrlTemperatureBC
-                                 ,ctrl:NumericalControls
-                                 ,ioctrl:IOControls
-                                 ,pdb:PhaseDataBase
-                                 ,g_input:GeomInput)->CtrlTemperatureBC:
-    
     if ctrl_tbc.recalculate:
-        # Compute lhs 
-        print('')
+        ctrl_tbc, g_input = compute_thermal_boundary(ctrl_tbc=ctrl_tbc
+                                                     ,ctrl=ctrl
+                                                     ,ioctrl=ioctrl
+                                                     ,sc=sc
+                                                     ,pdb=pdb
+                                                     ,g_input=g_input
+                                                     ,save_data=False
+                                                     ,left_right=left_right)
     elif not ctrl_tbc.recalculate: 
-        # read cache database -> are the data of the involved the phase the same? 
-        # if not -> compute and save 
-        print('')
+        # Read the data base.# PLACE HOLDER
+        pass
     
     
-    return ctrl_tbc
+    return ctrl_tbc,g_input
 
 # --- # 
 def configure_boundary_condition(ctrl_tbc:CtrlTemperatureBC
                                  ,ctrl:NumericalControls
                                  ,ioctrl:IOControls
+                                 ,sc:Scal
                                  ,pdb:PhaseDataBase
                                  ,g_input:GeomInput)->CtrlTemperatureBC:
     
-    # Configure left boundary condition
+    """_summary_
+
+    Returns:
+        _type_: _description_
+    """
     
+    # Configure left boundary condition
+    ctrl_tbc,g_input = configure_thermal_bc(ctrl_tbc = ctrl_tbc
+                         ,ctrl = ctrl
+                         ,ioctrl=ioctrl
+                         ,sc=sc
+                         ,pdb=pdb
+                         ,g_input=g_input
+                         ,left_right=True)
     
     # Configure right boundary condition 
+    ctrl_tbc,g_input = configure_thermal_bc(ctrl_tbc = ctrl_tbc
+                         ,ctrl = ctrl
+                         ,ioctrl=ioctrl
+                         ,sc=sc
+                         ,pdb=pdb
+                         ,g_input=g_input
+                         ,left_right=False)
     
-    
-    
-    
-    
-    
-    
-    return ctrl_tbc
+    return ctrl_tbc,g_input
 # --- # 
