@@ -620,18 +620,23 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
 
 
         # Current age index
-        current_age_index = np.where(t[0] >= ctrl_tbc.slab_age)[0][0]
-        ctrl_tbc.temperature_1d = temperature[current_age_index]
-        ctrl_tbc.z[:] = - z
-        ctrl_tbc.temperature_2d_field[:,:] = temperature
-
+        if left_right:
+            current_age_index = np.where(t[0] >= ctrl_tbc.slab_age)[0][0]
+            ctrl_tbc.temperature_1d = temperature[current_age_index]
+            ctrl_tbc.z[:] = - z
+            ctrl_tbc.temperature_2d_field[:,:] = temperature
+        else: 
+            ctrl_tbc.temperature_1d_right[:] = temp_new 
+            ctrl_tbc.z_right = - z
+            
+            
         rank = mpi4py.MPI.Comm.rank
 
-        if rank == 0:      
+        if rank == 0:
             race_condition = check_race_condition(ioctrl)
             if not race_condition: 
                 print('    The file is opened for an other process, skip the save.')
-            if save_data and race_condition:
+            if save_data and race_condition and left_right:
                 ttime,zz = np.meshgrid(t[0],z)
                 ttime = ttime*sc.time/365.25/60/60/24/1e6
                 ttime = ttime[:,1::]
@@ -749,7 +754,7 @@ def configure_boundary_condition(ctrl_tbc:CtrlTemperatureBC
                          ,g_input=g_input
                          ,left_right=True)
     
-    # Configure right boundary condition 
+    # Configure right boundary condition
     ctrl_tbc,g_input = configure_thermal_bc(ctrl_tbc = ctrl_tbc
                          ,ctrl = ctrl
                          ,ioctrl=ioctrl
