@@ -50,14 +50,6 @@ from pathlib import Path
 
 _NAME_H5_FILE_TMP = 'temporary_file.h5'
 
-power       = np.power
-exp         = np.exp
-transpose   = np.transpose 
-array       = np.array
-full        = np.full
-all         = np.all
-diagonal    = np.diagonal
-solve_banded= la.solve_banded
 
 def save_data_set(f:h5py.File,buf:any,name:str)->None:
     """save the cached file
@@ -599,7 +591,7 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
                                                                      ,dt = ctrl_tbc.dt
                                                                      ,dz = ctrl_tbc.dz
                                                                      ,nz = ctrl_tbc.nz)
-                        temp_new = transpose(np.linalg.solve(mass_matrix, d_vct))    # solve Mx = d_vct for x
+                        temp_new = np.transpose(np.linalg.solve(mass_matrix, d_vct))    # solve Mx = d_vct for x
 
                         if step == 0:
                             temp_pr = temp_new
@@ -776,7 +768,49 @@ def configure_boundary_condition(ctrl_tbc:CtrlTemperatureBC
 # --- # 
 
 def test_configure_boundary():
+    from stonedfenicsx.config.simulation_config import configure_simulation
+    from stonedfenicsx.config.input_parser import parse_input
+    from stonedfenicsx.config.phase_db import Phase,PhInput
+
+    # Find the main folder of the package
+    pkg_root = Path(__file__)
+    # Select the appropriate path for the input file
+    input_file = Path(pkg_root.parents[2], "input.yaml")
+    # parse the input file
+    input_data, ph_in = parse_input(input_file)
+    # Set the path of the tests
+    path_save = pkg_root.parents[2] / "Results"
+    test_name = "Mock_test"
+    input_data.ctrl_io.test_name = test_name
+    input_data.ctrl_io.path_save = path_save
+
+    ph_in.oceanic_crust.name_alpha = "Oceanic_crust"
+    ph_in.oceanic_crust.name_capacity = "Oceanic_crust"
+    ph_in.oceanic_crust.radiative_conductivity = 1
+    ph_in.oceanic_crust.rho0 = 2800
+    ph_in.oceanic_crust.name_conductivity = "Crust_Richards_2018"
+    ph_in.oceanic_crust.name_density = "PT"
+    ph_in.oceanic_crust.radiogenic_heat = 0.25e-6
+
+    ph_in.subducting_plate_mantle.name_capacity = "Mantle_Bernard_Ar_199x_FO_FA"
+    ph_in.subducting_plate_mantle.name_conductivity = "Mantle_Richards_2018"
+    ph_in.subducting_plate_mantle.name_alpha = "Mantle"
+    ph_in.subducting_plate_mantle.rho0 = 3300
+    ph_in.subducting_plate_mantle.name_density = "PT"
+
+    ph_in.wedge_mantle.name_capacity = "Mantle_Bernard_Ar_199x_FO_FA"
+    ph_in.wedge_mantle.name_conductivity = "Mantle_Richards_2018"
+    ph_in.wedge_mantle.name_alpha = "Mantle"
+    ph_in.wedge_mantle.rho0 = 3300
+    ph_in.wedge_mantle.name_density = "PT"
+    ph_in.wedge_mantle.name_dislocation = "VK_Dislocation_creep"
+    ph_in.wedge_mantle.name_diffusion = "VK_Diffusion_creep"
     
+    ph_in.overriding_lower_crust.radiogenic_heat = 0.5e-6
+    ph_in.overriding_upper_crust.radiogenic_heat = 1.0e-6
+
+    
+    configure_simulation(ph_in, input_data)
     
     
     return 0
