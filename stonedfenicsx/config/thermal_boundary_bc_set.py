@@ -70,8 +70,8 @@ def save_data_set(f:h5py.File,buf:any,name:str)->None:
 
     if name in f:
         del f[name]
-    else:
-        f.create_dataset(name,data=buf)
+
+    f.create_dataset(name,data=buf)
 
 def check_race_condition(ioctrl:IOControls)->bool:
     """Check if the file is opened by an other process 
@@ -94,7 +94,7 @@ def check_race_condition(ioctrl:IOControls)->bool:
         try:
             for f in proc.open_files():
                 if Path(f.path).resolve() == Path(path_h5):
-                    race = True
+                    race = False
         except (pst.NoSuchProcess,
                 pst.AccessDenied,
                 pst.ZombieProcess):
@@ -204,6 +204,9 @@ def compute_cp_k_rho(ph   : NDArray[np.float64]
 
     return cp,k,rho
 #-----------------------------------------------------------------------------------------
+
+
+#-----------------------------------------------------------------------------------------
 @njit
 def build_coefficient_matrix(a_vct:NDArray[np.float64],
                              b_vct:NDArray[np.float64],
@@ -216,8 +219,8 @@ def build_coefficient_matrix(a_vct:NDArray[np.float64],
                              temp_guess:NDArray[np.float64],
                              temp_pr:NDArray[np.float64],
                              k_m:NDArray[np.float64],
-                             density_m:NDArray[np.float64],
-                             heat_capacity_m:NDArray[np.float64],
+                             rho_m:NDArray[np.float64],
+                             cp_m:NDArray[np.float64],
                              step:int,
                              lit_p:NDArray[np.float64],
                              temp_min:np.float64,
@@ -260,12 +263,12 @@ def build_coefficient_matrix(a_vct:NDArray[np.float64],
         # predictor step
 
         # m = n
-
-        heat_capacity_m,k_m,density_m=compute_cp_k_rho(ph=ph
+        # Compute the current material property with the guess temperature
+        cp_m,k_m,rho_m=compute_cp_k_rho(ph=ph
                                                        ,pdb=pdb
-                                                       ,cp=heat_capacity_m
+                                                       ,cp=cp_m
                                                        ,k=k_m
-                                                       ,rho = density_m
+                                                       ,rho = rho_m
                                                        ,temp=temp_guess
                                                        ,pres=lit_p)
 
@@ -274,31 +277,35 @@ def build_coefficient_matrix(a_vct:NDArray[np.float64],
         # corrector step
 
         # m = n+1/2
-
+        # Compute the temperature with the guess and with the predicted temperature 
         cp_m0,k_m0,rho_m0=compute_cp_k_rho(ph=ph
                                            ,pdb=pdb
-                                           ,cp=heat_capacity_m
+                                           ,cp=cp_m
                                            ,k=k_m
-                                           ,rho = density_m
+                                           ,rho = rho_m
                                            ,temp = temp_guess
                                            ,pres = lit_p)
 
         cp_m1,k_m1,rho_m1=compute_cp_k_rho(ph=ph
                                            ,pdb=pdb
-                                           ,cp=heat_capacity_m
+                                           ,cp=cp_m
                                            ,k=k_m
-                                           ,rho = density_m
+                                           ,rho = rho_m
                                            ,temp = temp_pr
                                            ,pres = lit_p)
-        heat_capacity_m = (cp_m1+cp_m0)/2
+        cp_m = (cp_m1+cp_m0)/2
 
         k_m              = (k_m0+k_m1)/2
 
-        density_m        = (rho_m0+rho_m1)/2
+        rho_m        = (rho_m0+rho_m1)/2
+    
+    # find the mean of k     
+    k_m_m = (k_m[1:]+k_m[:-1])/2 
+    
 
     for i in range(0,nz):
 
-        if i == 0: 
+        if i == 0:
 
             start_loop = i
 
@@ -310,7 +317,7 @@ def build_coefficient_matrix(a_vct:NDArray[np.float64],
 
             end_loop   = i  
 
-        else: 
+        else:
 
             start_loop = i-1
 
@@ -322,13 +329,13 @@ def build_coefficient_matrix(a_vct:NDArray[np.float64],
 
                 # calculate a_vct
 
-                a_vct[j] = (dt / ( density_m[j] * heat_capacity_m[j] * ( dz_m[j] + dz_m[j] ) ))
+                a_vct[j] = (dt / ( rho_m[j] * cp_m[j] * ( dz_m[j] + dz_m[j] ) ))
 
             elif j > 0:
 
-                # calculate a_vct 
+                # calculate a_vct
 
-                a_vct[j] = (dt / ( density_m[j] * heat_capacity_m[j] * ( dz_m[j] + dz_m[j-1] ) ))  
+                a_vct[j] = (dt / ( rho_m[j] * cp_m[j] * ( dz_m[j] + dz_m[j-1] ) ))
 
 
             # ========== BUILD mass_matrix ========== - coefficient matrix
@@ -357,21 +364,21 @@ def build_coefficient_matrix(a_vct:NDArray[np.float64],
 
                 if i - j == 1 and j < nz - 2:
 
-                    # T_j+1 
+                    # T_j+1
 
                     if j > 0:
 
-                        mass_matrix[i,j] = -a_vct[j] * ( (k_m[j] + k_m[j+1] ) / 2. ) / dz_m[j]
+                        mass_matrix[i,j] = -a_vct[j] * ( k_m_m[j]  / dz_m[j])
 
                     elif j == 0:
 
-                        mass_matrix[i,j] = -a_vct[j] * ( (k_m[j] + k_m[j] ) / 2. ) / dz_m[j]
+                        mass_matrix[i,j] = -a_vct[j] * (k_m_m[j]  / dz_m[j])
 
                 elif i == j:
 
                     # diagonal: T_j
 
-                    mass_matrix[i,j] = 1. + a_vct[j] * ( ( (k_m[j] + k_m[j+1] ) / 2. ) / dz_m[j] + ( (k_m[j] + k_m[j-1] ) / 2. ) / dz_m[j-1])
+                    mass_matrix[i,j] = 1. + a_vct[j] * (  k_m_m[j]  / dz_m[j] + ( k_m_m[j-1]  / dz_m[j-1]))
 
                 elif i - j == -1 and j > 1 and j < nz:
 
@@ -379,11 +386,11 @@ def build_coefficient_matrix(a_vct:NDArray[np.float64],
 
                     if j < nz - 1:
 
-                        mass_matrix[i,j] = -a_vct[j] * ( (k_m[j] + k_m[j-1] ) / 2. ) / dz_m[j-1]
+                        mass_matrix[i,j] = -a_vct[j] * ( k_m_m[j-1]   / dz_m[j-1])
 
                     elif j == nz - 1:
 
-                        mass_matrix[i, j] = -a_vct[j] * ((k_m[j] + k_m[j]) / 2.) / dz_m[j]
+                        mass_matrix[i, j] = -a_vct[j] * (k_m_m[j-1] / dz_m[j])
 
 
                 # ========== BUILD d_vct ========== - right hand side vector
@@ -394,7 +401,9 @@ def build_coefficient_matrix(a_vct:NDArray[np.float64],
 
                 if j > 0 and j < nz-1:
 
-                    q_vct[j] = ( ( (k_m[j] + k_m[j+1] ) / 2. ) / dz_m[j] )*temp_old[j+1] - (( ( (k_m[j] + k_m[j+1] ) / 2. ) / dz_m[j] ) + ( ( (k_m[j] + k_m[j-1] ) / 2. ) / dz_m[j-1] )) * temp_old[j] + ( ( (k_m[j] + k_m[j-1] ) / 2. ) / dz_m[j-1] )*temp_old[j-1]
+                    q_vct[j] = ( ( k_m_m[j]) / dz_m[j] )*temp_old[j+1] \
+                    - (( k_m_m[j] / dz_m[j] ) + ( k_m_m[j-1] / dz_m[j-1] ) ) * temp_old[j] \
+                     + ( k_m_m[j-1] / dz_m[j-1]  )*temp_old[j-1]
 
 
                     # b_vct - correction that represents the second term on the right-hand side on the equation 
@@ -410,7 +419,7 @@ def build_coefficient_matrix(a_vct:NDArray[np.float64],
                         # b_vct - predictor step 
                         b_vct[j] = -temp_old[j] * ( rho_b * cp_a - rho_b * cp_b) / (rho_b * cp_b)
 
-                    elif step == 1: 
+                    elif step == 1:
                         rho_b = density(pdb,temp_pr[j],lit_p[j],ph[j])
                         cp_b = heat_capacity(pdb,temp_pr[j],ph[j])
 
@@ -420,7 +429,7 @@ def build_coefficient_matrix(a_vct:NDArray[np.float64],
                         b_vct[j] = - ((temp_pr[j] + temp_old[j]) * ( rho_b*cp_b - rho_a*cp_a ) / ( rho_b*cp_b + rho_a*cp_a))
 
 
-                    d_vct[j] = temp_old[j] + a_vct[j] * q_vct[j] + b_vct[j] + dt * (pdb.radiogenic_heat[ph[j]]/(density_m[j]*heat_capacity_m[j]))
+                    d_vct[j] = temp_old[j] + a_vct[j] * q_vct[j] + b_vct[j] + dt * (pdb.radiogenic_heat[ph[j]]/(rho_m[j]*cp_m[j]))
                     
     return mass_matrix,d_vct
 # --- 
@@ -581,8 +590,8 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
                                                                      ,temp_guess=temp_guess
                                                                      ,temp_pr=temp_pr
                                                                      ,k_m=k_m
-                                                                     ,density_m = density_m
-                                                                     ,heat_capacity_m=heat_capacity_m
+                                                                     ,rho_m = density_m
+                                                                     ,cp_m=heat_capacity_m
                                                                      ,step=step
                                                                      ,lit_p=lit_p
                                                                      ,temp_min=temp_min
@@ -630,7 +639,7 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
             ctrl_tbc.z_right = - z
             
             
-        rank = mpi4py.MPI.Comm.rank
+        rank = mpi4py.MPI.COMM_WORLD.Get_rank()
 
         if rank == 0:
             race_condition = check_race_condition(ioctrl)
@@ -765,3 +774,19 @@ def configure_boundary_condition(ctrl_tbc:CtrlTemperatureBC
     
     return ctrl_tbc,g_input
 # --- # 
+
+def test_configure_boundary():
+    
+    
+    
+    return 0
+
+
+def main():
+    
+    test_configure_boundary()
+    
+    return 0
+
+if __name__ == '__main__':
+    main()
