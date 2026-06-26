@@ -205,7 +205,8 @@ def create_gmesh(ioctrl: IOControls, g_input: GeomInput):
     max_x = g_input.x[1]
 
     # if the cache folder does not exist and the mesh file does not exist -> create the mesh. 
-    if  not Path(ioctrl.path_cached_information, "mesh.msh").is_file():
+    if  not Path(ioctrl.path_cached_information, "mesh.msh").is_file() \
+        or not Path(ioctrl.path_cached_information, "mesh_meta_data.yml").is_file():
 
         mesh_model = create_gmsh(slab_x, slab_y, bot_x, bot_y, oc_cx, oc_cy, g_input)
 

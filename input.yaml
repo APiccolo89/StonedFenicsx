@@ -56,6 +56,7 @@ Input:
     slab_age: 50.0
     self_consistent_flag: 1
     right_boundary : 'Continental'  # Oceanic 
+    recalculate : 0 # Option to compute on the fly the boundary -> useful if user wants to change thermal properties. 
 
   kinematic_boundary_condition:
     v_s : [5.0,0.0]
