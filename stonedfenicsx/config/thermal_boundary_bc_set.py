@@ -826,20 +826,14 @@ def read_temporary_file(ctrl_tbc:CtrlTemperatureBC
     
     path_cache = ioctrl.path_cached_information
     path_h5_file = path_cache/_NAME_H5_FILE_TMP
-    
+    redo = False
+
     if not path_h5_file.exists():
         print('Temporary file has not been created yet, running the cooling model')
-        ctrl_tbc, g_input = compute_thermal_boundary(ctrl_tbc=ctrl_tbc
-                                                     ,ctrl=ctrl
-                                                     ,ioctrl=ioctrl
-                                                     ,sc=sc
-                                                     ,pdb=pdb
-                                                     ,g_input=g_input
-                                                     ,save_data=True
-                                                     ,left_right=left_right)
+        redo = True
     else:
         print('Temporary file exists')
-        if left_right: 
+        if left_right:
             ph_id = [dict_surf['sub_plate'],dict_surf['oceanic_crust']]
         else: 
             ph_id = [dict_surf['upper_crust'],dict_surf['lower_crust'],dict_surf['overriding_lm'],dict_surf['wedge']]
@@ -852,23 +846,39 @@ def read_temporary_file(ctrl_tbc:CtrlTemperatureBC
             else:
                 main_grp = 'right_bc'
                 age = ctrl_tbc.right_age
+            
+            if main_grp  not in f:
+                print(f'{main_grp} is not yet in the temporary file')
+                redo = True
+            else: 
+        
 
-            time_v = f[f'{main_grp}/data_2_load/time_v'][:]
-            temperature = f[f'{main_grp}/data_2_load/temperature'][:]
-            z = f[f'{main_grp}/data_2_load/z'][:]
-                
-            flag = check_material_property(f,pdb,ph_id,main_grp)
-            current_age_index = np.where(time_v >= age)[0][0]
+                time_v = f[f'{main_grp}/data_2_load/time_v'][:]
+                temperature = f[f'{main_grp}/data_2_load/temperature'][:]
+                z = f[f'{main_grp}/data_2_load/z'][:]
 
-            if flag:
-                if not left_right: 
-                    ctrl_tbc.temp_1d_right[:] = temperature[current_age_index,:]
-                    ctrl_tbc.z_right = z
-                    g_input.lab_d = np.abs(np.min(z))
-                else:
-                    ctrl_tbc.temperature_1d[:] = temperature[current_age_index,:]
-                    ctrl_tbc.z = z
-   
+                flag = check_material_property(f,pdb,ph_id,main_grp)
+                current_age_index = np.where(time_v >= age)[0][0]
+
+                if flag:
+                    if not left_right: 
+                        ctrl_tbc.temp_1d_right[:] = temperature[current_age_index,:]
+                        ctrl_tbc.z_right = z
+                        g_input.lab_d = np.abs(np.min(z))
+                    else:
+                        ctrl_tbc.temperature_1d[:] = temperature[current_age_index,:]
+                        ctrl_tbc.z = z
+        
+        if redo:
+            ctrl_tbc, g_input = compute_thermal_boundary(ctrl_tbc=ctrl_tbc
+                                                     ,ctrl=ctrl
+                                                     ,ioctrl=ioctrl
+                                                     ,sc=sc
+                                                     ,pdb=pdb
+                                                     ,g_input=g_input
+                                                     ,save_data=True
+                                                     ,left_right=left_right)
+ 
     return ctrl_tbc,g_input
 
 
