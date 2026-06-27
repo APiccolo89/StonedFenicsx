@@ -140,7 +140,7 @@ class CtrlTemperatureBC(CTRLBC): # ctrltbc
         if self.dt > 0.1:
             raise ValueError("dt must be in Myr; this timestep blows up the system.")
         self.check_time_variation(ctrl)
-        if self.slab_age != self.interval_val[0]:
+        if self.slab_age != self.interval_val[0] and not ctrl.steady_state:
             raise ValueError('The input initial age must be the same of the first entry of the interval of values')
 
         # Prepare the main vector for computing the right and left boundary condition

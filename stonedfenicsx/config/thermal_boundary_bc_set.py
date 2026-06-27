@@ -319,7 +319,7 @@ def build_coefficient_matrix(pdb:PhaseDataBase,
             if step == 0:
                 rho_b = density(pdb,temp_guess[i],lit_p[i],ph[i])
                 cp_b = heat_capacity(pdb,temp_guess[i],ph[i])
-    
+
                 # b_vct - predictor step 
                 b_vct[i] = -temp_old[i] * ( rho_a * cp_a - rho_b * cp_b) / (rho_b * cp_b)       
             elif step == 1:
@@ -675,7 +675,7 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
                                  pdb.alpha2[i],
                                  pdb.kb[i]]
                     hr = pdb.radiogenic_heat[i]
-                    name = f'{grp}/phase_properties_{[i]}'
+                    name = f'{grp}/phase_properties_{i}'
                     save_data_set(f,hr,f'{name}/hr')
                     save_data_set(f,array_rho,f'{name}/rho_prop')
                     save_data_set(f,array_cp,f'{name}/array_cp')
@@ -824,7 +824,7 @@ def read_temporary_file(ctrl_tbc:CtrlTemperatureBC
             if main_grp  not in f:
                 print(f'{main_grp} is not yet in the temporary file')
                 redo = True
-            else: 
+            else:
         
 
                 time_v = f[f'{main_grp}/data_2_load/time_v'][:]
@@ -843,15 +843,15 @@ def read_temporary_file(ctrl_tbc:CtrlTemperatureBC
                         ctrl_tbc.temperature_1d[:] = temperature[current_age_index,:]
                         ctrl_tbc.z = z
         
-        if redo:
-            ctrl_tbc, g_input = compute_thermal_boundary(ctrl_tbc=ctrl_tbc
-                                                     ,ctrl=ctrl
-                                                     ,ioctrl=ioctrl
-                                                     ,sc=sc
-                                                     ,pdb=pdb
-                                                     ,g_input=g_input
-                                                     ,save_data=True
-                                                     ,left_right=left_right)
+    if redo:
+        ctrl_tbc, g_input = compute_thermal_boundary(ctrl_tbc=ctrl_tbc
+                                                 ,ctrl=ctrl
+                                                 ,ioctrl=ioctrl
+                                                 ,sc=sc
+                                                 ,pdb=pdb
+                                                 ,g_input=g_input
+                                                 ,save_data=True
+                                                 ,left_right=left_right)
  
     return ctrl_tbc,g_input
 
@@ -971,11 +971,12 @@ def test_configure_boundary():
     test_name = "Mock_test"
     input_data.ctrl_io.test_name = test_name
     input_data.ctrl_io.path_save = path_save
-
+    input_data.ctrl_tbc.slab_age = 100.0
+    #
     ph_in.oceanic_crust.name_alpha = "Oceanic_crust"
     ph_in.oceanic_crust.name_capacity = "Oceanic_crust"
     ph_in.oceanic_crust.radiative_conductivity = 1
-    ph_in.oceanic_crust.rho0 = 2800
+    ph_in.oceanic_crust.rho0 = 3300
     ph_in.oceanic_crust.name_conductivity = "Crust_Richards_2018"
     ph_in.oceanic_crust.name_density = "PT"
     ph_in.oceanic_crust.radiogenic_heat = 0.25e-6
@@ -998,7 +999,23 @@ def test_configure_boundary():
     ph_in.overriding_upper_crust.radiogenic_heat = 1.0e-6
 
     
-    configure_simulation(ph_in, input_data)
+    ctrl_sim, _ , _, sc  = configure_simulation(ph_in, input_data)
+    
+    import matplotlib.pyplot as plt 
+    
+    fig = plt.figure()
+    ax = fig.gca() 
+    temp_plate = ctrl_sim.ctrl_tbc.temperature_1d.copy()*sc.temp-273.15 
+    ax.plot(ctrl_sim.ctrl_tbc.temperature_1d*sc.temp-273.15, ctrl_sim.ctrl_tbc.z*sc.length/1e3,c='firebrick')   
+    ax.plot(ctrl_sim.ctrl_tbc.temp_1d_right*sc.temp-273.15, ctrl_sim.ctrl_tbc.z_right*sc.length/1e3,c='forestgreen')  
+    ctrl_tbc = compute_half_space_cooling_model_analytical(ctrl_sim.ctrl_tbc,np.abs(ctrl_sim.ctrl_tbc.z))
+    ax.plot(ctrl_tbc.temperature_1d*sc.temp-273.15, ctrl_tbc.z*sc.length/1e3,c='cadetblue')   
+
+    plt.show()
+    fig = plt.figure()
+    ax = fig.gca() 
+    ax.plot(ctrl_tbc.temperature_1d*sc.temp-273.15-temp_plate, ctrl_tbc.z*sc.length/1e3,c='cadetblue')   
+    
     
     
     return 0
