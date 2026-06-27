@@ -54,12 +54,12 @@ _NAME_H5_FILE_TMP = 'temporary_file.h5'
 
 
 def save_data_set(f:h5py.File,buf:any,name:str)->None:
-    """save the cached file
+    """Write a dataset to an open HDF5 file, overwriting if it already exists.
 
     Args:
-        f (h5py.File): 
-        buf (any): _description_
-        name (str): _description_
+        f (h5py.File): Open HDF5 file handle (must be writable).
+        buf (any): Data to write — any type accepted by h5py.create_dataset.
+        name (str): Full HDF5 path for the dataset (e.g. 'left_bc/temp_save').
     """
 
     if name in f:
@@ -68,14 +68,17 @@ def save_data_set(f:h5py.File,buf:any,name:str)->None:
     f.create_dataset(name,data=buf)
 
 def check_race_condition(ioctrl:IOControls)->bool:
-    """Check if the file is opened by an other process 
-    if not -> go and open
+    """Check whether the temporary HDF5 cache file is held open by another process.
+
+    Iterates over all running processes via psutil. Returns True if any process
+    has the cache file open, False otherwise. Processes that have died or are
+    inaccessible between iteration and inspection are silently skipped.
 
     Args:
-        ioctrl (IOControls): _description_
+        ioctrl (IOControls): I/O control object providing path_cached_information.
 
     Returns:
-        bool: _description_
+        bool: True if the file is currently open by another process, False if safe to write.
     """
 
     path_cached = ioctrl.path_cached_information
@@ -134,7 +137,7 @@ def _compute_lithostatic_pressure(
         Material database/dataset providing density and other thermodynamic/elastic
         properties as functions of phase, temperature and pressure.
 
-    NB: the parameters are usually sced within the numerical routines
+    NB: all parameters are already in dimensionless (scaled) units when called from the solver.
     
     Returns
     -------
@@ -171,7 +174,7 @@ def _compute_lithostatic_pressure(
 
 #-----------------------------------------------------------------------------------------
 @njit
-def compute_cp_k_rho(ph   : NDArray[np.float64]
+def compute_cp_k_rho(ph   : NDArray[np.int32]
                       ,pdb : PhaseDataBase
                       ,temp : NDArray[np.float64]
                       ,pres  : NDArray[np.float64])->tuple[NDArray[np.float64],NDArray[np.float64],NDArray[np.float64]]:
@@ -186,13 +189,12 @@ def compute_cp_k_rho(ph   : NDArray[np.float64]
     Returns:
         cp,rho,k => vector containing density, heat capacity, and conductivities that are computed using pressure and temperature vector
     """
-    cp = np.zeros([len(temp)],dtype=np.float64)
-    k = np.zeros([len(temp)],dtype=np.float64)
-    rho = np.zeros([len(temp)],dtype=np.float64)
+    cp = np.zeros(len(temp),dtype=np.float64)
+    k = np.zeros(len(temp),dtype=np.float64)
+    rho = np.zeros(len(temp),dtype=np.float64)
     
-    for jj in enumerate(temp):
-        i = jj[0]
-        cp[i], rho[i], k[i] = compute_thermal_properties(pdb,jj[1],pres[i],ph[i])
+    for jj,t_i in enumerate(temp):
+        cp[jj], rho[jj], k[jj] = compute_thermal_properties(pdb,t_i,pres[jj],ph[jj])
 
     return cp,k,rho
 
@@ -210,32 +212,37 @@ def build_coefficient_matrix(pdb:PhaseDataBase,
                              nz:int,
                              dt:np.float64,
                              dz_m:np.float64)->tuple[NDArray[np.float64],NDArray[np.float64]]:
-    """Assembly the system of equation
+    """Assemble the Crank-Nicolson finite-difference system for one predictor or corrector step.
+
+    Implements the predictor-corrector scheme of Press et al. (1992) extended to
+    temperature-dependent material properties. Material properties (ρ, Cp, k) are
+    evaluated at the guess temperature (predictor, step=0) or as the arithmetic mean
+    of guess and predicted temperatures (corrector, step=1).
+
+    The boundary conditions are Dirichlet: T=temp_min at node 0, T=temp_max at node nz-1.
+    Interior nodes follow the standard CN discretization including a mass-matrix
+    correction term (b_vct) that accounts for the change in ρCp between time levels,
+    and a radiogenic heat source term.
 
     Args:
-        a_vct (NDArray[np.float64]): _description_
-        b_vct (NDArray[np.float64]): _description_
-        d_vct (NDArray[np.float64]): _description_
-        q_vct (NDArray[np.float64]): _description_
-        mass_matrix (NDArray[np.float64]): _description_
-        pdb (PhaseDataBase): _description_
-        ph (NDArray[np.int32]): _description_
-        temp_old (NDArray[np.float64]): _description_
-        temp_guess (NDArray[np.float64]): _description_
-        temp_pr (NDArray[np.float64]): _description_
-        k_m (NDArray[np.float64]): _description_
-        density_m (NDArray[np.float64]): _description_
-        heat_capacity_m (NDArray[np.float64]): _description_
-        step (int): _description_
-        lit_p (NDArray[np.float64]): _description_
-        temp_min (np.float64): _description_
-        temp_max (np.float64): _description_
-        nz (int): _description_
-        dt (np.float64): _description_
-        dz (np.float64): _description_
+        pdb (PhaseDataBase): Phase material database (jitclass).
+        ph (NDArray[np.int32]): Phase index per node, shape (nz,). 0-based.
+        temp_old (NDArray[np.float64]): Temperature at the previous time level, shape (nz,).
+        temp_guess (NDArray[np.float64]): Current Picard iterate (best guess for T^{n+1}), shape (nz,).
+        temp_pr (NDArray[np.float64]): Predictor temperature (output of step=0 solve), shape (nz,).
+                                       Only used when step=1.
+        step (int): 0 for predictor pass, 1 for corrector pass.
+        lit_p (NDArray[np.float64]): Lithostatic pressure profile, shape (nz,).
+        temp_min (float): Dirichlet temperature at the top boundary (node 0).
+        temp_max (float): Dirichlet temperature at the bottom boundary (node nz-1).
+        nz (int): Number of grid nodes.
+        dt (float): Time step (dimensionless).
+        dz_m (float): Uniform node spacing (dimensionless).
 
     Returns:
-        tuple[NDArray[np.float64],NDArray[np.float64]]: _description_
+        tuple[NDArray[np.float64], NDArray[np.float64]]:
+            mass_matrix — tridiagonal system matrix, shape (nz, nz).
+            d_vct       — right-hand side vector, shape (nz,).
     """
 
     mass_matrix = np.zeros((nz, nz),dtype=np.float64)     # pre-allocate mass_matrix array
@@ -342,22 +349,29 @@ def build_coefficient_matrix(pdb:PhaseDataBase,
 def fill_phase_properties(g_input:GeomInput,
                           z:NDArray[np.float64],
                           left_right:bool)->NDArray[np.int32]:
-    """_summary_
+    """Assign a phase index to each node of a 1D vertical column.
+
+    For the left (subducting) boundary the column contains oceanic crust
+    above ocr and subducting-plate mantle below. For the right (overriding)
+    boundary it contains upper crust, optionally lower crust, lithospheric
+    mantle, and asthenospheric wedge, in order of increasing depth.
+
+    The returned indices are 0-based (i.e. dict_surf values minus 1) to match
+    the PhaseDataBase array indexing convention.
 
     Args:
-        g_input (GeomInput): _description_
-        z (NDArray[np.float64]): _description_
-        left_right (bool): _description_
-        ph (NDArray[np.int32]): _description_
+        g_input (GeomInput): Geometric input parameters (depths in dimensionless units).
+        z (NDArray[np.float64]): Depth coordinate vector, shape (nz,), increasing downward.
+        left_right (bool): True → left (subducting) boundary; False → right (overriding) boundary.
 
     Returns:
-        NDArray[np.int32]: _description_
+        NDArray[np.int32]: Phase index per node, shape (nz,), 0-based.
     """
     ph = np.zeros([len(z)],dtype=np.int32)
     if left_right:
         ph[z<g_input.ocr] = dict_surf['oceanic_crust']
         ph[z>=g_input.ocr] = dict_surf['sub_plate']
-    elif not left_right:
+    else:
         if g_input.lc != 0.0:
             ph[z<g_input.cr*(1-g_input.lc)] = dict_surf['upper_crust']
             ph[(z>=g_input.cr*(1-g_input.lc))
@@ -371,13 +385,25 @@ def fill_phase_properties(g_input:GeomInput,
 
 def compute_half_space_cooling_model_analytical(ctrl_tbc:CtrlTemperatureBC,
                                                 z:NDArray[np.float64])->CtrlTemperatureBC:
-    """_summary_
+    """Compute the left boundary temperature using the half-space cooling analytical solution.
+
+    Used for the Van Keken benchmark suite where constant material properties allow
+    the exact erf solution:
+
+        T(z, t) = T_top + (T_max - T_top) * erf( z / (2 * sqrt(κ * t)) )
+
+    where κ = k / (ρ Cp) is the thermal diffusivity computed from the fixed benchmark
+    values stored in ctrl_tbc (not from the phase database).
+
+    Writes the result directly into ctrl_tbc.temperature_1d and ctrl_tbc.z.
 
     Args:
-        ctrl_tbc (CtrlTemperatureBC): _description_
+        ctrl_tbc (CtrlTemperatureBC): Thermal BC control object. Must have scalar k, rho, cp,
+                                      slab_age, temp_top, temp_max set (benchmark values).
+        z (NDArray[np.float64]): Depth coordinate vector, shape (nz,), positive downward.
 
     Returns:
-        _type_: _description_
+        CtrlTemperatureBC: Updated ctrl_tbc with temperature_1d and z filled.
     """
     cp    = ctrl_tbc.cp
     k     = ctrl_tbc.k
@@ -391,50 +417,77 @@ def compute_half_space_cooling_model_analytical(ctrl_tbc:CtrlTemperatureBC,
 
 def initialise_geometry_1d(ctrl_tbc:CtrlTemperatureBC
                            ,g_input:GeomInput
-                           ,left_right:bool)->tuple[NDArray[np.float64]
-                                                    ,NDArray[np.int32]
-                                                    ,float]:
-    """_summary_
+                           ,left_right:bool)->tuple[NDArray[np.int32], NDArray[np.float64]]:
+    """Build the 1D depth grid and phase array for a boundary column.
+
+    For the left boundary the grid spans [0, (nz-1)*dz] with uniform spacing
+    ctrl_tbc.dz, so that np.diff(z).mean() == ctrl_tbc.dz exactly.
+    For the right boundary the grid spans [0, g_input.lab_d] (lithosphere-
+    asthenosphere boundary depth) with nz nodes.
 
     Args:
-        ctrl_tbc (CtrlTemperatureBC): _description_
-        g_input (GeomInput): _description_
-        left_right (bool): _description_
+        ctrl_tbc (CtrlTemperatureBC): Thermal BC control (provides nz, dz).
+        g_input (GeomInput): Geometric input (provides lab_d for right BC).
+        left_right (bool): True → left (subducting) boundary; False → right (overriding).
 
     Returns:
-        tuple[NDArray[np.float64] ,NDArray[np.int32] ,float]: _description_
+        tuple[NDArray[np.int32], NDArray[np.float64]]:
+            ph — 0-based phase index per node, shape (nz,).
+            z  — depth coordinate vector, shape (nz,), positive downward.
     """
 
     if left_right:
-        z = np.linspace(0,(ctrl_tbc.nz*ctrl_tbc.dz),ctrl_tbc.nz)
+        z = np.linspace(0,(ctrl_tbc.nz-1)*ctrl_tbc.dz,ctrl_tbc.nz)
     else:
         z = np.linspace(0,g_input.lab_d,ctrl_tbc.nz)
     
-    dz = np.nanmean(np.diff(z))
-
     ph = fill_phase_properties(g_input=g_input
                                ,z=z
                                ,left_right=left_right)
     
     
-    return ph, z, dz
+    return ph, z
 # --- 
 def solve_temperature_1d_bc(ctrl_tbc:CtrlTemperatureBC
                             ,g_input:GeomInput
                             ,pdb:PhaseDataBase
                             ,z:NDArray[np.float64]
                             ,ph:NDArray[np.int32]
-                            ,dz:float
                             ,g:float
                             ,left_right:bool):
 
-    """_summary_
+    """Advance the 1D thermal diffusion equation in time using Crank-Nicolson with Picard iteration.
+
+    At each time step a predictor-corrector cycle is run (build_coefficient_matrix
+    with step=0 then step=1), followed by a fixed-point (Picard) iteration that
+    updates material properties and the lithostatic pressure until the relative
+    change in temperature falls below 1e-6 or 10 iterations are reached.
+
+    The initial temperature is either isothermal at temp_max (oceanic / left BC)
+    or a linear geotherm from temp_top to temp_max over lab_d (continental right BC).
+
+    The loop runs while t[time-1] < end_time AND time < nt, where
+    end_time = ctrl_tbc.end_time (left) or ctrl_tbc.right_age * 1.01 (right).
+
+    Args:
+        ctrl_tbc (CtrlTemperatureBC): Thermal BC control (nz, nt, dt, dz, temp_max,
+                                      temp_top, end_time, right_age, right_boundary).
+        g_input (GeomInput): Geometric input (lab_d for right BC initial condition).
+        pdb (PhaseDataBase): Phase material database (jitclass).
+        z (NDArray[np.float64]): Depth coordinate vector, shape (nz,).
+        ph (NDArray[np.int32]): Phase index per node, shape (nz,). 0-based.
+        g (float): Gravitational acceleration (dimensionless scaled).
+        left_right (bool): True → left (subducting) boundary; False → right (overriding).
 
     Raises:
-        ValueError: _description_
+        ValueError: If a NaN is detected in the Picard residual.
 
     Returns:
-        _type_: _description_
+        tuple[NDArray[np.float64], NDArray[np.float64]]:
+            t           — time vector, shape (nt,). Entries beyond the last completed
+                          step remain zero.
+            temperature — temperature field, shape (nt, nz). Row 0 is the initial
+                          condition; rows beyond the last step are zero.
     """
 
 
@@ -443,6 +496,7 @@ def solve_temperature_1d_bc(ctrl_tbc:CtrlTemperatureBC
     nz = ctrl_tbc.nz
     nt = ctrl_tbc.nt
     dt = ctrl_tbc.dt
+    dz = ctrl_tbc.dz
     if left_right or ctrl_tbc.right_boundary == 'Oceanic':
         temp_old = np.ones((len(z)),dtype=np.float64) * temp_max
     else:
@@ -459,11 +513,12 @@ def solve_temperature_1d_bc(ctrl_tbc:CtrlTemperatureBC
     
     if left_right: 
         end_time = ctrl_tbc.end_time
-    else: 
-        end_time = ctrl_tbc.right_age * (1 + 0.01) 
+    else:
+        end_time = ctrl_tbc.right_age * (1 + 0.01)
 
-    time = 1 
-    while t[time-1] < end_time:
+    time = 1
+    
+    while t[time-1] < end_time and time < nt:
 
         t[time] = t[time-1] + dt
         temp_old_tl = temperature[time-1,:] # temperature at the previous time step
@@ -492,11 +547,16 @@ def solve_temperature_1d_bc(ctrl_tbc:CtrlTemperatureBC
                         temp_pr = temp_new
 
             res = np.linalg.norm(temp_new-temp_guess,2)/np.linalg.norm(temp_new+temp_guess,2)
-            lit_p = _compute_lithostatic_pressure(nz,ph,g,dz,temp_new,pdb)
+            
 
             if np.isnan(res):
                 raise ValueError("NaN detected in the residual")
+            
+            
+            lit_p = _compute_lithostatic_pressure(nz,ph,g,dz,temp_new,pdb)
+
             temp_guess = temp_new * 0.8 + temp_guess * (0.2)
+            
             it += 1
         lit_p = _compute_lithostatic_pressure(nz,ph,g,dz,temp_new,pdb)
 
@@ -505,7 +565,7 @@ def solve_temperature_1d_bc(ctrl_tbc:CtrlTemperatureBC
 
     return t, temperature
 
-# --- 
+# ---
 @timing_function
 def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
                                  ,ctrl:NumericalControls
@@ -515,28 +575,46 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
                                  ,g_input:GeomInput
                                  ,save_data:bool
                                  ,left_right:bool)->CtrlTemperatureBC:
-    """_summary_
+    """Compute the 1D thermal boundary condition and optionally cache the result to HDF5.
+
+    Orchestrates the full boundary computation:
+      1. Build the depth grid and phase array (initialise_geometry_1d).
+      2. If van_keken benchmark mode and left BC: use the analytical erf solution.
+      3. Otherwise: run the Crank-Nicolson + Picard time-stepping solver.
+      4. Extract the temperature profile at the target age (slab_age or right_age).
+      5. If save_data=True and MPI rank==0 and no race condition: write the full
+         time-temperature history and material property arrays to the HDF5 cache.
+
+    The HDF5 groups are 'left_bc' and 'right_bc'. Within each group:
+      - temp_save, time_2d          : 2D fields for post-processing (physical units)
+      - phases                       : unique phase ids present in the column
+      - phase_properties_<i>/...     : per-phase thermal coefficient arrays
+      - data_2_load/temperature_1d   : profile at target age (left BC)
+      - data_2_load/temp_1d_right    : profile at target age (right BC)
+      - data_2_load/temperature      : full time-temperature array (scaled)
+      - data_2_load/time_v           : time vector (scaled)
+      - data_2_load/z                : depth vector (scaled)
 
     Args:
-        ctrl_tbc (CtrlTemperatureBC): Thermal boundary condition
-        ctrl (NumericalControls): Numerical Control
-        ioctrl (IOControls): Input/Output control
-        pdb (PhaseDataBase): Phase database
-        g_input (GeomInput): input geometry
-        save_data (bool): save h5py file with all the data 
-        left_right (bool): True:left , False: Right 
+        ctrl_tbc (CtrlTemperatureBC): Thermal BC control (already scaled).
+        ctrl (NumericalControls): Numerical controls (provides g).
+        ioctrl (IOControls): I/O controls (provides cache path).
+        sc (Scal): Scaling object (used for unit conversion when saving).
+        pdb (PhaseDataBase): Phase material database (jitclass, already scaled).
+        g_input (GeomInput): Geometric input (already scaled).
+        save_data (bool): Whether to write the result to the HDF5 cache.
+        left_right (bool): True → left (subducting) boundary; False → right (overriding).
 
     Returns:
-        CtrlTemperatureBC: Updated boundary control 
+        tuple[CtrlTemperatureBC, GeomInput]:
+            ctrl_tbc — updated with temperature_1d / temp_1d_right and z / z_right.
+            g_input  — unchanged (returned for call-site symmetry).
     """
     # Spell out the structure
-    dz = ctrl_tbc.dz
     g = ctrl.g
-    nt = ctrl_tbc.nt
-    # Initialise the geometry and the phases 
-    t = np.zeros((nt))
 
-    ph, z ,dz = initialise_geometry_1d(ctrl_tbc=ctrl_tbc
+    # Initialise the geometry and the phases 
+    ph, z  = initialise_geometry_1d(ctrl_tbc=ctrl_tbc
                            ,g_input=g_input
                            ,left_right=left_right)
 
@@ -550,13 +628,12 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
                             ,g=g
                             ,z=z
                             ,ph=ph
-                            ,dz=dz
                             ,left_right=left_right)
 
     # Current age index
     if left_right:
         current_age_index = np.where(time_v >= ctrl_tbc.slab_age)[0][0]
-        ctrl_tbc.temperature_1d = temperature[current_age_index]
+        ctrl_tbc.temperature_1d = temperature[current_age_index,:]
         ctrl_tbc.z[:] = - z
         if ctrl_tbc.constant == 0:
             ctrl_tbc.temperature_2d_field[:,:] = temperature
@@ -564,7 +641,7 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
             ctrl_tbc.temperature_2d_field = None
     else:
         current_age_index = np.where(time_v >= ctrl_tbc.right_age)[0][0]
-        ctrl_tbc.temp_1d_right[:] = temperature[current_age_index]
+        ctrl_tbc.temp_1d_right[:] = temperature[current_age_index,:]
         ctrl_tbc.z_right = - z
     
     rank = mpi4py.MPI.COMM_WORLD.Get_rank()
@@ -573,8 +650,8 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
         race_condition = check_race_condition(ioctrl)
         if race_condition: 
             print('    The file is opened for an other process, skip the save.')
-        if save_data and not race_condition and left_right:
-            ttime,zz = np.meshgrid(t[0],z)
+        if save_data and not race_condition:
+            ttime,zz = np.meshgrid(time_v,z)
             ttime = ttime*sc.time/365.25/60/60/24/1e6
             ttime = ttime[:,1::]
             zz    = zz[:,1::]
@@ -617,24 +694,184 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
                     save_data_set(f,array_rho,f'{name}/rho_prop')
                     save_data_set(f,array_cp,f'{name}/array_cp')
                     save_data_set(f,array_k,f'{name}/array_cond')
-                    name = f'{grp}/data_2_load'
-                    if left_right:
-                        save_data_set(f,ctrl_tbc.temperature_1d,name=f'{name}/temperature_1d')
-                        save_data_set(f,ctrl_tbc.slab_age,name=f'{name}/slab_age')
-
-                    else: 
-                        save_data_set(f,ctrl_tbc.temp_1d_right,name=f'{name}/temp_1d_right')
-                        save_data_set(f,ctrl_tbc.right_age,name=f'{name}/right_age')
-                    
-                    save_data_set(f,temperature,name=f'{name}/temperature')
-                    save_data_set(f,time_v,name=f'{name}/time_v')
+                name = f'{grp}/data_2_load'
+                if left_right:
+                    save_data_set(f,ctrl_tbc.temperature_1d,name=f'{name}/temperature_1d')
+                    save_data_set(f,ctrl_tbc.slab_age,name=f'{name}/slab_age')
                     save_data_set(f,ctrl_tbc.z,name=f'{name}/z')
 
 
+                else: 
+                    save_data_set(f,ctrl_tbc.temp_1d_right,name=f'{name}/temp_1d_right')
+                    save_data_set(f,ctrl_tbc.right_age,name=f'{name}/right_age')
+                    save_data_set(f,ctrl_tbc.z_right,name=f'{name}/z')
+
+                    
+                save_data_set(f,temperature,name=f'{name}/temperature')
+                save_data_set(f,time_v,name=f'{name}/time_v')
                         
-                    print('             temporary data base is saved...')
+                print('             temporary data base is saved...')
 
     return ctrl_tbc,g_input
+
+def check_material_property(f,pdb,ph_id,main_grp)->bool:
+    """Verify that the material properties in the HDF5 cache match the current phase database.
+
+    Compares the stored thermal coefficient arrays (conductivity, heat capacity,
+    density parameters, radiogenic heat) against the values in pdb for each phase
+    in ph_id. Raises ValueError on any mismatch so the caller knows the cache must
+    be recomputed before reuse.
+
+    Args:
+        f (h5py.File): Open HDF5 file handle (read mode).
+        pdb (PhaseDataBase): Current phase material database (jitclass, already scaled).
+        ph_id (list[int]): List of phase ids (1-based dict_surf values) present in the column.
+        main_grp (str): HDF5 group name — 'left_bc' or 'right_bc'.
+
+    Raises:
+        ValueError: If any stored coefficient array differs from the current pdb
+                    by more than 1e-12 in absolute value. Signals that the cached
+                    thermal history was computed with different material properties.
+
+    Returns:
+        bool: True if all arrays match (always True when no exception is raised).
+    """
+    check_array_f = lambda x,y :  np.any(np.abs(x - y) > 1e-12)
+    
+    flag = True
+    warnings = 0
+    for i in ph_id: 
+        # Check conductivity: 
+        i = i - 1
+        array = f[f'{main_grp}/phase_properties_{i}/array_cond']
+        array_k = [pdb.k0[i],
+                   pdb.k_a[i],
+                   pdb.k_b[i],
+                   pdb.k_c[i],
+                   pdb.k_d[i],
+                   pdb.k_e[i],
+                   pdb.k_f[i],
+                   pdb.radiative_conductivity[i]]
+        if  check_array_f(array[:],array_k[:]):
+            warnings = warnings+1
+            raise Warning(f'Wrong material property, redo the database, change approach for running simulation [k] Ph {i}')
+        array = f[f'{main_grp}/phase_properties_{i}/array_cp']
+        array_cp = [pdb.c0[i],
+                    pdb.c1[i],
+                    pdb.c2[i],
+                    pdb.c3[i],
+                    pdb.c4[i],
+                    pdb.c5[i]]
+        if check_array_f(array[:],array_cp[:]):
+            warnings = warnings+1
+            raise Warning(f'Wrong material property, redo the database, change approach for running simulation [Cp] Ph {i}')
+        array = f[f'{main_grp}/phase_properties_{i}/rho_prop']
+        array_rho = [pdb.rho0[i],
+                     pdb.alpha0[i],
+                     pdb.alpha1[i],
+                     pdb.alpha2[i],
+                     pdb.kb[i]]
+        if check_array_f(array[:],array_rho[:]):
+            warnings = warnings+1
+            raise Warning(f'Wrong material property, redo the database, change approach for running simulation [rho] Ph {i}')
+        diff = f[f'{main_grp}/phase_properties_{i}/hr']-pdb.radiogenic_heat[i]
+        if diff != 0.0:
+            warnings = warnings+1
+            raise Warning(f'Wrong material property, redo the database, change approach for running simulation [hr] Ph {i}')
+
+
+    if warnings != 0:
+        raise ValueError('The saved database is different, it must be recomputed: the material properties must be'
+                         'the same within an ensemble of experiment or recomputed on the fly each time.')
+    else:
+        flag = True
+        
+    
+    return  flag
+
+
+# ---
+def read_temporary_file(ctrl_tbc:CtrlTemperatureBC
+                        ,ctrl:NumericalControls
+                        ,ioctrl:IOControls
+                        ,g_input:GeomInput
+                        ,pdb:PhaseDataBase
+                        ,sc:Scal
+                        ,left_right)->tuple[CtrlTemperatureBC,GeomInput]:
+    """Load a previously computed boundary temperature profile from the HDF5 cache.
+
+    If the cache file does not exist, falls back to computing it from scratch via
+    compute_thermal_boundary (with save_data=True so the result is cached for next time).
+
+    If the file exists, first calls check_material_property to ensure the stored
+    coefficients match the current pdb. On success, reads the full temperature array,
+    finds the time index closest to the target age (slab_age or right_age), and
+    loads that profile into ctrl_tbc.
+
+    Args:
+        ctrl_tbc (CtrlTemperatureBC): Thermal BC control (already scaled).
+        ctrl (NumericalControls): Numerical controls (passed through to compute_thermal_boundary
+                                  if the cache is missing).
+        ioctrl (IOControls): I/O controls (provides path_cached_information).
+        g_input (GeomInput): Geometric input (already scaled).
+        pdb (PhaseDataBase): Phase material database (jitclass, already scaled).
+        sc (Scal): Scaling object (passed through if recomputation is needed).
+        left_right (bool): True → left (subducting) boundary; False → right (overriding).
+
+    Returns:
+        tuple[CtrlTemperatureBC, GeomInput]:
+            ctrl_tbc — updated with temperature_1d / temp_1d_right and z / z_right.
+            g_input  — unchanged (returned for call-site symmetry).
+    """
+    
+    path_cache = ioctrl.path_cached_information
+    path_h5_file = path_cache/_NAME_H5_FILE_TMP
+    
+    if not path_h5_file.exists():
+        print('Temporary file has not been created yet, running the cooling model')
+        ctrl_tbc, g_input = compute_thermal_boundary(ctrl_tbc=ctrl_tbc
+                                                     ,ctrl=ctrl
+                                                     ,ioctrl=ioctrl
+                                                     ,sc=sc
+                                                     ,pdb=pdb
+                                                     ,g_input=g_input
+                                                     ,save_data=True
+                                                     ,left_right=left_right)
+    else:
+        print('Temporary file exists')
+        if left_right: 
+            ph_id = [dict_surf['sub_plate'],dict_surf['oceanic_crust']]
+        else: 
+            ph_id = [dict_surf['upper_crust'],dict_surf['lower_crust'],dict_surf['overriding_lm'],dict_surf['wedge']]
+        
+        with h5py.File(path_h5_file,'r') as f:
+            
+            if left_right:
+                main_grp = 'left_bc'
+                age = ctrl_tbc.slab_age
+            else:
+                main_grp = 'right_bc'
+                age = ctrl_tbc.right_age
+
+            time_v = f[f'{main_grp}/data_2_load/time_v']
+            temperature = f[f'{main_grp}/data_2_load/temperature']
+            z = f[f'{main_grp}/data_2_load/z']
+                
+            flag = check_material_property(f,pdb,ph_id,main_grp)
+            current_age_index = np.where(time_v >= age)[0][0]
+
+            if flag:
+                if not left_right: 
+                    ctrl_tbc.temp_1d_right[:] = temperature[current_age_index,:]
+                    ctrl_tbc.z_right = z
+                    g_input.lab_d = np.abs(np.min(z))
+                else:
+                    ctrl_tbc.temperature_1d[:] = temperature[current_age_index,:]
+                    ctrl_tbc.z = z
+   
+    return ctrl_tbc,g_input
+
+
 
 # --- 
 @timing_function
@@ -645,19 +882,26 @@ def configure_thermal_bc(ctrl_tbc:CtrlTemperatureBC
                                  ,pdb:PhaseDataBase
                                  ,g_input:GeomInput
                                  ,left_right:bool)->CtrlTemperatureBC:
-    """_summary_
+    """Dispatch thermal boundary computation: recompute from scratch or load from cache.
+
+    If ctrl_tbc.recalculate is set, runs the full Crank-Nicolson solver and saves
+    the result to the HDF5 cache. Otherwise attempts to load from the existing cache
+    via read_temporary_file (which itself falls back to recomputation if the file is
+    absent or the stored material properties do not match).
 
     Args:
-        ctrl_tbc (CtrlTemperatureBC): _description_
-        ctrl (NumericalControls): _description_
-        ioctrl (IOControls): _description_
-        sc (Scal): _description_
-        pdb (PhaseDataBase): _description_
-        g_input (GeomInput): _description_
-        left_right (bool): _description_
+        ctrl_tbc (CtrlTemperatureBC): Thermal BC control (already scaled).
+        ctrl (NumericalControls): Numerical controls.
+        ioctrl (IOControls): I/O controls (cache path).
+        sc (Scal): Scaling object.
+        pdb (PhaseDataBase): Phase material database (jitclass, already scaled).
+        g_input (GeomInput): Geometric input (already scaled).
+        left_right (bool): True → left (subducting) boundary; False → right (overriding).
 
     Returns:
-        CtrlTemperatureBC: _description_
+        tuple[CtrlTemperatureBC, GeomInput]:
+            ctrl_tbc — updated with the boundary temperature profile and depth vector.
+            g_input  — unchanged (returned for call-site symmetry).
     """
     
     if ctrl_tbc.recalculate:
@@ -669,11 +913,14 @@ def configure_thermal_bc(ctrl_tbc:CtrlTemperatureBC
                                                      ,g_input=g_input
                                                      ,save_data=True
                                                      ,left_right=left_right)
-    elif not ctrl_tbc.recalculate: 
-        # Read the data base.# PLACE HOLDER
-        pass
-    
-    
+    else:
+        ctrl_tbc,g_input = read_temporary_file(ctrl_tbc=ctrl_tbc
+                                               ,ctrl=ctrl
+                                               ,pdb=pdb
+                                               ,g_input=g_input
+                                               ,ioctrl=ioctrl
+                                               ,sc=sc
+                                               ,left_right=left_right)
     return ctrl_tbc,g_input
 
 # --- # 
@@ -684,12 +931,25 @@ def configure_boundary_condition(ctrl_tbc:CtrlTemperatureBC
                                  ,pdb:PhaseDataBase
                                  ,g_input:GeomInput)->CtrlTemperatureBC:
     
-    """_summary_
+    """Configure both the left and right thermal boundary conditions.
+
+    Public entry point for the thermal boundary setup. Calls configure_thermal_bc
+    twice — first for the left (subducting slab) boundary, then for the right
+    (overriding plate) boundary — each of which either recomputes or loads from cache.
+
+    Args:
+        ctrl_tbc (CtrlTemperatureBC): Thermal BC control (already scaled).
+        ctrl (NumericalControls): Numerical controls.
+        ioctrl (IOControls): I/O controls (cache path).
+        sc (Scal): Scaling object.
+        pdb (PhaseDataBase): Phase material database (jitclass, already scaled).
+        g_input (GeomInput): Geometric input (already scaled).
 
     Returns:
-        _type_: _description_
+        tuple[CtrlTemperatureBC, GeomInput]:
+            ctrl_tbc — updated with temperature_1d (left) and temp_1d_right (right).
+            g_input  — unchanged (returned for call-site symmetry).
     """
-    
     # Configure left boundary condition
     ctrl_tbc,g_input = configure_thermal_bc(ctrl_tbc = ctrl_tbc
                          ,ctrl = ctrl
