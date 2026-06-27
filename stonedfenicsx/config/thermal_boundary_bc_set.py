@@ -853,9 +853,9 @@ def read_temporary_file(ctrl_tbc:CtrlTemperatureBC
                 main_grp = 'right_bc'
                 age = ctrl_tbc.right_age
 
-            time_v = f[f'{main_grp}/data_2_load/time_v']
-            temperature = f[f'{main_grp}/data_2_load/temperature']
-            z = f[f'{main_grp}/data_2_load/z']
+            time_v = f[f'{main_grp}/data_2_load/time_v'][:]
+            temperature = f[f'{main_grp}/data_2_load/temperature'][:]
+            z = f[f'{main_grp}/data_2_load/z'][:]
                 
             flag = check_material_property(f,pdb,ph_id,main_grp)
             current_age_index = np.where(time_v >= age)[0][0]
