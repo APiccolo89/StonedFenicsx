@@ -313,22 +313,22 @@ def build_coefficient_matrix(pdb:PhaseDataBase,
             mass_matrix[i,i] = 1. + a_vct[i] * (  k_m_m[i] + ( k_m_m[i-1]))/dz_m
             mass_matrix[i,i-1] = -a_vct[i] * ( k_m_m[i-1]  / dz_m)
 
-        q_vct[i] = (1/dz_m) * (k_m_m[i]*temp_old[i+1] - (k_m_m[i-1]+k_m_m[i])*temp_old[i]+k_m_m[i-1]*temp_old[i-1])     
-        rho_a = density(pdb, temp_old[i], lit_p[i], ph[i])
-        cp_a  = heat_capacity(pdb, temp_old[i], ph[i])      
-        if step == 0:
-            rho_b = density(pdb,temp_guess[i],lit_p[i],ph[i])
-            cp_b = heat_capacity(pdb,temp_guess[i],ph[i])
-
-            # b_vct - predictor step 
-            b_vct[i] = -temp_old[i] * ( rho_a * cp_a - rho_b * cp_b) / (rho_b * cp_b)       
-        elif step == 1:
-            rho_b = density(pdb,temp_pr[i],lit_p[i],ph[i])
-            cp_b = heat_capacity(pdb,temp_pr[i],ph[i])      
-            # b_vct - corrector step        
-            b_vct[i] = - ((temp_pr[i] + temp_old[i]) * ( rho_b*cp_b - rho_a*cp_a ) / ( rho_b*cp_b + rho_a*cp_a))        
-        d_vct[i] = temp_old[i] + a_vct[i] * q_vct[i]+ b_vct[i] + \
-            dt * pdb.radiogenic_heat[ph[i]]/rho_m[i]/cp_m[i]
+            q_vct[i] = (1/dz_m) * (k_m_m[i]*temp_old[i+1] - (k_m_m[i-1]+k_m_m[i])*temp_old[i]+k_m_m[i-1]*temp_old[i-1])     
+            rho_a = density(pdb, temp_old[i], lit_p[i], ph[i])
+            cp_a  = heat_capacity(pdb, temp_old[i], ph[i])      
+            if step == 0:
+                rho_b = density(pdb,temp_guess[i],lit_p[i],ph[i])
+                cp_b = heat_capacity(pdb,temp_guess[i],ph[i])
+    
+                # b_vct - predictor step 
+                b_vct[i] = -temp_old[i] * ( rho_a * cp_a - rho_b * cp_b) / (rho_b * cp_b)       
+            elif step == 1:
+                rho_b = density(pdb,temp_pr[i],lit_p[i],ph[i])
+                cp_b = heat_capacity(pdb,temp_pr[i],ph[i])      
+                # b_vct - corrector step        
+                b_vct[i] = - ((temp_pr[i] + temp_old[i]) * ( rho_b*cp_b - rho_a*cp_a ) / ( rho_b*cp_b + rho_a*cp_a))        
+            d_vct[i] = temp_old[i] + a_vct[i] * q_vct[i]+ b_vct[i] + \
+                dt * pdb.radiogenic_heat[ph[i]]/rho_m[i]/cp_m[i]
                     
     return mass_matrix,d_vct
 # --- 
@@ -527,7 +527,7 @@ def solve_temperature_1d_bc(ctrl_tbc:CtrlTemperatureBC
                                                                  ,dt = ctrl_tbc.dt
                                                                  ,dz_m = ctrl_tbc.dz
                                                                  ,nz = ctrl_tbc.nz)
-                    temp_new = np.transpose(np.linalg.solve(mass_matrix, d_vct))    # solve Mx = d_vct for x
+                    temp_new = np.linalg.solve(mass_matrix, d_vct)
 
                     if step == 0:
                         temp_pr = temp_new
@@ -738,9 +738,8 @@ def check_material_property(f,pdb,ph_id,main_grp)->bool:
                    pdb.k_e[i],
                    pdb.k_f[i],
                    pdb.radiative_conductivity[i]]
-        if  check_array_f(array[:],array_k[:]):
-            warnings = warnings+1
-            raise Warning(f'Wrong material property, redo the database, change approach for running simulation [k] Ph {i}')
+        if check_array_f(array[:], array_k[:]):
+            raise ValueError(f'Conductivity mismatch for phase {i}: cached thermal history must be recomputed.')
         array = f[f'{main_grp}/phase_properties_{i}/array_cp']
         array_cp = [pdb.c0[i],
                     pdb.c1[i],
@@ -748,32 +747,21 @@ def check_material_property(f,pdb,ph_id,main_grp)->bool:
                     pdb.c3[i],
                     pdb.c4[i],
                     pdb.c5[i]]
-        if check_array_f(array[:],array_cp[:]):
-            warnings = warnings+1
-            raise Warning(f'Wrong material property, redo the database, change approach for running simulation [Cp] Ph {i}')
+        if check_array_f(array[:], array_cp[:]):
+            raise ValueError(f'Heat capacity mismatch for phase {i}: cached thermal history must be recomputed.')
         array = f[f'{main_grp}/phase_properties_{i}/rho_prop']
         array_rho = [pdb.rho0[i],
                      pdb.alpha0[i],
                      pdb.alpha1[i],
                      pdb.alpha2[i],
                      pdb.kb[i]]
-        if check_array_f(array[:],array_rho[:]):
-            warnings = warnings+1
-            raise Warning(f'Wrong material property, redo the database, change approach for running simulation [rho] Ph {i}')
-        diff = f[f'{main_grp}/phase_properties_{i}/hr']-pdb.radiogenic_heat[i]
+        if check_array_f(array[:], array_rho[:]):
+            raise ValueError(f'Density mismatch for phase {i}: cached thermal history must be recomputed.')
+        diff = f[f'{main_grp}/phase_properties_{i}/hr'] - pdb.radiogenic_heat[i]
         if diff != 0.0:
-            warnings = warnings+1
-            raise Warning(f'Wrong material property, redo the database, change approach for running simulation [hr] Ph {i}')
+            raise ValueError(f'Radiogenic heat mismatch for phase {i}: cached thermal history must be recomputed.')
 
-
-    if warnings != 0:
-        raise ValueError('The saved database is different, it must be recomputed: the material properties must be'
-                         'the same within an ensemble of experiment or recomputed on the fly each time.')
-    else:
-        flag = True
-        
-    
-    return  flag
+    return True
 
 
 # ---
