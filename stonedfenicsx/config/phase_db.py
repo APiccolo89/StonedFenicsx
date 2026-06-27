@@ -517,10 +517,7 @@ def generate_phase(pdb:PhaseDataBase,
         buf_data_diffusivity = read_diffusivity(name_conductivity)
     if pressure_dependency == 0:
         buf_data_diffusivity.f = 0.0
-    if radiative_conductivity == 1:
-        buf_data_diffusivity.g = 1.0
-    else:
-        buf_data_diffusivity.g = 0.0
+
 
     pdb.k_a[id_ph] = buf_data_diffusivity.a
     pdb.k_b[id_ph] = buf_data_diffusivity.b
@@ -986,7 +983,7 @@ class LatticeDiffusivity:
     d :float = field(init=False)
     e :float = field(init=False)
     f :float = field(init=False)
-    g :float = field(init=False)
+    g :float = 0.0
 
 # --- 
 def read_diffusivity(tag:str)->LatticeDiffusivity:
@@ -1062,7 +1059,7 @@ def heat_conductivity(pdb:PhaseDataBase
     
     kappa_p   = np.exp(pdb.k_f[ph] * pres)
 
-    k = pdb.k0[ph] + kappa_lat * kappa_p * cp * rho + k_rad * pdb.radio_flag[ph]
+    k = pdb.k0[ph] + kappa_lat * kappa_p * cp * rho + k_rad * pdb.radiative_conductivity[ph]
 
     return k
 #---------------------------------------------------------------------------------
@@ -1090,7 +1087,7 @@ def density(pdb:PhaseDataBase
     else :
         # calculate rho
         rho     = rho_0 * (1 - np.exp(- pres * pdb.alpha2[ph])
-                           *( pdb.alpha0[ph] * (temp - pdb.Tref) + (pdb.alpha1[ph]/2.) * ( temp**2 - pdb.temp_ref**2 )))
+                           *( pdb.alpha0[ph] * (temp - pdb.temp_ref) + (pdb.alpha1[ph]/2.) * ( temp**2 - pdb.temp_ref**2 )))
         if pdb.option_rho[ph] == 2:
             # calculate the pressure dependence of the density
             kb = pdb.kb[ph]

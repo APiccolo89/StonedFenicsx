@@ -155,11 +155,12 @@ def _compute_lithostatic_pressure(
     res = 1.0
     while res>1e-6:
         for i in range(0,nz):
+            
             rho = density(pdb,temp[i],lit_p_o[i],ph[i])
             rhog = rho*g
             if i == 0:
                 lit_p[i] = 0.0
-            else: 
+            else:
                 lit_p[i] = lit_p[i-1]+rhog*dz
         
         res =  np.linalg.norm(lit_p-lit_p_o,2)/np.linalg.norm(lit_p+lit_p_o,2)
@@ -199,7 +200,7 @@ def compute_cp_k_rho(ph   : NDArray[np.float64]
 
 
 #-----------------------------------------------------------------------------------------
-@njit
+#@njit
 def build_coefficient_matrix(a_vct:NDArray[np.float64],
                              b_vct:NDArray[np.float64],
                              d_vct:NDArray[np.float64],
@@ -219,7 +220,7 @@ def build_coefficient_matrix(a_vct:NDArray[np.float64],
                              temp_max:np.float64,
                              nz:int,
                              dt:np.float64,
-                             dz:np.float64)->tuple[NDArray[np.float64],NDArray[np.float64]]:
+                             dz_m:np.float64)->tuple[NDArray[np.float64],NDArray[np.float64]]:
     """Assembly the system of equation
 
     Args:
@@ -248,8 +249,8 @@ def build_coefficient_matrix(a_vct:NDArray[np.float64],
         tuple[NDArray[np.float64],NDArray[np.float64]]: _description_
     """
 
-    dz_m               = np.full((nz), dz) # current assumption: incompressible
-
+    hr = np.zeros(len(cp_m),dtype=np.float64)
+    hr = [pdb.radiogenic_heat[ph[i]] for i in range(len(hr))]
     if step == 0:
 
         # predictor step
@@ -258,9 +259,9 @@ def build_coefficient_matrix(a_vct:NDArray[np.float64],
         # Compute the current material property with the guess temperature
         cp_m,k_m,rho_m=compute_cp_k_rho(ph=ph
                                                        ,pdb=pdb
-                                                       ,cp=cp_m
-                                                       ,k=k_m
-                                                       ,rho = rho_m
+                                                       ,cp=cp_m.copy()
+                                                       ,k=k_m.copy()
+                                                       ,rho = rho_m.copy()
                                                        ,temp=temp_guess
                                                        ,pres=lit_p)
 
@@ -272,17 +273,17 @@ def build_coefficient_matrix(a_vct:NDArray[np.float64],
         # Compute the temperature with the guess and with the predicted temperature 
         cp_m0,k_m0,rho_m0=compute_cp_k_rho(ph=ph
                                            ,pdb=pdb
-                                           ,cp=cp_m
-                                           ,k=k_m
-                                           ,rho = rho_m
+                                           ,cp=cp_m.copy()
+                                           ,k=k_m.copy()
+                                           ,rho = rho_m.copy()
                                            ,temp = temp_guess
                                            ,pres = lit_p)
 
         cp_m1,k_m1,rho_m1=compute_cp_k_rho(ph=ph
                                            ,pdb=pdb
-                                           ,cp=cp_m
-                                           ,k=k_m
-                                           ,rho = rho_m
+                                           ,cp=cp_m.copy()
+                                           ,k=k_m.copy()
+                                           ,rho = rho_m.copy()
                                            ,temp = temp_pr
                                            ,pres = lit_p)
         cp_m = (cp_m1+cp_m0)/2
@@ -292,136 +293,63 @@ def build_coefficient_matrix(a_vct:NDArray[np.float64],
         rho_m        = (rho_m0+rho_m1)/2
     
     # find the mean of k     
-    k_m_m = (k_m[1:]+k_m[:-1])/2 
+    k_m_m = (k_m[1:]+k_m[:-1])/2
     
-
+    a_vct[:] = dt / (rho_m[:] * cp_m[:] * (2.0 * dz_m))
+    
     for i in range(0,nz):
 
-        if i == 0:
 
-            start_loop = i
+        if (i == 0):
 
-            end_loop   = i+1
+            # boundary condition at the top 
 
-        elif i == nz-1:
+            mass_matrix[i,i] = 1.
 
-            start_loop = i-1
+            d_vct[i]   = temp_min
 
-            end_loop   = i  
+        elif (i == nz-1):
+
+            # boundary condition at the bottom
+
+            mass_matrix[i,i] = 1.
+
+            d_vct[i]   = temp_max
 
         else:
 
-            start_loop = i-1
-
-            end_loop   = i+1
-
-
-        for j in range(start_loop,end_loop+1):
-            if j == 0:
-
-                # calculate a_vct
-
-                a_vct[j] = (dt / ( rho_m[j] * cp_m[j] * ( dz_m[j] + dz_m[j] ) ))
-
-            elif j > 0:
-
-                # calculate a_vct
-
-                a_vct[j] = (dt / ( rho_m[j] * cp_m[j] * ( dz_m[j] + dz_m[j-1] ) ))
+            mass_matrix[i,i+1] = -a_vct[i] * ( k_m_m[i]  / dz_m)
+            mass_matrix[i,i] = 1. + a_vct[i] * (  k_m_m[i] + ( k_m_m[i-1]))/dz_m
+            mass_matrix[i,i-1] = -a_vct[i] * ( k_m_m[i-1]  / dz_m)
 
 
-            # ========== BUILD mass_matrix ========== - coefficient matrix
+            if i > 0 and i < nz-1:
 
-            # ========== boundary conditions ==========
-
-            if (i == 0 and j == 0): 
-
-                # boundary condition at the top 
-
-                mass_matrix[i,j] = 1.
-
-                d_vct[j]   = temp_min
-
-            elif (i == nz-1 and j == nz-1):
-
-                # boundary condition at the bottom
-
-                mass_matrix[i,j] = 1.
-
-                d_vct[j]   = temp_max
-
-            else:
-
-                # ========== BUILD mass_matrix ========== - coefficient matrix 
-
-                if i - j == 1 and j < nz - 2:
-
-                    # T_j+1
-
-                    if j > 0:
-
-                        mass_matrix[i,j] = -a_vct[j] * ( k_m_m[j]  / dz_m[j])
-
-                    elif j == 0:
-
-                        mass_matrix[i,j] = -a_vct[j] * (k_m_m[j]  / dz_m[j])
-
-                elif i == j:
-
-                    # diagonal: T_j
-
-                    mass_matrix[i,j] = 1. + a_vct[j] * (  k_m_m[j]  / dz_m[j] + ( k_m_m[j-1]  / dz_m[j-1]))
-
-                elif i - j == -1 and j > 1 and j < nz:
-
-                    # T_j-1
-
-                    if j < nz - 1:
-
-                        mass_matrix[i,j] = -a_vct[j] * ( k_m_m[j-1]   / dz_m[j-1])
-
-                    elif j == nz - 1:
-
-                        mass_matrix[i, j] = -a_vct[j] * (k_m_m[j-1] / dz_m[j])
+                q_vct[i] = (1/dz_m) * (k_m_m[i]*temp_old[i+1] - (k_m_m[i-1]+k_m_m[i])*temp_old[i]+k_m_m[i-1]*temp_old[i-1])
 
 
-                # ========== BUILD d_vct ========== - right hand side vector
+                rho_a = density(pdb, temp_old[i], lit_p[i], ph[i])
+                cp_a  = heat_capacity(pdb, temp_old[i], ph[i])
 
-                # d_vct consists of multiple components
+                if step == 0:
 
-                # we say d_vct = T + a_vct * q_vct + b_vct
-
-                if j > 0 and j < nz-1:
-
-                    q_vct[j] = ( ( k_m_m[j]) / dz_m[j] )*temp_old[j+1] \
-                    - (( k_m_m[j] / dz_m[j] ) + ( k_m_m[j-1] / dz_m[j-1] ) ) * temp_old[j] \
-                     + ( k_m_m[j-1] / dz_m[j-1]  )*temp_old[j-1]
-
-
-                    # b_vct - correction that represents the second term on the right-hand side on the equation 
-
-                    rho_a = density(pdb, temp_old[j], lit_p[j], ph[j])
-                    cp_a  = heat_capacity(pdb, temp_old[j], ph[j])
-
-                    if step == 0:
-
-                        rho_b = density(pdb,temp_guess[j],lit_p[j],ph[j])
-                        cp_b = heat_capacity(pdb,temp_guess[j],ph[j])
+                    rho_b = density(pdb,temp_guess[i],lit_p[i],ph[i])
+                    cp_b = heat_capacity(pdb,temp_guess[i],ph[i])
  
-                        # b_vct - predictor step 
-                        b_vct[j] = -temp_old[j] * ( rho_b * cp_a - rho_b * cp_b) / (rho_b * cp_b)
+                    # b_vct - predictor step 
+                    b_vct[i] = -temp_old[i] * ( rho_a * cp_a - rho_b * cp_b) / (rho_b * cp_b)
 
-                    elif step == 1:
-                        rho_b = density(pdb,temp_pr[j],lit_p[j],ph[j])
-                        cp_b = heat_capacity(pdb,temp_pr[j],ph[j])
-
-
-                        # b_vct - corrector step 
-
-                        b_vct[j] = - ((temp_pr[j] + temp_old[j]) * ( rho_b*cp_b - rho_a*cp_a ) / ( rho_b*cp_b + rho_a*cp_a))
+                elif step == 1:
+                    rho_b = density(pdb,temp_pr[i],lit_p[i],ph[i])
+                    cp_b = heat_capacity(pdb,temp_pr[i],ph[i])
 
 
-                    d_vct[j] = temp_old[j] + a_vct[j] * q_vct[j] + b_vct[j] + dt * (pdb.radiogenic_heat[ph[j]]/(rho_m[j]*cp_m[j]))
+                    # b_vct - corrector step 
+
+                    b_vct[i] = - ((temp_pr[i] + temp_old[i]) * ( rho_b*cp_b - rho_a*cp_a ) / ( rho_b*cp_b + rho_a*cp_a))
+
+
+                d_vct[i] = temp_old[i] + a_vct[i] * q_vct[i]+ b_vct[i] + dt * hr[i]/rho_m[i]/cp_m[i]
                     
     return mass_matrix,d_vct
 # --- 
@@ -445,10 +373,10 @@ def fill_phase_properties(g_input:GeomInput,z:NDArray[np.float64],left_right:boo
         if g_input.lc != 0.0:
             ph[z<g_input.cr*(1-g_input.lc)] = dict_surf['upper_crust']
             ph[(z>=g_input.cr*(1-g_input.lc))
-               and (z<g_input.cr)] = dict_surf['lower_crust']
+               & (z<g_input.cr)] = dict_surf['lower_crust']
         elif g_input.lc == 0.0:
             ph[z<g_input.cr] = dict_surf['upper_crust']
-        ph[(z>=g_input.cr) and  (z<g_input.lit_mt+g_input.cr)] = dict_surf['overriding_lm']
+        ph[(z>=g_input.cr) &  (z<g_input.lit_mt+g_input.cr)] = dict_surf['overriding_lm']
         ph[(z>=g_input.lit_mt+g_input.cr)] = dict_surf['wedge']
     
     return ph-1
@@ -487,10 +415,14 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
     temp_min = ctrl_tbc.temp_top
     van_keken = g_input.van_keken
     theta_in = g_input.theta_in_slab
-    
-    nt = int(end_time / dt + 1)
 
-    t = np.zeros((1,nt))
+    side = "LEFT" if left_right else "RIGHT"
+    print(f"\n[DIAG {side}] dz={dz:.6g}  dt={dt:.6g}  end_time={end_time:.6g}  nz={nz}")
+    print(f"[DIAG {side}] temp_min={temp_min:.6g}  temp_max={temp_max:.6g}  theta_in={theta_in:.6g}")
+
+    nt = ctrl_tbc.nt
+
+    t = np.zeros((nt))
     if left_right:
         z = np.linspace(0,(nz*dz),nz)
     else: 
@@ -515,8 +447,16 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
     else:
 
         if theta_in != 0 and left_right:
+            """
+            Long story short: the sociopath of Richards and other they tried to make the finite difference scheme compressible 
+            creating an unnecessary complication for the current problem. Naturally, my estimate co-author follow the example 
+            creating a few logical loop hole that were perfectly masked by a weird approach to use a constant dz. I fix this problem
+            by simply stating the following: dz is constant. I am not creating a generic tool for compressible half-space cooling model 
+            not caring, the error are in any case negligible.  
+            """
+            
             z    = np.linspace(0,(nz*dz)/np.cos(theta_in),nz)
-            dz = np.diff(z)
+            dz = np.diff(z)[0]
             ctrl_tbc.dz = dz
             print('         The z vector of the left boundary condition has been'
                   'corrected with the initial slab angle.')
@@ -549,10 +489,11 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
         k_tmp = np.zeros((nz),dtype=np.float64)
         cp_tmp = np.zeros((nz),dtype=np.float64)
         rho_tmp = np.zeros((nz),dtype=np.float64)
+    
 
         for time in range(1,nt):
 
-            t[0,time] = t[0,time] + time*dt
+            t[time] = t[time-1] + dt
             temp_old_tl = temperature[time-1,:] # temperature at the previous time step
             temp_guess  = temp_old_tl
 
@@ -578,7 +519,7 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
                                                                      ,mass_matrix=mass_matrix
                                                                      ,pdb=pdb
                                                                      ,ph=ph
-                                                                     ,temp_old = temp_old
+                                                                     ,temp_old = temp_old_tl
                                                                      ,temp_guess=temp_guess
                                                                      ,temp_pr=temp_pr
                                                                      ,k_m=k_m
@@ -589,7 +530,7 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
                                                                      ,temp_min=temp_min
                                                                      ,temp_max=temp_max
                                                                      ,dt = ctrl_tbc.dt
-                                                                     ,dz = ctrl_tbc.dz
+                                                                     ,dz_m = ctrl_tbc.dz
                                                                      ,nz = ctrl_tbc.nz)
                         temp_new = np.transpose(np.linalg.solve(mass_matrix, d_vct))    # solve Mx = d_vct for x
 
@@ -597,13 +538,12 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
                             temp_pr = temp_new
 
                 res = np.linalg.norm(temp_new-temp_guess,2)/np.linalg.norm(temp_new+temp_guess,2)
+                lit_p = _compute_lithostatic_pressure(nz,ph,g,dz,temp_new,pdb)
+
                 if np.isnan(res):
                     raise ValueError("NaN detected in the residual")
                 temp_guess = temp_new * 0.8 + temp_guess * (0.2)
-                lit_p = _compute_lithostatic_pressure(nz,ph,g,dz,temp_old,pdb)
                 it += 1
-
-
             lit_p = _compute_lithostatic_pressure(nz,ph,g,dz,temp_new,pdb)
             cp_tmp,k_tmp,rho_tmp = compute_cp_k_rho(ph=ph
                                                     ,pdb=pdb
@@ -622,12 +562,15 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
 
         # Current age index
         if left_right:
-            current_age_index = np.where(t[0] >= ctrl_tbc.slab_age)[0][0]
+            current_age_index = np.where(t >= ctrl_tbc.slab_age)[0][0]
             ctrl_tbc.temperature_1d = temperature[current_age_index]
             ctrl_tbc.z[:] = - z
-            ctrl_tbc.temperature_2d_field[:,:] = temperature
+            if ctrl_tbc.constant == 1:
+                ctrl_tbc.temperature_2d_field[:,:] = temperature
+            else: 
+                ctrl_tbc.temperature_2d_field = None
         else: 
-            ctrl_tbc.temperature_1d_right[:] = temp_new 
+            ctrl_tbc.temperature_1d_right[:] = temp_new
             ctrl_tbc.z_right = - z
             
             

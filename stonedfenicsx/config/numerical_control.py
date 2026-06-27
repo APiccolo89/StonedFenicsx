@@ -109,7 +109,6 @@ class CtrlTemperatureBC(CTRLBC): # ctrltbc
     nz: int = 200                  # number of vertical cells
     dt: float = 5e-3               # [Myr]
     slab_age: float = 50.0
-    t_res: int = 1000              # temporal resolution
     recalculate: int = 0
     # Fixed value for reproducing the benchmarks 
     k: float = 3.1
@@ -117,6 +116,7 @@ class CtrlTemperatureBC(CTRLBC): # ctrltbc
     cp: float = 1250.0
     dz: float = field(init=False)
     end_time:float = 180
+    nt: int = 1 
     right_boundary : str = 'Continental'
     right_age : float = 30.0 # Useful in case the right boundary condition is a oceanic lithosphere. 
     z: NDArray[np.float64] = field(init=False)
@@ -144,9 +144,10 @@ class CtrlTemperatureBC(CTRLBC): # ctrltbc
         # Prepare the main vector for computing the right and left boundary condition
         self.dz = g_input.slab_tk / self.nz
         self.z = np.zeros(self.nz, dtype=np.float64)
+        self.nt  = int(self.end_time / self.dt + 1)
         self.temperature_1d = np.zeros(self.nz, dtype=np.float64)
-        self.temperature_2d_field = np.zeros((self.nz, self.t_res), dtype=np.float64)
-        self.t_res_vec = np.zeros(self.t_res, dtype=np.float64)
+        self.temperature_2d_field = np.zeros((self.nz, self.nt), dtype=np.float64)
+        self.t_res_vec = np.zeros(self.nt, dtype=np.float64)
         
 # --- #
 @dataclass(slots=True)
