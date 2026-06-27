@@ -7,6 +7,8 @@ from stonedfenicsx.config.numerical_control import (CtrlKy,
 from stonedfenicsx.config.phase_db import PhaseDataBase
 from dataclasses import dataclass,field
 from stonedfenicsx.config.geometry import GeomInput,Mesh
+_KELVIN_ = 273.15
+_KM_2_M_ = 1000
 
 @dataclass(slots=True)
 class Scal:
@@ -91,7 +93,6 @@ def scaling_material_properties(pdb:PhaseDataBase,sc:Scal)->PhaseDataBase:
     scal_bdif = (sc.stress*sc.time)**(-1)
     pdb.b_dif /= scal_bdif
     pdb.b_dis /= scal_bdsl
-    pdb.bdis_wz /= scal_bdif
 
     # Scal the heat capacity
     scal_c1 = sc.energy/sc.mass/sc.temp**(0.5)
@@ -125,7 +126,8 @@ def scaling_material_properties(pdb:PhaseDataBase,sc:Scal)->PhaseDataBase:
     scal_radio = sc.watt/sc.length**3
     
     pdb.radiogenic_heat /= scal_radio
-    
+    scal_bdsl = sc.stress**(-pdb.n_wz)*sc.time**(-1)    # Pa^-ns-1
+
     pdb.bdis_wz /= scal_bdsl
 
     return pdb
@@ -142,14 +144,14 @@ def scale_parameters(ctrl_tbc:CtrlTemperatureBC,sc:Scal)->CtrlTemperatureBC:
     """
     
     scal_factor = (sc.scale_myr2sec / sc.time)
-    ctrl_tbc.temp_top /= sc.temp
-    ctrl_tbc.temp_max /= sc.temp
+    ctrl_tbc.temp_top = (ctrl_tbc.temp_top+_KELVIN_)/ sc.temp
+    ctrl_tbc.temp_max = (ctrl_tbc.temp_max+_KELVIN_)/ sc.temp
     ctrl_tbc.end_time = ctrl_tbc.end_time * scal_factor
     ctrl_tbc.dt = ctrl_tbc.dt * scal_factor
     ctrl_tbc.slab_age = ctrl_tbc.slab_age * scal_factor
     ctrl_tbc.interval_time = ctrl_tbc.interval_time * scal_factor
     ctrl_tbc.interval_val = ctrl_tbc.interval_val * scal_factor
-    ctrl_tbc.dz = ctrl_tbc.dz / sc.length
+    ctrl_tbc.dz = ctrl_tbc.dz*_KM_2_M_ / sc.length
     ctrl_tbc.k = ctrl_tbc.k / sc.k
     ctrl_tbc.cp = ctrl_tbc.cp / sc.cp
     ctrl_tbc.rho = ctrl_tbc.rho / sc.rho
@@ -188,7 +190,7 @@ def scaling_mesh(mesh:Mesh,sc:Scal)->Mesh:
     
     for i in domain: 
         sub = getattr(mesh, i)
-        sub.mesh.geometry.x[:] /= sc.length
+        sub.mesh.geometry.x[:] /= sc.length/_KM_2_M_
     
     mesh.g_input = dimensionless_ginput(mesh.g_input,sc)
     
@@ -204,19 +206,20 @@ def dimensionless_ginput(g_input:GeomInput,sc:Scal):
     Returns:
         g_input: scaled geometrical input
     """
-    g_input.x /= sc.length # main grid coordinate
-    g_input.y /= sc.length
-    g_input.cr /= sc.length # crust 
-    g_input.ocr /= sc.length # oceanic crust
-    g_input.lit_mt /= sc.length # lithosperic mantle  
-    g_input.wz_tk /= sc.length # weak zone 
-    g_input.ns_depth /= sc.length # total lithosphere thickness
-    g_input.decoupling /= sc.length # decoupling depth -> i.e. where the weak zone is prolonged 
-    g_input.resolution_normal /= sc.length  # To Do
-    g_input.resolution_refine /= sc.length  # To Do
-    g_input.transition /= sc.length # the transition between coupled and uncoupled
-    g_input.lab_d /= sc.length # Astenosphere-lithosphere 
-    g_input.slab_tk /= sc.length
+    scale_lenght = sc.length/_KM_2_M_
+    g_input.x /= scale_lenght # main grid coordinate
+    g_input.y /= scale_lenght
+    g_input.cr /= scale_lenght # crust 
+    g_input.ocr /= scale_lenght # oceanic crust
+    g_input.lit_mt /= scale_lenght # lithosperic mantle  
+    g_input.wz_tk /= scale_lenght # weak zone 
+    g_input.ns_depth /= scale_lenght # total lithosphere thickness
+    g_input.decoupling /= scale_lenght # decoupling depth -> i.e. where the weak zone is prolonged 
+    g_input.resolution_normal /= scale_lenght  # To Do
+    g_input.resolution_refine /= scale_lenght  # To Do
+    g_input.transition /= scale_lenght # the transition between coupled and uncoupled
+    g_input.lab_d /= scale_lenght # Astenosphere-lithosphere 
+    g_input.slab_tk /= scale_lenght
 
     return g_input
 
