@@ -57,7 +57,7 @@ Input:
     self_consistent_flag: 1
     right_boundary : 'Continental'  # Oceanic 
     right_age: 40.0
-    recalculate : 1 # Option to compute on the fly the boundary -> useful if user wants to change thermal properties. 
+    recalculate : 0 # Option to compute on the fly the boundary -> useful if user wants to change thermal properties. 
 
   kinematic_boundary_condition:
     v_s : [5.0,0.0]
