@@ -42,7 +42,7 @@ class IOControls: # ctrlio
     ts_out: int = 10
     dt_out: float = 1
     path_test: Path = field(init=False)
-    path_cached_information: Path = 'Cached_information'
+    path_cached_information: str = 'Cached_information'
 
     def generate_io(self) -> None:
         """Create the output directories if they don't exist.
