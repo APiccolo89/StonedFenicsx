@@ -68,7 +68,7 @@ def configure_simulation(
 
     # release the new pre-processed class
 
-    return 0  # ctrl,ctrl_lhs,ctrl_io, pdb, mesh, sc
+    return ctrl_sim, mesh, pdb, sc
 
 
 def test_configure() -> int:
