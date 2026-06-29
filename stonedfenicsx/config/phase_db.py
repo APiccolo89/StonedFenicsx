@@ -836,9 +836,8 @@ def read_rheology(tag:str,dis_dif:0)->RheologicalFlowLaw:
 
     buf = RheologicalFlowLaw()
     
-    buf = update_ip_file(buf,common)
-    
-    buf = update_ip_file(buf,db_rheo[name])
+    update_ip_file(buf,common)
+    update_ip_file(buf,db_rheo[name])
     
     buf.apply_correction()
 
@@ -1004,11 +1003,11 @@ def read_diffusivity(tag:str)->LatticeDiffusivity:
         
         db_diff = yaml.safe_load(dictionary_db)['Thermal_diffusivity']
     
-    buf_dif = update_ip_file(buf_dif,db_diff[name])
-        
+    update_ip_file(buf_dif,db_diff[name])
+
     return buf_dif
-# --- 
-@dataclass(slots=True) 
+# ---
+@dataclass(slots=True)
 class ThermalExpansivity:
     alpha0 :float = field(init=False)
     alpha1 :float = field(init=False)
@@ -1025,8 +1024,8 @@ def read_expansivity(tag:str)->ThermalExpansivity:
         
         db_diff = yaml.safe_load(dictionary_db)['Thermal_expansivity']
     
-    buf_dif = update_ip_file(buf_dif,db_diff[name])
-        
+    update_ip_file(buf_dif,db_diff[name])
+
     return buf_dif
 # ---
 #-----------------------------------------------------------------------------

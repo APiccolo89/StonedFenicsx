@@ -84,13 +84,13 @@ def parse_input(path: str) -> tuple[Input,PhInput]:
     g_input = GeomInput()
 
     # Fill the
-    ctrl = update_ip_file(ctrl, nc)
-    ctrl_io = update_ip_file(ctrl_io, iocr)
-    g_input = update_ip_file(g_input, geom)
-    sc = update_ip_file(sc, scal)
+    update_ip_file(ctrl, nc)
+    update_ip_file(ctrl_io, iocr)
+    update_ip_file(g_input, geom)
+    update_ip_file(sc, scal)
     sc.compute_the_derivative_scal()
-    ctrl_tbc = update_ip_file(ctrl_tbc, lhs)
-    ctrl_ky = update_ip_file(ctrl_ky,ky)
+    update_ip_file(ctrl_tbc, lhs)
+    update_ip_file(ctrl_ky, ky)
 
     input_obj = Input(ctrl=ctrl,ctrl_io = ctrl_io,ctrl_ky=ctrl_ky,ctrl_tbc=ctrl_tbc,g_input=g_input,sc=sc)
 
@@ -123,7 +123,7 @@ def filling_the_phase_data_base(
         "overriding_lower_crust": 6,
     }
 
-    phase_input = update_ip_file(phase_input, shheating)
+    update_ip_file(phase_input, shheating)
 
     # Loop over the MP items. MP items, is a multilevel dictionary
     for k, v in materialproperties.items():
