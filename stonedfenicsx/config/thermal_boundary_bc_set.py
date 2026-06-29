@@ -370,7 +370,7 @@ def fill_phase_properties(g_input:GeomInput,
     return ph-1
 
 def compute_half_space_cooling_model_analytical(ctrl_tbc:CtrlTemperatureBC,
-                                                z:NDArray[np.float64])->CtrlTemperatureBC:
+                                                z:NDArray[np.float64])->None:
     """Compute the left boundary temperature using the half-space cooling analytical solution.
 
     Used for the Van Keken benchmark suite where constant material properties allow
@@ -399,7 +399,6 @@ def compute_half_space_cooling_model_analytical(ctrl_tbc:CtrlTemperatureBC,
     temperature_bc = ctrl_tbc.temp_top+(ctrl_tbc.temp_max-ctrl_tbc.temp_top) * erf_sc(z /2 /np.sqrt(t * kappa))
     ctrl_tbc.z[:] = -z[:]
     ctrl_tbc.temperature_1d = temperature_bc
-    return ctrl_tbc
 
 def initialise_geometry_1d(ctrl_tbc:CtrlTemperatureBC
                            ,g_input:GeomInput
@@ -560,7 +559,7 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
                                  ,pdb:PhaseDataBase
                                  ,g_input:GeomInput
                                  ,save_data:bool
-                                 ,left_right:bool)->CtrlTemperatureBC:
+                                 ,left_right:bool)->None:
     """Compute the 1D thermal boundary condition and optionally cache the result to HDF5.
 
     Orchestrates the full boundary computation:
@@ -605,8 +604,8 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
                            ,left_right=left_right)
 
     if g_input.van_keken and left_right: 
-        ctrl_tbc = compute_half_space_cooling_model_analytical(ctrl_tbc,z)
-        return ctrl_tbc,g_input
+        compute_half_space_cooling_model_analytical(ctrl_tbc,z)
+        return None
 
     time_v, temperature = solve_temperature_1d_bc(ctrl_tbc=ctrl_tbc
                             ,pdb=pdb
@@ -698,7 +697,6 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
                         
                 print('             temporary data base is saved...')
 
-    return ctrl_tbc,g_input
 
 def check_material_property(f,pdb,ph_id,main_grp)->bool:
     """Verify that the material properties in the HDF5 cache match the current phase database.
@@ -844,7 +842,7 @@ def read_temporary_file(ctrl_tbc:CtrlTemperatureBC
                         ctrl_tbc.z = z
         
     if redo:
-        ctrl_tbc, g_input = compute_thermal_boundary(ctrl_tbc=ctrl_tbc
+        compute_thermal_boundary(ctrl_tbc=ctrl_tbc
                                                  ,ctrl=ctrl
                                                  ,ioctrl=ioctrl
                                                  ,sc=sc
@@ -853,7 +851,6 @@ def read_temporary_file(ctrl_tbc:CtrlTemperatureBC
                                                  ,save_data=True
                                                  ,left_right=left_right)
  
-    return ctrl_tbc,g_input
 
 
 
@@ -889,7 +886,7 @@ def configure_thermal_bc(ctrl_tbc:CtrlTemperatureBC
     """
     
     if ctrl_tbc.recalculate:
-        ctrl_tbc, g_input = compute_thermal_boundary(ctrl_tbc=ctrl_tbc
+        compute_thermal_boundary(ctrl_tbc=ctrl_tbc
                                                      ,ctrl=ctrl
                                                      ,ioctrl=ioctrl
                                                      ,sc=sc
@@ -898,14 +895,14 @@ def configure_thermal_bc(ctrl_tbc:CtrlTemperatureBC
                                                      ,save_data=True
                                                      ,left_right=left_right)
     else:
-        ctrl_tbc,g_input = read_temporary_file(ctrl_tbc=ctrl_tbc
+        read_temporary_file(ctrl_tbc=ctrl_tbc
                                                ,ctrl=ctrl
                                                ,pdb=pdb
                                                ,g_input=g_input
                                                ,ioctrl=ioctrl
                                                ,sc=sc
                                                ,left_right=left_right)
-    return ctrl_tbc,g_input
+    return None
 
 # --- # 
 def configure_boundary_condition(ctrl_tbc:CtrlTemperatureBC
@@ -913,7 +910,7 @@ def configure_boundary_condition(ctrl_tbc:CtrlTemperatureBC
                                  ,ioctrl:IOControls
                                  ,sc:Scal
                                  ,pdb:PhaseDataBase
-                                 ,g_input:GeomInput)->CtrlTemperatureBC:
+                                 ,g_input:GeomInput)->None:
     
     """Configure both the left and right thermal boundary conditions.
 
@@ -935,7 +932,7 @@ def configure_boundary_condition(ctrl_tbc:CtrlTemperatureBC
             g_input  — unchanged (returned for call-site symmetry).
     """
     # Configure left boundary condition
-    ctrl_tbc,g_input = configure_thermal_bc(ctrl_tbc = ctrl_tbc
+    configure_thermal_bc(ctrl_tbc = ctrl_tbc
                          ,ctrl = ctrl
                          ,ioctrl=ioctrl
                          ,sc=sc
@@ -944,7 +941,7 @@ def configure_boundary_condition(ctrl_tbc:CtrlTemperatureBC
                          ,left_right=True)
     
     # Configure right boundary condition
-    ctrl_tbc,g_input = configure_thermal_bc(ctrl_tbc = ctrl_tbc
+    configure_thermal_bc(ctrl_tbc = ctrl_tbc
                          ,ctrl = ctrl
                          ,ioctrl=ioctrl
                          ,sc=sc
@@ -952,7 +949,6 @@ def configure_boundary_condition(ctrl_tbc:CtrlTemperatureBC
                          ,g_input=g_input
                          ,left_right=False)
     
-    return ctrl_tbc,g_input
 # --- # 
 
 def test_configure_boundary():
@@ -1008,7 +1004,7 @@ def test_configure_boundary():
     temp_plate = ctrl_sim.ctrl_tbc.temperature_1d.copy()*sc.temp-273.15 
     ax.plot(ctrl_sim.ctrl_tbc.temperature_1d*sc.temp-273.15, ctrl_sim.ctrl_tbc.z*sc.length/1e3,c='firebrick')   
     ax.plot(ctrl_sim.ctrl_tbc.temp_1d_right*sc.temp-273.15, ctrl_sim.ctrl_tbc.z_right*sc.length/1e3,c='forestgreen')  
-    ctrl_tbc = compute_half_space_cooling_model_analytical(ctrl_sim.ctrl_tbc,np.abs(ctrl_sim.ctrl_tbc.z))
+    compute_half_space_cooling_model_analytical(ctrl_sim.ctrl_tbc,np.abs(ctrl_sim.ctrl_tbc.z))
     ax.plot(ctrl_tbc.temperature_1d*sc.temp-273.15, ctrl_tbc.z*sc.length/1e3,c='cadetblue')   
 
     plt.show()

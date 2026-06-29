@@ -57,17 +57,16 @@ class Scal:
 @timing_function
 def scaling_simulation_physical(
     ctrl_sim: SimulationControls, pdb: PhaseDataBase, mesh: Mesh
-,sc:Scal) -> tuple[SimulationControls, PhaseDataBase, Mesh]:
+,sc:Scal) -> None:
     
-    ctrl_sim.ctrl_ky = scale_kinematic_bc(ctrl_ky=ctrl_sim.ctrl_ky,sc=sc)
-    ctrl_sim.ctrl_tbc = scale_parameters(ctrl_tbc=ctrl_sim.ctrl_tbc,sc=sc)
-    ctrl_sim.ctrl = scaling_control_parameters(ctrl=ctrl_sim.ctrl,sc=sc)
-    mesh = scaling_mesh(mesh=mesh,sc=sc)
-    pdb = scaling_material_properties(pdb=pdb,sc=sc)
-    return ctrl_sim, pdb, mesh
+    scale_kinematic_bc(ctrl_ky=ctrl_sim.ctrl_ky,sc=sc)
+    scale_parameters(ctrl_tbc=ctrl_sim.ctrl_tbc,sc=sc)
+    scaling_control_parameters(ctrl=ctrl_sim.ctrl,sc=sc)
+    scaling_mesh(mesh=mesh,sc=sc)
+    scaling_material_properties(pdb=pdb,sc=sc)
 
 
-def scaling_material_properties(pdb:PhaseDataBase,sc:Scal)->PhaseDataBase: 
+def scaling_material_properties(pdb:PhaseDataBase,sc:Scal)->None: 
     # scal the references values   
     pdb.temp_ref /= sc.temp
     pdb.pres_ref /= sc.stress
@@ -130,9 +129,8 @@ def scaling_material_properties(pdb:PhaseDataBase,sc:Scal)->PhaseDataBase:
 
     pdb.bdis_wz /= scal_bdsl
 
-    return pdb
 
-def scale_parameters(ctrl_tbc:CtrlTemperatureBC,sc:Scal)->CtrlTemperatureBC:
+def scale_parameters(ctrl_tbc:CtrlTemperatureBC,sc:Scal)->None:
     """_summary_
 
     Args:
@@ -156,9 +154,8 @@ def scale_parameters(ctrl_tbc:CtrlTemperatureBC,sc:Scal)->CtrlTemperatureBC:
     ctrl_tbc.cp = ctrl_tbc.cp / sc.cp
     ctrl_tbc.rho = ctrl_tbc.rho / sc.rho
     ctrl_tbc.right_age = ctrl_tbc.right_age * scal_factor
-    return ctrl_tbc
     
-def scaling_control_parameters(ctrl:NumericalControls,sc:Scal)->NumericalControls:
+def scaling_control_parameters(ctrl:NumericalControls,sc:Scal)->None:
     """_summary_
 
     Args:
@@ -173,8 +170,7 @@ def scaling_control_parameters(ctrl:NumericalControls,sc:Scal)->NumericalControl
     ctrl.time_max = ctrl.time_max * (sc.scale_myr2sec/sc.time)
     ctrl.dt = ctrl.dt * (sc.scale_myr2sec/sc.time)
 
-    return ctrl
-def scaling_mesh(mesh:Mesh,sc:Scal)->Mesh:
+def scaling_mesh(mesh:Mesh,sc:Scal)->None:
     """_summary_
 
     Args:
@@ -192,11 +188,10 @@ def scaling_mesh(mesh:Mesh,sc:Scal)->Mesh:
         sub = getattr(mesh, i)
         sub.mesh.geometry.x[:] /= sc.length/_KM_2_M_
     
-    mesh.g_input = dimensionless_ginput(mesh.g_input,sc)
+    dimensionless_ginput(mesh.g_input,sc)
     
-    return mesh
 
-def dimensionless_ginput(g_input:GeomInput,sc:Scal):
+def dimensionless_ginput(g_input:GeomInput,sc:Scal)->None:
     """_summary_
 
     Args:
@@ -221,11 +216,10 @@ def dimensionless_ginput(g_input:GeomInput,sc:Scal):
     g_input.lab_d /= scale_lenght # Astenosphere-lithosphere 
     g_input.slab_tk /= scale_lenght
 
-    return g_input
+    return None
 
-def scale_kinematic_bc(ctrl_ky:CtrlKy, sc: Scal)->CtrlKy:
+def scale_kinematic_bc(ctrl_ky:CtrlKy, sc: Scal)->None:
 
     ctrl_ky.v_s *= sc.scale_vel * (sc.time/sc.length)
     ctrl_ky.interval_val *= sc.scale_myr2sec * 1/sc.time
     ctrl_ky.interval_val *= sc.scale_myr2sec * 1/sc.time
-    return ctrl_ky

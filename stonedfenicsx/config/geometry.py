@@ -3,7 +3,7 @@ import dolfinx
 import numpy as np
 from numpy.typing import NDArray
 from mpi4py import MPI
-
+import basix 
 #------------------------------------------------------------------------------------------------
 @dataclass(slots=True)
 class Domain:
@@ -170,7 +170,7 @@ class Mesh:
     crust_domain : Domain
     comm : MPI.Intracomm
     rank : int
-    element_p  : object
-    element_pt : object
-    element_v  : object
-#-----------------------------------------------------------------------------------------------------------------
+    element_p  : object = basix.ufl.element("Lagrange","triangle", 1)
+    element_pt : object =  basix.ufl.element("Lagrange","triangle",2)
+    element_v  : object =  basix.ufl.element("Lagrange","triangle",2)
+#-----------------------------------------------------------------------------------------------------------------  M.element_p = basix.ufl.element("Lagrange","triangle", 1) 

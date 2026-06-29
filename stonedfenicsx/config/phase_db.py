@@ -684,7 +684,7 @@ def generate_phase_database(pressure_dependency:int,eta_max:float, phin:PhInput)
         )
 
 
-    pdb = fill_up_weakzone_data(
+    fill_up_weakzone_data(
         ch=phin.shear_heating_disl_ch,
         phi=np.radians(phin.shear_heating_disl_phi),
         eta_wz=1e18,
@@ -698,7 +698,7 @@ def fill_up_weakzone_data(ch:float = 10e6
                       ,phi: float = np.radians(5)
                       ,eta_wz: float = 1e20
                       ,dislocation_creep: str = 'Constant'
-                      ,pdb:PhaseDataBase = None)->PhaseDataBase: 
+                      ,pdb:PhaseDataBase = None)->None: 
     """Function that updates the data of the shear zone that mimick the subduction interface. 
     Args:
         ch (float, optional): Cohesion. Defaults to 10e6.
@@ -727,7 +727,6 @@ def fill_up_weakzone_data(ch:float = 10e6
         pdb.vis_con_fl = 1
     pdb.phi = phi
     pdb.cohesion = ch
-    return pdb
 
 @dataclass(slots=True)
 class RheologicalFlowLaw:
