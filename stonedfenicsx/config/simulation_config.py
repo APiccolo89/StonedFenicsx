@@ -55,10 +55,10 @@ def configure_simulation(
     ctrl_sim.ctrl_tbc = ctrl_tbc
     ctrl_sim.ctrl_io = ctrl_io
     # Scale the simulation parameters
-    ctrl_sim,pdb,mesh= scaling_simulation_physical(ctrl_sim=ctrl_sim,pdb=pdb,mesh=mesh,sc=sc)
-    
+    scaling_simulation_physical(ctrl_sim=ctrl_sim,pdb=pdb,mesh=mesh,sc=sc)
+
     # Generate the right boundary and left boundary thermal boundary condition
-    ctrl_sim.ctrl_tbc, mesh.g_input = configure_boundary_condition(ctrl_tbc=ctrl_sim.ctrl_tbc
+    configure_boundary_condition(ctrl_tbc=ctrl_sim.ctrl_tbc
                                                           ,ctrl=ctrl_sim.ctrl
                                                           ,ioctrl = ctrl_sim.ctrl_io
                                                           ,sc=sc

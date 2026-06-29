@@ -370,7 +370,7 @@ def fill_phase_properties(g_input:GeomInput,
     return ph-1
 
 def compute_half_space_cooling_model_analytical(ctrl_tbc:CtrlTemperatureBC,
-                                                z:NDArray[np.float64])->CtrlTemperatureBC:
+                                                z:NDArray[np.float64])->None:
     """Compute the left boundary temperature using the half-space cooling analytical solution.
 
     Used for the Van Keken benchmark suite where constant material properties allow
@@ -399,7 +399,6 @@ def compute_half_space_cooling_model_analytical(ctrl_tbc:CtrlTemperatureBC,
     temperature_bc = ctrl_tbc.temp_top+(ctrl_tbc.temp_max-ctrl_tbc.temp_top) * erf_sc(z /2 /np.sqrt(t * kappa))
     ctrl_tbc.z[:] = -z[:]
     ctrl_tbc.temperature_1d = temperature_bc
-    return ctrl_tbc
 
 def initialise_geometry_1d(ctrl_tbc:CtrlTemperatureBC
                            ,g_input:GeomInput
@@ -560,7 +559,7 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
                                  ,pdb:PhaseDataBase
                                  ,g_input:GeomInput
                                  ,save_data:bool
-                                 ,left_right:bool)->CtrlTemperatureBC:
+                                 ,left_right:bool)->None:
     """Compute the 1D thermal boundary condition and optionally cache the result to HDF5.
 
     Orchestrates the full boundary computation:
@@ -591,10 +590,7 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
         save_data (bool): Whether to write the result to the HDF5 cache.
         left_right (bool): True → left (subducting) boundary; False → right (overriding).
 
-    Returns:
-        tuple[CtrlTemperatureBC, GeomInput]:
-            ctrl_tbc — updated with temperature_1d / temp_1d_right and z / z_right.
-            g_input  — unchanged (returned for call-site symmetry).
+    Modifies ctrl_tbc in place: sets temperature_1d / temp_1d_right and z / z_right.
     """
     # Spell out the structure
     g = ctrl.g
@@ -604,9 +600,9 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
                            ,g_input=g_input
                            ,left_right=left_right)
 
-    if g_input.van_keken and left_right: 
-        ctrl_tbc = compute_half_space_cooling_model_analytical(ctrl_tbc,z)
-        return ctrl_tbc,g_input
+    if g_input.van_keken and left_right:
+        compute_half_space_cooling_model_analytical(ctrl_tbc,z)
+        return
 
     time_v, temperature = solve_temperature_1d_bc(ctrl_tbc=ctrl_tbc
                             ,pdb=pdb
@@ -698,8 +694,6 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
                         
                 print('             temporary data base is saved...')
 
-    return ctrl_tbc,g_input
-
 def check_material_property(f,pdb,ph_id,main_grp)->bool:
     """Verify that the material properties in the HDF5 cache match the current phase database.
 
@@ -771,7 +765,7 @@ def read_temporary_file(ctrl_tbc:CtrlTemperatureBC
                         ,g_input:GeomInput
                         ,pdb:PhaseDataBase
                         ,sc:Scal
-                        ,left_right)->tuple[CtrlTemperatureBC,GeomInput]:
+                        ,left_right)->None:
     """Load a previously computed boundary temperature profile from the HDF5 cache.
 
     If the cache file does not exist, falls back to computing it from scratch via
@@ -792,12 +786,9 @@ def read_temporary_file(ctrl_tbc:CtrlTemperatureBC
         sc (Scal): Scaling object (passed through if recomputation is needed).
         left_right (bool): True → left (subducting) boundary; False → right (overriding).
 
-    Returns:
-        tuple[CtrlTemperatureBC, GeomInput]:
-            ctrl_tbc — updated with temperature_1d / temp_1d_right and z / z_right.
-            g_input  — unchanged (returned for call-site symmetry).
+    Modifies ctrl_tbc in place: sets temperature_1d / temp_1d_right and z / z_right.
     """
-    
+
     path_cache = ioctrl.path_cached_information
     path_h5_file = path_cache/_NAME_H5_FILE_TMP
     redo = False
@@ -852,8 +843,6 @@ def read_temporary_file(ctrl_tbc:CtrlTemperatureBC
                                                  ,g_input=g_input
                                                  ,save_data=True
                                                  ,left_right=left_right)
- 
-    return ctrl_tbc,g_input
 
 
 
@@ -865,7 +854,7 @@ def configure_thermal_bc(ctrl_tbc:CtrlTemperatureBC
                                  ,sc:Scal
                                  ,pdb:PhaseDataBase
                                  ,g_input:GeomInput
-                                 ,left_right:bool)->CtrlTemperatureBC:
+                                 ,left_right:bool)->None:
     """Dispatch thermal boundary computation: recompute from scratch or load from cache.
 
     If ctrl_tbc.recalculate is set, runs the full Crank-Nicolson solver and saves
@@ -882,30 +871,25 @@ def configure_thermal_bc(ctrl_tbc:CtrlTemperatureBC
         g_input (GeomInput): Geometric input (already scaled).
         left_right (bool): True → left (subducting) boundary; False → right (overriding).
 
-    Returns:
-        tuple[CtrlTemperatureBC, GeomInput]:
-            ctrl_tbc — updated with the boundary temperature profile and depth vector.
-            g_input  — unchanged (returned for call-site symmetry).
+    Modifies ctrl_tbc in place: sets temperature_1d / temp_1d_right and z / z_right.
     """
-    
     if ctrl_tbc.recalculate:
-        ctrl_tbc, g_input = compute_thermal_boundary(ctrl_tbc=ctrl_tbc
-                                                     ,ctrl=ctrl
-                                                     ,ioctrl=ioctrl
-                                                     ,sc=sc
-                                                     ,pdb=pdb
-                                                     ,g_input=g_input
-                                                     ,save_data=True
-                                                     ,left_right=left_right)
+        compute_thermal_boundary(ctrl_tbc=ctrl_tbc
+                                 ,ctrl=ctrl
+                                 ,ioctrl=ioctrl
+                                 ,sc=sc
+                                 ,pdb=pdb
+                                 ,g_input=g_input
+                                 ,save_data=True
+                                 ,left_right=left_right)
     else:
-        ctrl_tbc,g_input = read_temporary_file(ctrl_tbc=ctrl_tbc
-                                               ,ctrl=ctrl
-                                               ,pdb=pdb
-                                               ,g_input=g_input
-                                               ,ioctrl=ioctrl
-                                               ,sc=sc
-                                               ,left_right=left_right)
-    return ctrl_tbc,g_input
+        read_temporary_file(ctrl_tbc=ctrl_tbc
+                            ,ctrl=ctrl
+                            ,pdb=pdb
+                            ,g_input=g_input
+                            ,ioctrl=ioctrl
+                            ,sc=sc
+                            ,left_right=left_right)
 
 # --- # 
 def configure_boundary_condition(ctrl_tbc:CtrlTemperatureBC
@@ -913,8 +897,8 @@ def configure_boundary_condition(ctrl_tbc:CtrlTemperatureBC
                                  ,ioctrl:IOControls
                                  ,sc:Scal
                                  ,pdb:PhaseDataBase
-                                 ,g_input:GeomInput)->CtrlTemperatureBC:
-    
+                                 ,g_input:GeomInput)->None:
+
     """Configure both the left and right thermal boundary conditions.
 
     Public entry point for the thermal boundary setup. Calls configure_thermal_bc
@@ -929,30 +913,25 @@ def configure_boundary_condition(ctrl_tbc:CtrlTemperatureBC
         pdb (PhaseDataBase): Phase material database (jitclass, already scaled).
         g_input (GeomInput): Geometric input (already scaled).
 
-    Returns:
-        tuple[CtrlTemperatureBC, GeomInput]:
-            ctrl_tbc — updated with temperature_1d (left) and temp_1d_right (right).
-            g_input  — unchanged (returned for call-site symmetry).
+    Modifies ctrl_tbc in place: temperature_1d (left) and temp_1d_right (right).
     """
     # Configure left boundary condition
-    ctrl_tbc,g_input = configure_thermal_bc(ctrl_tbc = ctrl_tbc
-                         ,ctrl = ctrl
+    configure_thermal_bc(ctrl_tbc=ctrl_tbc
+                         ,ctrl=ctrl
                          ,ioctrl=ioctrl
                          ,sc=sc
                          ,pdb=pdb
                          ,g_input=g_input
                          ,left_right=True)
-    
+
     # Configure right boundary condition
-    ctrl_tbc,g_input = configure_thermal_bc(ctrl_tbc = ctrl_tbc
-                         ,ctrl = ctrl
+    configure_thermal_bc(ctrl_tbc=ctrl_tbc
+                         ,ctrl=ctrl
                          ,ioctrl=ioctrl
                          ,sc=sc
                          ,pdb=pdb
                          ,g_input=g_input
                          ,left_right=False)
-    
-    return ctrl_tbc,g_input
 # --- # 
 
 def test_configure_boundary():

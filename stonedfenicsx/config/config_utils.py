@@ -31,28 +31,21 @@ def correct_input(k: str, v: str) -> int | float | str:
 
 
 # ----------------------------------------------------------------------------------
-def update_ip_file(obj: object, block: dict) -> object:
-    """_summary_
+def update_ip_file(obj: object, block: dict) -> None:
+    """Populate a dataclass instance from a YAML block dict.
 
     Args:
-        obj (object): Target portion of the input (e.g., NumericalControls)
-        block (dict): dictionary from the yaml file
-
-    Returns:
-        object: updated object
+        obj (object): Target dataclass instance (e.g., NumericalControls).
+        block (dict): Dictionary from the YAML file mapping field names to values.
     """
     hints = get_type_hints(obj.__class__)
     for k, v in block.items():
-        
-        if k not in hints: 
+        if k not in hints:
             raise ValueError(f"Unknown field '{k}' for {obj.__class__.__name__}")
-        
         tp = hints[k]
-
         if isinstance(v, str):
             v = correct_input(k, v)
         setattr(obj, k, cast_type(v, tp))
-    return obj
 
 def cast_type(v: any, tp: any) -> any:
     """Ensure that the typing of input is the same of the target class
