@@ -11,6 +11,11 @@ import basix
 import ufl 
 import numpy as np
 
+# --- 
+@dataclass
+class FEMFORM:
+    pass
+
 # ---------------------------------------------------------------------------------
 @dataclass
 class MATERIALS:
@@ -253,6 +258,7 @@ class  ProblemOBJ:
     g : float | None = field(init=False)
     cached_mat: MATERIALS = field(init=False)
     f_make_exp: Callable[[ProblemOBJ,Solutions,int,float],Any] = field(init=False)
+    f_create_solver:Callable[...,Any] = field(init=False)
     f_solve_lin: Callable[[ProblemOBJ,Solutions,int,float],Any] = field(init=False)
     f_solve_pic: Callable[[ProblemOBJ,Solutions,int,float],Any] = field(init=False)
     f_create_bc: Callable[[ProblemOBJ,Solutions,int,float],Any] = field(init=False) 
@@ -291,6 +297,7 @@ class  ProblemOBJ:
             mixed_element = basix.ufl.mixed_element([elements[0], elements[1]])
             self.func_space = dolfinx.fem.functionspace(domain.mesh, mixed_element)
             self.func_space_aux = dolfinx.fem.functionspace(domain.mesh,elements[2])
+            self.moving_wall
         
         self.dx = dolfinx.ufl.Measure("dx", domain=domain.mesh)
         self.ds = dolfinx.ufl.Measure("ds", domain=domain.mesh, subdomain_data=domain.facets) # Exterior -> for boundary external 
@@ -312,7 +319,7 @@ class  ProblemOBJ:
         
         return cached_mat
     
-    def solve_the_problem(self,sol:Solutions)->None:
+    def solve_the_problem(self,sol:Solutions,it:int,ts:int)->None:
         """Use the information stored in the problem 
         to modify the solution input object
 
@@ -321,6 +328,7 @@ class  ProblemOBJ:
         """
         form = self.f_make_exp(self,sol)
         self.f_create_bc(self,sol)
+        self.solv = self.f_create_solver(self,obj)
         # update solver need to check how
         if self.type_problem == 'Linear':
             self.f_solve_lin(self,sol)
