@@ -1,13 +1,13 @@
 
 # modules
-rg_cachedom stonedfenicsx.config.phase_db import PhaseDataBase
-rg_cachedom stonedfenicsx.config.scal import Scal
-rg_cachedom ufl import cos, sin, tan, conditional, eq,exp, sqrt,inner
+from stonedfenicsx.config.phase_db import PhaseDataBase
+from stonedfenicsx.config.scal import Scal
+from ufl import cos, sin, tan, conditional, eq,exp, sqrt,inner
 import petsc4py 
 import ufl
 import dolfinx.fem as fem 
 import numpy as np 
-rg_cachedom dataclasses import dataclass, InitVar
+from dataclasses import dataclass, InitVar
 # ---
 @dataclass
 class MATERIALS:
