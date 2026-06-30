@@ -1,9 +1,12 @@
 
 # modules
-from stonedfenicsx.package_import import *
 from .phase_db import PhaseDataBase
 from stonedfenicsx.scal import Scal
-from ufl import cos, sin, tan
+from ufl import cos, sin, tan, conditional, eq
+import petsc4py 
+import ufl
+import dolfinx.fem as fem 
+import numpy as np 
 # ---------------------------------------------------------------------------------
 @dataclass
 class Functions_material_properties_global():
@@ -348,19 +351,21 @@ def compute_plastic_strain(e_II:fem.Expression
                            ,T_in:fem.Function
                            ,P_in:fem.Function
                            ,pdb:PhaseDataBase
-                           ,ph:int
-                           ,phwz:fem.Function
-                           ,sc)->tuple[fem.Expression, fem.Expression]:
+                           )->tuple[ufl.fem.Expression, ufl.fem.Expression]:
     """
 
 
 
 
 
+<<<<<<< HEAD
     """
 
     e_II = e_II 
     
+=======
+    """    
+>>>>>>> 60e526b (Changing few more stuff)
     if pdb.vis_con_fl == 0: 
     
         # If your phase IDs are available per cell for mesh0:
@@ -368,9 +373,16 @@ def compute_plastic_strain(e_II:fem.Expression
         # UNFORTUNATELY I AM STUPID and i do not have any idea how to scale the energies such that it would be easier to handle. Since the scale of force and legth is self-consistently related to mass, i do not know how to deal with the fucking useless mol in the energy of activation 
         T = T_in.copy()
         P = P_in.copy()
+<<<<<<< HEAD
         T.x.array[:] = T.x.array[:]*sc.Temp  ;T.x.scatter_forward()
         P.x.array[:] = P.x.array[:]*sc.stress;P.x.scatter_forward()
         P0 = P_in.function_space
+=======
+        T.x.array[:] = T.x.array[:]*pdb.temp_scal
+        T.x.scatter_forward()
+        P.x.array[:] = P.x.array[:]*pdb.pres_scal
+        P.x.scatter_forward()
+>>>>>>> 60e526b (Changing few more stuff)
         # Gather material parameters as UFL expressions via indexing
         Bdis =  pdb.Bdis_wz
         n    =  pdb.n_wz
