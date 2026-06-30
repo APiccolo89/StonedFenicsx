@@ -13,7 +13,8 @@ from dataclasses import dataclass, InitVar
 class MATERIALS:
     pdb : InitVar[PhaseDataBase]
     phase : InitVar[fem.Function]
-# --- 
+# ---
+# ---
 @dataclass
 class THERMALCACHED(MATERIALS):
     """Function containing the fem.function per each of the parameter of material properties
@@ -61,7 +62,6 @@ class THERMALCACHED(MATERIALS):
     x_a : float = 0.0
     temp_b : float = 0.0
     x_b : float = 0.0
-# ---------------------------------------------------------------------------------
     def __post_init__(self
                      ,pdb:PhaseDataBase
                      ,phase:fem.Function)->None:
@@ -138,8 +138,8 @@ class THERMALCACHED(MATERIALS):
         self.x_a     = pdb.x_a
         self.temp_b     = pdb.temp_b
         self.x_b     = pdb.x_b
-
-
+# ---
+# ---
 @dataclass
 class RHEOLOGYCACHED(MATERIALS):
     """Initialise the rheological properties 
@@ -198,8 +198,7 @@ class RHEOLOGYCACHED(MATERIALS):
         self.eta_def = pdb.eta_def
         self.gas_constant       = pdb.gas_constant
         self.eta.x.scatter_forward()
-#---------------------------------------------------------------------------------
-
+# ---
 def heat_conductivity_FX(scal_cached : THERMALCACHED
                          ,T : fem.Function 
                          ,p : fem.Function
@@ -231,7 +230,7 @@ def heat_conductivity_FX(scal_cached : THERMALCACHED
     k = scal_cached.k0  + (kappa_lat * kappa_p * Cp * rho + k_rad * scal_cached.rg_cached)  
 
     return k 
-#---------------------------------------------------------------------------------
+# ---
 def heat_capacity_FX(scal_cached : THERMALCACHED
                      ,T : fem.Function) -> fem.Expression: 
     """Derive the heat capacity expression
@@ -250,9 +249,8 @@ def heat_capacity_FX(scal_cached : THERMALCACHED
   
 def compute_radiogenic(scal_cached, hs): 
     hs.interpolate(scal_cached.radiogenic)
-    return hs 
-    
-#---------------------------------------------------------------------------------
+    return hs
+# ---
 def density_FX(scal_cached:THERMALCACHED
                ,T:fem.Function
                ,p:fem.Function)->fem.Expression:
@@ -281,7 +279,7 @@ def density_FX(scal_cached:THERMALCACHED
     )
 
     return rho 
-#----------------------------------
+# ---
 def alpha_FX(scal_cached : THERMALCACHED
              ,T : fem.Function
              ,p : fem.Function)->fem.Expression:
@@ -300,9 +298,9 @@ def alpha_FX(scal_cached : THERMALCACHED
 
 
     return alpha 
-
+# ---
 def cell_average_DG0(mesh, expr_ufl):
-    V0 = dolfinx.fem.functionspace(mesh, ("DG", 0))
+    V0 = fem.functionspace(mesh, ("DG", 0))
     f0 = fem.Function(V0)
 
     w = ufl.TestFunction(V0)
@@ -324,7 +322,7 @@ def cell_average_DG0(mesh, expr_ufl):
     f0.x.petsc_vec.ghostUpdate(addv=PETSc.InsertMode.INSERT,
                                mode=PETSc.ScatterMode.FORWARD)
     return f0
-#---------------------------------------------------------------------------------
+# ---
 def compute_viscosity_FX(e:fem.Expression
                         ,temp_in:fem.Function
                         ,pres_in:fem.Function
@@ -360,7 +358,7 @@ def compute_viscosity_FX(e:fem.Expression
     n_inv = 1/rg_cached.n 
     # Se esiste un cazzo di inferno in culo a Satana ci vanno quelli che hanno generato 
     # sto modo creativo di fare gli esponenti. 
-    etads     = 0.5 * cds**(-n_inv) * e_II**n_co
+    etads     = 0.5 * cds**(-n_inv) * e_ii**n_co
     etadf     = 0.5 * cdf**(-1)
     eta_av    = 1 / (1 / etads + 1/etadf + 1/rg_cached.eta_max)
     eta_df    = 1 / (1 / etadf + 1 / rg_cached.eta_max) 
@@ -375,7 +373,7 @@ def compute_viscosity_FX(e:fem.Expression
     )
 
     return eta
-#---------------------------------------------------------------------------------
+# ---
 def compute_plastic_strain(e_ii:fem.Expression
                            ,temp_in:fem.Function
                            ,pres_in:fem.Function
@@ -426,3 +424,7 @@ def compute_plastic_strain(e_ii:fem.Expression
     tau_eff = tau_vis * ufl.tanh(tau_lim/tau_vis)
 
     return tau_eff, tau_vis, tau_lim
+
+# ---
+# ---
+# ---

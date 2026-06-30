@@ -615,6 +615,7 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
     # Current age index
     if left_right:
         current_age_index = np.where(time_v >= ctrl_tbc.slab_age)[0][0]
+        ctrl_tbc.t_res_vec = time_v
         ctrl_tbc.temperature_1d = temperature[current_age_index,:]
         ctrl_tbc.z[:] = - z
         if ctrl_tbc.constant == 0:
@@ -681,6 +682,7 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
                     save_data_set(f,ctrl_tbc.temperature_1d,name=f'{name}/temperature_1d')
                     save_data_set(f,ctrl_tbc.slab_age,name=f'{name}/slab_age')
                     save_data_set(f,ctrl_tbc.z,name=f'{name}/z')
+                    save_data_set(f,ctrl_tbc.t_res_vec,name=f'{name}/t_res_v')
 
 
                 else: 
@@ -821,6 +823,7 @@ def read_temporary_file(ctrl_tbc:CtrlTemperatureBC
                 time_v = f[f'{main_grp}/data_2_load/time_v'][:]
                 temperature = f[f'{main_grp}/data_2_load/temperature'][:]
                 z = f[f'{main_grp}/data_2_load/z'][:]
+                t_res_v = f[f'{main_grp}/data_2_load/t_res_v'][:]
 
                 flag = check_material_property(f,pdb,ph_id,main_grp)
                 current_age_index = np.where(time_v >= age)[0][0]
@@ -832,7 +835,9 @@ def read_temporary_file(ctrl_tbc:CtrlTemperatureBC
                         g_input.lab_d = np.abs(np.min(z))
                     else:
                         ctrl_tbc.temperature_1d[:] = temperature[current_age_index,:]
+                        ctrl_tbc.temperature_2d = temperature
                         ctrl_tbc.z = z
+                        ctrl_tbc.t_res_vec = t_res_v
         
     if redo:
         ctrl_tbc, g_input = compute_thermal_boundary(ctrl_tbc=ctrl_tbc
