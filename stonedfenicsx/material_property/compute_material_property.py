@@ -1,9 +1,12 @@
 
 # modules
-from stonedfenicsx.package_import import *
 from .phase_db import PhaseDataBase
 from stonedfenicsx.scal import Scal
-from ufl import cos, sin, tan
+from ufl import cos, sin, tan, conditional, eq
+import petsc4py 
+import ufl
+import dolfinx.fem as fem 
+import numpy as np 
 # ---------------------------------------------------------------------------------
 @dataclass
 class Functions_material_properties_global():
@@ -348,63 +351,61 @@ def compute_plastic_strain(e_II:fem.Expression
                            ,T_in:fem.Function
                            ,P_in:fem.Function
                            ,pdb:PhaseDataBase
-                           ,ph:int
-                           ,phwz:fem.Function
-                           ,sc)->tuple[fem.Expression, fem.Expression]:
+                           )->tuple[ufl.fem.Expression, ufl.fem.Expression]:
     """
 
 
 
 
 
-    """
-
-    e_II = e_II 
-    
-    
-    # If your phase IDs are available per cell for mesh0:
-    
-    # UNFORTUNATELY I AM STUPID and i do not have any idea how to scale the energies such that it would be easier to handle. Since the scale of force and legth is self-consistently related to mass, i do not know how to deal with the fucking useless mol in the energy of activation 
-    T = T_in.copy()
-    P = P_in.copy()
-    T.x.array[:] = T.x.array[:]*sc.Temp  ;T.x.scatter_forward()
-    P.x.array[:] = P.x.array[:]*sc.stress;P.x.scatter_forward()
-    P0 = P_in.function_space
-    # Gather material parameters as UFL expressions via indexing
-    Bdis =  pdb.Bdis_wz
-    n    =  pdb.n_wz
-    Edis =  pdb.Edis_wz
-    Vdis =  pdb.Vdis_wz
-    EH2O = pdb.EH20_wz
-    VH2O = pdb.VH20_wz
-    Tref = pdb.Tref * sc.Temp 
-    Pref = pdb.Pref * sc.stress 
-    Ch    = fem.Function(P0)     ; Ch.x.array[:]     = pdb.cohesion; Ch.x.scatter_forward()
-    FrA   = fem.Function(P0)     ; FrA.x.array[:]     = pdb.phi; FrA.x.scatter_forward()
-
-    
-    # In case the viscosity for the given phase is constant 
-    Bcon     = 1/(2 * pdb.eta_wz)
-    # Option for eta for a given marker number ph 
-
-
-    # strain indipendent  
-    cds = Bdis * exp(-(Edis + P * Vdis)/(pdb.R * T)) 
-    # compute tau guess
-    
-    if pdb.water_cor == 2: 
-        water = exp(-(EH2O+P*VH2O)/(pdb.R * T))/exp(-(EH2O+Pref*VH2O)/(pdb.R * Tref))
-        cds = cds * water ** (pdb.r_wz)
-        
-    
-    
-    # -> Compute the tau lim 
-    tau_lim  = Ch * cos(FrA) + P_in * sin(FrA) #Ch * cos(FrA) +
-
+    """    
     if pdb.vis_con_fl == 0: 
+    
+        # If your phase IDs are available per cell for mesh0:
+        
+        # UNFORTUNATELY I AM STUPID and i do not have any idea how to scale the energies such that it would be easier to handle. Since the scale of force and legth is self-consistently related to mass, i do not know how to deal with the fucking useless mol in the energy of activation 
+        T = T_in.copy()
+        P = P_in.copy()
+        T.x.array[:] = T.x.array[:]*pdb.temp_scal
+        T.x.scatter_forward()
+        P.x.array[:] = P.x.array[:]*pdb.pres_scal
+        P.x.scatter_forward()
+        # Gather material parameters as UFL expressions via indexing
+        Bdis =  pdb.Bdis_wz
+        n    =  pdb.n_wz
+        Edis =  pdb.Edis_wz
+        Vdis =  pdb.Vdis_wz
+        EH2O = pdb.EH20_wz
+        VH2O = pdb.VH20_wz
+        Tref = pdb.Tref * sc.Temp 
+        Pref = pdb.Pref * sc.stress 
+      
+        # strain indipendent  
+        cds = Bdis * exp(-(Edis + P * Vdis)/(pdb.R * T)) 
+        # compute tau guess
+        
+        if pdb.water_cor == 2: 
+            water = exp(-(EH2O+P*VH2O)/(pdb.R * T))/exp(-(EH2O+Pref*VH2O)/(pdb.R * Tref))
+            cds = cds * water ** (pdb.r_wz)
+
         tau_vis  = cds ** (-1/n) * e_II**(1/n) 
-    else: 
+
+    elif pdb.vis_con_fl == 1:     
+
+        Bcon = 1/(2*pdb.eta_wz)
+       
         tau_vis = Bcon ** (-1) * e_II 
+        
+    elif pdb.vis_con_fl == 2: 
+        
+        cds = pdb.Bdis_wz
+        tau_v = cds**(-1/pdb.n_wz) * e_II**(1/pdb.n_wz)
+        P_crit = tau_v/sin(pdb.phi)
+        P_norm = (P_in - P_crit)/P_crit
+        tau_vis = pdb.tau_min_wz + (tau_v-pdb.tau_min_wz)* exp(-pdb.decay_vis_wz*P_norm)
+        
+    # -> Compute the tau lim 
+    tau_lim  = P_in * sin(pdb.phi) 
 
     tau_eff = tau_vis * ufl.tanh(tau_lim/tau_vis)
 

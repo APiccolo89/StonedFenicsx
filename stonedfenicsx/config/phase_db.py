@@ -9,6 +9,7 @@ from pathlib import Path
 import yaml
 from dataclasses import dataclass, field, asdict,InitVar
 from numba import njit
+from stonedfenicsx.config.scal import Scal
 
 #TO DO in the future. 
 #The jit class is a pain in the ass. I used to use the numba routine for creating the left boundary condition and right 
@@ -265,7 +266,7 @@ spec_phase = [
     ('vis_con_fl',int32),
     ('eta_wz',float64),
     ("phi",float64),
-    ('cohesion',float64),
+    ('tau_min',float64),
 ]
 
 @jitclass(spec_phase)
@@ -554,7 +555,7 @@ def generate_phase(pdb:PhaseDataBase,
     return pdb
 
 
-def generate_phase_database(pressure_dependency:int,eta_max:float, phin:PhInput) -> PhaseDataBase:
+def generate_phase_database(pressure_dependency:int,eta_max:float, phin:PhInput, sc:Scal) -> PhaseDataBase:
     """_summary_
 
     Args:
@@ -691,7 +692,10 @@ def generate_phase_database(pressure_dependency:int,eta_max:float, phin:PhInput)
         dislocation_creep=phin.shear_heating_disl_law,
         pdb=pdb,
     )
-
+    # update the scaling for later usage
+    pdb.temp_scal = sc.temp
+    pdb.pres_scal = sc.stress
+    
     return pdb
 
 def fill_up_weakzone_data(ch:float = 10e6
