@@ -1,37 +1,20 @@
-from stonedfenicsx.package_import import *
-
-from stonedfenicsx.utils                     import timing_function, print_ph
-from stonedfenicsx.create_mesh.aux_create_mesh   import Mesh,Domain
-from stonedfenicsx.material_property.phase_db                  import PhaseDataBase
-from stonedfenicsx.numerical_control         import NumericalControls, ctrl_LHS, IOControls,time_dependent_evolution
-from stonedfenicsx.utils                     import interpolate_from_sub_to_main
-from stonedfenicsx.scal  import Scal
-from stonedfenicsx.output  import OUTPUT
-from stonedfenicsx.utils  import compute_strain_rate
-from stonedfenicsx.material_property.compute_material_property import Functions_material_properties_global, Functions_material_rheology
-from stonedfenicsx.solver_module.problems_solution import Global_thermal, Global_pressure, Wedge, Slab, Solution
-from stonedfenicsx.solver_module.solver_utilities import *
-
-"""
-Lame explanation: So, my idea is to conceive everything in a set of problems, without creating ad hoc classes for the wedge, subduction and so on
-yes by the end I do, but at least I create problem class that solves stokes/scalar problems. Most of the surrounding stuff (controls/phase) are set, 
-[Problem]=> uses Solver for solving a piece of the domain or the whole domain -> to increase the modularity I can introduce a class for the BC, but, 
-to lazy to do it, but could be something that I can do after I have a full working code. 
-
-=> Global Variables 
-print yes|no 
--> import a python code with global variable is it possible? 
-
--> Apperently, following the Stokes tutorial, I was porting the generation of null space: it appears, that this trick, is not working together with null space
--> Nitsche Boundary condition constraints the pressure, and the null space dislike it, apperently because the simmetry of the formulation is wrong, but this is black
-magic. 
-ta  = fem.Function(P0, name="ta")        # target Function
-expr = fem.Expression(rho, P0.element.interpolation_points())
-
-ta.interpolate(expr)    
 
 
-"""
+# --- 
+from stonedfenicsx.config.numerical_control import SimulationControls
+from stonedfenicsx.config.geometry import GeomInput, Mesh, Domain
+from stonedfenicsx.config.scal import Scal
+# --- 
+from stonedfenicsx.utils import *
+from stonedfenicsx.solver_module.problems_solution import Problem, Solution, Slab, Wedge, Global_thermal, Global_pressure
+# ---
+import ufl 
+import dolfinx 
+import mpi4py as MPI
+import petsc4py as petsc 
+# --- 
+
+
 def initialise_the_simulation(M:Mesh, 
                               ctrl:NumericalControls, 
                               lhs_ctrl:ctrl_LHS, 
@@ -375,13 +358,7 @@ def time_loop(M: Mesh
 
 
 #------------------------------------------------------------------------------------------------------------
-def solution_routine(M:Mesh
-                     ,ctrl:NumericalControls
-                     ,lhs_ctrl:ctrl_LHS
-                     ,lhs_t:time_dependent_evolution
-                     ,pdb:PhaseDataBase
-                     ,ioctrl:IOControls
-                     ,sc:Scal
+def solution_routine(
                     ):
 
     # Initialise
