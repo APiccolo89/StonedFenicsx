@@ -1,23 +1,24 @@
-from stonedfenicsx.package_import import *
+# --- libraries --- 
+import dolfinx
+import basix 
+import ufl
+import numpy as np 
+import mpi4py.MPI as MPI
+from numpy.typing import NDArray
+from scipy.interpolate import griddata   
 
-from stonedfenicsx.utils import timing_function, print_ph
-from stonedfenicsx.material_property.compute_material_property import density_FX, heat_conductivity_FX, heat_capacity_FX, compute_viscosity_FX, compute_radiogenic 
-from stonedfenicsx.create_mesh.aux_create_mesh import Mesh, Domain, Geom_input
-from stonedfenicsx.material_property.phase_db import PhaseDataBase
-from stonedfenicsx.numerical_control import NumericalControls, ctrl_LHS, IOControls
-from stonedfenicsx.utils import interpolate_from_sub_to_main
-from stonedfenicsx.scal import Scal
-from stonedfenicsx.output import OUTPUT
-from stonedfenicsx.utils import compute_strain_rate
-from stonedfenicsx.material_property.compute_material_property import Functions_material_properties_global, Functions_material_rheology
-#from stonedfenicsx.solver_module.solver import Solvers, ScalarSolver, SolverStokes
-from stonedfenicsx.scal import Scal
-from stonedfenicsx.solver_module.solution_routine import *
-from stonedfenicsx.solver_module.solver_utilities import *
-from stonedfenicsx.solver_module.solver import ScalarSolver, SolverStokes, Solvers
+# --- from config module 
+from stonedfenicsx.config.numerical_control import SimulationControls 
+from stonedfenicsx.config.geometry import Mesh, GeomInput, Domain
+from stonedfenicsx.config.phase_db import PhaseDataBase
+from stonedfenicsx.config.scal import Scal
+# --- from solver module
+from stonedfenicsx.solver_module.solver import Solvers
+from stonedfenicsx.solver_module.solver_utilities import decoupling_function
+# --- from material properties 
 from stonedfenicsx.material_property.compute_material_property import compute_plastic_strain
-
-
+# --- from src 
+from stonedfenicsx.utils import * 
 
 def debug_boundary_condition(bc, name):
     comm = MPI.COMM_WORLD
@@ -47,10 +48,7 @@ def debug_boundary_condition(bc, name):
         print(f"{name}: global min {gmin:.6e} global max {gmax:.6e} "
               f"(rank{comm.rank} local min {local_min:.6e} local max {local_max:.6e}, n_owned {dofs_owned.size})")
         
-    
-    
-
-#----------------------------------------------------------------------------     
+# ---
 class Problem:
     """
     Abstract problem super-class defining the common structure and metadata
@@ -114,6 +112,10 @@ class Problem:
 
     name      : list                               # name of the problem, domain [global, domainA...]
     mixed     : bool                               # is a mixed problem (e.g. Stokes problem has two function spaces: velocity and pressure)
+    domain    : Domain
+    ctrl_sim  : SimulationControls
+    g_input   : GeomInput
+    pdb       : PhaseDataBase 
     FS        : dolfinx.fem.FunctionSpace          # Function space of the problem 
     F0        : dolfinx.fem.FunctionSpace | None   # Function space of the subspace 
     F1        : dolfinx.fem.FunctionSpace | None   # Function space of the subspace
@@ -129,7 +131,9 @@ class Problem:
     solv      : Solvers
     # --
     def __init__(self
-                 ,M: Mesh
+                 ,mesh: Mesh
+                 ,pdb:PhaseDataBase
+                 ,ctrl_sim:SimulationControls
                  ,elements: tuple
                  ,name: list):
         """Initialize the problem
@@ -142,20 +146,25 @@ class Problem:
 
         Raises:
             NameError: If the user changes the name. 
+            
         """
 
 
-        self.name = name 
-        if name[1] not in ("domainA", "domainB", "domainC", "domainG"):
+        self.name = name
+        if name[1] not in ("global_domain", "subduction_plate_domain", "crust_domain", "wedge_domain"):
             raise NameError("Wrong domain name, check the spelling, in my case was it")
-        elif name[1] == "domainC":
-            print("Are you sure? DomainC is junk for this problem.")
+        elif name[1] == "crust_domain":
+            print("Are you sure? crust_domain is junk for this problem.")
 
-        M = getattr(M, name[1])
+        self.domain = getattr(mesh,name[1])
+        self.ctrl_sim = ctrl_sim
+        self.pdb = pdb
+        self.g_input = mesh.g_input
+        
 
-        if len(elements) == 1: 
+        if len(elements) == 1:
             self.mixed    = False
-            self.FS       = dolfinx.fem.functionspace(M.mesh, elements[0]) 
+            self.FS       = dolfinx.fem.functionspace(self.domain.mesh, elements[0])
             self.trial0   = ufl.TrialFunction(self.FS)
             self.test0    = ufl.TestFunction(self.FS)
             self.trial1   = None
@@ -163,7 +172,7 @@ class Problem:
         else: 
             self.mixed    = True
             mixed_element = basix.ufl.mixed_element([elements[0], elements[1]])
-            self.FS       = dolfinx.fem.functionspace(M.mesh, mixed_element) # MA cristoiddio, perche' cazzo hanno messo FunctionSpace and functionspace come nomi, ma sono degli stronzi?
+            self.FS       = dolfinx.fem.functionspace(self.domain.mesh, mixed_element) # MA cristoiddio, perche' cazzo hanno messo FunctionSpace and functionspace come nomi, ma sono degli stronzi?
             # 
             self.F0,_       = self.FS.sub(0).collapse()
             self.F1,_       = self.FS.sub(1).collapse()
@@ -173,9 +182,9 @@ class Problem:
             self.test0    = ufl.TestFunction(self.FS.sub(0).collapse()[0])
             self.test1    = ufl.TestFunction(self.FS.sub(1).collapse()[0])
         
-        self.dx       = ufl.Measure("dx", domain=M.mesh)
-        self.ds       = ufl.Measure("ds", domain=M.mesh, subdomain_data=M.facets) # Exterior -> for boundary external 
-        self.dS       = ufl.Measure("dS", domain=M.mesh, subdomain_data=M.facets) # Interior -> for boundary integral inside
+        self.dx       = ufl.Measure("dx", domain=self.domain.mesh)
+        self.ds       = ufl.Measure("ds", domain=self.domain.mesh, subdomain_data=self.domain.facets) # Exterior -> for boundary external 
+        self.dS       = ufl.Measure("dS", domain=self.domain.mesh, subdomain_data=self.domain.facets) # Interior -> for boundary integral inside
 
 #--------------------------------------------------------------------------------------------------------------
 class Solution():
@@ -205,13 +214,13 @@ class Solution():
         self.mv : NDArray[:]
         self.Mv : NDArray[:]     
         self.RMSv : NDArray[:]
-        self.ts : NDArray[:]   
+        self.ts : NDArray[:]
         
     def create_function(self
-                        ,PG:Problem 
+                        ,PG:Problem
                         ,PS:Problem
                         ,PW:Problem
-                        ,elements:list): 
+                        ,elements:list)->None: 
         """Create the 'fem.Function' for storing the solution of each of the problem 
 
         Args:
@@ -229,7 +238,7 @@ class Solution():
 
         mixed_element = basix.ufl.mixed_element([elements[0], elements[1]])
 
-        space_GL = fem.functionspace(PG.FS.mesh,mixed_element) # PORCO DIO 
+        space_GL = dolfinx.fem.functionspace(PG.FS.mesh,mixed_element) # PORCO DIO 
         
         
         def gives_Function(space):
@@ -237,26 +246,25 @@ class Solution():
             Pa = space.sub(1)
             V,_  = Va.collapse()
             P,_  = Pa.collapse()
-            a = fem.Function(V)
-            b = fem.Function(P)
-            return a,b 
+            a = dolfinx.fem.Function(V)
+            b = dolfinx.fem.Function(P)
+            return a,b
         
-        self.PL       = fem.Function(PG.FS) # Thermal and Pressure problems share the same functional space -> Need to enforce this bullshit 
-        self.T_O      = fem.Function(PG.FS) 
-        self.T_N      = fem.Function(PG.FS)
-        self.Hs_global = fem.Function(PG.FS)
-        self.Hs_slab  = fem.Function(PS.FSPT)
-        self.Hs_wedge = fem.Function(PW.FSPT)
-        self.T_i      = fem.Function(PG.FS)
-        self.p_lwedge = fem.Function(PW.FSPT) # PW.SolPT -> It is the only part of this lovercraftian nightmare that needs to have temperature and pressure -> Viscosity depends pressure and temperature potentially
-        self.t_owedge = fem.Function(PW.FSPT) # same stuff as before, again, this is a nightmare: why the fuck. 
-        self.p_lslab = fem.Function(PS.FSPT) # PW.SolPT -> It is the only part of this lovercraftian nightmare that needs to have temperature and pressure -> Viscosity depends pressure and temperature potentially
-        self.t_oslab = fem.Function(PS.FSPT)
-        self.t_nslab = fem.Function(PS.FSPT)
+        self.PL       = dolfinx.fem.Function(PG.FS) # Thermal and Pressure problems share the same functional space -> Need to enforce this bullshit 
+        self.T_O      = dolfinx.fem.Function(PG.FS) 
+        self.T_N      = dolfinx.fem.Function(PG.FS)
+        self.Hs_global = dolfinx.fem.Function(PG.FS)
+        self.Hs_slab  = dolfinx.fem.Function(PS.FSPT)
+        self.Hs_wedge = dolfinx.fem.Function(PW.FSPT)
+        self.T_i      = dolfinx.fem.Function(PG.FS)
+        self.p_lwedge = dolfinx.fem.Function(PW.FSPT) # PW.SolPT -> It is the only part of this lovercraftian nightmare that needs to have temperature and pressure -> Viscosity depends pressure and temperature potentially
+        self.t_owedge = dolfinx.fem.Function(PW.FSPT) # same stuff as before, again, this is a nightmare: why the fuck. 
+        self.p_lslab = dolfinx.fem.Function(PS.FSPT) # PW.SolPT -> It is the only part of this lovercraftian nightmare that needs to have temperature and pressure -> Viscosity depends pressure and temperature potentially
+        self.t_oslab = dolfinx.fem.Function(PS.FSPT)
         self.u_global, self.p_global = gives_Function(space_GL)
         self.u_slab  , self.p_slab   = gives_Function(PS.FS)
         self.u_wedge , self.p_wedge  = gives_Function(PW.FS)
-        self.T_ad                     = fem.Function(PG.FS)   
+        self.T_ad                     = dolfinx.fem.Function(PG.FS)   
         self.mT    = np.zeros(1,dtype=float)
         self.MT    = np.zeros(1,dtype=float) 
         self.RMST    = np.zeros(1,dtype=float)
@@ -266,172 +274,160 @@ class Solution():
         self.outer_iteration = np.zeros(1,dtype=float)
         self.ts             = np.zeros(1,dtype=int)
 
-        return self 
-
-
-        
-#------------------------------------------------------------------- 
-#-------------------------------------------------------------------
+# --- 
+ 
 class Global_thermal(Problem):
-    def __init__(self,M:Mesh, elements:tuple, name:list,pdb:PhaseDataBase,ctrl:NumericalControls):
-        super().__init__(M,elements,name)
+    def __init__(self,mesh:Mesh, elements:tuple, name:list,pdb:PhaseDataBase,ctrl_sim:SimulationControls):
+        super().__init__(mesh=mesh,elements=elements,name=name,ctrl_sim=ctrl_sim,pdb=pdb)
                 
-        self.steady_state = ctrl.steady_state
+        self.steady_state = ctrl_sim.ctrl.steady_state
         
-        if np.all(pdb.option_rho<2) and np.all(pdb.option_k==0) and np.all(pdb.option_Cp==0) and ctrl.model_shear == 0:
+        if np.all(self.pdb.option_rho<2) and np.all(self.pdb.option_k==0) and np.all(self.pdb.option_cp==0) and self.ctrl_sim.ctrl.model_shear == 0:
             self.typology = 'LinearProblem'
         else:
             self.typology = 'NonlinearProblem'
+
+        self.bc_left : None 
+        self.bc_right_wed : None
+        self.bc_bot_wed : None
+        self.bc_right_lit : None
+        self.bc_top : None
         
-    def create_bc_temp(self,M:Mesh,ctrl:NumericalControls,geom,lhs,u_global,T_i,it,ts=0):
-        from scipy.interpolate import griddata   
-        cd_dof = self.FS.tabulate_dof_coordinates()
-        # This part can be done only once -> bc dofs are constant 
-        if ts == 0 and it == 0:
-            facets                 = M.facets.find(M.bc_dict['Top'])    
-            dofs_top               = fem.locate_dofs_topological(self.FS, M.mesh.topology.dim-1, facets)
-            # -> Probably I need to use some parallel shit here 
-            self.bc_top            = fem.dirichletbc(ctrl.Ttop, dofs_top, self.FS) 
-            facets                 = M.facets.find(M.bc_dict['Left_inlet'])    
-            dofs_left              = fem.locate_dofs_topological(self.FS, M.mesh.topology.dim-1, facets)
-            
-            # Create suitable function space for the problem
-            T_bc_L = fem.Function(self.FS)
-            # Extract z and lhs 
-            z   = lhs.z
-            LHS = lhs.LHS 
-            # Extract coordinate dofs
-            # Interpolate temperature field: 
-            T_bc_L.x.array[:] = griddata(z, LHS, cd_dof[:,1], method='nearest')
-            T_bc_L.x.scatter_forward()
-
-            self.bc_left = fem.dirichletbc(T_bc_L, dofs_left)
-            
-
-            facets                 = M.facets.find(M.bc_dict['Right_lit'])                        
-            dofs_right_lit        = fem.locate_dofs_topological(self.FS, M.mesh.topology.dim-1, facets)
+        
+    @staticmethod
+    def interpolate_1d_vector_boundary(function_space, z, temp_vec, dofs_intp):
+            buf_fct = dolfinx.fem.Function(function_space)
+            buf_fct.x.array[:] = griddata(z, temp_vec, dofs_intp[:,1], method='nearest')
+            buf_fct.x.scatter_forward()
+            return buf_fct
     
-            T_gr = (-geom.lab_d-0)/(ctrl.Tmax-ctrl.Ttop)
-            T_gr = T_gr**(-1) 
-        
-            bc_fun = fem.Function(self.FS)
-            bc_fun.x.array[dofs_right_lit] = ctrl.Ttop + T_gr * cd_dof[dofs_right_lit,1]
-            bc_fun.x.scatter_forward()
-        
-            self.bc_right_lit = fem.dirichletbc(bc_fun, dofs_right_lit)
+    def create_bc_temp(self,u_global:dolfinx.fem.Function,it_outer:int,ts=0)->list:
+        """Create the boundary condition
 
-        facets                 = M.facets.find(M.bc_dict['Right_wed'])                        
-        dofs_right_wed        = fem.locate_dofs_topological(self.FS, M.mesh.topology.dim-1, facets)
+        Args:
+            u_global (dolfinx.fem.Function): velocity field global
+            it_outer (int): outer iteration
+            ts (int, optional): _description_. timestep
+
+        Returns:
+            list of boundary conditions
+        """
+        
+        # UnPack the needed variables 
+        cd_dof = self.FS.tabulate_dof_coordinates()
+        domain = self.domain
+        ctrl_tbc = self.ctrl_sim.ctrl_tbc 
+        temp_min = self.ctrl_sim.ctrl_tbc.temp_top
+        # This part can be done only once -> bc dofs are constant 
+        
+        if ctrl_tbc.constant != 1 or (it_outer == 0 and ts ==0): 
+            # if the boundary condition is not constant, or if the outer iteration is equal to 0.0 and ts as well. 
+            # Extract dofs
+            facets                 = domain.facets.find(domain.bc_dict['Left_inlet'])
+            dofs_left              = dolfinx.fem.locate_dofs_topological(self.FS, domain.mesh.topology.dim-1, facets)
+            # Interpolate
+            temp_bc_left = self.interpolate_1d_vector_boundary(self.FS,ctrl_tbc.z,ctrl_tbc.temperature_1d,cd_dof)
+            # Update dirichletbc
+            self.bc_left = dolfinx.fem.dirichletbc(temp_bc_left, dofs_left)
+
+        if ts == 0 and it_outer == 0:
+            # Top
+            facets                 = domain.facets.find(domain.bc_dict['Top'])    
+            dofs_top               = dolfinx.fem.locate_dofs_topological(self.FS, domain.mesh.topology.dim-1, facets)
+            # -> Probably I need to use some parallel shit here 
+            self.bc_top            = dolfinx.fem.dirichletbc(temp_min, dofs_top, self.FS)
+            # Right Lithosphere
+            facets                 = domain.facets.find(domain.bc_dict['Right_lit']) 
+            dofs_right_lit              = dolfinx.fem.locate_dofs_topological(self.FS, domain.mesh.topology.dim-1, facets)          
+            temp_bc_right = self.interpolate_1d_vector_boundary(self.FS,ctrl_tbc.z_right,ctrl_tbc.temp_1d_right,cd_dof)
+            self.bc_right_lit = dolfinx.fem.dirichletbc(temp_bc_right, dofs_right_lit)
+
+        # Right wedge
+        facets                 = domain.facets.find(domain.bc_dict['Right_wed'])                        
+        dofs_right_wed        = dolfinx.fem.locate_dofs_topological(self.FS, domain.mesh.topology.dim-1, facets)
         h_vel  = u_global.sub(0) # index 1 = y-direction (2D)
-        vel_T  = fem.Function(self.FS)
+        vel_T  = dolfinx.fem.Function(self.FS)
         vel_T.interpolate(h_vel)
         vel_T.x.scatter_forward()
         vel_bc = vel_T.x.array[dofs_right_wed]
-        ind_z = np.where((vel_bc < 0.0) & (cd_dof[dofs_right_wed,1]<=-geom.lab_d))
-        dofs_vel = dofs_right_wed[ind_z[0]]        
-        if ctrl.adiabatic_heating==0:
-            self.bc_right_wed = fem.dirichletbc(ctrl.Tmax, dofs_vel,self.FS)
-        else: 
-            function_bc = fem.Function(self.FS)
-            function_bc.interpolate(T_i)
+        ind_z = np.where((vel_bc < 0.0) & (cd_dof[dofs_right_wed,1]<=-self.g_input.lab_d))
+        dofs_vel = dofs_right_wed[ind_z[0]] 
+        self.bc_right_wed = dolfinx.fem.dirichletbc(ctrl_tbc.temp_max, dofs_vel,self.FS)
         
-            self.bc_right_wed  = fem.dirichletbc(function_bc,dofs_vel)
-            
-        facets                 = M.facets.find(M.bc_dict['Bottom_wed'])                        
-        dofs_bot_wed        = fem.locate_dofs_topological(self.FS, M.mesh.topology.dim-1, facets)
+        # Bottom wedge
+        facets                 = domain.facets.find(domain.bc_dict['Bottom_wed'])                        
+        dofs_bot_wed        = dolfinx.fem.locate_dofs_topological(self.FS, domain.mesh.topology.dim-1, facets)
         h_vel = u_global.sub(0) # index 1 = y-direction (2D)   
         v_vel = u_global.sub(1) # index 1 = y-direction (2D)
-        vel_T = fem.Function(self.FS)
+        vel_T = dolfinx.fem.Function(self.FS)
         vel_T.interpolate(v_vel)
         vel_T.x.scatter_forward()
         vel_bc = vel_T.x.array[dofs_bot_wed]
         ind_z = np.where((vel_bc > 0.0))
-        dofs_vel = dofs_bot_wed[ind_z[0]]    
+        dofs_vel = dofs_bot_wed[ind_z[0]]   
                     
         
-        self.bc_bot_wed = fem.dirichletbc(ctrl.Tmax, dofs_vel,self.FS)
+        self.bc_bot_wed = dolfinx.fem.dirichletbc(ctrl_tbc.temp_max, dofs_vel,self.FS)
         
         bc = [ self.bc_left,  self.bc_right_wed,self.bc_bot_wed, self.bc_right_lit,self.bc_top]
-
         
-        
-        
-        
-        return bc 
+        return bc
         
     #------------------------------------------------------------------
     def compute_shear_heating(self
-                              ,ctrl
-                              ,pdb
-                              ,p 
-                              ,T_k
-                              ,D
-                              ,g_input
-                              ,sc):
+                              ,p:dolfinx.fem.Function
+                              ,T_k:dolfinx.fem.Function
+                              ,sc)->dolfinx.fem.Expression|float:
         """
         Apperently the sociopath the devise this method, uses a delta function to describe 
         the interface frictional heating. 
         -> [A] => Shear heating becomes a ufl expression. So happy about it 
         
         """
-
-        if ctrl.decoupling == 1 and ctrl.model_shear >0: 
-            facets1                = D.facets.find(D.bc_dict['Subduction_top_lit'])
-            facets2                = D.facets.find(D.bc_dict['Subduction_top_wed'])
+        domain = self.domain
+        mode_shear = self.ctrl_sim.ctrl.mode_shear
+        expression = dolfinx.fem.Constant(domain.mesh,(0.0))
+        if self.ctrl_sim.ctrl.decoupling == 1 and mode_shear:
+            facets1                = domain.facets.find(domain.bc_dict['Subduction_top_lit'])
+            facets2                = domain.facets.find(domain.bc_dict['Subduction_top_wed'])
 
             facet_seismogenic = np.unique(np.concatenate((facets1,facets2)))
 
-            dofs              = fem.locate_dofs_topological(self.FS, D.mesh.topology.dim-1, facet_seismogenic)
+            dofs              = dolfinx.fem.locate_dofs_topological(self.FS, domain.mesh.topology.dim-1, facet_seismogenic)
 
-            heat_source = fem.Function(self.FS)
-            heat_source.x.array[:] = 0.0   
+            heat_source = dolfinx.fem.Function(self.FS)
+            heat_source.x.array[:] = 0.0
             heat_source.x.scatter_forward()
         
             decoupling    = heat_source.copy()
             Z = self.FS.tabulate_dof_coordinates()[:,1]
-            decoupling = decoupling_function(Z,decoupling,g_input)
+            decoupling = decoupling_function(Z,decoupling,self.g_input)
 
-            if ctrl.model_shear==2:
+            if mode_shear:
                 # compute the plastic strain rate ratio and viscous shear heating strain rate 
                 # Place holder function
-                from stonedfenicsx.utils import evaluate_material_property
-                dS = ufl.Measure("dS", domain=D.mesh, subdomain_data=D.facets)
-                tau_eff, tau_vs,tau_lim = self.compute_friction_shear_expression(pdb,ctrl,D,T_k,p,ctrl.v_s[0],decoupling,g_input.wz_tk,sc)
+                dS = ufl.Measure("dS", domain=domain.mesh, subdomain_data=domain.facets)
+                tau_eff, _, _  = self.compute_friction_shear_expression(T_k,p,decoupling)
+
+                friction_heat = tau_eff * decoupling * self.ctrl_sim.ctrl_ky.v_s[0]
                 
-                from stonedfenicsx.utils import evaluate_material_property
-
-
-
-                friction_heat = tau_eff * decoupling * ctrl.v_s[0]
-                
-                expression = friction_heat('+') * self.test0('+') * (dS(D.bc_dict['Subduction_top_lit']) + dS(D.bc_dict['Subduction_top_wed']))
-            else:  
-                phi = np.tan(pdb.friction_angle)
-                expression = decoupling * ufl.avg(S.PL) * ctrl.v_s[0] * phi * ufl.avg(self.test0) * (self.ds(D.bc_dict['Subduction_top_lit']) +self.ds(D.bc_dict['Subduction_top_wed']))
-
+                expression = friction_heat('+') * self.test0('+') * (dS(domain.bc_dict['Subduction_top_lit']) + dS(domain.bc_dict['Subduction_top_wed']))
             return expression
-
         else:
-            return 0.0 
+            return 0.0
         
         
     def compute_friction_shear_expression(self
                                           ,pdb:PhaseDataBase
-                                          ,ctrl:NumericalControls
-                                          ,D:Domain
                                           ,T:dolfinx.fem.function.Function
-                                          ,P:dolfinx.fem.function.Function
-                                          ,vs:float
-                                          ,decoupling:dolfinx.fem.function.Function
-                                          ,wz_tk:float
-                                          ,sc:Scal):
+                                          ,P:dolfinx.fem.function.Function):
 
 
-        e_II_fr = 0.5 * (vs *  1 /wz_tk)  # Second invariant strain rate
+        e_II_fr = 0.5 * (self.ctrl_sim.ctrl_ky.vs[0] * 1 /self.g_input.wz_tk)  # Second invariant strain rate
 
         # -> compute the plastic strain rate
 
-        tau, tau_vs, tau_lim = compute_plastic_strain(e_II_fr,T,P,pdb,D.phase,ctrl.phase_wz-1,sc)
+        tau, tau_vs, tau_lim = compute_plastic_strain(e_II_fr,T,P,pdb,domain.phase)
 
         return tau, tau_vs, tau_lim 
             
@@ -773,7 +769,7 @@ class Global_thermal(Problem):
         
         nl = 0 
         dt = None
-        # choose the problem: 
+        # choose the problemesh: 
         if ctrl.steady_state == 1: 
             self.set_linear = self.set_linear_picard_SS 
             self.compute_residual = self.compute_residual_SS
@@ -1036,7 +1032,7 @@ class Global_thermal(Problem):
 #-------------------------------------------------------------------
 class Global_pressure(Problem): 
     def __init__(self
-                 ,M:Mesh
+                 ,mesh:Mesh
                  ,elements:tuple
                  ,name:list
                  ,pdb:PhaseDataBase):
@@ -1395,7 +1391,7 @@ class Stokes_Problem(Problem):
             reason = self.solv.ksp.getConvergedReason()
             its    = self.solv.ksp.getIterationNumber()
             rnorm  = self.solv.ksp.getResidualNorm()
-            PETSc.Sys.Print(f"                       KSP reason/its/rnorm: {reason} {its} {rnorm:.3e}")
+            PETSc.Sys.Print(f"                       KSP reason/its/rnormesh: {reason} {its} {rnormesh:.3e}")
 
         minMaxU = min_max_array(u_solved,vel=True)
         print_ph(f'                       min vel = {minMaxU[0]:.5e}, max vel = {minMaxU[1]:.5e}, RMS = {minMaxU[2]:.5e}')
@@ -1407,7 +1403,7 @@ class Stokes_Problem(Problem):
 #-------------------------------------------------------------------
 class Wedge(Stokes_Problem): 
     def __init__(self
-                 ,M:Domain
+                 ,mesh:Domain
                  ,elements:tuple
                  ,name:list
                  ,pdb:PhaseDataBase)->None:
@@ -1681,12 +1677,12 @@ class Wedge(Stokes_Problem):
 
                 print_ph(f'              []Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
                 print_ph(f'                         [x] |F^mom|/|F^mom_0| {rmom/rmom_0:.3e}, |F^div|/|F^div_0| {rdiv/rdiv_0:.3e}')
-                print_ph(f'                         [x] |F^mom|           {rmom:.3e},         |F^div| {rdiv:.3e}')
+                print_ph(f'                         [x] |F^mom|           {rmomesh:.3e},         |F^div| {rdiv:.3e}')
                 it_inner = it_inner+1 
         
             print_ph(f'              []Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
             print_ph(f'                         [?] |F^mom|L2/|F^mom_0|L2 {rmom/rmom_0:.3e}, |F^div|L2/|F^div_0|L2 {rdiv/rdiv_0:.3e}')
-            print_ph(f'                         [?] |F^mom|L2           {rmom:.3e}, abs div residuum |F^div|L2 {rdiv:.3e}')
+            print_ph(f'                         [?] |F^mom|L2           {rmomesh:.3e}, abs div residuum |F^div|L2 {rdiv:.3e}')
             print_ph('              []Converged ')
 
             S.u_wedge = u_k.copy()
@@ -1706,7 +1702,7 @@ class Slab(Stokes_Problem):
     """Slab problem class. 
 
     Args:
-        Stokes_Problem: type of solver (i.e., scalar problem, stokes problem)
+        Stokes_Problemesh: type of solver (i.e., scalar problem, stokes problem)
     
     Class that inherits from the Stokes problem class, with the specificities of the slab problem. 
     
@@ -1725,7 +1721,7 @@ class Slab(Stokes_Problem):
 
     """
     def __init__(self
-                 ,M:Mesh 
+                 ,mesh:Mesh 
                  ,elements:tuple
                  ,name:list):
         super().__init__(M,elements,name)

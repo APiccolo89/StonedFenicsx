@@ -2,11 +2,13 @@
 
 # --- 
 from stonedfenicsx.config.numerical_control import SimulationControls
-from stonedfenicsx.config.geometry import GeomInput, Mesh, Domain
+from stonedfenicsx.config.geometry import Mesh
 from stonedfenicsx.config.scal import Scal
+from stonedfenicsx.config.phase_db import PhaseDataBase
 # --- 
 from stonedfenicsx.utils import *
-from stonedfenicsx.solver_module.problems_solution import Problem, Solution, Slab, Wedge, Global_thermal, Global_pressure
+from stonedfenicsx.solver_module.problems_solution import Solution, Slab, Wedge, Global_thermal, Global_pressure
+from stonedfenicsx.material_property.compute_material_property import populate_material_properties_thermal,populate_material_properties_rheology
 # ---
 import ufl 
 import dolfinx 
@@ -15,47 +17,30 @@ import petsc4py as petsc
 # --- 
 
 
-def initialise_the_simulation(M:Mesh, 
-                              ctrl:NumericalControls, 
-                              lhs_ctrl:ctrl_LHS, 
-                              pdb:PhaseDataBase, 
-                              ioctrl:IOControls, 
-                              sc:Scal)-> tuple[ctrl_LHS,
-                                                Solution,
-                                                Global_thermal,
-                                                Global_pressure,
-                                                Wedge,
-                                                Slab,
-                                                dolfinx.fem.function.Function,
-                                                Functions_material_properties_global,
-                                                Functions_material_rheology,
-                                                Functions_material_rheology,
-                                                Functions_material_rheology]:
+def initialise_the_simulation(ctrl_sim:SimulationControls
+                              ,pdb:PhaseDataBase
+                              ,mesh:Mesh
+                              ,sc:Scal)-> tuple[Global_pressure,Global_pressure,Wedge,Slab]:
     
-    from stonedfenicsx.thermal_structure_ocean import compute_initial_LHS
-    from stonedfenicsx.material_property.compute_material_property import populate_material_properties_thermal,populate_material_properties_rheology
 
     
-    element_p           = M.element_p#basix.ufl.element("Lagrange","triangle", 1) 
+    element_p           = mesh.element_p#basix.ufl.element("Lagrange","triangle", 1) 
     
-    element_PT          = M.element_PT#basix.ufl.element("Lagrange","triangle",2)
+    element_PT          = mesh.element_PT#basix.ufl.element("Lagrange","triangle",2)
     
-    element_V           = M.element_V#basix.ufl.element("Lagrange","triangle",2,shape=(2,))
-
-    #==================== Phase Parameter ====================
-    lhs_ctrl = compute_initial_LHS(ctrl,lhs_ctrl, sc, pdb,M.g_input.theta_in_slab)  
+    element_V           = mesh.element_V#basix.ufl.element("Lagrange","triangle",2,shape=(2,))
           
     # Define Problem
     # Global energy
-    energy_global = Global_thermal (M = M, name = ['energy','domainG']  , elements = (element_PT,), pdb = pdb, ctrl = ctrl)
+    energy_global = Global_thermal (mesh = mesh, name = ['energy','domainG']  , elements = (element_PT,), pdb = pdb, ctrl_sim = ctrl_sim)
     # Global lithostatic pressure
-    lithostatic_pressure_global = Global_pressure(M = M, name = ['pressure','domainG'], elements = (element_PT,), pdb = pdb ) 
+    lithostatic_pressure_global = Global_pressure(mesh = mesh, name = ['pressure','domainG'], elements = (element_PT,), pdb = pdb ) 
     # Wedge stokes problem
     wedge = Wedge(M =M, name = ['stokes','domainB'  ], elements = (element_V,element_p,element_PT), pdb = pdb)
     # Slab stokes problem
     slab = Slab(M = M, name = ['stokes','domainA'  ], elements = (element_V,element_p,element_PT))
     # Gravity, as I do not know where to put -> most likely inside the global problem 
-    g = fem.Constant(M.domainG.mesh, PETSc.ScalarType([0.0, -ctrl.g]))    
+    g = femesh.Constant(mesh.domainG.mesh, PETSc.ScalarType([0.0, -ctrl.g]))    
 
     # Define Solution 
     # Create instance of solution.
@@ -68,12 +53,12 @@ def initialise_the_simulation(M:Mesh,
     FGS_R   = Functions_material_rheology()
     FGG_R   = Functions_material_rheology()
     # Populate the function.
-    FGpdb   = populate_material_properties_thermal(FGpdb,pdb,M.domainG.phase)
-    FGWG_R  = populate_material_properties_rheology(FGWG_R,pdb,M.domainB.phase)
-    FGS_R   = populate_material_properties_rheology(FGS_R,pdb,M.domainA.phase)
-    FGG_R   = populate_material_properties_rheology(FGG_R,pdb,M.domainG.phase)
+    FGpdb   = populate_material_properties_thermal(FGpdb,pdb,mesh.domainG.phase)
+    FGWG_R  = populate_material_properties_rheology(FGWG_R,pdb,mesh.domainB.phase)
+    FGS_R   = populate_material_properties_rheology(FGS_R,pdb,mesh.domainA.phase)
+    FGG_R   = populate_material_properties_rheology(FGG_R,pdb,mesh.domainG.phase)
     # Generate the initial guess for the temperature. 
-    sol.T_O = energy_global.initial_temperature_field(M.domainG, ctrl, lhs_ctrl,M.g_input)
+    sol.T_O = energy_global.initial_temperature_field(mesh.domainG, ctrl, lhs_ctrl,mesh.g_input)
     
 
     
@@ -94,7 +79,7 @@ def outerloop_operation(M:Mesh,
                         We:Wedge,
                         Sl:Slab,
                         sol:Solution
-                        ,g:dolfinx.fem.function.Function
+                        ,g:dolfinx.femesh.function.Function
                         ,pdb:PhaseDataBase
                         ,ts:int=0
                         ,ioctrl:IOControls=None)->Solution:
@@ -104,7 +89,7 @@ def outerloop_operation(M:Mesh,
     res      = 1
     debug = 0   
     if debug == 1: 
-        out_deb = OUTPUT(M.domainG,ioctrl,ctrl,sc)
+        out_deb = OUTPUT(mesh.domainG,ioctrl,ctrl,sc)
     
     if LG.typology == 'LinearProblem' and EG.typology == 'LinearProblem' and We.typology == 'LinearProblem':
         ctrl.it_max = 2
@@ -138,19 +123,19 @@ def outerloop_operation(M:Mesh,
 
         sol.t_owedge = interpolate_from_sub_to_main(sol.t_owedge
                                                     ,sol.T_N
-                                                    ,M.domainB.cell_par
+                                                    ,mesh.domainB.cell_par
                                                     ,1)
         
         sol.p_lwedge = interpolate_from_sub_to_main(sol.p_lwedge
                                                     ,sol.PL
-                                                    ,M.domainB.cell_par
+                                                    ,mesh.domainB.cell_par
                                                     ,1)
 
         if (ts == 0 and it_outer==0) or (it_outer == 0 and constant_vel == 0): 
             sol = Sl.Solve_the_Problem(sol,
                                    ctrl
                                    ,FGSR
-                                   ,M.domainA
+                                   ,mesh.domainA
                                    ,g
                                    ,sc,
                                    it = it_outer,
@@ -160,29 +145,29 @@ def outerloop_operation(M:Mesh,
             sol = We.Solve_the_Problem(sol
                                 ,ctrl
                                 ,FGWR
-                                ,M.domainB
+                                ,mesh.domainB
                                 ,g
                                 ,sc
-                                ,M.g_input
+                                ,mesh.g_input
                                 ,it = it_outer
                                 ,ts=ts)
 
         # Interpolate from wedge/slab to global
         sol.u_global = interpolate_from_sub_to_main(sol.u_global
                                                     ,sol.u_wedge
-                                                    , M.domainB.cell_par)
+                                                    , mesh.domainB.cell_par)
         sol.u_global = interpolate_from_sub_to_main(sol.u_global
                                                     ,sol.u_slab
-                                                    , M.domainA.cell_par)
+                                                    , mesh.domainA.cell_par)
         
         
         sol.p_global = interpolate_from_sub_to_main(sol.p_global
                                                     ,sol.p_wedge
-                                                    ,M.domainB.cell_par)
+                                                    ,mesh.domainB.cell_par)
         
         sol.p_global = interpolate_from_sub_to_main(sol.p_global
                                                     ,sol.p_slab
-                                                    ,M.domainA.cell_par)
+                                                    ,mesh.domainA.cell_par)
         
         
         sol = EG.Solve_the_Problem(sol
@@ -190,7 +175,7 @@ def outerloop_operation(M:Mesh,
                             ,FGT
                             ,M
                             ,lhs
-                            ,M.g_input
+                            ,mesh.g_input
                             ,sc
                             ,pdb
                             ,it = it_outer
@@ -210,7 +195,7 @@ def outerloop_operation(M:Mesh,
                                      ,ctrl)
         if debug==1:
             print_ph('OUTPUT...')
-            out_deb.print_output(sol,M.domainG,FGT,FGGR,ioctrl,sc,ctrl,it_outer=it_outer,time=0,ts=ts,debug=1)
+            out_deb.print_output(sol,mesh.domainG,FGT,FGGR,ioctrl,sc,ctrl,it_outer=it_outer,time=0,ts=ts,debug=1)
             print_ph('finished')
 
 
@@ -239,7 +224,7 @@ def time_loop(M: Mesh
               ,We : Wedge 
               ,Sl : Slab
               ,sol : Solution
-              ,g : dolfinx.fem.Function
+              ,g : dolfinx.femesh.Function
               ,pdb: PhaseDataBase
              ) -> None:
     """time loop function
@@ -259,7 +244,7 @@ def time_loop(M: Mesh
         We (Wedge): _description_
         Sl (Slab): _description_
         sol (Solution): _description_
-        g (dolfinx.fem.Function): _description_
+        g (dolfinx.femesh.Function): _description_
         t_ctrl (time_controls): _description_
     """
     if ctrl.steady_state == 1:
@@ -271,7 +256,7 @@ def time_loop(M: Mesh
         
     t  = 0.0 
     ts = 0 
-    output_class  = OUTPUT(M.domainG, ioctrl, ctrl, sc)
+    output_class  = OUTPUT(mesh.domainG, ioctrl, ctrl, sc)
     
     # Initialise S.T_N 
     sol.T_N = sol.T_O.copy()
@@ -292,7 +277,7 @@ def time_loop(M: Mesh
                                  ,lhs
                                  ,sc
                                  ,pdb
-                                 ,M.g_input.theta_in_slab)
+                                 ,mesh.g_input.theta_in_slab)
             print_ph(f'                            [{ts:d}]age plate = {lhs_t.current_age*sc.T/sc.scale_Myr2sec:3e} [Myr]')
 
             
@@ -329,7 +314,7 @@ def time_loop(M: Mesh
 
         if ctrl.steady_state == 1 or (ts%10) == 0:
             print_ph('OUTPUT...')
-            output_class.print_output(sol,M.domainG,FGT,FGGR,ioctrl,sc,ctrl,it_outer=0,time=t*sc.T/sc.scale_Myr2sec,ts=ts)
+            output_class.print_output(sol,mesh.domainG,FGT,FGGR,ioctrl,sc,ctrl,it_outer=0,time=t*sc.T/sc.scale_Myr2sec,ts=ts)
             print_ph('finished')
 
         
@@ -358,26 +343,24 @@ def time_loop(M: Mesh
 
 
 #------------------------------------------------------------------------------------------------------------
-def solution_routine(
-                    ):
+def solution_routine(ctrl_sim:SimulationControls
+                     ,pdb:PhaseDataBase
+                     ,mesh:Mesh
+                     ,sc:Scal
+                    )->None:
+    """Function that Initialise the object for the simulation (i.e., the problem, solution...)
+    and send to the running simulations routine: outer_time_loop and inner_picard_loop. 
+
+    Args:
+        ctrl_sim (SimulationControls): Simulations controls [Numerical Controls, boundary controls, iocontrols]
+        pdb (PhaseDataBase): Data Base of phase
+        mesh (Mesh): Mesh and geometry object
+        sc (Scal): Scaling object 
+
+    """
 
     # Initialise
-    (lhs_ctrl,                      # Left Boundary controls
-    sol,                            # Solution data class
-    EG,                  # Energy Problem defined in the global mesh
-    LG,    # Lithostatic Problem defined in the global mesh
-    Sl,                           # Stokes Problem defined in the slab mesh 
-    We,                          # Stokes Problem defined in the wedge mesh
-    g,                              # gravity 
-    FGT,                          # Global thermal properties (pre-computed fem.function)
-    FGWR,                         # Rheological material properties of the slab mesh
-    FGSR,
-    FGGR) = initialise_the_simulation(M,                 # Mesh 
-                                       ctrl,              # Controls 
-                                       lhs_ctrl,          # Not updated Lhs Control 
-                                       pdb,               # Material property database
-                                       ioctrl,            # Control input and output
-                                       sc)                # Scaling 
+    initialise_the_simulation(ctrl_sim,pdb,mesh,sc)                # Scaling 
     
     # Time Loop 
     
