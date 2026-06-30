@@ -6,9 +6,9 @@ from stonedfenicsx.config.geometry import Mesh
 from stonedfenicsx.config.scal import Scal
 from stonedfenicsx.config.phase_db import PhaseDataBase
 # --- 
-from stonedfenicsx.utils import *
+from stonedfenicsx.utils import interpolate_from_sub_to_main, time_the_time,timing_function
+from stonedfenicsx.solver_module.solver_utilities import compute_residuum_outer
 from stonedfenicsx.solver_module.problems_solution import Solution, Slab, Wedge, Global_thermal, Global_pressure
-from stonedfenicsx.material_property.compute_material_property import populate_material_properties_thermal,populate_material_properties_rheology
 # ---
 import ufl 
 import dolfinx 
@@ -20,7 +20,7 @@ import petsc4py as petsc
 def initialise_the_simulation(ctrl_sim:SimulationControls
                               ,pdb:PhaseDataBase
                               ,mesh:Mesh
-                              ,sc:Scal)-> tuple[Global_pressure,Global_pressure,Wedge,Slab]:
+                              ,sc:Scal)-> tuple[Solution,Global_pressure,Global_pressure,Wedge,Slab]:
     
 
     
@@ -33,14 +33,16 @@ def initialise_the_simulation(ctrl_sim:SimulationControls
     # Define Problem
     # Global energy
     energy_global = Global_thermal (mesh = mesh, name = ['energy','domainG']  , elements = (element_PT,), pdb = pdb, ctrl_sim = ctrl_sim)
+    energy_global.create_cached_material(True)
     # Global lithostatic pressure
-    lithostatic_pressure_global = Global_pressure(mesh = mesh, name = ['pressure','domainG'], elements = (element_PT,), pdb = pdb ) 
+    lithostatic_pressure_global = Global_pressure(mesh = mesh, name = ['pressure','domainG'], elements = (element_PT,), pdb = pdb, ctrl_sim=ctrl_sim ) 
+    lithostatic_pressure_global.create_cached_material(True)
     # Wedge stokes problem
-    wedge = Wedge(M =M, name = ['stokes','domainB'  ], elements = (element_V,element_p,element_PT), pdb = pdb)
+    wedge = Wedge(mesh =mesh, name = ['stokes','domainB'  ], elements = (element_V,element_p,element_PT), pdb = pdb,ctrl_sim=ctrl_sim)
+    wedge.create_cached_material(False)
     # Slab stokes problem
-    slab = Slab(M = M, name = ['stokes','domainA'  ], elements = (element_V,element_p,element_PT))
-    # Gravity, as I do not know where to put -> most likely inside the global problem 
-    g = femesh.Constant(mesh.domainG.mesh, PETSc.ScalarType([0.0, -ctrl.g]))    
+    slab = Slab(mesh = mesh, name = ['stokes','domainA'  ], elements = (element_V,element_p,element_PT),pdb=pdb,ctrl_sim=ctrl_sim)
+    wedge.create_cached_material(False)
 
     # Define Solution 
     # Create instance of solution.
@@ -48,54 +50,31 @@ def initialise_the_simulation(ctrl_sim:SimulationControls
     # Allocate the function that handles. 
     sol.create_function(lithostatic_pressure_global,slab,wedge,[element_V,element_p])
     # Allocate the material properties.
-    FGpdb   = Functions_material_properties_global()      
-    FGWG_R  = Functions_material_rheology()
-    FGS_R   = Functions_material_rheology()
-    FGG_R   = Functions_material_rheology()
-    # Populate the function.
-    FGpdb   = populate_material_properties_thermal(FGpdb,pdb,mesh.domainG.phase)
-    FGWG_R  = populate_material_properties_rheology(FGWG_R,pdb,mesh.domainB.phase)
-    FGS_R   = populate_material_properties_rheology(FGS_R,pdb,mesh.domainA.phase)
-    FGG_R   = populate_material_properties_rheology(FGG_R,pdb,mesh.domainG.phase)
     # Generate the initial guess for the temperature. 
-    sol.T_O = energy_global.initial_temperature_field(mesh.domainG, ctrl, lhs_ctrl,mesh.g_input)
-    
+    sol.T_O = energy_global.initial_temperature_field()
+    sol.T_N = sol.T_O.copy()
 
-    
-    return lhs_ctrl,sol,energy_global,lithostatic_pressure_global,slab,wedge,g,FGpdb,FGWG_R,FGS_R,FGG_R
+    return sol, energy_global,lithostatic_pressure_global,slab,wedge
 #---------------------------------------------------------------------------------------------------
-def outerloop_operation(M:Mesh,
-                        ctrl:NumericalControls,
-                        ctrlio:IOControls,
+def outerloop_operation(ctrl_sim:SimulationControls,
                         sc:Scal,
-                        lhs:ctrl_LHS,
-                        constant_vel:int
-                        ,FGT:Functions_material_properties_global,
-                        FGWR:Functions_material_rheology,
-                        FGSR:Functions_material_rheology,
-                        FGGR:Functions_material_rheology,
-                        EG:Global_thermal,
-                        LG:Global_pressure,
-                        We:Wedge,
-                        Sl:Slab,
+                        eg:Global_thermal,
+                        lg:Global_pressure,
+                        we:Wedge,
+                        sl:Slab,
                         sol:Solution
-                        ,g:dolfinx.femesh.function.Function
                         ,pdb:PhaseDataBase
-                        ,ts:int=0
-                        ,ioctrl:IOControls=None)->Solution:
+                        ,ts:int=0)->Solution:
     
     # Initialise the it outer and residual outer 
     it_outer = 0 
     res      = 1
-    debug = 0   
-    if debug == 1: 
-        out_deb = OUTPUT(mesh.domainG,ioctrl,ctrl,sc)
     
-    if LG.typology == 'LinearProblem' and EG.typology == 'LinearProblem' and We.typology == 'LinearProblem':
-        ctrl.it_max = 2
+    if lg.typology == 'LinearProblem' and eg.typology == 'LinearProblem' and we.typology == 'LinearProblem':
+        ctrl_sim.ctrl.it_max = 2
     
     
-    while it_outer < ctrl.it_max and res > ctrl.tol: 
+    while it_outer < ctrl_sim.ctrl.it_max and res > ctrl_sim.ctrl.tol: 
         
         print_ph(f'   // -- // --- Outer iteration {it_outer:d} for the coupled problem // -- // --- > ')
         
@@ -111,73 +90,52 @@ def outerloop_operation(M:Mesh,
         p_global_kouter.x.scatter_forward()
         
         
-        if LG.typology == 'NonlinearProblem' or it_outer == 0:  
-            sol = LG.Solve_the_Problem(sol,
-                                       ctrl,
-                                       FGT,
-                                       M,
-                                       g,
-                                       it_outer,ts=ts)
+        if lg.typology == 'NonlinearProblem' or it_outer == 0:  
+            sol = lg.Solve_the_Problem(sol,
+                                       it_outer
+                                       ,ts=ts)
 
         # Interpolate from global to wedge/slab
 
         sol.t_owedge = interpolate_from_sub_to_main(sol.t_owedge
                                                     ,sol.T_N
-                                                    ,mesh.domainB.cell_par
+                                                    ,we.domain.cell_par
                                                     ,1)
         
         sol.p_lwedge = interpolate_from_sub_to_main(sol.p_lwedge
                                                     ,sol.PL
-                                                    ,mesh.domainB.cell_par
+                                                    ,we.domain.cell_par
                                                     ,1)
 
-        if (ts == 0 and it_outer==0) or (it_outer == 0 and constant_vel == 0): 
-            sol = Sl.Solve_the_Problem(sol,
-                                   ctrl
-                                   ,FGSR
-                                   ,mesh.domainA
-                                   ,g
-                                   ,sc,
+        if (ts == 0 and it_outer==0) or (it_outer == 0 and ctrl_sim.ctrl_ky.constant == 0): 
+            sol = sl.Solve_the_Problem(sol,
                                    it = it_outer,
                                    ts=ts)
 
-        if (We.typology == 'NonlinearProblem') or (We.typology == 'NonlinearProblemT') or (it_outer == 0):  
-            sol = We.Solve_the_Problem(sol
-                                ,ctrl
-                                ,FGWR
-                                ,mesh.domainB
-                                ,g
-                                ,sc
-                                ,mesh.g_input
+        if (we.typology == 'NonlinearProblem') or (we.typology == 'NonlinearProblemT') or (it_outer == 0):  
+            sol = we.Solve_the_Problem(sol=sol
                                 ,it = it_outer
                                 ,ts=ts)
 
         # Interpolate from wedge/slab to global
         sol.u_global = interpolate_from_sub_to_main(sol.u_global
                                                     ,sol.u_wedge
-                                                    , mesh.domainB.cell_par)
+                                                    ,we.domain.cell_par)
         sol.u_global = interpolate_from_sub_to_main(sol.u_global
                                                     ,sol.u_slab
-                                                    , mesh.domainA.cell_par)
+                                                    , sl.domain.cell_par)
         
         
         sol.p_global = interpolate_from_sub_to_main(sol.p_global
                                                     ,sol.p_wedge
-                                                    ,mesh.domainB.cell_par)
+                                                    ,we.domain.cell_par)
         
         sol.p_global = interpolate_from_sub_to_main(sol.p_global
                                                     ,sol.p_slab
-                                                    ,mesh.domainA.cell_par)
+                                                    ,sl.domain.cell_par)
         
         
-        sol = EG.Solve_the_Problem(sol
-                            ,ctrl
-                            ,FGT
-                            ,M
-                            ,lhs
-                            ,mesh.g_input
-                            ,sc
-                            ,pdb
+        sol = eg.Solve_the_Problem(sol
                             ,it = it_outer
                             ,ts = ts)
         
@@ -193,10 +151,6 @@ def outerloop_operation(M:Mesh,
                                      ,ctrl.Tmax
                                      ,ts
                                      ,ctrl)
-        if debug==1:
-            print_ph('OUTPUT...')
-            out_deb.print_output(sol,mesh.domainG,FGT,FGGR,ioctrl,sc,ctrl,it_outer=it_outer,time=0,ts=ts,debug=1)
-            print_ph('finished')
 
 
         print_ph('   // -- // :( --- ------- ------- ------- :) // -- // --- > ')
@@ -209,22 +163,12 @@ def outerloop_operation(M:Mesh,
     return sol
 #---------------------------------------------------------------------------------------------------
 # Def time_loop 
-def time_loop(M: Mesh
-              ,ctrl: NumericalControls
-              ,ioctrl:IOControls
-              ,sc:Scal
-              ,lhs:ctrl_LHS
-              ,lhs_t:time_dependent_evolution
-              ,FGT : Functions_material_properties_global
-              ,FGWR : Functions_material_rheology
-              ,FGSR : Functions_material_rheology
-              ,FGGR : Functions_material_rheology
-              ,EG : Global_thermal
-              ,LG : Global_pressure
-              ,We : Wedge 
-              ,Sl : Slab
+def time_loop(ctrl_sim:SimulationControls
+              ,eg : Global_thermal
+              ,lg : Global_pressure
+              ,wg : Wedge 
+              ,sl : Slab
               ,sol : Solution
-              ,g : dolfinx.femesh.Function
               ,pdb: PhaseDataBase
              ) -> None:
     """time loop function
@@ -258,34 +202,22 @@ def time_loop(M: Mesh
     ts = 0 
     output_class  = OUTPUT(mesh.domainG, ioctrl, ctrl, sc)
     
-    # Initialise S.T_N 
-    sol.T_N = sol.T_O.copy()
     
-    while t<ctrl.time_max: 
+    while t<ctrl_sim.ctrl.time_max: 
         
-        if ctrl.steady_state==0:
+        if ctrl_sim.ctrl.steady_state==0:
             print_ph(f'Time = {t*sc.T/sc.scale_Myr2sec:.3f} Myr, timestep = {ts:d}')
             print_ph('================ // =====================')
             
 
-        if lhs_t.constant_age == 0: 
-            from stonedfenicsx.thermal_structure_ocean import update_age_lhs
-            
-            lhs_t.current_age = lhs_t.update_vel_age(lhs_t.t_age,lhs_t.age_plate,t)
-            lhs.c_age_plate = lhs_t.current_age
-            lhs = update_age_lhs(ctrl
-                                 ,lhs
-                                 ,sc
-                                 ,pdb
-                                 ,mesh.g_input.theta_in_slab)
-            print_ph(f'                            [{ts:d}]age plate = {lhs_t.current_age*sc.T/sc.scale_Myr2sec:3e} [Myr]')
+        if ctrl_sim.ctrl_tbc.constant == 0: 
+            ctrl_sim.ctrl_tbc.update_vel_age(t)
+            ctrl_sim.ctrl_tbc.update_1d_vector_left()
 
             
-        if lhs_t.constant_vel == 0: 
-            lhs_t.current_vel = lhs_t.update_vel_age(lhs_t.t_vel,lhs_t.vel_plate,t)
-            ctrl.v_s[0] = lhs_t.current_vel
-            print_ph(f'                            [{ts:d}]velocity plate = {lhs_t.current_vel*(sc.L/sc.T)/sc.scale_vel:3e} [cm/yr]')
-        
+        if ctrl_sim.ctrl_ky.constant_vel == 0: 
+            ctrl_sim.ctrl_ky.update_vel_age(t)
+
             
             
    
@@ -307,8 +239,7 @@ def time_loop(M: Mesh
                                   ,sol
                                   ,g
                                   ,pdb
-                                  ,ts=ts
-                                  ,ioctrl=ioctrl)
+                                  ,ts=ts)
 
 
 
@@ -335,10 +266,10 @@ def time_loop(M: Mesh
         ts = ts + 1
 
     print_ph('Destroy Petsc Object and finish the simulation...')
-    EG.solv.destroy()
-    LG.solv.destroy()
-    Sl.solv.destroy()
-    We.solv.destroy()
+    eg.solv.destroy()
+    lg.solv.destroy()
+    sl.solv.destroy()
+    we.solv.destroy()
     print_ph('---- The End ----')
 
 
@@ -360,27 +291,16 @@ def solution_routine(ctrl_sim:SimulationControls
     """
 
     # Initialise
-    initialise_the_simulation(ctrl_sim,pdb,mesh,sc)                # Scaling 
+    sol,eg,lg,we,sl =initialise_the_simulation(ctrl_sim,pdb,mesh,sc)                # Scaling 
     
     # Time Loop 
     
-    time_loop(M
-              ,ctrl
-              ,ioctrl
-              ,sc
-              ,lhs_ctrl
-              ,lhs_t
-              ,FGT
-              ,FGWR
-              ,FGSR
-              ,FGGR
-              ,EG
-              ,LG
-              ,We
-              ,Sl
-              ,sol
-              ,g
-              ,pdb)
+    time_loop(eg = eg
+              ,lg = lg
+              ,we = we
+              ,sl = sl 
+              ,sol = sol 
+              ,pdb=pdb)
     
     return 0 
 #--------------------------------------------------------------------------------------------

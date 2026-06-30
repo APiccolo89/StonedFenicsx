@@ -152,7 +152,12 @@ class CtrlTemperatureBC(CTRLBC): # ctrltbc
         self.temperature_1d = np.zeros(self.nz, dtype=np.float64)
         self.temperature_2d_field = np.zeros((self.nt, self.nz), dtype=np.float64)
         self.t_res_vec = np.zeros(self.nt, dtype=np.float64)
+
+    def update_1d_vector_left(self):
+        current_age_index = np.where(self.t_res_vec >= self.slab_age)[0][0]
+        self.temperature_1d = self.temperature_2d_field[current_age_index,:]
         
+
 # --- #
 @dataclass(slots=True)
 class CtrlKy(CTRLBC):

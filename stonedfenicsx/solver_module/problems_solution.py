@@ -6,19 +6,30 @@ import numpy as np
 import mpi4py.MPI as MPI
 from numpy.typing import NDArray
 from scipy.interpolate import griddata   
+# --- ufl 
+from ufl import inner, exp
 
 # --- from config module 
-from stonedfenicsx.config.numerical_control import SimulationControls 
+from stonedfenicsx.config.numerical_control import SimulationControls
 from stonedfenicsx.config.geometry import Mesh, GeomInput, Domain
 from stonedfenicsx.config.phase_db import PhaseDataBase
 from stonedfenicsx.config.scal import Scal
 # --- from solver module
-from stonedfenicsx.solver_module.solver import Solvers
-from stonedfenicsx.solver_module.solver_utilities import decoupling_function
+from stonedfenicsx.solver_module.solver import Solvers,ScalarSolver,SolverStokes
+from stonedfenicsx.solver_module.solver_utilities import (decoupling_function
+                                                          ,update_solution
+                                                          ,compute_residuum
+                                                          ,compute_eii
+                                                          ,compute_strain_rate)
 # --- from material properties 
-from stonedfenicsx.material_property.compute_material_property import compute_plastic_strain
+from stonedfenicsx.material_property.compute_material_property import (compute_plastic_strain
+                                                                       ,MATERIALS,RHEOLOGYCACHED,THERMALCACHED
+                                                                       ,compute_radiogenic,
+                                                                       density_FX,heat_capacity_FX,heat_conductivity_FX
+                                                                       ,compute_viscosity_FX)
 # --- from src 
-from stonedfenicsx.utils import * 
+from stonedfenicsx.utils import print_ph,timing_function
+import time as timing 
 
 def debug_boundary_condition(bc, name):
     comm = MPI.COMM_WORLD
@@ -115,7 +126,8 @@ class Problem:
     domain    : Domain
     ctrl_sim  : SimulationControls
     g_input   : GeomInput
-    pdb       : PhaseDataBase 
+    pdb       : PhaseDataBase
+    cached_mat : MATERIALS
     FS        : dolfinx.fem.FunctionSpace          # Function space of the problem 
     F0        : dolfinx.fem.FunctionSpace | None   # Function space of the subspace 
     F1        : dolfinx.fem.FunctionSpace | None   # Function space of the subspace
@@ -185,6 +197,18 @@ class Problem:
         self.dx       = ufl.Measure("dx", domain=self.domain.mesh)
         self.ds       = ufl.Measure("ds", domain=self.domain.mesh, subdomain_data=self.domain.facets) # Exterior -> for boundary external 
         self.dS       = ufl.Measure("dS", domain=self.domain.mesh, subdomain_data=self.domain.facets) # Interior -> for boundary integral inside
+        
+    def create_cached_material(self,scalar:bool):
+        """Create the cached material for each class -> slightly an overkill for the pressure problem, 
+        I know. 
+
+        Args:
+            scalar (bool): flag rheological or thermal material property
+        """
+        if scalar:
+            self.cached_mat = THERMALCACHED(pdb=self.pdb,phase=self.domain.phase)
+        else:
+            self.cached_mat = RHEOLOGYCACHED(pdb=self.pdb,phase=self.domain.phase)
 
 #--------------------------------------------------------------------------------------------------------------
 class Solution():
@@ -287,11 +311,13 @@ class Global_thermal(Problem):
         else:
             self.typology = 'NonlinearProblem'
 
-        self.bc_left : None 
-        self.bc_right_wed : None
-        self.bc_bot_wed : None
-        self.bc_right_lit : None
-        self.bc_top : None
+        self.bc_left = None 
+        self.bc_right_wed = None
+        self.bc_bot_wed = None
+        self.bc_right_lit = None
+        self.bc_top = None
+        self.energy_source = dolfinx.fem.Function(self.FS)
+        self.shear_heating = dolfinx.fem.Function(self.FS)
         
         
     @staticmethod
@@ -357,7 +383,6 @@ class Global_thermal(Problem):
         # Bottom wedge
         facets                 = domain.facets.find(domain.bc_dict['Bottom_wed'])                        
         dofs_bot_wed        = dolfinx.fem.locate_dofs_topological(self.FS, domain.mesh.topology.dim-1, facets)
-        h_vel = u_global.sub(0) # index 1 = y-direction (2D)   
         v_vel = u_global.sub(1) # index 1 = y-direction (2D)
         vel_T = dolfinx.fem.Function(self.FS)
         vel_T.interpolate(v_vel)
@@ -376,8 +401,7 @@ class Global_thermal(Problem):
     #------------------------------------------------------------------
     def compute_shear_heating(self
                               ,p:dolfinx.fem.Function
-                              ,T_k:dolfinx.fem.Function
-                              ,sc)->dolfinx.fem.Expression|float:
+                              ,T_k:dolfinx.fem.Function)->dolfinx.fem.Expression:
         """
         Apperently the sociopath the devise this method, uses a delta function to describe 
         the interface frictional heating. 
@@ -388,12 +412,6 @@ class Global_thermal(Problem):
         mode_shear = self.ctrl_sim.ctrl.mode_shear
         expression = dolfinx.fem.Constant(domain.mesh,(0.0))
         if self.ctrl_sim.ctrl.decoupling == 1 and mode_shear:
-            facets1                = domain.facets.find(domain.bc_dict['Subduction_top_lit'])
-            facets2                = domain.facets.find(domain.bc_dict['Subduction_top_wed'])
-
-            facet_seismogenic = np.unique(np.concatenate((facets1,facets2)))
-
-            dofs              = dolfinx.fem.locate_dofs_topological(self.FS, domain.mesh.topology.dim-1, facet_seismogenic)
 
             heat_source = dolfinx.fem.Function(self.FS)
             heat_source.x.array[:] = 0.0
@@ -407,7 +425,7 @@ class Global_thermal(Problem):
                 # compute the plastic strain rate ratio and viscous shear heating strain rate 
                 # Place holder function
                 dS = ufl.Measure("dS", domain=domain.mesh, subdomain_data=domain.facets)
-                tau_eff, _, _  = self.compute_friction_shear_expression(T_k,p,decoupling)
+                tau_eff, _, _  = self.compute_friction_shear_expression(T_k,p)
 
                 friction_heat = tau_eff * decoupling * self.ctrl_sim.ctrl_ky.v_s[0]
                 
@@ -415,82 +433,54 @@ class Global_thermal(Problem):
             return expression
         else:
             return 0.0
-        
-        
+
     def compute_friction_shear_expression(self
-                                          ,pdb:PhaseDataBase
                                           ,T:dolfinx.fem.function.Function
                                           ,P:dolfinx.fem.function.Function):
+        """_summary_
 
+        Args:
+            pdb (PhaseDataBase): _description_
+            T (dolfinx.fem.function.Function): _description_
+            P (dolfinx.fem.function.Function): _description_
 
-        e_II_fr = 0.5 * (self.ctrl_sim.ctrl_ky.vs[0] * 1 /self.g_input.wz_tk)  # Second invariant strain rate
+        Returns:
+            _type_: _description_
+        """
+        # Compute the effective strain rate of the weak zone: -> couette-poisuille flow -> scalar
+        e_ii_fr = 0.5 * (self.ctrl_sim.ctrl_ky.v_s[0] * 1 /self.g_input.wz_tk)  # Second invariant strain rate
 
-        # -> compute the plastic strain rate
+        # -> compute the plastic strain rate []
 
-        tau, tau_vs, tau_lim = compute_plastic_strain(e_II_fr,T,P,pdb,domain.phase)
+        tau, tau_vs, tau_lim = compute_plastic_strain(e_ii_fr,T,P,self.pdb)
 
-        return tau, tau_vs, tau_lim 
+        return tau, tau_vs, tau_lim
             
-    
-    def set_newton_SS(self,p,D,T,u_global,pdb):
-        trial0 = self.trial0                # δp (TrialFunction) for Jacobian
-
-
-        rho_k = density_FX(pdb, T, p, D.phase, D.mesh)  # frozen
-        
-        k_k = density_FX(pdb, T, p, D.phase, D.mesh)  # frozen
-        
-        Cp_k = heat_capacity_FX(pdb, T,  D.phase, D.mesh)  # frozen
-
-
-        f    = fem.Constant(D.mesh, 0.0)  # source term
-        
-        dx  = self.dx
-        # Linear operator with frozen coefficients
-            
-        diff = ufl.inner(k_k * ufl.grad(T), ufl.grad(self.test0)) * dx
-        adv  = rho_k *Cp_k *ufl.dot(u_global, ufl.grad(T)) * self.test0 * dx
-
-        a_lin = diff + adv
-        L     = f * self.test0 * dx   
-        # Nonlinear residual: F(p; v) = ∫ ∇p·∇v dx - ∫ ∇v·(ρ(T, p) g) dx
-        F = a_lin - L
-        # Jacobian dF/dp in direction δp (trial0)
-        J = ufl.derivative(F, T, trial0)
-        
-        return F,J 
-    
     #------------------------------------------------------------------
-    def compute_energy_source(self,D,FG):
-        source = fem.Function(self.FS)
-        source = compute_radiogenic(FG, source)
+    def compute_energy_source(self):
+        source = dolfinx.fem.Function(self.FS)
+        source = compute_radiogenic(self.cached_mat, source)
         self.energy_source = source.copy()
         self.energy_source.x.scatter_forward()
         
 
     #------------------------------------------------------------------
     def compute_residual_SS(self
-                            ,ctrl:NumericalControls = None
                             ,p :dolfinx.fem.function.Function = None
                             ,T :dolfinx.fem.function.Function = None
                             ,T_O :dolfinx.fem.function.Function = None
                             ,u_global :dolfinx.fem.function.Function = None
-                            ,D :Domain = None
-                            ,g_input: Geom_input = None
-                            ,sc: Scal = None 
-                            ,pdb: PhaseDataBase = None
-                            ,FG: Functions_material_properties_global = None
                             ,it_inner:int=0
                             ,dt:float = 0.0)->float:
 
 
 
        
-        rho_k = density_FX(FG, T, p)  # frozen
+        rho_k = density_FX(self.cached_mat, T, p)  # frozen
         
-        Cp_k = heat_capacity_FX(FG, T)  # frozen
+        Cp_k = heat_capacity_FX(self.cached_mat, T)  # frozen
 
-        k_k = heat_conductivity_FX(FG, T, p, Cp_k, rho_k)  # frozen
+        k_k = heat_conductivity_FX(self.cached_mat, T, p, Cp_k, rho_k)  # frozen
 
         f    = self.energy_source# source term
         
@@ -499,14 +489,15 @@ class Global_thermal(Problem):
         diff = ufl.inner(k_k * ufl.grad(T), ufl.grad(self.test0)) * dx
         
         adv  = rho_k * Cp_k *ufl.dot(u_global, ufl.grad(T)) * self.test0 * dx
-        if it_inner > 0 and ctrl.model_shear>0:    
-            L = ((f) * self.test0 * dx + self.shear_heating)      
+        if it_inner > 0 and self.ctrl_sim.ctrl.mode_shear:
+            L = ((f) * self.test0 * dx + self.shear_heating) 
         else: 
-            L = ((f) * self.test0 * dx )   
+            L = ((f) * self.test0 * dx )
         R = fem.form(diff + adv - L)
            
-           
-        RT = fem.petsc.assemble_vector(fem.form(R))
+        
+        # Conservation residual -> [save in the solution as well, for visualising it]   
+        RT = dolfinx.fem.petsc.assemble_vector(fem.form(R))
         RT.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
         if getattr(self, "bc", None):
             with RT.localForm() as lf:
@@ -517,37 +508,30 @@ class Global_thermal(Problem):
 
         RTemp = RT.norm(PETSc.NormType.NORM_2)    
         
-        
         return RTemp
     
 
     def compute_residual_TD(self
-                            ,ctrl:NumericalControls = None
                             ,p :dolfinx.fem.function.Function = None
                             ,T :dolfinx.fem.function.Function = None
                             ,T_O :dolfinx.fem.function.Function = None
                             ,u_global :dolfinx.fem.function.Function = None
-                            ,D :Domain = None
-                            ,g_input: Geom_input = None
-                            ,sc: Scal = None 
-                            ,pdb: PhaseDataBase = None
-                            ,FG: Functions_material_properties_global = None
                             ,it_inner:int=0
-                            ,dt:float=0.0)->float:
+                            ,dt:float = 0.0)->float:
 
 
-        rho_k = density_FX(FG, T, p)  # frozen
+        rho_k = density_FX(self.cached_mat, T, p)  # frozen
                 
-        Cp_k = heat_capacity_FX(FG, T)  # frozen
+        Cp_k = heat_capacity_FX(self.cached_mat, T)  # frozen
 
-        k_k = heat_conductivity_FX(FG, T, p, Cp_k, rho_k)  # frozen
+        k_k = heat_conductivity_FX(self.cached_mat, T, p, Cp_k, rho_k)  # frozen
 
 
-        rho_k0 = density_FX(FG, T_O, p)  # frozen
+        rho_k0 = density_FX(self.cached_mat, T_O, p)  # frozen
                 
-        Cp_k0 = heat_capacity_FX(FG, T_O)  # frozen
+        Cp_k0 = heat_capacity_FX(self.cached_mat, T_O)  # frozen
         
-        k_k0 = heat_conductivity_FX(FG, T_O, p, Cp_k0, rho_k0)  # frozen
+        k_k0 = heat_conductivity_FX(self.cached_mat, T_O, p, Cp_k0, rho_k0)  # frozen
 
 
                 
@@ -556,7 +540,7 @@ class Global_thermal(Problem):
         rhocp_old    =  (rho_k0 * Cp_k0)
         
         dx  = self.dx
-        if ctrl.model_shear>0:
+        if self.ctrl_sim.ctrl.model_shear>0:
             f    = (self.energy_source) * self.test0 * dx + self.shear_heating # source term {energy_source is radiogenic heating compute before hand, shear heating is frictional heating already a form}
         else: 
             f    = (self.energy_source) * self.test0 * dx 
@@ -606,14 +590,7 @@ class Global_thermal(Problem):
                              ,T_k:dolfinx.fem.Function = None
                              ,T_O:dolfinx.fem.Function=None
                              ,u_global:dolfinx.fem.Function=None
-                             ,D:Domain =None
-                             ,FG:Functions_material_properties_global=None
-                             ,pdb:PhaseDataBase=None
-                             ,ctrl:NumericalControls=None
-                             ,g_input:Geom_input=None
-                             ,sc:Scal = None
-                             ,dt:float = None
-                             ,it:int=0
+                             ,it_outer :int=0
                              ,it_inner:int =0
                              ,ts:int = 0)->tuple[dolfinx.fem.Form,dolfinx.fem.Form]:
         """Set up fem form for Steady state solution. 
@@ -637,11 +614,11 @@ class Global_thermal(Problem):
         
         # Function that set linear form and linear picard for picard iteration
         
-        rho_k = density_FX(FG, T_k, p)  # frozen
+        rho_k = density_FX(self.cached_mat, T_k, p)  # frozen
         
-        Cp_k = heat_capacity_FX(FG, T_k)  # frozen
+        Cp_k = heat_capacity_FX(self.cached_mat, T_k)  # frozen
 
-        k_k = heat_conductivity_FX(FG, T_k, p, Cp_k, rho_k)  # frozen
+        k_k = heat_conductivity_FX(self.cached_mat, T_k, p, Cp_k, rho_k)  # frozen
 
 
         f    = self.energy_source# source term
@@ -655,7 +632,7 @@ class Global_thermal(Problem):
         # SUPG 
         
         # --- SUPG parameter tau ---
-        h = ufl.CellDiameter(D.mesh)
+        h = ufl.CellDiameter(self.domain.mesh)
         
         u_norm = ufl.sqrt(ufl.dot(u_global, u_global) + 1.0e-8)
         # Simple tau based on advection
@@ -668,14 +645,14 @@ class Global_thermal(Problem):
         
         SUPG_L = tau * ufl.dot(u_global, ufl.grad(self.test0)) * f * self.dx
 
-        a = fem.form(diff + adv+SUPG)
+        a = dolfinx.fem.form(diff + adv+SUPG)
         
         
         # Linear operator with frozen coefficients
-        if it_inner != 0 and ctrl.model_shear>0:
-            L = fem.form((f) * self.test0 * dx + SUPG_L +self.shear_heating) 
+        if it_inner != 0 and self.ctrl_sim.ctrl.model_shear>0:
+            L = dolfinx.fem.form((f) * self.test0 * dx + SUPG_L +self.shear_heating) 
         else:     
-            L = fem.form((f) * self.test0 * dx +SUPG_L) 
+            L = dolfinx.fem.form((f) * self.test0 * dx +SUPG_L) 
                 
 
         return a, L
@@ -686,35 +663,30 @@ class Global_thermal(Problem):
                              ,T_k:dolfinx.fem.Function = None
                              ,T_O:dolfinx.fem.Function=None
                              ,u_global:dolfinx.fem.Function=None
-                             ,D:Domain =None
-                             ,FG:Functions_material_properties_global=None
-                             ,pdb:PhaseDataBase=None
-                             ,ctrl:NumericalControls=None
-                             ,g_input:Geom_input=None
-                             ,sc:Scal = None
-                             ,dt:float = None
-                             ,it:int=0
+                             ,it_outer :int=0
                              ,it_inner:int =0
-                             ,ts:int = 0)->tuple[dolfinx.fem.Form,dolfinx.fem.Form]:
+                             ,ts:int = 0)->tuple[dolfinx.fem.Form,dolfinx.fem.Form|None]:
         # Function that set linear form and linear picard for picard iteration
         # Crank Nicolson scheme 
         # a - > New temperature 
         # L - > Old temperature
         # -> Source term is assumed constant in time and do not vary between the timesteps 
 
-        rho_k = density_FX(FG, T_k, p)  # frozen
-                
-        Cp_k = heat_capacity_FX(FG, T_k)  # frozen
+        dt = self.ctrl_sim.ctrl.dt
 
-        k_k = heat_conductivity_FX(FG, T_k, p, Cp_k, rho_k)  # frozen
+        rho_k = density_FX(self.cached_mat, T_k, p)  # frozen
+                
+        Cp_k = heat_capacity_FX(self.cached_mat, T_k)  # frozen
+
+        k_k = heat_conductivity_FX(self.cached_mat, T_k, p, Cp_k, rho_k)  # frozen
 
 
         
-        rho_k0 = density_FX(FG, T_O, p)  # frozen
+        rho_k0 = density_FX(self.cached_mat, T_O, p)  # frozen
                 
-        Cp_k0 = heat_capacity_FX(FG, T_O)  # frozen
+        Cp_k0 = heat_capacity_FX(self.cached_mat, T_O)  # frozen
         
-        k_k0 = heat_conductivity_FX(FG, T_O, p, Cp_k, rho_k)  # frozen
+        k_k0 = heat_conductivity_FX(self.cached_mat, T_O, p, Cp_k0, rho_k0)  # frozen
 
 
                 
@@ -724,7 +696,7 @@ class Global_thermal(Problem):
         
         dx  = self.dx
         
-        if ctrl.model_shear>0 & it_inner !=0:
+        if self.ctrl_sim.ctrl.mode_shear>0 and it_inner !=0:
         
             f    = (self.energy_source) * self.test0 * dx + self.shear_heating # source term {energy_source is radiogenic heating compute before hand, shear heating is frictional heating already a form}
 
@@ -738,9 +710,9 @@ class Global_thermal(Problem):
         
         mass_new = (rhocp / dt) * self.trial0 * self.test0 * dx
         
-        a = fem.form(diff_new + adv_new + mass_new)
+        a = dolfinx.fem.form(diff_new + adv_new + mass_new)
                 
-        if it == 0: 
+        if it_inner == 0: 
             
             adv_old =  - (rhocp_old / 2 ) * ufl.dot(u_global, ufl.grad(T_O)) * self.test0 * dx
 
@@ -748,54 +720,39 @@ class Global_thermal(Problem):
             
             mass_old =  (rhocp_old / dt) * T_O * self.test0 * dx
             
-            L = fem.form(diff_old + adv_old + f + mass_old)
+            L = dolfinx.fem.form(diff_old + adv_old + f + mass_old)
             
             return a, L
 
         else: 
-            return a, fem.Form(None)
+            return a, None
     #------------------------------------------------------------------
     def Solve_the_Problem(self
-                          ,S
-                          ,ctrl
-                          ,FG
-                          ,M
-                          ,lhs
-                          ,geom
-                          ,sc
-                          ,pdb
-                          ,it=0
-                          ,ts=0): 
+                          ,sol:Solution
+                          ,it_outer:int=0
+                          ,ts:int=0)->[]: 
         
         nl = 0 
-        dt = None
         # choose the problemesh: 
-        if ctrl.steady_state == 1: 
+        if self.ctrl_sim.ctrl.steady_state == 1: 
             self.set_linear = self.set_linear_picard_SS 
             self.compute_residual = self.compute_residual_SS
         else: 
             self.set_linear = self.set_linear_picard_TD
             self.compute_residual = self.compute_residual_TD
                     
-        if it == 0:         
-            self.compute_energy_source(getattr(M,'domainG'),FG)
+        if it_outer == 0:         
+            self.compute_energy_source()
         
-        a,L = self.set_linear(p=S.PL
-                              ,T_k=S.T_N
-                              ,T_O=S.T_O
-                              ,u_global=S.u_global
-                              ,D=getattr(M,'domainG')
-                              ,FG=FG
-                              ,ctrl=ctrl
-                              ,g_input=geom
-                              ,sc=sc
-                              ,pdb = pdb
-                              ,dt=ctrl.dt)
+        a,L = self.set_linear(p=sol.PL
+                              ,T_k=sol.T_N
+                              ,T_O=sol.T_O
+                              ,u_global=sol.u_global)
         
-        self.bc = self.create_bc_temp(getattr(M,'domainG'),ctrl,geom,lhs,S.u_global,S.T_i,it)
+        self.bc = self.create_bc_temp(u_global=sol.u_global,it_outer=it_outer,ts=ts)
 
-        if it == 0 & ts == 0: 
-            self.solv = ScalarSolver(a,L,self.bc,M.comm,ctrl.energy_solver_type)
+        if it_outer == 0 and ts == 0: 
+            self.solv = ScalarSolver(a,L,self.bc,self.domain.comm,self.ctrl_sim.ctrl.energy_solver_type)
             
         
         print_ph('              // -- // --- Temperature problem [GLOBAL] // -- // --->')
@@ -803,34 +760,27 @@ class Global_thermal(Problem):
         time_A = timing.time()
 
         if self.typology == 'LinearProblem': 
-            S.T_N = self.solve_the_linear(S
+            sol.T_N = self.solve_the_linear(sol
                                           ,a
                                           ,L
-                                          ,S.T_N) 
-            S.T_N.x.scatter_forward()
+                                          ,sol.T_N) 
+            sol.T_N.x.scatter_forward()
             
 
         else: 
             
-            S = self.solve_the_non_linear(M,S,ctrl,FG,geom,sc,pdb,it)
+            sol = self.solve_the_non_linear(sol,it_outer=it_outer,ts=ts)
         
         time_B = timing.time()
         
         f_viz = fem.Function(self.FS)
 
-        if ctrl.model_shear>0: 
-            
-            facets1                = M.domainG.facets.find(M.domainG.bc_dict['Subduction_top_lit'])
-            facets2                = M.domainG.facets.find(M.domainG.bc_dict['Subduction_top_wed'])
+        if self.ctrl_sim.ctrl.model_shear>0: 
 
-            facet_seismogenic = np.unique(np.concatenate((facets1,facets2)))
-
-            dofs              = fem.locate_dofs_topological(self.FS, M.domainG.mesh.topology.dim-1, facet_seismogenic)
-            
-            
+                    
             u_trial = ufl.TrialFunction(self.FS)
             v_test  = ufl.TestFunction(self.FS)
-            dx = ufl.Measure("dx", domain=M.domainG.mesh)
+            dx = ufl.Measure("dx", domain=self.domain.mesh)
 
             a_mass = (u_trial * v_test * dx)
             problem = LinearProblem(a_mass, (self.shear_heating))
@@ -838,131 +788,106 @@ class Global_thermal(Problem):
 
             print("shear min/max:", f_viz.x.array.min(), f_viz.x.array.max())            
             
-        S.shear_heating = f_viz.copy()
+        sol.shear_heating = f_viz.copy()
         
         print_ph(f'              // -- // --- Solution of Temperature  in {time_B-time_A:.2f} sec // -- // --->')
 
 
 
-        return S 
+        return sol 
 
     #------------------------------------------------------------------
     
-    def solve_the_linear(self,S,a,L,fen_function,isPicard=0,it=0,ts=0):
+    def solve_the_linear(self
+                         ,sol:Solution
+                         ,a:dolfinx.fem.Form
+                         ,L:dolfinx.fem.Form
+                         ,fen_function:dolfinx.fem.Function
+                         ,isPicard:int=0
+                         ,ts:int=0)->dolfinx.fem.Function:
         
         # Update the matrix
         self.solv.A.zeroEntries()
-        fem.petsc.assemble_matrix(self.solv.A,fem.form(a),self.bc)
+        dolfinx.fem.petsc.assemble_matrix(self.solv.A,fem.form(a),self.bc)
         # Assemble
         self.solv.A.assemble()
         # Update b solve [IMPORTANT BEFORE I WAS NOT DOING AS PARALLEL] 
         with self.solv.b.localForm() as loc:
             loc.set(0.0)              
         
-        fem.petsc.assemble_vector(self.solv.b, fem.form(L))
-        fem.petsc.apply_lifting(self.solv.b, [fem.form(a)], [self.bc])
+        dolfinx.fem.petsc.assemble_vector(self.solv.b, dolfinx.fem.form(L))
+        dolfinx.fem.petsc.apply_lifting(self.solv.b, [dolfinx.fem.form(a)], [self.bc])
         
         self.solv.b.ghostUpdate(addv=PETSc.InsertMode.ADD,
                         mode=PETSc.ScatterMode.REVERSE)
         
-        fem.petsc.set_bc(self.solv.b, self.bc)
+        dolfinx.fem.petsc.set_bc(self.solv.b, self.bc)
         self.solv.ksp.solve(self.solv.b, fen_function.x.petsc_vec)
-        fem.petsc.set_bc(fen_function.x.petsc_vec,bcs=self.bc)
+        dolfinx.fem.petsc.set_bc(fen_function.x.petsc_vec,bcs=self.bc)
         
  
         fen_function.x.scatter_forward()
         
         return fen_function
 
-#--------------------------------------------------------------------------------------------------------------
     def solve_the_non_linear(self
-                            ,M
-                            ,S
-                            ,ctrl
-                            ,FGT
-                            ,g_input
-                            ,sc
-                            ,pdb
-                            ,it=0):  
+                            ,sol: Solution
+                            ,it_outer:int=0
+                            ,ts:int=0):  
         
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
+        
+        ctrl = self.ctrl_sim.ctrl        
         tol = 1.0 
-        T_O = S.T_O
-        T_k = S.T_N.copy() 
-        T_k1 = S.T_N.copy()
+        T_O = sol.T_O
+        T_k = sol.T_N.copy() 
+        T_k1 = sol.T_N.copy()
 
         it_inner = 0 
         time_A = timing.time()
         print_ph('              [//] Picard iterations for the non linear temperature problem')
+
         while (it_inner < ctrl.it_inner_max and tol > ctrl.tol_innerPic) or it_inner < 2:
             
-            self.shear_heating = self.compute_shear_heating(ctrl=ctrl
-                                                        ,pdb=pdb
-                                                        ,T_k=T_k
-                                                        ,p=S.PL
-                                                        ,D=M.domainG
-                                                        ,g_input=M.g_input
-                                                        ,sc=sc)
+            self.shear_heating = self.compute_shear_heating(T_k=T_k
+                                                        ,p=sol.PL)
 
             time_ita = timing.time()
             
             if it_inner == 0: 
-                A,L = self.set_linear(p=S.PL
+                A,L = self.set_linear(p=sol.PL
                                     ,T_k=T_k
-                                    ,T_O=S.T_O
-                                    ,u_global=S.u_global
-                                    ,D=getattr(M,'domainG')
-                                    ,FG=FGT
-                                    ,ctrl=ctrl
-                                    ,g_input=g_input
-                                    ,pdb=pdb
-                                    ,sc=sc
-                                    ,dt=ctrl.dt)
+                                    ,T_O=sol.T_O
+                                    ,u_global=sol.u_global)
                           
             else: 
                 if ctrl.steady_state==1: 
-                    A,L = self.set_linear(p=S.PL
+                    A,L = self.set_linear(p=sol.PL
                                     ,T_k=T_k
-                                    ,T_O=S.T_O
-                                    ,u_global=S.u_global
-                                    ,D=getattr(M,'domainG')
-                                    ,FG=FGT
-                                    ,ctrl=ctrl
-                                    ,dt=ctrl.dt
-                                    ,g_input=g_input
-                                    ,pdb=pdb
-                                    ,sc=sc
+                                    ,T_O=sol.T_O
+                                    ,u_global=sol.u_global
                                     ,it_inner = it_inner)
                 else: 
-                    A,_ = self.set_linear(p=S.PL
+                    A,_ = self.set_linear(p=sol.PL
                                     ,T_k=T_k
-                                    ,T_O=S.T_O
-                                    ,u_global=S.u_global
-                                    ,D=getattr(M,'domainG')
-                                    ,FG=FGT
-                                    ,ctrl=ctrl
-                                    ,pdb=pdb
-                                    ,dt=ctrl.dt
-                                    ,g_input=g_input
-                                    ,sc=sc
+                                    ,T_O=sol.T_O
+                                    ,u_global=sol.u_global
                                     ,it_inner = it_inner)
                     
-            T_k1 = self.solve_the_linear(S,A,L,T_k1,1,it)
+            T_k1 = self.solve_the_linear(sol,A,L,T_k1,1,it_outer)
             T_k1.x.scatter_forward()
             # L2 norm 
             tol = compute_residuum(T_k1,T_k)
             
-            rT = self.compute_residual(ctrl = ctrl 
-                                  ,p = S.PL
-                                  ,T = S.T_N
-                                  ,T_O = S.T_O
-                                  ,g_input = g_input
-                                  ,sc = sc 
-                                  ,u_global = S.u_global
-                                  ,D = getattr(M,'domainG')
-                                  ,FG = FGT
-                                  ,pdb=pdb
-                                  ,it_inner=it_inner
-                                  ,dt=ctrl.dt)            
+            rT = self.compute_residual(p = sol.PL
+                                  ,T = sol.T_N
+                                  ,T_O = sol.T_O
+                                  ,u_global = sol.u_global
+                                  ,it_inner=it_inner)            
             if it_inner == 0: 
                 rT0 = rT 
             
@@ -974,92 +899,82 @@ class Global_thermal(Problem):
             T_k = update_solution(T_k1,T_k,ctrl.relax)
 
             it_inner = it_inner + 1 
-        S.T_N.x.array[:] = T_k1.x.array[:]
-        S.T_N.x.scatter_forward()
-        print_ph(f'')
         
-        return S  
+        sol.T_N.x.array[:] = T_k1.x.array[:]
+        sol.T_N.x.scatter_forward()        
+        return sol  
         
     @timing_function
-    def initial_temperature_field(self,M, ctrl, lhs, g_input):
+    def initial_temperature_field(self)->dolfinx.fem.Function:
         from scipy.interpolate import griddata
         from ufl import conditional, Or, eq
         from functools import reduce
         """
-        X    -:- Functionspace (i.e., an abstract stuff that represents all the possible solution for the given mesh and element type)
-        M    -:- Mesh object (i.e., a random container of utils related to the mesh)
-        ctrl -:- Control structure containing the information of the simulations 
-        lhs  -:- left side boundary condition controls. Separated from the control structure for avoiding clutter in the main ctrl  
-        ---- 
-        Function: Create a function out of the function space (T_i). From the function extract dofs, interpolate (initial) lhs all over. 
-        Then select the crustal+lithospheric marker, and overwrite the T_i with a linear geotherm. Simple. 
-        ----
-        output : T_i the initial temperature field.  
-            T_gr = (-M.g_input.ns_depth-0)/(ctrl.Tmax-ctrl.Ttop)
-            T_gr = T_gr**(-1) 
-
-            bc_fun = fem.Function(X)
-            bc_fun.x.array[dofs_dirichlet] = ctrl.Ttop + T_gr * cd_dof[dofs_dirichlet,1]
-            bc_fun.x.scatter_forward()
+        
         """    
         #- Create part of the thermal field: create function, extract dofs, 
+        ctrl_tbc = self.ctrl_sim.ctrl_tbc
+        
+        
         X     = self.FS
-        T_i_A = fem.Function(X)
+        T_i_A = dolfinx.fem.Function(X)
         cd_dof = X.tabulate_dof_coordinates()
-        T_i_A.x.array[:] = griddata(lhs.z, lhs.LHS, cd_dof[:,1], method='nearest')
+        T_i_A.x.array[:] = griddata(ctrl_tbc.z, ctrl_tbc.temperature_1d, cd_dof[:,1], method='nearest')
         T_i_A.x.scatter_forward() 
         #- 
-        T_gr = (-g_input.lab_d-0)/(ctrl.Tmax-ctrl.Ttop)
-        T_gr = T_gr**(-1) 
-        T_expr = fem.Function(X)
-        ind_A = np.where(cd_dof[:,1] >= -g_input.lab_d)[0]
-        ind_B = np.where(cd_dof[:,1] < -g_input.lab_d)[0]
-        T_expr.x.array[ind_A] = ctrl.Ttop + T_gr * cd_dof[ind_A,1]
-        T_expr.x.array[ind_B] = ctrl.Tmax
+
+        T_expr = dolfinx.fem.Function(X)
+        ind_A = np.where(cd_dof[:,1] >= -self.g_input.lab_d)[0]
+        ind_B = np.where(cd_dof[:,1] < -self.g_input.lab_d)[0]
+        T_expr.x.array[ind_A] = griddata(ctrl_tbc.z_right, ctrl_tbc.temp_1d_right, cd_dof[ind_A,1], method='nearest')
+        T_expr.x.array[ind_B] = ctrl_tbc.temp_max
         T_expr.x.scatter_forward()
-        T_i = fem.Function(X)
+        T_i = dolfinx.fem.Function(X)
         expr = conditional(
-            reduce(Or,[eq(M.phase, i) for i in [2, 3, 4, 5]]),
+            reduce(Or,[eq(self.domain.phase, i) for i in [2, 3, 4, 5]]),
             T_expr,
             T_i_A
         )
-        T_i.interpolate(fem.Expression(expr, X.element.interpolation_points()))
-        T_i.x.array[ind_B] = ctrl.Tmax
+        T_i.interpolate(dolfinx.fem.Expression(expr, X.element.interpolation_points()))
+        T_i.x.array[ind_B] = ctrl_tbc.temp_max
         T_i.x.scatter_forward()
         return T_i 
 
-#-------------------------------------------------------------------
-#-------------------------------------------------------------------
+# ---
 class Global_pressure(Problem): 
     def __init__(self
                  ,mesh:Mesh
                  ,elements:tuple
                  ,name:list
-                 ,pdb:PhaseDataBase):
-        super().__init__(M,elements,name)
+                 ,pdb:PhaseDataBase
+                 ,ctrl_sim:SimulationControls):
+        super().__init__(mesh=mesh,elements=elements,name=name,ctrl_sim=ctrl_sim,pdb=pdb)
         
         if np.all(pdb.option_rho<2):
             self.typology = 'LinearProblem'
         else:
             self.typology = 'NonlinearProblem'
 
-        self.bc = [self.set_problem_bc(getattr(M,'domainG'))]
+        self.bc = [self.set_problem_bc()]
     
-    def set_problem_bc(self
-                       ,D:Domain)->list[fem.DirichletBC]:
+    def set_problem_bc(self)->list[dolfinx.fem.DirichletBC]:
          
-        top_facets   = D.facets.find(D.bc_dict['Top'])
-        top_dofs    = fem.locate_dofs_topological(self.FS, 1, top_facets)
-        bc = [fem.dirichletbc(0.0, top_dofs, self.FS)]
-        
+        top_facets   = self.domain.facets.find(self.domain.bc_dict['Top'])
+        top_dofs    = dolfinx.fem.locate_dofs_topological(self.FS, 1, top_facets)
+        bc = [dolfinx.fem.dirichletbc(0.0, top_dofs, self.FS)]
         return bc  
     
     
     
-    def set_linear_picard(self,p_k,T,D,FG,g, it=0):
+    def set_linear_picard(self
+                          ,p_k:dolfinx.fem.Function
+                          ,T:dolfinx.fem.Function
+                          ,it:int=0):
         # Function that set linear form and linear picard for picard iteration
         
-        rho_k = density_FX(FG, T, p_k)  # frozen
+        g = self.ctrl_sim.ctrl.g
+        
+        rho_k = density_FX(self.cached_mat, T, p_k)  # frozen
         
         # Linear operator with frozen coefficients
         if it == 0: 
@@ -1072,10 +987,13 @@ class Global_pressure(Problem):
 
         return a, L
 
-    def Solve_the_Problem(self,S,ctrl,pdb,M,g,it_outer=0,ts=0): 
+    def Solve_the_Problem(self
+                          ,sol:Solution
+                          ,it_outer:int=0
+                          ,ts:int=0)->Solution: 
         
-        p_k = S.PL.copy()  # Previous lithostatic pressure 
-        T   = S.T_N.copy() # -> will not eventually update 
+        p_k = sol.PL.copy()  # Previous lithostatic pressure 
+        T   = sol.T_N.copy() # -> will not eventually update 
         
         # If the problem is linear, p_k is not doing anything, it is there because I
         # design the density function to receive in anycase a pressure, potentially I
@@ -1083,12 +1001,11 @@ class Global_pressure(Problem):
         # density without pressure is equal to fuck. But seems a bit lame, and I do 
         # not think that is a great improvement of the code. 
         
-        a,L = self.set_linear_picard(p_k,T,getattr(M,'domainG'),pdb,g)
-        
-
+        a,L = self.set_linear_picard(p_k,T)
+    
 
         if it_outer == 0 & ts == 0: 
-            self.solv = ScalarSolver(a,L,self.bc,M.comm,ctrl.energy_solver_type)
+            self.solv = ScalarSolver(a,L,self.bc,self.domain.comm,self.ctrl_sim.ctrl.energy_solver_type)
         
         print_ph('              // -- // --- LITHOSTATIC PROBLEM [GLOBAL] // -- // --- > ')
 
@@ -1096,40 +1013,48 @@ class Global_pressure(Problem):
 
         
         if self.typology=='LinearProblem': 
-            S.PL = self.solve_the_linear(S,a,L,S.PL) 
+            sol.PL = self.solve_the_linear(a,L,sol.PL) 
         else: 
-            S.PL = self.solve_the_non_linear(M,S,ctrl,pdb,g)
+            sol.PL = self.solve_the_non_linear(sol)
 
         time_B = timing.time()
 
         print_ph(f'              // -- // --- Solution of Lithostatic pressure problem finished in {time_B-time_A:.2f} sec // -- // --->')
         print_ph('')
 
-        return S 
+        return sol
     
-    def solve_the_linear(self,S,a,L,function_fen,isPicard=0,it=0,ts=0):
+    def solve_the_linear(self
+                         ,a:dolfinx.fem.Form
+                         ,L:dolfinx.fem.Form
+                         ,function_fen:dolfinx.fem.Function
+                         ,isPicard:int=0
+                         ,it:int=0
+                         ,ts:int=0):
         
         if it == 0 or ts == 0:
             self.solv.A.zeroEntries()
-            fem.petsc.assemble_matrix(self.solv.A,fem.form(a),self.bc[0])
+            dolfinx.fem.petsc.assemble_matrix(self.solv.A,dolfinx.fem.form(a),self.bc[0])
             self.solv.A.assemble()
         # b -> can change as it is the part that depends on the pressure in case of nonlinearities
         with self.solv.b.localForm() as loc:
             loc.set(0.0)        
-        fem.petsc.assemble_vector(self.solv.b, fem.form(L))
-        fem.petsc.apply_lifting(self.solv.b, [fem.form(a)], self.bc)
+        dolfinx.fem.petsc.assemble_vector(self.solv.b, dolfinx.fem.form(L))
+        dolfinx.fem.petsc.apply_lifting(self.solv.b, [dolfinx.fem.form(a)], self.bc)
         self.solv.b.ghostUpdate(addv=PETSc.InsertMode.ADD,
                         mode=PETSc.ScatterMode.REVERSE)        
-        fem.petsc.set_bc(self.solv.b, self.bc[0])
+        dolfinx.fem.petsc.set_bc(self.solv.b, self.bc[0])
         self.solv.ksp.solve(self.solv.b, function_fen.x.petsc_vec)
         function_fen.x.scatter_forward()
         
         return function_fen
     
-    def solve_the_non_linear(self,M,S,ctrl,FG,g):  
+    def solve_the_non_linear(self
+                             ,sol:Solution):  
   
-        p_k = S.PL.copy() 
-        p_k1 = S.PL.copy()
+        ctrl = self.ctrl_sim.ctrl
+        p_k = sol.PL.copy() 
+        p_k1 = sol.PL.copy()
 
         it_inner = 0 
         
@@ -1141,11 +1066,11 @@ class Global_pressure(Problem):
             time_ita = timing.time()
             
             if it_inner == 0:
-                A,L = self.set_linear_picard(p_k,S.T_O,getattr(M,'domainG'),FG,g)
+                A,L = self.set_linear_picard(p_k,sol.T_N)
             else: 
-                _,L = self.set_linear_picard(p_k,S.T_O,getattr(M,'domainG'),FG,g,1)
+                _,L = self.set_linear_picard(p_k,sol.T_N,1)
             
-            p_k1 = self.solve_the_linear(S,A,L,p_k1,1,it_inner,1) 
+            p_k1 = self.solve_the_linear(A,L,p_k1,1,it_inner,1) 
 
             # L2 norm 
             res = compute_residuum(p_k1,p_k)
@@ -1160,51 +1085,31 @@ class Global_pressure(Problem):
             it_inner = it_inner + 1 
         
         print_ph('              [//] Newton iterations for the non linear lithostatic pressure problem')
-
-        # --- Newton =>         
         
-        S.PL.x.array[:] = p_k.x.array[:]
-        S.PL.x.scatter_forward()
+        sol.PL.x.array[:] = p_k.x.array[:]
+        sol.PL.x.scatter_forward()
       
         
         
-        return S.PL
+        return sol.PL
 
 #-------------------------------------------------------------------
 #-------------------------------------------------------------------
 class Stokes_Problem(Problem):
-    def __init__(self,M,elements,name):
-        super().__init__(M,elements,name)       
+    def __init__(self
+                 ,mesh:Mesh
+                 ,elements:list
+                 ,name:list
+                 ,ctrl_sim:SimulationControls
+                 ,pdb:PhaseDataBase):
+        super().__init__(mesh=mesh,elements=elements,name=name,ctrl_sim=ctrl_sim,pdb=pdb)
         M = getattr(M,name[1])
         self.FSPT = dolfinx.fem.functionspace(M.mesh, elements[2])     
         # Create the moving wall functions: 
         # Allocate memory
-        self.moving_wall_ref = fem.Function(self.F0)
-        self.moving_wall = fem.Function(self.F0)
+        self.moving_wall_ref = dolfinx.fem.Function(self.F0)
+        self.moving_wall = dolfinx.fem.Function(self.F0)
     
-    def compute_shear_heating(self,ctrl,FR,S,D,sc,wedge=1):
-        from .compute_material_property import compute_viscosity_FX
-        from .utils import evaluate_material_property
-        if wedge ==1: 
-            V = S.u_wedge.function_space
-            PT = self.FSPT
-            e = compute_strain_rate(S.u_wedge)
-            eta_new = compute_viscosity_FX(e, S.t_owedge, S.p_lwedge, FR, sc)
-        else: 
-            V = S.u_slab.function_space
-            PT = self.FSPT
-            e = compute_strain_rate(S.u_slab)
-            eta_new = compute_viscosity_FX(e, S.t_oslab, S.p_lslab, FR, sc)
-
-        shear_heating = ufl.inner(2*eta_new*e, e)
-
-        if wedge ==1: 
-            S.Hs_wedge = evaluate_material_property(shear_heating,PT)
-        else: 
-            S.Hs_slab = evaluate_material_property(shear_heating,PT)
-
-        return S
-
     def fem_stokes_form(self,a1,a2,a3,a_p):
         a   = [[a1, a2],[a3, None]]
         a_p0  = [[a1, a2],[a3, a_p]]
@@ -1218,7 +1123,7 @@ class Stokes_Problem(Problem):
 
         e = compute_strain_rate(u_new)
         eta_new = compute_viscosity_FX(e, T, PL, FR,sc)
-        f = fem.Constant(D.mesh, PETSc.ScalarType((0.0,) * D.mesh.geometry.dim))
+        f = dolfinx.fem.Constant(D.mesh, PETSc.ScalarType((0.0,) * D.mesh.geometry.dim))
         dx = ufl.dx
 
         Fmom = (ufl.inner(2*eta_new*ufl.sym(ufl.grad(u_new)), ufl.sym(ufl.grad(v))) * dx
@@ -1227,7 +1132,7 @@ class Stokes_Problem(Problem):
 
         Fdiv = ufl.inner(q, ufl.div(u_new)) * dx
 
-        Rm = fem.petsc.assemble_vector(fem.form(Fmom))
+        Rm = dolfinx.fem.petsc.assemble_vector(dolfinx.fem.form(Fmom))
         Rm.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
         if getattr(self, "bc", None):
             with Rm.localForm() as lf:
@@ -1239,7 +1144,7 @@ class Stokes_Problem(Problem):
         rmom = Rm.norm(PETSc.NormType.NORM_2) 
 
 
-        Rd = fem.petsc.assemble_vector(fem.form(Fdiv))
+        Rd = dolfinx.fem.petsc.assemble_vector(dolfinx.fem.form(Fdiv))
         Rd.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
         rdiv = Rd.norm(PETSc.NormType.NORM_2) 
 
@@ -1287,7 +1192,7 @@ class Stokes_Problem(Problem):
         e = compute_strain_rate(u_s)
         # If we are in the first iteration of the first timestep -> use the default viscosity for creating an initial guess. fem.Constant(M.domainG.mesh, PETSc.ScalarType([0.0, -ctrl.g]))   
         if it == 0 and ts == 0 and slab == 0:
-            eta = fem.Constant(D.mesh,PETSc.ScalarType(FR.eta_def))
+            eta = dolfinx.fem.Constant(D.mesh,PETSc.ScalarType(FR.eta_def))
         else: 
             eta = compute_viscosity_FX(e,T,PL,FR,sc)
             eta_av = cell_average_DG0(D.mesh, eta)
@@ -1297,9 +1202,9 @@ class Stokes_Problem(Problem):
         a3 = - ufl.inner(q, ufl.div(u)) * dx             # build once
         a_p0 =  -1/eta * ufl.inner( q, p) * dx                      # pressure mass (precond)
 
-        f  = fem.Constant(D.mesh, PETSc.ScalarType((0.0,)*D.mesh.geometry.dim))
-        f2 = fem.Constant(D.mesh, PETSc.ScalarType(0.0))
-        L  = fem.form([ufl.inner(f, v)*dx, ufl.inner(f2, q)*dx])    
+        f  = dolfinx.fem.Constant(D.mesh, PETSc.ScalarType((0.0,)*D.mesh.geometry.dim))
+        f2 = dolfinx.fem.Constant(D.mesh, PETSc.ScalarType(0.0))
+        L  = dolfinx.fem.form([ufl.inner(f, v)*dx, ufl.inner(f2, q)*dx])    
     
         return a1, a2, a3 , L , a_p0       
     
@@ -1347,7 +1252,7 @@ class Stokes_Problem(Problem):
         a = ufl.inner(u, v) * self.ds(D.bc_dict[facet])        #  boundary     mass    matrix (vector)
         L = ufl.inner(v_project, v) * self.ds(D.bc_dict[facet])
         # Solve the linar problem to compute the velocity field of the moving wall and cache it for the entire simulation 
-        problem = fem.petsc.LinearProblem(
+        problem = dolfinx.fem.petsc.LinearProblem(
             a, L,
             u = self.moving_wall_ref, # Forcing the solution to using the same function space
             petsc_options={
@@ -1403,11 +1308,11 @@ class Stokes_Problem(Problem):
 #-------------------------------------------------------------------
 class Wedge(Stokes_Problem): 
     def __init__(self
-                 ,mesh:Domain
-                 ,elements:tuple
+                 ,mesh:Mesh
+                 ,elements:list
                  ,name:list
-                 ,pdb:PhaseDataBase)->None:
-        
+                 ,ctrl_sim:SimulationControls
+                 ,pdb:PhaseDataBase):
         """Wedge problem constructor.
 
         The Wedge class inherits from ``Stokes_Problem`` and therefore
@@ -1444,13 +1349,13 @@ class Wedge(Stokes_Problem):
         """
 
         
-        super().__init__(M,elements,name)
+        super().__init__(mesh=mesh,elements=elements,name=name,ctrl_sim=ctrl_sim,pdb=pdb)
         
 
         comm = MPI.COMM_WORLD
 
         # Example: each rank has some local IDs
-        local_ids = np.int32(M.domainB.phase.x.array[:])
+        local_ids = np.int32(self.domain.phase.x.array[:])
 
         # Gather arrays from all processes
         all_ids = comm.allgather(local_ids)
@@ -1472,9 +1377,9 @@ class Wedge(Stokes_Problem):
                 non_linear_T = True
     
             
-        if non_linear_v == True:
+        if non_linear_v:
             self.typology = 'NonlinearProblem'
-        elif non_linear_T == True and non_linear_v==False: 
+        elif non_linear_T and not non_linear_v: 
             self.typology = 'NonlinearProblemT'
         else:
             self.typology = 'LinearProblem'
@@ -1502,9 +1407,9 @@ class Wedge(Stokes_Problem):
             slab_facets      = D.facets.find(D.bc_dict['slab'])
             # Extract the dofs from the overriding plate and cache it.  
             noslip = np.zeros(mesh.geometry.dim, dtype=PETSc.ScalarType)
-            dofs_over = fem.locate_dofs_topological(V, fdim, D.facets.find(D.bc_dict['overriding']))
+            dofs_over = dolfinx.fem.locate_dofs_topological(V, fdim, D.facets.find(D.bc_dict['overriding']))
 
-            self.bc_overriding = fem.dirichletbc(noslip, dofs_over, V)
+            self.bc_overriding = dolfinx.fem.dirichletbc(noslip, dofs_over, V)
 
             #------------------------------------------------------------------------
             # compute the unit-vector components of the moving wall
@@ -1512,13 +1417,13 @@ class Wedge(Stokes_Problem):
 
             # scale the vector with the decoupling
             if ctrl.decoupling == 1:
-                scaling = fem.Function(self.FSPT)
+                scaling = dolfinx.fem.Function(self.FSPT)
                 scaling = decoupling_function(self.FSPT.tabulate_dof_coordinates()[:,1],scaling,g_input)  
                 scaling.x.array[:] = 1.0 - scaling.x.array[:] 
                 scaling.x.scatter_forward()
                 # from :https://fenicsproject.discourse.group/t/scale-vector-function-by-scalar-function/10638
                 temp_buf = self.moving_wall_ref.copy()
-                temp_buf.interpolate(fem.Expression(self.moving_wall_ref*scaling
+                temp_buf.interpolate(dolfinx.fem.Expression(self.moving_wall_ref*scaling
                                                     ,self.moving_wall_ref.function_space.element.interpolation_points()))
                 self.moving_wall_ref = temp_buf.copy()
                 
@@ -1528,11 +1433,11 @@ class Wedge(Stokes_Problem):
         
         self.moving_wall.x.scatter_forward()
         # Set the the boundary condition    
-        dofs_s_x = fem.locate_dofs_topological(self.F0.sub(0), fdim, D.facets.find(D.bc_dict['slab']))
-        dofs_s_y = fem.locate_dofs_topological(self.F0.sub(1), fdim, D.facets.find(D.bc_dict['slab']))
+        dofs_s_x = dolfinx.fem.locate_dofs_topological(self.F0.sub(0), fdim, D.facets.find(D.bc_dict['slab']))
+        dofs_s_y = dolfinx.fem.locate_dofs_topological(self.F0.sub(1), fdim, D.facets.find(D.bc_dict['slab']))
         # create the dirichlet bc for the slab boundary using the computed velocity field of the moving wall.
-        bcx = fem.dirichletbc(self.moving_wall.sub(0), dofs_s_x)
-        bcy = fem.dirichletbc(self.moving_wall.sub(1), dofs_s_y)
+        bcx = dolfinx.fem.dirichletbc(self.moving_wall.sub(0), dofs_s_x)
+        bcy = dolfinx.fem.dirichletbc(self.moving_wall.sub(1), dofs_s_y)
 
         return [bcx,bcy, self.bc_overriding]
                 
@@ -1575,8 +1480,8 @@ class Wedge(Stokes_Problem):
             self.test1 = ufl.TestFunction(self.p_subs)
             
             # Better to recreate 
-            self.moving_wall = fem.Function(self.V_subs)
-            self.moving_wall_ref = fem.Function(self.V_subs)
+            self.moving_wall = dolfinx.fem.Function(self.V_subs)
+            self.moving_wall_ref = dolfinx.fem.Function(self.V_subs)
             
 
             
@@ -1607,7 +1512,7 @@ class Wedge(Stokes_Problem):
 
         
         if self.typology == 'LinearProblem' or self.typology == 'NonlinearProblemT': 
-            S.u_wedge,S.p_wedge = self.solve_linear_picard(fem.form(a),fem.form(a_p0),fem.form(L),ctrl, S.u_wedge,S.p_wedge,it=it,ts=ts)
+            S.u_wedge,S.p_wedge = self.solve_linear_picard(dolfinx.fem.form(a),dolfinx.fem.form(a_p0),dolfinx.fem.form(L),ctrl, S.u_wedge,S.p_wedge,it=it,ts=ts)
 
         else: 
             print_ph('              [//] Picard iterations for the non linear lithostatic pressure problem')
@@ -1637,9 +1542,9 @@ class Wedge(Stokes_Problem):
                     
                     a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)
                 
-                u_k1, p_k1  = self.solve_linear_picard(fem.form(a)
-                                                            ,fem.form(a_p0)
-                                                            ,fem.form(L)
+                u_k1, p_k1  = self.solve_linear_picard(dolfinx.fem.form(a)
+                                                            ,dolfinx.fem.form(a_p0)
+                                                            ,dolfinx.fem.form(L)
                                                             ,ctrl,
                                                             u_k,
                                                             p_k,
@@ -1721,10 +1626,12 @@ class Slab(Stokes_Problem):
 
     """
     def __init__(self
-                 ,mesh:Mesh 
-                 ,elements:tuple
-                 ,name:list):
-        super().__init__(M,elements,name)
+                 ,mesh:Mesh
+                 ,elements:list
+                 ,name:list
+                 ,ctrl_sim:SimulationControls
+                 ,pdb:PhaseDataBase):
+        super().__init__(mesh=mesh,elements=elements,name=name,ctrl_sim=ctrl_sim,pdb=pdb)
     
     def setdirichlecht(self
                        ,ctrl : NumericalControls
@@ -1764,11 +1671,11 @@ class Slab(Stokes_Problem):
         self.moving_wall.x.array[:] = self.moving_wall_ref.x.array[:] * ctrl.v_s[0] 
         self.moving_wall.x.scatter_forward()
         # locate the dofs on the slab boundary and create dirichlet bc for them.
-        dofs_s_x = fem.locate_dofs_topological(self.F0.sub(0), fdim, D.facets.find(D.bc_dict['top_subduction']))
-        dofs_s_y = fem.locate_dofs_topological(self.F0.sub(1), fdim, D.facets.find(D.bc_dict['top_subduction']))
+        dofs_s_x = dolfinx.fem.locate_dofs_topological(self.F0.sub(0), fdim, D.facets.find(D.bc_dict['top_subduction']))
+        dofs_s_y = dolfinx.fem.locate_dofs_topological(self.F0.sub(1), fdim, D.facets.find(D.bc_dict['top_subduction']))
         # create the dirichlet bc for the slab boundary using the computed velocity field of the moving wall.
-        bcx = fem.dirichletbc(self.moving_wall.sub(0), dofs_s_x)
-        bcy = fem.dirichletbc(self.moving_wall.sub(1), dofs_s_y)
+        bcx = dolfinx.fem.dirichletbc(self.moving_wall.sub(0), dofs_s_x)
+        bcy = dolfinx.fem.dirichletbc(self.moving_wall.sub(1), dofs_s_y)
         
         return [bcx,bcy]
                 
@@ -1832,7 +1739,7 @@ class Slab(Stokes_Problem):
                           ,ctrl:NumericalControls
                           ,FGS:Functions_material_properties_global
                           ,D:Domain
-                          ,g:fem.Function
+                          ,g:dolfinx.fem.Function
                           ,sc:Scal
                           ,it=0
                           ,ts=0):
@@ -1853,8 +1760,8 @@ class Slab(Stokes_Problem):
             self.trial1 = ufl.TrialFunction(self.p_subs)
             self.test1 = ufl.TestFunction(self.p_subs)
                         # Better to recreate 
-            self.moving_wall = fem.Function(self.V_subs)
-            self.moving_wall_ref = fem.Function(self.V_subs)
+            self.moving_wall = dolfinx.fem.Function(self.V_subs)
+            self.moving_wall_ref = dolfinx.fem.Function(self.V_subs)
             
         # Create the linear problem
         a1,a2,a3, L, a_p = self.set_linear_picard(S.u_slab
@@ -1883,9 +1790,9 @@ class Slab(Stokes_Problem):
                 
         a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)
         time_A = timing.time()
-        S.u_slab,S.p_slab =  self.solve_linear_picard(fem.form(a)
-                                                         ,fem.form(a_p0)
-                                                         ,fem.form(L)
+        S.u_slab,S.p_slab =  self.solve_linear_picard(dolfinx.fem.form(a)
+                                                         ,dolfinx.fem.form(a_p0)
+                                                         ,dolfinx.fem.form(L)
                                                          ,ctrl
                                                          ,S.u_slab
                                                          ,S.p_slab

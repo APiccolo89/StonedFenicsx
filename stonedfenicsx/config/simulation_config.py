@@ -23,7 +23,7 @@ def configure_simulation(
         inp (Input): input class storing the information of the simulation
 
     Returns:
-        tuple[NumericalControl,CtrlLHS,IOControls,PhaseDataBase,Mesh]: computational classes
+        tuple[SimulationControls,PhaseDaataBase,Mesh,Scal]: computational classes
     """
 
     ctrl = inp.ctrl
