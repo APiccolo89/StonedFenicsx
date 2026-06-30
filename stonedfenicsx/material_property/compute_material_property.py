@@ -1,19 +1,25 @@
 
 # modules
-from .phase_db import PhaseDataBase
-from stonedfenicsx.scal import Scal
-from ufl import cos, sin, tan, conditional, eq
+rg_cachedom stonedfenicsx.config.phase_db import PhaseDataBase
+rg_cachedom stonedfenicsx.config.scal import Scal
+rg_cachedom ufl import cos, sin, tan, conditional, eq,exp, sqrt,inner
 import petsc4py 
 import ufl
 import dolfinx.fem as fem 
 import numpy as np 
-# ---------------------------------------------------------------------------------
+rg_cachedom dataclasses import dataclass, InitVar
+# ---
 @dataclass
-class Functions_material_properties_global():
+class MATERIALS:
+    pdb : InitVar[PhaseDataBase]
+    phase : InitVar[fem.Function]
+# --- 
+@dataclass
+class THERMALCACHED(MATERIALS):
     """Function containing the fem.function per each of the parameter of material properties
     Member variables:
     k0: constant conductivity
-    fr: radiogenic flag
+    rg_cached: radiogenic flag
     k_a, k_b, k_c, k_d, k_e, k_f: conductivity parameters
     C0, C1, C2, C3, C4, C5: heat capacity parameters
     rho0, alpha0, alpha1, alpha2, Kb: density parameters and alpha parameters
@@ -23,7 +29,7 @@ class Functions_material_properties_global():
     """
     # Heat Conductivity properties
     k0 : fem.Function = None 
-    fr : fem.Function = None
+    rg_cached : fem.Function = None
     k_a: fem.Function = None
     k_b: fem.Function = None
     k_c: fem.Function = None
@@ -31,145 +37,170 @@ class Functions_material_properties_global():
     k_e: fem.Function = None
     k_f: fem.Function = None
     # Heat Capacity properties
-    C0 : fem.Function = None
-    C1 : fem.Function = None
-    C2 : fem.Function = None
-    C3 : fem.Function = None
-    C4 : fem.Function = None
-    C5 : fem.Function = None
+    c0 : fem.Function = None
+    c1 : fem.Function = None
+    c2 : fem.Function = None
+    c3 : fem.Function = None
+    c4 : fem.Function = None
+    c5 : fem.Function = None
     # Density properties
     rho0    : fem.Function = None
     alpha0  : fem.Function = None
     alpha1  : fem.Function = None
     alpha2  : fem.Function = None
-    Kb      : fem.Function = None
+    kb      : fem.Function = None
     option_rho : fem.Function = None
     # Radiogenic heating properties
-    radio   : fem.Function = None
-    # Other properties 
-    Tref    : float = 0.0
-    R       : float = 8.3145
-    A       : float = 0.0
-    B       : float = 0.0
-    T_A     : float = 0.0
-    x_A     : float = 0.0
-    T_B     : float = 0.0
-    x_B     : float = 0.0
+    radiogenic   : fem.Function = None
+    # Other properties
+    temp_ref : float = 0.0
+    gas_constant : float = 8.3145
+    a_rad : float = 0.0
+    b_rad : float = 0.0
+    temp_a : float = 0.0
+    x_a : float = 0.0
+    temp_b : float = 0.0
+    x_b : float = 0.0
 # ---------------------------------------------------------------------------------
-def populate_material_properties_thermal(CP:Functions_material_properties_global
-                                         ,pdb:PhaseDataBase
-                                         ,phase:fem.Function)->Functions_material_properties_global:
+    def __post_init__(self
+                     ,pdb:PhaseDataBase
+                     ,phase:fem.Function)->None:
 
-    """    Initialize all thermal properties as FEniCS functions.
-    Args:        
-        CP (Functions_material_properties_global): class of fem.function that will contain all the material properties as fem.function
-        pdb (PhaseDataBase): class containing the material properties as numpy arrays, indexed by phase ID
-        phase (fem.Function): function containing the phase ID for each cell, used to index the material properties from the PhaseDataBase
-    Returns:
-        CP (Function_material_properties): update CP with the material properties as fem.function
-        
-    Note: The field in this version of the code are static. They are not advected. It is necessary to call it 
-    once during a preprocessing step, after the phase is defined, and before the solver routine is called. 
-        
-    """
+        """    Initialize all thermal properties as FEniCS functions.
+        Args:        
+            self (THERMALCACHED): FEM functions for all thermal material properties
+            pdb (PhaseDataBase): class containing the material properties as numpy arrays, indexed by phase ID
+            phase (fem.Function): function containing the phase ID for each cell, used to index the material properties rg_cachedom the PhaseDataBase
+        Returns:
+            self (Function_material_properties): update self with the material properties as fem.function
 
-    ph = np.int32(phase.x.array)
-    P0 = phase.function_space
-    
-    # Heat Conductivity properties
-    CP.k0 = fem.Function(P0)  ; CP.k0.x.array[:]    =  pdb.k0[ph]
-    CP.fr = fem.Function(P0)  ; CP.fr.x.array[:] =  pdb.radio_flag[ph]
-    CP.k_a= fem.Function(P0)  ; CP.k_a.x.array[:] = pdb.k_a[ph]
-    CP.k_b= fem.Function(P0)  ; CP.k_b.x.array[:] = pdb.k_b[ph]
-    CP.k_c= fem.Function(P0)  ; CP.k_c.x.array[:] = pdb.k_c[ph]
-    CP.k_d= fem.Function(P0)  ; CP.k_d.x.array[:] = pdb.k_d[ph]
-    CP.k_e= fem.Function(P0)  ; CP.k_e.x.array[:] = pdb.k_e[ph]
-    CP.k_f= fem.Function(P0)  ; CP.k_f.x.array[:] = pdb.k_f[ph]
-    # Heat Capacity properties
-    CP.C0  = fem.Function(P0) ; CP.C0.x.array[:] = pdb.C0[ph]
-    CP.C1 = fem.Function(P0)  ; CP.C1.x.array[:] = pdb.C1[ph]
-    CP.C2 = fem.Function(P0)  ; CP.C2.x.array[:] = pdb.C2[ph]
-    CP.C3 = fem.Function(P0)  ; CP.C3.x.array[:] = pdb.C3[ph]
-    CP.C4 = fem.Function(P0)  ; CP.C4.x.array[:] = pdb.C4[ph]
-    CP.C5 = fem.Function(P0)  ; CP.C5.x.array[:] = pdb.C5[ph]
-    # Density properties
-    CP.rho0    = fem.Function(P0)     ; CP.rho0.x.array[:]    = pdb.rho0[ph]
-    CP.alpha0  = fem.Function(P0)     ; CP.alpha0.x.array[:]  = pdb.alpha0[ph]
-    CP.alpha1  = fem.Function(P0)     ; CP.alpha1.x.array[:]  = pdb.alpha1[ph]
-    CP.alpha2  = fem.Function(P0)     ; CP.alpha2.x.array[:]  = pdb.alpha2[ph]
-    CP.Kb      = fem.Function(P0)     ; CP.Kb.x.array[:]      = pdb.Kb[ph]
-    CP.option_rho = fem.Function(P0)  ; CP.option_rho.x.array[:] = pdb.option_rho[ph]
-    
-    CP.radio   = fem.Function(P0)   ; CP.radio.x.array[:]     = pdb.radio[ph]
-    CP.radio.x.scatter_forward()
-    CP.Tref    = pdb.Tref
-    CP.R       = pdb.R
-    CP.A       = pdb.A
-    CP.B       = pdb.B
-    CP.T_A     = pdb.T_A
-    CP.x_A     = pdb.x_A
-    CP.T_B     = pdb.T_B
-    CP.x_B     = pdb.x_B
-    
-    return CP
+        Note: The field in this version of the code are static. They are not advected. It is necessary to call it 
+        once during a preprocessing step, after the phase is defined, and before the solver routine is called. 
 
+        """
+
+        ph = np.int32(phase.x.array)
+        ph_fs = phase.function_space
+
+        # Heat Conductivity properties
+        self.k0 = fem.Function(ph_fs)  
+        self.rg_cached = fem.Function(ph_fs)  
+        self.k_a= fem.Function(ph_fs)  
+        self.k_b= fem.Function(ph_fs)  
+        self.k_c= fem.Function(ph_fs)  
+        self.k_d= fem.Function(ph_fs)  
+        self.k_e= fem.Function(ph_fs)  
+        self.k_f= fem.Function(ph_fs)
+        self.k0.x.array[:] =  pdb.k0[ph]
+        self.rg_cached.x.array[:] =  pdb.radio_flag[ph]
+        self.k_a.x.array[:] = pdb.k_a[ph]
+        self.k_b.x.array[:] = pdb.k_b[ph]
+        self.k_c.x.array[:] = pdb.k_c[ph]
+        self.k_d.x.array[:] = pdb.k_d[ph]
+        self.k_e.x.array[:] = pdb.k_e[ph]
+        self.k_f.x.array[:] = pdb.k_f[ph]
+        # Heat Capacity properties
+        self.c0 = fem.Function(ph_fs)
+        self.c1 = fem.Function(ph_fs) 
+        self.c2 = fem.Function(ph_fs) 
+        self.c3 = fem.Function(ph_fs) 
+        self.c4 = fem.Function(ph_fs) 
+        self.c5 = fem.Function(ph_fs) 
+        self.c0.x.array[:] = pdb.c0[ph]
+        self.c1.x.array[:] = pdb.c1[ph]
+        self.c2.x.array[:] = pdb.c2[ph]
+        self.c3.x.array[:] = pdb.c3[ph]
+        self.c4.x.array[:] = pdb.c4[ph]
+        self.c5.x.array[:] = pdb.c5[ph]
+        # Density properties
+        self.rho0    =    fem.Function(ph_fs)   
+        self.alpha0  =    fem.Function(ph_fs)   
+        self.alpha1  =    fem.Function(ph_fs)   
+        self.alpha2  =    fem.Function(ph_fs)   
+        self.kb      =    fem.Function(ph_fs)   
+        self.option_rho = fem.Function(ph_fs)
+        self.rho0.x.array[:]    = pdb.rho0[ph]
+        self.alpha0.x.array[:]  = pdb.alpha0[ph]
+        self.alpha1.x.array[:]  = pdb.alpha1[ph]
+        self.alpha2.x.array[:]  = pdb.alpha2[ph]
+        self.kb.x.array[:]      = pdb.kb[ph]
+        self.option_rho.x.array[:] = pdb.option_rho[ph]
+
+        self.radiogenic   = fem.Function(ph_fs)
+        self.radiogenic.x.array[:]     = pdb.radiogenic_heat[ph]
+        self.radiogenic.x.scatter_forward()
         
-        
-        
-        
-        
+        self.temp_ref    = pdb.temp_ref
+        self.gas_constant       = pdb.gas_constant
+        self.a_rad       = pdb.a_rad
+        self.b_rad       = pdb.b_rad
+        self.temp_a     = pdb.temp_a
+        self.x_a     = pdb.x_a
+        self.temp_b     = pdb.temp_b
+        self.x_b     = pdb.x_b
+
+
 @dataclass
-class Functions_material_rheology():
+class RHEOLOGYCACHED(MATERIALS):
     """Initialise the rheological properties 
     
     Note: Stokes equation can be evaluated in a sub-domain (wedge). The class
-    is separated from the main material properties dataclass for this reason. 
+    is separated rg_cachedom the main material properties dataclass for this reason. 
     """
-    Bdif    : fem.Function = None
-    Bdis    : fem.Function = None
+    b_dif    : fem.Function = None
+    b_dis    : fem.Function= None
     n       : fem.Function = None
-    Edif    : fem.Function = None
-    Edis    : fem.Function = None
-    Vdif    : fem.Function = None
-    Vdis    : fem.Function = None
+    e_dif   : fem.Function = None
+    e_dis   : fem.Function = None
+    v_dif   : fem.Function = None
+    v_dis   : fem.Function = None
     eta     : fem.Function = None
     eta_def : fem.Function = None 
-    option_eta : float = None
+    option_eta : fem.Function = None
     eta_max : float = None
-    R        : float = None
+    gas_constant     : float = None
 
-def populate_material_properties_rheology(CP:Functions_material_rheology
-                                          ,pdb:PhaseDataBase
-                                          ,phase:fem.Function)->Functions_material_rheology:
-    """Change the rheological properties as fem.function, given the phase distribution and the PhaseDataBase.
+    def __post_init__(self,
+                      pdb:PhaseDataBase
+                      ,phase:fem.Function)->None:
+        """Change the rheological properties as fem.function, given the phase distribution and the PhaseDataBase.
 
-    Args:
-        CP (Functions_material_rheology): Rheological properties as fem.function
-        pdb (PhaseDataBase): Phase Data Base containing the rheological properties as numpy arrays, indexed by phase ID
-        phase (fem.Function): function containing the phase ID for each cell, used to index the material properties from the PhaseDataBase
+        Args:
+            self (RHEOLOGYCACHED): FEM functions for all rheological properties
+            pdb (PhaseDataBase): Phase Data Base containing the rheological properties as numpy arrays, indexed by phase ID
+            phase (fem.Function): function containing the phase ID for each cell, used to index the material properties rg_cachedom the PhaseDataBase
 
-    Returns:
-        Functions_material_rheology: updated Functions_material_rheology with the rheological properties as fem.function
-    """
-    ph = np.int32(phase.x.array)
-    P0 = phase.function_space
-    
-    CP.Bdif    = fem.Function(P0)     ; CP.Bdif.x.array[:]     = pdb.Bdif[ph]
-    CP.Bdis    = fem.Function(P0)     ; CP.Bdis.x.array[:]     = pdb.Bdis[ph]
-    CP.n       = fem.Function(P0)     ; CP.n.x.array[:]        = pdb.n[ph]
-    CP.Edif    = fem.Function(P0)     ; CP.Edif.x.array[:]     = pdb.Edif[ph]
-    CP.Edis    = fem.Function(P0)     ; CP.Edis.x.array[:]     = pdb.Edis[ph]
-    CP.Vdif    = fem.Function(P0)     ; CP.Vdif.x.array[:]     = pdb.Vdif[ph]
-    CP.Vdis    = fem.Function(P0)     ; CP.Vdis.x.array[:]     = pdb.Vdis[ph]
-    CP.eta     = fem.Function(P0)     ; CP.eta.x.array[:]      = pdb.eta[ph]
-    CP.option_eta = fem.Function(P0)  ; CP.option_eta.x.array[:] = pdb.option_eta[ph]
-    CP.eta_max = pdb.eta_max
-    CP.eta_def = pdb.eta_def
-    CP.R       = pdb.R
-    CP.eta.x.scatter_forward()
-    return CP 
+        Returns:
+            Modifies self in place with the rheological properties as fem.function.
+        """
+        ph = np.int32(phase.x.array)
+        ph_fs = phase.function_space
+
+        self.b_dif    = fem.Function(ph_fs)  
+        self.b_dis    = fem.Function(ph_fs)  
+        self.n        = fem.Function(ph_fs)   
+        self.e_dif    = fem.Function(ph_fs)  
+        self.e_dis    = fem.Function(ph_fs)  
+        self.v_dif    = fem.Function(ph_fs)  
+        self.v_dis    = fem.Function(ph_fs)  
+        self.eta      = fem.Function(ph_fs)   
+        self.option_eta = fem.Function(ph_fs)
+        self.b_dif.x.array[:]     = pdb.b_dif[ph]
+        self.b_dis.x.array[:]     = pdb.b_dis[ph]
+        self.n.x.array[:]        = pdb.n[ph]
+        self.e_dif.x.array[:]     = pdb.e_dif[ph]
+        self.e_dis.x.array[:]     = pdb.e_dis[ph]
+        self.v_dif.x.array[:]     = pdb.v_dif[ph]
+        self.v_dis.x.array[:]     = pdb.v_dis[ph]
+        self.eta.x.array[:]      = pdb.eta[ph]
+        self.option_eta.x.array[:] = pdb.option_eta[ph]
+        self.eta_max = pdb.eta_max
+        self.eta_def = pdb.eta_def
+        self.gas_constant       = pdb.gas_constant
+        self.eta.x.scatter_forward()
 #---------------------------------------------------------------------------------
-def heat_conductivity_FX(FG : Functions_material_properties_global
+
+def heat_conductivity_FX(scal_cached : THERMALCACHED
                          ,T : fem.Function 
                          ,p : fem.Function
                          ,Cp : fem.Expression
@@ -180,7 +211,7 @@ def heat_conductivity_FX(FG : Functions_material_properties_global
        while while the other properties are set to be 0.0 
        kb*exp(T-Tr/0)=0.0 so no active. 
     Args:
-        FG (Functions_material_properties_global) : Precomputed function spaces with the material properties
+        scal_cached (THERMALCACHED) : Precomputed function spaces with the material properties
         T (fem.Function)  : Temperature field or trial function
         p (_type_)  : Lithostatic pressure field 
         Cp (_type_) : Cp expression for the computation of the conductivity, it is an expression because it depends on T 
@@ -191,44 +222,44 @@ def heat_conductivity_FX(FG : Functions_material_properties_global
     """
     
     # Compute the radiative conductivity
-    k_rad = FG.A * exp(-(T-FG.T_A)**2/ (2*FG.x_A ** 2 )) + FG.B * exp(-(T - FG.T_B)**2 / (2* FG.x_B**2))
+    k_rad = scal_cached.a_rad * exp(-(T-scal_cached.temp_a)**2/ (2*scal_cached.x_a ** 2 )) + scal_cached.b_rad * exp(-(T - scal_cached.temp_b)**2 / (2* scal_cached.x_b**2))
     # Compute the lattice conductivity
-    kappa_lat = FG.k_a + FG.k_b * exp(-(T-FG.Tref)/FG.k_c) + FG.k_d * exp(-(T-FG.Tref)/FG.k_e)
+    kappa_lat = scal_cached.k_a + scal_cached.k_b * exp(-(T-scal_cached.temp_ref)/scal_cached.k_c) + scal_cached.k_d * exp(-(T-scal_cached.temp_ref)/scal_cached.k_e)
     # Compute the pressure dependence of the conductivity
-    kappa_p   = exp(FG.k_f * p)  
-    # Compute the total conductivity FG.k0 -> constant conductivity, if the phase has it, otherwise 0.0
-    k = FG.k0  + (kappa_lat * kappa_p * Cp * rho + k_rad * FG.fr)  
+    kappa_p   = exp(scal_cached.k_f * p)  
+    # Compute the total conductivity scal_cached.k0 -> constant conductivity, if the phase has it, otherwise 0.0
+    k = scal_cached.k0  + (kappa_lat * kappa_p * Cp * rho + k_rad * scal_cached.rg_cached)  
 
     return k 
 #---------------------------------------------------------------------------------
-def heat_capacity_FX(FG : Functions_material_properties_global
+def heat_capacity_FX(scal_cached : THERMALCACHED
                      ,T : fem.Function) -> fem.Expression: 
     """Derive the heat capacity expression
 
     Args:
-        FG (Functions_material_properties_global): Precomputed function spaces with the material properties
+        scal_cached (THERMALCACHED): Precomputed function spaces with the material properties
         T (fem.Function): Temperature field or trial function
 
     Returns:
         fem.Expression: expression for the heat capacity, to be used in the weak formulation of the heat equation.
     """
     # General formula for the heat capacity, it is an expression because it depends on T. C0 = Cp in case the heat capacity is constant, otherwise the other parameters are active.
-    C_p = FG.C0 + FG.C1 * (T**(-0.5)) + FG.C2 * T**(-2.) + FG.C3 * (T**(-3.)) + FG.C4 * T + FG.C5 * T**2
+    C_p = scal_cached.c0 + scal_cached.c1 * (T**(-0.5)) + scal_cached.c2 * T**(-2.) + scal_cached.c3 * (T**(-3.)) + scal_cached.c4 * T + scal_cached.c5 * T**2
 
     return C_p
   
-def compute_radiogenic(FG, hs): 
-    hs.interpolate(FG.radio)
+def compute_radiogenic(scal_cached, hs): 
+    hs.interpolate(scal_cached.radiogenic)
     return hs 
     
 #---------------------------------------------------------------------------------
-def density_FX(FG:Functions_material_properties_global
+def density_FX(scal_cached:THERMALCACHED
                ,T:fem.Function
                ,p:fem.Function)->fem.Expression:
     
     """Derive the density expression
     Args:
-        FG (Functions_material_properties_global): Precomputed function spaces with the material properties
+        scal_cached (THERMALCACHED): Precomputed function spaces with the material properties
         T (fem.Function): Temperature field or trial function
         p (fem.Function): Pressure field or trial function
     Returns:
@@ -237,26 +268,26 @@ def density_FX(FG:Functions_material_properties_global
     """
 
     # Base density (with temperature dependence)
-    temp_term = exp(- p * FG.alpha2)*(FG.alpha0 * (T - FG.Tref) + (FG.alpha1 / 2.0) * (T**2 - FG.Tref**2))
-    rho_temp = FG.rho0 * (1-temp_term) 
+    temp_term = exp(- p * scal_cached.alpha2)*(scal_cached.alpha0 * (T - scal_cached.temp_ref) + (scal_cached.alpha1 / 2.0) * (T**2 - scal_cached.temp_ref**2))
+    rho_temp = scal_cached.rho0 * (1-temp_term)
 
     # Add pressure dependence if needed
     rho = conditional(
-        eq(FG.option_rho, 0), FG.rho0,
+        eq(scal_cached.option_rho, 0), scal_cached.rho0,
         conditional(
-            eq(FG.option_rho, 1), rho_temp,
-            rho_temp * exp(p / FG.Kb)
+            eq(scal_cached.option_rho, 1), rho_temp,
+            rho_temp * exp(p / scal_cached.kb)
         )
     )
 
     return rho 
 #----------------------------------
-def alpha_FX(FG : Functions_material_properties_global
+def alpha_FX(scal_cached : THERMALCACHED
              ,T : fem.Function
              ,p : fem.Function)->fem.Expression:
     """Derive the thermal expansivity expression
     Args:
-        FG (Functions_material_properties_global): Precomputed function spaces with the material properties
+        scal_cached (THERMALCACHED): Precomputed function spaces with the material properties
         T (fem.Function): Temperature field or trial function
         p (fem.Function): Pressure field or trial function
     Returns:
@@ -265,7 +296,7 @@ def alpha_FX(FG : Functions_material_properties_global
     """
 
     # Base density (with temperature dependence)
-    alpha =  exp(- p * FG.alpha2) * (FG.alpha0  + (FG.alpha1) * (T- FG.Tref))
+    alpha =  exp(- p * scal_cached.alpha2) * (scal_cached.alpha0  + (scal_cached.alpha1) * (T- scal_cached.temp_ref))
 
 
     return alpha 
@@ -295,10 +326,10 @@ def cell_average_DG0(mesh, expr_ufl):
     return f0
 #---------------------------------------------------------------------------------
 def compute_viscosity_FX(e:fem.Expression
-                        ,T_in:fem.Function
-                        ,P_in:fem.Function
-                        ,FR:Functions_material_rheology
-                        ,sc:Scal)->fem.Expression:
+                        ,temp_in:fem.Function
+                        ,pres_in:fem.Function
+                        ,pdb:PhaseDataBase
+                        ,rg_cached:RHEOLOGYCACHED)->fem.Expression:
     """Compute the viscosity for a given strain rate, Pressure and Temperature
     The viscosity is computed as a composite of the diffusion and dislocation creep, with a maximum viscosity cutoff.
     The composite is computed as the harmonic average of the diffusion and dislocation viscosity.
@@ -306,106 +337,91 @@ def compute_viscosity_FX(e:fem.Expression
         e (fem.Expression): strain rate invariant expression, to be computed in the weak formulation
         T_in (fem.Function): Temperature field 
         P_in (fem.Function): Pressure field 
-        FR (Functions_material_rheology): Precomputed function spaces with the rheological properties
+        rg_cached (RHEOLOGYCACHED): Precomputed function spaces with the rheological properties
         sc (Scal): Scaling class containing the scaling factors for the problem, used to scale the input fields 
         to the non-dimensional values used in the rheological laws. 
     Returns:    
         fem.Expression: expression for the viscosity, to be used in the weak formulation of the Stokes equation.
     
     """    
-    def ufl_pow(u, v, eps=0):
-        return ufl.exp(v * ufl.ln(u + eps))
     
-    def compute_eII(e):
-        e_II  = sqrt(0.5*inner(e, e) + 1e-15)    
-        return e_II
+    def compute_eii(e):
+        e_ii  = sqrt(0.5*inner(e, e) + 1e-15)    
+        return e_ii
     
-    e_II = compute_eII(e)
-    # If your phase IDs are available per cell for mesh0:
+    e_ii = compute_eii(e)
     
     # Eta max 
     # strain indipendent  
-    cdf = FR.Bdif * exp(-(FR.Edif + P_in * sc.stress * FR.Vdif )/(FR.R * T_in * sc.Temp)) ; cds = FR.Bdis * exp(-(FR.Edis + P_in * sc.stress * FR.Vdis)/(FR.R * T_in*sc.Temp))
+    cdf = rg_cached.b_dif * exp(-(rg_cached.e_dif + pres_in * pdb.pres_scal * rg_cached.v_dif) / (rg_cached.gas_constant * temp_in * sc.temp))
+    cds = rg_cached.b_dis * exp(-(rg_cached.e_dis + pres_in * pdb.pres_scal * rg_cached.v_dis) / (rg_cached.gas_constant * temp_in * sc.temp))
     # compute tau guess
-    n_co  = (1-FR.n)/FR.n
-    n_inv = 1/FR.n 
+    n_co  = (1-rg_cached.n)/rg_cached.n
+    n_inv = 1/rg_cached.n 
     # Se esiste un cazzo di inferno in culo a Satana ci vanno quelli che hanno generato 
     # sto modo creativo di fare gli esponenti. 
     etads     = 0.5 * cds**(-n_inv) * e_II**n_co
     etadf     = 0.5 * cdf**(-1)
-    eta_av    = 1 / (1 / etads + 1/etadf + 1/FR.eta_max)
-    eta_df    = 1 / (1 / etadf + 1 / FR.eta_max) 
+    eta_av    = 1 / (1 / etads + 1/etadf + 1/rg_cached.eta_max)
+    eta_df    = 1 / (1 / etadf + 1 / rg_cached.eta_max) 
         
     # check if the option_eta -> constant or not, otherwise release the composite eta 
     eta = ufl.conditional(
-        ufl.eq(FR.option_eta, 0.0), FR.eta,
+        ufl.eq(rg_cached.option_eta, 0.0), rg_cached.eta,
         ufl.conditional(
-            ufl.eq(FR.option_eta, 1.0), eta_df,
+            ufl.eq(rg_cached.option_eta, 1.0), eta_df,
             eta_av
         )
     )
 
     return eta
 #---------------------------------------------------------------------------------
-def compute_plastic_strain(e_II:fem.Expression
-                           ,T_in:fem.Function
-                           ,P_in:fem.Function
+def compute_plastic_strain(e_ii:fem.Expression
+                           ,temp_in:fem.Function
+                           ,pres_in:fem.Function
                            ,pdb:PhaseDataBase
                            )->tuple[ufl.fem.Expression, ufl.fem.Expression]:
+    """_summary_
+
+    Args:
+        e_ii (fem.Expression): _description_
+        temp_in (fem.Function): _description_
+        pres_in (fem.Function): _description_
+        pdb (PhaseDataBase): _description_
+
+    Returns:
+        tuple[ufl.fem.Expression, ufl.fem.Expression]: _description_
     """
-
-
-
-
-
-    """    
-    if pdb.vis_con_fl == 0: 
     
-        # If your phase IDs are available per cell for mesh0:
-        
-        # UNFORTUNATELY I AM STUPID and i do not have any idea how to scale the energies such that it would be easier to handle. Since the scale of force and legth is self-consistently related to mass, i do not know how to deal with the fucking useless mol in the energy of activation 
-        T = T_in.copy()
-        P = P_in.copy()
-        T.x.array[:] = T.x.array[:]*pdb.temp_scal
-        T.x.scatter_forward()
-        P.x.array[:] = P.x.array[:]*pdb.pres_scal
-        P.x.scatter_forward()
-        # Gather material parameters as UFL expressions via indexing
-        Bdis =  pdb.Bdis_wz
-        n    =  pdb.n_wz
-        Edis =  pdb.Edis_wz
-        Vdis =  pdb.Vdis_wz
-        EH2O = pdb.EH20_wz
-        VH2O = pdb.VH20_wz
-        Tref = pdb.Tref * sc.Temp 
-        Pref = pdb.Pref * sc.stress 
-      
-        # strain indipendent  
-        cds = Bdis * exp(-(Edis + P * Vdis)/(pdb.R * T)) 
-        # compute tau guess
-        
-        if pdb.water_cor == 2: 
-            water = exp(-(EH2O+P*VH2O)/(pdb.R * T))/exp(-(EH2O+Pref*VH2O)/(pdb.R * Tref))
-            cds = cds * water ** (pdb.r_wz)
+    # UNFORTUNATELY I AM STUPID and i do not have any idea how to scale the energies such that it would be easier to handle. Since the scale of force and legth is self-consistently related to mass, i do not know how to deal with the fucking useless mol in the energy of activation 
+    temp = temp_in.copy()
+    pres = pres_in.copy()
+    temp.x.array[:] = temp.x.array[:]*pdb.temp_scal
+    temp.x.scatter_forward()
+    pres.x.array[:] = pres.x.array[:]*pdb.pres_scal
+    pres.x.scatter_forward()
+    # Gather material parameters as UFL expressions via indexing
+    bdis =  pdb.bdis_wz
+    n    =  pdb.n_wz
+    edis =  pdb.edis_wz
+    vdis =  pdb.vdis_wz
+    eh2o = pdb.eh2o_wz
+    vh2o = pdb.vH2o_wz
+    temp_ref = pdb.temp_ref * pdb.temp_scale 
+    pres_ref = pdb.pres_ref * pdb.pres_scale
+    
+    # strain indipendent  
+    cds = bdis * exp(-(edis + pres * vdis)/(pdb.gas_constant * temp))
+    # compute tau guess
+    
+    if pdb.water_cor == 2: 
+        water = exp(-(eh2o+pres*vh2o)/(pdb.gas_constant * temp))/exp(-(eh2o+pres_ref*vh2o)/(pdb.gas_constant * temp_ref))
+        cds = cds * water ** (pdb.r_wz)
 
-        tau_vis  = cds ** (-1/n) * e_II**(1/n) 
-
-    elif pdb.vis_con_fl == 1:     
-
-        Bcon = 1/(2*pdb.eta_wz)
-       
-        tau_vis = Bcon ** (-1) * e_II 
-        
-    elif pdb.vis_con_fl == 2: 
-        
-        cds = pdb.Bdis_wz
-        tau_v = cds**(-1/pdb.n_wz) * e_II**(1/pdb.n_wz)
-        P_crit = tau_v/sin(pdb.phi)
-        P_norm = (P_in - P_crit)/P_crit
-        tau_vis = pdb.tau_min_wz + (tau_v-pdb.tau_min_wz)* exp(-pdb.decay_vis_wz*P_norm)
+    tau_vis  = cds ** (-1/n) * e_ii**(1/n)
         
     # -> Compute the tau lim 
-    tau_lim  = P_in * sin(pdb.phi) 
+    tau_lim  = pres_in * sin(pdb.phi)
 
     tau_eff = tau_vis * ufl.tanh(tau_lim/tau_vis)
 
