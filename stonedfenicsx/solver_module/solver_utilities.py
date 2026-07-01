@@ -35,7 +35,7 @@ def decoupling_function(z: np.ndarray, fun: dolfinx.fem.Function, g_input: GeomI
     dc = dc/g_input.decoupling
     lit = lit/g_input.decoupling
     z2 = np.abs(z)/g_input.decoupling
-    trans = g_input.trans/g_input.decoupling
+    trans = g_input.transition/g_input.decoupling
     
 
     fun.x.array[:] = 1-0.5 * ((1.0)+(1.0)*np.tanh((z2-dc)/(trans/4)))

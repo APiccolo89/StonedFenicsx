@@ -1126,7 +1126,7 @@ class Stokes_Problem(Problem):
         q = ufl.TestFunction(Q)
 
         e = compute_strain_rate(u_new)
-        eta_new = compute_viscosity_FX(e, temp, pres_l, self.cached_material,self.pdb)
+        eta_new = compute_viscosity_FX(e, temp, pres_l, self.pdb,self.cached_mat)
         f = dolfinx.fem.Constant(self.domain.mesh, PETSc.ScalarType((0.0,) * self.domain.mesh.geometry.dim))
         dx = ufl.dx
 
@@ -1475,7 +1475,7 @@ class Wedge(Stokes_Problem):
             tol_p = compute_residuum(p_k1,p_k)
 
             rmom, rdiv = self.compute_residuum_stokes(u_new=u_k1
-                                                              ,p=p_k1
+                                                              ,p_new=p_k1
                                                               ,temp=sol.t_owedge
                                                               ,pres_l=sol.p_lwedge
                                                          )
@@ -1487,19 +1487,19 @@ class Wedge(Stokes_Problem):
 
             res   = np.sqrt(tol_u**2+tol_p**2)
 
-            u_k = update_solution(u_k1,u_k,self.ctrl_sim.relax)
-            p_k =  update_solution(p_k1,p_k,self.ctrl_sim.relax)
+            u_k = update_solution(u_k1,u_k,self.ctrl_sim.ctrl.relax)
+            p_k =  update_solution(p_k1,p_k,self.ctrl_sim.ctrl.relax)
 
 
             u_k.x.scatter_forward()
             p_k.x.scatter_forward()
             
             time_itb = timing.time()    
-            print_ph(f'              []Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
+            print_ph(f'              it[{it_inner}]Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
             print_ph(f'                         [x] |F^mom|/|F^mom_0| {rmom/rmom_0:.3e}, |F^div|/|F^div_0| {rdiv/rdiv_0:.3e}')
             print_ph(f'                         [x] |F^mom|           {rmom:.3e},         |F^div| {rdiv:.3e}')
             it_inner = it_inner+1 
-            print_ph(f'              []Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
+            print_ph(f'              it[{it_inner}]Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
         print_ph(f'                         [?] |F^mom|L2/|F^mom_0|L2 {rmom/rmom_0:.3e}, |F^div|L2/|F^div_0|L2 {rdiv/rdiv_0:.3e}')
         print_ph(f'                         [?] |F^mom|L2           {rmom:.3e}, abs div residuum |F^div|L2 {rdiv:.3e}')
         print_ph('              []Converged ')  
@@ -1553,9 +1553,9 @@ class Wedge(Stokes_Problem):
     
 
         # Create the linear problem
-        a1,a2,a3, L, a_p = self.set_linear_picard(sol.u_wedge
-                                                  ,sol.t_owedge
-                                                  ,sol.p_lwedge
+        a1,a2,a3, L, a_p = self.set_linear_picard(vel=sol.u_wedge
+                                                  ,temp=sol.t_owedge
+                                                  ,pres_l=sol.p_lwedge
                                                   ,it = it
                                                   ,ts = ts 
                                                   ,slab = 0)
@@ -1578,7 +1578,7 @@ class Wedge(Stokes_Problem):
             print_ph(f'              || -- || --- Solution of Wedge in {time_B-time_A:.2f} sec || -- || --- ||')
 
         else: 
-            sol.u_wedge,sol.p_wedge= self.solve_the_non_linear(sol,it=it,ts=ts)
+            sol.u_wedge,sol.p_wedge= self.solve_the_non_linear(sol,it_outer=it,ts=ts)
 
         return sol
     
