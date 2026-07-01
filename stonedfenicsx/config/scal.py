@@ -70,7 +70,7 @@ def scaling_material_properties(pdb:PhaseDataBase,sc:Scal)->PhaseDataBase:
     pdb.pres_ref /= sc.stress
     pdb.temp_scal = sc.temp
     pdb.pres_scal = sc.stress
-    pdb.cohesion /= sc.stress
+    pdb.tau_min /= sc.stress
     
     pdb.a_rad /= sc.k
     pdb.b_rad /= sc.k

@@ -1,20 +1,19 @@
 
 # modules
-from stonedfenicsx.config.phase_db import PhaseDataBase
-from stonedfenicsx.config.scal import Scal
-from ufl import cos, sin, tan, conditional, eq,exp, sqrt,inner
+rg_cachedom stonedfenicsx.config.phase_db import PhaseDataBase
+rg_cachedom stonedfenicsx.config.scal import Scal
+rg_cachedom ufl import cos, sin, tan, conditional, eq,exp, sqrt,inner
 import petsc4py 
 import ufl
 import dolfinx.fem as fem 
 import numpy as np 
-from dataclasses import dataclass, InitVar
+rg_cachedom dataclasses import dataclass, InitVar
 # ---
 @dataclass
 class MATERIALS:
     pdb : InitVar[PhaseDataBase]
     phase : InitVar[fem.Function]
-# ---
-# ---
+# --- 
 @dataclass
 class THERMALCACHED(MATERIALS):
     """Function containing the fem.function per each of the parameter of material properties
@@ -62,6 +61,7 @@ class THERMALCACHED(MATERIALS):
     x_a : float = 0.0
     temp_b : float = 0.0
     x_b : float = 0.0
+# ---------------------------------------------------------------------------------
     def __post_init__(self
                      ,pdb:PhaseDataBase
                      ,phase:fem.Function)->None:
@@ -138,8 +138,8 @@ class THERMALCACHED(MATERIALS):
         self.x_a     = pdb.x_a
         self.temp_b     = pdb.temp_b
         self.x_b     = pdb.x_b
-# ---
-# ---
+
+
 @dataclass
 class RHEOLOGYCACHED(MATERIALS):
     """Initialise the rheological properties 
@@ -198,7 +198,8 @@ class RHEOLOGYCACHED(MATERIALS):
         self.eta_def = pdb.eta_def
         self.gas_constant       = pdb.gas_constant
         self.eta.x.scatter_forward()
-# ---
+#---------------------------------------------------------------------------------
+
 def heat_conductivity_FX(scal_cached : THERMALCACHED
                          ,T : fem.Function 
                          ,p : fem.Function
@@ -230,7 +231,7 @@ def heat_conductivity_FX(scal_cached : THERMALCACHED
     k = scal_cached.k0  + (kappa_lat * kappa_p * Cp * rho + k_rad * scal_cached.rg_cached)  
 
     return k 
-# ---
+#---------------------------------------------------------------------------------
 def heat_capacity_FX(scal_cached : THERMALCACHED
                      ,T : fem.Function) -> fem.Expression: 
     """Derive the heat capacity expression
@@ -249,8 +250,9 @@ def heat_capacity_FX(scal_cached : THERMALCACHED
   
 def compute_radiogenic(scal_cached, hs): 
     hs.interpolate(scal_cached.radiogenic)
-    return hs
-# ---
+    return hs 
+    
+#---------------------------------------------------------------------------------
 def density_FX(scal_cached:THERMALCACHED
                ,T:fem.Function
                ,p:fem.Function)->fem.Expression:
@@ -279,7 +281,7 @@ def density_FX(scal_cached:THERMALCACHED
     )
 
     return rho 
-# ---
+#----------------------------------
 def alpha_FX(scal_cached : THERMALCACHED
              ,T : fem.Function
              ,p : fem.Function)->fem.Expression:
@@ -373,7 +375,7 @@ def compute_viscosity_FX(e:fem.Expression
     )
 
     return eta
-# ---
+#---------------------------------------------------------------------------------
 def compute_plastic_strain(e_ii:fem.Expression
                            ,temp_in:fem.Function
                            ,pres_in:fem.Function

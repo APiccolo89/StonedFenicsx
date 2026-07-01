@@ -1,7 +1,12 @@
-from .package_import import *
 from typing import get_type_hints, get_origin, get_args, Callable
-
-
+from dataclasses import dataclass, field
+import numpy as np
+import mpi4py.MPI as MPI
+import time as timing 
+import ufl 
+import dolfinx
+from functools import wraps
+from numpy.typing import NDArray
 # ---------------------------------------------------------------------------------------------------------
 def timing_function(fun: Callable) -> Callable:
     """Extract the execution time of the function.
@@ -68,7 +73,10 @@ def print_ph(string: str) -> int:
     return -1
 
 
-def interpolate_from_sub_to_main(u_dest, u_start, cells, parent2child=0):
+def interpolate_from_sub_to_main(u_dest: dolfinx.fem.Function
+                                 , u_start: dolfinx.fem.Function,
+                                 cells: np.ndarray,
+                                 parent2child: int = 0) -> dolfinx.fem.Function:
     """
     Interpolate the solution from the subdomain to the main domain.
 
@@ -202,173 +210,26 @@ def compute_eii(e):
     return e_ii
 
 
-# ---------------------------------------------------------------------------
-
-
-@dataclass(slots=True)
-class Phase:
-    """
-    Phase: container for rheological and thermal material parameters.
-
-    ------------------
-    Rheology (viscosity)
-    ------------------
-    name_diffusion : str
-        Diffusion creep flow law name.
-        Options include (non-exhaustive):
-          - 'Constant'                : constant viscosity
-          - 'Hirth_Dry_Olivine_diff'  : Hirth & Kohlstedt (2003), dry olivine
-          - 'Van_Keken_diff'          : Van Keken et al. (2008) style diffusion
-          - 'Hirth_Wet_Olivine_diff'  : Hirth & Kohlstedt (2003), wet olivine
-
-    Edif : float
-        Activation energy for diffusion creep [J/mol].
-    Vdif : float
-        Activation volume for diffusion creep [m³/mol].
-    Bdif : float
-        Pre-exponential factor for diffusion creep [1/Pa/s].
-
-    name_dislocation : str
-        Dislocation creep flow law name.
-        Options include:
-          - 'Constant'
-          - 'Hirth_Dry_Olivine_disl'
-          - 'Van_Keken_disl'
-          - 'Hirth_Wet_Olivine_disl'
-
-    n : float
-        Stress exponent. **NB**: if you change this, Bdis must be updated consistently.
-    Edis : float
-        Activation energy for dislocation creep [J/mol].
-    Vdis : float
-        Activation volume for dislocation creep [m³/mol].
-    Bdis : float
-        Pre-exponential factor for dislocation creep [1/Pa^n/s].
-
-    eta : float
-        Constant viscosity [Pa·s] (used if rheology is 'Constant').
-
-    ------------------
-    Thermal properties
-    ------------------
-    Cp : float
-        constant heat capacity [J/kg/K].
-    k : float
-        constant thermal conductivity [W/m/K].
-    rho0 : float
-        Reference / constant density [kg/m³].
-
-    name_capacity : str
-        Heat capacity law.
-        Options:
-          - 'Constant'
-          - 'Berman_Forsterite'
-          - 'Berman_Fayalite'
-          - 'Berman_Aranovich_Forsterite'
-          - 'Berman_Aranovich_Fayalite'
-          - 'Berman_Fo_Fa_01'
-          - 'Bermann_Aranovich_Fo_Fa_0_1'
-          - 'Oceanic_Crust'
-          - 'ContinentalCrust' (not implemented / to be removed).
-
-    name_density : str
-        Density law.
-        Options:
-          - 'Constant' : ρ = ρ0.
-          - 'PT'       : ρ(P,T) with constant bulk modulus K₀ ≈ 130e9 Pa and
-                         thermal expansivity consistent with `name_alpha`.
-
-    name_alpha : str
-        Thermal expansivity law (α).
-        Options:
-          - 'Constant'      : α = 3e-5 K⁻¹.
-          - 'Mantle'        : olivine / mantle α (e.g., Groose & Afonso 2013;
-                              Richardson et al. 2020).
-          - 'Oceanic_Crust' : basaltic crustal α.
-
-    name_conductivity : str
-        Thermal conductivity law (k).
-        Options:
-          - 'Constant'
-          - 'Mantle'
-          - 'Oceanic_Crust'
-
-    ------------------
-    Internal heating
-    ------------------
-    radio : float
-        Radiogenic heat production [W/m³] (or [Pa/s] if used as source in σ units).
-    radio_flag : float
-        Activation flag for radiogenic heating / radiative conductivity
-        (0.0 = off, 1.0 = on, or a more general scaling factor).
-
-    Notes
-    -----
-    This class is intended as a flexible container for building a PhaseDataBase.
-    For your current kinematic slab work it may be somewhat overkill, but it
-    should be reusable for other problems.
-    """
-
-    name_phase: str = "Undefined Phase"
-    id: int = 0
-    # Viscosity / rheology
-    name_diffusion: str = "Constant"
-    Edif: float = -1e23
-    Vdif: float = -1e23
-    Bdif: float = -1e23
-
-    name_dislocation: str = "Constant"
-    n: float = -1e23
-    Edis: float = -1e23
-    Vdis: float = -1e23
-    Bdis: float = -1e23
-
-    eta: float = 1e20  # constant viscosity
-
-    # Thermal properties
-    Cp: float = 1250.0
-    k: float = 3.0
-    rho0: float = 3300.0
-    radio_flag: float = 0.0
-
-    name_capacity: str = "Constant"
-    name_conductivity: str = "Constant"
-    name_alpha: str = "Constant"
-    name_density: str = "Constant"
-    alpha0: float = 3e-5  # constant thermal expansivity
-    Hr: float = 0.0
-    # Internal heating
-    radio: float = 0.0
-
-@dataclass
-class Ph_input:
-    """Container of the phases"""
-
-    subducting_plate_mantle: Phase
-    oceanic_crust: Phase
-    wedge_mantle: Phase
-    overriding_mantle: Phase
-    overriding_upper_crust: Phase
-    overriding_lower_crust: Phase
 
 
 def evaluate_material_property(
-    expression, function_space
-) -> fem.function:
+    expression:dolfinx.fem.Expression, function_space:dolfinx.fem.FunctionSpace
+) -> dolfinx.fem.Function:
     """Transform an ufl expression into a function
     Args:
         expression (ufl.Expression): ufl expression
-        function_space (fem.Function): the function space
+        function_space (dolfinx.fem.FunctionSpace): the function space
     Returns:
         target_function: The final function
     """
 
-    target_function = fem.Function(function_space)
+    target_function = dolfinx.fem.Function(function_space)
     target_function.interpolate(
-        fem.Expression(expression, function_space.element.interpolation_points())
+        dolfinx.fem.Expression(expression, function_space.element.interpolation_points())
     )
     return target_function
 
+<<<<<<< HEAD
 
 @dataclass(slots=True)
 class Input:
@@ -658,3 +519,5 @@ def filling_the_phase_data_base(MP: dict, Ph: Ph_input) -> Ph_input:
         buf.id = dict_phase_id[k]
         setattr(Ph, k, buf)  # Substitute the buf class with the default one
     return Ph
+=======
+>>>>>>> 0d3dba1 ([bugs]: Purged a few bugs)

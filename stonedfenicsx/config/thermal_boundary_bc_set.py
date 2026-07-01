@@ -810,6 +810,7 @@ def read_temporary_file(ctrl_tbc:CtrlTemperatureBC
             if left_right:
                 main_grp = 'left_bc'
                 age = ctrl_tbc.slab_age
+                t_res_v = f[f'{main_grp}/data_2_load/t_res_v'][:]
             else:
                 main_grp = 'right_bc'
                 age = ctrl_tbc.right_age
@@ -823,7 +824,7 @@ def read_temporary_file(ctrl_tbc:CtrlTemperatureBC
                 time_v = f[f'{main_grp}/data_2_load/time_v'][:]
                 temperature = f[f'{main_grp}/data_2_load/temperature'][:]
                 z = f[f'{main_grp}/data_2_load/z'][:]
-                t_res_v = f[f'{main_grp}/data_2_load/t_res_v'][:]
+
 
                 flag = check_material_property(f,pdb,ph_id,main_grp)
                 current_age_index = np.where(time_v >= age)[0][0]
@@ -835,12 +836,12 @@ def read_temporary_file(ctrl_tbc:CtrlTemperatureBC
                         g_input.lab_d = np.abs(np.min(z))
                     else:
                         ctrl_tbc.temperature_1d[:] = temperature[current_age_index,:]
-                        ctrl_tbc.temperature_2d = temperature
+                        ctrl_tbc.temperature_2d_field = temperature
                         ctrl_tbc.z = z
                         ctrl_tbc.t_res_vec = t_res_v
         
     if redo:
-        ctrl_tbc, g_input = compute_thermal_boundary(ctrl_tbc=ctrl_tbc
+        compute_thermal_boundary(ctrl_tbc=ctrl_tbc
                                                  ,ctrl=ctrl
                                                  ,ioctrl=ioctrl
                                                  ,sc=sc
@@ -1004,12 +1005,3 @@ def test_configure_boundary():
     
     return 0
 
-
-def main():
-    
-    test_configure_boundary()
-    
-    return 0
-
-if __name__ == '__main__':
-    main()

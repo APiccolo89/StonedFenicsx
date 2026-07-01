@@ -1087,7 +1087,12 @@ def create_mesh_object(sc: Scal, ioctrl: IOControls, g_input: GeomInput) -> Mesh
 
     # write_partition(mesh,filename=os.path.join(ioctrl.path_save,'%s_global_partition.xdmf'%ioctrl.sname))
     # -- Fill the Mesh object
-
+    crust_domain.comm = MPI.COMM_WORLD
+    wedge_plate.comm = MPI.COMM_WORLD
+    subduction_plate.comm = MPI.COMM_WORLD
+    global_domain.comm = MPI.COMM_WORLD
+    
+    
     mesh = Mesh(
         g_input=g_input,
         global_domain=global_domain,
@@ -1095,10 +1100,7 @@ def create_mesh_object(sc: Scal, ioctrl: IOControls, g_input: GeomInput) -> Mesh
         wedge_domain=wedge_plate,
         crust_domain=crust_domain,
         comm=MPI.COMM_WORLD,
-        rank=MPI.COMM_WORLD.Get_rank(),
-        element_p =None,
-        element_pt =None,
-        element_v =None,
+        rank=MPI.COMM_WORLD.Get_rank()
     )
 
     print_ph(" Computational mesh and domains have been created...")
