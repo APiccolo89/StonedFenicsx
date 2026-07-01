@@ -6,8 +6,8 @@ import numpy as np
 import mpi4py.MPI as MPI
 from numpy.typing import NDArray
 from scipy.interpolate import griddata   
+import petsc4py.PETSc as PETSc
 # --- ufl 
-from ufl import inner, exp
 
 # --- from config module 
 from stonedfenicsx.config.numerical_control import SimulationControls
@@ -19,8 +19,8 @@ from stonedfenicsx.solver_module.solver import Solvers,ScalarSolver,SolverStokes
 from stonedfenicsx.solver_module.solver_utilities import (decoupling_function
                                                           ,update_solution
                                                           ,compute_residuum
-                                                          ,compute_eii
-                                                          ,compute_strain_rate)
+                                                          ,min_max_array)
+from stonedfenicsx.utils import compute_strain_rate
 # --- from material properties 
 from stonedfenicsx.material_property.compute_material_property import (compute_plastic_strain
                                                                        ,MATERIALS,RHEOLOGYCACHED,THERMALCACHED
@@ -851,7 +851,7 @@ class Global_thermal(Problem):
         time_A = timing.time()
         print_ph('              [//] Picard iterations for the non linear temperature problem')
 
-        while (it_inner < ctrl.it_inner_max and tol > ctrl.tol_innerPic) or it_inner < 2:
+        while (it_inner < ctrl.it_inner_max and tol > ctrl.tol_innerpic) or it_inner < 2:
             
             self.shear_heating = self.compute_shear_heating(T_k=T_k
                                                         ,p=sol.PL)
@@ -956,6 +956,9 @@ class Global_pressure(Problem):
             self.typology = 'NonlinearProblem'
 
         self.bc = [self.set_problem_bc()]
+        self.g = dolfinx.fem.Constant(self.domain.mesh, PETSc.ScalarType([0.0,-self.ctrl_sim.ctrl.g]))
+        
+
     
     def set_problem_bc(self)->list[dolfinx.fem.DirichletBC]:
          
@@ -972,7 +975,6 @@ class Global_pressure(Problem):
                           ,it:int=0):
         # Function that set linear form and linear picard for picard iteration
         
-        g = self.ctrl_sim.ctrl.g
         
         rho_k = density_FX(self.cached_mat, T, p_k)  # frozen
         
@@ -982,7 +984,7 @@ class Global_pressure(Problem):
         else: 
             a = None
         
-        L = ufl.inner(ufl.grad(self.test0), rho_k * g) * self.dx
+        L = ufl.inner(ufl.grad(self.test0), rho_k * self.g) * self.dx
         
 
         return a, L
@@ -1019,7 +1021,7 @@ class Global_pressure(Problem):
 
         time_B = timing.time()
 
-        print_ph(f'              // -- // --- Solution of Lithostatic pressure problem finished in {time_B-time_A:.2f} sec // -- // --->')
+        print_ph(f'              || -- || --- Solution of Lithostatic pressure problem finished in {time_B-time_A:.2f} sec || -- || ---||')
         print_ph('')
 
         return sol
@@ -1059,10 +1061,10 @@ class Global_pressure(Problem):
         it_inner = 0 
         
         
-        print_ph('              [//] Picard iterations for the non linear lithostatic pressure problem')
+        print_ph('              [||] Picard iterations for the non linear lithostatic pressure problem')
 
         res = 1.0
-        while it_inner < ctrl.it_inner_max and res > ctrl.tol_innerPic:
+        while it_inner < ctrl.it_inner_max and res > ctrl.tol_innerpic:
             time_ita = timing.time()
             
             if it_inner == 0:
@@ -1076,7 +1078,7 @@ class Global_pressure(Problem):
             res = compute_residuum(p_k1,p_k)
             
             time_itb = timing.time()
-            print_ph(f'              []L_2 norm is {res:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
+            print_ph(f'              it:[{it_inner:d}]: L_2 norm is {res:.3e} performed in {time_itb-time_ita:.2f} seconds')
             
             #update solution
             p_k = update_solution(p_k1,p_k,ctrl.relax)
@@ -1084,7 +1086,6 @@ class Global_pressure(Problem):
             
             it_inner = it_inner + 1 
         
-        print_ph('              [//] Newton iterations for the non linear lithostatic pressure problem')
         
         sol.PL.x.array[:] = p_k.x.array[:]
         sol.PL.x.scatter_forward()
@@ -1103,8 +1104,7 @@ class Stokes_Problem(Problem):
                  ,ctrl_sim:SimulationControls
                  ,pdb:PhaseDataBase):
         super().__init__(mesh=mesh,elements=elements,name=name,ctrl_sim=ctrl_sim,pdb=pdb)
-        M = getattr(M,name[1])
-        self.FSPT = dolfinx.fem.functionspace(M.mesh, elements[2])     
+        self.FSPT = dolfinx.fem.functionspace(self.domain.mesh, elements[2])     
         # Create the moving wall functions: 
         # Allocate memory
         self.moving_wall_ref = dolfinx.fem.Function(self.F0)
@@ -1115,15 +1115,19 @@ class Stokes_Problem(Problem):
         a_p0  = [[a1, a2],[a3, a_p]]
         return a,a_p0
     
-    def compute_residuum_stokes(self, u_new, p_new, D, T, PL, FR, sc):
+    def compute_residuum_stokes(self
+                                ,u_new:dolfinx.fem.function.Function
+                                ,p_new:dolfinx.fem.function.Function
+                                ,temp:dolfinx.fem.function.Function
+                                ,pres_l:dolfinx.fem.function.Function):
         V = u_new.function_space
         Q = p_new.function_space
         v = ufl.TestFunction(V)
         q = ufl.TestFunction(Q)
 
         e = compute_strain_rate(u_new)
-        eta_new = compute_viscosity_FX(e, T, PL, FR,sc)
-        f = dolfinx.fem.Constant(D.mesh, PETSc.ScalarType((0.0,) * D.mesh.geometry.dim))
+        eta_new = compute_viscosity_FX(e, temp, pres_l, self.cached_material,self.pdb)
+        f = dolfinx.fem.Constant(self.domain.mesh, PETSc.ScalarType((0.0,) * self.domain.mesh.geometry.dim))
         dx = ufl.dx
 
         Fmom = (ufl.inner(2*eta_new*ufl.sym(ufl.grad(u_new)), ufl.sym(ufl.grad(v))) * dx
@@ -1152,13 +1156,9 @@ class Stokes_Problem(Problem):
 
 
     def set_linear_picard(self
-                          ,u_s : dolfinx.fem.function.Function 
-                          ,T : dolfinx.fem.function.Function 
-                          ,PL : dolfinx.fem.function.Function 
-                          ,D : Domain
-                          ,FR : Functions_material_rheology
-                          ,ctrl : NumericalControls
-                          ,sc : Scal
+                          ,vel : dolfinx.fem.function.Function 
+                          ,temp : dolfinx.fem.function.Function 
+                          ,pres_l : dolfinx.fem.function.Function 
                           ,a_p = None
                           ,it : int = 0
                           ,ts : int = 0
@@ -1166,7 +1166,7 @@ class Stokes_Problem(Problem):
         
         """Function that set linear form (both for picard iteration and linear problem solution)
         Args: 
-            u_slab : dolfinx.fem.function.Function -> Velocity field of the slab, used for computing the viscosity
+            u : dolfinx.fem.function.Function -> Velocity field, used for computing the viscosity
             T : dolfinx.fem.function.Function -> Temperature field, used for computing the viscosity
             PL : dolfinx.fem.function.Function -> Lithostatic pressure field, used for computing the viscosity
             D : Domain -> Domain object, used for extracting the mesh and the boundary conditions
@@ -1189,28 +1189,25 @@ class Stokes_Problem(Problem):
         v, q  = self.test0,  self.test1
         dx    = ufl.dx
 
-        e = compute_strain_rate(u_s)
+        e = compute_strain_rate(vel)
         # If we are in the first iteration of the first timestep -> use the default viscosity for creating an initial guess. fem.Constant(M.domainG.mesh, PETSc.ScalarType([0.0, -ctrl.g]))   
         if it == 0 and ts == 0 and slab == 0:
-            eta = dolfinx.fem.Constant(D.mesh,PETSc.ScalarType(FR.eta_def))
+            eta = dolfinx.fem.Constant(self.domain.mesh,PETSc.ScalarType(self.cached_mat.eta_def))
         else: 
-            eta = compute_viscosity_FX(e,T,PL,FR,sc)
-            eta_av = cell_average_DG0(D.mesh, eta)
+            eta = compute_viscosity_FX(e,temp,pres_l,self.pdb,self.cached_mat)
         
         a1 = ufl.inner(2*eta*ufl.sym(ufl.grad(u)), ufl.sym(ufl.grad(v))) * dx
         a2 = - ufl.inner(ufl.div(v), p) * dx             # build once
         a3 = - ufl.inner(q, ufl.div(u)) * dx             # build once
         a_p0 =  -1/eta * ufl.inner( q, p) * dx                      # pressure mass (precond)
 
-        f  = dolfinx.fem.Constant(D.mesh, PETSc.ScalarType((0.0,)*D.mesh.geometry.dim))
-        f2 = dolfinx.fem.Constant(D.mesh, PETSc.ScalarType(0.0))
+        f  = dolfinx.fem.Constant(self.domain.mesh, PETSc.ScalarType((0.0,)*self.domain.mesh.geometry.dim))
+        f2 = dolfinx.fem.Constant(self.domain.mesh, PETSc.ScalarType(0.0))
         L  = dolfinx.fem.form([ufl.inner(f, v)*dx, ufl.inner(f2, q)*dx])    
     
         return a1, a2, a3 , L , a_p0       
     
     def compute_moving_wall(self
-                        ,D:Domain
-                        ,ctrl:NumericalControls
                         ,facet:str
                         )->None:
         """Compute the moving wall function for the kinematic boundary condition of the slab. 
@@ -1224,19 +1221,19 @@ class Stokes_Problem(Problem):
             facet (str): the string that defines the facet on which the moving wall is applied.
         """
 
-        u, p  = self.trial0, self.trial1
-        v, q  = self.test0,  self.test1
+        u  = self.trial0
+        v  = self.test0
 
 
-        mesh = D.mesh
+        mesh = self.domain.mesh
         # exact facet normal in    weak   form
-        n = ufl.FacetNormal(D.mesh)       
+        n = ufl.FacetNormal(self.domain.mesh)       
         # slab velocity magnitude (Assuming that velocity of the slab is unit vector)        
         v_slab = float(1.0)  
         
         
         # slab velocity vector (Assuming that velocity of the slab is along x direction)
-        v_const = ufl.as_vector((ctrl.v_s[0], 0.0))
+        v_const = ufl.as_vector((self.ctrl_sim.ctrl_ky.v_s[0], 0.0))
         # projector   onto  the  tangential plane
         proj = ufl.Identity(mesh.geometry.dim) - ufl.outer(n, n)
         # tangential     velocity    vector on  slab
@@ -1249,8 +1246,8 @@ class Stokes_Problem(Problem):
         # Extract the trial and test function for the subspace of the slab domain
 
         # Build the linear problem to compute the velocity field of the moving wall. The problem is a simple mass matrix with a projection of the velocity on the slab as a source term.
-        a = ufl.inner(u, v) * self.ds(D.bc_dict[facet])        #  boundary     mass    matrix (vector)
-        L = ufl.inner(v_project, v) * self.ds(D.bc_dict[facet])
+        a = ufl.inner(u, v) * self.ds(self.domain.bc_dict[facet])        #  boundary     mass    matrix (vector)
+        L = ufl.inner(v_project, v) * self.ds(self.domain.bc_dict[facet])
         # Solve the linar problem to compute the velocity field of the moving wall and cache it for the entire simulation 
         problem = dolfinx.fem.petsc.LinearProblem(
             a, L,
@@ -1266,18 +1263,17 @@ class Stokes_Problem(Problem):
         
         return self.moving_wall_ref
     def solve_linear_picard(self
-                            ,a
-                            ,a_p0
-                            ,L
-                            ,ctrl
-                            ,u
-                            ,p
-                            ,it=0
-                            ,ts=0
-                            ,slab = 0):
+                            ,a:dolfinx.fem.Form
+                            ,a_p0:dolfinx.fem.Form
+                            ,L:dolfinx.fem.Form
+                            ,u:dolfinx.fem.Function
+                            ,p:dolfinx.fem.Function
+                            ,it:int=0
+                            ,ts:int=0
+                            ,slab:int = 0):
             
         if it == 0 and ts == 0: 
-            self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,ctrl ,J = None, r = None,it = it, ts = ts, slab=slab)
+            self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,self.ctrl_sim.ctrl ,J = None, r = None,it = it, ts = ts, slab=slab)
         else: 
             self.solv.update_block_operator(a,a_p0,self.bc,L,self.F0,self.F1)
         
@@ -1292,20 +1288,17 @@ class Stokes_Problem(Problem):
         p_solved.x.scatter_forward()
     
         
-        if ctrl.stokes_solver_type == 0: 
+        if self.ctrl_sim.ctrl.stokes_solver_type == 0: 
             reason = self.solv.ksp.getConvergedReason()
             its    = self.solv.ksp.getIterationNumber()
             rnorm  = self.solv.ksp.getResidualNorm()
-            PETSc.Sys.Print(f"                       KSP reason/its/rnormesh: {reason} {its} {rnormesh:.3e}")
+            PETSc.Sys.Print(f"                       KSP reason/its/rnormesh: {reason} {its} {rnorm:.3e}")
 
         minMaxU = min_max_array(u_solved,vel=True)
         print_ph(f'                       min vel = {minMaxU[0]:.5e}, max vel = {minMaxU[1]:.5e}, RMS = {minMaxU[2]:.5e}')
                 
         return u_solved,p_solved 
-
-
-#-------------------------------------------------------------------
-#-------------------------------------------------------------------
+# --- 
 class Wedge(Stokes_Problem): 
     def __init__(self
                  ,mesh:Mesh
@@ -1387,12 +1380,8 @@ class Wedge(Stokes_Problem):
         # Cached boundary condition.     
         self.bc_overriding = None
                 
-    #------------------------------------------------------------------
     def setdirichlecht(self
-                       ,ctrl : NumericalControls
-                       ,D : Domain 
                        ,V : dolfinx.fem.FunctionSpace
-                       ,g_input : Geom_input
                        ,it : int = 0
                        ,ts : int = 0)-> list:
         
@@ -1404,21 +1393,20 @@ class Wedge(Stokes_Problem):
         
         if it == 0 and ts == 0:
             # facet ids
-            slab_facets      = D.facets.find(D.bc_dict['slab'])
             # Extract the dofs from the overriding plate and cache it.  
             noslip = np.zeros(mesh.geometry.dim, dtype=PETSc.ScalarType)
-            dofs_over = dolfinx.fem.locate_dofs_topological(V, fdim, D.facets.find(D.bc_dict['overriding']))
+            dofs_over = dolfinx.fem.locate_dofs_topological(V, fdim, self.domain.facets.find(self.domain.bc_dict['overriding']))
 
             self.bc_overriding = dolfinx.fem.dirichletbc(noslip, dofs_over, V)
 
             #------------------------------------------------------------------------
             # compute the unit-vector components of the moving wall
-            self.moving_wall_ref = self.compute_moving_wall(D,ctrl,'slab') 
+            self.moving_wall_ref = self.compute_moving_wall('slab') 
 
             # scale the vector with the decoupling
-            if ctrl.decoupling == 1:
+            if self.ctrl_sim.ctrl.decoupling_ctrl == 1:
                 scaling = dolfinx.fem.Function(self.FSPT)
-                scaling = decoupling_function(self.FSPT.tabulate_dof_coordinates()[:,1],scaling,g_input)  
+                scaling = decoupling_function(self.FSPT.tabulate_dof_coordinates()[:,1],scaling,self.g_input)  
                 scaling.x.array[:] = 1.0 - scaling.x.array[:] 
                 scaling.x.scatter_forward()
                 # from :https://fenicsproject.discourse.group/t/scale-vector-function-by-scalar-function/10638
@@ -1428,28 +1416,105 @@ class Wedge(Stokes_Problem):
                 self.moving_wall_ref = temp_buf.copy()
                 
         # update the moving wall normalised field with the actual velocity of the slab.        
-        self.moving_wall.x.array[:] = self.moving_wall_ref.x.array[:]*ctrl.v_s[0]
-        print_ph(f'                      Slab velocity is {ctrl.v_s[0]:.3e} [n.d.]')
+        self.moving_wall.x.array[:] = self.moving_wall_ref.x.array[:]*self.ctrl_sim.ctrl_ky.v_s[0]
+        print_ph(f'                      Slab velocity is {self.ctrl_sim.ctrl_ky.v_s[0]:.3e} [n.d.]')
         
         self.moving_wall.x.scatter_forward()
         # Set the the boundary condition    
-        dofs_s_x = dolfinx.fem.locate_dofs_topological(self.F0.sub(0), fdim, D.facets.find(D.bc_dict['slab']))
-        dofs_s_y = dolfinx.fem.locate_dofs_topological(self.F0.sub(1), fdim, D.facets.find(D.bc_dict['slab']))
+        dofs_s_x = dolfinx.fem.locate_dofs_topological(self.F0.sub(0), fdim, self.domain.facets.find(self.domain.bc_dict['slab']))
+        dofs_s_y = dolfinx.fem.locate_dofs_topological(self.F0.sub(1), fdim, self.domain.facets.find(self.domain.bc_dict['slab']))
         # create the dirichlet bc for the slab boundary using the computed velocity field of the moving wall.
         bcx = dolfinx.fem.dirichletbc(self.moving_wall.sub(0), dofs_s_x)
         bcy = dolfinx.fem.dirichletbc(self.moving_wall.sub(1), dofs_s_y)
 
         return [bcx,bcy, self.bc_overriding]
                 
+    def solve_the_non_linear(self
+                            ,sol: Solution
+                            ,it_outer:int=0
+                            ,ts:int=0):
+        
+        time_A = timing.time()
+        print_ph('              [//] Picard iterations for the non linear lithostatic pressure problem')    
+        u_k = sol.u_wedge.copy()
+        u_k1 = sol.u_wedge.copy()
+        u_k1.x.array[:]=0.0
+        p_k = sol.p_wedge.copy()
+        p_k1 = sol.p_wedge.copy() 
+
+        res  = 1.0 
+        it_inner   = 0 
+        while (res > self.ctrl_sim.ctrl.tol_innerpic) and it_inner < self.ctrl_sim.ctrl.it_inner_max: 
+            time_ita = timing.time()
+            if it_inner==0: 
+                a1,a2,a3,L,a_p = self.set_linear_picard(u_k,
+                                                     sol.t_owedge,
+                                                     sol.p_lwedge
+                                                     ,it = it_outer
+                                                     ,ts = ts
+                                                     ,slab =0)
+            else: 
+                a1,_,_,_,a_p = self.set_linear_picard(u_k,
+                                                     sol.t_owedge,
+                                                     sol.p_lwedge
+                                                     ,it = it_outer
+                                                     ,ts = ts
+                                                     ,slab =0)           
+            
+            a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)
+
+            u_k1, p_k1  = self.solve_linear_picard(dolfinx.fem.form(a)
+                                                        ,dolfinx.fem.form(a_p0)
+                                                        ,dolfinx.fem.form(L)
+                                                        ,u_k
+                                                        ,p_k
+                                                        ,it_outer
+                                                        ,ts)
+            
+            tol_u = compute_residuum(u_k1,u_k)  
+            tol_p = compute_residuum(p_k1,p_k)
+
+            rmom, rdiv = self.compute_residuum_stokes(u_new=u_k1
+                                                              ,p=p_k1
+                                                              ,temp=sol.t_owedge
+                                                              ,pres_l=sol.p_lwedge
+                                                         )
+
+            if it_inner == 0:
+                rmom_0 = rmom
+                rdiv_0 = rdiv   
+
+
+            res   = np.sqrt(tol_u**2+tol_p**2)
+
+            u_k = update_solution(u_k1,u_k,self.ctrl_sim.relax)
+            p_k =  update_solution(p_k1,p_k,self.ctrl_sim.relax)
+
+
+            u_k.x.scatter_forward()
+            p_k.x.scatter_forward()
+            
+            time_itb = timing.time()    
+            print_ph(f'              []Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
+            print_ph(f'                         [x] |F^mom|/|F^mom_0| {rmom/rmom_0:.3e}, |F^div|/|F^div_0| {rdiv/rdiv_0:.3e}')
+            print_ph(f'                         [x] |F^mom|           {rmom:.3e},         |F^div| {rdiv:.3e}')
+            it_inner = it_inner+1 
+            print_ph(f'              []Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
+        print_ph(f'                         [?] |F^mom|L2/|F^mom_0|L2 {rmom/rmom_0:.3e}, |F^div|L2/|F^div_0|L2 {rdiv/rdiv_0:.3e}')
+        print_ph(f'                         [?] |F^mom|L2           {rmom:.3e}, abs div residuum |F^div|L2 {rdiv:.3e}')
+        print_ph('              []Converged ')  
+        sol.u_wedge = u_k.copy()
+        sol.p_wedge = p_k.copy() 
+        time_B = timing.time()
+        print_ph(f'              || -- || --- Solution of Wedge in {time_B-time_A:.2f} sec || -- || --- ||')
+
+        return sol.u_wedge, sol.p_wedge
+       
+       
+   
    
     def Solve_the_Problem(self
-                          ,S : Solution
-                          ,ctrl : NumericalControls
-                          ,FGW : Functions_material_rheology
-                          ,D : Domain 
-                          ,g : dolfinx.fem.function.Function
-                          ,sc : Scal
-                          ,g_input : Geom_input
+                          ,sol : Solution
                           ,it : int =0
                           ,ts : int=0)->Solution:
 
@@ -1488,116 +1553,34 @@ class Wedge(Stokes_Problem):
     
 
         # Create the linear problem
-        a1,a2,a3, L, a_p = self.set_linear_picard(S.u_wedge
-                                                  ,S.t_owedge
-                                                  ,S.p_lwedge
-                                                  ,D
-                                                  ,FGW
-                                                  ,ctrl
-                                                  ,sc
+        a1,a2,a3, L, a_p = self.set_linear_picard(sol.u_wedge
+                                                  ,sol.t_owedge
+                                                  ,sol.p_lwedge
                                                   ,it = it
                                                   ,ts = ts 
                                                   ,slab = 0)
         # Iteration outer 0 -> Initial guess -> start linear
         # Create the dirichlecht boundary condition 
-        self.bc   = self.setdirichlecht(ctrl,D,self.V_subs,g_input,ts=ts,it=it) 
+        self.bc   = self.setdirichlecht(self.V_subs,ts=ts,it=it) 
         
         # Form the system 
         a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)
 
-        print_ph('              // -- // --- STOKES PROBLEM [WEDGE] // -- // --- > ')
+        print_ph('              || -- || Solving the Stokes problem for the wedge domain || -- ||')
 
         
-        time_A = timing.time()
 
         
         if self.typology == 'LinearProblem' or self.typology == 'NonlinearProblemT': 
-            S.u_wedge,S.p_wedge = self.solve_linear_picard(dolfinx.fem.form(a),dolfinx.fem.form(a_p0),dolfinx.fem.form(L),ctrl, S.u_wedge,S.p_wedge,it=it,ts=ts)
+            time_A = timing.time()
+            sol.u_wedge,sol.p_wedge = self.solve_linear_picard(dolfinx.fem.form(a),dolfinx.fem.form(a_p0),dolfinx.fem.form(L), sol.u_wedge,sol.p_wedge,it=it,ts=ts)
+            time_B = timing.time()
+            print_ph(f'              || -- || --- Solution of Wedge in {time_B-time_A:.2f} sec || -- || --- ||')
 
         else: 
-            print_ph('              [//] Picard iterations for the non linear lithostatic pressure problem')
+            sol.u_wedge,sol.p_wedge= self.solve_the_non_linear(sol,it=it,ts=ts)
 
-            u_k = S.u_wedge.copy()
-            ak = S.u_wedge.copy()
-            u_k1 = S.u_wedge.copy()
-            u_k1.x.array[:]=0.0
-            p_k = S.p_wedge.copy()
-            p_k1 = S.p_wedge.copy() 
-            
-            res  = 1.0 
-            it_inner   = 0 
-            while (res > ctrl.tol_innerPic) and it_inner < ctrl.it_inner_max: 
-                time_ita = timing.time()
-                if it_inner>0: 
-                    a1,_,_, _,a_p = self.set_linear_picard(u_k,
-                                                         S.t_owedge,
-                                                         S.p_lwedge
-                                                         ,D
-                                                         ,FGW
-                                                         ,ctrl
-                                                         ,sc
-                                                         ,it = it
-                                                         ,ts = ts
-                                                         ,slab =0)
-                    
-                    a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)
-                
-                u_k1, p_k1  = self.solve_linear_picard(dolfinx.fem.form(a)
-                                                            ,dolfinx.fem.form(a_p0)
-                                                            ,dolfinx.fem.form(L)
-                                                            ,ctrl,
-                                                            u_k,
-                                                            p_k,
-                                                            it
-                                                            ,ts)
-                
-                tol_u = compute_residuum(u_k1,u_k)
-
-                tol_p = compute_residuum(p_k1,p_k)
-                
-                rmom, rdiv = self.compute_residuum_stokes(u_k1
-                                                                  ,p_k1
-                                                                  ,D
-                                                                  ,S.t_owedge
-                                                                  ,S.p_lwedge
-                                                                  ,FGW
-                                                                  ,sc)
-                
-                if it_inner == 0:
-                    rmom_0 = rmom
-                    rdiv_0 = rdiv
-
-                
-                                
-                res   = np.sqrt(tol_u**2+tol_p**2)
-                                
-                u_k = update_solution(u_k1,u_k1,ctrl.relax)
-                p_k =  update_solution(p_k1,p_k1,ctrl.relax)
-                
-                
-                u_k.x.scatter_forward()
-                p_k.x.scatter_forward()
-                
-                time_itb = timing.time()
-
-                print_ph(f'              []Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
-                print_ph(f'                         [x] |F^mom|/|F^mom_0| {rmom/rmom_0:.3e}, |F^div|/|F^div_0| {rdiv/rdiv_0:.3e}')
-                print_ph(f'                         [x] |F^mom|           {rmomesh:.3e},         |F^div| {rdiv:.3e}')
-                it_inner = it_inner+1 
-        
-            print_ph(f'              []Wedge L_2 norm is   {res:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
-            print_ph(f'                         [?] |F^mom|L2/|F^mom_0|L2 {rmom/rmom_0:.3e}, |F^div|L2/|F^div_0|L2 {rdiv/rdiv_0:.3e}')
-            print_ph(f'                         [?] |F^mom|L2           {rmomesh:.3e}, abs div residuum |F^div|L2 {rdiv:.3e}')
-            print_ph('              []Converged ')
-
-            S.u_wedge = u_k.copy()
-            S.p_wedge = p_k.copy() 
-        
-        time_B = timing.time()
-        print_ph(f'              // -- // --- Solution of Wedge in {time_B-time_A:.2f} sec // -- // --- >')
-        print_ph('')
-
-        return S 
+        return sol
     
 
 
@@ -1634,8 +1617,6 @@ class Slab(Stokes_Problem):
         super().__init__(mesh=mesh,elements=elements,name=name,ctrl_sim=ctrl_sim,pdb=pdb)
     
     def setdirichlecht(self
-                       ,ctrl : NumericalControls
-                       ,D : Domain
                        ,it : int = 0
                        ,ts:int = 0)-> list:
         """Set Dirichlet boundary condition (Subducting plate domain)
@@ -1664,15 +1645,15 @@ class Slab(Stokes_Problem):
         
         if (it == 0 or ts == 0 ):
         
-            self.moving_wall_ref = self.compute_moving_wall(D,ctrl,'top_subduction')
+            self.moving_wall_ref = self.compute_moving_wall('top_subduction')
 
         
         # Update the velocity field of the moving wall according to the current velocity of the slab.
-        self.moving_wall.x.array[:] = self.moving_wall_ref.x.array[:] * ctrl.v_s[0] 
+        self.moving_wall.x.array[:] = self.moving_wall_ref.x.array[:] * self.ctrl_sim.ctrl_ky.v_s[0] 
         self.moving_wall.x.scatter_forward()
         # locate the dofs on the slab boundary and create dirichlet bc for them.
-        dofs_s_x = dolfinx.fem.locate_dofs_topological(self.F0.sub(0), fdim, D.facets.find(D.bc_dict['top_subduction']))
-        dofs_s_y = dolfinx.fem.locate_dofs_topological(self.F0.sub(1), fdim, D.facets.find(D.bc_dict['top_subduction']))
+        dofs_s_x = dolfinx.fem.locate_dofs_topological(self.F0.sub(0), fdim, self.domain.facets.find(self.domain.bc_dict['top_subduction']))
+        dofs_s_y = dolfinx.fem.locate_dofs_topological(self.F0.sub(1), fdim, self.domain.facets.find(self.domain.bc_dict['top_subduction']))
         # create the dirichlet bc for the slab boundary using the computed velocity field of the moving wall.
         bcx = dolfinx.fem.dirichletbc(self.moving_wall.sub(0), dofs_s_x)
         bcy = dolfinx.fem.dirichletbc(self.moving_wall.sub(1), dofs_s_y)
@@ -1681,15 +1662,12 @@ class Slab(Stokes_Problem):
                 
     #-------------------------------------------------------------------
     def compute_nitsche_FS(self
-                           ,D:Domain
-                           ,S:Solution
+                           ,sol:Solution
                            ,dS:ufl.measure.Measure  
                            ,a1:ufl.form.Form
                            ,a2:ufl.form.Form
                            ,a3:ufl.form.Form
-                           ,FGS:Functions_material_properties_global
                            ,gamma:float
-                           ,sc:Scal
                            ,it:int = 0)->tuple([ufl.form.Form,ufl.form.Form,ufl.form.Form]):
 
         """Update the fem form to integrate the weak formulation of free slip boundary condition
@@ -1712,12 +1690,12 @@ class Slab(Stokes_Problem):
         
         
         # Linear 
-        e   = compute_strain_rate(S.u_slab)   
+        e   = compute_strain_rate(sol.u_slab)   
         # Viscosity computation
-        eta = compute_viscosity_FX(e,S.t_oslab,S.p_lslab,FGS,sc)
+        eta = compute_viscosity_FX(e,sol.t_oslab,sol.p_lslab,self.pdb,self.cached_mat)
         # Extract the facet normal and the cell diameter for the mesh to compute the Nitsche terms.
-        n = ufl.FacetNormal(D.mesh)
-        h = ufl.CellDiameter(D.mesh)
+        n = ufl.FacetNormal(self.domain.mesh)
+        h = ufl.CellDiameter(self.domain.mesh)
         # Update the forms with the Nitsche terms.
         a1 += (
             - ufl.inner(tau(eta, self.trial0), ufl.outer(ufl.dot(self.test0, n) * n, n)) * self.ds(dS)
@@ -1735,13 +1713,8 @@ class Slab(Stokes_Problem):
         return a1, a2, a3 
     #-------------------------------------------------------------------
     def Solve_the_Problem(self
-                          ,S:Solution
-                          ,ctrl:NumericalControls
-                          ,FGS:Functions_material_properties_global
-                          ,D:Domain
-                          ,g:dolfinx.fem.Function
-                          ,sc:Scal
-                          ,it=0
+                          ,sol:Solution
+                          ,it_outer=0
                           ,ts=0):
 
         
@@ -1764,48 +1737,42 @@ class Slab(Stokes_Problem):
             self.moving_wall_ref = dolfinx.fem.Function(self.V_subs)
             
         # Create the linear problem
-        a1,a2,a3, L, a_p = self.set_linear_picard(S.u_slab
-                                                  ,S.t_oslab
-                                                  ,S.p_lslab
-                                                  ,D
-                                                  ,FGS
-                                                  ,ctrl
-                                                  ,sc)
+        a1,a2,a3, L, a_p = self.set_linear_picard(vel = sol.u_slab
+                                                  ,temp = sol.t_oslab
+                                                  ,pres_l = sol.p_lslab
+                                                  ,it = it_outer
+                                                  ,ts = ts
+                                                  ,slab = 1)
 
         # Create the dirichlecht boundary condition 
-        self.bc   = self.setdirichlecht(ctrl
-                                        ,D) 
+        self.bc   = self.setdirichlecht() 
         # Set Nietsche FS boundary condition 
-        dS_bot = D.bc_dict["bot_subduction"]
+        dS_bot = self.domain.bc_dict["bot_subduction"]
         # 1 Extract ds 
-        a1,a2,a3 = self.compute_nitsche_FS(D
-                                           ,S
-                                           ,dS_bot
-                                           ,a1
-                                           ,a2
-                                           ,a3
-                                           ,FGS
-                                           ,50.0
-                                           ,sc)
+        a1,a2,a3 = self.compute_nitsche_FS(sol=sol
+                                           ,dS=dS_bot
+                                           ,a1=a1
+                                           ,a2=a2
+                                           ,a3=a3
+                                           ,gamma=50.0
+                                           ,it=it_outer)
                 
         a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)
         time_A = timing.time()
-        S.u_slab,S.p_slab =  self.solve_linear_picard(dolfinx.fem.form(a)
-                                                         ,dolfinx.fem.form(a_p0)
-                                                         ,dolfinx.fem.form(L)
-                                                         ,ctrl
-                                                         ,S.u_slab
-                                                         ,S.p_slab
-                                                         ,it
-                                                         ,ts
+        sol.u_slab,sol.p_slab =  self.solve_linear_picard(a=dolfinx.fem.form(a)
+                                                         ,a_p0=dolfinx.fem.form(a_p0)
+                                                         ,L=dolfinx.fem.form(L)
+                                                         ,u=sol.u_slab
+                                                         ,p=sol.p_slab
+                                                         ,it=it_outer
+                                                         ,ts = ts
                                                          ,slab=1)
 
         
         time_B = timing.time()
-        print_ph(f'              // -- // --- Solution of Stokes problem in {time_B-time_A:.2f} sec // -- // --->')
-        print_ph(f'')
+        print_ph(f'              || -- || --- Solution of Stokes problem in {time_B-time_A:.2f} sec || -- || ---||')
 
-        return S 
+        return sol
     
 #-------------------------------------------------------------------
 #-------------------------------------------------------------------

@@ -9,7 +9,6 @@ from pathlib import Path
 import yaml
 from dataclasses import dataclass, field, asdict,InitVar
 from numba import njit
-from stonedfenicsx.config.scal import Scal
 
 #TO DO in the future. 
 #The jit class is a pain in the ass. I used to use the numba routine for creating the left boundary condition and right 
@@ -377,7 +376,7 @@ class PhaseDataBase:
         self.r_wz = 0.0
         self.eta_wz    = 0.0
         self.phi = 0.0
-        self.cohesion  = 0.0
+        self.tau_min  = 0.0
 # ---
 # ---
 def generate_phase(pdb:PhaseDataBase,
@@ -555,13 +554,15 @@ def generate_phase(pdb:PhaseDataBase,
     return pdb
 
 
-def generate_phase_database(pressure_dependency:int,eta_max:float, phin:PhInput, sc:Scal) -> PhaseDataBase:
+def generate_phase_database(pressure_dependency:int,eta_max:float, phin:PhInput,scal_temp:float,scal_press:float) -> PhaseDataBase:
     """_summary_
 
     Args:
         pressure_dependency (int): deactivate the pressure dependency
         eta_max (float): maximum viscosity
         phin (PhInput): data class containing the information of the input phases 
+        scal_temp (float): temperature scaling factor
+        scal_press (float): pressure scaling factor
 
     Returns:
         PhaseDataBase: data class that contains the information of the phases. 
@@ -693,8 +694,8 @@ def generate_phase_database(pressure_dependency:int,eta_max:float, phin:PhInput,
         pdb=pdb,
     )
     # update the scaling for later usage
-    pdb.temp_scal = sc.temp
-    pdb.pres_scal = sc.stress
+    pdb.temp_scal = scal_temp
+    pdb.pres_scal = scal_press
     
     return pdb
 
@@ -716,7 +717,6 @@ def fill_up_weakzone_data(ch:float = 10e6
     """
 
 
-    pdb.cohesion = ch
     pdb.eta_wz = eta_wz
     rheo = read_rheology(dislocation_creep,1)
     pdb.edis_wz = rheo.e
@@ -730,7 +730,7 @@ def fill_up_weakzone_data(ch:float = 10e6
     if dislocation_creep == 'Constant':
         pdb.vis_con_fl = 1
     pdb.phi = phi
-    pdb.cohesion = ch
+    pdb.tau_min = ch
     return pdb
 
 @dataclass(slots=True)

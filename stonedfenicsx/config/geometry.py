@@ -3,7 +3,13 @@ import dolfinx
 import numpy as np
 from numpy.typing import NDArray
 from mpi4py import MPI
+import basix 
+    
+_ELEMENT_P           = basix.ufl.element("Lagrange","triangle", 1) 
 
+_ELEMENT_PT          = basix.ufl.element("Lagrange","triangle",2)
+
+_ELEMENT_V           = basix.ufl.element("Lagrange","triangle",2,shape=(2,))
 #------------------------------------------------------------------------------------------------
 @dataclass(slots=True)
 class Domain:
@@ -64,6 +70,7 @@ class Domain:
     bc_dict: dict = field(default_factory=dict)
     solph: dolfinx.fem.FunctionSpace = None
     phase: dolfinx.fem.Function = None
+    comm: MPI.Intracomm = None
 #---------------------------------------------------------------------------------------------------
 @dataclass(slots=True)
 class GeomInput:
@@ -170,7 +177,7 @@ class Mesh:
     crust_domain : Domain
     comm : MPI.Intracomm
     rank : int
-    element_p  : object
-    element_pt : object
-    element_v  : object
+    element_p  = _ELEMENT_P
+    element_pt = _ELEMENT_PT
+    element_v  = _ELEMENT_V
 #-----------------------------------------------------------------------------------------------------------------

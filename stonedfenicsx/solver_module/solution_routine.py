@@ -6,42 +6,36 @@ from stonedfenicsx.config.geometry import Mesh
 from stonedfenicsx.config.scal import Scal
 from stonedfenicsx.config.phase_db import PhaseDataBase
 # --- 
-from stonedfenicsx.utils import interpolate_from_sub_to_main, time_the_time,timing_function,print_ph
+from stonedfenicsx.utils import interpolate_from_sub_to_main,timing,print_ph
 from stonedfenicsx.solver_module.solver_utilities import compute_residuum_outer
 from stonedfenicsx.solver_module.problems_solution import Solution, Slab, Wedge, Global_thermal, Global_pressure
-# ---
-import ufl 
-import dolfinx 
-import mpi4py as MPI
-import petsc4py as petsc 
-# --- 
+from stonedfenicsx.output import OUTPUT
 
-
-def initialise_the_simulation(ctrl_sim:SimulationControls
-                              ,pdb:PhaseDataBase
-                              ,mesh:Mesh)-> tuple[Solution,Global_pressure,Global_pressure,Wedge,Slab]:
-    
+def initialise_the_simulation(ctrl_sim:SimulationControls = None
+                              ,pdb:PhaseDataBase = None
+                              ,mesh:Mesh = None
+                              )-> tuple[Solution,Global_thermal,Global_pressure,Wedge,Slab]:    
 
     
     element_p           = mesh.element_p#basix.ufl.element("Lagrange","triangle", 1) 
     
-    element_PT          = mesh.element_PT#basix.ufl.element("Lagrange","triangle",2)
+    element_PT          = mesh.element_pt#basix.ufl.element("Lagrange","triangle",2)
     
-    element_V           = mesh.element_V#basix.ufl.element("Lagrange","triangle",2,shape=(2,))
+    element_V           = mesh.element_v#basix.ufl.element("Lagrange","triangle",2,shape=(2,))
           
     # Define Problem
     # Global energy
-    energy_global = Global_thermal (mesh = mesh, name = ['energy','domainG']  , elements = (element_PT,), pdb = pdb, ctrl_sim = ctrl_sim)
+    energy_global = Global_thermal (mesh = mesh, name = ['energy','global_domain']  , elements = (element_PT,), pdb = pdb, ctrl_sim = ctrl_sim)
     energy_global.create_cached_material(True)
     # Global lithostatic pressure
-    lithostatic_pressure_global = Global_pressure(mesh = mesh, name = ['pressure','domainG'], elements = (element_PT,), pdb = pdb, ctrl_sim=ctrl_sim ) 
+    lithostatic_pressure_global = Global_pressure(mesh = mesh, name = ['pressure','global_domain'], elements = (element_PT,), pdb = pdb, ctrl_sim=ctrl_sim ) 
     lithostatic_pressure_global.create_cached_material(True)
     # Wedge stokes problem
-    wedge = Wedge(mesh =mesh, name = ['stokes','domainB'  ], elements = (element_V,element_p,element_PT), pdb = pdb,ctrl_sim=ctrl_sim)
+    wedge = Wedge(mesh =mesh, name = ['stokes','wedge_domain'  ], elements = (element_V,element_p,element_PT), pdb = pdb,ctrl_sim=ctrl_sim)
     wedge.create_cached_material(False)
     # Slab stokes problem
-    slab = Slab(mesh = mesh, name = ['stokes','domainA'  ], elements = (element_V,element_p,element_PT),pdb=pdb,ctrl_sim=ctrl_sim)
-    wedge.create_cached_material(False)
+    slab = Slab(mesh = mesh, name = ['stokes','subduction_plate_domain'], elements = (element_V,element_p,element_PT),pdb=pdb,ctrl_sim=ctrl_sim)
+    slab.create_cached_material(False)
 
     # Define Solution 
     # Create instance of solution.
@@ -75,7 +69,7 @@ def outerloop_operation(ctrl_sim:SimulationControls,
     
     while it_outer < ctrl_sim.ctrl.it_max and res > ctrl_sim.ctrl.tol: 
         
-        print_ph(f'   // -- // --- Outer iteration {it_outer:d} for the coupled problem // -- // --- > ')
+        print_ph(f'   || -- || --- Outer iteration {it_outer:d} for the coupled problem || -- || --- || ')
         
         time_A_outer = timing.time()
         # Copy the old solution of the outer loop for computing the residual of the equations. 
@@ -108,7 +102,7 @@ def outerloop_operation(ctrl_sim:SimulationControls,
 
         if (ts == 0 and it_outer==0) or (it_outer == 0 and ctrl_sim.ctrl_ky.constant == 0): 
             sol = sl.Solve_the_Problem(sol,
-                                   it = it_outer,
+                                   it_outer = it_outer,
                                    ts=ts)
 
         if (we.typology == 'NonlinearProblem') or (we.typology == 'NonlinearProblemT') or (it_outer == 0):  
@@ -139,20 +133,20 @@ def outerloop_operation(ctrl_sim:SimulationControls,
                             ,ts = ts)
         
         # Compute residuum 
-        res,sol = compute_residuum_outer(sol
-                                     ,T_kouter
-                                     ,PL_kouter
-                                     ,u_global_kouter
-                                     ,p_global_kouter
-                                     ,it_outer
-                                     ,sc
-                                     ,time_A_outer
-                                     ,ctrl.Tmax
-                                     ,ts
-                                     ,ctrl)
+        res,sol = compute_residuum_outer(sol=sol
+                                     ,T=T_kouter
+                                     ,PL=PL_kouter
+                                     ,u=u_global_kouter
+                                     ,p=p_global_kouter
+                                     ,it_outer=it_outer
+                                     ,sc=sc
+                                     ,time_A_outer=time_A_outer
+                                     ,ts=ts
+                                     ,ctrl_sim=ctrl_sim
+                                    )
 
 
-        print_ph('   // -- // :( --- ------- ------- ------- :) // -- // --- > ')
+        print_ph('|| --- || --- || --- || --- || --- || --- || --- || --- || --- || --- || --- || --- || ')
 
             
         it_outer = it_outer + 1
@@ -172,7 +166,7 @@ def time_loop(ctrl_sim:SimulationControls
               ,sc: Scal
              ) -> None:
 
-    if ctrl.steady_state == 1:
+    if ctrl_sim.ctrl.steady_state == 1:
         print_ph('|| --- || --- || Steady State solution || -- || --- || ')
     else:
         print_ph('|| --- || --- || Time Dependent solution || -- || --- || ')
@@ -181,14 +175,14 @@ def time_loop(ctrl_sim:SimulationControls
         
     t  = 0.0 
     ts = 0 
-    output_class  = OUTPUT(mesh.domainG, ioctrl, ctrl, sc)
+    output_class  = OUTPUT(domain=eg.domain,ctrl_sim=ctrl_sim,sc=sc,pdb=pdb,cach_mat_thermal=eg.cached_mat,comm=eg.domain.mesh.comm)
     
     
     while t<ctrl_sim.ctrl.time_max: 
         
         if ctrl_sim.ctrl.steady_state==0:
-            print_ph(f'Time = {t*sc.T/sc.scale_Myr2sec:.3f} Myr, timestep = {ts:d}')
-            print_ph('================ // =====================')
+            print_ph(f'Time = {t*sc.temp/sc.scale_Myr2sec:.3f} Myr, timestep = {ts:d}')
+            print_ph('||================ || =====================||')
             
 
         if ctrl_sim.ctrl_tbc.constant == 0: 
@@ -196,39 +190,41 @@ def time_loop(ctrl_sim:SimulationControls
             ctrl_sim.ctrl_tbc.update_1d_vector_left()
 
             
-        if ctrl_sim.ctrl_ky.constant_vel == 0: 
+        if ctrl_sim.ctrl_ky.constant == 0: 
             ctrl_sim.ctrl_ky.update_vel_age(t)
 
             
             
    
         # Prepare variable
-        sol = outerloop_operation(eg
-                                  ,lg
-                                  ,we
-                                  ,sl
-                                  ,sol
-                                  ,pdb
+        sol = outerloop_operation(ctrl_sim=ctrl_sim
+                                  ,sc=sc
+                                  ,eg=eg
+                                  ,lg=lg
+                                  ,we=we
+                                  ,sl=sl
+                                  ,sol=sol
+                                  ,pdb=pdb
                                   ,ts=ts)
 
 
 
-        if ctrl.steady_state == 1 or (ts%10) == 0:
+        if ctrl_sim.ctrl.steady_state == 1 or (ts%10) == 0:
             print_ph('OUTPUT...')
-            output_class.print_output(sol,mesh.domainG,FGT,FGGR,ioctrl,sc,ctrl,it_outer=0,time=t*sc.T/sc.scale_Myr2sec,ts=ts)
+            output_class.print_output(sol=sol,ctrl_sim=ctrl_sim,sc=sc,ts=ts,it_outer=0,time=t*sc.temp/sc.scale_Myr2sec)
             print_ph('finished')
 
         
     
         
-        if ctrl.steady_state == 1: 
+        if ctrl_sim.ctrl.steady_state == 1: 
             print_ph('End Steady State solution, printing the benchmarks')
-            t = ctrl.time_max
-            if ctrl.van_keken == 1: 
+            t = ctrl_sim.ctrl.time_max
+            if ctrl_sim.ctrl.van_keken == 1: 
                 from stonedfenicsx.output import _benchmark_van_keken
-                _benchmark_van_keken(sol,ioctrl,sc)
+                _benchmark_van_keken(sol,ctrl_sim.ctrl_io,sc)
 
-        t = t+ctrl.dt
+        t = t+ctrl_sim.ctrl.dt
             
     
         sol.T_O = sol.T_N
@@ -261,11 +257,12 @@ def solution_routine(ctrl_sim:SimulationControls
     """
 
     # Initialise
-    sol,eg,lg,we,sl =initialise_the_simulation(ctrl_sim,pdb,mesh)                # Scaling 
+    sol,eg,lg,sl,we =initialise_the_simulation(ctrl_sim=ctrl_sim,pdb=pdb,mesh=mesh)                # Scaling 
     
     # Time Loop 
     
-    time_loop(eg = eg
+    time_loop(ctrl_sim=ctrl_sim
+              ,eg = eg
               ,lg = lg
               ,we = we
               ,sl = sl 

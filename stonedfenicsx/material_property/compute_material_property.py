@@ -3,7 +3,6 @@
 from stonedfenicsx.config.phase_db import PhaseDataBase
 from stonedfenicsx.config.scal import Scal
 from ufl import cos, sin, tan, conditional, eq,exp, sqrt,inner
-import petsc4py 
 import ufl
 import dolfinx.fem as fem 
 import numpy as np 
@@ -92,7 +91,7 @@ class THERMALCACHED(MATERIALS):
         self.k_e= fem.Function(ph_fs)  
         self.k_f= fem.Function(ph_fs)
         self.k0.x.array[:] =  pdb.k0[ph]
-        self.rg_cached.x.array[:] =  pdb.radio_flag[ph]
+        self.rg_cached.x.array[:] =  pdb.radiative_conductivity[ph]
         self.k_a.x.array[:] = pdb.k_a[ph]
         self.k_b.x.array[:] = pdb.k_b[ph]
         self.k_c.x.array[:] = pdb.k_c[ph]
@@ -351,8 +350,8 @@ def compute_viscosity_FX(e:fem.Expression
     
     # Eta max 
     # strain indipendent  
-    cdf = rg_cached.b_dif * exp(-(rg_cached.e_dif + pres_in * pdb.pres_scal * rg_cached.v_dif) / (rg_cached.gas_constant * temp_in * sc.temp))
-    cds = rg_cached.b_dis * exp(-(rg_cached.e_dis + pres_in * pdb.pres_scal * rg_cached.v_dis) / (rg_cached.gas_constant * temp_in * sc.temp))
+    cdf = rg_cached.b_dif * exp(-(rg_cached.e_dif + pres_in * pdb.pres_scal * rg_cached.v_dif) / (rg_cached.gas_constant * temp_in * pdb.temp_scal))
+    cds = rg_cached.b_dis * exp(-(rg_cached.e_dis + pres_in * pdb.pres_scal * rg_cached.v_dis) / (rg_cached.gas_constant * temp_in * pdb.temp_scal))
     # compute tau guess
     n_co  = (1-rg_cached.n)/rg_cached.n
     n_inv = 1/rg_cached.n 
@@ -378,7 +377,7 @@ def compute_plastic_strain(e_ii:fem.Expression
                            ,temp_in:fem.Function
                            ,pres_in:fem.Function
                            ,pdb:PhaseDataBase
-                           )->tuple[ufl.fem.Expression, ufl.fem.Expression]:
+                           )->tuple[fem.Expression, fem.Expression]:
     """_summary_
 
     Args:

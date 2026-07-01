@@ -45,7 +45,7 @@ def configure_simulation(
     # Generate the phase data base
     pdb = generate_phase_database(
         pressure_dependency=ctrl.pressure_dependency, eta_max=ctrl.eta_max, phin=ph_in
-    )
+    ,scal_temp=sc.temp, scal_press=sc.stress)
 
     # Merge the controls into simulation controls
     ctrl_sim = SimulationControls()
@@ -113,6 +113,3 @@ def test_configure() -> int:
     return 0
 
 
-if __name__ == "__main__":
-
-    test_configure()

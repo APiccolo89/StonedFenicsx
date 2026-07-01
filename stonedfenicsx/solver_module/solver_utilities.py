@@ -1,4 +1,5 @@
 # --- 
+from __future__ import annotations
 import numpy as np 
 import dolfinx.fem as fem 
 import dolfinx 
@@ -11,12 +12,10 @@ from numpy.typing import NDArray
 from stonedfenicsx.config.scal import Scal
 from stonedfenicsx.config.numerical_control import SimulationControls
 from stonedfenicsx.config.geometry import GeomInput
-from stonedfenicsx.solver_module.problems_solution import Solution
 from stonedfenicsx.utils import print_ph, timing
-
-
-
-
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from stonedfenicsx.solver_module.problems_solution import Solution
 
 #-------------------------------------------------------------------------       
 def decoupling_function(z: np.ndarray, fun: dolfinx.fem.Function, g_input: GeomInput)-> dolfinx.fem.Function:
