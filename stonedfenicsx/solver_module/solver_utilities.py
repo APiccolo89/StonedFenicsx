@@ -1,19 +1,34 @@
-from stonedfenicsx.utils import *
-from stonedfenicsx.package_import import *
-from stonedfenicsx.scal import Scal
+# --- 
+import numpy as np 
+import dolfinx.fem as fem 
+import dolfinx 
+import ufl
+from mpi4py import MPI
+from petsc4py import PETSc
+from numpy.typing import NDArray
+
+# --- 
+from stonedfenicsx.config.scal import Scal
+from stonedfenicsx.config.numerical_control import SimulationControls
+from stonedfenicsx.config.geometry import GeomInput
+from stonedfenicsx.solver_module.problems_solution import Solution
+from stonedfenicsx.utils import print_ph, timing
+
+
+
+
 
 #-------------------------------------------------------------------------       
-def decoupling_function(z,fun,g_input):
-    """
-    Function explanation: 
-    [a]: z depth coordinate 
-    [b]: fun a function 
-    [c]: ctrl => deprecated 
-    [d]: D => deprecated 
-    [e]: g_input -> still here, geometric parameters
-    
-    
-    
+def decoupling_function(z: np.ndarray, fun: dolfinx.fem.Function, g_input: GeomInput)-> dolfinx.fem.Function:
+    """_summary_
+
+    Args:
+        z (np.ndarray): _description_
+        fun (dolfinx.fem.Function): _description_
+        g_input (GeomInput): _description_
+
+    Returns:
+        dolfinx.fem.Function: _description_
     """
     
     dc = g_input.decoupling
@@ -34,91 +49,23 @@ def decoupling_function(z,fun,g_input):
 
 #---------------------------------------------------------------------------------------------------          
 
-def L2_norm_calculation(f):
+def L2_norm_calculation(f:dolfinx.fem.Function) -> float:
     comm = f.function_space.mesh.comm
     local = fem.assemble_scalar(fem.form(ufl.inner(f, f) * ufl.dx))
     global_sq = comm.allreduce(local, op=MPI.SUM)
     return np.sqrt(global_sq)
 
-        
-#---------------------------------------------------------------------------------------------------       
-
-def compute_adiabatic_initial_adiabatic_contribution(M,T,Tgue,p,FG,vankeken): 
-    
-    from .compute_material_property import alpha_FX 
-    from .utils import evaluate_material_property
-    
-    
-    FS = T.function_space 
-    Tg = fem.Function(FS)
-    Tg = T.copy()
-    v  = ufl.TestFunction(FS)
-
-
-    if vankeken==0:
-        
-        res = 1
-        while res > 1e-6:
-        
-            expr = (alpha_FX(FG,Tg,p) * p)/(heat_capacity_FX(FG,Tg) * density_FX(FG,Tg,p))
-            a = T * ufl.exp(expr)
-            TG1 = evaluate_material_property(a,FS)
-            res = compute_residuum(TG1,Tg)
-            Tg.x.array[:]  = 0.8*(TG1.x.array[:])+(1-0.8)*Tg.x.array[:]
-            
-
-            
-        
-    else: 
-        from .utils import evaluate_material_property
-        expr = (alpha_FX(FG,Tg,p) * p)/(heat_capacity_FX(FG,Tg) * density_FX(FG,Tg,p))
-        F = T * ufl.exp(expr)
-        Tg = evaluate_material_property(F,FS)
-
-    
-    return Tg
-    
-    
-
-def initial_adiabatic_lithostatic_thermal_gradient(sol,lps,FGpdb,M,g,it_outer,ctrl):
-    res = 1 
-    it = 0
-    T_0 = sol.T_O.copy()
-    T_Oa = sol.T_O.copy()
-    while res > 1e-3: 
-        P_old = sol.PL.copy()
-        sol = lps.Solve_the_Problem(sol,ctrl,FGpdb,M,g,it_outer,ts=0)
-        T_O = compute_adiabatic_initial_adiabatic_contribution(M.domainG,T_0,T_Oa,sol.PL,FGpdb,ctrl.van_keken)
-        resp = compute_residuum(sol.PL,P_old)
-        resT = compute_residuum(T_O, T_Oa)
-        res = np.sqrt(resp**2 + resT**2)
-        if it !=0: 
-            sol.PL.x.array[:] = 0.8 * sol.PL.x.array[:] + (1-0.8) * P_old.x.array[:]
-            sol.PL.x.scatter_forward()
-            T_Oa.x.array[:]= T_O.x.array[:] * 0.8 + (1-0.8) * T_O.x.array[:]
-            sol.T_O.x.scatter_forward()
-        it = it + 1 
-        sol.T_O = T_Oa.copy()
-        print_ph('Adiabatic res is %.3e'%res)
-    
-    sol.T_i = T_O.copy()
-    sol.T_N = T_O.copy()
-    sol.T_O = T_O.copy()
-    return sol 
-
-#---------------------------------------------------------------------------------------------------
-#------------------------------------------------------------------------------------------------------------
-def compute_residuum_outer(sol
-                           ,T
-                           ,PL
-                           ,u
-                           ,p
-                           ,it_outer
-                           ,sc
-                           ,tA
-                           ,Tmax
-                           ,ts
-                           ,ctrl):
+def compute_residuum_outer(sol:Solution
+                           ,T:dolfinx.fem.Function
+                           ,PL:dolfinx.fem.Function
+                           ,u:dolfinx.fem.Function
+                           ,p:dolfinx.fem.Function
+                           ,it_outer:int
+                           ,sc:Scal
+                           ,tA:float
+                           ,ts:int
+                           ,ctrl_sim:SimulationControls
+                           ) -> tuple[float,Solution]:
     # Prepare the variables 
     
     res_u = compute_residuum(sol.u_global,u)
@@ -134,13 +81,13 @@ def compute_residuum_outer(sol
     
     # scal back 
     
-    minMaxU[0:2] = minMaxU[0:2]*(sc.L/sc.T)/sc.scale_vel 
+    minMaxU[0:2] = minMaxU[0:2]*(sc.length/sc.time)/sc.scale_vel 
     minMaxP = minMaxP*sc.stress/1e9 
-    minMaxT[0:2] = minMaxT[0:2]*sc.Temp -273.15
+    minMaxT[0:2] = minMaxT[0:2]*sc.temp -273.15
     minMaxPL = minMaxPL*sc.stress/1e9
  
     
-    if minMaxT[1]-(Tmax * sc.Temp-273.15)>1.0: 
+    if minMaxT[1]-(ctrl_sim.ctrl_tbc.temp_max * sc.temp-273.15)>1.0: 
         print_ph('Temperature higher than the maximum temperature')
     if minMaxT[0] < 0.0: 
         print_ph("Problem with the thermal solver")
@@ -172,9 +119,7 @@ def compute_residuum_outer(sol
     sol.mv = np.append(sol.mv,minMaxU[0])
     sol.Mv = np.append(sol.Mv,minMaxU[1])
     sol.RMSv = np.append(sol.RMSv,minMaxU[2])
-    
-    
-    
+
     sol.outer_iteration = np.append(sol.outer_iteration,res_total)
     sol.ts = np.append(sol.ts,ts)
     
@@ -216,7 +161,7 @@ def min_max_array(a:dolfinx.fem.function.Function
         NDArray[np.float64]: array containing min of a, max of a, RMS of a. 
     """
     
-    if vel == True: 
+    if vel: 
         a1 = a.sub(0).collapse()
         num_owned = a1.function_space.dofmap.index_map.size_local
 
