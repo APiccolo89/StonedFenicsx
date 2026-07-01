@@ -6,7 +6,7 @@ from stonedfenicsx.config.geometry import Mesh
 from stonedfenicsx.config.scal import Scal
 from stonedfenicsx.config.phase_db import PhaseDataBase
 # --- 
-from stonedfenicsx.utils import interpolate_from_sub_to_main, time_the_time,timing_function
+from stonedfenicsx.utils import interpolate_from_sub_to_main, time_the_time,timing_function,print_ph
 from stonedfenicsx.solver_module.solver_utilities import compute_residuum_outer
 from stonedfenicsx.solver_module.problems_solution import Solution, Slab, Wedge, Global_thermal, Global_pressure
 # ---
@@ -19,8 +19,7 @@ import petsc4py as petsc
 
 def initialise_the_simulation(ctrl_sim:SimulationControls
                               ,pdb:PhaseDataBase
-                              ,mesh:Mesh
-                              ,sc:Scal)-> tuple[Solution,Global_pressure,Global_pressure,Wedge,Slab]:
+                              ,mesh:Mesh)-> tuple[Solution,Global_pressure,Global_pressure,Wedge,Slab]:
     
 
     
@@ -166,35 +165,17 @@ def outerloop_operation(ctrl_sim:SimulationControls,
 def time_loop(ctrl_sim:SimulationControls
               ,eg : Global_thermal
               ,lg : Global_pressure
-              ,wg : Wedge 
+              ,we : Wedge 
               ,sl : Slab
               ,sol : Solution
               ,pdb: PhaseDataBase
+              ,sc: Scal
              ) -> None:
-    """time loop function
 
-    Args:
-        M (Mesh): _description_
-        ctrl (NumericalControls): _description_
-        ioctrl (IOControls): _description_
-        sc (Scal): _description_
-        lhs (ctrl_LHS): _description_
-        FGT (Functions_material_properties_global): _description_
-        FGWR (Functions_material_rheology): _description_
-        FGSR (Functions_material_rheology): _description_
-        FGGR (Functions_material_rheology): _description_
-        EG (Global_thermal): _description_
-        LG (Global_pressure): _description_
-        We (Wedge): _description_
-        Sl (Slab): _description_
-        sol (Solution): _description_
-        g (dolfinx.femesh.Function): _description_
-        t_ctrl (time_controls): _description_
-    """
     if ctrl.steady_state == 1:
-        print_ph('// -- // --- Steady   State  solution // -- // --- > ')
+        print_ph('|| --- || --- || Steady State solution || -- || --- || ')
     else:
-        print_ph('// -- // --- Time Dependent solution // -- // --- > ')
+        print_ph('|| --- || --- || Time Dependent solution || -- || --- || ')
 
          
         
@@ -222,22 +203,11 @@ def time_loop(ctrl_sim:SimulationControls
             
    
         # Prepare variable
-        sol = outerloop_operation(M
-                                  ,ctrl
-                                  ,ioctrl
-                                  ,sc
-                                  ,lhs
-                                  ,lhs_t.constant_vel
-                                  ,FGT
-                                  ,FGWR
-                                  ,FGSR
-                                  ,FGGR
-                                  ,EG
-                                  ,LG
-                                  ,We
-                                  ,Sl
+        sol = outerloop_operation(eg
+                                  ,lg
+                                  ,we
+                                  ,sl
                                   ,sol
-                                  ,g
                                   ,pdb
                                   ,ts=ts)
 
@@ -291,7 +261,7 @@ def solution_routine(ctrl_sim:SimulationControls
     """
 
     # Initialise
-    sol,eg,lg,we,sl =initialise_the_simulation(ctrl_sim,pdb,mesh,sc)                # Scaling 
+    sol,eg,lg,we,sl =initialise_the_simulation(ctrl_sim,pdb,mesh)                # Scaling 
     
     # Time Loop 
     
@@ -300,7 +270,8 @@ def solution_routine(ctrl_sim:SimulationControls
               ,we = we
               ,sl = sl 
               ,sol = sol 
-              ,pdb=pdb)
+              ,pdb=pdb
+              ,sc=sc)
     
     return 0 
 #--------------------------------------------------------------------------------------------
