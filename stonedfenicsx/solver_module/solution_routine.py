@@ -129,7 +129,7 @@ def outerloop_operation(ctrl_sim:SimulationControls,
         
         
         sol = eg.Solve_the_Problem(sol
-                            ,it = it_outer
+                            ,it_outer = it_outer
                             ,ts = ts)
         
         # Compute residuum 
