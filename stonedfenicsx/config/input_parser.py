@@ -12,7 +12,6 @@ from stonedfenicsx.config.phase_db import Phase,PhInput
 from stonedfenicsx.utils import timing_function
 from pathlib import Path
 from dataclasses import field, dataclass
-import numpy as np
 
 @dataclass(slots=True)
 class Input:

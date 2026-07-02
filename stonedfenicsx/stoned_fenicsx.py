@@ -29,6 +29,7 @@ def test_function():
     It creates a mock input and phase input, then calls the main function.
     """
     from stonedfenicsx.config.input_parser import  parse_input
+    from stonedfenicsx.config.config_utils import dict_shear_modes
     # Create a mock input
         # Find the main folder of the package
     pkg_root = Path(__file__)
@@ -68,6 +69,7 @@ def test_function():
     ph_in.overriding_lower_crust.radiogenic_heat = 0.5e-6
     ph_in.overriding_upper_crust.radiogenic_heat = 1.0e-6
     
+    input_data.ctrl.model_shear = dict_shear_modes["SelfConsistent"]
     
     stoned_fenicsx(input_data,ph_in)
     

@@ -5,7 +5,7 @@ from numpy.typing import NDArray
 from stonedfenicsx.config.geometry import GeomInput
 # --- #
 # --- #
-
+dict_shear_modes = {"NoShear": 0, "SelfConsistent": 1, "Constant": 2}
 @dataclass(slots=True)
 class NumericalControls:#ctrl 
     """Numerical controls: class that stores the numerical control required for the simulation.

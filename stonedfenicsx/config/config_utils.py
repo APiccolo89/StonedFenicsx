@@ -1,9 +1,9 @@
-
 import numpy as np
 from typing import get_type_hints, get_origin, get_args
 
 
-dict_options = {"NoShear": 0, "SelfConsistent": 1}
+
+dict_shear_modes = {"NoShear": 0, "SelfConsistent": 1, "Constant": 2}
 dict_stokes = {"Direct": np.int32(1), "Iterative": np.int32(0)}
 # -----------------------------------------------------------------------------------
 def correct_input(k: str, v: str) -> int | float | str:
@@ -23,7 +23,7 @@ def correct_input(k: str, v: str) -> int | float | str:
         v(int|float|str): transformed value. 
     """
     if k == "model_shear":
-        v = dict_options[v]
+        v = dict_shear_modes[v]
     elif k in ("stokes_solver_type", "energy_solver_type"):
         v = dict_stokes[v]
 

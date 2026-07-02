@@ -108,9 +108,6 @@ def compute_residuum_outer(sol:Solution
     print_ph('. =============================================// -- // --->')
     print_ph('')
     
-    #sol.T_N = update_solution(sol.T_N,T,ctrl.relax)
-    #sol.u_global = update_solution(sol.u_global,u,ctrl.relax)
-
     sol.mT = np.append(sol.mT,minMaxT[0])
     sol.MT = np.append(sol.MT,minMaxT[1])
     sol.RMST = np.append(sol.RMST,minMaxT[2])

@@ -127,7 +127,6 @@ def outerloop_operation(ctrl_sim:SimulationControls,
                                                     ,sol.p_slab
                                                     ,sl.domain.cell_par)
         
-        
         sol = eg.Solve_the_Problem(sol
                             ,it_outer = it_outer
                             ,ts = ts)
@@ -140,7 +139,7 @@ def outerloop_operation(ctrl_sim:SimulationControls,
                                      ,p=p_global_kouter
                                      ,it_outer=it_outer
                                      ,sc=sc
-                                     ,time_A_outer=time_A_outer
+                                     ,tA=time_A_outer
                                      ,ts=ts
                                      ,ctrl_sim=ctrl_sim
                                     )
@@ -211,7 +210,7 @@ def time_loop(ctrl_sim:SimulationControls
 
         if ctrl_sim.ctrl.steady_state == 1 or (ts%10) == 0:
             print_ph('OUTPUT...')
-            output_class.print_output(sol=sol,ctrl_sim=ctrl_sim,sc=sc,ts=ts,it_outer=0,time=t*sc.temp/sc.scale_Myr2sec)
+            output_class.print_output(sol=sol,ctrl_sim=ctrl_sim,sc=sc,ts=ts,it_outer=0,time=t*sc.temp/sc.scale_myr2sec)
             print_ph('finished')
 
         
@@ -220,7 +219,7 @@ def time_loop(ctrl_sim:SimulationControls
         if ctrl_sim.ctrl.steady_state == 1: 
             print_ph('End Steady State solution, printing the benchmarks')
             t = ctrl_sim.ctrl.time_max
-            if ctrl_sim.ctrl.van_keken == 1: 
+            if eg.g_input.van_keken == 1: 
                 from stonedfenicsx.output import _benchmark_van_keken
                 _benchmark_van_keken(sol,ctrl_sim.ctrl_io,sc)
 
