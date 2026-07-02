@@ -269,7 +269,7 @@ def time_loop(ctrl_sim:SimulationControls
     while t<ctrl_sim.ctrl.time_max: 
         
         if ctrl_sim.ctrl.steady_state==0:
-            print_ph(f'Time = {t*sc.temp/sc.scale_Myr2sec:.3f} Myr, timestep = {ts:d}')
+            print_ph(f'Time = {t*sc.temp/sc.scale_myr2sec:.3f} Myr, timestep = {ts:d}')
             print_ph('||================ || =====================||')
             
 
