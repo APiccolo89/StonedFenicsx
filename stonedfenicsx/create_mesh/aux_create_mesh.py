@@ -4,6 +4,8 @@ import numpy as np
 from numpy import ndarray
 import dolfinx
 from petsc4py import PETSc
+from Pathlib import Path
+from numpy.typing import NDArray
 
 #---------------------------------------------------------
 
@@ -369,7 +371,7 @@ def find_tag_line(coord:ndarray,
         a = 1 
     
     i = np.where(coord[a,:]==-x)
-    i = i[0][0];
+    i = i[0][0]
     i = coord[2,i]
     
     return np.int32(i)                 
@@ -419,22 +421,29 @@ def find_slab_surface(g_input:GeomInput)->tuple([ndarray[float],ndarray[float]])
     """
 
  
-    if g_input.slab_type == 'Custom':
-        def wrapper_ribe(g_input):
-            def f(x):
-                return compute_bending_angle(g_input, x)
-            return f 
-        
-        f_ribe = wrapper_ribe(g_input)
+    if g_input.slab_type in ('CustomRibe','CustomParabolic'):
+        if g_input.slab_type == 'CustomRibe':
+            def wrapper_ribe(g_input):
+                def f(x):
+                    return compute_bending_angle(g_input, x)
+                return f 
+            f_ribe = wrapper_ribe(g_input)
 
-        slab_top,theta_mean, _ = create_slab_surface(f_ribe,g_input.y[0],stp = g_input.sub_dl)
-            
-    else: 
+            slab_top,theta_mean, _ = create_slab_surface(f_ribe,g_input.y[0],stp = g_input.sub_dl)
+        else: 
+            slab_top,theta_mean, _ = create_slab_surface_parabolic(g_input.y[0])            
+    elif g_input.slab_type == 'FromFile': 
         from .read_slab_surface import read_file_slab
         
+        path2subduction = Path(g_input.sub_path)
+        if not path2subduction.is_file():
+            raise ValueError('The txt file of subduction does not exist, please change the path.')
+        # TO DO: DIVIDE THE READING WITH THE POST_PROCESSING!!!
         slab_top, theta_mean = read_file_slab(g_input.sub_path)
         g_input.y[0] = np.min(slab_top[:,1])
-                
+    else: 
+        raise ValueError(f"Slab surface method '{g_input.slab_type}' is not implemented. Please choose 'CustomRibe', 'CustomParabolic', or 'FromFile'.")    
+            
     return slab_top, theta_mean
 #-----------------------------------------------------------------------------------------------------------
 def create_slab_surface(f:callable, y_min:float,stp=float,depth:float=0.0)->tuple[ndarray[float],ndarray[float]]:
@@ -673,13 +682,13 @@ def generate_parallel_layer_subducting_plate(sx:ndarray[np.float64],
 #-----------------------------------------------------------------------------------------------------------------
   
 def _find_e_node(ax:ndarray[np.float64],ay:ndarray[np.float64],t:ndarray[np.float64],lt:float,flag=False):
-    if lt == 0.0 and flag == False: 
+    if lt == 0.0 and not flag: 
     
         return [],[]
     
     for i in range (0,len(ax)-1):
     
-        if flag == False: 
+        if not flag: 
             a = i 
             b = i+1 
         else: 
@@ -899,3 +908,40 @@ def assign_phases(dict_surf:dict,
     
     return phase
 #---------------------------------------------------------------------------------------------------------------
+def create_slab_surface_parabolic(g_input:GeomInput):
+    
+    z = np.linspace(0,np.abs(g_input.z[0]),num=np.ceil(np.abs(g_input.z[0])/g_input.sub_dl))
+    
+    x = np.abs(np.sqrt(z/g_input.sub_a_parabolic))
+    # Compute the dip angle (radians)
+    dip = compute_dip(x,z) # len = len(x)-1
+    # Compute the cumulative distance
+    x,z,dist = cumulative_distance(x,z)# len = len(x)-1
+    # Create the main vector
+    crd = np.zeros([2,len(x)],dtype=np.float32)
+    dip = dip 
+    length = dist 
+    # Correct the coordinate 
+    # -> Necessary because the new x,z has as initial coordinate (x[0]+x[1])/2
+    crd[0,:] = -(x - x[0]) 
+    crd[1,:] = -(z - z[0]) 
+    
+    return crd,dip,length
+
+
+def cumulative_distance(x:NDArray[np.float32],z:NDArray[np.float32])->tuple[NDArray[np.float32],NDArray[np.float32],NDArray[np.float32]]:
+    dist = np.cumsum(np.sqrt(np.diff(x)**2+np.diff(z)**2))
+    x_m = (x[:-1]+x[1:])/2 
+    z_m = (z[:-1]+z[1:])/2 
+    
+    return x_m,z_m,dist
+
+def compute_dip(x:NDArray[np.float32],z:NDArray[np.float32])->NDArray[np.float32]:
+    
+    dx = np.diff(x)
+    dz = np.diff(z)
+    dip = np.arctan2(dz,dx)
+
+    return dip
+
+    
