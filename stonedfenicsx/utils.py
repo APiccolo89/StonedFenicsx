@@ -188,7 +188,6 @@ def compute_strain_rate(u):
     Returns:
         e (function): strain rate field
     """
-
     e = ufl.sym(ufl.grad(u))
 
     return e

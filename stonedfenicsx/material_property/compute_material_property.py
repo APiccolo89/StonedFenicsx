@@ -459,6 +459,8 @@ def compute_plastic_strain(e_ii:fem.Expression
                            ,temp_in:fem.Function
                            ,pres_in:fem.Function
                            ,pdb:PhaseDataBase
+                           )->tuple[ufl.fem.Expression, ufl.fem.Expression]:
+    """_summary_
                            )->tuple[fem.Expression, fem.Expression, fem.Expression]:
     """Build UFL expressions for the effective shear stress in the plastic weak zone.
 
@@ -477,6 +479,18 @@ def compute_plastic_strain(e_ii:fem.Expression
         tau_eff = tau_vis * tanh(tau_lim / tau_vis)
 
     where `tau_lim = P * sin(phi)` is the Drucker-Prager yield stress.
+
+    Args:
+        e_ii (fem.Expression): Second invariant of the strain-rate tensor
+            (already computed, e.g. from `compute_strain_rate`).
+        temp_in (fem.Function): Temperature field (dimensionless); copied and
+            re-dimensionalised internally.
+        pres_in (fem.Function): Pressure field (dimensionless); copied and
+            re-dimensionalised internally.
+        pdb (PhaseDataBase): Database with weak-zone rheology parameters
+            (bdis_wz, n_wz, edis_wz, vdis_wz, eh2o_wz, vh2o_wz, r_wz, phi)
+            and scaling factors (temp_scal, pres_scal, gas_constant).
+
 
     Args:
         e_ii (fem.Expression): Second invariant of the strain-rate tensor
