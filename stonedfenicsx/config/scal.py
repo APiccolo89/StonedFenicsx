@@ -35,10 +35,17 @@ class Scal:
     scale_vel: float = 1e-2 / 365.25 / 24 / 60 / 60 # scaling velocity from cm/yr to m/s
     scale_myr2sec: float = 1e6 * 365.25 * 60 * 60 * 24 # scale Myr to second 
     def compute_the_derivative_scal(self):
-        """During the configuration it fills the remnants unit of measure
+        """Derive all secondary scaling units from the four primary ones.
 
-        Returns:
-            self: _description_
+        Called once during configuration after the primary scales (length,
+        temp, eta, stress) have been set.  Fills every `field(init=False)`
+        attribute according to standard dimensional analysis:
+          - time   = eta / stress           [s]
+          - mass   = stress * L^2 * t^2 / L [kg]
+          - rho    = mass / L^3             [kg/m^3]
+          - k      = watt / (L * T)         [W/(m·K)]
+          - cp     = energy / (T * mass)    [J/(kg·K)]
+          etc.
         """
         self.time = self.eta/self.stress # Time [eta/stress=Pas/Pa=s]
         self.mass = (self.stress*self.length**2) * \
@@ -56,7 +63,23 @@ class Scal:
 def scaling_simulation_physical(
     ctrl_sim: SimulationControls, pdb: PhaseDataBase, mesh: Mesh
 ,sc:Scal) -> None:
+    """Non-dimensionalise the entire simulation state in-place.
 
+    Dispatches to the five individual scaling functions in the correct
+    dependency order so that all SI values are converted to dimensionless
+    form before the FEM problem objects are constructed.  Must be called
+    exactly once, after `Scal.compute_the_derivative_scal()` and before
+    `initialise_the_simulation`.
+
+    Args:
+        ctrl_sim (SimulationControls): All simulation controls; fields are
+            overwritten with their dimensionless equivalents.
+        pdb (PhaseDataBase): Material-property database; fields are
+            overwritten with their dimensionless equivalents.
+        mesh (Mesh): Mesh object; geometry coordinates and geometric input
+            are overwritten with their dimensionless equivalents.
+        sc (Scal): Fully initialised scaling object (primary + derived scales).
+    """
     scale_kinematic_bc(ctrl_ky=ctrl_sim.ctrl_ky,sc=sc)
     scale_parameters(ctrl_tbc=ctrl_sim.ctrl_tbc,sc=sc)
     scaling_control_parameters(ctrl=ctrl_sim.ctrl,sc=sc)
@@ -64,7 +87,25 @@ def scaling_simulation_physical(
     scaling_material_properties(pdb=pdb,sc=sc)
 
 
-def scaling_material_properties(pdb:PhaseDataBase,sc:Scal)->PhaseDataBase: 
+def scaling_material_properties(pdb:PhaseDataBase,sc:Scal)->PhaseDataBase:
+    """Non-dimensionalise all material-property parameters in the phase database.
+
+    Divides every parameter in `pdb` by its composite SI scaling factor
+    derived from `sc`.  Covers: reference temperature and pressure, viscosity
+    bounds, thermal conductivity coefficients (a, b, c, d, e series and
+    pressure correction k_f), heat-capacity polynomial coefficients
+    (c0–c5), thermal expansivity (alpha0–alpha2), density (rho0, kb),
+    radiogenic heat production, and dislocation/diffusion creep prefactors
+    (b_dis, b_dif, bdis_wz).
+
+    Args:
+        pdb (PhaseDataBase): Material-property database; all fields overwritten
+            in-place with dimensionless values.
+        sc (Scal): Fully initialised scaling object.
+
+    Returns:
+        PhaseDataBase: The same `pdb` object with all fields scaled.
+    """
     # scal the references values   
     pdb.temp_ref /= sc.temp
     pdb.pres_ref /= sc.stress
@@ -128,14 +169,20 @@ def scaling_material_properties(pdb:PhaseDataBase,sc:Scal)->PhaseDataBase:
     pdb.bdis_wz /= scal_bdsl
 
 def scale_parameters(ctrl_tbc:CtrlTemperatureBC,sc:Scal)->None:
-    """_summary_
+    """Non-dimensionalise all thermal boundary-condition parameters.
+
+    Converts temperatures from Celsius to Kelvin then divides by `sc.temp`.
+    Converts all time quantities (end_time, dt, slab_age, interval_time,
+    interval_val, right_age) from Myr to seconds then to dimensionless time
+    using the viscous time scale `sc.time`.  Converts the depth discretisation
+    step `dz` from km to metres then to dimensionless length.  Scales
+    conductivity, heat capacity, and density by their respective composite
+    scales.
 
     Args:
-        lhs (_type_): lhs:dataclass that handles the thermal boundary condition
-        scal (Scal): scal the scaling class
-
-    Returns:
-        lhs(): the scaled lhs dataclass 
+        ctrl_tbc (CtrlTemperatureBC): Thermal boundary-condition controls;
+            all fields overwritten in-place with dimensionless values.
+        sc (Scal): Fully initialised scaling object.
     """
     
     scal_factor = (sc.scale_myr2sec / sc.time)
@@ -153,14 +200,16 @@ def scale_parameters(ctrl_tbc:CtrlTemperatureBC,sc:Scal)->None:
     ctrl_tbc.right_age = ctrl_tbc.right_age * scal_factor
 
 def scaling_control_parameters(ctrl:NumericalControls,sc:Scal)->None:
-    """_summary_
+    """Non-dimensionalise numerical solver controls.
+
+    Scales gravity `g` by the characteristic acceleration (length/time^2),
+    and converts `time_max` and `dt` from Myr to the dimensionless viscous
+    time unit.
 
     Args:
-        ctrl (NumericalControls): numerical control class
-        scal (Scal): scaling class
-
-    Returns:
-        NumericalControls: adimensional numerical controls
+        ctrl (NumericalControls): Numerical controls dataclass; `g`,
+            `time_max`, and `dt` are overwritten in-place.
+        sc (Scal): Fully initialised scaling object.
     """
 
     ctrl.g = ctrl.g / (sc.length/sc.time**2)
@@ -168,14 +217,18 @@ def scaling_control_parameters(ctrl:NumericalControls,sc:Scal)->None:
     ctrl.dt = ctrl.dt * (sc.scale_myr2sec/sc.time)
 
 def scaling_mesh(mesh:Mesh,sc:Scal)->None:
-    """_summary_
+    """Non-dimensionalise mesh geometry and geometric input parameters.
+
+    Divides all mesh node coordinates (in metres) by `sc.length / 1000` for
+    the four sub-domains (global, crust, subduction plate, wedge), converting
+    them from kilometres to dimensionless units.  Then calls
+    `dimensionless_ginput` to scale the scalar geometric parameters stored in
+    `mesh.g_input`.
 
     Args:
-        mesh (Mesh): Mesh object
-        sc (Scal): scaling object
-
-    Returns:
-        Mesh: updated mesh object
+        mesh (Mesh): Mesh object whose sub-domain geometry arrays and
+            `g_input` are overwritten in-place.
+        sc (Scal): Fully initialised scaling object.
     """
     
     domain = tuple(['global_domain','crust_domain',
@@ -188,14 +241,17 @@ def scaling_mesh(mesh:Mesh,sc:Scal)->None:
     dimensionless_ginput(mesh.g_input,sc)
 
 def dimensionless_ginput(g_input:GeomInput,sc:Scal)->None:
-    """_summary_
+    """Non-dimensionalise all scalar geometric parameters in GeomInput.
+
+    Divides every length parameter (grid extents, layer thicknesses, weak zone
+    thickness, decoupling depth, mesh resolution targets, LAB depth, slab
+    thickness) by `sc.length / 1000` to convert from kilometres to the
+    dimensionless length unit.
 
     Args:
-        g_input (GeomInput): geometrical input
-        sc (Scal): scaling object
-
-    Returns:
-        g_input: scaled geometrical input
+        g_input (GeomInput): Geometric input dataclass; all length fields
+            are overwritten in-place.
+        sc (Scal): Fully initialised scaling object.
     """
     scale_lenght = sc.length/_KM_2_M_
     g_input.x /= scale_lenght # main grid coordinate
@@ -213,6 +269,17 @@ def dimensionless_ginput(g_input:GeomInput,sc:Scal)->None:
     g_input.slab_tk /= scale_lenght
 
 def scale_kinematic_bc(ctrl_ky:CtrlKy, sc: Scal)->None:
+    """Non-dimensionalise kinematic boundary-condition parameters.
 
+    Converts the slab surface velocity `v_s` from cm/yr to m/s using
+    `sc.scale_vel`, then to the dimensionless velocity unit (length/time).
+    Converts the time-series interval array `interval_val` from Myr to the
+    dimensionless time unit.
+
+    Args:
+        ctrl_ky (CtrlKy): Kinematic boundary-condition controls; `v_s` and
+            `interval_val` are overwritten in-place.
+        sc (Scal): Fully initialised scaling object.
+    """
     ctrl_ky.v_s *= sc.scale_vel * (sc.time/sc.length)
     ctrl_ky.interval_val *= sc.scale_myr2sec * 1/sc.time

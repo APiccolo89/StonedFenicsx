@@ -14,9 +14,32 @@ from stonedfenicsx.output import OUTPUT
 def initialise_the_simulation(ctrl_sim:SimulationControls = None
                               ,pdb:PhaseDataBase = None
                               ,mesh:Mesh = None
-                              )-> tuple[Solution,Global_thermal,Global_pressure,Wedge,Slab]:    
+                              )-> tuple[Solution,Global_thermal,Global_pressure,Wedge,Slab]:
+    """Instantiate all FEM problem objects and allocate the solution container.
 
-    
+    Constructs one problem object per physical sub-problem (global thermal,
+    global lithostatic pressure, wedge Stokes, slab Stokes), creates their
+    cached material-property tables, and allocates every fem.Function that
+    will hold the evolving solution fields.  The initial temperature field is
+    computed from the 1-D thermal boundary condition and stored in both
+    sol.T_O (old) and sol.T_N (new) so the first Picard iteration starts
+    from a physically meaningful guess.
+
+    Args:
+        ctrl_sim (SimulationControls): Container of all numerical, I/O, thermal
+            and kinematic boundary-condition controls.
+        pdb (PhaseDataBase): Material-property database for all phases.
+        mesh (Mesh): Mesh object holding the global mesh, all sub-meshes,
+            finite-element definitions, and geometric metadata.
+
+    Returns:
+        tuple[Solution, Global_thermal, Global_pressure, Wedge, Slab]:
+            sol -- pre-allocated solution container with initial temperature.
+            eg  -- global thermal energy problem.
+            lg  -- global lithostatic pressure problem.
+            sl  -- subducting-plate (slab) Stokes problem.
+            we  -- mantle-wedge Stokes problem.
+    """
     element_p           = mesh.element_p#basix.ufl.element("Lagrange","triangle", 1) 
     
     element_PT          = mesh.element_pt#basix.ufl.element("Lagrange","triangle",2)
@@ -58,8 +81,39 @@ def outerloop_operation(ctrl_sim:SimulationControls,
                         sol:Solution
                         ,pdb:PhaseDataBase
                         ,ts:int=0)->Solution:
-    
-    # Initialise the it outer and residual outer 
+    """Execute one complete Picard outer-loop sweep over all coupled sub-problems.
+
+    At each outer iteration the sub-problems are solved in the following order:
+      1. Global lithostatic pressure  (lg) -- skipped after it_outer=0 if linear.
+      2. Temperature and pressure interpolated from global to wedge/slab sub-meshes.
+      3. Slab Stokes                  (sl) -- solved only at the first outer iteration
+         of each timestep, or when the kinematic BC changes.
+      4. Wedge Stokes                 (we) -- solved every iteration when nonlinear.
+      5. Stokes solutions interpolated back to the global mesh.
+      6. Global thermal energy        (eg) -- always solved.
+      7. Outer-loop residual computed; loop exits when below ctrl_sim.ctrl.tol
+         or ctrl_sim.ctrl.it_max iterations are reached.
+
+    If all three sub-problems are linear the maximum number of outer iterations
+    is capped at 2 (one solve + one residual check).
+
+    Args:
+        ctrl_sim (SimulationControls): Simulation controls (tolerances, max
+            iterations, solver types, boundary-condition parameters).
+        sc (Scal): Non-dimensionalisation scaling object.
+        eg (Global_thermal): Global thermal energy problem.
+        lg (Global_pressure): Global lithostatic pressure problem.
+        we (Wedge): Mantle-wedge Stokes problem.
+        sl (Slab): Subducting-plate Stokes problem.
+        sol (Solution): Current solution container; updated in-place and returned.
+        pdb (PhaseDataBase): Material-property database.
+        ts (int, optional): Current timestep index. Defaults to 0.
+
+    Returns:
+        Solution: Updated solution container after the outer Picard loop has
+        converged (or exhausted the iteration budget).
+    """
+    # Initialise the it outer and residual outer
     it_outer = 0 
     res      = 1
     
@@ -158,13 +212,48 @@ def outerloop_operation(ctrl_sim:SimulationControls,
 def time_loop(ctrl_sim:SimulationControls
               ,eg : Global_thermal
               ,lg : Global_pressure
-              ,we : Wedge 
+              ,we : Wedge
               ,sl : Slab
               ,sol : Solution
               ,pdb: PhaseDataBase
               ,sc: Scal
              ) -> None:
+    """Drive the time-stepping loop and write output at the requested intervals.
 
+    Instantiates the OUTPUT object once before entering the loop.  At every
+    timestep:
+      - Advances time-dependent boundary conditions (slab age, slab velocity)
+        when ctrl_sim.ctrl_tbc.constant == 0 or ctrl_sim.ctrl_ky.constant == 0.
+      - Calls outerloop_operation to converge the coupled Picard system.
+      - Writes XDMF output every 10 timesteps (transient) or after the single
+        steady-state solve.
+      - Optionally runs the van Keken (2008) benchmark diagnostics.
+      - Advances the physical time by ctrl_sim.ctrl.dt and rolls T_N → T_O.
+
+    For steady-state mode (ctrl_sim.ctrl.steady_state == 1) the loop executes
+    exactly once: the time variable is immediately set to time_max after the
+    solve so the while condition is not re-entered.
+
+    At the end of the loop all PETSc solver objects are explicitly destroyed to
+    free GPU/CPU memory before the Python garbage collector runs.
+
+    Args:
+        ctrl_sim (SimulationControls): Simulation controls including time
+            stepping (dt, time_max, steady_state), output frequency, and
+            boundary-condition update flags.
+        eg (Global_thermal): Global thermal energy problem (owns the XDMF
+            domain and the cached thermal material table passed to OUTPUT).
+        lg (Global_pressure): Global lithostatic pressure problem.
+        we (Wedge): Mantle-wedge Stokes problem.
+        sl (Slab): Subducting-plate Stokes problem.
+        sol (Solution): Solution container carrying all field functions.
+        pdb (PhaseDataBase): Material-property database (forwarded to
+            outerloop_operation and OUTPUT).
+        sc (Scal): Non-dimensionalisation scaling object.
+
+    Returns:
+        None
+    """
     if ctrl_sim.ctrl.steady_state == 1:
         print_ph('|| --- || --- || Steady State solution || -- || --- || ')
     else:
@@ -244,15 +333,30 @@ def solution_routine(ctrl_sim:SimulationControls
                      ,mesh:Mesh
                      ,sc:Scal
                     )->None:
-    """Function that Initialise the object for the simulation (i.e., the problem, solution...)
-    and send to the running simulations routine: outer_time_loop and inner_picard_loop. 
+    """Top-level solver entry point: initialise and run the full simulation.
+
+    Thin orchestration function that sequences the two main phases of the
+    simulation:
+      1. initialise_the_simulation -- allocates all FEM problem objects and
+         the solution container.
+      2. time_loop -- drives time stepping (or the single steady-state solve),
+         Picard outer iteration, and output.
+
+    This is the function called by stoned_fenicsx() after the configuration
+    and mesh generation are complete.
 
     Args:
-        ctrl_sim (SimulationControls): Simulations controls [Numerical Controls, boundary controls, iocontrols]
-        pdb (PhaseDataBase): Data Base of phase
-        mesh (Mesh): Mesh and geometry object
-        sc (Scal): Scaling object 
+        ctrl_sim (SimulationControls): Container of all numerical, I/O,
+            thermal-BC and kinematic-BC controls.  All parameters are already
+            non-dimensionalised by the time this function is called.
+        pdb (PhaseDataBase): Non-dimensionalised material-property database.
+        mesh (Mesh): Mesh object holding the global and sub-domain meshes,
+            element definitions, and geometric metadata.
+        sc (Scal): Non-dimensionalisation scaling object used for output
+            rescaling and time conversion.
 
+    Returns:
+        None
     """
 
     # Initialise

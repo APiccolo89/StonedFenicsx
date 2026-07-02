@@ -7,12 +7,20 @@ from pathlib import Path
 
 @timing_function
 def stoned_fenicsx(inp:Input,ph_in:PhInput) -> None:
-    """Main function : it calls the configure simulation with the input 
-    data, then, send the simulation configuration into the main solver
+    """Top-level entry point for the stonedfenicsx subduction simulation.
+
+    Sequences the two top-level stages of the simulation:
+      1. configure_simulation -- non-dimensionalises all inputs, builds the
+         mesh and sub-meshes, and constructs the material-property database.
+      2. solution_routine -- allocates FEM problem objects and drives the
+         coupled Picard / time-stepping loop through to completion.
 
     Args:
-        inp (Input): _description_
-        ph_in (PhInput): _description_
+        inp (Input): Parsed YAML input containing numerical controls, I/O
+            settings, thermal boundary conditions, and kinematic boundary
+            conditions.
+        ph_in (PhInput): Parsed material-property input for all phases
+            (wedge mantle, slab mantle, oceanic crust, overriding crust, etc.).
     """
 
     ctrl_sim, mesh, pdb, sc= configure_simulation(ph_in=ph_in,inp=inp)
@@ -38,7 +46,7 @@ def test_function():
     # parse the input file
     input_data, ph_in = parse_input(input_file)
     # Set the path of the tests
-    path_save = pkg_root.parents[2] / "Results"
+    path_save = pkg_root.parents[1] / "Results"
     test_name = "Mock_test"
     input_data.ctrl_io.test_name = test_name
     input_data.ctrl_io.path_save = path_save

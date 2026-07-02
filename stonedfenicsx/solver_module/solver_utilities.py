@@ -19,15 +19,26 @@ if TYPE_CHECKING:
 
 #-------------------------------------------------------------------------       
 def decoupling_function(z: np.ndarray, fun: dolfinx.fem.Function, g_input: GeomInput)-> dolfinx.fem.Function:
-    """_summary_
+    """Compute the slab–wedge decoupling weight field from depth coordinates.
+
+    Fills `fun` with a smooth tanh ramp that transitions from 1 (fully
+    coupled, above the decoupling depth) to 0 (fully decoupled, below it).
+    The transition width is one quarter of `g_input.transition`.  The result
+    is normalised by `g_input.decoupling` so the function is dimensionless
+    and correct whether coordinates are physical or non-dimensionalised.
 
     Args:
-        z (np.ndarray): _description_
-        fun (dolfinx.fem.Function): _description_
-        g_input (GeomInput): _description_
+        z (np.ndarray): Depth coordinate array at every DOF, in the same
+            unit as the mesh (non-dimensionalised in normal use).
+        fun (dolfinx.fem.Function): Pre-allocated scalar Function on the
+            sub-mesh where the weight is needed; modified in-place.
+        g_input (GeomInput): Geometric input holding decoupling depth
+            (`decoupling`), total lithosphere depth (`ns_depth`), and the
+            transition half-width (`transition`).
 
     Returns:
-        dolfinx.fem.Function: _description_
+        dolfinx.fem.Function: The same `fun` object, updated with the
+        decoupling weight and scatter-forwarded for MPI consistency.
     """
     
     dc = g_input.decoupling
@@ -49,6 +60,19 @@ def decoupling_function(z: np.ndarray, fun: dolfinx.fem.Function, g_input: GeomI
 #---------------------------------------------------------------------------------------------------          
 
 def L2_norm_calculation(f:dolfinx.fem.Function) -> float:
+    """Compute the global L2 norm of a fem.Function over its mesh.
+
+    Assembles the local contribution of (f, f) on each MPI rank and reduces
+    across all ranks before taking the square root, so the result is correct
+    in parallel.
+
+    Args:
+        f (dolfinx.fem.Function): Scalar or vector fem.Function defined on
+            a dolfinx mesh.
+
+    Returns:
+        float: ||f||_L2 = sqrt( integral f·f dx ) over the full (parallel) mesh.
+    """
     comm = f.function_space.mesh.comm
     local = fem.assemble_scalar(fem.form(ufl.inner(f, f) * ufl.dx))
     global_sq = comm.allreduce(local, op=MPI.SUM)
@@ -65,6 +89,44 @@ def compute_residuum_outer(sol:Solution
                            ,ts:int
                            ,ctrl_sim:SimulationControls
                            ) -> tuple[float,Solution]:
+    """Compute the outer-loop Picard residual and print diagnostic statistics.
+
+    Computes a normalised L2 residual for each of the four solution fields
+    (velocity, dynamic pressure, temperature, lithostatic pressure) between
+    the current and previous outer iterations.  The combined residual is the
+    Euclidean norm of the four individual residuals.  Physical-unit ranges
+    (min, max, RMS) are rescaled for printing.
+
+    Appends per-timestep diagnostics (min/max T, min/max v, RMS, outer
+    residual, timestep index) to the history arrays stored in `sol`.
+
+    Raises ValueError if the combined residual is non-finite, which signals
+    a diverged or ill-conditioned solve.
+
+    Args:
+        sol (Solution): Current solution container (fields read, history
+            arrays appended in-place).
+        T (dolfinx.fem.Function): Temperature at the start of this outer
+            iteration (snapshot copy made by `outerloop_operation`).
+        PL (dolfinx.fem.Function): Lithostatic pressure at the start of this
+            outer iteration.
+        u (dolfinx.fem.Function): Velocity at the start of this outer
+            iteration.
+        p (dolfinx.fem.Function): Dynamic pressure at the start of this outer
+            iteration.
+        it_outer (int): Current outer-loop iteration index (for printing).
+        sc (Scal): Non-dimensionalisation scaling object for unit rescaling.
+        tA (float): Wall-clock time (from `timing.time()`) at the start of
+            the outer iteration, used to report elapsed time.
+        ts (int): Current timestep index.
+        ctrl_sim (SimulationControls): Simulation controls; used to check
+            whether temperature has exceeded the prescribed maximum.
+
+    Returns:
+        tuple[float, Solution]:
+            res_total -- combined outer-loop residual (dimensionless).
+            sol       -- solution container with updated history arrays.
+    """
     # Prepare the variables 
     
     res_u = compute_residuum(sol.u_global,u)
@@ -125,16 +187,20 @@ def compute_residuum_outer(sol:Solution
 #------------------------------------------------------------------------------------------------------------
 
 def compute_residuum(a:dolfinx.fem.Function,b:dolfinx.fem.Function)->float:
-    """Compute the residual of a given solution
+    """Compute the normalised PETSc-vector residual between two solution fields.
+
+    Uses PETSc NORM_2 on the underlying PETSc vectors to evaluate:
+        res = ||a - b||_2 / ||a + b||_2
+    which is a relative change norm immune to absolute scaling of the fields.
+    The norms are computed inside PETSc and are already MPI-global.
 
     Args:
-        a (dolfinx.fem.Function): new solution
-        b (dolfinx.fem.Function): old solution
+        a (dolfinx.fem.Function): Current (new) solution field.
+        b (dolfinx.fem.Function): Previous (old) solution field; must live on
+            the same function space as `a`.
 
     Returns:
-        float: L2 norm residual 
-    
-    The residual is computed as ||(a-b)/(a+b)|| L2 norm
+        float: Dimensionless relative residual in [0, inf).
     """
     
     
@@ -146,15 +212,22 @@ def compute_residuum(a:dolfinx.fem.Function,b:dolfinx.fem.Function)->float:
 #------------------------------------------------------------------------------------------------------------
 def min_max_array(a:dolfinx.fem.function.Function
                 ,vel = False)->NDArray[np.float64]:
-    """Create diagnostic for scalar/vectorial field
-    Compute the min and max of the given function, and compute the Root mean square of this field
-     
+    """Compute global min, max, and volume-averaged RMS of a field.
+
+    For scalar fields the min/max are taken over owned DOFs only (ghost DOFs
+    excluded) before the MPI allreduce, preventing double-counting on shared
+    nodes.  For vector fields (vel=True) the magnitude is formed from the x
+    and y sub-components before computing min/max.  The RMS is the
+    volume-normalised L2 norm: ||a||_L2 / sqrt(volume).
+
     Args:
-        a (dolfinx.fem.function.Function_): Function (i.e., velocity, pressure ... )
-        vel (bool, optional): vectorial field. Defaults to False.
+        a (dolfinx.fem.function.Function): Scalar or 2-D vector fem.Function.
+        vel (bool, optional): If True, treat `a` as a 2-D velocity vector and
+            compute the pointwise speed magnitude. Defaults to False.
 
     Returns:
-        NDArray[np.float64]: array containing min of a, max of a, RMS of a. 
+        NDArray[np.float64]: Shape-(3,) array [global_min, global_max, RMS],
+        all in the non-dimensionalised units of `a`.
     """
     
     if vel: 
@@ -190,17 +263,26 @@ def min_max_array(a:dolfinx.fem.function.Function
 
 def update_solution(sk1:dolfinx.fem.function.Function
                     ,sk0:dolfinx.fem.function.Function
-                    ,tol:dolfinx.fem.function.Function)->dolfinx.fem.function.Function:
-    """Relax the solution 
-        us = tol * sk1 + (1-tol) * sk
+                    ,tol:float)->dolfinx.fem.function.Function:
+    """Apply under-relaxation to a solution field.
+
+    Blends the new iterate sk1 with the old iterate sk0 using relaxation
+    factor `tol`:
+        sk0 ← tol * sk1 + (1 - tol) * sk0
+
+    A value of tol=1 accepts the new iterate fully; tol<1 damps oscillations
+    in slowly-converging or marginally-stable Picard problems.  The result is
+    written back into sk0 in-place so no new allocation occurs.
 
     Args:
-        sk1 (dolfinx.fem.function.Function): new iteration solution
-        sk0 (dolfinx.fem.function.Function): old iteration solution
-        tol (dolfinx.fem.function.Function): tollerance
+        sk1 (dolfinx.fem.function.Function): Solution from the current
+            inner-loop iteration.
+        sk0 (dolfinx.fem.function.Function): Solution from the previous
+            inner-loop iteration; overwritten with the relaxed value.
+        tol (float): Relaxation factor in (0, 1].
 
     Returns:
-        dolfinx.fem.function.Function: _description_
+        dolfinx.fem.function.Function: The updated `sk0` (same object).
     """
 
     

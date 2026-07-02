@@ -11,6 +11,20 @@ rg_cachedom dataclasses import dataclass, InitVar
 # ---
 @dataclass
 class MATERIALS:
+    """Abstract base for cached material-property dataclasses.
+
+    Defines the two InitVar arguments consumed by `__post_init__` in every
+    subclass.  `pdb` carries the per-phase parameter arrays and `phase`
+    carries the DG0 phase-ID field on the target sub-mesh.  Neither is
+    stored as an instance attribute after construction; they are used only to
+    populate the concrete fem.Function fields defined in each subclass.
+
+    Args:
+        pdb (PhaseDataBase): Material-property database with parameter arrays
+            indexed by integer phase ID.
+        phase (fem.Function): DG0 Function whose `.x.array[:]` holds the
+            integer phase ID for every cell in the sub-mesh.
+    """
     pdb : InitVar[PhaseDataBase]
     phase : InitVar[fem.Function]
 # --- 
@@ -66,17 +80,22 @@ class THERMALCACHED(MATERIALS):
                      ,pdb:PhaseDataBase
                      ,phase:fem.Function)->None:
 
-        """    Initialize all thermal properties as FEniCS functions.
-        Args:        
-            self (THERMALCACHED): FEM functions for all thermal material properties
-            pdb (PhaseDataBase): class containing the material properties as numpy arrays, indexed by phase ID
-            phase (fem.Function): function containing the phase ID for each cell, used to index the material properties rg_cachedom the PhaseDataBase
-        Returns:
-            self (Function_material_properties): update self with the material properties as fem.function
+        """Allocate and fill all thermal material-property fem.Functions.
 
-        Note: The field in this version of the code are static. They are not advected. It is necessary to call it 
-        once during a preprocessing step, after the phase is defined, and before the solver routine is called. 
+        Uses the integer phase-ID array from `phase.x.array` to index into
+        the per-phase parameter arrays in `pdb`, broadcasting a scalar per
+        element into a DG0 fem.Function defined on the same function space as
+        `phase`.  All functions are filled once and treated as static
+        throughout the simulation (properties are not advected with the flow).
 
+        Scalar parameters that are mesh-independent (reference temperature,
+        gas constant, radiative conductivity coefficients) are stored as plain
+        Python floats rather than fem.Functions.
+
+        Args:
+            pdb (PhaseDataBase): Material-property database; all arrays are
+                already non-dimensionalised before this call.
+            phase (fem.Function): DG0 phase-ID field on the target sub-mesh.
         """
 
         ph = np.int32(phase.x.array)
@@ -163,15 +182,22 @@ class RHEOLOGYCACHED(MATERIALS):
     def __post_init__(self,
                       pdb:PhaseDataBase
                       ,phase:fem.Function)->None:
-        """Change the rheological properties as fem.function, given the phase distribution and the PhaseDataBase.
+        """Allocate and fill all rheological material-property fem.Functions.
+
+        Mirrors the pattern of THERMALCACHED.__post_init__: indexes `pdb`
+        arrays by integer phase ID and writes the result into newly allocated
+        DG0 fem.Functions on the same function space as `phase`.  Creep
+        prefactors (b_dif, b_dis), stress exponent (n), activation energies
+        (e_dif, e_dis), and activation volumes (v_dif, v_dis) are stored as
+        Functions so they enter the UFL viscosity expression symbolically.
+        Scalar upper bounds (eta_max, eta_def) and gas constant are kept as
+        Python floats.
 
         Args:
-            self (RHEOLOGYCACHED): FEM functions for all rheological properties
-            pdb (PhaseDataBase): Phase Data Base containing the rheological properties as numpy arrays, indexed by phase ID
-            phase (fem.Function): function containing the phase ID for each cell, used to index the material properties rg_cachedom the PhaseDataBase
-
-        Returns:
-            Modifies self in place with the rheological properties as fem.function.
+            pdb (PhaseDataBase): Material-property database; all arrays are
+                already non-dimensionalised before this call.
+            phase (fem.Function): DG0 phase-ID field on the Stokes sub-mesh
+                (wedge or slab).
         """
         ph = np.int32(phase.x.array)
         ph_fs = phase.function_space
@@ -201,24 +227,37 @@ class RHEOLOGYCACHED(MATERIALS):
 #---------------------------------------------------------------------------------
 
 def heat_conductivity_FX(scal_cached : THERMALCACHED
-                         ,T : fem.Function 
+                         ,T : fem.Function
                          ,p : fem.Function
                          ,Cp : fem.Expression
                          ,rho: fem.Expression) -> fem.Expression:
-    """Function that computes the heat conductivity for a given Pressure and Temperature
-       k = k0 + kb*exp(-(T-Tr)/kc)+kd*exp(-(T-Tr)/ke)*exp(kf*P) + rad * flag
-       if the phase has a constant conductivity, k0 is defined and positive, otherwise is 0.0 
-       while while the other properties are set to be 0.0 
-       kb*exp(T-Tr/0)=0.0 so no active. 
+    """Build the UFL expression for thermal conductivity as a function of T and P.
+
+    Implements the composite conductivity law:
+        k = k0 + (k_lat(T) * exp(k_f * P) * Cp * rho  +  k_rad(T) * flag_rad)
+
+    where:
+        k_lat(T) = k_a + k_b * exp(-(T - T_ref)/k_c) + k_d * exp(-(T - T_ref)/k_e)
+        k_rad(T) = a_rad * exp(-(T - T_a)^2 / (2 x_a^2))
+                 + b_rad * exp(-(T - T_b)^2 / (2 x_b^2))
+
+    For phases with a constant conductivity, `k0 > 0` and the lattice/radiative
+    terms are zero (their coefficients are 0 in the database).  For mantle
+    phases, `k0 = 0` and the T- and P-dependent terms are active.
+
     Args:
-        scal_cached (THERMALCACHED) : Precomputed function spaces with the material properties
-        T (fem.Function)  : Temperature field or trial function
-        p (_type_)  : Lithostatic pressure field 
-        Cp (_type_) : Cp expression for the computation of the conductivity, it is an expression because it depends on T 
-        rho (_type_): rho expression for the computation of the conductivity, it is an expression because it depends on T and P 
+        scal_cached (THERMALCACHED): Cached DG0 fem.Functions for all
+            conductivity coefficients.
+        T (fem.Function): Temperature field (dimensionless) — typically the
+            Picard-frozen `T_k` or the UFL trial function.
+        p (fem.Function): Lithostatic pressure field (dimensionless).
+        Cp (fem.Expression): UFL heat-capacity expression from `heat_capacity_FX`;
+            passed in to avoid recomputing it inside this function.
+        rho (fem.Expression): UFL density expression from `density_FX`.
 
     Returns:
-        k: fem.form expression for the heat conductivity, to be used in the weak formulation of the heat equation.
+        fem.Expression: UFL expression for k, to be used directly in the
+        bilinear form of the energy equation.
     """
     
     # Compute the radiative conductivity
@@ -233,22 +272,45 @@ def heat_conductivity_FX(scal_cached : THERMALCACHED
     return k 
 #---------------------------------------------------------------------------------
 def heat_capacity_FX(scal_cached : THERMALCACHED
-                     ,T : fem.Function) -> fem.Expression: 
-    """Derive the heat capacity expression
+                     ,T : fem.Function) -> fem.Expression:
+    """Build the UFL expression for heat capacity as a polynomial in T.
+
+    Implements the Berman (1988) polynomial:
+        Cp = c0 + c1 * T^(-0.5) + c2 * T^(-2) + c3 * T^(-3) + c4 * T + c5 * T^2
+
+    For phases with a constant heat capacity only `c0` is non-zero; all other
+    coefficients are set to 0 in the database.
 
     Args:
-        scal_cached (THERMALCACHED): Precomputed function spaces with the material properties
-        T (fem.Function): Temperature field or trial function
+        scal_cached (THERMALCACHED): Cached DG0 fem.Functions for the heat-
+            capacity polynomial coefficients c0–c5.
+        T (fem.Function): Temperature field (dimensionless).
 
     Returns:
-        fem.Expression: expression for the heat capacity, to be used in the weak formulation of the heat equation.
+        fem.Expression: UFL expression for Cp, to be used in the energy
+        bilinear form and passed to `heat_conductivity_FX`.
     """
     # General formula for the heat capacity, it is an expression because it depends on T. C0 = Cp in case the heat capacity is constant, otherwise the other parameters are active.
     C_p = scal_cached.c0 + scal_cached.c1 * (T**(-0.5)) + scal_cached.c2 * T**(-2.) + scal_cached.c3 * (T**(-3.)) + scal_cached.c4 * T + scal_cached.c5 * T**2
 
     return C_p
   
-def compute_radiogenic(scal_cached, hs): 
+def compute_radiogenic(scal_cached:THERMALCACHED, hs:fem.Function) -> fem.Function:
+    """Interpolate the cached radiogenic heating field into a pre-allocated Function.
+
+    Copies the per-element radiogenic heat production (already stored as a
+    DG0 fem.Function in `scal_cached.radiogenic`) into `hs` by direct
+    interpolation, avoiding a new allocation.
+
+    Args:
+        scal_cached (THERMALCACHED): Thermal cache holding `radiogenic` as a
+            DG0 fem.Function of non-dimensionalised heat production [W/m^3].
+        hs (fem.Function): Pre-allocated target Function on the same function
+            space; overwritten in-place.
+
+    Returns:
+        fem.Function: The updated `hs` object.
+    """
     hs.interpolate(scal_cached.radiogenic)
     return hs 
     
@@ -256,15 +318,28 @@ def compute_radiogenic(scal_cached, hs):
 def density_FX(scal_cached:THERMALCACHED
                ,T:fem.Function
                ,p:fem.Function)->fem.Expression:
-    
-    """Derive the density expression
+    """Build the UFL expression for density as a function of T and P.
+
+    Selects one of three density formulations per element via UFL conditional
+    branching on `scal_cached.option_rho`:
+        0 -- constant:          rho = rho0
+        1 -- T-dependent:       rho = rho0 * (1 - alpha_int(T, P))
+        2 -- T- and P-dependent: rho = rho0 * (1 - alpha_int) * exp(P / kb)
+
+    where the integrated thermal expansivity term is:
+        alpha_int = exp(-P * alpha2) * (alpha0 * (T - T_ref)
+                  + (alpha1/2) * (T^2 - T_ref^2))
+
     Args:
-        scal_cached (THERMALCACHED): Precomputed function spaces with the material properties
-        T (fem.Function): Temperature field or trial function
-        p (fem.Function): Pressure field or trial function
+        scal_cached (THERMALCACHED): Cached DG0 fem.Functions for rho0,
+            alpha0, alpha1, alpha2, kb, option_rho, and the reference
+            temperature temp_ref.
+        T (fem.Function): Temperature field (dimensionless).
+        p (fem.Function): Lithostatic pressure field (dimensionless).
+
     Returns:
-        fem.Expression: expression for the density, to be used in the weak formulation of the heat equation.
-        
+        fem.Expression: UFL expression for density, to be inserted into the
+        energy and Stokes bilinear forms.
     """
 
     # Base density (with temperature dependence)
@@ -285,14 +360,24 @@ def density_FX(scal_cached:THERMALCACHED
 def alpha_FX(scal_cached : THERMALCACHED
              ,T : fem.Function
              ,p : fem.Function)->fem.Expression:
-    """Derive the thermal expansivity expression
+    """Build the UFL expression for thermal expansivity as a function of T and P.
+
+    Implements the linearised Birch-Murnaghan expansivity:
+        alpha(T, P) = exp(-P * alpha2) * (alpha0 + alpha1 * (T - T_ref))
+
+    The pressure factor exp(-P * alpha2) accounts for compressional
+    suppression of thermal expansion.  For constant-alpha phases only alpha0
+    is non-zero.
+
     Args:
-        scal_cached (THERMALCACHED): Precomputed function spaces with the material properties
-        T (fem.Function): Temperature field or trial function
-        p (fem.Function): Pressure field or trial function
+        scal_cached (THERMALCACHED): Cached DG0 fem.Functions for alpha0,
+            alpha1, alpha2, and the reference temperature temp_ref.
+        T (fem.Function): Temperature field (dimensionless).
+        p (fem.Function): Lithostatic pressure field (dimensionless).
+
     Returns:
-        fem.Expression: expression for the thermal expansivity, to be used in the weak formulation of the heat equation.
-        
+        fem.Expression: UFL expression for alpha, suitable for use in the
+        buoyancy term of the Stokes momentum equation.
     """
 
     # Base density (with temperature dependence)
@@ -301,7 +386,25 @@ def alpha_FX(scal_cached : THERMALCACHED
 
     return alpha 
 # ---
-def cell_average_DG0(mesh, expr_ufl):
+def cell_average_DG0(mesh:dolfinx.mesh.Mesh, expr_ufl:ufl.core.expr.Expr) -> fem.Function:
+    """Project a UFL expression onto a DG0 space via an L2 cell-average solve.
+
+    Assembles and solves a local mass matrix problem:
+        (w, u)_dx = (w, expr_ufl)_dx    for all w in DG0
+
+    Because the DG0 mass matrix is block-diagonal (one cell per DOF), the
+    solve reduces to a per-cell average and is handled with a direct LU
+    preconditioner.  Used to produce cell-constant approximations of
+    nonlinear UFL expressions for diagnostic output or stabilisation.
+
+    Args:
+        mesh (dolfinx.mesh.Mesh): The mesh on which to project.
+        expr_ufl (ufl.core.expr.Expr): UFL expression to project; must be
+            defined on the same mesh.
+
+    Returns:
+        fem.Function: DG0 Function containing the cell averages of `expr_ufl`.
+    """
     V0 = fem.functionspace(mesh, ("DG", 0))
     f0 = fem.Function(V0)
 
@@ -330,19 +433,39 @@ def compute_viscosity_FX(e:fem.Expression
                         ,pres_in:fem.Function
                         ,pdb:PhaseDataBase
                         ,rg_cached:RHEOLOGYCACHED)->fem.Expression:
-    """Compute the viscosity for a given strain rate, Pressure and Temperature
-    The viscosity is computed as a composite of the diffusion and dislocation creep, with a maximum viscosity cutoff.
-    The composite is computed as the harmonic average of the diffusion and dislocation viscosity.
+    """Build the UFL expression for effective viscosity from strain rate, T, and P.
+
+    Computes a composite diffusion + dislocation creep viscosity with a
+    maximum-viscosity cutoff, selecting the formulation per element via UFL
+    conditionals on `rg_cached.option_eta`:
+        0 -- constant:          eta = rg_cached.eta
+        1 -- diffusion only:    eta = harmonic(eta_df, eta_max)
+        2 -- composite:         eta = harmonic(eta_df, eta_ds, eta_max)
+
+    The creep flow factors (in SI, re-dimensionalised internally via
+    pdb.temp_scal and pdb.pres_scal) are:
+        C_df = b_dif * exp(-(E_dif + P * V_dif) / (R * T))
+        C_ds = b_dis * exp(-(E_dis + P * V_dis) / (R * T))
+
+    The dislocation viscosity is:
+        eta_ds = 0.5 * C_ds^(-1/n) * e_II^((1-n)/n)
+
+    where e_II = sqrt(0.5 * e:e + epsilon) is the second invariant of the
+    strain-rate tensor.
+
     Args:
-        e (fem.Expression): strain rate invariant expression, to be computed in the weak formulation
-        T_in (fem.Function): Temperature field 
-        P_in (fem.Function): Pressure field 
-        rg_cached (RHEOLOGYCACHED): Precomputed function spaces with the rheological properties
-        sc (Scal): Scaling class containing the scaling factors for the problem, used to scale the input fields 
-        to the non-dimensional values used in the rheological laws. 
-    Returns:    
-        fem.Expression: expression for the viscosity, to be used in the weak formulation of the Stokes equation.
-    
+        e (fem.Expression): Full strain-rate tensor UFL expression
+            (not the invariant); the invariant is computed internally.
+        temp_in (fem.Function): Temperature field (dimensionless).
+        pres_in (fem.Function): Pressure field (dimensionless).
+        pdb (PhaseDataBase): Database carrying `temp_scal`, `pres_scal`, and
+            `gas_constant` needed to re-dimensionalise the Arrhenius exponent.
+        rg_cached (RHEOLOGYCACHED): Cached DG0 fem.Functions for all creep
+            parameters and the `option_eta` selector.
+
+    Returns:
+        fem.Expression: UFL expression for eta, to be inserted into the Stokes
+        bilinear form.
     """    
     
     def compute_eii(e):
@@ -380,17 +503,46 @@ def compute_plastic_strain(e_ii:fem.Expression
                            ,temp_in:fem.Function
                            ,pres_in:fem.Function
                            ,pdb:PhaseDataBase
+<<<<<<< HEAD
                            )->tuple[ufl.fem.Expression, ufl.fem.Expression]:
     """_summary_
+=======
+                           )->tuple[fem.Expression, fem.Expression, fem.Expression]:
+    """Build UFL expressions for the effective shear stress in the plastic weak zone.
+
+    Computes the visco-plastic effective stress using a dislocation-creep
+    flow law for the weak-zone phase (separate parameters from the bulk
+    mantle).  Re-dimensionalises temperature and pressure internally (copies
+    are made to avoid modifying the solver fields) because activation energies
+    are stored in SI (J/mol) and cannot be non-dimensionalised consistently
+    with a mol-based gas constant.
+
+    Optionally applies a water-fugacity correction to the creep prefactor
+    when `pdb.water_cor == 2`:
+        C_ds *= (f_H2O(P,T) / f_H2O(P_ref, T_ref))^r_wz
+
+    The effective stress is regularised via a smooth tanh cap:
+        tau_eff = tau_vis * tanh(tau_lim / tau_vis)
+
+    where `tau_lim = P * sin(phi)` is the Drucker-Prager yield stress.
+>>>>>>> 5f2ddee (Asked Claude to document my functions, otherwise I will never finish this crap)
 
     Args:
-        e_ii (fem.Expression): _description_
-        temp_in (fem.Function): _description_
-        pres_in (fem.Function): _description_
-        pdb (PhaseDataBase): _description_
+        e_ii (fem.Expression): Second invariant of the strain-rate tensor
+            (already computed, e.g. from `compute_strain_rate`).
+        temp_in (fem.Function): Temperature field (dimensionless); copied and
+            re-dimensionalised internally.
+        pres_in (fem.Function): Pressure field (dimensionless); copied and
+            re-dimensionalised internally.
+        pdb (PhaseDataBase): Database with weak-zone rheology parameters
+            (bdis_wz, n_wz, edis_wz, vdis_wz, eh2o_wz, vh2o_wz, r_wz, phi)
+            and scaling factors (temp_scal, pres_scal, gas_constant).
 
     Returns:
-        tuple[ufl.fem.Expression, ufl.fem.Expression]: _description_
+        tuple[fem.Expression, fem.Expression, fem.Expression]:
+            tau_eff  -- regularised effective stress (UFL expression).
+            tau_vis  -- viscous stress before plastic cap (UFL expression).
+            tau_lim  -- Drucker-Prager yield stress (UFL expression).
     """
     
     # UNFORTUNATELY I AM STUPID and i do not have any idea how to scale the energies such that it would be easier to handle. Since the scale of force and legth is self-consistently related to mass, i do not know how to deal with the fucking useless mol in the energy of activation 

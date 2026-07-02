@@ -9,7 +9,6 @@ import dolfinx.fem as fem
 import numpy as np
 import ufl
 from mpi4py import MPI
-from petsc4py import PETSc
 from dolfinx.io import XDMFFile
 from pathlib import Path
 import os
@@ -20,7 +19,6 @@ from stonedfenicsx.config.numerical_control import SimulationControls
 from stonedfenicsx.config.geometry import Domain
 from stonedfenicsx.config.phase_db import PhaseDataBase
 from stonedfenicsx.solver_module.problems_solution import Solution
-from stonedfenicsx.utils import print_ph, timing
 from stonedfenicsx.material_property.compute_material_property import RHEOLOGYCACHED, THERMALCACHED
 
 
@@ -43,7 +41,7 @@ class OUTPUT():
         if not os.path.exists(pt_save):
             os.makedirs(pt_save)
     
-        pt_save = os.path.join(pt_save, ctrl_sim.ctrl_io.sname)
+        pt_save = os.path.join(pt_save, ctrl_sim.ctrl_io.test_name)
         if not os.path.exists(pt_save):
             os.makedirs(pt_save)    
         
