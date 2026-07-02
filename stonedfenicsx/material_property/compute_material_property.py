@@ -459,8 +459,6 @@ def compute_plastic_strain(e_ii:fem.Expression
                            ,temp_in:fem.Function
                            ,pres_in:fem.Function
                            ,pdb:PhaseDataBase
-                           )->tuple[ufl.fem.Expression, ufl.fem.Expression]:
-    """_summary_
                            )->tuple[fem.Expression, fem.Expression, fem.Expression]:
     """Build UFL expressions for the effective shear stress in the plastic weak zone.
 

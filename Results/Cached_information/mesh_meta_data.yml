@@ -19,7 +19,7 @@ sub_trench: 0.0
 theta_in_slab: 0.7853981633974483
 theta_out_slab: 45.0
 transition: 10.0
-van_keken: true
+van_keken: false
 wz_tk: 0.5
 x:
 - 0.0
