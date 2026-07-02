@@ -1,13 +1,12 @@
 
 # modules
-rg_cachedom stonedfenicsx.config.phase_db import PhaseDataBase
-rg_cachedom stonedfenicsx.config.scal import Scal
-rg_cachedom ufl import cos, sin, tan, conditional, eq,exp, sqrt,inner
-import petsc4py 
+from stonedfenicsx.config.phase_db import PhaseDataBase
+from stonedfenicsx.config.scal import Scal
+from ufl import cos, sin, tan, conditional, eq,exp, sqrt,inner
 import ufl
 import dolfinx.fem as fem 
 import numpy as np 
-rg_cachedom dataclasses import dataclass, InitVar
+from dataclasses import dataclass, InitVar
 # ---
 @dataclass
 class MATERIALS:
@@ -27,7 +26,8 @@ class MATERIALS:
     """
     pdb : InitVar[PhaseDataBase]
     phase : InitVar[fem.Function]
-# --- 
+# ---
+# ---
 @dataclass
 class THERMALCACHED(MATERIALS):
     """Function containing the fem.function per each of the parameter of material properties
@@ -75,7 +75,6 @@ class THERMALCACHED(MATERIALS):
     x_a : float = 0.0
     temp_b : float = 0.0
     x_b : float = 0.0
-# ---------------------------------------------------------------------------------
     def __post_init__(self
                      ,pdb:PhaseDataBase
                      ,phase:fem.Function)->None:
@@ -111,7 +110,7 @@ class THERMALCACHED(MATERIALS):
         self.k_e= fem.Function(ph_fs)  
         self.k_f= fem.Function(ph_fs)
         self.k0.x.array[:] =  pdb.k0[ph]
-        self.rg_cached.x.array[:] =  pdb.radio_flag[ph]
+        self.rg_cached.x.array[:] =  pdb.radiative_conductivity[ph]
         self.k_a.x.array[:] = pdb.k_a[ph]
         self.k_b.x.array[:] = pdb.k_b[ph]
         self.k_c.x.array[:] = pdb.k_c[ph]
@@ -157,8 +156,8 @@ class THERMALCACHED(MATERIALS):
         self.x_a     = pdb.x_a
         self.temp_b     = pdb.temp_b
         self.x_b     = pdb.x_b
-
-
+# ---
+# ---
 @dataclass
 class RHEOLOGYCACHED(MATERIALS):
     """Initialise the rheological properties 
@@ -224,8 +223,7 @@ class RHEOLOGYCACHED(MATERIALS):
         self.eta_def = pdb.eta_def
         self.gas_constant       = pdb.gas_constant
         self.eta.x.scatter_forward()
-#---------------------------------------------------------------------------------
-
+# ---
 def heat_conductivity_FX(scal_cached : THERMALCACHED
                          ,T : fem.Function
                          ,p : fem.Function
@@ -270,7 +268,7 @@ def heat_conductivity_FX(scal_cached : THERMALCACHED
     k = scal_cached.k0  + (kappa_lat * kappa_p * Cp * rho + k_rad * scal_cached.rg_cached)  
 
     return k 
-#---------------------------------------------------------------------------------
+# ---
 def heat_capacity_FX(scal_cached : THERMALCACHED
                      ,T : fem.Function) -> fem.Expression:
     """Build the UFL expression for heat capacity as a polynomial in T.
@@ -312,9 +310,8 @@ def compute_radiogenic(scal_cached:THERMALCACHED, hs:fem.Function) -> fem.Functi
         fem.Function: The updated `hs` object.
     """
     hs.interpolate(scal_cached.radiogenic)
-    return hs 
-    
-#---------------------------------------------------------------------------------
+    return hs
+# ---
 def density_FX(scal_cached:THERMALCACHED
                ,T:fem.Function
                ,p:fem.Function)->fem.Expression:
@@ -356,7 +353,7 @@ def density_FX(scal_cached:THERMALCACHED
     )
 
     return rho 
-#----------------------------------
+# ---
 def alpha_FX(scal_cached : THERMALCACHED
              ,T : fem.Function
              ,p : fem.Function)->fem.Expression:
@@ -435,8 +432,8 @@ def compute_viscosity_FX(e:fem.Expression
     
     # Eta max 
     # strain indipendent  
-    cdf = rg_cached.b_dif * exp(-(rg_cached.e_dif + pres_in * pdb.pres_scal * rg_cached.v_dif) / (rg_cached.gas_constant * temp_in * sc.temp))
-    cds = rg_cached.b_dis * exp(-(rg_cached.e_dis + pres_in * pdb.pres_scal * rg_cached.v_dis) / (rg_cached.gas_constant * temp_in * sc.temp))
+    cdf = rg_cached.b_dif * exp(-(rg_cached.e_dif + pres_in * pdb.pres_scal * rg_cached.v_dif) / (rg_cached.gas_constant * temp_in * pdb.temp_scal))
+    cds = rg_cached.b_dis * exp(-(rg_cached.e_dis + pres_in * pdb.pres_scal * rg_cached.v_dis) / (rg_cached.gas_constant * temp_in * pdb.temp_scal))
     # compute tau guess
     n_co  = (1-rg_cached.n)/rg_cached.n
     n_inv = 1/rg_cached.n 
@@ -457,15 +454,13 @@ def compute_viscosity_FX(e:fem.Expression
     )
 
     return eta
-#---------------------------------------------------------------------------------
+# ---
 def compute_plastic_strain(e_ii:fem.Expression
                            ,temp_in:fem.Function
                            ,pres_in:fem.Function
                            ,pdb:PhaseDataBase
-<<<<<<< HEAD
                            )->tuple[ufl.fem.Expression, ufl.fem.Expression]:
     """_summary_
-=======
                            )->tuple[fem.Expression, fem.Expression, fem.Expression]:
     """Build UFL expressions for the effective shear stress in the plastic weak zone.
 
@@ -484,7 +479,18 @@ def compute_plastic_strain(e_ii:fem.Expression
         tau_eff = tau_vis * tanh(tau_lim / tau_vis)
 
     where `tau_lim = P * sin(phi)` is the Drucker-Prager yield stress.
->>>>>>> 5f2ddee (Asked Claude to document my functions, otherwise I will never finish this crap)
+
+    Args:
+        e_ii (fem.Expression): Second invariant of the strain-rate tensor
+            (already computed, e.g. from `compute_strain_rate`).
+        temp_in (fem.Function): Temperature field (dimensionless); copied and
+            re-dimensionalised internally.
+        pres_in (fem.Function): Pressure field (dimensionless); copied and
+            re-dimensionalised internally.
+        pdb (PhaseDataBase): Database with weak-zone rheology parameters
+            (bdis_wz, n_wz, edis_wz, vdis_wz, eh2o_wz, vh2o_wz, r_wz, phi)
+            and scaling factors (temp_scal, pres_scal, gas_constant).
+
 
     Args:
         e_ii (fem.Expression): Second invariant of the strain-rate tensor
