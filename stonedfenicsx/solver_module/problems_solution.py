@@ -810,15 +810,15 @@ class Global_thermal(Problem):
         
         # Update the matrix
         self.solv.A.zeroEntries()
-        dolfinx.fem.petsc.assemble_matrix(self.solv.A,dolfinx.fem.form(a),self.bc)
+        dolfinx.fem.petsc.assemble_matrix(self.solv.A,a,self.bc)
         # Assemble
         self.solv.A.assemble()
         # Update b solve [IMPORTANT BEFORE I WAS NOT DOING AS PARALLEL] 
         with self.solv.b.localForm() as loc:
             loc.set(0.0)              
         
-        dolfinx.fem.petsc.assemble_vector(self.solv.b, dolfinx.fem.form(L))
-        dolfinx.fem.petsc.apply_lifting(self.solv.b, [dolfinx.fem.form(a)], [self.bc])
+        dolfinx.fem.petsc.assemble_vector(self.solv.b, L)
+        dolfinx.fem.petsc.apply_lifting(self.solv.b, [a], [self.bc])
         
         self.solv.b.ghostUpdate(addv=PETSc.InsertMode.ADD,
                         mode=PETSc.ScatterMode.REVERSE)

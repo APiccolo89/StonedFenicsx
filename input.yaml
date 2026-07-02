@@ -17,7 +17,7 @@ Input:
     eta_max: 1.0e26
     time_max: 2.0  # Myr
     steady_state: 1
-    tol_innerpic: 1.0e-3
+    tol_innerpic: 1.0e-2
     decoupling_ctrl: 1
     model_shear: "SelfConsistent" # [Constant,SelfConsistent,NoShear]
     dt: 0.015            # Myr (15000/1e6)

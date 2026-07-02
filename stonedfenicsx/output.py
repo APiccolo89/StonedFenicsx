@@ -192,7 +192,7 @@ class OUTPUT():
         self.flux.x.scatter_forward()
         
         # shear heating
-        self.shear_heating.interpolate(sol.Hs_global)
+        self.shear_heating.interpolate(sol.shear_heating)
         self.shear_heating.x.array[:] = self.shear_heating.x.array[:]*sc.watt/(sc.length**3)
         self.shear_heating.x.scatter_forward()
         # Line Tag for the mesh and post_processing -> Translating in parallel -> gather and sending 
