@@ -175,7 +175,7 @@ class PhInput:
     """Container of the phases"""
 
     shear_heating_disl_law: str = "WetQuartzite"
-    shear_heating_disl_ch: float = 0.0
+    shear_heating_disl_tau_min: float = 0.0
     shear_heating_disl_phi: float = 0.0
     subducting_plate_mantle: Phase = field(init=False)
     oceanic_crust: Phase = field(init=False)
@@ -687,7 +687,7 @@ def generate_phase_database(pressure_dependency:int,eta_max:float, phin:PhInput,
 
 
     pdb = fill_up_weakzone_data(
-        ch=phin.shear_heating_disl_ch,
+        tau_min=phin.shear_heating_disl_tau_min,
         phi=np.radians(phin.shear_heating_disl_phi),
         eta_wz=1e18,
         dislocation_creep=phin.shear_heating_disl_law,
@@ -699,7 +699,7 @@ def generate_phase_database(pressure_dependency:int,eta_max:float, phin:PhInput,
     
     return pdb
 
-def fill_up_weakzone_data(ch:float = 10e6
+def fill_up_weakzone_data(tau_min:float = 10e6
                       ,phi: float = np.radians(5)
                       ,eta_wz: float = 1e20
                       ,dislocation_creep: str = 'Constant'
@@ -730,7 +730,7 @@ def fill_up_weakzone_data(ch:float = 10e6
     if dislocation_creep == 'Constant':
         pdb.vis_con_fl = 1
     pdb.phi = phi
-    pdb.tau_min = ch
+    pdb.tau_min = tau_min
     return pdb
 
 @dataclass(slots=True)

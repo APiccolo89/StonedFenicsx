@@ -51,7 +51,7 @@ class OUTPUT():
         self.cached_mat_thermal = cach_mat_thermal # [Took the reference from problems, it is efficient to store the thermal properties in a class and then use it for the output]
         self.domain = domain
         self.pt_save = pt_save
-
+        self.pdb = pdb
         self.vel_V   = fem.functionspace(domain.mesh,
                           basix.ufl.element("Lagrange", "triangle", 1, shape=(domain.mesh.geometry.dim,)))
         self.pres_V  = fem.functionspace(domain.mesh,
@@ -158,7 +158,7 @@ class OUTPUT():
         self.rho.x.scatter_forward()
 
         # Cp 
-        Cp = heat_capacity_FX(self.cached_mat_thermal,sol.T_N,sol.PL)
+        Cp = heat_capacity_FX(self.cached_mat_thermal,sol.T_N)
         interpolate_expression(self.cp, Cp)
         self.cp.x.array[:] = self.cp.x.array[:]*sc.cp
         self.cp.x.scatter_forward()
@@ -175,13 +175,13 @@ class OUTPUT():
 
         # strain rate 
         e = compute_strain_rate(sol.u_global)
-        eII = compute_eII(e)
+        eII = compute_eii(e)
         interpolate_expression(self.e_ii, eII)
         self.e_ii.x.array[:] = np.abs(self.e_ii.x.array[:])*(1/sc.time)
         self.e_ii.x.array[self.e_ii.x.array[:] < 1e-20] = 0.0
         self.e_ii.x.scatter_forward()
 
-        eta = compute_viscosity_FX(eII,sol.T_N,sol.PL,self.cached_mat_rheology,sc)
+        eta = compute_viscosity_FX(eII,sol.T_N,sol.PL,self.pdb,self.cached_mat_rheology)
         interpolate_expression(self.eta, eta)
         self.eta.x.array[:] = self.eta.x.array[:]*sc.stress*sc.time 
         self.eta.x.scatter_forward()

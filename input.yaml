@@ -17,18 +17,18 @@ Input:
     eta_max: 1.0e26
     time_max: 2.0  # Myr
     steady_state: 1
-    tol_innerpic: 1.0e-2
+    tol_innerpic: 1.0e-3
     decoupling_ctrl: 1
-    model_shear: "NoShear"
+    model_shear: "SelfConsistent" # [Constant,SelfConsistent,NoShear]
     dt: 0.015            # Myr (15000/1e6)
     adiabatic_heating: 0
     stokes_solver_type : "Iterative"
-    energy_solver_type : "Direct"
+    energy_solver_type : "Iterative"
     pressure_dependency: 1
 
   Shear_Heating: 
     shear_heating_disl_phi: 5.0 
-    shear_heating_disl_ch: 0.0 
+    shear_heating_disl_tau_min: 0.0 
     shear_heating_disl_law: "Wet_Quartzite_2001_Dislocation_creep"
     
   InputOutputControl:

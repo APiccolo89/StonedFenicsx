@@ -403,9 +403,9 @@ def compute_plastic_strain(e_ii:fem.Expression
     edis =  pdb.edis_wz
     vdis =  pdb.vdis_wz
     eh2o = pdb.eh2o_wz
-    vh2o = pdb.vH2o_wz
-    temp_ref = pdb.temp_ref * pdb.temp_scale 
-    pres_ref = pdb.pres_ref * pdb.pres_scale
+    vh2o = pdb.vh2o_wz
+    temp_ref = pdb.temp_ref * pdb.temp_scal
+    pres_ref = pdb.pres_ref * pdb.pres_scal
     
     # strain indipendent  
     cds = bdis * exp(-(edis + pres * vdis)/(pdb.gas_constant * temp))
