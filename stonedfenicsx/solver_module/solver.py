@@ -232,10 +232,7 @@ class SolverStokes(Solvers):
         dolfinx.fem.petsc.assemble_vector_block(
             self.b, L, a,bcs=bcs)
                 
-        #self.b.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES,
-        #           mode=PETSc.ScatterMode.FORWARD)
-    
-        #olfinx.fem.petsc.set_bc(self.b,bcs)
+
         # -------------------------
         # KSP operators
         # -------------------------

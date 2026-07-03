@@ -56,7 +56,7 @@ Input:
     slab_age: 50.0
     self_consistent_flag: 1
     right_boundary : 'Continental'  # Oceanic 
-    right_age: 40.0
+    right_age: 50.0
     recalculate : 0 # Option to compute on the fly the boundary -> useful if user wants to change thermal properties. 
 
   kinematic_boundary_condition:
@@ -199,8 +199,6 @@ Input:
       n : null
       radiative_conductivity : 0 
       radiogenic_heat : 0.0 
-
-  # Place holder for time-dependent left boundary condition
   # Geometry
   geometry:
     x: [0.0, 660.0] # Coordinate of X

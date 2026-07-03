@@ -12,16 +12,14 @@ from stonedfenicsx.create_mesh.aux_create_mesh import (
     function_create_subducting_plate_geometry,
 )
 from mpi4py import MPI
-from petsc4py import PETSc
 from pathlib import Path
 import gmsh
-from stonedfenicsx.utils import print_ph
 import numpy as np
 import math
 import meshio
 import dolfinx
 from dataclasses import asdict
-from dolfinx.io import XDMFFile, gmshio
+from dolfinx.io import gmshio
 from dolfinx import fem
 
 
@@ -1051,9 +1049,7 @@ def create_mesh_object(sc: Scal, ioctrl: IOControls, g_input: GeomInput) -> Mesh
     )  # Assign phases using the cell tags and physical surfaces -> i.e. 10000 = Mantle ? is going to assign unique phase to each node?
 
     # Correct the phase:
-    phase.x.array[
-        :
-    ] -= 1  # Rather necessary remember to put plus one once you publish it
+    phase.x.array[:] -= 1  # Rather necessary remember to put plus one once you publish it
 
     # -- Create additional facet for the shear heating. Since this hell is requiring a lot of useless work,
     # -- I need to create a yet another ad hoc function for this.

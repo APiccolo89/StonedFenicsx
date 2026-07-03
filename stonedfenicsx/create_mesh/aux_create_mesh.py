@@ -4,7 +4,7 @@ import numpy as np
 from numpy import ndarray
 import dolfinx
 from petsc4py import PETSc
-from Pathlib import Path
+from pathlib import Path
 from numpy.typing import NDArray
 
 #---------------------------------------------------------
@@ -218,7 +218,8 @@ class Class_Line():
             else: 
                 self.lines_lcr = None
         else: 
-            self.lines_cr = None; self.lines_lcr = None
+            self.lines_cr = None
+            self.lines_lcr = None
 
         arr = [self.lines_T, self.lines_R, self.lines_B, self.lines_L, self.lines_S, self.lines_BS, self.lines_oc, self.lines_L_ov, self.lines_cr, self.lines_lcr]
         arrays = [a for a in arr if a is not None]
@@ -422,16 +423,20 @@ def find_slab_surface(g_input:GeomInput)->tuple([ndarray[float],ndarray[float]])
 
  
     if g_input.slab_type in ('CustomRibe','CustomParabolic'):
-        if g_input.slab_type == 'CustomRibe':
-            def wrapper_ribe(g_input):
-                def f(x):
-                    return compute_bending_angle(g_input, x)
-                return f 
-            f_ribe = wrapper_ribe(g_input)
+        def wrapper_angle(f_angle,g_input):
 
-            slab_top,theta_mean, _ = create_slab_surface(f_ribe,g_input.y[0],stp = g_input.sub_dl)
+            def f(x):
+                return f_angle(g_input, x)
+            return f 
+
+        if g_input.slab_type == 'CustomRibe':
+            f_angle  = wrapper_angle(compute_bending_angle,g_input)
+        elif g_input.slab_type == 'CustomParabolic': 
+            f_angle = wrapper_angle(compute_angle_parabolic,g_input)
         else: 
-            slab_top,theta_mean, _ = create_slab_surface_parabolic(g_input.y[0])            
+            raise ValueError('Wrong name for subduction')
+        
+        slab_top,theta_mean, _ = create_slab_surface(f_angle,g_input.y[0],stp = g_input.sub_dl)
     elif g_input.slab_type == 'FromFile': 
         from .read_slab_surface import read_file_slab
         
@@ -446,6 +451,13 @@ def find_slab_surface(g_input:GeomInput)->tuple([ndarray[float],ndarray[float]])
             
     return slab_top, theta_mean
 #-----------------------------------------------------------------------------------------------------------
+def compute_angle_parabolic(g_input:GeomInput,x):
+    
+    theta = np.arctan(2*g_input.sub_parabolic_a*x)
+
+    return theta
+
+#---
 def create_slab_surface(f:callable, y_min:float,stp=float,depth:float=0.0)->tuple[ndarray[float],ndarray[float]]:
     
     # Initialise the theta_mean and slab_top array
@@ -462,14 +474,18 @@ def create_slab_surface(f:callable, y_min:float,stp=float,depth:float=0.0)->tupl
     it = 0 
     statement = True 
     while statement:
+        if lghn < 100:
+            dl = 5 * stp
+        else: 
+            dl = stp
         lghn += dl
         theta1 = f(lgh) # bending angle at the beginning of the segment
-        theta = theta1 # mean bending angle
-        theta_mean[it]= theta
-        theta_meani_1 = theta
+        theta2 = f(lghn) # mean bending angle
+        theta_mean[it]= (theta1+theta2)/2
+        theta_meani_1 = (theta1+theta2)/2
         # Find the middle of the slab
-        slab_topi_ix = slab_top[it,0]+dl*(np.cos(theta)) # middle of the slab at the end of the segment x
-        slab_topi_iz = slab_top[it,1]-dl*(np.sin(theta)) # middle of the slab at the end of the segment z
+        slab_topi_ix = slab_top[it,0]+dl*(np.cos(theta_mean[it])) # middle of the slab at the end of the segment x
+        slab_topi_iz = slab_top[it,1]-dl*(np.sin(theta_mean[it])) # middle of the slab at the end of the segment z
         ell_s[it] = lgh
 
         if it+1 > len(slab_top[:,0])-1:
@@ -479,14 +495,14 @@ def create_slab_surface(f:callable, y_min:float,stp=float,depth:float=0.0)->tupl
         else: 
             slab_top[it+1,0] = slab_topi_ix
             slab_top[it+1,1] = slab_topi_iz
-            theta_mean[it] = theta
-            theta_mean[it+1] = theta
+            theta_mean[it] = theta_mean[it]
+            theta_mean[it+1] = theta_mean[it]
         if y_min != -1e23: 
             x = slab_top[it+1,1]
             statement = x > y_min
             if not statement:
                 dz = slab_top[it,1] - y_min
-                dx = dz / np.tan(theta)
+                dx = dz / np.tan(theta_mean[it])
                 slab_top[it+1,0] = slab_top[it,0] + dx
                 slab_top[it+1,1] = y_min
         it = it+1
@@ -910,21 +926,22 @@ def assign_phases(dict_surf:dict,
 #---------------------------------------------------------------------------------------------------------------
 def create_slab_surface_parabolic(g_input:GeomInput):
     
-    z = np.linspace(0,np.abs(g_input.z[0]),num=np.ceil(np.abs(g_input.z[0])/g_input.sub_dl))
+    num = np.ceil(np.abs(g_input.y[0])/1)
+    z = np.linspace(0,np.abs(g_input.y[0]),num=int(num))
     
-    x = np.abs(np.sqrt(z/g_input.sub_a_parabolic))
+    x = np.abs(np.sqrt(z/g_input.sub_parabolic_a))
     # Compute the dip angle (radians)
     dip = compute_dip(x,z) # len = len(x)-1
     # Compute the cumulative distance
     x,z,dist = cumulative_distance(x,z)# len = len(x)-1
     # Create the main vector
-    crd = np.zeros([2,len(x)],dtype=np.float32)
+    crd = np.zeros([len(x),2],dtype=np.float32)
     dip = dip 
     length = dist 
     # Correct the coordinate 
     # -> Necessary because the new x,z has as initial coordinate (x[0]+x[1])/2
-    crd[0,:] = -(x - x[0]) 
-    crd[1,:] = -(z - z[0]) 
+    crd[:,0] = (x - x[0]) 
+    crd[:,1] = -(z - z[0]) 
     
     return crd,dip,length
 

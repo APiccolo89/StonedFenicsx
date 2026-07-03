@@ -94,8 +94,9 @@ class GeomInput:
     theta_in_slab: float = 10.0        # gradi, invariato
     transition: float = 10.0
     lab_d: float = 100.0
-    slab_type: str = "Custom"
+    slab_type: str = "CustomParabolic"
     sub_path: str = "Not_Defined"
+    sub_parabolic_a:float = 5e-4 # Curvature of the parabula (England and May 2021 for reference) [5e-4 -> 3.5e-3]
     sub_lb: float = 300.0
     sub_constant_flag: bool = False
     sub_theta0: float = 5.0           # gradi, invariato
@@ -116,7 +117,7 @@ class GeomInput:
         """
         if not 0.0 <= self.lc <= 1.0:
             raise ValueError(f"lc (lower crust fraction) must be in [0, 1], got {self.lc}")
-        if self.slab_type not in {"Custom", "Real"}:
+        if self.slab_type not in {"CustomRibe","CustomParabolic", "FromFile"}:
             raise ValueError(f'sub_type must be "Custom" or "Real", got {self.slab_type!r}')
         if self.van_keken and not self.sub_constant_flag:
             raise ValueError('Van Keken benchmark suite requires that the angle flag constant is true')

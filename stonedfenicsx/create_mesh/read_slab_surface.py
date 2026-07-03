@@ -1,15 +1,13 @@
-from stonedfenicsx.package_import import * 
 
-from scipy.optimize import curve_fit
 
 import numpy as np
 
-from scipy.special import expit
 
 from scipy.interpolate import CubicSpline
 
 from stonedfenicsx.create_mesh.aux_create_mesh import create_slab_surface
 
+from numpy.typing import NDArray
 
 def apply_Savitzky_Golay(yd,order,cf):
     
