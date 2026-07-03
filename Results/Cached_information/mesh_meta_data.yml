@@ -8,22 +8,23 @@ ocr: 7.0
 resolution_normal: 3.0
 resolution_refine: 1.5
 slab_tk: 130.0
-slab_type: Custom
+slab_type: CustomParabolic
 sub_constant_flag: true
 sub_dl: 10.0
 sub_lb: 300.0
+sub_parabolic_a: 0.0005
 sub_path: Not Defined
 sub_theta0: 0.08726646259971647
 sub_theta_max: 0.7853981633974483
 sub_trench: 0.0
-theta_in_slab: 0.7853981633974483
+theta_in_slab: 0.024979197860971383
 theta_out_slab: 45.0
 transition: 10.0
 van_keken: false
 wz_tk: 0.5
 x:
 - 0.0
-- 660.0000000000014
+- 1106.9846517635838
 y:
 - -600.0
 - 0.0
