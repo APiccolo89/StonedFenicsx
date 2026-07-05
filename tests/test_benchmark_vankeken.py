@@ -9,13 +9,18 @@ from mpi4py import MPI
 DEBUG = False
 #-------------------------------------------------------------------------------
 def perform_test(option_viscous=0,option_thermal=0):
-    # 
+    # Path 2 test
     path_test = os.path.dirname(os.path.realpath(__file__))
-    
+    # Path 2 imput fie
     path_input = f"{path_test}/input_tests.yaml"
-
+    # Parse the input: 
+    # The input file is required to run a simulation. You can modify  
+    # it and parse the input and then call the function for running simulation. 
+    # Alternatively, you can generate the input file using it as blue print for the 
+    # common property of the simulation, and modify the produced object for personalising 
+    # the ensemble of simulations. 
     inp,ph_input = parse_input(path_input)
-    # Geometric Input: 
+    # Geometric Input: [inp.g_input.attributes -> change]
     inp.g_input.cr = .0 
     inp.g_input.lc = .0
     inp.g_input.ocr = 6.0 
@@ -26,15 +31,8 @@ def perform_test(option_viscous=0,option_thermal=0):
     # Control 
     inp.ctrl.decoupling_ctrl = 0 
     inp.ctrl.steady_state = 1 
-    
-
-    # option for the benchmark
-
-    # Create input data - Input is a class populated by default dataset
-    # A flag that generate the geometry of the benchmark
-
-    # The input path for saving the results
-
+    # In this case, for testing the Van Keken benchmark, I opted to create a simple script
+    # that has: option viscosity and thermal for testing several potential configuration. 
     if option_thermal == 0: 
     
         alpha_nameC = 'Constant'
@@ -87,7 +85,11 @@ def perform_test(option_viscous=0,option_thermal=0):
         name_dislocation = 'VK_Dislocation_creep'     
         
 
-    
+    # ph_input contains the compositional phase -> you can modify them. The problem 
+    # of kinematic simulations does not give a lot of freedom, and indeed, the possibility 
+    # to have different rheologies is a design choiche to allow extension of the code 
+    # in the future. Would be easier to start a new branch with more complex dynamic with 
+    # config module. 
 
     # Modify the phase with the new data: 
     ph_input.subducting_plate_mantle.rho0 = rho0_M
@@ -138,12 +140,15 @@ def perform_test(option_viscous=0,option_thermal=0):
     #ph_input.virtual_weak_zone.name_diffusion = 'Hirth_Wet_Olivine_disl'
     #ph_input.virtual_weak_zone.name_dislocation = 'Hirth_Wet_Olivine_disl' 
 
-
+    # -> Important: where to save and the name of the test. You can fully automatise the creation of new
+    # folder. 
     inp.ctrl_io.test_name = f'T_vi{option_viscous}_th{option_thermal}'
     inp.ctrl_io.path_save = os.path.join(os.path.dirname(os.path.realpath(__file__)),'VanKeken')
     
 
     # Initialise the input
+    # After the user change the required data, and update the input and phase input, he must 
+    # call this function, and run the simulation - hopefully, without throwing errors. 
     stoned_fenicsx(inp = inp, ph_in=ph_input)
 
 #-------------------------------------------------------------------------------
@@ -213,37 +218,10 @@ def read_data_base(option_viscous,option_thermal=0):
     db_vk1 = [np.mean(data[:,0]), np.min(data[:,0]), np.max(data[:,0])]
     db_vk2 = [np.mean(data[:,1]), np.min(data[:,1]), np.max(data[:,1])]
     db_vk3 = [np.mean(data[:,2]), np.min(data[:,2]), np.max(data[:,2])]
-    # The nonlinear stopping tolerance is set to 1e-1 for the following reasons:
-    #
-    # 1) Parallel floating-point round-off:
-    #    In MPI parallel reductions (e.g., norms, dot products), floating-point
-    #    operations are not strictly associative. The ordering of reductions
-    #    differs between runs and processor counts, leading to unavoidable
-    #    round-off variations (typically O(1e-5) in our tests).
-    #    Therefore, convergence criteria below this threshold do not reflect
-    #    physically meaningful changes in the solution.
-    #
-    # 2) Iterative vs direct Stokes solve:
-    #    The Krylov (KSP) solver computes an approximate solution whose accuracy
-    #    depends on the relative tolerance (rtol). For nonlinear rheologies,
-    #    especially dislocation creep, the Picard fixed-point iteration becomes
-    #    sensitive to the linear solver tolerance.
-    #
-    #    We observe that:
-    #      - For linear viscosity and diffusion creep, the solution is robust
-    #        across a wide range of KSP tolerances.
-    #      - For dislocation creep, tightening or loosening the KSP rtol
-    #        changes the nonlinear fixed-point trajectory.
-    #
-    #    Below a certain linear tolerance threshold, the nonlinear iteration
-    #    may converge to a different fixed point or exhibit divergence,
-    #    indicating sensitivity of the coupled nonlinear–linear scheme.
-    #
-    #    The chosen tolerance represents a compromise between numerical
-    #    stability, physical consistency, and computational cost.
-    test_1 = np.isclose(T_11_11, v1, 5e-1, 1e-1)
-    test_2 = np.isclose(L2_A, v2,5e-1, 1e-1)
-    test_3 = np.isclose(L2_B, v3,5e-1, 1e-1)
+ 
+    test_1 = np.isclose(T_11_11, v1, rtol=1e-3, atol=1e-1)
+    test_2 = np.isclose(L2_A, v2,rtol=1e-3, atol=1e-1)
+    test_3 = np.isclose(L2_B, v3,rtol=1e-3,atol= 1e-1)
     
     
     rel_err = (T_11_11 - db_vk1[1])/(db_vk1[2]-db_vk1[1])
@@ -289,7 +267,7 @@ def test_isoviscous():
 
 def test_diffusion():
     # Test Van Keken 
-    #perform_test(1) # IsoViscous
+    perform_test(1) # IsoViscous
     # Read Data Base and compare data 
     if MPI.COMM_WORLD.rank == 0: 
         read_data_base(1)
@@ -300,7 +278,7 @@ def test_diffusion():
 
 def test_composite():
     # Test Van Keken 
-    #perform_test(2) # IsoViscous
+    perform_test(2) # IsoViscous
     # Read Data Base and compare data 
     if MPI.COMM_WORLD.rank == 0: 
         read_data_base(2)
