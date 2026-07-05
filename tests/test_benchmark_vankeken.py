@@ -52,13 +52,14 @@ def perform_test(option_viscous=0,option_thermal=0):
         alpha_nameM = 'Mantle'
         density_nameC = 'PT'
         density_nameM = 'PT'
-        capacity_nameM = 'Bermann_Aranovich_Fo_Fa_0_1'
-        capacity_nameC = 'Bermann_Aranovich_Fo_Fa_0_1'
-        conductivity_nameM = 'Mantle'
-        conductivity_nameC = 'Mantle'
+        capacity_nameM = 'Mantle_Bernard_Ar_199x_FO_FA'
+        capacity_nameC = 'Mantle_Bernard_Ar_199x_FO_FA'
+        conductivity_nameM = 'Mantle_Richards_2018'
+        conductivity_nameC = 'Mantle_Richards_2018'
         rho0_M = 3300.0
         rho0_C = 3300.0
         radio_flag = 1 
+        inp.ctrl.pressure_dependency = 0
         
     elif option_thermal == 2: 
 
@@ -66,13 +67,17 @@ def perform_test(option_viscous=0,option_thermal=0):
         alpha_nameM = 'Mantle'
         density_nameC = 'PT'
         density_nameM = 'PT'
-        capacity_nameM = 'Bermann_Aranovich_Fo_Fa_0_1'
+        capacity_nameM = 'Mantle_bernard_ar_FO_FA'
         capacity_nameC = 'Oceanic_Crust'
         conductivity_nameM = 'Mantle'
-        conductivity_nameC = 'Oceanic_Crust'
+        conductivity_nameC = 'Crust_Richards_2018'
         rho0_M = 3300.0
         rho0_C = 3300.0
         radio_flag = 1 
+        inp.ctrl.pressure_dependency = 0
+        inp.g_input.ocr = 6.0 
+        inp.g_input.cr = 6.0 
+        inp.g_input.lc = 0.0
 
     if option_viscous == 0:
         name_diffusion = 'Constant'
@@ -170,7 +175,7 @@ def read_data_base(option_viscous,option_thermal=0):
     field_c = f'{Test_name}/L2_B'
     L2_B = np.array(f[field_c])
     
-    if option_viscous==0:  
+    if option_viscous==0 and option_thermal == 0:  
         
         data = np.array([
         [397.55, 505.70, 850.50],
@@ -187,7 +192,7 @@ def read_data_base(option_viscous,option_thermal=0):
         
         # 
            
-    if option_viscous == 1:
+    if option_viscous == 1 and option_thermal == 0: 
         data = np.array([
         [570.30, 614.09, 1007.31],
         [580.52, 606.94, 1002.85],
@@ -200,7 +205,7 @@ def read_data_base(option_viscous,option_thermal=0):
         v2 = 601.45
         v3 = 999.1
 
-    if option_viscous==2: 
+    if option_viscous==2 and option_thermal == 0: 
         
         data = np.array([
         [550.17, 593.48, 994.11],
@@ -214,33 +219,46 @@ def read_data_base(option_viscous,option_thermal=0):
         v1 = 559.61
         v2 = 594.45
         v3 = 995.19 
+    if option_thermal==1: 
+        v1 = 559.61
+        v2 = 594.45
+        v3 = 995.19 
+    if option_thermal==2: 
+        v1 = 559.61
+        v2 = 594.45
+        v3 = 995.19 
 
-    db_vk1 = [np.mean(data[:,0]), np.min(data[:,0]), np.max(data[:,0])]
-    db_vk2 = [np.mean(data[:,1]), np.min(data[:,1]), np.max(data[:,1])]
-    db_vk3 = [np.mean(data[:,2]), np.min(data[:,2]), np.max(data[:,2])]
+    if option_thermal == 0: 
+        db_vk1 = [np.mean(data[:,0]), np.min(data[:,0]), np.max(data[:,0])]
+        db_vk2 = [np.mean(data[:,1]), np.min(data[:,1]), np.max(data[:,1])]
+        db_vk3 = [np.mean(data[:,2]), np.min(data[:,2]), np.max(data[:,2])]
  
     test_1 = np.isclose(T_11_11, v1, rtol=1e-3, atol=1e-1)
     test_2 = np.isclose(L2_A, v2,rtol=1e-3, atol=1e-1)
     test_3 = np.isclose(L2_B, v3,rtol=1e-3,atol= 1e-1)
     
     
-    rel_err = (T_11_11 - db_vk1[1])/(db_vk1[2]-db_vk1[1])
     print(f'Test_viscous{option_viscous}, T_11_11 is {T_11_11:.4f}. Tested against {v1:.4f}.')
-    print(f'                             Van Keken benchmark : mean T_11_11 = {db_vk1[0]:.2f}.')
-    print(f'                             Van Keken benchmark : range T_11_11 = {db_vk1[1]:.2f}-{db_vk1[2]:.2f}.')
-    print(f'                             Van Keken benchmark : rel_err = {rel_err:.2f}')
+    if option_thermal == 0:
+        rel_err = (T_11_11 - db_vk1[1])/(db_vk1[2]-db_vk1[1])
+        print(f'                             Van Keken benchmark : mean T_11_11 = {db_vk1[0]:.2f}.')
+        print(f'                             Van Keken benchmark : range T_11_11 = {db_vk1[1]:.2f}-{db_vk1[2]:.2f}.')
+        print(f'                             Van Keken benchmark : rel_err = {rel_err:.2f}')
 
-    rel_err = (L2_A - db_vk2[1])/(db_vk2[2]-db_vk2[1])
     print(f'Test_viscous{option_viscous}, L2_A is {L2_A:.4f}. Tested against {v2:.4f}.')
-    print(f'                             Van Keken benchmark : mean L2_A = {db_vk2[0]:.2f}.')
-    print(f'                             Van Keken benchmark : range L2_A = {db_vk2[1]:.2f}-{db_vk2[2]:.2f}.')
-    print(f'                             Van Keken benchmark : rel_err = {rel_err:.2f}')
+    if option_thermal == 0: 
+        rel_err = (L2_A - db_vk2[1])/(db_vk2[2]-db_vk2[1])
 
-    rel_err = (L2_B - db_vk3[1])/(db_vk3[2]-db_vk3[1])
+        print(f'                             Van Keken benchmark : mean L2_A = {db_vk2[0]:.2f}.')
+        print(f'                             Van Keken benchmark : range L2_A = {db_vk2[1]:.2f}-{db_vk2[2]:.2f}.')
+        print(f'                             Van Keken benchmark : rel_err = {rel_err:.2f}')
+
     print(f'Test_viscous{option_viscous}, L2_B is {L2_B:.4f}. Tested against {v3:.4f}.')
-    print(f'                             Van Keken benchmark : mean L2_A = {db_vk3[0]:.2f}.')
-    print(f'                             Van Keken benchmark : range L2_A = {db_vk3[1]:.2f}-{db_vk3[2]:.2f}.')
-    print(f'                             Van Keken benchmark : rel_err = {rel_err:.2f}')
+    if option_thermal == 0: 
+        rel_err = (L2_B - db_vk3[1])/(db_vk3[2]-db_vk3[1])
+        print(f'                             Van Keken benchmark : mean L2_A = {db_vk3[0]:.2f}.')
+        print(f'                             Van Keken benchmark : range L2_A = {db_vk3[1]:.2f}-{db_vk3[2]:.2f}.')
+        print(f'                             Van Keken benchmark : rel_err = {rel_err:.2f}')
 
 
     if test_1 and test_2 and test_3:         
@@ -262,8 +280,8 @@ def test_isoviscous():
     if MPI.COMM_WORLD.rank == 0: 
         read_data_base(0)
     # Remove folder after completing the test
-    if DEBUG == False:
-        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
+    if not DEBUG:
+        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
 
 def test_diffusion():
     # Test Van Keken 
@@ -272,8 +290,8 @@ def test_diffusion():
     if MPI.COMM_WORLD.rank == 0: 
         read_data_base(1)
     # Remove folder after completing the test
-    if DEBUG == False:
-        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
+    if not DEBUG:
+        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
 #-------------------------------------------------------------------------------
 
 def test_composite():
@@ -283,19 +301,43 @@ def test_composite():
     if MPI.COMM_WORLD.rank == 0: 
         read_data_base(2)
     # Remove folder after completing the test
-    if DEBUG == False:
-        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/Tests_Van_keken')
+    if not DEBUG:
+        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
 #-------------------------------------------------------------------------------
 
+def test_composite_NL_no_crust():
+    # Test Van Keken 
+    perform_test(2,1) # IsoViscous
+    # Read Data Base and compare data 
+    if MPI.COMM_WORLD.rank == 0: 
+        read_data_base(2,1)
+    # Remove folder after completing the test
+    if not DEBUG:
+        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
+#-------------------------------------------------------------------------------
 
+def test_composite_NL_crust():
+    # Test Van Keken 
+    perform_test(2,2) # IsoViscous
+    # Read Data Base and compare data 
+    if MPI.COMM_WORLD.rank == 0: 
+        read_data_base(2,2)
+    # Remove folder after completing the test
+    if not DEBUG:
+        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
+#-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 if __name__ == '__main__': 
     
     DEBUG = True
     
-    test_isoviscous()
+    #test_isoviscous()
 
-    test_diffusion()
+    #test_diffusion()
 
-    test_composite()
+    #test_composite()
+    
+    test_composite_NL_no_crust()
+    
+    test_composite_NL_crust()
 #---------------------------------------------------------------------------------

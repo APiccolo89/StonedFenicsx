@@ -22,7 +22,7 @@ Input:
     model_shear: "NoShear" # [Constant,SelfConsistent,NoShear]
     dt: 0.015            # Myr (15000/1e6)
     adiabatic_heating: 0
-    stokes_solver_type : "Iterative"
+    stokes_solver_type : "Direct"
     energy_solver_type : "Direct"
     pressure_dependency: 1
 
