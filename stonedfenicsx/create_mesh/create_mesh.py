@@ -192,6 +192,7 @@ def create_gmesh(ioctrl: IOControls, g_input: GeomInput):
         g_input.x[1] = max_x
         g_input.y[1] = max_y
         g_input.y[0] = min_y
+        g_input.sub_theta_max = np.radians(45)
     # Create the subducting plate main geometrical point and lines using the information of g_input
     slab_x, slab_y, bot_x, bot_y, oc_cx, oc_cy, g_input = (
         function_create_subducting_plate_geometry(g_input)

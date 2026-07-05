@@ -289,6 +289,8 @@ class Solution():
         self.u_slab  , self.p_slab   = gives_Function(PS.FS)
         self.u_wedge , self.p_wedge  = gives_Function(PW.FS)
         self.T_ad                     = dolfinx.fem.Function(PG.FS)   
+        self.mom_res, _ = gives_Function(space_GL)
+        self.energy_res = dolfinx.fem.Function(PG.FS)
         self.mT    = np.zeros(1,dtype=float)
         self.MT    = np.zeros(1,dtype=float) 
         self.RMST    = np.zeros(1,dtype=float)
@@ -354,7 +356,7 @@ class Global_thermal(Problem):
             facets                 = domain.facets.find(domain.bc_dict['Left_inlet'])
             dofs_left              = dolfinx.fem.locate_dofs_topological(self.FS, domain.mesh.topology.dim-1, facets)
             # Interpolate + CORRECTION initial z vector -> If angle slab != 0.0 => z = z/cos(theta_in_slab) 
-            temp_bc_left = self.interpolate_1d_vector_boundary(self.FS,ctrl_tbc.z/np.cos(self.g_input.theta_in_slab),ctrl_tbc.temperature_1d,cd_dof)
+            temp_bc_left = self.interpolate_1d_vector_boundary(self.FS,ctrl_tbc.z,ctrl_tbc.temperature_1d,cd_dof)
             # Update dirichletbc
             self.bc_left = dolfinx.fem.dirichletbc(temp_bc_left, dofs_left)
 
@@ -734,7 +736,6 @@ class Global_thermal(Problem):
                           ,it_outer:int=0
                           ,ts:int=0)->[]: 
         
-        nl = 0 
         # choose the problemesh: 
         if self.ctrl_sim.ctrl.steady_state == 1: 
             self.set_linear = self.set_linear_picard_SS 
@@ -1522,8 +1523,8 @@ class Wedge(Stokes_Problem):
         print_ph(f'                         [Final] |F^mom|L2/|F^mom_0|L2 {rmom/rmom_0:.3e}, |F^div|L2/|F^div_0|L2 {rdiv/rdiv_0:.3e}')
         print_ph(f'                         [Final] |F^mom|L2           {rmom:.3e}, abs div residuum |F^div|L2 {rdiv:.3e}')
         print_ph('                         []Converged ')  
-        sol.u_wedge = self.u_k.copy()
-        sol.p_wedge = self.p_k.copy() 
+        sol.u_wedge = self.u_k1.copy()
+        sol.p_wedge = self.p_k1.copy() 
         time_B = timing.time()
         print_ph(f'              || -- || --- Solution of Wedge in {time_B-time_A:.2f} sec || -- || --- ||')
 

@@ -58,7 +58,7 @@ def test_function():
     ph_in.oceanic_crust.rho0 = 3300
     ph_in.oceanic_crust.name_conductivity = "Crust_Richards_2018"
     ph_in.oceanic_crust.name_density = "PT"
-    ph_in.oceanic_crust.radiogenic_heat = 0.25e-6
+    #ph_in.oceanic_crust.radiogenic_heat = 0.25e-6
 
     ph_in.subducting_plate_mantle.name_capacity = "Mantle_Bernard_Ar_199x_FO_FA"
     ph_in.subducting_plate_mantle.name_conductivity = "Mantle_Richards_2018"
@@ -74,8 +74,8 @@ def test_function():
     ph_in.wedge_mantle.name_dislocation = "VK_Dislocation_creep"
     ph_in.wedge_mantle.name_diffusion = "VK_Diffusion_creep"
     
-    ph_in.overriding_lower_crust.radiogenic_heat = 0.5e-6
-    ph_in.overriding_upper_crust.radiogenic_heat = 1.0e-6
+    #ph_in.overriding_lower_crust.radiogenic_heat = 0.5e-6
+    #ph_in.overriding_upper_crust.radiogenic_heat = 1.0e-6
     
     input_data.ctrl.model_shear = dict_shear_modes["SelfConsistent"]
     

@@ -1,55 +1,69 @@
+# The input unit of measure: 
+# Length = km -> all the unit of measure are in km and internally change to meter then dimensionless.
+# Viscosity = Pas 
+# Temperature = degC
+# Velocity = cm/yr 
+# Stress = Pascal 
+# time = Myr 
+# -> list of rheology and thermal model is given in the guide. 
+
 Input:
   NumericalControls:
     it_max: 20
+    it_inner_max : 3 
     tol: 1.0e-5
     relax: 0.9
-    Tmax: 1333.0
-    Ttop: 0.0
     g: 9.81
     eta_max: 1.0e26
-    v_s: [5.0, 0.0] # cm/yr
-    slab_age: 50.0 # Myr
     time_max: 2.0  # Myr
-    time_dependent_v: 0
     steady_state: 1
-    slab_bc: 1
-    tol_innerPic: 1.0e-2
-    tol_innerNew: 1.0e-5
-    van_keken_case: 2
+    tol_innerpic: 1.0e-2
     decoupling_ctrl: 1
-    model_shear: "NoShear"
-    time_dependent: 0
-    dt_sim: 0.015            # Myr (15000/1e6)
+    model_shear: "NoShear" # [Constant,SelfConsistent,NoShear]
+    dt: 0.015            # Myr (15000/1e6)
     adiabatic_heating: 0
-    self_consistent_flag: 1
-    stokes_solver_type : "Direct"
+    stokes_solver_type : "Iterative"
+    energy_solver_type : "Direct"
+    pressure_dependency: 1
 
   Shear_Heating: 
-    model_shear: "NoShear"
-    phi: 10.0 
-    cohesion: 10e6 
-    dislocation_creep_wz: "WetQuartzite_disl"
+    shear_heating_disl_phi: 5.0 
+    shear_heating_disl_tau_min: 0.0 
+    shear_heating_disl_law: "Wet_Quartzite_2001_Dislocation_creep"
     
   InputOutputControl:
     test_name: "Output"
     sname: "Output"
     path_test: "../Results"
 
-  # Scaling parameters
+  # Scaling parameters [in SI unit meter, Pa, Pas, K]!!
   scaling:
-    L: 600000.0
+    length: 600e3
     stress: 1.0e9
     eta: 1.0e21
-    Temp: 1333.0
+    temp: 1333.0
 
   # Left boundary condition
-  left_thermal_bc:
+  thermal_boundary_condition:
+    temp_max: 1300.0
+    temp_top: 0.0
+    constant: 1 
+    interval_val : [50.0,30]
+    interval_time: [20,40]
     nz: 108
     end_time: 180.0
-    dt: 0.001
-    recalculate: 1
-    van_keken: 1
-    c_age_plate: 50.0
+    dt: 0.005
+    slab_age: 50.0
+    self_consistent_flag: 1
+    right_boundary : 'Continental'  # Oceanic 
+    right_age: 50.0
+    recalculate : 1 # Option to compute on the fly the boundary -> useful if user wants to change thermal properties. 
+
+  kinematic_boundary_condition:
+    v_s : [5.0,0.0]
+    constant : 1 
+    interval_val : [5.0,1.0]
+    interval_time : [20,40]
 
   Material_properties: 
   
@@ -63,17 +77,17 @@ Input:
       eta : 1.0e20 
       rho0 : 3300.0 
       k : 3.0
-      Cp : 1250 
+      cp : 1250 
       alpha0 : 3e-5
-      Bdiff : null
-      Bdisl : null 
-      Ediff : null
-      Edisl : null 
-      Vdiff : null 
-      Vdisl : null
+      b_dif : null
+      b_dis : null 
+      e_dif : null
+      e_dis : null 
+      v_dis : null 
+      v_dif : null
       n : null
-      radio_flag : 0 
-      Hr : 0.0 
+      radiative_conductivity : 0 
+      radiogenic_heat : 0.0 
 
     wedge_mantle: 
       name_diffusion : 'Constant'
@@ -85,17 +99,17 @@ Input:
       eta : 1.0e20 
       rho0 : 3300.0 
       k : 3.0
-      Cp : 1250 
+      cp : 1250 
       alpha0 : 3e-5
-      Bdiff : null
-      Bdisl : null 
-      Ediff : null
-      Edisl : null 
-      Vdiff : null 
-      Vdisl : null
+      b_dif : null
+      b_dis : null 
+      e_dif : null
+      e_dis : null 
+      v_dis : null 
+      v_dif : null
       n : null
-      radio_flag : 0 
-      Hr : 0.0 
+      radiative_conductivity : 0 
+      radiogenic_heat : 0.0 
 
     overriding_mantle: 
       name_diffusion : 'Constant'
@@ -107,17 +121,17 @@ Input:
       eta : 1.0e20 
       rho0 : 3300.0 
       k : 3.0
-      Cp : 1250 
+      cp : 1250 
       alpha0 : 3e-5
-      Bdiff : null
-      Bdisl : null 
-      Ediff : null
-      Edisl : null 
-      Vdiff : null 
-      Vdisl : null
+      b_dif : null
+      b_dis : null 
+      e_dif : null
+      e_dis : null 
+      v_dis : null 
+      v_dif : null
       n : null
-      radio_flag : 0 
-      Hr : 0.0 
+      radiative_conductivity : 0 
+      radiogenic_heat : 0.0 
 
     oceanic_crust: 
       name_diffusion : 'Constant'
@@ -129,17 +143,17 @@ Input:
       eta : 1.0e20 
       rho0 : 3300.0 
       k : 3.0
-      Cp : 1250 
+      cp : 1250 
       alpha0 : 3e-5
-      Bdiff : null
-      Bdisl : null 
-      Ediff : null
-      Edisl : null 
-      Vdiff : null 
-      Vdisl : null
+      b_dif : null
+      b_dis : null 
+      e_dif : null
+      e_dis : null 
+      v_dis : null 
+      v_dif : null
       n : null
-      radio_flag : 0 
-      Hr : 0.0 
+      radiative_conductivity : 0 
+      radiogenic_heat : 0.0 
       
 
     overriding_upper_crust:
@@ -152,17 +166,17 @@ Input:
       eta : 1.0e20 
       rho0 : 3300.0 
       k : 3.0
-      Cp : 1250 
+      cp : 1250 
       alpha0 : 3e-5
-      Bdiff : null
-      Bdisl : null 
-      Ediff : null
-      Edisl : null 
-      Vdiff : null 
-      Vdisl : null
+      b_dif : null
+      b_dis : null 
+      e_dif : null
+      e_dis : null 
+      v_dis : null 
+      v_dif : null
       n : null
-      radio_flag : 0 
-      Hr : 0.0 
+      radiative_conductivity : 0 
+      radiogenic_heat : 0.0 
 
     overriding_lower_crust:
       name_diffusion : 'Constant'
@@ -174,48 +188,39 @@ Input:
       eta : 1.0e20 
       rho0 : 3300.0 
       k : 3.0
-      Cp : 1250 
+      cp : 1250 
       alpha0 : 3e-5
-      Bdiff : null
-      Bdisl : null 
-      Ediff : null
-      Edisl : null 
-      Vdiff : null 
-      Vdisl : null
-      n : null  
-      radio_flag : 0 
-      Hr : 0.0 
-
-  # Place holder for time-dependent left boundary condition
-  time_dependent_left_bc:
-    constant_age: 1 
-    constant_vel: 1
-    t_age : [0.0,30.0]
-    t_vel : [0.0,30.0]
-    age_plate : [50.0, 25.0]
-    vel_plate : [5.0, 2.5]
-
-
+      b_dif : null
+      b_dis : null 
+      e_dif : null
+      e_dis : null 
+      v_dis : null 
+      v_dif : null
+      n : null
+      radiative_conductivity : 0 
+      radiogenic_heat : 0.0 
   # Geometry
   geometry:
-    x: [0.0, 660000.0] # Coordinate of X
-    y: [-600000.0, 0.0] # Coordinate of Y
-    slab_tk: 130000.0 # Slab Thickness
-    cr: 30000.0 # Overriding Crust {if lc==0.0 -> only overriding upper crust}
-    ocr: 7000.0 # Oceanic crust
+    x: [0.0, 660.0] # Coordinate of X
+    y: [-600.0, 0.0] # Coordinate of Y
+    van_keken: True
+    sub_constant_flag : True
+    slab_tk: 130.0 # Slab Thickness
+    cr: 30.0 # Overriding Crust {if lc==0.0 -> only overriding upper crust}
+    ocr: 7.0 # Oceanic crust
     lc: 0.3
-    resolution_normal: 2000.0
-    resolution_refine: 2000.0 
-    ns_depth: 50000.0
-    lab_d: 100000.0
-    decoupling: 80000.0
-    resolution_normal: 2000.0
-    transition: 2500.0
-    wz_tk: 500.0
-    sub_Lb: 300000.0
-    sub_dl: 10000.0
-    sub_theta0: 5
-    sub_theta_max: 45
-    sub_trench: [0.0, 0.0]
-    slab_type: "Costum"
+    resolution_normal: 2.0
+    resolution_refine: 1.5 
+    ns_depth: 50.0
+    lab_d: 100.0
+    decoupling: 80.0
+    transition: 10.0
+    wz_tk: 0.5
+    sub_lb: 300.0
+    sub_dl: 10.0
+    sub_theta0: 5.0
+    sub_theta_max: 45.0
+    sub_trench: 0.0
+    sub_parabolic_a: 8e-4 # [km^-1] -> curvature of the parabolic slab
+    slab_type: "CustomParabolic" # [CustomParabolic,CustomRibe,FromFile] 
     sub_path: "Not Defined"

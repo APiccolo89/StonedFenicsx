@@ -15,7 +15,7 @@ import os
 import basix 
 import h5py
 from stonedfenicsx.config.scal import Scal
-from stonedfenicsx.config.numerical_control import SimulationControls
+from stonedfenicsx.config.numerical_control import SimulationControls,IOControls
 from stonedfenicsx.config.geometry import Domain
 from stonedfenicsx.config.phase_db import PhaseDataBase
 from stonedfenicsx.solver_module.problems_solution import Solution
@@ -292,7 +292,7 @@ class OUTPUT():
 # Benchmarking functions    
 #-----------------------------------------------------------------------------------------
 def _benchmark_van_keken(sol:Solution
-                         ,ctrl_sim:SimulationControls
+                         ,ctrl_io:IOControls
                          ,sc:Scal)->None:
     from scipy.interpolate import griddata
     
@@ -325,8 +325,8 @@ def _benchmark_van_keken(sol:Solution
         XG[:,0] = X_global
         XG[:,1] = Y_global
      
-        x_g = np.array([np.min(XG[:,0]),np.max(XG[:,0])],dtype=np.float64)*sc.L
-        y_g = np.array([np.min(XG[:,1]),np.max(XG[:,1])],dtype=np.float64)*sc.L
+        x_g = np.array([np.min(XG[:,0]),np.max(XG[:,0])],dtype=np.float64)*sc.length
+        y_g = np.array([np.min(XG[:,1]),np.max(XG[:,1])],dtype=np.float64)*sc.length
         nx   = 111 
         ny   = 101
         idx0 = 10 #(11 in van keken)
@@ -337,11 +337,11 @@ def _benchmark_van_keken(sol:Solution
         yy   = np.linspace(y_g[0],y_g[1],num=ny)
         T_g  = np.zeros([nx,ny],dtype=np.float64)
         X,Y  = np.meshgrid(xx,yy)
-        xt,yt = XG[:,0]*sc.L, XG[:,1]*sc.L
+        xt,yt = XG[:,0]*sc.length, XG[:,1]*sc.length
         p     = np.zeros((len(xt),2),dtype=np.float64)
         p[:,0] = xt 
         p[:,1] = yt
-        T_g   = griddata(p,T_all*sc.Temp,(X, Y), method='nearest')-273.15
+        T_g   = griddata(p,T_all*sc.temp,(X, Y), method='nearest')-273.15
         T_g = T_g.T
         T = 0
         co = 0
@@ -389,9 +389,9 @@ def _benchmark_van_keken(sol:Solution
         
     if comm.rank ==0:
         
-        with h5py.File(os.path.join(ctrl_sim.ctrl_io.path_save,'benchmark_van_keken.h5'),'a') as van_keken_db:
+        with h5py.File(os.path.join(ctrl_io.path_save,'benchmark_van_keken.h5'),'a') as van_keken_db:
         
-           group_name = ctrl_sim.ctrl_io.sname
+           group_name = ctrl_io.test_name
            name       = '%s/T_11_11'%group_name
            if name in van_keken_db.keys():
                del van_keken_db[name]

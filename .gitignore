@@ -88,3 +88,6 @@ examples/slurm-3992024.out
 examples/slurm-3992101.out
 .DS_Store
 Results/Cached_information/mesh_meta_data.yml
+experiment_geometry.py
+Results/Cached_information/mesh_meta_data.yml
+.DS_Store

@@ -429,12 +429,7 @@ def find_slab_surface(g_input:GeomInput)->tuple([ndarray[float],ndarray[float]])
                 return f_angle(g_input, x)
             return f 
 
-        if g_input.slab_type == 'CustomRibe':
-            f_angle  = wrapper_angle(compute_bending_angle,g_input)
-        elif g_input.slab_type == 'CustomParabolic': 
-            f_angle = wrapper_angle(compute_angle_parabolic,g_input)
-        else: 
-            raise ValueError('Wrong name for subduction')
+        f_angle  = wrapper_angle(compute_bending_angle,g_input)
         
         slab_top,theta_mean, _ = create_slab_surface(f_angle,g_input.y[0],stp = g_input.sub_dl)
     elif g_input.slab_type == 'FromFile': 
@@ -452,7 +447,7 @@ def find_slab_surface(g_input:GeomInput)->tuple([ndarray[float],ndarray[float]])
     return slab_top, theta_mean
 #-----------------------------------------------------------------------------------------------------------
 def compute_angle_parabolic(g_input:GeomInput,x):
-    
+    # -> needs to be changed -> now I introduced as function of the cumulative length 
     theta = np.arctan(2*g_input.sub_parabolic_a*x)
 
     return theta
@@ -526,13 +521,17 @@ def compute_bending_angle(g_input:GeomInput
     """
     if g_input.sub_constant_flag:
         theta = g_input.sub_theta_max
-    else:
+    elif g_input.slab_type == 'CustomRibe':
         if lgh > g_input.sub_lb:
             theta = g_input.sub_theta_max
         else:
             theta = ribe_angle(g_input.sub_theta_max, g_input.sub_lb, lgh)
             if theta<g_input.sub_theta0:
                 theta = g_input.sub_theta0
+    elif g_input.slab_type == 'CustomParabolic':
+        theta = compute_angle_parabolic(g_input=g_input,x=lgh)
+    else:
+        raise ValueError('Wrong slab type')
 
     return theta
 

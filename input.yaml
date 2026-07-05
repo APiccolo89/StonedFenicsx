@@ -10,7 +10,7 @@
 Input:
   NumericalControls:
     it_max: 20
-    it_inner_max : 10 
+    it_inner_max : 3 
     tol: 1.0e-5
     relax: 0.9
     g: 9.81
@@ -23,7 +23,7 @@ Input:
     dt: 0.015            # Myr (15000/1e6)
     adiabatic_heating: 0
     stokes_solver_type : "Iterative"
-    energy_solver_type : "Iterative"
+    energy_solver_type : "Direct"
     pressure_dependency: 1
 
   Shear_Heating: 
@@ -221,6 +221,6 @@ Input:
     sub_theta0: 5.0
     sub_theta_max: 45.0
     sub_trench: 0.0
-    sub_parabolic_a: 5e-4 # [km^-1] -> curvature of the parabolic slab
+    sub_parabolic_a: 8e-4 # [km^-1] -> curvature of the parabolic slab
     slab_type: "CustomParabolic" # [CustomParabolic,CustomRibe,FromFile] 
     sub_path: "Not Defined"

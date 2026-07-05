@@ -154,7 +154,7 @@ def compute_residuum_outer(sol:Solution
         print_ph("Problem with the thermal solver")
 
     
-    res_total = np.sqrt(res_T**2+res_p**2+res_u**2+res_PL)
+    res_total = np.sqrt(res_T**2+res_p**2+res_u**2+res_PL**2)
     if not np.isfinite(res_total):
         raise ValueError("res_total is NaN/Inf; check inputs and residual computations.")
     
@@ -169,6 +169,12 @@ def compute_residuum_outer(sol:Solution
     print_ph(f'    []Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  {res_total:.3e} [n.d.] ')
     print_ph('. =============================================// -- // --->')
     print_ph('')
+    
+    # Update solution 
+    sol.T_N = update_solution(sol.T_N,T,ctrl_sim.ctrl.relax)
+    sol.u_global = update_solution(sol.u_global,u,ctrl_sim.ctrl.relax)
+    sol.p_global = update_solution(sol.p_global,p,ctrl_sim.ctrl.relax)
+    
     
     sol.mT = np.append(sol.mT,minMaxT[0])
     sol.MT = np.append(sol.MT,minMaxT[1])

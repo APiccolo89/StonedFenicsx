@@ -1,11 +1,11 @@
-cr: 30.0
-decoupling: 80.0
-lab_d: 100.0
-lc: 0.3
-lit_mt: 20.0
+cr: 0.0
+decoupling: 0.0
+lab_d: 50.0
+lc: 0.0
+lit_mt: 50.0
 ns_depth: 50.0
-ocr: 7.0
-resolution_normal: 3.0
+ocr: 6.0
+resolution_normal: 2.0
 resolution_refine: 1.5
 slab_tk: 130.0
 slab_type: CustomParabolic
@@ -17,14 +17,14 @@ sub_path: Not Defined
 sub_theta0: 0.08726646259971647
 sub_theta_max: 0.7853981633974483
 sub_trench: 0.0
-theta_in_slab: 0.03991499285611866
+theta_in_slab: 0.7853981633974483
 theta_out_slab: 45.0
 transition: 10.0
-van_keken: false
+van_keken: true
 wz_tk: 0.5
 x:
 - 0.0
-- 868.5057925466803
+- 660.0000000000014
 y:
 - -600.0
 - 0.0
