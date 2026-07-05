@@ -63,13 +63,13 @@ def perform_test(option_viscous=0,option_thermal=0):
         
     elif option_thermal == 2: 
 
-        alpha_nameC = 'Crust'
+        alpha_nameC = 'Oceanic_crust'
         alpha_nameM = 'Mantle'
         density_nameC = 'PT'
         density_nameM = 'PT'
-        capacity_nameM = 'Mantle_bernard_ar_FO_FA'
-        capacity_nameC = 'Oceanic_Crust'
-        conductivity_nameM = 'Mantle'
+        capacity_nameM = 'Mantle_Bernard_Ar_199x_FO_FA'
+        capacity_nameC = 'Oceanic_crust'
+        conductivity_nameM = 'Mantle_Richards_2018'
         conductivity_nameC = 'Crust_Richards_2018'
         rho0_M = 3300.0
         rho0_C = 3300.0
@@ -220,9 +220,9 @@ def read_data_base(option_viscous,option_thermal=0):
         v2 = 594.45
         v3 = 995.19 
     if option_thermal==1: 
-        v1 = 559.61
-        v2 = 594.45
-        v3 = 995.19 
+        v1 = 539.62
+        v2 = 603.18
+        v3 = 937.31
     if option_thermal==2: 
         v1 = 559.61
         v2 = 594.45
@@ -337,7 +337,7 @@ if __name__ == '__main__':
 
     #test_composite()
     
-    test_composite_NL_no_crust()
+    #test_composite_NL_no_crust()
     
     test_composite_NL_crust()
 #---------------------------------------------------------------------------------

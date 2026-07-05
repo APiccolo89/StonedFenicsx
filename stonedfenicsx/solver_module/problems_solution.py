@@ -425,11 +425,15 @@ class Global_thermal(Problem):
             Z = self.FS.tabulate_dof_coordinates()[:,1]
             decoupling = decoupling_function(Z,decoupling,self.g_input)
 
-            if mode_shear:
+            if mode_shear>0:
                 # compute the plastic strain rate ratio and viscous shear heating strain rate 
                 # Place holder function
+                
                 dS = ufl.Measure("dS", domain=domain.mesh, subdomain_data=domain.facets)
-                tau_eff, _, _  = self.compute_friction_shear_expression(T_k,p)
+                if mode_shear == 1: 
+                    tau_eff, _, _  = self.compute_friction_shear_expression(T_k,p)
+                else: 
+                    tau_eff = self.pdb.tau_min
 
                 friction_heat = tau_eff * decoupling * self.ctrl_sim.ctrl_ky.v_s[0]
                 

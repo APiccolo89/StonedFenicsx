@@ -203,6 +203,7 @@ Input:
   geometry:
     x: [0.0, 660.0] # Coordinate of X
     y: [-600.0, 0.0] # Coordinate of Y
+    redo_mesh: True
     van_keken: True
     sub_constant_flag : True
     slab_tk: 130.0 # Slab Thickness

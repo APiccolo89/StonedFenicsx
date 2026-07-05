@@ -81,6 +81,7 @@ class GeomInput:
     """
     x: NDArray[np.float64] = field(default_factory=lambda: np.array([0.0, 660.0]))
     y: NDArray[np.float64] = field(default_factory=lambda: np.array([-600.0, 0.0]))
+    redo_mesh:bool = True
     slab_tk: float = 130.0
     cr: float = 30.0
     ocr: float = 7.0
