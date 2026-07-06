@@ -180,7 +180,7 @@ class CtrlKy(CTRLBC):
             The input initial velocity must be the same of the first entry of the interval of values
         """
         self.check_time_variation(ctrl)
-        if self.v_s[0] != self.interval_val[0]:
+        if self.v_s[0] != self.interval_val[0] and ctrl.steady_state == 0:
             raise ValueError('The input initial velocity must be the same of the first entry of the interval of values')
 
 @dataclass(slots=True)

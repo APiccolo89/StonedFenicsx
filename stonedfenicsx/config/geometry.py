@@ -119,7 +119,7 @@ class GeomInput:
         if not 0.0 <= self.lc <= 1.0:
             raise ValueError(f"lc (lower crust fraction) must be in [0, 1], got {self.lc}")
         if self.slab_type not in {"CustomRibe","CustomParabolic", "FromFile"}:
-            raise ValueError(f'sub_type must be "Custom" or "Real", got {self.slab_type!r}')
+            raise ValueError(f'sub_type must be "CustomRibe", "CustomParabolic" or "Real", got {self.slab_type!r}')
         if self.van_keken and not self.sub_constant_flag:
             raise ValueError('Van Keken benchmark suite requires that the angle flag constant is true')
         if self.slab_type == 'Real' and self.sub_path in ('Not_Defined', None):
