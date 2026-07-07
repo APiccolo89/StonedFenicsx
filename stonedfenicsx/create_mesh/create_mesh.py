@@ -49,7 +49,7 @@ def compare_data(g_input: GeomInput, ioctrl: IOControls) -> None:
         cached = yaml.safe_load(f)
 
     for key, cached_val in cached.items():
-        if key == "decoupling":          # campo che può legittimamente differire
+        if key in ("decoupling","redo_mesh"):          
             continue
         current_val = getattr(g_input, key)
         if _differs(cached_val, current_val):
@@ -991,13 +991,6 @@ def read_mesh(
         msh = meshio.read(path_file)
 
         pt_save = ioctrl.path_cached_information
-
-
-        # Create and save one file for the mesh, and one file for the facets
-        triangle_mesh = create_mesh_fenicsx(msh, "triangle", prune_z=True)
-        line_mesh = create_mesh_fenicsx(msh, "line", prune_z=True)
-        meshio.write(Path(ioctrl.path_save,'mesh.xdmf'), triangle_mesh)  # Debug
-        meshio.write(Path(ioctrl.path_save,'boundary.xdmf'), line_mesh)  # Debug
         # Remove gmsh file, to save memory: every information of the mesh is already known by fenicsx
     return mesh, cell_markers, facet_markers
 

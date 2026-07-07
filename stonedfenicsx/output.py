@@ -235,7 +235,7 @@ class OUTPUT():
             # write each field at this physical_time
             # ...same for PL2, rho2, Cp2, k2, kappa2, e_T, eta2, flux
             
-            self.xdmf_main = XDMFFile(comm, os.path.join(self.pt_save, "time_dependent.xdmf"),
+            self.xdmf_main = XDMFFile(comm, os.path.join(self.pt_save, "Time_dependent.xdmf"),
                                       "a")
             
             self.xdmf_main.write_function(self.u_sol,          time)
@@ -257,7 +257,7 @@ class OUTPUT():
             self.close()
         
         else:
-            with XDMFFile(MPI.COMM_WORLD, os.path.join(self.pt_save, "Steady_State.xdmf"), "w") as ufile_xdmf:
+            with XDMFFile(MPI.COMM_WORLD, os.path.join(self.pt_save, "Steady_state.xdmf"), "w") as ufile_xdmf:
                 print_ph('... Printing')
                 coord = self.domain.mesh.geometry.x.copy()
                 self.domain.mesh.geometry.x[:] *= sc.length/1e3

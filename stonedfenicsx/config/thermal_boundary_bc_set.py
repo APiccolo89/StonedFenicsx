@@ -631,7 +631,7 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
 
     if rank == 0:
         race_condition = check_race_condition(ioctrl)
-        if race_condition: 
+        if race_condition and ctrl_tbc.recalculate == 0: 
             print('    The file is opened for an other process, skip the save.')
         if save_data and not race_condition:
             ttime,zz = np.meshgrid(time_v,z)
