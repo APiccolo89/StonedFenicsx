@@ -139,9 +139,9 @@ def read_data_base(test_name):
     L2_B = np.array(f[field_c])
     
     if test_name == '_phi3':
-        v1 = 0
-        v2 = 0 
-        v3 = 0
+        v1 = 251.17
+        v2 = 581.29
+        v3 = 843.03
     elif test_name == '_phi5':
         v1 = 0
         v2 = 0
@@ -199,7 +199,7 @@ def test_phi(phi=0.0,test_name='_phi5'):
 if __name__ == '__main__': 
     
     DEBUG = True
-    test_phi(phi=3.0, test_name='_phi3')
+    #test_phi(phi=3.0, test_name='_phi3')
     test_phi(phi=5.0,test_name='_phi5')
     test_phi(phi=10.0,test_name='_phi10')
     test_phi(phi=15.0,test_name='_phi15')
