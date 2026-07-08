@@ -6,6 +6,9 @@ from stonedfenicsx.config.geometry import GeomInput
 # --- #
 # --- #
 dict_shear_modes = {"NoShear": 0, "SelfConsistent": 1, "Constant": 2}
+dict_solver_type = {"Direct": np.int32(1), "Iterative": np.int32(0)}
+
+
 @dataclass(slots=True)
 class NumericalControls:#ctrl 
     """Numerical controls: class that stores the numerical control required for the simulation.
@@ -22,13 +25,24 @@ class NumericalControls:#ctrl
     dt: float = 500.0              # [yr]
     steady_state: int = 1
     decoupling_ctrl: int = 1 # 1 decoupled, 0 coupled
-    model_shear: int = 1           # 1 linear, 0 nonlinear
+    model_shear: str|int = 1           # 1 linear, 0 nonlinear
     adiabatic_heating: int = 1     # REMOVE (?)
-    stokes_solver_type: int = 1
-    energy_solver_type: int = 1
+    stokes_solver_type: str|int = 1
+    energy_solver_type: str|int = 1
     iterative_solver_tol: float = 1e-10
     eta_max : float = 1e26
     pressure_dependency: int = 1
+    def convert_string(self):
+        if (self.energy_solver_type) not in dict_solver_type.keys():
+            raise ValueError(f'Solver type is wrong: {self.energy_solver_type} is not valid. The options must be either Direct or Iterative' )
+        if (self.stokes_solver_type) not in dict_solver_type.keys():
+            raise ValueError(f'Solver type is wrong: {self.stokes_solver_type} is not valid. The options must be either Direct or Iterative' ) 
+        if (self.model_shear) not in dict_shear_modes.keys():   
+            raise ValueError(f'Shear Heating mode; is wrong: {self.model_shear} is not valid. The options must be either NoShear, SelfConsistent, Constant' ) 
+        self.energy_solver_type = dict_solver_type[self.energy_solver_type]
+        self.stokes_solver_type = dict_solver_type[self.stokes_solver_type]
+        self.model_shear = dict_shear_modes[self.model_shear]
+        print('Controls updated')
 # --- #
 @dataclass(slots=True)
 class IOControls: # ctrlio

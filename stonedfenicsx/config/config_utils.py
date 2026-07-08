@@ -43,9 +43,10 @@ def update_ip_file(obj: object, block: dict) -> None:
         if k not in hints:
             raise ValueError(f"Unknown field '{k}' for {obj.__class__.__name__}")
         tp = hints[k]
-        if isinstance(v, str):
-            v = correct_input(k, v)
-        setattr(obj, k, cast_type(v, tp))
+        if k in ('stokes_solver_type', 'energy_solver_type','model_shear'):
+            setattr(obj, k, v)
+        else:
+            setattr(obj, k, cast_type(v, tp))
 
 def cast_type(v: any, tp: any) -> any:
     """Ensure that the typing of input is the same of the target class

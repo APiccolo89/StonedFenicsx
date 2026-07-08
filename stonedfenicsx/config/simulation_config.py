@@ -27,6 +27,7 @@ def configure_simulation(
     """
 
     ctrl = inp.ctrl
+    inp.ctrl.convert_string()
     ctrl_io = inp.ctrl_io
     ctrl_tbc = inp.ctrl_tbc
     ctrl_ky = inp.ctrl_ky
