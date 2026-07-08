@@ -3,6 +3,7 @@ from dataclasses import field, dataclass
 import numpy as np
 from numpy.typing import NDArray
 from stonedfenicsx.config.geometry import GeomInput
+from dataclasses import InitVar
 # --- #
 # --- #
 dict_shear_modes = {"NoShear": 0, "SelfConsistent": 1, "Constant": 2}
@@ -42,6 +43,10 @@ class NumericalControls:#ctrl
         self.energy_solver_type = dict_solver_type[self.energy_solver_type]
         self.stokes_solver_type = dict_solver_type[self.stokes_solver_type]
         self.model_shear = dict_shear_modes[self.model_shear]
+        if self.decoupling_ctrl == 0 and self.model_shear !=0: 
+            raise ValueError('Decoupling control must be active if the shear heating flag is either Constant or SelfConsistent')
+
+        
         print('Controls updated')
 # --- #
 @dataclass(slots=True)
@@ -206,7 +211,24 @@ class SimulationControls:
     ctrl_ky: Kinematic boundary condition controls
     # name: ctrlsm 
     """
+    g_input: InitVar[GeomInput]
     ctrl: NumericalControls = field(default_factory=NumericalControls)
     ctrl_io: IOControls = field(default_factory=IOControls) 
     ctrl_tbc: CtrlTemperatureBC = field(default_factory=CtrlTemperatureBC)
     ctrl_ky: CtrlKy = field(default_factory=CtrlKy)
+    _scaled: bool = field(default=False, init=False, repr=False)
+    def __post_init__(self,g_input:GeomInput):
+        # check consistency
+        if self.ctrl.decoupling_ctrl == 1 and ((g_input.decoupling == g_input.ns_depth) or g_input.decoupling ==0):
+            raise Warning(f'geometric_input **decoupling** is {g_input.decoupling}')
+            if (g_input.decoupling == g_input.ns_depth):
+                raise Warning('**ns_depth** cannot be the same of **decoupling**')
+            elif g_input.decoupling == 0.0: 
+                raise Warning('**decoupling** is equal to 0.0. decoupling must be a no-zero value and decoupling must be higher than ns_depth')
+            raise ValueError('geometric input **decoupling** has a problem' )
+
+        
+        
+        
+        
+        

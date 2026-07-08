@@ -49,12 +49,16 @@ def configure_simulation(
     ,scal_temp=sc.temp, scal_press=sc.stress)
 
     # Merge the controls into simulation controls
-    ctrl_sim = SimulationControls()
+    ctrl_sim = SimulationControls( ctrl = ctrl
+                                  ,ctrl_ky = ctrl_ky
+                                  ,ctrl_tbc = ctrl_tbc
+                                  ,ctrl_io = ctrl_io
+                                  ,g_input = g_input)
     
-    ctrl_sim.ctrl = ctrl
-    ctrl_sim.ctrl_ky = ctrl_ky
-    ctrl_sim.ctrl_tbc = ctrl_tbc
-    ctrl_sim.ctrl_io = ctrl_io
+    
+    
+   
+    
     # Scale the simulation parameters
     scaling_simulation_physical(ctrl_sim=ctrl_sim,pdb=pdb,mesh=mesh,sc=sc)
 

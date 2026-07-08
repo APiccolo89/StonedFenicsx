@@ -80,11 +80,15 @@ def scaling_simulation_physical(
             are overwritten with their dimensionless equivalents.
         sc (Scal): Fully initialised scaling object (primary + derived scales).
     """
-    scale_kinematic_bc(ctrl_ky=ctrl_sim.ctrl_ky,sc=sc)
-    scale_parameters(ctrl_tbc=ctrl_sim.ctrl_tbc,sc=sc)
-    scaling_control_parameters(ctrl=ctrl_sim.ctrl,sc=sc)
-    scaling_mesh(mesh=mesh,sc=sc)
-    scaling_material_properties(pdb=pdb,sc=sc)
+    if not ctrl_sim._scaled :
+        scale_kinematic_bc(ctrl_ky=ctrl_sim.ctrl_ky,sc=sc)
+        scale_parameters(ctrl_tbc=ctrl_sim.ctrl_tbc,sc=sc)
+        scaling_control_parameters(ctrl=ctrl_sim.ctrl,sc=sc)
+        scaling_mesh(mesh=mesh,sc=sc)
+        scaling_material_properties(pdb=pdb,sc=sc)
+        ctrl_sim._scaled = True
+    else: 
+        raise ValueError ('Simulations controls cannot be scaled more than once!')
 
 
 def scaling_material_properties(pdb:PhaseDataBase,sc:Scal)->PhaseDataBase:
