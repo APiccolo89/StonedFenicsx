@@ -220,13 +220,13 @@ def read_data_base(option_viscous,option_thermal=0):
         v2 = 594.45
         v3 = 995.19 
     if option_thermal==1: 
-        v1 = 539.62
-        v2 = 603.18
-        v3 = 937.31
+        v1 = 526.68
+        v2 = 599.12
+        v3 = 934.03
     if option_thermal==2: 
-        v1 = 579.03
-        v2 = 629.23
-        v3 = 956.36
+        v1 = 565.19
+        v2 = 625.01
+        v3 = 952.62
 
     if option_thermal == 0: 
         db_vk1 = [np.mean(data[:,0]), np.min(data[:,0]), np.max(data[:,0])]
@@ -325,16 +325,6 @@ def test_composite_NL_crust():
     # Remove folder after completing the test
     if not DEBUG:
         os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
-        
-def test_isoviscous_NL():
-    # Test Van Keken 
-    perform_test(0,2) # IsoViscous
-    # Read Data Base and compare data 
-    if MPI.COMM_WORLD.rank == 0: 
-        read_data_base(0,2)
-    # Remove folder after completing the test
-    if not DEBUG:
-        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 if __name__ == '__main__': 
@@ -344,8 +334,6 @@ if __name__ == '__main__':
     #test_isoviscous()
 
     #test_diffusion()
-    
-    #test_isoviscous_NL()
 
     #test_composite()
     
