@@ -900,11 +900,19 @@ class Global_thermal(Problem):
         
         ctrl = self.ctrl_sim.ctrl        
         tol = 1.0 
+        
+        a,L = self.initialise_form(sol=sol,it_outer=it_outer,ts=ts)
+        
+        if it_outer == 0 and ts == 0: 
+            self.solv = ScalarSolver(a,L,self.bc,self.domain.comm,self.ctrl_sim.ctrl.energy_solver_type)
+     
+        
         self.temp_k.x.array[:] = sol.T_N.x.array[:]
         self.temp_k1.x.array[:] = sol.T_N.x.array[:]
         self.temp_k.x.scatter_forward()
         self.temp_k1.x.scatter_forward()
-    
+
+        
         it_inner = 0 
         time_A = timing.time()
         print_ph('              [||] Picard iterations for the non linear temperature problem')
@@ -916,27 +924,27 @@ class Global_thermal(Problem):
 
             time_ita = timing.time()
             
-            if it_inner == 0: 
-                A,L = self.set_linear(p=sol.PL
-                                    ,T_k=self.temp_k
-                                    ,T_O=sol.T_O
-                                    ,u_global=sol.u_global)
-                          
-            else: 
-                if ctrl.steady_state==1: 
-                    A,L = self.set_linear(p=sol.PL
-                                    ,T_k=self.temp_k
-                                    ,T_O=sol.T_O
-                                    ,u_global=sol.u_global
-                                    ,it_inner = it_inner)
-                else: 
-                    A,_ = self.set_linear(p=sol.PL
-                                    ,T_k=self.temp_k
-                                    ,T_O=sol.T_O
-                                    ,u_global=sol.u_global
-                                    ,it_inner = it_inner)
-                    
-            self.solve_the_linear(sol,A,L,self.temp_k1,1,it_outer)
+            #if it_inner == 0: 
+            #    A,L = self.set_linear(p=sol.PL
+            #                        ,T_k=self.temp_k
+            #                        ,T_O=sol.T_O
+            #                        ,u_global=sol.u_global)
+            #              
+            #else: 
+            #    if ctrl.steady_state==1: 
+            #        A,L = self.set_linear(p=sol.PL
+            #                        ,T_k=self.temp_k
+            #                        ,T_O=sol.T_O
+            #                        ,u_global=sol.u_global
+            #                        ,it_inner = it_inner)
+            #    else: 
+            #        A,_ = self.set_linear(p=sol.PL
+            #                        ,T_k=self.temp_k
+            #                        ,T_O=sol.T_O
+            #                        ,u_global=sol.u_global
+            #                        ,it_inner = it_inner)
+            #        
+            self.solve_the_linear(sol,a,L,self.temp_k1,1,it_outer)
             self.temp_k1.x.scatter_forward()
             # L2 norm 
             tol = compute_residuum(self.temp_k1,self.temp_k)
@@ -958,7 +966,7 @@ class Global_thermal(Problem):
 
             it_inner = it_inner + 1 
         
-        sol.T_N.x.array[:] = self.temp_k1.x.array[:]
+        sol.T_N.x.array[:] = self.temp_k.x.array[:]
         sol.T_N.x.scatter_forward()        
 
         
@@ -1528,8 +1536,8 @@ class Wedge(Stokes_Problem):
             self.solve_linear_picard(dolfinx.fem.form(a)
                                                         ,dolfinx.fem.form(a_p0)
                                                         ,dolfinx.fem.form(L)
-                                                        ,self.u_k
-                                                        ,self.p_k
+                                                        ,self.u_k1
+                                                        ,self.p_k1
                                                         ,it_outer
                                                         ,ts)
             

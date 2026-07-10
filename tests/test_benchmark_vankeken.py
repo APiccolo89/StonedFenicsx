@@ -341,13 +341,13 @@ if __name__ == '__main__':
     
     DEBUG = True
     
-    test_isoviscous()
+    #test_isoviscous()
 
-    test_diffusion()
+    #test_diffusion()
     
-    test_isoviscous_NL()
+    #test_isoviscous_NL()
 
-    test_composite()
+    #test_composite()
     
     test_composite_NL_no_crust()
     
