@@ -88,7 +88,7 @@ def compute_residuum_outer(sol:Solution
                            ,tA:float
                            ,ts:int
                            ,ctrl_sim:SimulationControls
-                           ) -> tuple[float,Solution]:
+                           ) -> tuple[float]:
     """Compute the outer-loop Picard residual and print diagnostic statistics.
 
     Computes a normalised L2 residual for each of the four solution fields
@@ -171,9 +171,9 @@ def compute_residuum_outer(sol:Solution
     print_ph('')
     
     # Update solution 
-    sol.T_N = update_solution(sol.T_N,T,ctrl_sim.ctrl.relax)
-    sol.u_global = update_solution(sol.u_global,u,ctrl_sim.ctrl.relax)
-    sol.p_global = update_solution(sol.p_global,p,ctrl_sim.ctrl.relax)
+    update_solution(sol.T_N,T,ctrl_sim.ctrl.relax)
+    update_solution(sol.u_global,u,ctrl_sim.ctrl.relax)
+    update_solution(sol.p_global,p,ctrl_sim.ctrl.relax)
     
     
     sol.mT = np.append(sol.mT,minMaxT[0])
@@ -188,7 +188,7 @@ def compute_residuum_outer(sol:Solution
     sol.ts = np.append(sol.ts,ts)
     
     
-    return res_total, sol 
+    return res_total
 
 #------------------------------------------------------------------------------------------------------------
 
@@ -269,7 +269,7 @@ def min_max_array(a:dolfinx.fem.function.Function
 
 def update_solution(sk1:dolfinx.fem.function.Function
                     ,sk0:dolfinx.fem.function.Function
-                    ,tol:float)->dolfinx.fem.function.Function:
+                    ,tol:float)->None:
     """Apply under-relaxation to a solution field.
 
     Blends the new iterate sk1 with the old iterate sk0 using relaxation
@@ -297,5 +297,4 @@ def update_solution(sk1:dolfinx.fem.function.Function
 
     sk0.x.scatter_forward()
     
-    return sk0
 

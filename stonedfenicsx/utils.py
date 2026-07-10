@@ -76,7 +76,7 @@ def print_ph(string: str) -> int:
 def interpolate_from_sub_to_main(u_dest: dolfinx.fem.Function
                                  , u_start: dolfinx.fem.Function,
                                  cells: np.ndarray,
-                                 parent2child: int = 0) -> dolfinx.fem.Function:
+                                 parent2child: int = 0) -> None:
     """
     Interpolate the solution from the subdomain to the main domain.
 
@@ -95,7 +95,6 @@ def interpolate_from_sub_to_main(u_dest: dolfinx.fem.Function
 
     u_dest.interpolate(u_start, cells0=a, cells1=b)
 
-    return u_dest
 
 
 def gather_vector(v):

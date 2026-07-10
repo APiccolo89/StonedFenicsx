@@ -7,6 +7,8 @@ import mpi4py.MPI as MPI
 from numpy.typing import NDArray
 from scipy.interpolate import griddata   
 import petsc4py.PETSc as PETSc
+import dataclasses 
+from dataclasses import field,dataclass
 # --- ufl 
 
 # --- from config module 
@@ -58,7 +60,16 @@ def debug_boundary_condition(bc, name):
     if comm.rank == 0:
         print(f"{name}: global min {gmin:.6e} global max {gmax:.6e} "
               f"(rank{comm.rank} local min {local_min:.6e} local max {local_max:.6e}, n_owned {dofs_owned.size})")
-        
+
+@dataclass
+class CACHED_FEM_FORM:
+    a :  None = None 
+    linear : None = None 
+    other_form : dict = field(default_factory=dict)
+
+    
+
+     
 # ---
 class Problem:
     """
@@ -141,6 +152,7 @@ class Problem:
     ds        : ufl.measure.Measure                # measure surface/length 
     dx        : ufl.measure.Measure
     solv      : Solvers
+    cached_fom : CACHED_FEM_FORM()
     # --
     def __init__(self
                  ,mesh: Mesh
@@ -299,6 +311,7 @@ class Solution():
         self.RMSv    = np.zeros(1,dtype=float) 
         self.outer_iteration = np.zeros(1,dtype=float)
         self.ts             = np.zeros(1,dtype=int)
+        self.shear_heating = dolfinx.fem.Function(PG.FS)
 
 # --- 
  
@@ -468,7 +481,7 @@ class Global_thermal(Problem):
     def compute_energy_source(self):
         source = dolfinx.fem.Function(self.FS)
         source = compute_radiogenic(self.cached_mat, source)
-        self.energy_source = source.copy()
+        self.energy_source.x.array[:] = source.x.array[:]
         self.energy_source.x.scatter_forward()
         
 
@@ -735,10 +748,33 @@ class Global_thermal(Problem):
         else: 
             return a, None
     #------------------------------------------------------------------
+    def initialise_form(self,sol:Solution,it_outer:int,ts:int):
+        """Call the routine for setting up the form, and caching it during the first iteration 
+        and first 
+
+        Args:
+            sol (Solution): _description_
+            it_outer (int): _description_
+            ts (int): _description_
+        """
+        a,L = self.set_linear(p=sol.PL
+                              ,T_k=self.temp_k
+                              ,T_O=sol.T_O
+                              ,u_global = sol.u_global
+                              ,it_outer=0
+                              ,it_inner=0
+                              ,ts=0)
+        
+        
+        
+        
+        
+        
+    #------------------------------------------------------------------
     def Solve_the_Problem(self
                           ,sol:Solution
                           ,it_outer:int=0
-                          ,ts:int=0)->[]: 
+                          ,ts:int=0)->None: 
         
         # choose the problemesh: 
         if self.ctrl_sim.ctrl.steady_state == 1: 
@@ -747,6 +783,10 @@ class Global_thermal(Problem):
         else: 
             self.set_linear = self.set_linear_picard_TD
             self.compute_residual = self.compute_residual_TD
+        
+    
+        
+        
                     
         if it_outer == 0:         
             self.compute_energy_source()
@@ -767,7 +807,7 @@ class Global_thermal(Problem):
         time_A = timing.time()
 
         if self.typology == 'LinearProblem': 
-            sol.T_N = self.solve_the_linear(sol
+            self.solve_the_linear(sol
                                           ,a
                                           ,L
                                           ,sol.T_N) 
@@ -776,11 +816,10 @@ class Global_thermal(Problem):
 
         else: 
             
-            sol = self.solve_the_non_linear(sol,it_outer=it_outer,ts=ts)
+            self.solve_the_non_linear(sol,it_outer=it_outer,ts=ts)
         
         time_B = timing.time()
         
-        f_viz = dolfinx.fem.Function(self.FS)
 
         if self.ctrl_sim.ctrl.model_shear>0: 
 
@@ -791,17 +830,18 @@ class Global_thermal(Problem):
 
             a_mass = (u_trial * v_test * dx)
             problem = dolfinx.fem.petsc.LinearProblem(a_mass, (self.shear_heating))
-            f_viz = problem.solve()
-
-            print("shear min/max:", f_viz.x.array.min(), f_viz.x.array.max())            
+            sol.shear_heating = problem.solve()
+            sol.shear_heating.x.scatter_forward()
+        else: 
+            if it_outer ==0 and ts == 0: 
+                sol.shear_heating.x.array[:]=0.0
+                sol.shear_heating.x.scatter_forward()
             
-        sol.shear_heating = f_viz.copy()
         
         print_ph(f'              || --- || -- Solution of Temperature  in {time_B-time_A:.2f} sec || -- || --- ||')
 
 
 
-        return sol 
 
     #------------------------------------------------------------------
     
@@ -811,7 +851,7 @@ class Global_thermal(Problem):
                          ,L:dolfinx.fem.Form
                          ,fen_function:dolfinx.fem.Function
                          ,isPicard:int=0
-                         ,ts:int=0)->dolfinx.fem.Function:
+                         ,ts:int=0)->None:
         
         # Update the matrix
         self.solv.A.zeroEntries()
@@ -835,12 +875,10 @@ class Global_thermal(Problem):
  
         fen_function.x.scatter_forward()
         
-        return fen_function
-
     def solve_the_non_linear(self
                             ,sol: Solution
                             ,it_outer:int=0
-                            ,ts:int=0):  
+                            ,ts:int=0)->None:  
         
         """_summary_
 
@@ -886,7 +924,7 @@ class Global_thermal(Problem):
                                     ,u_global=sol.u_global
                                     ,it_inner = it_inner)
                     
-            self.temp_k1 = self.solve_the_linear(sol,A,L,self.temp_k1,1,it_outer)
+            self.solve_the_linear(sol,A,L,self.temp_k1,1,it_outer)
             self.temp_k1.x.scatter_forward()
             # L2 norm 
             tol = compute_residuum(self.temp_k1,self.temp_k)
@@ -904,13 +942,13 @@ class Global_thermal(Problem):
             print_ph(f'              it:[{it_inner}]:Temperature L_2 norm is {tol:.3e}, it_th {it_inner:d} performed in {time_itb-time_ita:.2f} seconds')
             print_ph(f'                          [|.|] Residual L2 norm is {rT:.3e}, L2_rel is {rT/rT0:.3e}')
 
-            self.temp_k = update_solution(self.temp_k1,self.temp_k,ctrl.relax)
+            update_solution(self.temp_k1,self.temp_k,ctrl.relax)
 
             it_inner = it_inner + 1 
         
         sol.T_N.x.array[:] = self.temp_k1.x.array[:]
         sol.T_N.x.scatter_forward()        
-        return sol  
+
         
     @timing_function
     def initial_temperature_field(self)->dolfinx.fem.Function:
@@ -1002,39 +1040,34 @@ class Global_pressure(Problem):
     def Solve_the_Problem(self
                           ,sol:Solution
                           ,it_outer:int=0
-                          ,ts:int=0)->Solution: 
+                          ,ts:int=0)->None: 
         
-        p_k = sol.PL.copy()  # Previous lithostatic pressure 
-        T   = sol.T_N.copy() # -> will not eventually update 
-        
+
         # If the problem is linear, p_k is not doing anything, it is there because I
         # design the density function to receive in anycase a pressure, potentially I
         # can use the multipledispach of python, which say ah density with pressure 
         # density without pressure is equal to fuck. But seems a bit lame, and I do 
         # not think that is a great improvement of the code. 
         
-        a,L = self.set_linear_picard(p_k,T)
-    
-
-        if it_outer == 0 & ts == 0: 
-            self.solv = ScalarSolver(a,L,self.bc,self.domain.comm,self.ctrl_sim.ctrl.energy_solver_type)
-        
         print_ph('              || --- || -- LITHOSTATIC PROBLEM [GLOBAL] || -- || --- || ')
 
         time_A = timing.time()
 
         
-        if self.typology=='LinearProblem': 
-            sol.PL = self.solve_the_linear(a,L,sol.PL) 
+        if self.typology=='LinearProblem':
+    
+            if it_outer == 0 & ts == 0: 
+                a,L = self.set_linear_picard(sol.PL,sol.T_N)
+                self.solv = ScalarSolver(a,L,self.bc,self.domain.comm,self.ctrl_sim.ctrl.energy_solver_type) 
+            self.solve_the_linear(a,L,sol.PL) 
         else: 
-            sol.PL = self.solve_the_non_linear(sol)
+            self.solve_the_non_linear(sol=sol,it_outer=it_outer,ts=ts)
 
         time_B = timing.time()
 
         print_ph(f'              || -- || --- Solution of Lithostatic pressure problem finished in {time_B-time_A:.2f} sec || -- || --- ||')
         print_ph('')
 
-        return sol
     
     def solve_the_linear(self
                          ,a:dolfinx.fem.Form
@@ -1059,10 +1092,11 @@ class Global_pressure(Problem):
         self.solv.ksp.solve(self.solv.b, function_fen.x.petsc_vec)
         function_fen.x.scatter_forward()
         
-        return function_fen
     
     def solve_the_non_linear(self
-                             ,sol:Solution):  
+                             ,sol:Solution
+                             ,it_outer:int
+                             ,ts:int)->None:  
   
         ctrl = self.ctrl_sim.ctrl
         self.p_k.x.array[:] = 0.0
@@ -1080,11 +1114,13 @@ class Global_pressure(Problem):
             time_ita = timing.time()
             
             if it_inner == 0:
-                A,L = self.set_linear_picard(self.p_k,sol.T_N)
+                a,L = self.set_linear_picard(self.p_k,sol.T_N)
+                if it_outer==0 and ts==0:
+                        self.solv = ScalarSolver(a,L,self.bc,self.domain.comm,self.ctrl_sim.ctrl.energy_solver_type)  
             else: 
                 _,L = self.set_linear_picard(self.p_k,sol.T_N,1)
             
-            self.p_k1 = self.solve_the_linear(A,L,self.p_k1,1,it_inner,1) 
+            self.solve_the_linear(a,L,self.p_k1,1,it_inner,1) 
 
             # L2 norm 
             res = compute_residuum(self.p_k1,self.p_k)
@@ -1093,7 +1129,7 @@ class Global_pressure(Problem):
             print_ph(f'              it:[{it_inner:d}]: L_2 norm is {res:.3e} performed in {time_itb-time_ita:.2f} seconds')
             
             #update solution
-            self.p_k = update_solution(self.p_k1,self.p_k,ctrl.relax)
+            update_solution(self.p_k1,self.p_k,ctrl.relax)
             self.p_k.x.scatter_forward()
             
             it_inner = it_inner + 1 
@@ -1101,10 +1137,7 @@ class Global_pressure(Problem):
         
         sol.PL.x.array[:] = self.p_k.x.array[:]
         sol.PL.x.scatter_forward()
-      
-        
-        
-        return sol.PL
+
 
 #-------------------------------------------------------------------
 #-------------------------------------------------------------------
@@ -1281,22 +1314,20 @@ class Stokes_Problem(Problem):
                             ,p:dolfinx.fem.Function
                             ,it:int=0
                             ,ts:int=0
-                            ,slab:int = 0):
+                            ,slab:int = 0)->None:
             
         if it == 0 and ts == 0: 
             self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,self.ctrl_sim.ctrl ,J = None, r = None,it = it, ts = ts, slab=slab)
         else: 
             self.solv.update_block_operator(a,a_p0,self.bc,L,self.F0,self.F1)
         
-        u_solved = u.copy()
-        p_solved = p.copy()
         x = self.solv.A.createVecLeft()
         self.solv.ksp.solve(self.solv.b, x)
 
-        u_solved.x.array[:self.solv.offset] = x.array[:self.solv.offset]
-        p_solved.x.array[: (len(x.array_r) - self.solv.offset)] = x.array[self.solv.offset:]
-        u_solved.x.scatter_forward()
-        p_solved.x.scatter_forward()
+        u.x.array[:self.solv.offset] = x.array[:self.solv.offset]
+        p.x.array[: (len(x.array_r) - self.solv.offset)] = x.array[self.solv.offset:]
+        u.x.scatter_forward()
+        p.x.scatter_forward()
     
         
         if self.ctrl_sim.ctrl.stokes_solver_type == 0: 
@@ -1305,10 +1336,9 @@ class Stokes_Problem(Problem):
             rnorm  = self.solv.ksp.getResidualNorm()
             PETSc.Sys.Print(f"                       iterative solver : KSP reason/its/rnormesh: {reason} {its} {rnorm:.3e}")
 
-        minMaxU = min_max_array(u_solved,vel=True)
+        minMaxU = min_max_array(u,vel=True)
         print_ph(f'                       [checks] min vel = {minMaxU[0]:.5e}, max vel = {minMaxU[1]:.5e}, RMS = {minMaxU[2]:.5e}')
                 
-        return u_solved,p_solved 
 # --- 
 class Wedge(Stokes_Problem): 
     def __init__(self
@@ -1428,13 +1458,13 @@ class Wedge(Stokes_Problem):
                 temp_buf = self.moving_wall_ref.copy()
                 temp_buf.interpolate(dolfinx.fem.Expression(self.moving_wall_ref*scaling
                                                     ,self.moving_wall_ref.function_space.element.interpolation_points()))
-                self.moving_wall_ref = temp_buf.copy()
+                self.moving_wall_ref.x.array[:] = temp_buf.x.array[:]
+                self.moving_wall_ref.x.scatter_forward()
                 
         # update the moving wall normalised field with the actual velocity of the slab.        
         self.moving_wall.x.array[:] = self.moving_wall_ref.x.array[:]*self.ctrl_sim.ctrl_ky.v_s[0]
-        print_ph(f'                      Slab velocity is {self.ctrl_sim.ctrl_ky.v_s[0]:.3e} [n.d.]')
-        
         self.moving_wall.x.scatter_forward()
+        print_ph(f'                      Slab velocity is {self.ctrl_sim.ctrl_ky.v_s[0]:.3e} [n.d.]')
         # Set the the boundary condition    
         dofs_s_x = dolfinx.fem.locate_dofs_topological(self.F0.sub(0), fdim, self.domain.facets.find(self.domain.bc_dict['slab']))
         dofs_s_y = dolfinx.fem.locate_dofs_topological(self.F0.sub(1), fdim, self.domain.facets.find(self.domain.bc_dict['slab']))
@@ -1483,7 +1513,7 @@ class Wedge(Stokes_Problem):
             
             a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)
 
-            self.u_k1, self.p_k1  = self.solve_linear_picard(dolfinx.fem.form(a)
+            self.solve_linear_picard(dolfinx.fem.form(a)
                                                         ,dolfinx.fem.form(a_p0)
                                                         ,dolfinx.fem.form(L)
                                                         ,self.u_k
@@ -1507,8 +1537,8 @@ class Wedge(Stokes_Problem):
 
             res   = np.sqrt(tol_u**2+tol_p**2)
 
-            self.u_k = update_solution(self.u_k1,self.u_k,self.ctrl_sim.ctrl.relax)
-            self.p_k =  update_solution(self.p_k1,self.p_k,self.ctrl_sim.ctrl.relax)
+            update_solution(self.u_k1,self.u_k,self.ctrl_sim.ctrl.relax)
+            update_solution(self.p_k1,self.p_k,self.ctrl_sim.ctrl.relax)
 
 
             self.u_k.x.scatter_forward()
@@ -1527,12 +1557,13 @@ class Wedge(Stokes_Problem):
         print_ph(f'                         [Final] |F^mom|L2/|F^mom_0|L2 {rmom/rmom_0:.3e}, |F^div|L2/|F^div_0|L2 {rdiv/rdiv_0:.3e}')
         print_ph(f'                         [Final] |F^mom|L2           {rmom:.3e}, abs div residuum |F^div|L2 {rdiv:.3e}')
         print_ph('                         []Converged ')  
-        sol.u_wedge = self.u_k1.copy()
-        sol.p_wedge = self.p_k1.copy() 
+        sol.u_wedge.x.array[:] = self.u_k1.x.array[:]
+        sol.p_wedge = self.p_k1.x.array[:]
+        sol.p_wedge.x.scatter_forward()
+        sol.u_wedge.x.scatter_forward()
         time_B = timing.time()
         print_ph(f'              || -- || --- Solution of Wedge in {time_B-time_A:.2f} sec || -- || --- ||')
 
-        return sol.u_wedge, sol.p_wedge
        
        
    
@@ -1540,7 +1571,7 @@ class Wedge(Stokes_Problem):
     def Solve_the_Problem(self
                           ,sol : Solution
                           ,it : int =0
-                          ,ts : int=0)->Solution:
+                          ,ts : int=0)->None:
 
         """Function that solve the stokes problem for the wedge domain.
             Args:
@@ -1572,39 +1603,32 @@ class Wedge(Stokes_Problem):
             self.moving_wall = dolfinx.fem.Function(self.V_subs)
             self.moving_wall_ref = dolfinx.fem.Function(self.V_subs)
             
-
-            
-    
-
-        # Create the linear problem
-        a1,a2,a3, L, a_p = self.set_linear_picard(vel=sol.u_wedge
-                                                  ,temp=sol.t_owedge
-                                                  ,pres_l=sol.p_lwedge
-                                                  ,it = it
-                                                  ,ts = ts 
-                                                  ,slab = 0)
-        # Iteration outer 0 -> Initial guess -> start linear
-        # Create the dirichlecht boundary condition 
-        self.bc   = self.setdirichlecht(self.V_subs,ts=ts,it=it) 
-        
-        # Form the system 
-        a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)
-
         print_ph('              || -- || Solving the Stokes problem for the wedge domain || -- ||')
 
-        
+        self.bc   = self.setdirichlecht(self.V_subs,ts=ts,it=it) 
+
 
         
         if self.typology == 'LinearProblem' or self.typology == 'NonlinearProblemT': 
+            # Create the linear problem
+            a1,a2,a3, L, a_p = self.set_linear_picard(vel=sol.u_wedge
+                                                      ,temp=sol.t_owedge
+                                                      ,pres_l=sol.p_lwedge
+                                                      ,it = it
+                                                      ,ts = ts 
+                                                      ,slab = 0)
+            # Iteration outer 0 -> Initial guess -> start linear
+            # Create the dirichlecht boundary condition 
+            # Form the system 
+            a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)
             time_A = timing.time()
-            sol.u_wedge,sol.p_wedge = self.solve_linear_picard(dolfinx.fem.form(a),dolfinx.fem.form(a_p0),dolfinx.fem.form(L), sol.u_wedge,sol.p_wedge,it=it,ts=ts)
+            self.solve_linear_picard(dolfinx.fem.form(a),dolfinx.fem.form(a_p0),dolfinx.fem.form(L), sol.u_wedge,sol.p_wedge,it=it,ts=ts)
             time_B = timing.time()
             print_ph(f'              || -- || --- Solution of Wedge in {time_B-time_A:.2f} sec || -- || --- ||')
 
         else: 
-            sol.u_wedge,sol.p_wedge= self.solve_the_non_linear(sol,it_outer=it,ts=ts)
+            self.solve_the_non_linear(sol,it_outer=it,ts=ts)
 
-        return sol
     
 
 
@@ -1739,7 +1763,7 @@ class Slab(Stokes_Problem):
     def Solve_the_Problem(self
                           ,sol:Solution
                           ,it_outer=0
-                          ,ts=0):
+                          ,ts=0)->None:
 
         
         # Recreate the test and trial function on the subspace of the slab
@@ -1783,7 +1807,7 @@ class Slab(Stokes_Problem):
                 
         a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)
         time_A = timing.time()
-        sol.u_slab,sol.p_slab =  self.solve_linear_picard(a=dolfinx.fem.form(a)
+        self.solve_linear_picard(a=dolfinx.fem.form(a)
                                                          ,a_p0=dolfinx.fem.form(a_p0)
                                                          ,L=dolfinx.fem.form(L)
                                                          ,u=sol.u_slab
@@ -1796,7 +1820,6 @@ class Slab(Stokes_Problem):
         time_B = timing.time()
         print_ph(f'              || -- || --- Solution of Stokes problem in {time_B-time_A:.2f} sec || -- || ---||')
 
-        return sol
     
 #-------------------------------------------------------------------
 #-------------------------------------------------------------------

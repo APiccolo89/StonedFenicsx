@@ -39,6 +39,7 @@ def initialise_the_simulation(ctrl_sim:SimulationControls = None
             lg  -- global lithostatic pressure problem.
             sl  -- subducting-plate (slab) Stokes problem.
             we  -- mantle-wedge Stokes problem.
+        object created: solution, energy, lithostatic pressure, slab, wedge
     """
     element_p           = mesh.element_p#basix.ufl.element("Lagrange","triangle", 1) 
     
@@ -80,7 +81,7 @@ def outerloop_operation(ctrl_sim:SimulationControls,
                         sl:Slab,
                         sol:Solution
                         ,pdb:PhaseDataBase
-                        ,ts:int=0)->Solution:
+                        ,ts:int=0)->None:
     """Execute one complete Picard outer-loop sweep over all coupled sub-problems.
 
     At each outer iteration the sub-problems are solved in the following order:
@@ -138,55 +139,55 @@ def outerloop_operation(ctrl_sim:SimulationControls,
         
         
         if lg.typology == 'NonlinearProblem' or it_outer == 0:  
-            sol = lg.Solve_the_Problem(sol,
+            lg.Solve_the_Problem(sol,
                                        it_outer
                                        ,ts=ts)
 
         # Interpolate from global to wedge/slab
 
-        sol.t_owedge = interpolate_from_sub_to_main(sol.t_owedge
-                                                    ,sol.T_N
-                                                    ,we.domain.cell_par
-                                                    ,1)
-        
-        sol.p_lwedge = interpolate_from_sub_to_main(sol.p_lwedge
-                                                    ,sol.PL
-                                                    ,we.domain.cell_par
-                                                    ,1)
+        interpolate_from_sub_to_main(sol.t_owedge
+                                     ,sol.T_N
+                                     ,we.domain.cell_par
+                                     ,1)
+
+        interpolate_from_sub_to_main(sol.p_lwedge
+                                     ,sol.PL
+                                     ,we.domain.cell_par
+                                     ,1)
 
         if (ts == 0 and it_outer==0) or (it_outer == 0 and ctrl_sim.ctrl_ky.constant == 0): 
-            sol = sl.Solve_the_Problem(sol,
+            sl.Solve_the_Problem(sol,
                                    it_outer = it_outer,
                                    ts=ts)
 
         if (we.typology == 'NonlinearProblem') or (we.typology == 'NonlinearProblemT') or (it_outer == 0):  
-            sol = we.Solve_the_Problem(sol=sol
+            we.Solve_the_Problem(sol=sol
                                 ,it = it_outer
                                 ,ts=ts)
 
         # Interpolate from wedge/slab to global
-        sol.u_global = interpolate_from_sub_to_main(sol.u_global
-                                                    ,sol.u_wedge
-                                                    ,we.domain.cell_par)
-        sol.u_global = interpolate_from_sub_to_main(sol.u_global
-                                                    ,sol.u_slab
-                                                    , sl.domain.cell_par)
+        interpolate_from_sub_to_main(sol.u_global
+                                      ,sol.u_wedge
+                                      ,we.domain.cell_par)
+        interpolate_from_sub_to_main(sol.u_global
+                                      ,sol.u_slab
+                                      , sl.domain.cell_par)
+    
+    
+        interpolate_from_sub_to_main(sol.p_global
+                                      ,sol.p_wedge
+                                      ,we.domain.cell_par)
+    
+        interpolate_from_sub_to_main(sol.p_global
+                                    ,sol.p_slab
+                                    ,sl.domain.cell_par)
         
-        
-        sol.p_global = interpolate_from_sub_to_main(sol.p_global
-                                                    ,sol.p_wedge
-                                                    ,we.domain.cell_par)
-        
-        sol.p_global = interpolate_from_sub_to_main(sol.p_global
-                                                    ,sol.p_slab
-                                                    ,sl.domain.cell_par)
-        
-        sol = eg.Solve_the_Problem(sol
+        eg.Solve_the_Problem(sol
                             ,it_outer = it_outer
                             ,ts = ts)
         
         # Compute residuum 
-        res,sol = compute_residuum_outer(sol=sol
+        res = compute_residuum_outer(sol=sol
                                      ,T=T_kouter
                                      ,PL=PL_kouter
                                      ,u=u_global_kouter
@@ -206,7 +207,6 @@ def outerloop_operation(ctrl_sim:SimulationControls,
         
         
     
-    return sol
 #---------------------------------------------------------------------------------------------------
 # Def time_loop 
 def time_loop(ctrl_sim:SimulationControls
@@ -281,11 +281,9 @@ def time_loop(ctrl_sim:SimulationControls
         if ctrl_sim.ctrl_ky.constant == 0: 
             ctrl_sim.ctrl_ky.update_vel_age(t)
 
-            
-            
-   
+
         # Prepare variable
-        sol = outerloop_operation(ctrl_sim=ctrl_sim
+        outerloop_operation(ctrl_sim=ctrl_sim
                                   ,sc=sc
                                   ,eg=eg
                                   ,lg=lg
@@ -315,7 +313,8 @@ def time_loop(ctrl_sim:SimulationControls
         t = t+ctrl_sim.ctrl.dt
             
     
-        sol.T_O = sol.T_N
+        sol.T_O.x.array[:] = sol.T_N.x.array[:]
+        sol.T_O.x.scatter_forward()
         
         ts = ts + 1
 
