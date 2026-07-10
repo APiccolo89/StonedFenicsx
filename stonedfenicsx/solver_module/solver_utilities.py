@@ -172,8 +172,11 @@ def compute_residuum_outer(sol:Solution
     
     # Update solution 
     update_solution(sol.T_N,T,ctrl_sim.ctrl.relax)
+    sol.T_N.x.array[:] = T.x.array[:]
     update_solution(sol.u_global,u,ctrl_sim.ctrl.relax)
+    sol.u_global.x.array[:] = u.x.array[:]
     update_solution(sol.p_global,p,ctrl_sim.ctrl.relax)
+    sol.p_global.x.array[:] = p.x.array[:]
     
     
     sol.mT = np.append(sol.mT,minMaxT[0])

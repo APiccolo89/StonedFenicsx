@@ -1558,7 +1558,7 @@ class Wedge(Stokes_Problem):
         print_ph(f'                         [Final] |F^mom|L2           {rmom:.3e}, abs div residuum |F^div|L2 {rdiv:.3e}')
         print_ph('                         []Converged ')  
         sol.u_wedge.x.array[:] = self.u_k1.x.array[:]
-        sol.p_wedge = self.p_k1.x.array[:]
+        sol.p_wedge.x.array[:] = self.p_k1.x.array[:]
         sol.p_wedge.x.scatter_forward()
         sol.u_wedge.x.scatter_forward()
         time_B = timing.time()
