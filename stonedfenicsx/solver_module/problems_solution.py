@@ -63,8 +63,8 @@ def debug_boundary_condition(bc, name):
 
 @dataclass
 class CACHED_FEM_FORM:
-    a :  None = None 
-    linear : None = None 
+    a :  dolfinx.fem.Form | None = None 
+    L : dolfinx.fem.Form| None = None 
     other_form : dict = field(default_factory=dict)
 
     
@@ -152,7 +152,7 @@ class Problem:
     ds        : ufl.measure.Measure                # measure surface/length 
     dx        : ufl.measure.Measure
     solv      : Solvers
-    cached_fom : CACHED_FEM_FORM()
+    cached_form : CACHED_FEM_FORM
     # --
     def __init__(self
                  ,mesh: Mesh
@@ -209,6 +209,7 @@ class Problem:
         self.dx       = ufl.Measure("dx", domain=self.domain.mesh)
         self.ds       = ufl.Measure("ds", domain=self.domain.mesh, subdomain_data=self.domain.facets) # Exterior -> for boundary external 
         self.dS       = ufl.Measure("dS", domain=self.domain.mesh, subdomain_data=self.domain.facets) # Interior -> for boundary integral inside
+        self.cached_form = CACHED_FEM_FORM()
         
     def create_cached_material(self,scalar:bool):
         """Create the cached material for each class -> slightly an overkill for the pressure problem, 
@@ -757,13 +758,25 @@ class Global_thermal(Problem):
             it_outer (int): _description_
             ts (int): _description_
         """
-        a,L = self.set_linear(p=sol.PL
+        # -> Initialise the vector of temp_k for avoiding idiotic solution
+        if it_outer == 0: 
+            self.temp_k.x.array[:] = sol.T_N.x.array[:]
+            self.temp_k.x.scatter_forward()
+        if self.cached_form.a is None:
+            a,L = self.set_linear(p=sol.PL
                               ,T_k=self.temp_k
                               ,T_O=sol.T_O
                               ,u_global = sol.u_global
                               ,it_outer=0
                               ,it_inner=0
                               ,ts=0)
+            self.cached_form.a = a 
+            self.cached_form.L = L 
+        else: 
+            a = self.cached_form.a 
+            L = self.cached_form.L 
+        
+        return a,L
         
         
         
@@ -791,15 +804,8 @@ class Global_thermal(Problem):
         if it_outer == 0:         
             self.compute_energy_source()
         
-        a,L = self.set_linear(p=sol.PL
-                              ,T_k=sol.T_N
-                              ,T_O=sol.T_O
-                              ,u_global=sol.u_global)
-        
         self.bc = self.create_bc_temp(u_global=sol.u_global,it_outer=it_outer,ts=ts)
 
-        if it_outer == 0 and ts == 0: 
-            self.solv = ScalarSolver(a,L,self.bc,self.domain.comm,self.ctrl_sim.ctrl.energy_solver_type)
             
         
         print_ph('              || --- || -- Temperature problem [GLOBAL] || -- || --- ||')
@@ -807,13 +813,19 @@ class Global_thermal(Problem):
         time_A = timing.time()
 
         if self.typology == 'LinearProblem': 
+            # Create the solver object: 
+            a,L = self.initialise_form(sol=sol,it_outer=it_outer,ts=ts)
+
+            if it_outer == 0 and ts == 0: 
+                self.solv = ScalarSolver(a,L,self.bc,self.domain.comm,self.ctrl_sim.ctrl.energy_solver_type)
+                
             self.solve_the_linear(sol
                                           ,a
                                           ,L
-                                          ,sol.T_N) 
-            sol.T_N.x.scatter_forward()
+                                          ,self.temp_k)
             
-
+            sol.T_N.x.array[:] = self.temp_k.x.array[:]
+            sol.T_N.x.scatter_forward() 
         else: 
             
             self.solve_the_non_linear(sol,it_outer=it_outer,ts=ts)

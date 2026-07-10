@@ -325,6 +325,16 @@ def test_composite_NL_crust():
     # Remove folder after completing the test
     if not DEBUG:
         os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
+        
+def test_isoviscous_NL():
+    # Test Van Keken 
+    perform_test(0,2) # IsoViscous
+    # Read Data Base and compare data 
+    if MPI.COMM_WORLD.rank == 0: 
+        read_data_base(0,2)
+    # Remove folder after completing the test
+    if not DEBUG:
+        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 if __name__ == '__main__': 
@@ -334,6 +344,8 @@ if __name__ == '__main__':
     test_isoviscous()
 
     test_diffusion()
+    
+    test_isoviscous_NL()
 
     test_composite()
     
