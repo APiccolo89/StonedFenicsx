@@ -7,7 +7,6 @@ import mpi4py.MPI as MPI
 from numpy.typing import NDArray
 from scipy.interpolate import griddata   
 import petsc4py.PETSc as PETSc
-import dataclasses 
 from dataclasses import field,dataclass
 # --- ufl 
 
@@ -15,7 +14,6 @@ from dataclasses import field,dataclass
 from stonedfenicsx.config.numerical_control import SimulationControls
 from stonedfenicsx.config.geometry import Mesh, GeomInput, Domain
 from stonedfenicsx.config.phase_db import PhaseDataBase
-from stonedfenicsx.config.scal import Scal
 # --- from solver module
 from stonedfenicsx.solver_module.solver import Solvers,ScalarSolver,SolverStokes
 from stonedfenicsx.solver_module.solver_utilities import (decoupling_function
@@ -67,9 +65,6 @@ class CACHED_FEM_FORM:
     L : dolfinx.fem.Form| None = None 
     other_form : dict = field(default_factory=dict)
 
-    
-
-     
 # ---
 class Problem:
     """
@@ -777,12 +772,7 @@ class Global_thermal(Problem):
             L = self.cached_form.L 
         
         return a,L
-        
-        
-        
-        
-        
-        
+
     #------------------------------------------------------------------
     def Solve_the_Problem(self
                           ,sol:Solution
@@ -924,26 +914,6 @@ class Global_thermal(Problem):
 
             time_ita = timing.time()
             
-            #if it_inner == 0: 
-            #    A,L = self.set_linear(p=sol.PL
-            #                        ,T_k=self.temp_k
-            #                        ,T_O=sol.T_O
-            #                        ,u_global=sol.u_global)
-            #              
-            #else: 
-            #    if ctrl.steady_state==1: 
-            #        A,L = self.set_linear(p=sol.PL
-            #                        ,T_k=self.temp_k
-            #                        ,T_O=sol.T_O
-            #                        ,u_global=sol.u_global
-            #                        ,it_inner = it_inner)
-            #    else: 
-            #        A,_ = self.set_linear(p=sol.PL
-            #                        ,T_k=self.temp_k
-            #                        ,T_O=sol.T_O
-            #                        ,u_global=sol.u_global
-            #                        ,it_inner = it_inner)
-            #        
             self.solve_the_linear(sol,a,L,self.temp_k1,1,it_outer)
             self.temp_k1.x.scatter_forward()
             # L2 norm 
@@ -1043,19 +1013,20 @@ class Global_pressure(Problem):
                           ,it:int=0):
         # Function that set linear form and linear picard for picard iteration
         
-        
-        rho_k = density_FX(self.cached_mat, T, p_k)  # frozen
-        
-        # Linear operator with frozen coefficients
-        if it == 0: 
-            a = ufl.inner(ufl.grad(self.trial0), ufl.grad(self.test0)) * self.dx
-        else: 
-            a = None
-        
-        L = ufl.inner(ufl.grad(self.test0), rho_k * self.g) * self.dx
-        
+        if self.cached_form.a is None:
+            rho_k = density_FX(self.cached_mat, T, p_k)  # frozen
 
-        return a, L
+            # Linear operator with frozen coefficients
+            if it == 0: 
+                a = ufl.inner(ufl.grad(self.trial0), ufl.grad(self.test0)) * self.dx
+            else: 
+                a = None
+
+            L = ufl.inner(ufl.grad(self.test0), rho_k * self.g) * self.dx
+            self.cached_form.a = dolfinx.fem.form(a)
+            self.cached_form.L = dolfinx.fem.form(L)
+
+        return self.cached_form.a, self.cached_form.L
 
     def Solve_the_Problem(self
                           ,sol:Solution
@@ -1560,23 +1531,6 @@ class Wedge(Stokes_Problem):
         
         while (res > self.ctrl_sim.ctrl.tol_innerpic) and it_inner < self.ctrl_sim.ctrl.it_inner_max: 
             time_ita = timing.time()
-            #if it_inner==0: 
-            #    a1,a2,a3,L,a_p = self.set_linear_picard(self.u_k,
-            #                                         sol.t_owedge,
-            #                                         sol.p_lwedge
-            #                                         ,it = it_outer
-            #                                         ,ts = ts
-            #                                         ,slab =0)
-            #else: 
-            #    a1,_,_,_,a_p = self.set_linear_picard(self.u_k,
-            #                                         sol.t_owedge,
-            #                                         sol.p_lwedge
-            #                                         ,it = it_outer
-            #                                         ,ts = ts
-            #                                         ,slab =0)           
-            #
-            #a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)
-
             self.solve_linear_picard(a
                                     ,a_p0
                                     ,L
