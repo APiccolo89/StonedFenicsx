@@ -1516,10 +1516,10 @@ class Wedge(Stokes_Problem):
         
         time_A = timing.time()
         print_ph('              [||] Picard iterations for the non linear lithostatic pressure problem')    
-        self.u_k.x.array[:] = 0.0
-        self.u_k1.x.array[:] = 0.0
-        self.p_k.x.array[:] = 0.0
-        self.p_k1.x.array[:] = 0.0
+        self.u_k.x.array[:] = sol.u_wedge.x.array[:]
+        self.u_k1.x.array[:] = sol.u_wedge.x.array[:]
+        self.p_k.x.array[:] = sol.p_wedge.x.array[:]
+        self.p_k1.x.array[:] = sol.p_wedge.x.array[:]
         self.u_k.x.scatter_forward()
         self.u_k1.x.scatter_forward()
         self.p_k.x.scatter_forward()

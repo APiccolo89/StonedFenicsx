@@ -335,7 +335,7 @@ if __name__ == '__main__':
 
     #test_diffusion()
 
-    #test_composite()
+    test_composite()
     
     test_composite_NL_no_crust()
     
