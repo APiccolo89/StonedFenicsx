@@ -210,7 +210,7 @@ Input:
     cr: 30.0 # Overriding Crust {if lc==0.0 -> only overriding upper crust}
     ocr: 7.0 # Oceanic crust
     lc: 0.3
-    resolution_normal: 2.0
+    resolution_normal: 1.5
     resolution_refine: 1.5 
     ns_depth: 50.0
     lab_d: 100.0

@@ -1178,8 +1178,52 @@ class Stokes_Problem(Problem):
     def fem_stokes_form(self,a1,a2,a3,a_p):
         a   = [[a1, a2],[a3, None]]
         a_p0  = [[a1, a2],[a3, a_p]]
-        return a,a_p0
+        return dolfinx.fem.form(a),dolfinx.fem.form(a_p0)
+
+    def initialise_fem_form(self, sol:Solution,it_outer:int,ts:int):
+        
+        if self.cached_form.a is None:
+            # set the problem 
+            if self.domain.name == 'subduction_plate_domain':
+                a1,a2,a3,L,ap0 = self.set_linear_picard(vel = sol.u_slab,
+                                                         temp = sol.t_oslab,
+                                                         pres_l=sol.p_lslab,
+                                                         a_p=None,
+                                                         it = it_outer,
+                                                         ts=ts,
+                                                         slab=1)
+            else: 
+                a1,a2,a3,L,ap0 = self.set_linear_picard(vel = self.u_k,
+                                                         temp = sol.t_owedge,
+                                                         pres_l=sol.t_owedge,
+                                                         a_p=None,
+                                                         it = it_outer,
+                                                         ts=ts,
+                                                         slab=0)
+                
+            if self.domain.name == 'subducting_plate_domain':
+                # Add Nitsche Boundary Conditions 
+                dS_bot = self.domain.bc_dict["bot_subduction"]
+                a1,a2,a3 = self.compute_nitsche_FS(sol=sol
+                                           ,dS=dS_bot
+                                           ,a1=a1
+                                           ,a2=a2
+                                           ,a3=a3
+                                           ,gamma=50.0
+                                           ,it=it_outer)
+            
+            
+            a,ap0 = self.fem_stokes_form(a1,a2,a3,ap0)
+            self.cached_form.a = [a,ap0]
+            self.cached_form.L = dolfinx.fem.form(L)
+        else: 
+            a,ap0 = self.cached_form.a[0],self.cached_form.a[1]
+            L = self.cached_form.L 
+        
+        return a,ap0,L            
+            
     
+
     def compute_residuum_stokes(self
                                 ,u_new:dolfinx.fem.function.Function
                                 ,p_new:dolfinx.fem.function.Function
@@ -1255,7 +1299,7 @@ class Stokes_Problem(Problem):
 
         e = compute_strain_rate(vel)
         # If we are in the first iteration of the first timestep -> use the default viscosity for creating an initial guess. fem.Constant(M.domainG.mesh, PETSc.ScalarType([0.0, -ctrl.g]))   
-        if it == 0 and ts == 0 and slab == 0:
+        if it == 0 and ts == 0 and slab == 1:
             eta = dolfinx.fem.Constant(self.domain.mesh,PETSc.ScalarType(self.cached_mat.eta_def))
         else: 
             eta = compute_viscosity_FX(e,temp,pres_l,self.pdb,self.cached_mat)
@@ -1444,7 +1488,7 @@ class Wedge(Stokes_Problem):
         self.p_k = dolfinx.fem.Function(self.F1)
         self.u_k1 = dolfinx.fem.Function(self.F0)
         self.p_k1 = dolfinx.fem.Function(self.F1)
-                
+    
     def setdirichlecht(self
                        ,V : dolfinx.fem.FunctionSpace
                        ,it : int = 0
@@ -1512,34 +1556,34 @@ class Wedge(Stokes_Problem):
 
         res  = 1.0 
         it_inner   = 0 
-
-            
+        a,a_p0,L = self.initialise_fem_form(sol=sol,it_outer=it_outer,ts=ts)
+        
         while (res > self.ctrl_sim.ctrl.tol_innerpic) and it_inner < self.ctrl_sim.ctrl.it_inner_max: 
             time_ita = timing.time()
-            if it_inner==0: 
-                a1,a2,a3,L,a_p = self.set_linear_picard(self.u_k,
-                                                     sol.t_owedge,
-                                                     sol.p_lwedge
-                                                     ,it = it_outer
-                                                     ,ts = ts
-                                                     ,slab =0)
-            else: 
-                a1,_,_,_,a_p = self.set_linear_picard(self.u_k,
-                                                     sol.t_owedge,
-                                                     sol.p_lwedge
-                                                     ,it = it_outer
-                                                     ,ts = ts
-                                                     ,slab =0)           
-            
-            a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)
+            #if it_inner==0: 
+            #    a1,a2,a3,L,a_p = self.set_linear_picard(self.u_k,
+            #                                         sol.t_owedge,
+            #                                         sol.p_lwedge
+            #                                         ,it = it_outer
+            #                                         ,ts = ts
+            #                                         ,slab =0)
+            #else: 
+            #    a1,_,_,_,a_p = self.set_linear_picard(self.u_k,
+            #                                         sol.t_owedge,
+            #                                         sol.p_lwedge
+            #                                         ,it = it_outer
+            #                                         ,ts = ts
+            #                                         ,slab =0)           
+            #
+            #a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)
 
-            self.solve_linear_picard(dolfinx.fem.form(a)
-                                                        ,dolfinx.fem.form(a_p0)
-                                                        ,dolfinx.fem.form(L)
-                                                        ,self.u_k1
-                                                        ,self.p_k1
-                                                        ,it_outer
-                                                        ,ts)
+            self.solve_linear_picard(a
+                                    ,a_p0
+                                    ,L
+                                    ,self.u_k1
+                                    ,self.p_k1
+                                    ,it_outer
+                                    ,ts)
             
             tol_u = compute_residuum(self.u_k1,self.u_k)  
             tol_p = compute_residuum(self.p_k1,self.p_k)
@@ -1803,7 +1847,9 @@ class Slab(Stokes_Problem):
                         # Better to recreate 
             self.moving_wall = dolfinx.fem.Function(self.V_subs)
             self.moving_wall_ref = dolfinx.fem.Function(self.V_subs)
-            
+        
+        time_A = timing.time()
+    
         # Create the linear problem
         a1,a2,a3, L, a_p = self.set_linear_picard(vel = sol.u_slab
                                                   ,temp = sol.t_oslab
@@ -1814,29 +1860,17 @@ class Slab(Stokes_Problem):
 
         # Create the dirichlecht boundary condition 
         self.bc   = self.setdirichlecht() 
-        # Set Nietsche FS boundary condition 
-        dS_bot = self.domain.bc_dict["bot_subduction"]
-        # 1 Extract ds 
-        a1,a2,a3 = self.compute_nitsche_FS(sol=sol
-                                           ,dS=dS_bot
-                                           ,a1=a1
-                                           ,a2=a2
-                                           ,a3=a3
-                                           ,gamma=50.0
-                                           ,it=it_outer)
-                
-        a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)
-        time_A = timing.time()
-        self.solve_linear_picard(a=dolfinx.fem.form(a)
-                                                         ,a_p0=dolfinx.fem.form(a_p0)
-                                                         ,L=dolfinx.fem.form(L)
-                                                         ,u=sol.u_slab
-                                                         ,p=sol.p_slab
-                                                         ,it=it_outer
-                                                         ,ts = ts
-                                                         ,slab=1)
-
+        a,ap0,L = self.initialise_fem_form(sol=sol,it_outer=it_outer,ts=ts)
         
+        
+        self.solve_linear_picard(a=a
+                                 ,a_p0=ap0
+                                 ,L=L
+                                 ,u=sol.u_slab
+                                 ,p=sol.p_slab
+                                 ,it=it_outer
+                                 ,ts = ts
+                                 ,slab=1)
         time_B = timing.time()
         print_ph(f'              || -- || --- Solution of Stokes problem in {time_B-time_A:.2f} sec || -- || ---||')
 
