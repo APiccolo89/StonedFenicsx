@@ -71,6 +71,7 @@ class Domain:
     solph: dolfinx.fem.FunctionSpace = None
     phase: dolfinx.fem.Function = None
     comm: MPI.Intracomm = None
+    name: str = None 
 #---------------------------------------------------------------------------------------------------
 @dataclass(slots=True)
 class GeomInput:

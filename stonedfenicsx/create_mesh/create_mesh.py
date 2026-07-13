@@ -873,7 +873,7 @@ def create_subdomain(
 
     # Facet marker original mesh ->
     # Select subduction:
-    if name == "Subduction":
+    if name == "subduction_plate_domain":
         # top subduction 8-9 For the subduction subdomain, the tag of the subdcution
         # are the entire top surface
         # --
@@ -892,7 +892,7 @@ def create_subdomain(
         # --
         bc = facet_BC(mesh, facet_tag, submesh, vertex_maps, specs)
         # --
-    elif name == "Wedge":
+    elif name == "wedge_domain":
 
         specs = [
             ([11], 1),
@@ -908,7 +908,7 @@ def create_subdomain(
         }
         bc = facet_BC(mesh, facet_tag, submesh, vertex_maps, specs)
 
-    elif name == "Lithosphere":
+    elif name == "overriding_plate_domain":
 
         specs = [
             ([11], 1),
@@ -946,6 +946,7 @@ def create_subdomain(
         phase=ph,
         solph=sol_spaceph,
         bc_dict=dict_local,
+        name = name
     )
 
     # write_partition(submesh, filename=os.path.join(ioctrl.path_save,f'{ioctrl.sname}_{name}_partition.xdmf'))
@@ -1057,24 +1058,25 @@ def create_mesh_object(sc: Scal, ioctrl: IOControls, g_input: GeomInput) -> Mesh
         phase=phase,
         solph=pph,
         bc_dict=dict_tag_lines,
+        name='global_domain'
     )
     # Subducting plate domain
     print_ph(" Creating the Subudcting plate domain")
 
     subduction_plate = create_subdomain(
-        mesh, cell_markers, facet_markers, [1, 2], "Subduction", phase, ioctrl
+        mesh, cell_markers, facet_markers, [1, 2], "subduction_plate_domain", phase, ioctrl
     )
     # Wedge plate domain
     print_ph(" Creating the Wedge domain")
 
     wedge_plate = create_subdomain(
-        mesh, cell_markers, facet_markers, [3], "Wedge", phase, ioctrl
+        mesh, cell_markers, facet_markers, [3], "wedge_domain", phase, ioctrl
     )
     # Overriding plate domain
     print_ph(" Creating the Overriding plate domain")
 
     crust_domain = create_subdomain(
-        mesh, cell_markers, facet_markers, [4, 5, 6], "Lithosphere", phase, ioctrl
+        mesh, cell_markers, facet_markers, [4, 5, 6], "overriding_plate_domain", phase, ioctrl
     )
 
     # write_partition(mesh,filename=os.path.join(ioctrl.path_save,'%s_global_partition.xdmf'%ioctrl.sname))
