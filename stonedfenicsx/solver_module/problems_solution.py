@@ -516,7 +516,10 @@ class Global_thermal(Problem):
         tau = h / (2.0 * u_norm+1e-12)
         SUPG = tau * ufl.dot(u_global, ufl.grad(self.test0)) * residual * self.dx
         SUPG_L = tau * ufl.dot(u_global, ufl.grad(self.test0)) * f * self.dx
-        L = ((f) * self.test0 * dx + self.shear_heating) 
+        if self.ctrl_sim.ctrl.model_shear>0
+            L = ((f) * self.test0 * dx + self.shear_heating) 
+        else: 
+            L = (f) * self.test0 
         R = dolfinx.fem.form(diff + adv + SUPG - L-SUPG_L)
         
         return R
