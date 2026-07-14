@@ -9,15 +9,15 @@
 
 Input:
   NumericalControls:
-    it_max: 20
-    it_inner_max : 3 
+    it_max: 50
+    it_inner_max : 1 
     tol: 1.0e-5
     relax: 0.9
     g: 9.81
     eta_max: 1.0e26
     time_max: 2.0  # Myr
     steady_state: 1
-    tol_innerpic: 1.0e-2
+    tol_innerpic: 1.0e-3
     decoupling_ctrl: 1
     model_shear: "SelfConsistent" # [Constant,SelfConsistent,NoShear]
     dt: 0.015            # Myr (15000/1e6)

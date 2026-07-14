@@ -105,8 +105,8 @@ class SolverStokes(Solvers):
             self.pc.setType("lu")
             self.pc.setFactorSolverType("mumps")
             self.pc.setFactorSetUpSolverType()
-            self.pc.getFactorMatrix().setMumpsIcntl(icntl=24, ival=1)
-            self.pc.getFactorMatrix().setMumpsIcntl(icntl=25, ival=0)
+            #self.pc.getFactorMatrix().setMumpsIcntl(icntl=24, ival=1)
+            #self.pc.getFactorMatrix().setMumpsIcntl(icntl=25, ival=0)
         else: 
             self.update_block_operator(a,a_p,bcs,L,F0,F1)
             
@@ -197,7 +197,7 @@ class SolverStokes(Solvers):
         self.null_vec.array[self.nloc_u:self.nloc_u+self.nloc_p] = 1.0
         self.null_vec.normalize()
         self.nsp = PETSc.NullSpace().create(vectors=[self.null_vec])
-        self.A.setNullSpace(self.nsp)
+        #self.A.setNullSpace(self.nsp)
 
 
     def update_block_operator(self,a,a_p,bcs,L,F0,F1):
@@ -238,8 +238,8 @@ class SolverStokes(Solvers):
         # -------------------------
         if self.direct_solver == 0:
             # Nullspace (e.g., pressure) — set once if possible, but safe here too
-            if getattr(self, "nsp", None) is not None:
-                self.A.setNullSpace(self.nsp)
+            #if getattr(self, "nsp", None) is not None:
+            #    self.A.setNullSpace(self.nsp)
                 #self.nsp.remove(self.b)
 
             self.ksp.setOperators(self.A, self.P)

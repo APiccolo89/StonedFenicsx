@@ -1166,11 +1166,20 @@ class Stokes_Problem(Problem):
             else: 
                 a1,a2,a3,L,ap0 = self.set_linear_picard(vel = self.u_k,
                                                          temp = sol.t_owedge,
-                                                         pres_l=sol.t_owedge,
+                                                         pres_l=sol.p_lwedge,
                                                          a_p=None,
                                                          it = it_outer,
                                                          ts=ts,
                                                          slab=0)
+                a1_r,a2_r,a3_r,_,_ = self.set_linear_picard(vel = self.u_k1,
+                                                         temp = sol.t_owedge,
+                                                         pres_l=sol.p_lwedge,
+                                                         a_p=None,
+                                                         it = it_outer,
+                                                         ts=ts,
+                                                         slab=0)
+                self.cached_form.other_form['rmom'] = dolfinx.fem.form(ufl.action(a1_r, self.u_k1) + ufl.action(a2_r, self.p_k1))
+                self.cached_form.other_form['rdiv'] = dolfinx.fem.form(ufl.action(a3_r, self.u_k1))
                 
             if self.domain.name == 'subducting_plate_domain':
                 # Add Nitsche Boundary Conditions 
@@ -1200,23 +1209,8 @@ class Stokes_Problem(Problem):
                                 ,p_new:dolfinx.fem.function.Function
                                 ,temp:dolfinx.fem.function.Function
                                 ,pres_l:dolfinx.fem.function.Function):
-        V = u_new.function_space
-        Q = p_new.function_space
-        v = ufl.TestFunction(V)
-        q = ufl.TestFunction(Q)
 
-        e = compute_strain_rate(u_new)
-        eta_new = compute_viscosity_FX(e, temp, pres_l, self.pdb,self.cached_mat)
-        f = dolfinx.fem.Constant(self.domain.mesh, PETSc.ScalarType((0.0,) * self.domain.mesh.geometry.dim))
-        dx = ufl.dx
-
-        Fmom = (ufl.inner(2*eta_new*ufl.sym(ufl.grad(u_new)), ufl.sym(ufl.grad(v))) * dx
-                - ufl.inner(p_new, ufl.div(v)) * dx
-                - ufl.inner(f, v) * dx)
-
-        Fdiv = ufl.inner(q, ufl.div(u_new)) * dx
-
-        Rm = dolfinx.fem.petsc.assemble_vector(dolfinx.fem.form(Fmom))
+        Rm = dolfinx.fem.petsc.assemble_vector(self.cached_form.other_form['rmom'])
         Rm.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
         if getattr(self, "bc", None):
             with Rm.localForm() as lf:
@@ -1228,7 +1222,7 @@ class Stokes_Problem(Problem):
         rmom = Rm.norm(PETSc.NormType.NORM_2) 
 
 
-        Rd = dolfinx.fem.petsc.assemble_vector(dolfinx.fem.form(Fdiv))
+        Rd = dolfinx.fem.petsc.assemble_vector(self.cached_form.other_form['rdiv'])
         Rd.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
         rdiv = Rd.norm(PETSc.NormType.NORM_2) 
 
@@ -1347,12 +1341,13 @@ class Stokes_Problem(Problem):
                             ,L:dolfinx.fem.Form
                             ,u:dolfinx.fem.Function
                             ,p:dolfinx.fem.Function
-                            ,it:int=0
+                            ,it_outer:int=0
                             ,ts:int=0
+                            ,it_inner=0
                             ,slab:int = 0)->None:
             
-        if it == 0 and ts == 0: 
-            self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,self.ctrl_sim.ctrl ,J = None, r = None,it = it, ts = ts, slab=slab)
+        if it_outer == 0 and ts == 0 and it_inner == 0: 
+            self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,self.ctrl_sim.ctrl ,J = None, r = None,it = it_outer, ts = ts, slab=slab)
         else: 
             self.solv.update_block_operator(a,a_p0,self.bc,L,self.F0,self.F1)
         
@@ -1499,15 +1494,14 @@ class Wedge(Stokes_Problem):
         # update the moving wall normalised field with the actual velocity of the slab.        
         self.moving_wall.x.array[:] = self.moving_wall_ref.x.array[:]*self.ctrl_sim.ctrl_ky.v_s[0]
         self.moving_wall.x.scatter_forward()
-        print_ph(f'                      Slab velocity is {self.ctrl_sim.ctrl_ky.v_s[0]:.3e} [n.d.]')
         # Set the the boundary condition    
-        dofs_s_x = dolfinx.fem.locate_dofs_topological(self.F0.sub(0), fdim, self.domain.facets.find(self.domain.bc_dict['slab']))
-        dofs_s_y = dolfinx.fem.locate_dofs_topological(self.F0.sub(1), fdim, self.domain.facets.find(self.domain.bc_dict['slab']))
-        # create the dirichlet bc for the slab boundary using the computed velocity field of the moving wall.
-        bcx = dolfinx.fem.dirichletbc(self.moving_wall.sub(0), dofs_s_x)
-        bcy = dolfinx.fem.dirichletbc(self.moving_wall.sub(1), dofs_s_y)
+        dofs_slab = dolfinx.fem.locate_dofs_topological(
+        self.F0, fdim, self.domain.facets.find(self.domain.bc_dict['slab'])
+            )
+        # single vector-valued Dirichlet BC: both components from the moving wall field
+        bc_slab = dolfinx.fem.dirichletbc(self.moving_wall, dofs_slab)
 
-        return [bcx,bcy, self.bc_overriding]
+        return [bc_slab, self.bc_overriding]
                 
     def solve_the_non_linear(self
                             ,sol: Solution
@@ -1529,15 +1523,16 @@ class Wedge(Stokes_Problem):
         it_inner   = 0 
         a,a_p0,L = self.initialise_fem_form(sol=sol,it_outer=it_outer,ts=ts)
         
-        while (res > self.ctrl_sim.ctrl.tol_innerpic) and it_inner < self.ctrl_sim.ctrl.it_inner_max: 
+        while (it_inner < self.ctrl_sim.ctrl.it_inner_max and res > self.ctrl_sim.ctrl.tol_innerpic) or it_inner < 2: 
             time_ita = timing.time()
-            self.solve_linear_picard(a
-                                    ,a_p0
-                                    ,L
-                                    ,self.u_k1
-                                    ,self.p_k1
-                                    ,it_outer
-                                    ,ts)
+            self.solve_linear_picard(a=a
+                                    ,a_p0=a_p0
+                                    ,L=L
+                                    ,u=self.u_k1
+                                    ,p=self.p_k1
+                                    ,it_outer=it_outer
+                                    ,ts=ts
+                                    ,it_inner=it_inner)
             
             tol_u = compute_residuum(self.u_k1,self.u_k)  
             tol_p = compute_residuum(self.p_k1,self.p_k)
@@ -1822,7 +1817,7 @@ class Slab(Stokes_Problem):
                                  ,L=L
                                  ,u=sol.u_slab
                                  ,p=sol.p_slab
-                                 ,it=it_outer
+                                 ,it_outer=it_outer
                                  ,ts = ts
                                  ,slab=1)
         time_B = timing.time()
