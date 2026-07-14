@@ -240,6 +240,12 @@ class Solution():
         self.shear_heating : dolfinx.fem.function.Function
         self.T_ad : dolfinx.fem.function.Function
         self.outer_iteration : NDArray[:]
+        self.rmom: NDArray[:]
+        self.rmom0: float 
+        self.rdiv: NDArray[:]
+        self.rdiv0: float 
+        self.rT:NDArray[:]
+        self.rT0:float
         self.mT : NDArray[:]
         self.MT : NDArray[:]     
         self.RMST : NDArray[:]
@@ -308,6 +314,10 @@ class Solution():
         self.outer_iteration = np.zeros(1,dtype=float)
         self.ts             = np.zeros(1,dtype=int)
         self.shear_heating = dolfinx.fem.Function(PG.FS)
+        self.rdiv = np.zeros(1,dtype=int)
+        self.rmom = np.zeros(1,dtype=int)
+        self.rT = np.zeros(1,dtype=int)
+        
 
 # --- 
  
@@ -958,10 +968,12 @@ class Global_pressure(Problem):
         print_ph(f'              || --- || -- LITHOSTATIC PROBLEM [{self.domain.name}] || -- || --- || ')
 
         time_A = timing.time()
-
+        
+        a,L = self.set_linear_picard(sol.PL,sol.T_N)
         if it_outer == 0 & ts == 0: 
-            a,L = self.set_linear_picard(sol.PL,sol.T_N)
             self.solv = ScalarSolver(a,L,self.bc,self.domain.comm,self.ctrl_sim.ctrl.energy_solver_type) 
+        
+
         self.solve_the_linear(a,L,sol.PL) 
         
         time_B = timing.time()
