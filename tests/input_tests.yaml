@@ -10,7 +10,7 @@
 Input:
   NumericalControls:
     it_max: 30
-    it_inner_max : 2 
+    it_inner_max : 1 
     tol: 5e-5
     relax: 0.9
     g: 9.81

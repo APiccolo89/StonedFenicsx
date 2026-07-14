@@ -481,7 +481,7 @@ class Global_thermal(Problem):
         
 
     #------------------------------------------------------------------
-    def compute_residual_SS(self
+    def set_form_residual_SS(self
                             ,p :dolfinx.fem.function.Function = None
                             ,T :dolfinx.fem.function.Function = None
                             ,T_O :dolfinx.fem.function.Function = None
@@ -517,20 +517,22 @@ class Global_thermal(Problem):
         SUPG = tau * ufl.dot(u_global, ufl.grad(self.test0)) * residual * self.dx
         SUPG_L = tau * ufl.dot(u_global, ufl.grad(self.test0)) * f * self.dx
         L = ((f) * self.test0 * dx + self.shear_heating) 
-        R = diff + adv + SUPG - L-SUPG_L
-        # Conservation residual -> [save in the solution as well, for visualising it]   
-        RT = dolfinx.fem.petsc.assemble_vector(dolfinx.fem.form(R))
+        R = dolfinx.fem.form(diff + adv + SUPG - L-SUPG_L)
+        
+        return R
+    #---------------------------------------------------------------------
+    def compute_residual(self):
+        RT = dolfinx.fem.petsc.assemble_vector(self.cached_form.other_form['res_temp'])
         RT.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
         if not hasattr(self, "_all_bc_dofs_T"):
             self._all_bc_dofs_T = np.unique(np.concatenate([bc.dof_indices()[0] for bc in self.bc]))
         arr = RT.array
         arr[self._all_bc_dofs_T] = 0.0
         RTemp = RT.norm(PETSc.NormType.NORM_2)  
+        return RTemp 
         
-        return RTemp
-    
 
-    def compute_residual_TD(self
+    def set_form_residual(self
                             ,p :dolfinx.fem.function.Function = None
                             ,T :dolfinx.fem.function.Function = None
                             ,T_O :dolfinx.fem.function.Function = None
@@ -767,8 +769,14 @@ class Global_thermal(Problem):
                               ,it_outer=0
                               ,it_inner=0
                               ,ts=0)
+            R = self.set_residual(p=sol.PL
+                                  ,T=self.temp_k1
+                                  ,T_O = sol.T_O
+                                  ,u_global = sol.u_global
+                                  ,it_inner=0)
             self.cached_form.a = a 
             self.cached_form.L = L 
+            self.cached_form.other_form['res_temp'] = R 
         else: 
             a = self.cached_form.a 
             L = self.cached_form.L 
@@ -784,10 +792,10 @@ class Global_thermal(Problem):
         # choose the problemesh: 
         if self.ctrl_sim.ctrl.steady_state == 1: 
             self.set_linear = self.set_linear_picard_SS 
-            self.compute_residual = self.compute_residual_SS
+            self.set_residual = self.set_form_residual_SS
         else: 
             self.set_linear = self.set_linear_picard_TD
-            self.compute_residual = self.compute_residual_TD
+            self.set_residual = self.set_form_residual_TD
         
     
         
@@ -893,6 +901,8 @@ class Global_thermal(Problem):
         ctrl = self.ctrl_sim.ctrl        
         tol = 1.0 
         
+        self.shear_heating = self.compute_shear_heating(T_k=self.temp_k
+                                                        ,p=sol.PL)
         a,L = self.initialise_form(sol=sol,it_outer=it_outer,ts=ts)
         
         if it_outer == 0 and ts == 0: 
@@ -909,7 +919,7 @@ class Global_thermal(Problem):
         time_A = timing.time()
         print_ph('              [||] Picard iterations for the non linear temperature problem')
 
-        while (it_inner < ctrl.it_inner_max and tol > ctrl.tol_innerpic) or it_inner < 2:
+        while (it_inner < ctrl.it_inner_max and tol > ctrl.tol_innerpic):
             
             self.shear_heating = self.compute_shear_heating(T_k=self.temp_k
                                                         ,p=sol.PL)
@@ -921,11 +931,7 @@ class Global_thermal(Problem):
             # L2 norm 
             tol = compute_residuum(self.temp_k1,self.temp_k)
             
-            rT = self.compute_residual(p = sol.PL
-                                  ,T = self.temp_k1
-                                  ,T_O = sol.T_O
-                                  ,u_global = sol.u_global
-                                  ,it_inner=it_inner)            
+            rT = self.compute_residual()            
             if it_inner == 0: 
                 rT0 = rT 
             
@@ -1525,7 +1531,7 @@ class Wedge(Stokes_Problem):
         it_inner   = 0 
         a,a_p0,L = self.initialise_fem_form(sol=sol,it_outer=it_outer,ts=ts)
         
-        while (it_inner < self.ctrl_sim.ctrl.it_inner_max and res > self.ctrl_sim.ctrl.tol_innerpic) or it_inner < 2: 
+        while (it_inner < self.ctrl_sim.ctrl.it_inner_max and res > self.ctrl_sim.ctrl.tol_innerpic): 
             time_ita = timing.time()
             self.solve_linear_picard(a=a
                                     ,a_p0=a_p0

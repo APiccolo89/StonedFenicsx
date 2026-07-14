@@ -224,9 +224,9 @@ def read_data_base(option_viscous,option_thermal=0):
         v2 = 608.76
         v3 = 940.40
     if option_thermal==2: 
-        v1 = 565.19
-        v2 = 625.01
-        v3 = 952.62
+        v1 = 595.05
+        v2 = 635.08
+        v3 = 960.09
 
     if option_thermal == 0: 
         db_vk1 = [np.mean(data[:,0]), np.min(data[:,0]), np.max(data[:,0])]
