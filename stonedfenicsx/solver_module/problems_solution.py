@@ -337,7 +337,7 @@ class Global_thermal(Problem):
         self.bc_right_lit = None
         self.bc_top = None
         self.energy_source = dolfinx.fem.Function(self.FS)
-        self.shear_heating = dolfinx.fem.Function(self.FS)
+        self.shear_heating = None
         self.temp_k = dolfinx.fem.Function(self.FS)
         self.rT0 = 1.0 
     #---    
@@ -419,7 +419,7 @@ class Global_thermal(Problem):
     #---
     def compute_shear_heating(self
                               ,p:dolfinx.fem.Function
-                              ,T_k:dolfinx.fem.Function)->dolfinx.fem.Expression:
+                              ,T_k:dolfinx.fem.Function)->None:
         """
         Apperently the sociopath the devise this method, uses a delta function to describe 
         the interface frictional heating. 
@@ -427,9 +427,10 @@ class Global_thermal(Problem):
         
         """
         domain = self.domain
+        dS = ufl.Measure("dS", domain=domain.mesh, subdomain_data=domain.facets)
         mode_shear = self.ctrl_sim.ctrl.model_shear
-        expression = dolfinx.fem.Constant(domain.mesh,(0.0))
-        if self.ctrl_sim.ctrl.decoupling_ctrl == 1 and mode_shear:
+        expression = dolfinx.fem.Constant(domain.mesh,(0.0))* (dS(domain.bc_dict['Subduction_top_lit']) + dS(domain.bc_dict['Subduction_top_wed']))
+        if self.ctrl_sim.ctrl.decoupling_ctrl == 1 and mode_shear>0:
 
             heat_source = dolfinx.fem.Function(self.FS)
             heat_source.x.array[:] = 0.0
@@ -443,7 +444,6 @@ class Global_thermal(Problem):
                 # compute the plastic strain rate ratio and viscous shear heating strain rate 
                 # Place holder function
                 
-                dS = ufl.Measure("dS", domain=domain.mesh, subdomain_data=domain.facets)
                 if mode_shear == 1: 
                     tau_eff, _, _  = self.compute_friction_shear_expression(T_k,p)
                 else: 
@@ -452,9 +452,7 @@ class Global_thermal(Problem):
                 friction_heat = tau_eff * decoupling * self.ctrl_sim.ctrl_ky.v_s[0]
                 
                 expression = friction_heat('+') * self.test0('+') * (dS(domain.bc_dict['Subduction_top_lit']) + dS(domain.bc_dict['Subduction_top_wed']))
-            return expression
-        else:
-            return 0.0
+        self.shear_heating = expression
     #---
     def compute_friction_shear_expression(self
                                           ,T:dolfinx.fem.function.Function
@@ -491,9 +489,6 @@ class Global_thermal(Problem):
                             ,u_global :dolfinx.fem.function.Function = None
                             ,it_inner:int=0
                             ,dt:float = 0.0)->float:
-
-
-
        
         rho_k = density_FX(self.cached_mat, T, p)  # frozen
         
@@ -537,7 +532,7 @@ class Global_thermal(Problem):
         RTemp = RT.norm(PETSc.NormType.NORM_2)  
         return RTemp 
     #---
-    def set_form_residual(self
+    def set_form_residual_TD(self
                             ,p :dolfinx.fem.function.Function = None
                             ,T :dolfinx.fem.function.Function = None
                             ,T_O :dolfinx.fem.function.Function = None
@@ -673,7 +668,7 @@ class Global_thermal(Problem):
         
         
         # Linear operator with frozen coefficients
-        if it_inner != 0 and self.ctrl_sim.ctrl.model_shear>0:
+        if  self.ctrl_sim.ctrl.model_shear>0:
             L = dolfinx.fem.form((f) * self.test0 * dx + SUPG_L +self.shear_heating) 
         else:     
             L = dolfinx.fem.form((f) * self.test0 * dx +SUPG_L) 
@@ -760,12 +755,11 @@ class Global_thermal(Problem):
             ts (int): _description_
         """
         # -> Initialise the vector of temp_k for avoiding idiotic solution
-        if it_outer == 0: 
-            self.temp_k.x.array[:] = sol.T_N.x.array[:]
-            self.temp_k.x.scatter_forward()
+
         if self.cached_form.a is None:
+            self.compute_shear_heating(sol.PL,sol.T_N)
             a,L = self.set_linear(p=sol.PL
-                              ,T_k=self.temp_k
+                              ,T_k=sol.T_N
                               ,T_O=sol.T_O
                               ,u_global = sol.u_global
                               ,it_outer=0

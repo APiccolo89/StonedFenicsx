@@ -199,7 +199,7 @@ def test_phi(phi=0.0,test_name='_phi5'):
 if __name__ == '__main__': 
     
     DEBUG = True
-    #test_phi(phi=3.0, test_name='_phi3')
+    test_phi(phi=3.0, test_name='_phi3')
     test_phi(phi=5.0,test_name='_phi5')
     test_phi(phi=10.0,test_name='_phi10')
     test_phi(phi=15.0,test_name='_phi15')
