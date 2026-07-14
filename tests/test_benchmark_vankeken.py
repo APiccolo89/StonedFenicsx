@@ -331,9 +331,9 @@ if __name__ == '__main__':
     
     DEBUG = True
     
-    test_isoviscous()
+    #test_isoviscous()
 
-    test_diffusion()
+    #test_diffusion()
 
     test_composite()
     
