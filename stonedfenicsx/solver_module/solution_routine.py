@@ -162,7 +162,7 @@ def outerloop_operation(ctrl_sim:SimulationControls,
 
         if (we.typology == 'NonlinearProblem') or (we.typology == 'NonlinearProblemT') or (it_outer == 0):  
             we.Solve_the_Problem(sol=sol
-                                ,it = it_outer
+                                ,it_outer = it_outer
                                 ,ts=ts)
 
         # Interpolate from wedge/slab to global

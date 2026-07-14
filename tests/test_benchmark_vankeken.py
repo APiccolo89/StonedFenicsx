@@ -216,13 +216,13 @@ def read_data_base(option_viscous,option_thermal=0):
         [583.11, 604.96, 1000.05],
         [585.70, 591.30, 996.60]
         ])
-        v1 = 550.78
-        v2 = 591.10
-        v3 = 993.49 
+        v1 = 571.50
+        v2 = 599.36
+        v3 = 996.35 
     if option_thermal==1: 
-        v1 = 526.68
-        v2 = 599.12
-        v3 = 934.03
+        v1 = 554.58
+        v2 = 608.76
+        v3 = 940.40
     if option_thermal==2: 
         v1 = 565.19
         v2 = 625.01
@@ -335,7 +335,7 @@ if __name__ == '__main__':
 
     #test_diffusion()
 
-    test_composite()
+    #test_composite()
     
     test_composite_NL_no_crust()
     

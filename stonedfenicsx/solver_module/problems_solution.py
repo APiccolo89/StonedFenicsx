@@ -407,9 +407,8 @@ class Global_thermal(Problem):
         
         self.bc_bot_wed = dolfinx.fem.dirichletbc(ctrl_tbc.temp_max, dofs_vel,self.FS)
         
-        bc = [ self.bc_left,  self.bc_right_wed,self.bc_bot_wed, self.bc_right_lit,self.bc_top]
-        
-        return bc
+        self.bc = [ self.bc_left,  self.bc_right_wed,self.bc_bot_wed, self.bc_right_lit,self.bc_top]
+
         
     #------------------------------------------------------------------
     def compute_shear_heating(self
@@ -506,24 +505,27 @@ class Global_thermal(Problem):
         diff = ufl.inner(k_k * ufl.grad(T), ufl.grad(self.test0)) * dx
         
         adv  = rho_k * Cp_k *ufl.dot(u_global, ufl.grad(T)) * self.test0 * dx
-        if it_inner > 0 and self.ctrl_sim.ctrl.model_shear:
-            L = ((f) * self.test0 * dx + self.shear_heating) 
-        else: 
-            L = ((f) * self.test0 * dx )
-        R = dolfinx.fem.form(diff + adv - L)
-           
         
+            # SUPG 
+        
+        # --- SUPG parameter tau ---
+        h = ufl.CellDiameter(self.domain.mesh)
+        u_norm = ufl.sqrt(ufl.dot(u_global, u_global) + 1.0e-8)
+        # SUPG CORRECTION
+        residual = (rho_k * Cp_k * ufl.dot(u_global, ufl.grad(T)))
+        tau = h / (2.0 * u_norm+1e-12)
+        SUPG = tau * ufl.dot(u_global, ufl.grad(self.test0)) * residual * self.dx
+        SUPG_L = tau * ufl.dot(u_global, ufl.grad(self.test0)) * f * self.dx
+        L = ((f) * self.test0 * dx + self.shear_heating) 
+        R = diff + adv + SUPG - L-SUPG_L
         # Conservation residual -> [save in the solution as well, for visualising it]   
         RT = dolfinx.fem.petsc.assemble_vector(dolfinx.fem.form(R))
         RT.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
-        if getattr(self, "bc", None):
-            with RT.localForm() as lf:
-                r = lf.getArray(readonly=False)
-                for bc in self.bc:
-                    dofs = bc.dof_indices()[0]   # local dof indices
-                    r[dofs] = 0.0
-
-        RTemp = RT.norm(PETSc.NormType.NORM_2)    
+        if not hasattr(self, "_all_bc_dofs_T"):
+            self._all_bc_dofs_T = np.unique(np.concatenate([bc.dof_indices()[0] for bc in self.bc]))
+        arr = RT.array
+        arr[self._all_bc_dofs_T] = 0.0
+        RTemp = RT.norm(PETSc.NormType.NORM_2)  
         
         return RTemp
     
@@ -794,7 +796,7 @@ class Global_thermal(Problem):
         if it_outer == 0:         
             self.compute_energy_source()
         
-        self.bc = self.create_bc_temp(u_global=sol.u_global,it_outer=it_outer,ts=ts)
+        self.create_bc_temp(u_global=sol.u_global,it_outer=it_outer,ts=ts)
 
             
         
@@ -1509,7 +1511,7 @@ class Wedge(Stokes_Problem):
                             ,ts:int=0):
         
         time_A = timing.time()
-        print_ph('              [||] Picard iterations for the non linear lithostatic pressure problem')    
+        print_ph('              [||] Picard iterations for the Wedge problem')    
         self.u_k.x.array[:] = sol.u_wedge.x.array[:]
         self.u_k1.x.array[:] = sol.u_wedge.x.array[:]
         self.p_k.x.array[:] = sol.p_wedge.x.array[:]
@@ -1583,7 +1585,7 @@ class Wedge(Stokes_Problem):
    
     def Solve_the_Problem(self
                           ,sol : Solution
-                          ,it : int =0
+                          ,it_outer : int =0
                           ,ts : int=0)->None:
 
         """Function that solve the stokes problem for the wedge domain.
@@ -1601,7 +1603,7 @@ class Wedge(Stokes_Problem):
                 S : Solution -> Object containing the solution of the problem, used for storing the solution of
         
         """     
-        if (ts == 0) and (it == 0):
+        if (ts == 0) and (it_outer == 0):
             V_subs0 = self.FS.sub(0)
             p_subs0 = self.FS.sub(1)
             self.V_subs, _ = V_subs0.collapse()
@@ -1618,7 +1620,7 @@ class Wedge(Stokes_Problem):
             
         print_ph('              || -- || Solving the Stokes problem for the wedge domain || -- ||')
 
-        self.bc   = self.setdirichlecht(self.V_subs,ts=ts,it=it) 
+        self.bc   = self.setdirichlecht(self.V_subs,ts=ts,it=it_outer) 
 
 
         
@@ -1627,7 +1629,7 @@ class Wedge(Stokes_Problem):
             a1,a2,a3, L, a_p = self.set_linear_picard(vel=sol.u_wedge
                                                       ,temp=sol.t_owedge
                                                       ,pres_l=sol.p_lwedge
-                                                      ,it = it
+                                                      ,it = it_outer
                                                       ,ts = ts 
                                                       ,slab = 0)
             # Iteration outer 0 -> Initial guess -> start linear
@@ -1635,12 +1637,12 @@ class Wedge(Stokes_Problem):
             # Form the system 
             a, a_p0 = self.fem_stokes_form(a1,a2,a3,a_p)
             time_A = timing.time()
-            self.solve_linear_picard(dolfinx.fem.form(a),dolfinx.fem.form(a_p0),dolfinx.fem.form(L), sol.u_wedge,sol.p_wedge,it=it,ts=ts)
+            self.solve_linear_picard(dolfinx.fem.form(a),dolfinx.fem.form(a_p0),dolfinx.fem.form(L), sol.u_wedge,sol.p_wedge,it_outer=it_outer,ts=ts)
             time_B = timing.time()
             print_ph(f'              || -- || --- Solution of Wedge in {time_B-time_A:.2f} sec || -- || --- ||')
 
         else: 
-            self.solve_the_non_linear(sol,it_outer=it,ts=ts)
+            self.solve_the_non_linear(sol,it_outer=it_outer,ts=ts)
 
     
 
