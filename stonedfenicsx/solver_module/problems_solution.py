@@ -519,7 +519,7 @@ class Global_thermal(Problem):
         if self.ctrl_sim.ctrl.model_shear>0:
             L = ((f) * self.test0 * dx + self.shear_heating) 
         else: 
-            L = (f) * self.test0 
+            L = (f) * self.test0 * dx
         R = dolfinx.fem.form(diff + adv + SUPG - L-SUPG_L)
         
         return R
