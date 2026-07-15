@@ -508,13 +508,13 @@ def compute_plastic_strain(e_ii:fem.Expression
             tau_lim  -- Drucker-Prager yield stress (UFL expression).
     """
     
-    # UNFORTUNATELY I AM STUPID and i do not have any idea how to scale the energies such that it would be easier to handle. Since the scale of force and legth is self-consistently related to mass, i do not know how to deal with the fucking useless mol in the energy of activation 
-    temp = temp_in.copy()
-    pres = pres_in.copy()
-    temp.x.array[:] = temp.x.array[:]*pdb.temp_scal
-    temp.x.scatter_forward()
-    pres.x.array[:] = pres.x.array[:]*pdb.pres_scal
-    pres.x.scatter_forward()
+    # UNFORTUNATELY I AM STUPID and i do not have any idea how to scale the energies such that it would be easier to handle. Since the scale of force and legth is self-consistently related to mass, i do not know how to deal with the fucking useless mol in the energy of activation
+    # NOTE: rescale as UFL expressions on temp_in/pres_in directly (do NOT .copy() into
+    # a detached Function) -> compute_shear_heating() is only called once (its form is
+    # cached and reused for the whole run), so tau_eff must keep a live UFL reference to
+    # the solver's T/P Functions to pick up their updated values on each reassembly.
+    temp = temp_in * pdb.temp_scal
+    pres = pres_in * pdb.pres_scal
     # Gather material parameters as UFL expressions via indexing
     bdis =  pdb.bdis_wz
     n    =  pdb.n_wz
