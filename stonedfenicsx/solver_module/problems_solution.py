@@ -340,6 +340,8 @@ class Global_thermal(Problem):
         self.shear_heating = None
         self.temp_k = dolfinx.fem.Function(self.FS)
         self.rT0 = 1.0 
+        self.wall_boundary = dolfinx.fem.Function(self.FS)
+        self.e_ii_fr = 0.5 * (self.ctrl_sim.ctrl_ky.v_s[0] * 1 /self.g_input.wz_tk)
     #---    
     @staticmethod
     def interpolate_1d_vector_boundary(function_space, z, temp_vec, dofs_intp):
@@ -416,6 +418,17 @@ class Global_thermal(Problem):
         self.bc_bot_wed = dolfinx.fem.dirichletbc(ctrl_tbc.temp_max, dofs_vel,self.FS)
         
         self.bc = [ self.bc_left,  self.bc_right_wed,self.bc_bot_wed, self.bc_right_lit,self.bc_top]  
+        # Shear heating bc informations
+        decoupling    = self.wall_boundary.copy()
+        Z = self.FS.tabulate_dof_coordinates()[:,1]
+        decoupling = decoupling_function(Z,decoupling,self.g_input)
+        self.wall_boundary.x.array[:] = decoupling.x.array[:] * self.ctrl_sim.ctrl_ky.v_s[0]
+        self.wall_boundary.x.scatter_forward()
+        self.e_ii_fr = 0.5 * (self.ctrl_sim.ctrl_ky.v_s[0] * 1 /self.g_input.wz_tk)
+        
+        
+        
+        
     #---
     def compute_shear_heating(self
                               ,p:dolfinx.fem.Function
@@ -431,15 +444,7 @@ class Global_thermal(Problem):
         mode_shear = self.ctrl_sim.ctrl.model_shear
         expression = dolfinx.fem.Constant(domain.mesh,(0.0))* (dS(domain.bc_dict['Subduction_top_lit']) + dS(domain.bc_dict['Subduction_top_wed']))
         if self.ctrl_sim.ctrl.decoupling_ctrl == 1 and mode_shear>0:
-
-            heat_source = dolfinx.fem.Function(self.FS)
-            heat_source.x.array[:] = 0.0
-            heat_source.x.scatter_forward()
-        
-            decoupling    = heat_source.copy()
-            Z = self.FS.tabulate_dof_coordinates()[:,1]
-            decoupling = decoupling_function(Z,decoupling,self.g_input)
-
+    
             if mode_shear>0:
                 # compute the plastic strain rate ratio and viscous shear heating strain rate 
                 # Place holder function
@@ -448,8 +453,8 @@ class Global_thermal(Problem):
                     tau_eff, _, _  = self.compute_friction_shear_expression(T_k,p)
                 else: 
                     tau_eff = self.pdb.tau_min
-
-                friction_heat = tau_eff * decoupling * self.ctrl_sim.ctrl_ky.v_s[0]
+                # cache -> decoupling 
+                friction_heat = tau_eff * self.wall_boundary
                 
                 expression = friction_heat('+') * self.test0('+') * (dS(domain.bc_dict['Subduction_top_lit']) + dS(domain.bc_dict['Subduction_top_wed']))
         self.shear_heating = expression
@@ -467,12 +472,8 @@ class Global_thermal(Problem):
         Returns:
             _type_: _description_
         """
-        # Compute the effective strain rate of the weak zone: -> couette-poisuille flow -> scalar
-        e_ii_fr = 0.5 * (self.ctrl_sim.ctrl_ky.v_s[0] * 1 /self.g_input.wz_tk)  # Second invariant strain rate
 
-        # -> compute the plastic strain rate []
-
-        tau, tau_vs, tau_lim = compute_plastic_strain(e_ii_fr,T,P,self.pdb)
+        tau, tau_vs, tau_lim = compute_plastic_strain(self.e_ii_fr,T,P,self.pdb)
 
         return tau, tau_vs, tau_lim      
     #---
@@ -504,7 +505,7 @@ class Global_thermal(Problem):
         
         adv  = rho_k * Cp_k *ufl.dot(u_global, ufl.grad(T)) * self.test0 * dx
         
-            # SUPG 
+        # SUPG 
         
         # --- SUPG parameter tau ---
         h = ufl.CellDiameter(self.domain.mesh)
@@ -715,9 +716,7 @@ class Global_thermal(Problem):
         dx  = self.dx
         
         if self.ctrl_sim.ctrl.mode_shear>0 and it_inner !=0:
-        
             f    = (self.energy_source) * self.test0 * dx + self.shear_heating # source term {energy_source is radiogenic heating compute before hand, shear heating is frictional heating already a form}
-
         else: 
             f = self.energy_source * self.test0 * dx 
         
@@ -1295,7 +1294,7 @@ class Stokes_Problem(Problem):
         
         time_B = timing.time()
         print_ph(f'              || -- || --- Solution of {self.domain.name} in {time_B-time_A:.2f} sec || -- || --- ||')
-   
+# ---   
 # --- 
 class Wedge(Stokes_Problem): 
     def __init__(self
@@ -1553,5 +1552,5 @@ class Slab(Stokes_Problem):
             a2 += 0 
             a3 += 0 
         return a1, a2, a3 
-#---
-#---
+# ---
+# ---

@@ -186,7 +186,7 @@ def read_data_base(test_name):
 def test_phi(phi=0.0,test_name='_phi5'):
     # Test Van Keken 
     
-    perform_test(phi=phi) # IsoViscous
+    perform_test(phi=phi,test_name=test_name) # IsoViscous
     # Read Data Base and compare data 
     if MPI.COMM_WORLD.rank == 0: 
         read_data_base(test_name)
@@ -199,8 +199,8 @@ def test_phi(phi=0.0,test_name='_phi5'):
 if __name__ == '__main__': 
     
     DEBUG = True
-    test_phi(phi=3.0, test_name='_phi3')
-    test_phi(phi=5.0,test_name='_phi5')
+    #test_phi(phi=3.0, test_name='_phi3')
+    #test_phi(phi=5.0,test_name='_phi5')
     test_phi(phi=10.0,test_name='_phi10')
     test_phi(phi=15.0,test_name='_phi15')
 #---------------------------------------------------------------------------------
