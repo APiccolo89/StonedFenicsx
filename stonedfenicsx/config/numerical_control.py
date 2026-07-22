@@ -29,7 +29,7 @@ class NumericalControls:#ctrl
     adiabatic_heating: int = 1     # REMOVE (?)
     stokes_solver_type: str|int = 1
     energy_solver_type: str|int = 1
-    iterative_solver_tol: float = 1e-10
+    iterative_solver_tol: float = 1e-7
     eta_max : float = 1e26
     pressure_dependency: int = 1
     def convert_string(self):

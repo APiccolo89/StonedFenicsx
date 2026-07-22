@@ -389,6 +389,8 @@ class Global_thermal(Problem):
         self.rT0 = 1.0 
         self.wall_boundary = dolfinx.fem.Function(self.FS)
         self.e_ii_fr = 0.5 * (self.ctrl_sim.ctrl_ky.v_s[0] * 1 /self.g_input.wz_tk)
+        self.problem_shear_heating = None 
+        self.problem_shear_heating_mass = None 
     #---    
     @staticmethod
     def interpolate_1d_vector_boundary(function_space, z, temp_vec, dofs_intp):
@@ -620,12 +622,46 @@ class Global_thermal(Problem):
         """
         RT = dolfinx.fem.petsc.assemble_vector(self.cached_form.other_form['res_temp'])
         RT.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
-        if not hasattr(self, "_all_bc_dofs_T"):
-            self._all_bc_dofs_T = np.unique(np.concatenate([bc.dof_indices()[0] for bc in self.bc]))
-        arr = RT.array
-        arr[self._all_bc_dofs_T] = 0.0
+        if getattr(self, "bc", None):
+            with RT.localForm() as lf:
+                r = lf.getArray(readonly=False)
+                for bc in self.bc:
+                    dofs = bc.dof_indices()[0]   # local dof indices
+                    r[dofs] = 0.0
         RTemp = RT.norm(PETSc.NormType.NORM_2)  
         return RTemp 
+    #--- 
+    def compute_dt_update_dt(self,sol:Solution,it_outer:int,ts:int)->None:
+        # compute the kappa form
+        if ts==1:
+            rho = density_FX(self.cached_mat,sol.T_N,sol.PL)
+            cp = heat_capacity_FX(self.cached_mat,sol.T_N)
+            k = heat_conductivity_FX(self.cached_mat,sol.T_N,sol.PL,cp,rho)
+            kappa = k/rho/cp
+            h = ufl.CellDiameter(self.domain.mesh)
+            u_norm = ufl.sqrt(ufl.dot(sol.u_global, sol.u_global) + 1.0e-30)
+            dt_diff = 0.5 * (h**2/kappa)
+            dt_adv  = 0.8 * (h/u_norm)
+            self.cached_form.other_form['dt_diff'] = dolfinx.fem.Expression(dt_diff,self.domain.solph.element.interpolation_points())
+            self.cached_form.other_form['dt_adv'] = dolfinx.fem.Expression(dt_adv,self.domain.solph.element.interpolation_points())
+
+        if ts==1 or self.ctrl_sim.ctrl_ky.constant==0: 
+            tdim = self.domain.mesh.topology.dim
+            ncells_local = self.domain.mesh.topology.index_map(tdim).size_local
+            dt_adv = dolfinx.fem.Function(self.domain.solph)
+            dt_dif = dolfinx.fem.Function(self.domain.solph)
+            dt_adv.interpolate(self.cached_form.other_form['dt_adv'])
+            dt_dif.interpolate(self.cached_form.other_form['dt_diff'])
+            dt_a = np.min(dt_adv.x.array[:ncells_local])
+            dt_a = self.domain.comm.allreduce(dt_a,op=MPI.MIN)
+            dt_b = np.min(dt_dif.x.array[:ncells_local])
+            dt_b = self.domain.comm.allreduce(dt_b,op=MPI.MIN)
+            print_ph(f'       old dt = {self.ctrl_sim.ctrl.dt:.2f}')
+            self.ctrl_sim.ctrl.dt = np.min([dt_a,dt_b])
+            print_ph(f'       new dt = {self.ctrl_sim.ctrl.dt:.2f}')            
+            
+            
+            
     #---
     def set_form_residual_TD(self
                             ,p :dolfinx.fem.function.Function = None
@@ -973,7 +1009,7 @@ class Global_thermal(Problem):
 
         if it_outer == 0 and ts == 0: 
             self.solv = ScalarSolver(a,L,self.bc,self.domain.comm,self.ctrl_sim.ctrl.energy_solver_type)
-            
+        self.compute_dt_update_dt(sol=sol,it_outer=it_outer,ts=ts)
         self.solve_the_linear(sol
                                       ,a
                                       ,L
@@ -991,14 +1027,14 @@ class Global_thermal(Problem):
         time_B = timing.time()        
         if self.ctrl_sim.ctrl.model_shear>0: 
 
-                    
-            u_trial = ufl.TrialFunction(self.FS)
-            v_test  = ufl.TestFunction(self.FS)
-            dx = ufl.Measure("dx", domain=self.domain.mesh)
+            if ts == 0 and it_outer == 0:      
+                u_trial = ufl.TrialFunction(self.FS)
+                v_test  = ufl.TestFunction(self.FS)
+                dx = ufl.Measure("dx", domain=self.domain.mesh)
 
-            a_mass = (u_trial * v_test * dx)
-            problem = dolfinx.fem.petsc.LinearProblem(a_mass, (self.shear_heating))
-            sol.shear_heating = problem.solve()
+                self.shear_heating_mass = (u_trial * v_test * dx)
+                self.shear_problem = dolfinx.fem.petsc.LinearProblem(self.shear_heating_mass, (self.shear_heating))
+            sol.shear_heating = self.shear_problem.solve()
             sol.shear_heating.x.scatter_forward()
         else: 
             if it_outer ==0 and ts == 0: 

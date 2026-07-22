@@ -32,6 +32,8 @@ def perform_test(option_viscous=0,option_thermal=0):
     inp.ctrl.decoupling_ctrl = 0 
     inp.ctrl.steady_state = 0 
     inp.ctrl.tol = 1e-3
+    inp.ctrl.stokes_solver_type = 'Iterative'
+    inp.ctrl.energy_solver_type = 'Iterative'
     
     # In this case, for testing the Van Keken benchmark, I opted to create a simple script
     # that has: option viscosity and thermal for testing several potential configuration. 
