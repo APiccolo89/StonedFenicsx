@@ -139,21 +139,21 @@ def read_data_base(test_name):
     L2_B = np.array(f[field_c])
     
     if test_name == '_phi3':
-        v1 = 251.17
-        v2 = 581.29
-        v3 = 843.03
+        v1 = 235.91
+        v2 = 574.81
+        v3 = 831.66
     elif test_name == '_phi5':
-        v1 = 0
-        v2 = 0
-        v3 = 0
+        v1 = 239.40
+        v2 = 576.42
+        v3 = 832.09
     elif test_name =='_phi10':
-        v1 = 0 
-        v2 = 0 
-        v3 = 0
+        v1 = 243.35 
+        v2 = 578.35 
+        v3 = 832.57
     elif test_name =='_phi15':
-        v1 = 0 
-        v2 = 0 
-        v3 = 0
+        v1 = 245.19 
+        v2 = 579.28 
+        v3 = 832.80
     else: 
         raise ValueError('Wrong test')
 
@@ -198,9 +198,8 @@ def test_phi(phi=0.0,test_name='_phi5'):
 #-------------------------------------------------------------------------------
 if __name__ == '__main__': 
     
-    DEBUG = True
-    #test_phi(phi=3.0, test_name='_phi3')
-    #test_phi(phi=5.0,test_name='_phi5')
+    test_phi(phi=3.0, test_name='_phi3')
+    test_phi(phi=5.0,test_name='_phi5')
     test_phi(phi=10.0,test_name='_phi10')
     test_phi(phi=15.0,test_name='_phi15')
 #---------------------------------------------------------------------------------
