@@ -32,6 +32,19 @@ from stonedfenicsx.utils import print_ph,timing_function
 import time as timing 
 
 def debug_boundary_condition(bc, name):
+    """Print the global min/max of a Dirichlet BC value across all MPI ranks.
+
+    Reduces over the owned dofs of ``bc`` (skipping ghost dofs) to report a
+    single global min/max, alongside the local values on rank 0. Useful for
+    sanity-checking a boundary condition (constant, ndarray, or interpolated
+    Function) while debugging.
+
+    Args:
+        bc (dolfinx.fem.DirichletBC): Boundary condition to inspect. ``bc.g``
+            may be a Function (vector-valued values are reduced via norm) or
+            a Constant/ndarray.
+        name (str): Label used in the printed diagnostic line.
+    """
     comm = MPI.COMM_WORLD
 
     # bc.dof_indices() returns (dofs, first_ghost) in many dolfinx versions
@@ -221,7 +234,15 @@ class Problem:
 #--------------------------------------------------------------------------------------------------------------
 class Solution():
     def __init__(self):
-        self.PL : dolfinx.fem.function.Function 
+        """Declare (without allocating) every field and residual/history array
+        carried by a simulation state.
+
+        This constructor only type-annotates the attributes; the actual
+        `dolfinx.fem.Function` objects and history arrays are allocated later
+        by `create_function`, once the function spaces of the global,
+        wedge and slab problems are known.
+        """
+        self.PL : dolfinx.fem.function.Function
         self.T_i : dolfinx.fem.function.Function
         self.T_O : dolfinx.fem.function.Function 
         self.T_N : dolfinx.fem.function.Function 
@@ -280,6 +301,19 @@ class Solution():
         
         
         def gives_Function(space):
+            """Collapse the velocity/pressure subspaces of a mixed space and
+            allocate one Function on each.
+
+            Args:
+                space (dolfinx.fem.FunctionSpace): Mixed function space with
+                    subspace 0 = vector (velocity) and subspace 1 = scalar
+                    (pressure).
+
+            Returns:
+                tuple[dolfinx.fem.Function, dolfinx.fem.Function]: New,
+                zero-initialised Functions on the collapsed velocity and
+                pressure subspaces respectively.
+            """
             Va = space.sub(0)
             Pa = space.sub(1)
             V,_  = Va.collapse()
@@ -323,6 +357,21 @@ class Solution():
  
 class Global_thermal(Problem):
     def __init__(self,mesh:Mesh, elements:tuple, name:list,pdb:PhaseDataBase,ctrl_sim:SimulationControls):
+        """Global thermal (energy) problem constructor.
+
+        Sets the problem typology (linear vs. nonlinear, depending on whether
+        density/conductivity/heat-capacity are constant and shear heating is
+        active), allocates the boundary-condition placeholders, and
+        pre-computes the shear-heating scratch fields (`wall_boundary`,
+        `e_ii_fr`) used by `compute_shear_heating`/`compute_friction_shear_expression`.
+
+        Args:
+            mesh (Mesh): Mesh object storing the computational domains.
+            elements (tuple): Finite elements for the temperature function space.
+            name (list): Identifiers of the problem and associated domain.
+            pdb (PhaseDataBase): Phase/material database.
+            ctrl_sim (SimulationControls): Simulation control parameters.
+        """
         super().__init__(mesh=mesh,elements=elements,name=name,ctrl_sim=ctrl_sim,pdb=pdb)
         self.steady_state = ctrl_sim.ctrl.steady_state
                 
@@ -345,6 +394,23 @@ class Global_thermal(Problem):
     #---    
     @staticmethod
     def interpolate_1d_vector_boundary(function_space, z, temp_vec, dofs_intp):
+            """Nearest-neighbour interpolate a 1D depth profile onto a boundary Function.
+
+            Args:
+                function_space (dolfinx.fem.FunctionSpace): Function space of
+                    the returned boundary Function (e.g. the temperature space).
+                z (np.ndarray): 1D array of depth coordinates of the profile
+                    to interpolate from.
+                temp_vec (np.ndarray): Values of the profile at each `z`.
+                dofs_intp (np.ndarray): Dof coordinate array (shape (ndofs, gdim));
+                    only the second column (depth) is used to look up nearest
+                    `z`/`temp_vec` pairs.
+
+            Returns:
+                dolfinx.fem.Function: Function on `function_space` whose dof
+                values are the nearest-neighbour interpolated profile,
+                scatter-forwarded for MPI consistency.
+            """
             buf_fct = dolfinx.fem.Function(function_space)
             buf_fct.x.array[:] = griddata(z, temp_vec, dofs_intp[:,1], method='nearest')
             buf_fct.x.scatter_forward()
@@ -419,12 +485,13 @@ class Global_thermal(Problem):
         
         self.bc = [ self.bc_left,  self.bc_right_wed,self.bc_bot_wed, self.bc_right_lit,self.bc_top]  
         # Shear heating bc informations
-        decoupling    = self.wall_boundary.copy()
-        Z = self.FS.tabulate_dof_coordinates()[:,1]
-        decoupling = decoupling_function(Z,decoupling,self.g_input)
-        self.wall_boundary.x.array[:] = decoupling.x.array[:] * self.ctrl_sim.ctrl_ky.v_s[0]
-        self.wall_boundary.x.scatter_forward()
-        self.e_ii_fr = 0.5 * (self.ctrl_sim.ctrl_ky.v_s[0] * 1 /self.g_input.wz_tk)
+        if self.ctrl_sim.ctrl.model_shear>0:
+            decoupling    = self.wall_boundary.copy()
+            Z = self.FS.tabulate_dof_coordinates()[:,1]
+            decoupling = decoupling_function(Z,decoupling,self.g_input)
+            self.wall_boundary.x.array[:] = decoupling.x.array[:] * self.ctrl_sim.ctrl_ky.v_s[0]
+            self.wall_boundary.x.scatter_forward()
+            self.e_ii_fr = 0.5 * (self.ctrl_sim.ctrl_ky.v_s[0] * 1 /self.g_input.wz_tk)
         
         
         
@@ -478,6 +545,13 @@ class Global_thermal(Problem):
         return tau, tau_vs, tau_lim      
     #---
     def compute_energy_source(self):
+        """Compute and cache the radiogenic heat production source term.
+
+        Evaluates the per-phase radiogenic heating (via `compute_radiogenic`)
+        into a scratch Function and copies the result into
+        `self.energy_source`. Called once per timestep (at `it_outer == 0`)
+        since radiogenic heating does not depend on the solution.
+        """
         source = dolfinx.fem.Function(self.FS)
         source = compute_radiogenic(self.cached_mat, source)
         self.energy_source.x.array[:] = source.x.array[:]
@@ -490,17 +564,32 @@ class Global_thermal(Problem):
                             ,u_global :dolfinx.fem.function.Function = None
                             ,it_inner:int=0
                             ,dt:float = 0.0)->float:
-       
+        """Build the steady-state residual form of the energy equation (diffusion + SUPG-stabilised advection - sources).
+
+        Args:
+            p (dolfinx.fem.Function, optional): Lithostatic pressure field.
+            T (dolfinx.fem.Function, optional): Current temperature field.
+            T_O (dolfinx.fem.Function, optional): Old temperature (unused in
+                steady state; kept for interface parity with the TD variant).
+            u_global (dolfinx.fem.Function, optional): Global velocity field.
+            it_inner (int, optional): Inner (Picard) iteration index. Defaults to 0.
+            dt (float, optional): Unused in steady state; kept for interface parity.
+
+        Returns:
+            dolfinx.fem.Form: Compiled residual form (diffusion + advection +
+            SUPG stabilisation - source, including shear heating if
+            `model_shear > 0`).
+        """
         rho_k = density_FX(self.cached_mat, T, p)  # frozen
-        
+
         Cp_k = heat_capacity_FX(self.cached_mat, T)  # frozen
 
         k_k = heat_conductivity_FX(self.cached_mat, T, p, Cp_k, rho_k)  # frozen
 
         f    = self.energy_source# source term
-        
+
         dx  = self.dx
-            
+
         diff = ufl.inner(k_k * ufl.grad(T), ufl.grad(self.test0)) * dx
         
         adv  = rho_k * Cp_k *ufl.dot(u_global, ufl.grad(T)) * self.test0 * dx
@@ -524,6 +613,17 @@ class Global_thermal(Problem):
         return R
     #---
     def compute_residual(self):
+        """Assemble the cached temperature residual form and return its L2 norm.
+
+        Assembles `self.cached_form.other_form['res_temp']` (built once in
+        `initialise_form`), zeroes the entries at constrained (Dirichlet)
+        dofs, and reduces to a global L2 norm used for outer-loop convergence
+        monitoring.
+
+        Returns:
+            float: L2 norm of the temperature residual vector, with
+            Dirichlet dofs excluded.
+        """
         RT = dolfinx.fem.petsc.assemble_vector(self.cached_form.other_form['res_temp'])
         RT.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
         if not hasattr(self, "_all_bc_dofs_T"):
@@ -540,10 +640,30 @@ class Global_thermal(Problem):
                             ,u_global :dolfinx.fem.function.Function = None
                             ,it_inner:int=0
                             ,dt:float = 0.0)->float:
+        """Assemble the time-dependent (Crank-Nicolson) energy residual and return its L2 norm.
 
+        Builds the new/old diffusion, advection and mass terms (mirroring
+        `set_linear_picard_TD`) directly as a residual form `R = new + old`,
+        assembles it, zeroes the entries at Dirichlet dofs, and reduces to a
+        global L2 norm.
 
+        Args:
+            p (dolfinx.fem.Function, optional): Lithostatic pressure field.
+            T (dolfinx.fem.Function, optional): Current (new) temperature field.
+            T_O (dolfinx.fem.Function, optional): Old (previous timestep) temperature field.
+            u_global (dolfinx.fem.Function, optional): Global velocity field.
+            it_inner (int, optional): Inner (Picard) iteration index. Defaults to 0.
+            dt (float, optional): Timestep size. Defaults to 0.0.
+
+        Returns:
+            float: L2 norm of the assembled residual vector, with Dirichlet
+            dofs excluded.
+        """
+        dt = self.ctrl_sim.ctrl.dt
+
+        
         rho_k = density_FX(self.cached_mat, T, p)  # frozen
-                
+
         Cp_k = heat_capacity_FX(self.cached_mat, T)  # frozen
 
         k_k = heat_conductivity_FX(self.cached_mat, T, p, Cp_k, rho_k)  # frozen
@@ -560,8 +680,17 @@ class Global_thermal(Problem):
         rhocp        =  (rho_k * Cp_k)
 
         rhocp_old    =  (rho_k0 * Cp_k0)
-        
+    
         dx  = self.dx
+        
+        # SUPG : 
+        h = ufl.CellDiameter(self.domain.mesh)
+        u_norm = ufl.sqrt(ufl.dot(u_global,u_global)+1e-12)
+        tau = 1.0/ufl.sqrt((2.0/dt)**2+(2.0*u_norm/h)**2+1e-12)
+        tau_f = tau * ufl.dot(u_global,ufl.grad(self.test0))
+        supg_new = tau_f * ((rhocp/dt)*T + (rhocp/2.0)*ufl.dot(u_global,ufl.grad(T)))*self.dx 
+        supg_old = tau_f * ((rhocp_old/dt)*T_O - (rhocp_old/2.0)*ufl.dot(u_global,ufl.grad(T_O)))*self.dx
+        
         if self.ctrl_sim.ctrl.model_shear>0:
             f    = (self.energy_source) * self.test0 * dx + self.shear_heating # source term {energy_source is radiogenic heating compute before hand, shear heating is frictional heating already a form}
         else: 
@@ -574,7 +703,7 @@ class Global_thermal(Problem):
         
         mass_new = (rhocp / dt) * T * self.test0 * dx
         
-        new = diff_new + adv_new + mass_new  
+        new = diff_new + adv_new + mass_new #+ supg_new
                         
    
             
@@ -584,26 +713,15 @@ class Global_thermal(Problem):
         
         mass_old =  (rhocp_old / dt) * T_O * self.test0 * dx
         
-        old = diff_old + adv_old + f + mass_old
+        old = diff_old + adv_old + f + mass_old #+ supg_old
         
-        R = new + old
+        R = new - old
 
            
-        RT = dolfinx.fem.petsc.assemble_vector(dolfinx.fem.form(R))
-        
-        RT.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
-        
-        if getattr(self, "bc", None):
-            with RT.localForm() as lf:
-                r = lf.getArray(readonly=False)
-                for bc in self.bc:
-                    dofs = bc.dof_indices()[0]   # local dof indices
-                    r[dofs] = 0.0
-
-        RTemp = RT.norm(PETSc.NormType.NORM_2)    
+        RT = dolfinx.fem.form(dolfinx.fem.form(R))
         
         
-        return RTemp
+        return RT
     #---
     def set_linear_picard_SS(self
                              ,p:dolfinx.fem.Function=None
@@ -685,11 +803,39 @@ class Global_thermal(Problem):
                              ,it_outer :int=0
                              ,it_inner:int =0
                              ,ts:int = 0)->tuple[dolfinx.fem.Form,dolfinx.fem.Form|None]:
+        """Set up the bilinear/linear Crank-Nicolson forms for the time-dependent energy equation.
+
+        Builds the "new" (implicit) bilinear form `a` from the current
+        Picard-iterate coefficients every call, and the "old" (explicit)
+        linear form `L` only on the first inner iteration (`it_inner == 0`)
+        of a timestep, since it depends solely on the previous timestep's
+        temperature `T_O`. Source terms (radiogenic + shear heating, the
+        latter only once `it_inner != 0`, i.e. once `shear_heating` has been
+        computed for this outer iteration) are assumed constant across the
+        timestep.
+
+        Args:
+            p (dolfinx.fem.Function, optional): Lithostatic pressure field. Defaults to None.
+            T_k (dolfinx.fem.Function, optional): Current Picard-iterate temperature. Defaults to None.
+            T_O (dolfinx.fem.Function, optional): Temperature at the previous timestep. Defaults to None.
+            u_global (dolfinx.fem.Function, optional): Global velocity field. Defaults to None.
+            it_outer (int, optional): Outer (nonlinear) iteration index. Defaults to 0.
+            it_inner (int, optional): Inner (Picard) iteration index; controls
+                whether the shear-heating source is included and whether `L`
+                is rebuilt. Defaults to 0.
+            ts (int, optional): Timestep index. Defaults to 0.
+
+        Returns:
+            tuple[dolfinx.fem.Form, dolfinx.fem.Form | None]: Compiled
+            bilinear form `a`, and the linear form `L` (or `None` if
+            `it_inner != 0`, in which case the previously assembled `L`
+            should be reused).
+        """
         # Function that set linear form and linear picard for picard iteration
-        # Crank Nicolson scheme 
-        # a - > New temperature 
+        # Crank Nicolson scheme
+        # a - > New temperature
         # L - > Old temperature
-        # -> Source term is assumed constant in time and do not vary between the timesteps 
+        # -> Source term is assumed constant in time and do not vary between the timesteps
 
         dt = self.ctrl_sim.ctrl.dt
 
@@ -713,9 +859,16 @@ class Global_thermal(Problem):
 
         rhocp_old    =  (rho_k0 * Cp_k0)
         
+        # SUPG : 
+        h = ufl.CellDiameter(self.domain.mesh)
+        u_norm = ufl.sqrt(ufl.dot(u_global,u_global)+1e-12)
+        tau = 1.0/ufl.sqrt((2.0/dt)**2+(2.0*u_norm/h)**2+1e-12)
+        tau_f = tau * ufl.dot(u_global,ufl.grad(self.test0))
+        supg_new = tau_f * ((rhocp/dt)*self.trial0 + (rhocp/2.0)*ufl.dot(u_global,ufl.grad(self.trial0)))*self.dx 
+        supg_old = tau_f * ((rhocp_old/dt)*T_O - (rhocp_old/2.0)*ufl.dot(u_global,ufl.grad(T_O)))*self.dx
         dx  = self.dx
         
-        if self.ctrl_sim.ctrl.mode_shear>0 and it_inner !=0:
+        if self.ctrl_sim.ctrl.model_shear>0 and it_inner !=0:
             f    = (self.energy_source) * self.test0 * dx + self.shear_heating # source term {energy_source is radiogenic heating compute before hand, shear heating is frictional heating already a form}
         else: 
             f = self.energy_source * self.test0 * dx 
@@ -727,22 +880,20 @@ class Global_thermal(Problem):
         
         mass_new = (rhocp / dt) * self.trial0 * self.test0 * dx
         
-        a = dolfinx.fem.form(diff_new + adv_new + mass_new)
+        a = dolfinx.fem.form(diff_new + adv_new + mass_new )#+ supg_new)
                 
-        if it_inner == 0: 
+    
             
-            adv_old =  - (rhocp_old / 2 ) * ufl.dot(u_global, ufl.grad(T_O)) * self.test0 * dx
+        adv_old =  - (rhocp_old / 2 ) * ufl.dot(u_global, ufl.grad(T_O)) * self.test0 * dx
 
-            diff_old =  - ( 1 / 2 ) * ufl.inner(k_k0 * ufl.grad(T_O), ufl.grad(self.test0)) * dx
-            
-            mass_old =  (rhocp_old / dt) * T_O * self.test0 * dx
-            
-            L = dolfinx.fem.form(diff_old + adv_old + f + mass_old)
-            
-            return a, L
+        diff_old =  - ( 1 / 2 ) * ufl.inner(k_k0 * ufl.grad(T_O), ufl.grad(self.test0)) * dx
 
-        else: 
-            return a, None
+        mass_old =  (rhocp_old / dt) * T_O * self.test0 * dx
+
+        L = dolfinx.fem.form(diff_old + adv_old + f + mass_old)#+supg_old)
+
+        return a, L
+
     #---
     def initialise_form(self,sol:Solution,it_outer:int,ts:int):
         """Call the routine for setting up the form, and caching it during the first iteration 
@@ -781,10 +932,24 @@ class Global_thermal(Problem):
     def Solve_the_Problem(self
                           ,sol:Solution
                           ,it_outer:int=0
-                          ,ts:int=0)->None: 
-        
-        # choose the problemesh: 
-        if self.ctrl_sim.ctrl.steady_state == 1: 
+                          ,ts:int=0)->None:
+        """Drive one solve of the global temperature problem for the current outer iteration.
+
+        Selects the steady-state or time-dependent form/residual builders,
+        (re)computes the radiogenic source at the start of a timestep,
+        rebuilds the boundary conditions, assembles/solves the cached linear
+        system into `self.temp_k`, copies the result into `sol.T_N`, reports
+        the residual, and finally projects `self.shear_heating` (if active)
+        into `sol.shear_heating` for diagnostics/output.
+
+        Args:
+            sol (Solution): Solution container; reads `u_global`, writes `T_N`
+                and `shear_heating`.
+            it_outer (int, optional): Outer (nonlinear) iteration index. Defaults to 0.
+            ts (int, optional): Timestep index. Defaults to 0.
+        """
+        # choose the problemesh:
+        if self.ctrl_sim.ctrl.steady_state == 1:
             self.set_linear = self.set_linear_picard_SS 
             self.set_residual = self.set_form_residual_SS
         else: 
@@ -851,7 +1016,23 @@ class Global_thermal(Problem):
                          ,fen_function:dolfinx.fem.Function
                          ,isPicard:int=0
                          ,ts:int=0)->None:
-        
+        """Assemble and solve the scalar linear system `a x = L` into `fen_function`.
+
+        Zeroes and reassembles the system matrix, assembles the RHS vector,
+        applies lifting for the Dirichlet boundary conditions, and solves via
+        the cached `ScalarSolver` KSP, writing the result directly into
+        `fen_function` (e.g. `self.temp_k`).
+
+        Args:
+            sol (Solution): Solution container (unused directly here, kept
+                for interface parity with other `solve_the_linear` variants).
+            a (dolfinx.fem.Form): Compiled bilinear form.
+            L (dolfinx.fem.Form): Compiled linear form.
+            fen_function (dolfinx.fem.Function): Function the solution is
+                written into.
+            isPicard (int, optional): Unused; kept for interface parity. Defaults to 0.
+            ts (int, optional): Unused; kept for interface parity. Defaults to 0.
+        """
         # Update the matrix
         self.solv.A.zeroEntries()
         dolfinx.fem.petsc.assemble_matrix(self.solv.A,a,self.bc)
@@ -874,13 +1055,23 @@ class Global_thermal(Problem):
     #---   
     @timing_function
     def initial_temperature_field(self)->dolfinx.fem.Function:
+        """Build the initial temperature field from 1D depth profiles.
+
+        Interpolates two 1D nearest-neighbour temperature-vs-depth profiles
+        (the background geotherm `ctrl_tbc.z`/`temperature_1d`, and the
+        lithosphere-side profile `ctrl_tbc.z_right`/`temp_1d_right`), then
+        selects between them per-dof using the phase id: phases in
+        {2, 3, 4, 5} (crust/lithosphere/slab phases) take the lithosphere
+        profile (clamped to `temp_max` below the LAB depth `lab_d`), all
+        other phases take the background profile.
+
+        Returns:
+            dolfinx.fem.Function: Initial temperature field on `self.FS`.
+        """
         from scipy.interpolate import griddata
         from ufl import conditional, Or, eq
         from functools import reduce
-        """
-        
-        """    
-        #- Create part of the thermal field: create function, extract dofs, 
+        #- Create part of the thermal field: create function, extract dofs,
         ctrl_tbc = self.ctrl_sim.ctrl_tbc
         
         
@@ -916,8 +1107,22 @@ class Global_pressure(Problem):
                  ,name:list
                  ,pdb:PhaseDataBase
                  ,ctrl_sim:SimulationControls):
+        """Global lithostatic pressure problem constructor.
+
+        Sets the typology (linear if density does not depend on pressure,
+        i.e. `option_rho < 2` everywhere), builds the Dirichlet boundary
+        condition (P = 0 at the top surface), and creates the gravity vector
+        constant used as the RHS forcing.
+
+        Args:
+            mesh (Mesh): Mesh object storing the computational domains.
+            elements (tuple): Finite elements for the pressure function space.
+            name (list): Identifiers of the problem and associated domain.
+            pdb (PhaseDataBase): Phase/material database.
+            ctrl_sim (SimulationControls): Simulation control parameters.
+        """
         super().__init__(mesh=mesh,elements=elements,name=name,ctrl_sim=ctrl_sim,pdb=pdb)
-        
+
         if np.all(pdb.option_rho<2):
             self.typology = 'LinearProblem'
         else:
@@ -925,9 +1130,17 @@ class Global_pressure(Problem):
 
         self.bc = [self.set_problem_bc()]
         self.g = dolfinx.fem.Constant(self.domain.mesh, PETSc.ScalarType([0.0,-self.ctrl_sim.ctrl.g]))
-    # --- 
+    # ---
     def set_problem_bc(self)->list[dolfinx.fem.DirichletBC]:
-         
+        """Build the Dirichlet boundary condition for the lithostatic pressure problem.
+
+        Pins the pressure to zero at the top surface of the domain (the
+        reference for the hydrostatic/lithostatic integration).
+
+        Returns:
+            list[dolfinx.fem.DirichletBC]: Single-element list with the
+            P = 0 boundary condition at the 'Top' facet tag.
+        """
         top_facets   = self.domain.facets.find(self.domain.bc_dict['Top'])
         top_dofs    = dolfinx.fem.locate_dofs_topological(self.FS, 1, top_facets)
         bc = [dolfinx.fem.dirichletbc(0.0, top_dofs, self.FS)]
@@ -937,8 +1150,29 @@ class Global_pressure(Problem):
                           ,p_k:dolfinx.fem.Function
                           ,T:dolfinx.fem.Function
                           ,it:int=0):
+        """Set up and cache the bilinear/linear forms of the lithostatic pressure problem.
+
+        Built only once (`self.cached_form.a is None`): a Poisson-type
+        bilinear form for `grad(P)` and a linear form driven by the
+        (density-weighted) gravity body force. Density is evaluated from the
+        current `p_k`/`T` at the time of the first call and is not
+        recomputed afterwards, since the cached form still holds a live UFL
+        reference to `T`/`p_k` and is simply reassembled with their current
+        values on subsequent calls.
+
+        Args:
+            p_k (dolfinx.fem.Function): Current pressure iterate (used to
+                evaluate density where it depends on pressure).
+            T (dolfinx.fem.Function): Temperature field (used to evaluate density).
+            it (int, optional): Outer iteration index; the bilinear form `a`
+                is only (re)built on `it == 0`. Defaults to 0.
+
+        Returns:
+            tuple[dolfinx.fem.Form, dolfinx.fem.Form]: Cached bilinear form
+            `a` and linear form `L`.
+        """
         # Function that set linear form and linear picard for picard iteration
-        
+
         if self.cached_form.a is None:
             rho_k = density_FX(self.cached_mat, T, p_k)  # frozen
 
@@ -957,7 +1191,17 @@ class Global_pressure(Problem):
     def Solve_the_Problem(self
                           ,sol:Solution
                           ,it_outer:int=0
-                          ,ts:int=0)->None:       
+                          ,ts:int=0)->None:
+        """Drive one solve of the global lithostatic pressure problem.
+
+        Builds/reuses the cached linear system, creates the `ScalarSolver` on
+        the very first solve, then assembles and solves it into `sol.PL`.
+
+        Args:
+            sol (Solution): Solution container; reads `PL`/`T_N`, writes `PL`.
+            it_outer (int, optional): Outer iteration index. Defaults to 0.
+            ts (int, optional): Timestep index. Defaults to 0.
+        """
         print_ph(f'              || --- || -- LITHOSTATIC PROBLEM [{self.domain.name}] || -- || --- || ')
 
         time_A = timing.time()
@@ -981,7 +1225,21 @@ class Global_pressure(Problem):
                          ,isPicard:int=0
                          ,it:int=0
                          ,ts:int=0):
-        
+        """Assemble and solve the lithostatic pressure linear system `a x = L` into `function_fen`.
+
+        The matrix is only reassembled on `it == 0 or ts == 0` (density does
+        not change within an outer/time loop once frozen); the RHS is always
+        reassembled since it carries the density-dependent body force.
+
+        Args:
+            a (dolfinx.fem.Form): Compiled bilinear form.
+            L (dolfinx.fem.Form): Compiled linear form.
+            function_fen (dolfinx.fem.Function): Function the solution is
+                written into (typically `sol.PL`).
+            isPicard (int, optional): Unused; kept for interface parity. Defaults to 0.
+            it (int, optional): Outer iteration index, controls matrix reassembly. Defaults to 0.
+            ts (int, optional): Timestep index, controls matrix reassembly. Defaults to 0.
+        """
         if it == 0 or ts == 0:
             self.solv.A.zeroEntries()
             dolfinx.fem.petsc.assemble_matrix(self.solv.A,dolfinx.fem.form(a),self.bc[0])
@@ -1005,20 +1263,69 @@ class Stokes_Problem(Problem):
                  ,name:list
                  ,ctrl_sim:SimulationControls
                  ,pdb:PhaseDataBase):
+        """Stokes problem constructor.
+
+        Allocates the temperature/pressure function space `FSPT` (shared
+        with the global thermal/lithostatic problems, needed to evaluate
+        viscosity) and the moving-wall velocity Functions (reference unit
+        field and its scaled/time-dependent counterpart) used by the
+        kinematic slab boundary condition.
+
+        Args:
+            mesh (Mesh): Mesh object storing the computational domains.
+            elements (list): Elements tuple; `elements[2]` is the scalar
+                temperature/pressure element for `FSPT`.
+            name (list): Identifiers of the problem and associated domain.
+            ctrl_sim (SimulationControls): Simulation control parameters.
+            pdb (PhaseDataBase): Phase/material database.
+        """
         super().__init__(mesh=mesh,elements=elements,name=name,ctrl_sim=ctrl_sim,pdb=pdb)
-        self.FSPT = dolfinx.fem.functionspace(self.domain.mesh, elements[2])     
-        # Create the moving wall functions: 
+        self.FSPT = dolfinx.fem.functionspace(self.domain.mesh, elements[2])
+        # Create the moving wall functions:
         # Allocate memory
         self.moving_wall_ref = dolfinx.fem.Function(self.F0)
         self.moving_wall = dolfinx.fem.Function(self.F0)
-    # --- 
+    # ---
     def fem_stokes_form(self,a1,a2,a3,a_p):
+        """Assemble the momentum/continuity blocks into compiled block forms.
+
+        Args:
+            a1 (ufl.Form): Momentum (viscous) block.
+            a2 (ufl.Form): Pressure-gradient block (test = velocity).
+            a3 (ufl.Form): Divergence block (test = pressure).
+            a_p (ufl.Form): Pressure mass form used for Schur-complement preconditioning.
+
+        Returns:
+            tuple[dolfinx.fem.Form, dolfinx.fem.Form]: Compiled 2x2 block
+            system form `[[a1, a2], [a3, None]]`, and the preconditioner
+            block form `[[a1, a2], [a3, a_p]]`.
+        """
         a   = [[a1, a2],[a3, None]]
         a_p0  = [[a1, a2],[a3, a_p]]
         return dolfinx.fem.form(a),dolfinx.fem.form(a_p0)
-    # --- 
+    # ---
     def initialise_fem_form(self, sol:Solution,it_outer:int,ts:int):
-        
+        """Build and cache the Stokes system forms (momentum, continuity, preconditioner, residual forms).
+
+        On the first call (`self.cached_form.a is None`) selects the
+        domain-specific fields (slab vs. wedge), builds the Picard forms via
+        `set_linear_picard`, adds the Nitsche free-slip terms for the
+        subducting plate's bottom boundary, caches the residual forms
+        (`rmom`, `rdiv`) used by `compute_residuum_stokes`, and compiles the
+        block system/preconditioner. On subsequent calls simply returns the
+        cached forms.
+
+        Args:
+            sol (Solution): Solution container providing velocity/pressure/
+                temperature/lithostatic-pressure fields for the current domain.
+            it_outer (int): Outer iteration index, forwarded to `set_linear_picard`.
+            ts (int): Timestep index, forwarded to `set_linear_picard`.
+
+        Returns:
+            tuple[dolfinx.fem.Form, dolfinx.fem.Form, dolfinx.fem.Form]:
+            Compiled block system form `a`, preconditioner block form `ap0`,
+            and RHS form `L`.
+        """
         if self.cached_form.a is None:
             # set the problem 
             if self.domain.name == 'subduction_plate_domain':
@@ -1066,7 +1373,16 @@ class Stokes_Problem(Problem):
         return a,ap0,L            
     # --- 
     def compute_residuum_stokes(self):
+        """Assemble the cached momentum/continuity residual forms and return their L2 norms.
 
+        Zeroes the momentum residual entries at Dirichlet dofs before
+        reducing to an L2 norm (the divergence residual has no such dofs to
+        exclude).
+
+        Returns:
+            tuple[float, float]: L2 norms of the momentum residual (`rmom`)
+            and the continuity/divergence residual (`rdiv`).
+        """
         Rm = dolfinx.fem.petsc.assemble_vector(self.cached_form.other_form['rmom'])
         Rm.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
         if getattr(self, "bc", None):
@@ -1202,8 +1518,30 @@ class Stokes_Problem(Problem):
                             ,ts:int=0
                             ,it_inner=0
                             ,slab:int = 0)->None:
-            
-        if it_outer == 0 and ts == 0 and it_inner == 0: 
+        """Assemble/solve the Stokes block system and scatter the result into velocity and pressure.
+
+        Creates the `SolverStokes` (block KSP + preconditioner) on the very
+        first solve, otherwise updates its block operator in place. Solves
+        the coupled velocity-pressure system as a single monolithic vector
+        `x` and splits it back into `u`/`p` using the velocity/pressure dof
+        offset stored on the solver.
+
+        Args:
+            a (dolfinx.fem.Form): Compiled block system form.
+            a_p0 (dolfinx.fem.Form): Compiled preconditioner block form.
+            L (dolfinx.fem.Form): Compiled RHS form.
+            u (dolfinx.fem.Function): Velocity Function the solution is written into.
+            p (dolfinx.fem.Function): Pressure Function the solution is written into.
+            it_outer (int, optional): Outer iteration index; used to decide
+                whether to (re)build the solver. Defaults to 0.
+            ts (int, optional): Timestep index; used to decide whether to
+                (re)build the solver. Defaults to 0.
+            it_inner (int, optional): Inner iteration index; used to decide
+                whether to (re)build the solver. Defaults to 0.
+            slab (int, optional): Flag forwarded to `SolverStokes` selecting
+                slab- vs. wedge-specific solver options. Defaults to 0.
+        """
+        if it_outer == 0 and ts == 0 and it_inner == 0:
             self.solv = SolverStokes(a, a_p0,L ,MPI.COMM_WORLD, 0,self.bc,self.F0,self.F1,self.ctrl_sim.ctrl ,J = None, r = None,it = it_outer, ts = ts, slab=slab)
         else: 
             self.solv.update_block_operator(a,a_p0,self.bc,L,self.F0,self.F1)
@@ -1382,9 +1720,29 @@ class Wedge(Stokes_Problem):
                        ,V : dolfinx.fem.FunctionSpace
                        ,it_outer : int = 0
                        ,ts : int = 0)-> list:
-        
+        """Build the wedge domain's Dirichlet boundary conditions (no-slip overriding plate, kinematic slab wall).
+
+        On the first call (`it_outer == 0 and ts == 0`): locates and caches
+        the no-slip dofs on the overriding-plate boundary, computes the
+        moving-wall reference (unit) velocity field along the slab interface
+        via `compute_moving_wall`, and — if `decoupling_ctrl == 1` — scales
+        it by `1 - decoupling_function` so the imposed wall velocity tapers
+        off with depth as slab/wedge decoupling increases. On every call:
+        rescales the cached reference field by the current slab velocity
+        `v_s[0]` and rebuilds the slab-boundary Dirichlet BC from it.
+
+        Args:
+            V (dolfinx.fem.FunctionSpace): Collapsed velocity subspace.
+            it_outer (int, optional): Outer iteration index. Defaults to 0.
+            ts (int, optional): Timestep index. Defaults to 0.
+
+        Returns:
+            list[dolfinx.fem.DirichletBC]: `[bc_slab, bc_overriding]` — the
+            kinematic slab-wall condition and the no-slip overriding-plate
+            condition.
+        """
         # Extract the mesh from the function
-        mesh = V.mesh 
+        mesh = V.mesh
         tdim = mesh.topology.dim
         fdim = tdim - 1
         
@@ -1455,8 +1813,21 @@ class Slab(Stokes_Problem):
                  ,name:list
                  ,ctrl_sim:SimulationControls
                  ,pdb:PhaseDataBase):
+        """Slab (subducting plate) problem constructor.
+
+        Thin wrapper around `Stokes_Problem.__init__`; the slab-specific
+        setup (kinematic top-boundary condition, Nitsche free-slip bottom
+        condition) is deferred to `setdirichlecht`/`compute_nitsche_FS`.
+
+        Args:
+            mesh (Mesh): Mesh object storing the computational domains.
+            elements (list): Elements tuple for the Stokes/temperature-pressure spaces.
+            name (list): Identifiers of the problem and associated domain.
+            ctrl_sim (SimulationControls): Simulation control parameters.
+            pdb (PhaseDataBase): Phase/material database.
+        """
         super().__init__(mesh=mesh,elements=elements,name=name,ctrl_sim=ctrl_sim,pdb=pdb)
-    
+
     def setdirichlecht(self
                        ,Vsubs = None
                        ,it_outer : int = 0
@@ -1525,8 +1896,17 @@ class Slab(Stokes_Problem):
             tuple: Updated forms (a1, a2, a3) with the Nitsche free slip boundary condition integrated.
         """
 
-        # Compute the shear stress tensor for a given viscosity and velocity field. 
+        # Compute the shear stress tensor for a given viscosity and velocity field.
         def tau(eta, u):
+            """Viscous stress tensor `2 * eta * sym(grad(u))`.
+
+            Args:
+                eta (ufl.Expression): Viscosity (scalar UFL expression).
+                u (ufl.Argument | dolfinx.fem.Function): Velocity field/trial/test function.
+
+            Returns:
+                ufl.Expression: Viscous (deviatoric) stress tensor.
+            """
             return 2 * eta * ufl.sym(ufl.grad(u))
         
         
