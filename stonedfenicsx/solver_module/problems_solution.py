@@ -71,14 +71,15 @@ def debug_boundary_condition(bc, name):
     if comm.rank == 0:
         print(f"{name}: global min {gmin:.6e} global max {gmax:.6e} "
               f"(rank{comm.rank} local min {local_min:.6e} local max {local_max:.6e}, n_owned {dofs_owned.size})")
+# --- 
 
 @dataclass
 class CACHED_FEM_FORM:
     a :  dolfinx.fem.Form | None = None 
     L : dolfinx.fem.Form| None = None 
     other_form : dict = field(default_factory=dict)
-
 # ---
+# --- 
 class Problem:
     """
     Abstract problem super-class defining the common structure and metadata
@@ -230,8 +231,8 @@ class Problem:
             self.cached_mat = THERMALCACHED(pdb=self.pdb,phase=self.domain.phase)
         else:
             self.cached_mat = RHEOLOGYCACHED(pdb=self.pdb,phase=self.domain.phase)
-
-#--------------------------------------------------------------------------------------------------------------
+# --- 
+# --- 
 class Solution():
     def __init__(self):
         """Declare (without allocating) every field and residual/history array
@@ -351,10 +352,7 @@ class Solution():
         self.rdiv = np.zeros(1,dtype=int)
         self.rmom = np.zeros(1,dtype=int)
         self.rT = np.zeros(1,dtype=int)
-        
-
 # --- 
- 
 class Global_thermal(Problem):
     def __init__(self,mesh:Mesh, elements:tuple, name:list,pdb:PhaseDataBase,ctrl_sim:SimulationControls):
         """Global thermal (energy) problem constructor.
@@ -491,11 +489,7 @@ class Global_thermal(Problem):
             decoupling = decoupling_function(Z,decoupling,self.g_input)
             self.wall_boundary.x.array[:] = decoupling.x.array[:] * self.ctrl_sim.ctrl_ky.v_s[0]
             self.wall_boundary.x.scatter_forward()
-            self.e_ii_fr = 0.5 * (self.ctrl_sim.ctrl_ky.v_s[0] * 1 /self.g_input.wz_tk)
-        
-        
-        
-        
+            self.e_ii_fr = 0.5 * (self.ctrl_sim.ctrl_ky.v_s[0] * 1 /self.g_input.wz_tk)    
     #---
     def compute_shear_heating(self
                               ,p:dolfinx.fem.Function
@@ -893,7 +887,6 @@ class Global_thermal(Problem):
         L = dolfinx.fem.form(diff_old + adv_old + f + mass_old)#+supg_old)
 
         return a, L
-
     #---
     def initialise_form(self,sol:Solution,it_outer:int,ts:int):
         """Call the routine for setting up the form, and caching it during the first iteration 
@@ -949,10 +942,14 @@ class Global_thermal(Problem):
             ts (int, optional): Timestep index. Defaults to 0.
         """
         # choose the problemesh:
-        if self.ctrl_sim.ctrl.steady_state == 1:
+        if self.ctrl_sim.ctrl.steady_state == 1 or (ts==0 and it_outer==0):
             self.set_linear = self.set_linear_picard_SS 
             self.set_residual = self.set_form_residual_SS
+
         else: 
+            if ts==1: 
+                # -> the intial guess is assuming a steady state solution with the initial condition ~ linear
+                self.cached_form = CACHED_FEM_FORM()             
             self.set_linear = self.set_linear_picard_TD
             self.set_residual = self.set_form_residual_TD
         
@@ -1098,8 +1095,8 @@ class Global_thermal(Problem):
         T_i.x.array[ind_B] = ctrl_tbc.temp_max
         T_i.x.scatter_forward()
         return T_i 
-
-# ---
+# --- 
+# --- 
 class Global_pressure(Problem): 
     def __init__(self
                  ,mesh:Mesh
@@ -1436,7 +1433,7 @@ class Stokes_Problem(Problem):
 
         e = compute_strain_rate(vel)
         # If we are in the first iteration of the first timestep -> use the default viscosity for creating an initial guess. fem.Constant(M.domainG.mesh, PETSc.ScalarType([0.0, -ctrl.g]))   
-        if it == 0 and ts == 0 and slab == 1:
+        if (it == 0 and ts == 0) or slab == 1:
             eta = dolfinx.fem.Constant(self.domain.mesh,PETSc.ScalarType(self.cached_mat.eta_def))
         else: 
             eta = compute_viscosity_FX(e,temp,pres_l,self.pdb,self.cached_mat)
@@ -1611,6 +1608,8 @@ class Stokes_Problem(Problem):
         print_ph(f'              || -- || Solving the Stokes problem for the {self.domain.name} domain || -- ||')
 
         self.bc   = self.setdirichlecht(self.V_subs,ts=ts,it_outer=it_outer) 
+        if ts == 1: # -> remove the first timestep 
+            self.cached_form = CACHED_FEM_FORM()
         
         a,ap0,L = self.initialise_fem_form(sol=sol,it_outer=it_outer,ts=ts)
         

@@ -267,9 +267,10 @@ def time_loop(ctrl_sim:SimulationControls
     
     
     while t<ctrl_sim.ctrl.time_max: 
-        
+        time_A = timing.time()
+
         if ctrl_sim.ctrl.steady_state==0:
-            print_ph(f'Time = {t*sc.temp/sc.scale_myr2sec:.3f} Myr, timestep = {ts:d}')
+            print_ph(f'Time = {t*sc.time/sc.scale_myr2sec:.3f} Myr, timestep = {ts:d}')
             print_ph('||================ || =====================||')
             
 
@@ -297,7 +298,7 @@ def time_loop(ctrl_sim:SimulationControls
 
         if ctrl_sim.ctrl.steady_state == 1 or (ts%10) == 0:
             print_ph('OUTPUT...')
-            output_class.print_output(sol=sol,ctrl_sim=ctrl_sim,sc=sc,ts=ts,it_outer=0,time=t*sc.temp/sc.scale_myr2sec)
+            output_class.print_output(sol=sol,ctrl_sim=ctrl_sim,sc=sc,ts=ts,it_outer=0,time=t*sc.time/sc.scale_myr2sec)
             print_ph('finished')
 
         
@@ -310,12 +311,16 @@ def time_loop(ctrl_sim:SimulationControls
                 from stonedfenicsx.output import _benchmark_van_keken
                 _benchmark_van_keken(sol,ctrl_sim.ctrl_io,sc)
 
-        t = t+ctrl_sim.ctrl.dt
+        if ts>0:
+            t = t+ctrl_sim.ctrl.dt
             
     
         sol.T_O.x.array[:] = sol.T_N.x.array[:]
         sol.T_O.x.scatter_forward()
         
+        time_B = timing.time()
+        print_ph(f'              || -- ||Timestep {ts}  took {time_B-time_A:.2f} sec || -- || --- ||')
+
         ts = ts + 1
 
     print_ph('Destroy Petsc Object and finish the simulation...')

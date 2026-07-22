@@ -31,6 +31,8 @@ def perform_test(option_viscous=0,option_thermal=0):
     # Control 
     inp.ctrl.decoupling_ctrl = 0 
     inp.ctrl.steady_state = 0 
+    inp.ctrl.tol = 1e-3
+    
     # In this case, for testing the Van Keken benchmark, I opted to create a simple script
     # that has: option viscosity and thermal for testing several potential configuration. 
     if option_thermal == 0: 
@@ -331,13 +333,13 @@ if __name__ == '__main__':
     
     DEBUG = True
     
-    test_isoviscous()
+    #test_isoviscous()
 
-    test_diffusion()
+    #test_diffusion()
 
-    test_composite()
+    #test_composite()
     
-    test_composite_NL_no_crust()
+    #test_composite_NL_no_crust()
     
     test_composite_NL_crust()
 #---------------------------------------------------------------------------------
