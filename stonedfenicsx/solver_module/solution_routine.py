@@ -1,16 +1,20 @@
 
 
-# --- 
+# ---
 from stonedfenicsx.config.numerical_control import SimulationControls
 from stonedfenicsx.config.geometry import Mesh
 from stonedfenicsx.config.scal import Scal
 from stonedfenicsx.config.phase_db import PhaseDataBase
-# --- 
+# ---
 from stonedfenicsx.utils import interpolate_from_sub_to_main,timing,print_ph
-from stonedfenicsx.solver_module.solver_utilities import compute_residuum_outer
 from stonedfenicsx.solver_module.problems_solution import Solution, Slab, Wedge, Global_thermal, Global_pressure
 from stonedfenicsx.output import OUTPUT
-
+from stonedfenicsx.solver_module.solver_utilities import OUTERITERATION_SOL_VAL
+# --- mpi4py/petsc4py needed for the permanent per-timestep PETSc garbage
+# cleanup below (see time_loop).
+from mpi4py import MPI
+from petsc4py import PETSc
+# ---
 def initialise_the_simulation(ctrl_sim:SimulationControls = None
                               ,pdb:PhaseDataBase = None
                               ,mesh:Mesh = None
@@ -81,6 +85,7 @@ def outerloop_operation(ctrl_sim:SimulationControls,
                         sl:Slab,
                         sol:Solution
                         ,pdb:PhaseDataBase
+                        ,outit:OUTERITERATION_SOL_VAL
                         ,ts:int=0)->None:
     """Execute one complete Picard outer-loop sweep over all coupled sub-problems.
 
@@ -116,27 +121,17 @@ def outerloop_operation(ctrl_sim:SimulationControls,
     """
     # Initialise the it outer and residual outer
     it_outer = 0 
-    res      = 1
     
     if lg.typology == 'LinearProblem' and eg.typology == 'LinearProblem' and we.typology == 'LinearProblem':
         ctrl_sim.ctrl.it_max = 2
     
     
-    while it_outer < ctrl_sim.ctrl.it_max and res > ctrl_sim.ctrl.tol: 
+    while it_outer < ctrl_sim.ctrl.it_max and outit.res > ctrl_sim.ctrl.tol: 
         
-        print_ph(f'   || -- || --- Outer iteration {it_outer:d} for the coupled problem || -- || --- || ')
+        print_ph(f'--  --- Outer iteration {it_outer:d} for the coupled problem  --  ---')
         
         time_A_outer = timing.time()
         # Copy the old solution of the outer loop for computing the residual of the equations. 
-        T_kouter        = sol.T_N.copy()
-        T_kouter.x.scatter_forward()
-        PL_kouter       = sol.PL.copy()
-        PL_kouter.x.scatter_forward()
-        u_global_kouter = sol.u_global.copy()
-        u_global_kouter.x.scatter_forward()
-        p_global_kouter = sol.p_global.copy()
-        p_global_kouter.x.scatter_forward()
-        
         
         if lg.typology == 'NonlinearProblem' or it_outer == 0:  
             lg.Solve_the_Problem(sol,
@@ -156,12 +151,18 @@ def outerloop_operation(ctrl_sim:SimulationControls,
                                      ,1)
 
         if (ts == 0 and it_outer==0) or (it_outer == 0 and ctrl_sim.ctrl_ky.constant == 0): 
-            sl.Solve_the_Problem(sol,
+            (outit.mom_res_slab[0]
+             ,outit.mom_res_slab[1]
+             ,outit.div_res_slab[0]
+             ,outit.div_res_slab[1]) = sl.Solve_the_Problem(sol,
                                    it_outer = it_outer,
                                    ts=ts)
 
         if (we.typology == 'NonlinearProblem') or (we.typology == 'NonlinearProblemT') or (it_outer == 0):  
-            we.Solve_the_Problem(sol=sol
+             (outit.mom_res_wedge[0]
+             ,outit.mom_res_wedge[1]
+             ,outit.div_res_wedge[0]
+             ,outit.div_res_wedge[1])=we.Solve_the_Problem(sol=sol
                                 ,it_outer = it_outer
                                 ,ts=ts)
 
@@ -169,10 +170,10 @@ def outerloop_operation(ctrl_sim:SimulationControls,
         interpolate_from_sub_to_main(sol.u_global
                                       ,sol.u_wedge
                                       ,we.domain.cell_par)
+        
         interpolate_from_sub_to_main(sol.u_global
                                       ,sol.u_slab
                                       , sl.domain.cell_par)
-    
     
         interpolate_from_sub_to_main(sol.p_global
                                       ,sol.p_wedge
@@ -182,28 +183,23 @@ def outerloop_operation(ctrl_sim:SimulationControls,
                                     ,sol.p_slab
                                     ,sl.domain.cell_par)
         
-        eg.Solve_the_Problem(sol
+        outit.ene_res_gl[0], outit.ene_res_gl[1] = eg.Solve_the_Problem(sol
                             ,it_outer = it_outer
                             ,ts = ts)
         
         # Compute residuum 
-        res = compute_residuum_outer(sol=sol
-                                     ,T=T_kouter
-                                     ,PL=PL_kouter
-                                     ,u=u_global_kouter
-                                     ,p=p_global_kouter
+        outit.compute_residuum_outer(sol=sol
                                      ,it_outer=it_outer
                                      ,sc=sc
                                      ,tA=time_A_outer
                                      ,ts=ts
                                      ,ctrl_sim=ctrl_sim
                                     )
-
-
-        print_ph('|| --- || --- || --- || --- || --- || --- || --- || --- || --- || --- || --- || --- || ')
-
-            
+        print_ph('')
         it_outer = it_outer + 1
+    
+    # reset outit res:
+    outit.res = 1.0 
         
         
     
@@ -255,22 +251,23 @@ def time_loop(ctrl_sim:SimulationControls
         None
     """
     if ctrl_sim.ctrl.steady_state == 1:
-        print_ph('|| --- || --- || Steady State solution || -- || --- || ')
+        print_ph(' --------------------- Steady State Solution   --------------------- ')
     else:
-        print_ph('|| --- || --- || Time Dependent solution || -- || --- || ')
+        print_ph('---------------------- Time Dependent Solution --------------------- ')
 
          
         
-    t  = 0.0 
-    ts = 0 
+    t  = 0.0
+    ts = 0
     output_class  = OUTPUT(domain=eg.domain,ctrl_sim=ctrl_sim,sc=sc,pdb=pdb,cach_mat_thermal=eg.cached_mat,comm=eg.domain.mesh.comm)
-    
-    
-    while t<ctrl_sim.ctrl.time_max: 
-        
+    outit = OUTERITERATION_SOL_VAL(sol)
+
+    while t<ctrl_sim.ctrl.time_max:
+        time_A = timing.time()
         if ctrl_sim.ctrl.steady_state==0:
-            print_ph(f'Time = {t*sc.temp/sc.scale_myr2sec:.3f} Myr, timestep = {ts:d}')
-            print_ph('||================ || =====================||')
+            print_ph('||--------------------- || ---------------------||')
+            print_ph(f'Time = {t*sc.time/sc.scale_myr2sec:.3f} Myr, timestep = {ts:d}')
+            print_ph('||--------------------- || ---------------------||')
             
 
         if ctrl_sim.ctrl_tbc.constant == 0: 
@@ -291,39 +288,59 @@ def time_loop(ctrl_sim:SimulationControls
                                   ,sl=sl
                                   ,sol=sol
                                   ,pdb=pdb
+                                  ,outit=outit
                                   ,ts=ts)
-
-
-
+        
         if ctrl_sim.ctrl.steady_state == 1 or (ts%10) == 0:
             print_ph('OUTPUT...')
-            output_class.print_output(sol=sol,ctrl_sim=ctrl_sim,sc=sc,ts=ts,it_outer=0,time=t*sc.temp/sc.scale_myr2sec)
+            output_class.print_output(sol=sol,ctrl_sim=ctrl_sim,sc=sc,ts=ts,it_outer=0,time=t*sc.time/sc.scale_myr2sec)
             print_ph('finished')
 
         
     
         
         if ctrl_sim.ctrl.steady_state == 1: 
-            print_ph('End Steady State solution, printing the benchmarks')
+            print_ph('---------------------End Steady State solution, printing the benchmarks')
             t = ctrl_sim.ctrl.time_max
             if eg.g_input.van_keken == 1: 
                 from stonedfenicsx.output import _benchmark_van_keken
                 _benchmark_van_keken(sol,ctrl_sim.ctrl_io,sc)
 
-        t = t+ctrl_sim.ctrl.dt
+        if ts>0:
+            t = t+ctrl_sim.ctrl.dt
             
     
         sol.T_O.x.array[:] = sol.T_N.x.array[:]
         sol.T_O.x.scatter_forward()
         
+        time_B = timing.time()
+        print_ph(f'---------------------Timestep {ts}  took {time_B-time_A:.2f} ---------------------')
+
+        # petsc4py defers destruction of PETSc objects caught in reference
+        # cycles (or that require a collective destroy call) into an
+        # internal queue; nothing else flushes it during a run, so without
+        # this it accumulates unboundedly (confirmed experimentally: RSS
+        # grew from 2.67 to 4.81 GB over one run with this disabled). Cheap,
+        # collective, must be called on every rank.
+        # Ref: https://gitlab.com/petsc/petsc/-/work_items/1309 
+        # Ref2 : https://fenicsproject.discourse.group/t/memory-management-with-petsc4py/18199/2
+        PETSc.garbage_cleanup(MPI.COMM_WORLD)
+
         ts = ts + 1
 
-    print_ph('Destroy Petsc Object and finish the simulation...')
+    print_ph('---------------------Destroy Petsc Object and finish the simulation---------------------')
+    
     eg.solv.destroy()
     lg.solv.destroy()
     sl.solv.destroy()
     we.solv.destroy()
-    print_ph('---- The End ----')
+    
+    print_ph('')
+    print_ph('')    
+    print_ph('You will hear of wars and rumors of wars, but see to it that you are not alarmed. Such things must happen, but the end is still to come:')
+    print_ph('Ex Falso sequitor quodlibet.')
+    print_ph('')
+    print_ph('')
 
 
 #------------------------------------------------------------------------------------------------------------
@@ -359,7 +376,7 @@ def solution_routine(ctrl_sim:SimulationControls
     """
 
     # Initialise
-    sol,eg,lg,sl,we =initialise_the_simulation(ctrl_sim=ctrl_sim,pdb=pdb,mesh=mesh)                # Scaling 
+    sol,eg,lg,sl,we = initialise_the_simulation(ctrl_sim=ctrl_sim,pdb=pdb,mesh=mesh)                # Scaling 
     
     # Time Loop 
     

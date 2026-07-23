@@ -30,7 +30,11 @@ def perform_test(option_viscous=0,option_thermal=0):
     inp.g_input.van_keken = True 
     # Control 
     inp.ctrl.decoupling_ctrl = 0 
-    inp.ctrl.steady_state = 1 
+    inp.ctrl.steady_state = 0 
+    inp.ctrl.tol = 1e-3
+    inp.ctrl.stokes_solver_type = 'Iterative'
+    inp.ctrl.energy_solver_type = 'Iterative'
+    
     # In this case, for testing the Van Keken benchmark, I opted to create a simple script
     # that has: option viscosity and thermal for testing several potential configuration. 
     if option_thermal == 0: 
@@ -147,7 +151,7 @@ def perform_test(option_viscous=0,option_thermal=0):
 
     # -> Important: where to save and the name of the test. You can fully automatise the creation of new
     # folder. 
-    inp.ctrl_io.test_name = f'T_vi{option_viscous}_th{option_thermal}'
+    inp.ctrl_io.test_name = f'T_vi{option_viscous}_th{option_thermal}_td'
     inp.ctrl_io.path_save = os.path.join(os.path.dirname(os.path.realpath(__file__)),'VanKeken')
     
 
@@ -337,7 +341,7 @@ if __name__ == '__main__':
 
     #test_composite()
     
-    test_composite_NL_no_crust()
+    #test_composite_NL_no_crust()
     
     test_composite_NL_crust()
 #---------------------------------------------------------------------------------

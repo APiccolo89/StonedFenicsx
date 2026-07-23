@@ -20,7 +20,7 @@ class Solvers():
             # Nullspace + vector
             "nsp", "null_vec",
             # Matrices / vectors
-            "A", "P", "b",
+            "A", "P", "b", "x",
         ):
             obj = getattr(self, name, None)
             if obj is None:
@@ -44,7 +44,22 @@ class  ScalarSolver(Solvers):
     for now all the parameter will be default. 
     """
     def __init__(self,a ,L, bcs ,COMM,direct =0):
-        self.A = fem.petsc.create_matrix(fem.form(a)) # Store the sparsisity 
+        """Create the PETSc matrix/vector/KSP for a scalar (temperature or lithostatic pressure) problem.
+
+        Allocates the system matrix `A` (with the sparsity of `a`) and RHS
+        vector `b`, creates the KSP, and configures either an iterative
+        (FGMRES + hypre) or direct (LU via MUMPS) solver.
+
+        Args:
+            a (dolfinx.fem.Form | ufl.Form): Bilinear form defining the matrix sparsity/operator.
+            L (dolfinx.fem.Form | ufl.Form): Linear form defining the RHS vector.
+            bcs (list): Dirichlet boundary conditions (unused directly here,
+                kept for interface parity with callers).
+            COMM (mpi4py.MPI.Comm): MPI communicator for the KSP.
+            direct (int, optional): 0 for the iterative (fgmres/hypre)
+                solver, non-zero for the direct (LU/mumps) solver. Defaults to 0.
+        """
+        self.A = fem.petsc.create_matrix(fem.form(a)) # Store the sparsisity
         self.b = fem.petsc.create_vector(fem.form(L)) # Store the vector
         self.ksp = PETSc.KSP().create(COMM)           # Create the ksp object 
         self.ksp.setOperators(self.A)                # Set Operator
@@ -66,6 +81,30 @@ class SolverStokes(Solvers):
 
     
     def __init__(self,a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0,slab=0):
+        """Create the block PETSc solver for a Stokes (velocity-pressure) problem.
+
+        Dispatches to `set_direct_solver` or `set_iterative_solver` based on
+        `ctrl.stokes_solver_type` (always direct for the slab domain, whose
+        internal-wall boundary condition over-constrains the problem).
+
+        Args:
+            a (dolfinx.fem.Form): Compiled block system form (momentum + continuity).
+            a_p (dolfinx.fem.Form): Compiled preconditioner (pressure mass) block form.
+            L (dolfinx.fem.Form): Compiled block RHS form.
+            COMM (mpi4py.MPI.Comm): MPI communicator for the KSP.
+            nl (int): Nonlinear-solve flag, forwarded to the solver setup (unused directly here).
+            bcs (list): Dirichlet boundary conditions.
+            F0 (dolfinx.fem.FunctionSpace): Collapsed velocity subspace (used
+                for computing the velocity/pressure dof offset).
+            F1 (dolfinx.fem.FunctionSpace): Collapsed pressure subspace.
+            ctrl (NumericalControls): Numerical controls; `stokes_solver_type`
+                selects direct (1) vs. iterative (0).
+            J (optional): Unused; kept for interface parity. Defaults to None.
+            r (optional): Unused; kept for interface parity. Defaults to None.
+            it (int, optional): Outer iteration index, forwarded to the solver setup. Defaults to 0.
+            ts (int, optional): Timestep index, forwarded to the solver setup. Defaults to 0.
+            slab (int, optional): 1 forces the direct solver (slab domain). Defaults to 0.
+        """
         if slab == 1:
             self.direct_solver = 1
         else:
@@ -88,9 +127,30 @@ class SolverStokes(Solvers):
                           ctrl,
                           J = None, 
                           r = None,
-                          it = 0, 
+                          it = 0,
                           ts = 0):
-        
+        """Configure a direct (LU/MUMPS) block solver for the Stokes system.
+
+        On the first solve (`it == 0 and ts == 0`) builds the block
+        operators/preconditioner and creates a `preonly` KSP with an LU/MUMPS
+        preconditioner; on subsequent calls just reassembles the block
+        operators in place via `update_block_operator`.
+
+        Args:
+            a (dolfinx.fem.Form): Compiled block system form.
+            a_p (dolfinx.fem.Form): Compiled preconditioner block form.
+            L (dolfinx.fem.Form): Compiled block RHS form.
+            COMM (mpi4py.MPI.Comm): MPI communicator for the KSP.
+            nl (int): Unused; kept for interface parity.
+            bcs (list): Dirichlet boundary conditions.
+            F0 (dolfinx.fem.FunctionSpace): Collapsed velocity subspace.
+            F1 (dolfinx.fem.FunctionSpace): Collapsed pressure subspace.
+            ctrl (NumericalControls): Numerical controls (unused directly here).
+            J (optional): Unused; kept for interface parity. Defaults to None.
+            r (optional): Unused; kept for interface parity. Defaults to None.
+            it (int, optional): Outer iteration index. Defaults to 0.
+            ts (int, optional): Timestep index. Defaults to 0.
+        """
         if it == 0 and ts == 0:
             self.set_block_operator(a, a_p, bcs, L, F0, F1)
 
@@ -112,7 +172,32 @@ class SolverStokes(Solvers):
             
 
     
-    def set_iterative_solver(self,a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0): 
+    def set_iterative_solver(self,a,a_p ,L ,COMM, nl,bcs ,F0,F1, ctrl,J = None, r = None,it = 0, ts = 0):
+        """Configure an iterative (FGMRES + fieldsplit) block solver for the Stokes system.
+
+        On the first solve (`it == 0 or ts == 0`) builds the block operators/
+        preconditioner, computes the velocity/pressure PETSc index sets
+        (`is_u`/`is_p`) for field-split, and creates an FGMRES KSP with a
+        multiplicative fieldsplit preconditioner (hypre on each velocity and
+        pressure sub-block). On subsequent calls just reassembles the block
+        operators in place via `update_block_operator`.
+
+        Args:
+            a (dolfinx.fem.Form): Compiled block system form.
+            a_p (dolfinx.fem.Form): Compiled preconditioner block form.
+            L (dolfinx.fem.Form): Compiled block RHS form.
+            COMM (mpi4py.MPI.Comm): MPI communicator for the KSP.
+            nl (int): Unused; kept for interface parity.
+            bcs (list): Dirichlet boundary conditions.
+            F0 (dolfinx.fem.FunctionSpace): Collapsed velocity subspace.
+            F1 (dolfinx.fem.FunctionSpace): Collapsed pressure subspace.
+            ctrl (NumericalControls): Numerical controls; `iterative_solver_tol`
+                sets the KSP relative tolerance.
+            J (optional): Unused; kept for interface parity. Defaults to None.
+            r (optional): Unused; kept for interface parity. Defaults to None.
+            it (int, optional): Outer iteration index. Defaults to 0.
+            ts (int, optional): Timestep index. Defaults to 0.
+        """
         #Return block operators and block RHS vector for the Stokes problem'
         # nullspace vector [0_u; 1_p] locally
         if it == 0 or ts == 0:
@@ -164,6 +249,13 @@ class SolverStokes(Solvers):
 
             monitor_n_digits = int(np.ceil(np.log10(self.ksp.max_it)))
             def monitor(ksp, it, r):
+                """Print the KSP iteration count and residual (PETSc KSP monitor callback).
+
+                Args:
+                    ksp (PETSc.KSP): The KSP instance (unused, required by the monitor signature).
+                    it (int): Current iteration number.
+                    r (float): Current (preconditioned) residual norm.
+                """
                 PETSc.Sys.Print(f"{         it: {monitor_n_digits}d}: {r:.3e}")
 
             #self.ksp.setMonitor(monitor)
@@ -181,7 +273,24 @@ class SolverStokes(Solvers):
             self.update_block_operator(a,a_p,bcs,L,F0,F1)
 
     def set_block_operator(self,a,a_p,bcs,L,F0,F1):
+        """Assemble the block system matrix, preconditioner matrix, RHS vector and pressure nullspace.
 
+        Builds `self.A`/`self.P`/`self.b` from scratch via
+        `assemble_matrix_block`/`assemble_vector_block`, then constructs the
+        constant-pressure nullspace vector (zero on velocity dofs, uniform
+        on pressure dofs, normalised) used for pure Neumann/free-slip
+        pressure setups.
+
+        Args:
+            a (dolfinx.fem.Form): Compiled block system form.
+            a_p (dolfinx.fem.Form): Compiled preconditioner block form.
+            bcs (list): Dirichlet boundary conditions.
+            L (dolfinx.fem.Form): Compiled block RHS form.
+            F0 (dolfinx.fem.FunctionSpace): Collapsed velocity subspace (used
+                to size the velocity block of the nullspace vector).
+            F1 (dolfinx.fem.FunctionSpace): Collapsed pressure subspace (used
+                to size the pressure block of the nullspace vector).
+        """
         self.A = assemble_matrix_block(a, bcs=bcs)   ; self.A.assemble()
         self.P = assemble_matrix_block(a_p, bcs=bcs) ; self.P.assemble()
         self.b = assemble_vector_block(L, a, bcs=bcs); self.b.assemble()
@@ -189,7 +298,10 @@ class SolverStokes(Solvers):
         
         self.b.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES,
                    mode=PETSc.ScatterMode.FORWARD)
-        
+
+        # Solution vector, allocated once and reused by solve_linear_picard
+        # every outer iteration instead of calling createVecLeft() per call.
+        self.x = self.A.createVecLeft()
         self.null_vec = self.A.createVecLeft()
         self.nloc_u = F0.dofmap.index_map.size_local * F0.dofmap.index_map_bs
         self.nloc_p = F1.dofmap.index_map.size_local

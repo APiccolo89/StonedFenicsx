@@ -88,6 +88,42 @@ class OUTPUT():
         self.shear_heating.name = "H_s [W/m3]" 
         self.tag = fem.Function(self.temp_V)
         self.tag.name = "MeshTAG"
+        # DG0: one dof per cell, needed for a per-cell rank tag -- the P1
+        # temp_V space is per-node and has a different dof count than cells.
+        self.V0 = fem.functionspace(domain.mesh, ("DG", 0))
+        self.partition = fem.Function(self.V0)
+        self.partition.name = "Partition"
+
+
+        # Line Tag for the mesh and post_processing -> Translating in parallel -> gather and sending 
+        tag = fem.Function(self.temp_V)
+        tag.name = 'MeshTAG'
+        
+        boundary_list = np.array(list(self.domain.bc_dict.values()),dtype=np.int32)
+        
+        for i in range(len(self.domain.bc_dict.values())):
+            facet_indices = self.domain.facets.find(boundary_list[i])   # numpy array of facet ids
+            dofs = fem.locate_dofs_topological(self.temp_V, 1, facet_indices)
+            self.tag.x.array[dofs] = boundary_list[i]
+        
+        self.tag.x.scatter_forward()
+        
+        
+        comm = self.domain.mesh.comm
+        tdim = self.domain.mesh.topology.dim
+
+        # DG0 on cells
+        # Which cells are owned by this rank?
+        # cell index map: owned are [0, size_local)
+        imap = self.domain.mesh.topology.index_map(tdim)
+        n_local = imap.size_local
+
+        # DG0 has one dof per cell, in the same ordering
+        # (this is true for standard DG0 on cells in dolfinx)
+        values = self.partition.x.array
+        values[:n_local] = comm.rank
+        # ghosts (if present) can be left as-is; ParaView will still show partitioning
+        self.partition.x.scatter_forward()
 
         # for transient we keep XDMF files open across timesteps
         if ctrl_sim.ctrl.steady_state == 0:
@@ -195,47 +231,13 @@ class OUTPUT():
         self.shear_heating.interpolate(sol.shear_heating)
         self.shear_heating.x.array[:] = self.shear_heating.x.array[:]*sc.watt/(sc.length**3)
         self.shear_heating.x.scatter_forward()
-        # Line Tag for the mesh and post_processing -> Translating in parallel -> gather and sending 
-        tag = fem.Function(self.temp_V)
-        tag.name = 'MeshTAG'
-        
-        boundary_list = np.array(list(self.domain.bc_dict.values()),dtype=np.int32)
-        
-        for i in range(len(self.domain.bc_dict.values())):
-            facet_indices = self.domain.facets.find(boundary_list[i])   # numpy array of facet ids
-            dofs = fem.locate_dofs_topological(self.temp_V, 1, facet_indices)
-            tag.x.array[dofs] = boundary_list[i]
-        
-        tag.x.scatter_forward()
-        
-        self.tag.interpolate(tag)
-        self.tag.x.scatter_forward()
-        
-        comm = self.domain.mesh.comm
-        tdim = self.domain.mesh.topology.dim
-
-        # DG0 on cells
-        V0 = fem.functionspace(self.domain.mesh, ("DG", 0))
-        part = fem.Function(V0, name="mpi_rank")
-
-        # Which cells are owned by this rank?
-        # cell index map: owned are [0, size_local)
-        imap = self.domain.mesh.topology.index_map(tdim)
-        n_local = imap.size_local
-
-        # DG0 has one dof per cell, in the same ordering
-        # (this is true for standard DG0 on cells in dolfinx)
-        values = part.x.array
-        values[:n_local] = comm.rank
-        # ghosts (if present) can be left as-is; ParaView will still show partitioning
-        part.x.scatter_forward()
 
         if ctrl_sim.ctrl.steady_state == 0:
             # transient: append to ongoing XDMF with time
             # write each field at this physical_time
             # ...same for PL2, rho2, Cp2, k2, kappa2, e_T, eta2, flux
             
-            self.xdmf_main = XDMFFile(comm, os.path.join(self.pt_save, "Time_dependent.xdmf"),
+            self.xdmf_main = XDMFFile(self.domain.comm, os.path.join(self.pt_save, "Time_dependent.xdmf"),
                                       "a")
             
             self.xdmf_main.write_function(self.u_sol,          time)
@@ -277,7 +279,7 @@ class OUTPUT():
                 ufile_xdmf.write_function(self.flux)
                 ufile_xdmf.write_function(self.shear_heating)
                 ufile_xdmf.write_function(self.tag)
-                ufile_xdmf.write_function(part)
+                ufile_xdmf.write_function(self.partition)
                 self.domain.mesh.geometry.x[:] = coord
                 print_ph('... Finished')
     
