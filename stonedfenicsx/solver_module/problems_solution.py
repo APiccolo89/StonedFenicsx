@@ -489,10 +489,12 @@ class Global_thermal(Problem):
         self.bc = [ self.bc_left,  self.bc_right_wed,self.bc_bot_wed, self.bc_right_lit,self.bc_top]  
         # Shear heating bc informations
         if self.ctrl_sim.ctrl.model_shear>0:
-            decoupling    = self.wall_boundary.copy()
+            # decoupling_function mutates its `fun` argument in place and
+            # returns the same object, so operate directly on wall_boundary
+            # instead of copying it every outer iteration.
             Z = self.FS.tabulate_dof_coordinates()[:,1]
-            decoupling = decoupling_function(Z,decoupling,self.g_input)
-            self.wall_boundary.x.array[:] = decoupling.x.array[:] * self.ctrl_sim.ctrl_ky.v_s[0]
+            decoupling_function(Z,self.wall_boundary,self.g_input)
+            self.wall_boundary.x.array[:] = self.wall_boundary.x.array[:] * self.ctrl_sim.ctrl_ky.v_s[0]
             self.wall_boundary.x.scatter_forward()
             self.e_ii_fr = 0.5 * (self.ctrl_sim.ctrl_ky.v_s[0] * 1 /self.g_input.wz_tk)    
     #---
@@ -623,7 +625,13 @@ class Global_thermal(Problem):
             float: L2 norm of the temperature residual vector, with
             Dirichlet dofs excluded.
         """
-        RT = dolfinx.fem.petsc.assemble_vector(self.cached_form.other_form['res_temp'])
+        # Reuse the vector cached in initialise_form instead of the
+        # assemble_vector(form) factory call, which allocates a brand-new
+        # PETSc Vec (never destroyed) on every outer iteration.
+        RT = self.cached_form.other_form['res_temp_vec']
+        with RT.localForm() as lf:
+            lf.set(0.0)
+        dolfinx.fem.petsc.assemble_vector(RT, self.cached_form.other_form['res_temp'])
         RT.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
         if getattr(self, "bc", None):
             with RT.localForm() as lf:
@@ -648,11 +656,18 @@ class Global_thermal(Problem):
             self.cached_form.other_form['dt_diff'] = dolfinx.fem.Expression(dt_diff,self.domain.solph.element.interpolation_points())
             self.cached_form.other_form['dt_adv'] = dolfinx.fem.Expression(dt_adv,self.domain.solph.element.interpolation_points())
 
-        if ts==1 or self.ctrl_sim.ctrl_ky.constant==0: 
+        if ts==1 or self.ctrl_sim.ctrl_ky.constant==0:
             tdim = self.domain.mesh.topology.dim
             ncells_local = self.domain.mesh.topology.index_map(tdim).size_local
-            dt_adv = dolfinx.fem.Function(self.domain.solph)
-            dt_dif = dolfinx.fem.Function(self.domain.solph)
+            # Allocate once and reuse: this branch runs every outer iteration
+            # whenever ctrl_ky.constant==0 (non-constant kinematic BC, i.e.
+            # any real transient run), so a fresh Function per call here
+            # leaked steadily across the whole time-dependent simulation.
+            if not hasattr(self, '_dt_adv_fn'):
+                self._dt_adv_fn = dolfinx.fem.Function(self.domain.solph)
+                self._dt_dif_fn = dolfinx.fem.Function(self.domain.solph)
+            dt_adv = self._dt_adv_fn
+            dt_dif = self._dt_dif_fn
             dt_adv.interpolate(self.cached_form.other_form['dt_adv'])
             dt_dif.interpolate(self.cached_form.other_form['dt_diff'])
             dt_a = np.min(dt_adv.x.array[:ncells_local])
@@ -952,10 +967,11 @@ class Global_thermal(Problem):
                                   ,T_O = sol.T_O
                                   ,u_global = sol.u_global
                                   ,it_inner=0)
-            self.cached_form.a = a 
-            self.cached_form.L = L 
-            self.cached_form.other_form['res_temp'] = R 
-        else: 
+            self.cached_form.a = a
+            self.cached_form.L = L
+            self.cached_form.other_form['res_temp'] = R
+            self.cached_form.other_form['res_temp_vec'] = dolfinx.fem.petsc.create_vector(R)
+        else:
             a = self.cached_form.a 
             L = self.cached_form.L 
         
@@ -1387,7 +1403,9 @@ class Stokes_Problem(Problem):
                 
             self.cached_form.other_form['rmom'] = dolfinx.fem.form(ufl.action(a1, u) + ufl.action(a2, p))
             self.cached_form.other_form['rdiv'] = dolfinx.fem.form(ufl.action(a3, u))
-    
+            self.cached_form.other_form['rmom_vec'] = dolfinx.fem.petsc.create_vector(self.cached_form.other_form['rmom'])
+            self.cached_form.other_form['rdiv_vec'] = dolfinx.fem.petsc.create_vector(self.cached_form.other_form['rdiv'])
+
             a,ap0 = self.fem_stokes_form(a1,a2,a3,ap0)
             self.cached_form.a = [a,ap0]
             self.cached_form.L = dolfinx.fem.form(L)
@@ -1409,7 +1427,13 @@ class Stokes_Problem(Problem):
             tuple[float, float]: L2 norms of the momentum residual (`rmom`)
             and the continuity/divergence residual (`rdiv`).
         """
-        Rm = dolfinx.fem.petsc.assemble_vector(self.cached_form.other_form['rmom'])
+        # Reuse the vectors cached in initialise_fem_form instead of the
+        # assemble_vector(form) factory call, which allocates a brand-new
+        # PETSc Vec (never destroyed) on every outer iteration.
+        Rm = self.cached_form.other_form['rmom_vec']
+        with Rm.localForm() as lf:
+            lf.set(0.0)
+        dolfinx.fem.petsc.assemble_vector(Rm, self.cached_form.other_form['rmom'])
         Rm.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
         if getattr(self, "bc", None):
             with Rm.localForm() as lf:
@@ -1418,12 +1442,15 @@ class Stokes_Problem(Problem):
                     dofs = bc.dof_indices()[0]   # local dof indices
                     r[dofs] = 0.0
 
-        rmom = Rm.norm(PETSc.NormType.NORM_2) 
+        rmom = Rm.norm(PETSc.NormType.NORM_2)
 
 
-        Rd = dolfinx.fem.petsc.assemble_vector(self.cached_form.other_form['rdiv'])
+        Rd = self.cached_form.other_form['rdiv_vec']
+        with Rd.localForm() as lf:
+            lf.set(0.0)
+        dolfinx.fem.petsc.assemble_vector(Rd, self.cached_form.other_form['rdiv'])
         Rd.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
-        rdiv = Rd.norm(PETSc.NormType.NORM_2) 
+        rdiv = Rd.norm(PETSc.NormType.NORM_2)
 
         return rmom, rdiv
     # --- 
@@ -1572,7 +1599,7 @@ class Stokes_Problem(Problem):
         else: 
             self.solv.update_block_operator(a,a_p0,self.bc,L,self.F0,self.F1)
         
-        x = self.solv.A.createVecLeft()
+        x = self.solv.x
         self.solv.ksp.solve(self.solv.b, x)
 
         u.x.array[:self.solv.offset] = x.array[:self.solv.offset]
@@ -1886,8 +1913,8 @@ class Slab(Stokes_Problem):
         # facet ids
         
         
-        if (it_outer == 0 or ts == 0 ):
-        
+        if (it_outer == 0 and ts == 0 ):
+
             self.moving_wall_ref = self.compute_moving_wall('top_subduction')
 
         

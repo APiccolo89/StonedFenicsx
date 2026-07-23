@@ -20,7 +20,7 @@ class Solvers():
             # Nullspace + vector
             "nsp", "null_vec",
             # Matrices / vectors
-            "A", "P", "b",
+            "A", "P", "b", "x",
         ):
             obj = getattr(self, name, None)
             if obj is None:
@@ -298,7 +298,10 @@ class SolverStokes(Solvers):
         
         self.b.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES,
                    mode=PETSc.ScatterMode.FORWARD)
-        
+
+        # Solution vector, allocated once and reused by solve_linear_picard
+        # every outer iteration instead of calling createVecLeft() per call.
+        self.x = self.A.createVecLeft()
         self.null_vec = self.A.createVecLeft()
         self.nloc_u = F0.dofmap.index_map.size_local * F0.dofmap.index_map_bs
         self.nloc_p = F1.dofmap.index_map.size_local

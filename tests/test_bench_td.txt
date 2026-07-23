@@ -1,0 +1,18 @@
+.  parse_input took 0.03 sec
+Controls updated
+Controls updated
+Directory created: /Users/wlnw570/Work/Leeds/Fenics_tutorial/tests/VanKeken/T_vi2_th2_td
+Directory created: /Users/wlnw570/Work/Leeds/Fenics_tutorial/tests/VanKeken/T_vi2_th2_td
+Finished to generate the curved loop for domain A [Subducting plate]
+Finished to generate the curved loop for domain B [Wedge]
+Finished to generate the curved loop for domain C [Crust]
+The metadata of the mesh have been saved into the cached folder
+ Reading global mesh and creating the global domain
+Info    : Reading '/Users/wlnw570/Work/Leeds/Fenics_tutorial/tests/VanKeken/Cached_information/mesh.msh'...
+Info    : 451 entities
+Info    : 118376 nodes
+Info    : [  0%] Reading nodes                                                                                Info    : [ 10%] Reading nodes                                                                                Info    : [ 20%] Reading nodes                                                                                Info    : [ 30%] Reading nodes                                                                                Info    : [ 40%] Reading nodes                                                                                Info    : [ 50%] Reading nodes                                                                                Info    : [ 60%] Reading nodes                                                                                Info    : [ 70%] Reading nodes                                                                                Info    : [ 80%] Reading nodes                                                                                Info    : [ 90%] Reading nodes                                                                                                                                                                Info    : 238489 elements
+Info    : [  0%] Reading elements                                                                                Info    : [ 10%] Reading elements                                                                                Info    : [ 20%] Reading elements                                                                                Info    : [ 30%] Reading elements                                                                                Info    : [ 40%] Reading elements                                                                                Info    : [ 50%] Reading elements                                                                                Info    : [ 60%] Reading elements                                                                                Info    : [ 70%] Reading elements                                                                                Info    : [ 80%] Reading elements                                                                                Info    : [ 90%] Reading elements                                                                                                                                                                Info    : Done reading '/Users/wlnw570/Work/Leeds/Fenics_tutorial/tests/VanKeken/Cached_information/mesh.msh'
+
+ Creating the Subudcting plate domain
+ Creating the Wedge domain
