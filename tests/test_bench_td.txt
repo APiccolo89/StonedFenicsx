@@ -414,3 +414,10 @@ Time = 0.000 Myr, timestep = 1
         it_outer = 004: Solution of lit.pres domain global_domain in 0.77
 
     --- Solution of the Stokes problem in wedge_domain --  ---
+                       iterative solver : KSP reason/its/rnormesh: 2 23 4.432e-04
+                                  [checks] min vel = 0.00000e+00, max vel = 2.64082e-03, RMS = 1.52762e-03
+        it_outer = 004: Solution of Stokes domain wedge_domain in 6.54
+
+    --- Solution of the Energy problem in global_domain --  ---
+       old dt = 0.61
+       new dt = 0.61
