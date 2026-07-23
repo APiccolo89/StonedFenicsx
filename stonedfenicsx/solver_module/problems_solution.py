@@ -340,14 +340,17 @@ class Solution():
         self.T_ad                     = dolfinx.fem.Function(PG.FS)   
         self.mom_res, _ = gives_Function(space_GL)
         self.energy_res = dolfinx.fem.Function(PG.FS)
-        self.mT    = np.zeros(1,dtype=float)
-        self.MT    = np.zeros(1,dtype=float) 
-        self.RMST    = np.zeros(1,dtype=float)
-        self.Mv    = np.zeros(1,dtype=float) 
-        self.mv   = np.zeros(1,dtype=float)
-        self.RMSv    = np.zeros(1,dtype=float) 
-        self.outer_iteration = np.zeros(1,dtype=float)
-        self.ts             = np.zeros(1,dtype=int)
+        # Plain lists: appended once per outer iteration for the life of the
+        # run, and np.append reallocates+copies the whole array on every call
+        # (O(n) per call, O(n^2) total). list.append is amortised O(1).
+        self.mT    = []
+        self.MT    = []
+        self.RMST    = []
+        self.Mv    = []
+        self.mv   = []
+        self.RMSv    = []
+        self.outer_iteration = []
+        self.ts             = []
         self.shear_heating = dolfinx.fem.Function(PG.FS)
         self.rdiv = np.zeros(1,dtype=int)
         self.rmom = np.zeros(1,dtype=int)
@@ -657,7 +660,7 @@ class Global_thermal(Problem):
             dt_b = np.min(dt_dif.x.array[:ncells_local])
             dt_b = self.domain.comm.allreduce(dt_b,op=MPI.MIN)
             print_ph(f'       old dt = {self.ctrl_sim.ctrl.dt:.2f}')
-            self.ctrl_sim.ctrl.dt = np.min([dt_a,dt_b])
+            self.ctrl_sim.ctrl.dt = 2*np.min([dt_a,dt_b])
             print_ph(f'       new dt = {self.ctrl_sim.ctrl.dt:.2f}')            
             
             
@@ -977,6 +980,8 @@ class Global_thermal(Problem):
             it_outer (int, optional): Outer (nonlinear) iteration index. Defaults to 0.
             ts (int, optional): Timestep index. Defaults to 0.
         """
+        print_ph(f'    --- Solution of the Energy problem in {self.domain.name} --  ---')
+
         # choose the problemesh:
         if self.ctrl_sim.ctrl.steady_state == 1 or (ts==0 and it_outer==0):
             self.set_linear = self.set_linear_picard_SS 
@@ -987,21 +992,12 @@ class Global_thermal(Problem):
                 # -> the intial guess is assuming a steady state solution with the initial condition ~ linear
                 self.cached_form = CACHED_FEM_FORM()             
             self.set_linear = self.set_linear_picard_TD
-            self.set_residual = self.set_form_residual_TD
-        
-    
-        
-        
-                    
+            self.set_residual = self.set_form_residual_TD                    
         if it_outer == 0:         
             self.compute_energy_source()
         
         self.create_bc_temp(u_global=sol.u_global,it_outer=it_outer,ts=ts)
-
-            
-        
-        print_ph('              || --- || -- Temperature problem [GLOBAL] || -- || --- ||')
-        
+                
         time_A = timing.time()
 
         # Create the solver object: 
@@ -1020,10 +1016,6 @@ class Global_thermal(Problem):
         rT = self.compute_residual()
         if it_outer==0:
             self.rT0 = rT 
-        
-        print_ph(f'                    [|it_outer = {it_outer}|] Residual L2 norm is {rT:.3e}, L2_rel is {rT/self.rT0:.3e}')
-        print_ph('')
-        print_ph('              || --- || -- Temperature problem [GLOBAL] || -- || --- ||')
         time_B = timing.time()        
         if self.ctrl_sim.ctrl.model_shear>0: 
 
@@ -1040,7 +1032,9 @@ class Global_thermal(Problem):
             if it_outer ==0 and ts == 0: 
                 sol.shear_heating.x.array[:]=0.0
                 sol.shear_heating.x.scatter_forward()  
-        print_ph(f'              || --- || -- Solution of Temperature  in {time_B-time_A:.2f} sec || -- || --- ||')
+        print_ph(f'        it_outer = {it_outer:03d}: Solution of Temperature domain {self.domain.name} in {time_B-time_A:.2f}')
+        
+        return rT,self.rT0 
     #---
     def solve_the_linear(self
                          ,sol:Solution
@@ -1235,7 +1229,7 @@ class Global_pressure(Problem):
             it_outer (int, optional): Outer iteration index. Defaults to 0.
             ts (int, optional): Timestep index. Defaults to 0.
         """
-        print_ph(f'              || --- || -- LITHOSTATIC PROBLEM [{self.domain.name}] || -- || --- || ')
+        print_ph(f'    --- Solution of the Lit. Pressure problem in {self.domain.name} --  ---')
 
         time_A = timing.time()
         
@@ -1247,8 +1241,7 @@ class Global_pressure(Problem):
         self.solve_the_linear(a,L,sol.PL) 
         
         time_B = timing.time()
-        print_ph(f'              || --- || -- LITHOSTATIC PROBLEM [{self.domain.name}] || -- || --- || ')
-        print_ph(f'              || -- || --- Solution of Lithostatic pressure problem finished in {time_B-time_A:.2f} sec || -- || --- ||')
+        print_ph(f'        it_outer = {it_outer:03d}: Solution of lit.pres domain {self.domain.name} in {time_B-time_A:.2f}')
         print_ph('')
     # ---    
     def solve_the_linear(self
@@ -1469,7 +1462,7 @@ class Stokes_Problem(Problem):
 
         e = compute_strain_rate(vel)
         # If we are in the first iteration of the first timestep -> use the default viscosity for creating an initial guess. fem.Constant(M.domainG.mesh, PETSc.ScalarType([0.0, -ctrl.g]))   
-        if (it == 0 and ts == 0) or slab == 1:
+        if (it == 0 and ts == 0 and self.ctrl_sim.ctrl.steady_state==0) or slab == 1:
             eta = dolfinx.fem.Constant(self.domain.mesh,PETSc.ScalarType(self.cached_mat.eta_def))
         else: 
             eta = compute_viscosity_FX(e,temp,pres_l,self.pdb,self.cached_mat)
@@ -1595,7 +1588,7 @@ class Stokes_Problem(Problem):
             PETSc.Sys.Print(f"                       iterative solver : KSP reason/its/rnormesh: {reason} {its} {rnorm:.3e}")
 
         minMaxU = min_max_array(u,vel=True)
-        print_ph(f'                       [checks] min vel = {minMaxU[0]:.5e}, max vel = {minMaxU[1]:.5e}, RMS = {minMaxU[2]:.5e}')
+        print_ph(f'                                  [checks] min vel = {minMaxU[0]:.5e}, max vel = {minMaxU[1]:.5e}, RMS = {minMaxU[2]:.5e}')
     #---
     def Solve_the_Problem(self
                           ,sol : Solution
@@ -1641,7 +1634,7 @@ class Stokes_Problem(Problem):
         else: 
             raise ValueError('Wrong DOMAIN!!!! FOR STOKES')
             
-        print_ph(f'              || -- || Solving the Stokes problem for the {self.domain.name} domain || -- ||')
+        print_ph(f'    --- Solution of the Stokes problem in {self.domain.name} --  ---')
 
         self.bc   = self.setdirichlecht(self.V_subs,ts=ts,it_outer=it_outer) 
         if ts == 1: # -> remove the first timestep 
@@ -1662,11 +1655,13 @@ class Stokes_Problem(Problem):
                 self.rdiv0 = 1.0
             else: 
                 self.rdiv0 = rdiv
-        print_ph(f'                         [|it_outer = {it_outer}|] |F^mom|/|F^mom_0| {rmom/self.rmom0:.3e}, |F^div|/|F^div_0| {rdiv/self.rdiv0:.3e}')
-        print_ph(f'                         [|.|] |F^mom|           {rmom:.3e},        |F^div|           {rdiv:.3e}')
+
         
         time_B = timing.time()
-        print_ph(f'              || -- || --- Solution of {self.domain.name} in {time_B-time_A:.2f} sec || -- || --- ||')
+        print_ph(f'        it_outer = {it_outer:03d}: Solution of Stokes domain {self.domain.name} in {time_B-time_A:.2f}')
+        print_ph('')
+
+        return rmom,self.rmom0,rdiv,self.rdiv0
 # ---   
 # --- 
 class Wedge(Stokes_Problem): 
