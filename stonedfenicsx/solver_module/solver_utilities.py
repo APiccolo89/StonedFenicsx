@@ -142,14 +142,15 @@ class OUTERITERATION_SOL_VAL:
             raise ValueError("res_total is NaN/Inf; check inputs and residual computations.")
 
         time_B_outer = timing.time()
-
+    
+        print_ph('        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ')
         print_ph('        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ')
         print_ph('         Residual difference function :')
-        print_ph(f'            []Res velocity       =  {res_u:.3e} [n.d.], max = {minMaxU[1]:.3f}, min = {minMaxU[0]:.3f} [cm/yr], RMS = {minMaxU[2]:.3f} [n.d]')
-        print_ph(f'            []Res Temperature    =  {res_T:.3e} [n.d.], max = {minMaxT[1]:.3f}, min = {minMaxT[0]:.3f} [C], RMS = {minMaxT[2]:.3f} [n.d.] ')
-        print_ph(f'            []Res pressure       =  {res_p:.3e} [n.d.], max = {minMaxP[1]:.3e}, min = {minMaxP[0]:.3e} [GPa]')
-        print_ph(f'            []Res lithostatic    =  {res_PL:.3e}[n.d.], max = {minMaxPL[1]:.3e}, min = {minMaxPL[0]:.3e} [GPa]')
-        print_ph(f'            []Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  {res_total:.3e} [n.d.] ')
+        print_ph(f'              Res velocity       =  {res_u:.3e} [n.d.], max = {minMaxU[1]:.3f}, min = {minMaxU[0]:.3f} [cm/yr], RMS = {minMaxU[2]:.3f} [n.d]')
+        print_ph(f'              Res Temperature    =  {res_T:.3e} [n.d.], max = {minMaxT[1]:.3f}, min = {minMaxT[0]:.3f} [C], RMS = {minMaxT[2]:.3f} [n.d.] ')
+        print_ph(f'              Res pressure       =  {res_p:.3e} [n.d.], max = {minMaxP[1]:.3e}, min = {minMaxP[0]:.3e} [GPa]')
+        print_ph(f'              Res lithostatic    =  {res_PL:.3e}[n.d.], max = {minMaxPL[1]:.3e}, min = {minMaxPL[0]:.3e} [GPa]')
+        print_ph(f'              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  {res_total:.3e} [n.d.] ')
         print_ph('         Conservation residual :')
         print_ph('          Stokes Equation :')
         a = self.mom_res_wedge[0] * sc.force/sc.length**3
@@ -157,16 +158,17 @@ class OUTERITERATION_SOL_VAL:
         c = self.div_res_wedge[0] * sc.strain_rate 
         d = self.div_res_slab[0] * sc.strain_rate
         e = self.ene_res_gl[0] * sc.watt/sc.length**3
-        print_ph(f'            []Res mom wedge = abs: {self.mom_res_wedge[0]:.3e} [n.d],{a:.3e} [N/m3] | rel: {self.mom_res_wedge[0]/self.mom_res_wedge[1]:.3e} [n.d.]')
-        print_ph(f'            []Res mom_slab  = abs: {self.mom_res_slab[0]:.3e} [n.d],{b:3e} [N/m3] | rel: {self.mom_res_slab[0]/self.mom_res_slab[1]:.3e} [n.d.]')
-        print_ph(f'            []Res div_wedge = abs: {self.div_res_wedge[0]:.3e} [n.d],{c:3e} [1/s] | rel: {self.div_res_wedge[0]/self.div_res_wedge[1]:.3e} [n.d.]') 
-        print_ph(f'           []Res div_slab  = abs: {self.div_res_slab[0]:.3e} [n.d],{d:3e} [1/s] | rel: {self.div_res_slab[0]/self.div_res_slab[1]:.3e} [n.d.]') 
+        print_ph(f'              Res mom wedge = abs: {self.mom_res_wedge[0]:.3e} [n.d],{a:.3e} [N/m3] | rel: {self.mom_res_wedge[0]/self.mom_res_wedge[1]:.3e} [n.d.]')
+        print_ph(f'              Res mom_slab  = abs: {self.mom_res_slab[0]:.3e} [n.d],{b:.3e} [N/m3] | rel: {self.mom_res_slab[0]/self.mom_res_slab[1]:.3e} [n.d.]')
+        print_ph(f'              Res div_wedge = abs: {self.div_res_wedge[0]:.3e} [n.d],{c:.3e} [1/s]  | rel: {self.div_res_wedge[0]/self.div_res_wedge[1]:.3e} [n.d.]') 
+        print_ph(f'              Res div_slab  = abs: {self.div_res_slab[0]:.3e} [n.d],{d:.3e} [1/s]  | rel: {self.div_res_slab[0]/self.div_res_slab[1]:.3e} [n.d.]') 
         print_ph('          Energy Equation :')
-        print_ph(f'            []Res energy equation = abs: {self.ene_res_gl[0]:.3e} [n.d],{e**3:3e} [1/s] | rel: {self.ene_res_gl[0]/self.ene_res_gl[1]:.3e} [n.d.]')
+        print_ph(f'              Res energy equation = abs: {self.ene_res_gl[0]:.3e} [n.d],{e**3:3e} [W/m3] | rel: {self.ene_res_gl[0]/self.ene_res_gl[1]:.3e} [n.d.]')
         r_tot_conv = np.sqrt(self.mom_res_wedge[0]**2+self.mom_res_slab[0]**2+self.div_res_slab[0]**2+self.div_res_wedge[0]**2+self.ene_res_gl[0]**2)
         r_tot_rel  = np.sqrt(self.mom_res_wedge[1]**2+self.mom_res_slab[1]**2+self.div_res_slab[1]**2+self.div_res_wedge[1]**2+self.ene_res_gl[1]**2)
 
         print_ph(f'         Combined residual =  abs {r_tot_conv:.3e} [n.d.], rel {r_tot_conv/r_tot_rel:.3e}')
+        print_ph('        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ')
         print_ph('        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ')
 
         print_ph(f'   --- Outer iteration {it_outer:d} with tolerance {res_total:.3e}, in {time_B_outer-tA:.1f} sec -- ---')
@@ -191,7 +193,12 @@ class OUTERITERATION_SOL_VAL:
         sol.outer_iteration.append(res_total)
         sol.ts.append(ts)
         # Update the structure, update the residual
-        self.res = res_total 
+        # Switch between combined residual of the conservation 
+
+        self.res = np.min([res_total,r_tot_conv/r_tot_rel])
+        if res_total>r_tot_conv/r_tot_rel:
+            print_ph('     --- The conservation residual is less than the residual difference: the tol is evaluated against conservation equations.')
+        
         self.update_iteration(sol)
         
 # ---

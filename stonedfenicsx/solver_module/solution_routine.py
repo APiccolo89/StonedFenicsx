@@ -317,8 +317,12 @@ def time_loop(ctrl_sim:SimulationControls
     sl.solv.destroy()
     we.solv.destroy()
     
+    print_ph('')
+    print_ph('')    
     print_ph('You will hear of wars and rumors of wars, but see to it that you are not alarmed. Such things must happen, but the end is still to come:')
     print_ph('Ex Falso sequitor quodlibet.')
+    print_ph('')
+    print_ph('')
 
 
 #------------------------------------------------------------------------------------------------------------
