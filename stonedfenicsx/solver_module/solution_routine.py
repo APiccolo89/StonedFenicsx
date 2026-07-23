@@ -322,6 +322,8 @@ def time_loop(ctrl_sim:SimulationControls
         # this it accumulates unboundedly (confirmed experimentally: RSS
         # grew from 2.67 to 4.81 GB over one run with this disabled). Cheap,
         # collective, must be called on every rank.
+        # Ref: https://gitlab.com/petsc/petsc/-/work_items/1309 
+        # Ref2 : https://fenicsproject.discourse.group/t/memory-management-with-petsc4py/18199/2
         PETSc.garbage_cleanup(MPI.COMM_WORLD)
 
         ts = ts + 1

@@ -120,34 +120,34 @@ Radiogenic heating:  Radiogenic heating is not active
 -----------------------------------
 
 
-.  scaling_simulation_physical took 0.53 sec
+.  scaling_simulation_physical took 0.51 sec
 .  compute_thermal_boundary took 0.00 sec
 .  configure_thermal_bc took 0.00 sec
              temporary data base is saved...
-.  compute_thermal_boundary took 5.67 sec
-.  configure_thermal_bc took 5.67 sec
-.  configure_simulation took 37.55 sec
-.  initial_temperature_field took 0.09 sec
+.  compute_thermal_boundary took 4.79 sec
+.  configure_thermal_bc took 4.79 sec
+.  configure_simulation took 35.07 sec
+.  initial_temperature_field took 0.05 sec
 ---------------------- Time Dependent Solution --------------------- 
 ||--------------------- || ---------------------||
 Time = 0.000 Myr, timestep = 0
 ||--------------------- || ---------------------||
 --  --- Outer iteration 0 for the coupled problem  --  ---
     --- Solution of the Lit. Pressure problem in global_domain --  ---
-        it_outer = 000: Solution of lit.pres domain global_domain in 0.88
+        it_outer = 000: Solution of lit.pres domain global_domain in 0.84
 
     --- Solution of the Stokes problem in subduction_plate_domain --  ---
                        iterative solver : KSP reason/its/rnormesh: 2 128 9.046e-09
                                   [checks] min vel = 2.64067e-03, max vel = 2.64096e-03, RMS = 2.64077e-03
-        it_outer = 000: Solution of Stokes domain subduction_plate_domain in 4.85
+        it_outer = 000: Solution of Stokes domain subduction_plate_domain in 4.83
 
     --- Solution of the Stokes problem in wedge_domain --  ---
                        iterative solver : KSP reason/its/rnormesh: 2 33 7.149e-09
                                   [checks] min vel = 0.00000e+00, max vel = 2.64067e-03, RMS = 1.15703e-03
-        it_outer = 000: Solution of Stokes domain wedge_domain in 5.97
+        it_outer = 000: Solution of Stokes domain wedge_domain in 5.89
 
     --- Solution of the Energy problem in global_domain --  ---
-        it_outer = 000: Solution of Temperature domain global_domain in 3.39
+        it_outer = 000: Solution of Temperature domain global_domain in 3.51
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
          Residual difference function :
@@ -167,20 +167,20 @@ Time = 0.000 Myr, timestep = 0
          Combined residual =  abs 1.074e-06 [n.d.], rel 1.000e+00
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
-   --- Outer iteration 0 with tolerance 1.735e+00, in 16.2 sec -- ---
+   --- Outer iteration 0 with tolerance 1.735e+00, in 15.9 sec -- ---
      --- The conservation residual is less than the residual difference: the tol is evaluated against conservation equations.
 
 --  --- Outer iteration 1 for the coupled problem  --  ---
     --- Solution of the Lit. Pressure problem in global_domain --  ---
-        it_outer = 001: Solution of lit.pres domain global_domain in 0.69
+        it_outer = 001: Solution of lit.pres domain global_domain in 0.77
 
     --- Solution of the Stokes problem in wedge_domain --  ---
                        iterative solver : KSP reason/its/rnormesh: 2 33 7.149e-09
                                   [checks] min vel = 0.00000e+00, max vel = 2.64067e-03, RMS = 1.15703e-03
-        it_outer = 001: Solution of Stokes domain wedge_domain in 4.78
+        it_outer = 001: Solution of Stokes domain wedge_domain in 4.86
 
     --- Solution of the Energy problem in global_domain --  ---
-        it_outer = 001: Solution of Temperature domain global_domain in 3.29
+        it_outer = 001: Solution of Temperature domain global_domain in 3.22
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
          Residual difference function :
@@ -200,19 +200,19 @@ Time = 0.000 Myr, timestep = 0
          Combined residual =  abs 1.784e-07 [n.d.], rel 1.661e-01
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
-   --- Outer iteration 1 with tolerance 7.523e-02, in 8.9 sec -- ---
+   --- Outer iteration 1 with tolerance 7.523e-02, in 9.0 sec -- ---
 
 --  --- Outer iteration 2 for the coupled problem  --  ---
     --- Solution of the Lit. Pressure problem in global_domain --  ---
-        it_outer = 002: Solution of lit.pres domain global_domain in 0.82
+        it_outer = 002: Solution of lit.pres domain global_domain in 0.69
 
     --- Solution of the Stokes problem in wedge_domain --  ---
                        iterative solver : KSP reason/its/rnormesh: 2 33 7.149e-09
                                   [checks] min vel = 0.00000e+00, max vel = 2.64067e-03, RMS = 1.15703e-03
-        it_outer = 002: Solution of Stokes domain wedge_domain in 4.81
+        it_outer = 002: Solution of Stokes domain wedge_domain in 4.89
 
     --- Solution of the Energy problem in global_domain --  ---
-        it_outer = 002: Solution of Temperature domain global_domain in 3.31
+        it_outer = 002: Solution of Temperature domain global_domain in 3.22
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
          Residual difference function :
@@ -232,19 +232,19 @@ Time = 0.000 Myr, timestep = 0
          Combined residual =  abs 9.076e-08 [n.d.], rel 8.452e-02
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
-   --- Outer iteration 2 with tolerance 7.222e-03, in 9.1 sec -- ---
+   --- Outer iteration 2 with tolerance 7.222e-03, in 8.9 sec -- ---
 
 --  --- Outer iteration 3 for the coupled problem  --  ---
     --- Solution of the Lit. Pressure problem in global_domain --  ---
-        it_outer = 003: Solution of lit.pres domain global_domain in 0.70
+        it_outer = 003: Solution of lit.pres domain global_domain in 0.69
 
     --- Solution of the Stokes problem in wedge_domain --  ---
                        iterative solver : KSP reason/its/rnormesh: 2 33 7.149e-09
                                   [checks] min vel = 0.00000e+00, max vel = 2.64067e-03, RMS = 1.15703e-03
-        it_outer = 003: Solution of Stokes domain wedge_domain in 4.86
+        it_outer = 003: Solution of Stokes domain wedge_domain in 4.90
 
     --- Solution of the Energy problem in global_domain --  ---
-        it_outer = 003: Solution of Temperature domain global_domain in 3.28
+        it_outer = 003: Solution of Temperature domain global_domain in 3.23
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
          Residual difference function :
@@ -268,23 +268,23 @@ Time = 0.000 Myr, timestep = 0
 
 OUTPUT...
 finished
----------------------Timestep 0  took 43.81 ---------------------
+---------------------Timestep 0  took 43.30 ---------------------
 ||--------------------- || ---------------------||
 Time = 0.000 Myr, timestep = 1
 ||--------------------- || ---------------------||
 --  --- Outer iteration 0 for the coupled problem  --  ---
     --- Solution of the Lit. Pressure problem in global_domain --  ---
-        it_outer = 000: Solution of lit.pres domain global_domain in 0.90
+        it_outer = 000: Solution of lit.pres domain global_domain in 0.92
 
     --- Solution of the Stokes problem in wedge_domain --  ---
                        iterative solver : KSP reason/its/rnormesh: 2 22 1.051e-04
                                   [checks] min vel = 0.00000e+00, max vel = 2.64782e-03, RMS = 1.43060e-03
-        it_outer = 000: Solution of Stokes domain wedge_domain in 5.68
+        it_outer = 000: Solution of Stokes domain wedge_domain in 5.88
 
     --- Solution of the Energy problem in global_domain --  ---
        old dt = 0.47
        new dt = 0.61
-        it_outer = 000: Solution of Temperature domain global_domain in 4.74
+        it_outer = 000: Solution of Temperature domain global_domain in 4.63
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
          Residual difference function :
@@ -314,12 +314,12 @@ Time = 0.000 Myr, timestep = 1
     --- Solution of the Stokes problem in wedge_domain --  ---
                        iterative solver : KSP reason/its/rnormesh: 2 22 1.858e-04
                                   [checks] min vel = 0.00000e+00, max vel = 2.64489e-03, RMS = 1.49063e-03
-        it_outer = 001: Solution of Stokes domain wedge_domain in 5.67
+        it_outer = 001: Solution of Stokes domain wedge_domain in 5.57
 
     --- Solution of the Energy problem in global_domain --  ---
        old dt = 0.61
        new dt = 0.61
-        it_outer = 001: Solution of Temperature domain global_domain in 4.91
+        it_outer = 001: Solution of Temperature domain global_domain in 4.81
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
          Residual difference function :
@@ -339,11 +339,11 @@ Time = 0.000 Myr, timestep = 1
          Combined residual =  abs 9.280e+00 [n.d.], rel 3.316e-01
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
-   --- Outer iteration 1 with tolerance 5.717e-02, in 11.5 sec -- ---
+   --- Outer iteration 1 with tolerance 5.717e-02, in 11.3 sec -- ---
 
 --  --- Outer iteration 2 for the coupled problem  --  ---
     --- Solution of the Lit. Pressure problem in global_domain --  ---
-        it_outer = 002: Solution of lit.pres domain global_domain in 0.74
+        it_outer = 002: Solution of lit.pres domain global_domain in 0.71
 
     --- Solution of the Stokes problem in wedge_domain --  ---
                        iterative solver : KSP reason/its/rnormesh: 2 22 4.263e-04
@@ -353,7 +353,7 @@ Time = 0.000 Myr, timestep = 1
     --- Solution of the Energy problem in global_domain --  ---
        old dt = 0.61
        new dt = 0.61
-        it_outer = 002: Solution of Temperature domain global_domain in 4.81
+        it_outer = 002: Solution of Temperature domain global_domain in 4.74
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
          Residual difference function :
@@ -373,21 +373,21 @@ Time = 0.000 Myr, timestep = 1
          Combined residual =  abs 3.908e+00 [n.d.], rel 1.396e-01
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
-   --- Outer iteration 2 with tolerance 1.462e-02, in 11.5 sec -- ---
+   --- Outer iteration 2 with tolerance 1.462e-02, in 11.4 sec -- ---
 
 --  --- Outer iteration 3 for the coupled problem  --  ---
     --- Solution of the Lit. Pressure problem in global_domain --  ---
-        it_outer = 003: Solution of lit.pres domain global_domain in 0.73
+        it_outer = 003: Solution of lit.pres domain global_domain in 0.70
 
     --- Solution of the Stokes problem in wedge_domain --  ---
                        iterative solver : KSP reason/its/rnormesh: 2 23 3.637e-04
                                   [checks] min vel = 0.00000e+00, max vel = 2.64212e-03, RMS = 1.52180e-03
-        it_outer = 003: Solution of Stokes domain wedge_domain in 5.71
+        it_outer = 003: Solution of Stokes domain wedge_domain in 5.67
 
     --- Solution of the Energy problem in global_domain --  ---
        old dt = 0.61
        new dt = 0.61
-        it_outer = 003: Solution of Temperature domain global_domain in 4.96
+        it_outer = 003: Solution of Temperature domain global_domain in 4.66
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
          Residual difference function :
@@ -407,17 +407,689 @@ Time = 0.000 Myr, timestep = 1
          Combined residual =  abs 1.608e+00 [n.d.], rel 5.746e-02
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
         --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
-   --- Outer iteration 3 with tolerance 7.581e-03, in 11.7 sec -- ---
+   --- Outer iteration 3 with tolerance 7.581e-03, in 11.3 sec -- ---
 
 --  --- Outer iteration 4 for the coupled problem  --  ---
     --- Solution of the Lit. Pressure problem in global_domain --  ---
-        it_outer = 004: Solution of lit.pres domain global_domain in 0.77
+        it_outer = 004: Solution of lit.pres domain global_domain in 0.70
 
     --- Solution of the Stokes problem in wedge_domain --  ---
                        iterative solver : KSP reason/its/rnormesh: 2 23 4.432e-04
                                   [checks] min vel = 0.00000e+00, max vel = 2.64082e-03, RMS = 1.52762e-03
-        it_outer = 004: Solution of Stokes domain wedge_domain in 6.54
+        it_outer = 004: Solution of Stokes domain wedge_domain in 5.67
 
     --- Solution of the Energy problem in global_domain --  ---
        old dt = 0.61
        new dt = 0.61
+        it_outer = 004: Solution of Temperature domain global_domain in 4.72
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+         Residual difference function :
+              Res velocity       =  4.499e-03 [n.d.], max = 5.001, min = 0.000 [cm/yr], RMS = 0.002 [n.d]
+              Res Temperature    =  4.910e-06 [n.d.], max = 1300.748, min = 0.000 [C], RMS = 1.031 [n.d.] 
+              Res pressure       =  6.475e-04 [n.d.], max = 2.169e-02, min = -4.539e+05 [GPa]
+              Res lithostatic    =  2.808e-08[n.d.], max = 1.817e+01, min = 0.000e+00 [GPa]
+              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  4.545e-03 [n.d.] 
+         Conservation residual :
+          Stokes Equation :
+              Res mom wedge = abs: 7.129e-01 [n.d],1.188e+03 [N/m3] | rel: 2.547e-02 [n.d.]
+              Res mom_slab  = abs: 9.045e-09 [n.d],1.508e-05 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res div_wedge = abs: 2.833e-07 [n.d],2.833e-19 [1/s]  | rel: 6.679e-01 [n.d.]
+              Res div_slab  = abs: 7.864e-11 [n.d],7.864e-23 [1/s]  | rel: 1.000e+00 [n.d.]
+          Energy Equation :
+              Res energy equation = abs: 4.472e-08 [n.d],8.946247e-32 [W/m3] | rel: 3.723e-01 [n.d.]
+         Combined residual =  abs 7.129e-01 [n.d.], rel 2.547e-02
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+   --- Outer iteration 4 with tolerance 4.545e-03, in 11.3 sec -- ---
+
+--  --- Outer iteration 5 for the coupled problem  --  ---
+    --- Solution of the Lit. Pressure problem in global_domain --  ---
+        it_outer = 005: Solution of lit.pres domain global_domain in 0.67
+
+    --- Solution of the Stokes problem in wedge_domain --  ---
+                       iterative solver : KSP reason/its/rnormesh: 2 23 5.167e-04
+                                  [checks] min vel = 0.00000e+00, max vel = 2.68372e-03, RMS = 1.53189e-03
+        it_outer = 005: Solution of Stokes domain wedge_domain in 5.49
+
+    --- Solution of the Energy problem in global_domain --  ---
+       old dt = 0.61
+       new dt = 0.61
+        it_outer = 005: Solution of Temperature domain global_domain in 4.65
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+         Residual difference function :
+              Res velocity       =  2.930e-03 [n.d.], max = 5.081, min = 0.000 [cm/yr], RMS = 0.002 [n.d]
+              Res Temperature    =  3.216e-06 [n.d.], max = 1300.745, min = 0.000 [C], RMS = 1.031 [n.d.] 
+              Res pressure       =  2.682e-04 [n.d.], max = 1.260e-02, min = -4.539e+05 [GPa]
+              Res lithostatic    =  2.089e-08[n.d.], max = 1.817e+01, min = 0.000e+00 [GPa]
+              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  2.942e-03 [n.d.] 
+         Conservation residual :
+          Stokes Equation :
+              Res mom wedge = abs: 3.414e-01 [n.d],5.690e+02 [N/m3] | rel: 1.220e-02 [n.d.]
+              Res mom_slab  = abs: 9.045e-09 [n.d],1.508e-05 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res div_wedge = abs: 2.502e-07 [n.d],2.502e-19 [1/s]  | rel: 5.901e-01 [n.d.]
+              Res div_slab  = abs: 7.864e-11 [n.d],7.864e-23 [1/s]  | rel: 1.000e+00 [n.d.]
+          Energy Equation :
+              Res energy equation = abs: 4.404e-08 [n.d],8.543532e-32 [W/m3] | rel: 3.666e-01 [n.d.]
+         Combined residual =  abs 3.414e-01 [n.d.], rel 1.220e-02
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+   --- Outer iteration 5 with tolerance 2.942e-03, in 11.1 sec -- ---
+
+--  --- Outer iteration 6 for the coupled problem  --  ---
+    --- Solution of the Lit. Pressure problem in global_domain --  ---
+        it_outer = 006: Solution of lit.pres domain global_domain in 0.67
+
+    --- Solution of the Stokes problem in wedge_domain --  ---
+                       iterative solver : KSP reason/its/rnormesh: 2 23 5.287e-04
+                                  [checks] min vel = 0.00000e+00, max vel = 2.71936e-03, RMS = 1.53453e-03
+        it_outer = 006: Solution of Stokes domain wedge_domain in 5.55
+
+    --- Solution of the Energy problem in global_domain --  ---
+       old dt = 0.61
+       new dt = 0.61
+        it_outer = 006: Solution of Temperature domain global_domain in 4.69
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+         Residual difference function :
+              Res velocity       =  1.973e-03 [n.d.], max = 5.149, min = 0.000 [cm/yr], RMS = 0.002 [n.d]
+              Res Temperature    =  2.341e-06 [n.d.], max = 1300.749, min = 0.000 [C], RMS = 1.031 [n.d.] 
+              Res pressure       =  1.156e-04 [n.d.], max = 1.455e-02, min = -4.538e+05 [GPa]
+              Res lithostatic    =  9.222e-09[n.d.], max = 1.817e+01, min = 0.000e+00 [GPa]
+              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  1.977e-03 [n.d.] 
+         Conservation residual :
+          Stokes Equation :
+              Res mom wedge = abs: 1.738e-01 [n.d],2.897e+02 [N/m3] | rel: 6.210e-03 [n.d.]
+              Res mom_slab  = abs: 9.045e-09 [n.d],1.508e-05 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res div_wedge = abs: 2.657e-07 [n.d],2.657e-19 [1/s]  | rel: 6.266e-01 [n.d.]
+              Res div_slab  = abs: 7.864e-11 [n.d],7.864e-23 [1/s]  | rel: 1.000e+00 [n.d.]
+          Energy Equation :
+              Res energy equation = abs: 4.436e-08 [n.d],8.730554e-32 [W/m3] | rel: 3.693e-01 [n.d.]
+         Combined residual =  abs 1.738e-01 [n.d.], rel 6.210e-03
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+   --- Outer iteration 6 with tolerance 1.977e-03, in 11.2 sec -- ---
+
+--  --- Outer iteration 7 for the coupled problem  --  ---
+    --- Solution of the Lit. Pressure problem in global_domain --  ---
+        it_outer = 007: Solution of lit.pres domain global_domain in 0.69
+
+    --- Solution of the Stokes problem in wedge_domain --  ---
+                       iterative solver : KSP reason/its/rnormesh: 2 23 5.226e-04
+                                  [checks] min vel = 0.00000e+00, max vel = 2.74389e-03, RMS = 1.53630e-03
+        it_outer = 007: Solution of Stokes domain wedge_domain in 5.93
+
+    --- Solution of the Energy problem in global_domain --  ---
+       old dt = 0.61
+       new dt = 0.61
+        it_outer = 007: Solution of Temperature domain global_domain in 4.81
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+         Residual difference function :
+              Res velocity       =  1.384e-03 [n.d.], max = 5.195, min = 0.000 [cm/yr], RMS = 0.002 [n.d]
+              Res Temperature    =  1.696e-06 [n.d.], max = 1300.744, min = 0.000 [C], RMS = 1.031 [n.d.] 
+              Res pressure       =  5.369e-05 [n.d.], max = 8.400e-03, min = -4.538e+05 [GPa]
+              Res lithostatic    =  7.607e-09[n.d.], max = 1.817e+01, min = 0.000e+00 [GPa]
+              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  1.385e-03 [n.d.] 
+         Conservation residual :
+          Stokes Equation :
+              Res mom wedge = abs: 9.269e-02 [n.d],1.545e+02 [N/m3] | rel: 3.312e-03 [n.d.]
+              Res mom_slab  = abs: 9.045e-09 [n.d],1.508e-05 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res div_wedge = abs: 2.629e-07 [n.d],2.629e-19 [1/s]  | rel: 6.200e-01 [n.d.]
+              Res div_slab  = abs: 7.864e-11 [n.d],7.864e-23 [1/s]  | rel: 1.000e+00 [n.d.]
+          Energy Equation :
+              Res energy equation = abs: 4.400e-08 [n.d],8.517520e-32 [W/m3] | rel: 3.662e-01 [n.d.]
+         Combined residual =  abs 9.269e-02 [n.d.], rel 3.312e-03
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+   --- Outer iteration 7 with tolerance 1.385e-03, in 11.7 sec -- ---
+
+--  --- Outer iteration 8 for the coupled problem  --  ---
+    --- Solution of the Lit. Pressure problem in global_domain --  ---
+        it_outer = 008: Solution of lit.pres domain global_domain in 0.71
+
+    --- Solution of the Stokes problem in wedge_domain --  ---
+                       iterative solver : KSP reason/its/rnormesh: 2 23 5.588e-04
+                                  [checks] min vel = 0.00000e+00, max vel = 2.76135e-03, RMS = 1.53755e-03
+        it_outer = 008: Solution of Stokes domain wedge_domain in 6.18
+
+    --- Solution of the Energy problem in global_domain --  ---
+       old dt = 0.61
+       new dt = 0.61
+        it_outer = 008: Solution of Temperature domain global_domain in 4.83
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+         Residual difference function :
+              Res velocity       =  9.526e-04 [n.d.], max = 5.228, min = 0.000 [cm/yr], RMS = 0.002 [n.d]
+              Res Temperature    =  1.257e-06 [n.d.], max = 1300.745, min = 0.000 [C], RMS = 1.031 [n.d.] 
+              Res pressure       =  2.690e-05 [n.d.], max = 1.271e-02, min = -4.538e+05 [GPa]
+              Res lithostatic    =  4.457e-09[n.d.], max = 1.817e+01, min = 0.000e+00 [GPa]
+              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  9.530e-04 [n.d.] 
+         Conservation residual :
+          Stokes Equation :
+              Res mom wedge = abs: 5.158e-02 [n.d],8.597e+01 [N/m3] | rel: 1.843e-03 [n.d.]
+              Res mom_slab  = abs: 9.045e-09 [n.d],1.508e-05 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res div_wedge = abs: 2.684e-07 [n.d],2.684e-19 [1/s]  | rel: 6.328e-01 [n.d.]
+              Res div_slab  = abs: 7.864e-11 [n.d],7.864e-23 [1/s]  | rel: 1.000e+00 [n.d.]
+          Energy Equation :
+              Res energy equation = abs: 4.367e-08 [n.d],8.329392e-32 [W/m3] | rel: 3.635e-01 [n.d.]
+         Combined residual =  abs 5.158e-02 [n.d.], rel 1.843e-03
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+   --- Outer iteration 8 with tolerance 9.530e-04, in 12.0 sec -- ---
+
+---------------------Timestep 1  took 102.95 ---------------------
+||--------------------- || ---------------------||
+Time = 0.019 Myr, timestep = 2
+||--------------------- || ---------------------||
+--  --- Outer iteration 0 for the coupled problem  --  ---
+    --- Solution of the Lit. Pressure problem in global_domain --  ---
+        it_outer = 000: Solution of lit.pres domain global_domain in 0.86
+
+    --- Solution of the Stokes problem in wedge_domain --  ---
+                       iterative solver : KSP reason/its/rnormesh: 2 23 6.214e-04
+                                  [checks] min vel = 0.00000e+00, max vel = 2.77410e-03, RMS = 1.53825e-03
+        it_outer = 000: Solution of Stokes domain wedge_domain in 5.79
+
+    --- Solution of the Energy problem in global_domain --  ---
+        it_outer = 000: Solution of Temperature domain global_domain in 4.62
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+         Residual difference function :
+              Res velocity       =  7.263e-04 [n.d.], max = 5.253, min = 0.000 [cm/yr], RMS = 0.002 [n.d]
+              Res Temperature    =  1.274e-04 [n.d.], max = 1300.739, min = 0.000 [C], RMS = 1.031 [n.d.] 
+              Res pressure       =  2.168e-05 [n.d.], max = 1.456e-02, min = -4.539e+05 [GPa]
+              Res lithostatic    =  3.645e-09[n.d.], max = 1.817e+01, min = 0.000e+00 [GPa]
+              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  7.377e-04 [n.d.] 
+         Conservation residual :
+          Stokes Equation :
+              Res mom wedge = abs: 2.954e-02 [n.d],4.923e+01 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res mom_slab  = abs: 9.045e-09 [n.d],1.508e-05 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res div_wedge = abs: 2.815e-07 [n.d],2.815e-19 [1/s]  | rel: 1.000e+00 [n.d.]
+              Res div_slab  = abs: 7.864e-11 [n.d],7.864e-23 [1/s]  | rel: 1.000e+00 [n.d.]
+          Energy Equation :
+              Res energy equation = abs: 1.776e-07 [n.d],5.601989e-30 [W/m3] | rel: 1.000e+00 [n.d.]
+         Combined residual =  abs 2.954e-02 [n.d.], rel 1.000e+00
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+   --- Outer iteration 0 with tolerance 7.377e-04, in 11.4 sec -- ---
+
+---------------------Timestep 2  took 11.44 ---------------------
+||--------------------- || ---------------------||
+Time = 0.039 Myr, timestep = 3
+||--------------------- || ---------------------||
+--  --- Outer iteration 0 for the coupled problem  --  ---
+    --- Solution of the Lit. Pressure problem in global_domain --  ---
+        it_outer = 000: Solution of lit.pres domain global_domain in 0.84
+
+    --- Solution of the Stokes problem in wedge_domain --  ---
+                       iterative solver : KSP reason/its/rnormesh: 2 23 6.125e-04
+                                  [checks] min vel = 0.00000e+00, max vel = 2.83659e-03, RMS = 1.53897e-03
+        it_outer = 000: Solution of Stokes domain wedge_domain in 5.85
+
+    --- Solution of the Energy problem in global_domain --  ---
+        it_outer = 000: Solution of Temperature domain global_domain in 4.60
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+         Residual difference function :
+              Res velocity       =  1.168e-03 [n.d.], max = 5.371, min = 0.000 [cm/yr], RMS = 0.002 [n.d]
+              Res Temperature    =  1.250e-04 [n.d.], max = 1300.737, min = 0.000 [C], RMS = 1.031 [n.d.] 
+              Res pressure       =  3.765e-03 [n.d.], max = 1.778e-02, min = -4.528e+05 [GPa]
+              Res lithostatic    =  7.799e-07[n.d.], max = 1.817e+01, min = 0.000e+00 [GPa]
+              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  3.945e-03 [n.d.] 
+         Conservation residual :
+          Stokes Equation :
+              Res mom wedge = abs: 1.451e+00 [n.d],2.419e+03 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res mom_slab  = abs: 9.045e-09 [n.d],1.508e-05 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res div_wedge = abs: 2.889e-07 [n.d],2.889e-19 [1/s]  | rel: 1.000e+00 [n.d.]
+              Res div_slab  = abs: 7.864e-11 [n.d],7.864e-23 [1/s]  | rel: 1.000e+00 [n.d.]
+          Energy Equation :
+              Res energy equation = abs: 1.713e-07 [n.d],5.028878e-30 [W/m3] | rel: 1.000e+00 [n.d.]
+         Combined residual =  abs 1.451e+00 [n.d.], rel 1.000e+00
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+   --- Outer iteration 0 with tolerance 3.945e-03, in 11.4 sec -- ---
+
+--  --- Outer iteration 1 for the coupled problem  --  ---
+    --- Solution of the Lit. Pressure problem in global_domain --  ---
+        it_outer = 001: Solution of lit.pres domain global_domain in 0.69
+
+    --- Solution of the Stokes problem in wedge_domain --  ---
+                       iterative solver : KSP reason/its/rnormesh: 2 23 6.445e-04
+                                  [checks] min vel = 0.00000e+00, max vel = 2.94024e-03, RMS = 1.53907e-03
+        it_outer = 001: Solution of Stokes domain wedge_domain in 5.55
+
+    --- Solution of the Energy problem in global_domain --  ---
+        it_outer = 001: Solution of Temperature domain global_domain in 4.56
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+         Residual difference function :
+              Res velocity       =  1.818e-03 [n.d.], max = 5.567, min = 0.000 [cm/yr], RMS = 0.002 [n.d]
+              Res Temperature    =  1.032e-05 [n.d.], max = 1300.738, min = 0.000 [C], RMS = 1.031 [n.d.] 
+              Res pressure       =  5.644e-03 [n.d.], max = 9.269e-03, min = -4.506e+05 [GPa]
+              Res lithostatic    =  7.786e-07[n.d.], max = 1.817e+01, min = 0.000e+00 [GPa]
+              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  5.930e-03 [n.d.] 
+         Conservation residual :
+          Stokes Equation :
+              Res mom wedge = abs: 1.638e+00 [n.d],2.730e+03 [N/m3] | rel: 1.129e+00 [n.d.]
+              Res mom_slab  = abs: 9.045e-09 [n.d],1.508e-05 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res div_wedge = abs: 3.466e-07 [n.d],3.466e-19 [1/s]  | rel: 1.200e+00 [n.d.]
+              Res div_slab  = abs: 7.864e-11 [n.d],7.864e-23 [1/s]  | rel: 1.000e+00 [n.d.]
+          Energy Equation :
+              Res energy equation = abs: 4.560e-08 [n.d],9.481619e-32 [W/m3] | rel: 2.662e-01 [n.d.]
+         Combined residual =  abs 1.638e+00 [n.d.], rel 1.129e+00
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+   --- Outer iteration 1 with tolerance 5.930e-03, in 10.9 sec -- ---
+
+--  --- Outer iteration 2 for the coupled problem  --  ---
+    --- Solution of the Lit. Pressure problem in global_domain --  ---
+        it_outer = 002: Solution of lit.pres domain global_domain in 0.68
+
+    --- Solution of the Stokes problem in wedge_domain --  ---
+                       iterative solver : KSP reason/its/rnormesh: 2 23 6.625e-04
+                                  [checks] min vel = 0.00000e+00, max vel = 3.02084e-03, RMS = 1.53832e-03
+        it_outer = 002: Solution of Stokes domain wedge_domain in 5.51
+
+    --- Solution of the Energy problem in global_domain --  ---
+        it_outer = 002: Solution of Temperature domain global_domain in 4.74
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+         Residual difference function :
+              Res velocity       =  1.607e-03 [n.d.], max = 5.720, min = 0.000 [cm/yr], RMS = 0.002 [n.d]
+              Res Temperature    =  3.721e-06 [n.d.], max = 1300.738, min = 0.000 [C], RMS = 1.031 [n.d.] 
+              Res pressure       =  8.002e-04 [n.d.], max = 1.404e-02, min = -4.505e+05 [GPa]
+              Res lithostatic    =  7.007e-08[n.d.], max = 1.817e+01, min = 0.000e+00 [GPa]
+              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  1.795e-03 [n.d.] 
+         Conservation residual :
+          Stokes Equation :
+              Res mom wedge = abs: 6.484e-01 [n.d],1.081e+03 [N/m3] | rel: 4.468e-01 [n.d.]
+              Res mom_slab  = abs: 9.045e-09 [n.d],1.508e-05 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res div_wedge = abs: 3.372e-07 [n.d],3.372e-19 [1/s]  | rel: 1.167e+00 [n.d.]
+              Res div_slab  = abs: 7.864e-11 [n.d],7.864e-23 [1/s]  | rel: 1.000e+00 [n.d.]
+          Energy Equation :
+              Res energy equation = abs: 4.425e-08 [n.d],8.665113e-32 [W/m3] | rel: 2.583e-01 [n.d.]
+         Combined residual =  abs 6.484e-01 [n.d.], rel 4.468e-01
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+   --- Outer iteration 2 with tolerance 1.795e-03, in 11.1 sec -- ---
+
+--  --- Outer iteration 3 for the coupled problem  --  ---
+    --- Solution of the Lit. Pressure problem in global_domain --  ---
+        it_outer = 003: Solution of lit.pres domain global_domain in 0.69
+
+    --- Solution of the Stokes problem in wedge_domain --  ---
+                       iterative solver : KSP reason/its/rnormesh: 2 23 6.590e-04
+                                  [checks] min vel = 0.00000e+00, max vel = 3.08070e-03, RMS = 1.53808e-03
+        it_outer = 003: Solution of Stokes domain wedge_domain in 5.86
+
+    --- Solution of the Energy problem in global_domain --  ---
+        it_outer = 003: Solution of Temperature domain global_domain in 4.74
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+         Residual difference function :
+              Res velocity       =  1.206e-03 [n.d.], max = 5.833, min = 0.000 [cm/yr], RMS = 0.002 [n.d]
+              Res Temperature    =  2.554e-06 [n.d.], max = 1300.737, min = 0.000 [C], RMS = 1.031 [n.d.] 
+              Res pressure       =  2.798e-04 [n.d.], max = 1.797e-02, min = -4.504e+05 [GPa]
+              Res lithostatic    =  9.689e-09[n.d.], max = 1.817e+01, min = 0.000e+00 [GPa]
+              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  1.238e-03 [n.d.] 
+         Conservation residual :
+          Stokes Equation :
+              Res mom wedge = abs: 3.024e-01 [n.d],5.040e+02 [N/m3] | rel: 2.084e-01 [n.d.]
+              Res mom_slab  = abs: 9.045e-09 [n.d],1.508e-05 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res div_wedge = abs: 3.561e-07 [n.d],3.561e-19 [1/s]  | rel: 1.233e+00 [n.d.]
+              Res div_slab  = abs: 7.864e-11 [n.d],7.864e-23 [1/s]  | rel: 1.000e+00 [n.d.]
+          Energy Equation :
+              Res energy equation = abs: 4.390e-08 [n.d],8.458456e-32 [W/m3] | rel: 2.562e-01 [n.d.]
+         Combined residual =  abs 3.024e-01 [n.d.], rel 2.084e-01
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+   --- Outer iteration 3 with tolerance 1.238e-03, in 11.4 sec -- ---
+
+--  --- Outer iteration 4 for the coupled problem  --  ---
+    --- Solution of the Lit. Pressure problem in global_domain --  ---
+        it_outer = 004: Solution of lit.pres domain global_domain in 0.71
+
+    --- Solution of the Stokes problem in wedge_domain --  ---
+                       iterative solver : KSP reason/its/rnormesh: 2 23 6.684e-04
+                                  [checks] min vel = 0.00000e+00, max vel = 3.12462e-03, RMS = 1.53781e-03
+        it_outer = 004: Solution of Stokes domain wedge_domain in 5.71
+
+    --- Solution of the Energy problem in global_domain --  ---
+        it_outer = 004: Solution of Temperature domain global_domain in 4.77
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+         Residual difference function :
+              Res velocity       =  1.232e-03 [n.d.], max = 5.916, min = 0.000 [cm/yr], RMS = 0.002 [n.d]
+              Res Temperature    =  1.958e-06 [n.d.], max = 1300.737, min = 0.000 [C], RMS = 1.031 [n.d.] 
+              Res pressure       =  1.024e-04 [n.d.], max = 1.482e-02, min = -4.504e+05 [GPa]
+              Res lithostatic    =  4.112e-09[n.d.], max = 1.817e+01, min = 0.000e+00 [GPa]
+              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  1.237e-03 [n.d.] 
+         Conservation residual :
+          Stokes Equation :
+              Res mom wedge = abs: 1.516e-01 [n.d],2.527e+02 [N/m3] | rel: 1.045e-01 [n.d.]
+              Res mom_slab  = abs: 9.045e-09 [n.d],1.508e-05 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res div_wedge = abs: 4.574e-07 [n.d],4.574e-19 [1/s]  | rel: 1.583e+00 [n.d.]
+              Res div_slab  = abs: 7.864e-11 [n.d],7.864e-23 [1/s]  | rel: 1.000e+00 [n.d.]
+          Energy Equation :
+              Res energy equation = abs: 4.452e-08 [n.d],8.824704e-32 [W/m3] | rel: 2.599e-01 [n.d.]
+         Combined residual =  abs 1.516e-01 [n.d.], rel 1.045e-01
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+   --- Outer iteration 4 with tolerance 1.237e-03, in 11.3 sec -- ---
+
+--  --- Outer iteration 5 for the coupled problem  --  ---
+    --- Solution of the Lit. Pressure problem in global_domain --  ---
+        it_outer = 005: Solution of lit.pres domain global_domain in 0.71
+
+    --- Solution of the Stokes problem in wedge_domain --  ---
+                       iterative solver : KSP reason/its/rnormesh: 2 23 5.988e-04
+                                  [checks] min vel = 0.00000e+00, max vel = 3.15704e-03, RMS = 1.53750e-03
+        it_outer = 005: Solution of Stokes domain wedge_domain in 6.14
+
+    --- Solution of the Energy problem in global_domain --  ---
+        it_outer = 005: Solution of Temperature domain global_domain in 4.72
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+         Residual difference function :
+              Res velocity       =  8.906e-04 [n.d.], max = 5.978, min = 0.000 [cm/yr], RMS = 0.002 [n.d]
+              Res Temperature    =  1.410e-06 [n.d.], max = 1300.738, min = 0.000 [C], RMS = 1.031 [n.d.] 
+              Res pressure       =  4.598e-05 [n.d.], max = 1.807e-02, min = -4.504e+05 [GPa]
+              Res lithostatic    =  3.817e-09[n.d.], max = 1.817e+01, min = 0.000e+00 [GPa]
+              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  8.918e-04 [n.d.] 
+         Conservation residual :
+          Stokes Equation :
+              Res mom wedge = abs: 8.212e-02 [n.d],1.369e+02 [N/m3] | rel: 5.659e-02 [n.d.]
+              Res mom_slab  = abs: 9.045e-09 [n.d],1.508e-05 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res div_wedge = abs: 3.859e-07 [n.d],3.859e-19 [1/s]  | rel: 1.336e+00 [n.d.]
+              Res div_slab  = abs: 7.864e-11 [n.d],7.864e-23 [1/s]  | rel: 1.000e+00 [n.d.]
+          Energy Equation :
+              Res energy equation = abs: 4.454e-08 [n.d],8.838870e-32 [W/m3] | rel: 2.600e-01 [n.d.]
+         Combined residual =  abs 8.212e-02 [n.d.], rel 5.659e-02
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+   --- Outer iteration 5 with tolerance 8.918e-04, in 11.7 sec -- ---
+
+---------------------Timestep 3  took 67.95 ---------------------
+||--------------------- || ---------------------||
+Time = 0.058 Myr, timestep = 4
+||--------------------- || ---------------------||
+--  --- Outer iteration 0 for the coupled problem  --  ---
+    --- Solution of the Lit. Pressure problem in global_domain --  ---
+        it_outer = 000: Solution of lit.pres domain global_domain in 0.90
+
+    --- Solution of the Stokes problem in wedge_domain --  ---
+                       iterative solver : KSP reason/its/rnormesh: 2 23 6.251e-04
+                                  [checks] min vel = 0.00000e+00, max vel = 3.18062e-03, RMS = 1.53701e-03
+        it_outer = 000: Solution of Stokes domain wedge_domain in 6.02
+
+    --- Solution of the Energy problem in global_domain --  ---
+        it_outer = 000: Solution of Temperature domain global_domain in 4.63
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+         Residual difference function :
+              Res velocity       =  5.699e-04 [n.d.], max = 6.022, min = 0.000 [cm/yr], RMS = 0.002 [n.d]
+              Res Temperature    =  1.282e-04 [n.d.], max = 1300.731, min = 0.000 [C], RMS = 1.031 [n.d.] 
+              Res pressure       =  2.369e-05 [n.d.], max = 1.175e-02, min = -4.504e+05 [GPa]
+              Res lithostatic    =  3.227e-09[n.d.], max = 1.817e+01, min = 0.000e+00 [GPa]
+              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  5.846e-04 [n.d.] 
+         Conservation residual :
+          Stokes Equation :
+              Res mom wedge = abs: 4.712e-02 [n.d],7.854e+01 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res mom_slab  = abs: 9.045e-09 [n.d],1.508e-05 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res div_wedge = abs: 3.903e-07 [n.d],3.903e-19 [1/s]  | rel: 1.000e+00 [n.d.]
+              Res div_slab  = abs: 7.864e-11 [n.d],7.864e-23 [1/s]  | rel: 1.000e+00 [n.d.]
+          Energy Equation :
+              Res energy equation = abs: 1.768e-07 [n.d],5.530924e-30 [W/m3] | rel: 1.000e+00 [n.d.]
+         Combined residual =  abs 4.712e-02 [n.d.], rel 1.000e+00
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+   --- Outer iteration 0 with tolerance 5.846e-04, in 11.7 sec -- ---
+
+---------------------Timestep 4  took 11.71 ---------------------
+||--------------------- || ---------------------||
+Time = 0.077 Myr, timestep = 5
+||--------------------- || ---------------------||
+--  --- Outer iteration 0 for the coupled problem  --  ---
+    --- Solution of the Lit. Pressure problem in global_domain --  ---
+        it_outer = 000: Solution of lit.pres domain global_domain in 0.82
+
+    --- Solution of the Stokes problem in wedge_domain --  ---
+                       iterative solver : KSP reason/its/rnormesh: 2 23 6.388e-04
+                                  [checks] min vel = 0.00000e+00, max vel = 3.25650e-03, RMS = 1.53618e-03
+        it_outer = 000: Solution of Stokes domain wedge_domain in 5.64
+
+    --- Solution of the Energy problem in global_domain --  ---
+        it_outer = 000: Solution of Temperature domain global_domain in 4.61
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+         Residual difference function :
+              Res velocity       =  1.310e-03 [n.d.], max = 6.166, min = 0.000 [cm/yr], RMS = 0.002 [n.d]
+              Res Temperature    =  1.261e-04 [n.d.], max = 1300.726, min = 0.000 [C], RMS = 1.031 [n.d.] 
+              Res pressure       =  6.522e-03 [n.d.], max = 2.183e-02, min = -4.474e+05 [GPa]
+              Res lithostatic    =  7.829e-07[n.d.], max = 1.817e+01, min = 0.000e+00 [GPa]
+              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  6.653e-03 [n.d.] 
+         Conservation residual :
+          Stokes Equation :
+              Res mom wedge = abs: 1.139e+00 [n.d],1.899e+03 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res mom_slab  = abs: 9.045e-09 [n.d],1.508e-05 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res div_wedge = abs: 4.316e-07 [n.d],4.316e-19 [1/s]  | rel: 1.000e+00 [n.d.]
+              Res div_slab  = abs: 7.864e-11 [n.d],7.864e-23 [1/s]  | rel: 1.000e+00 [n.d.]
+          Energy Equation :
+              Res energy equation = abs: 1.726e-07 [n.d],5.139896e-30 [W/m3] | rel: 1.000e+00 [n.d.]
+         Combined residual =  abs 1.139e+00 [n.d.], rel 1.000e+00
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+   --- Outer iteration 0 with tolerance 6.653e-03, in 11.2 sec -- ---
+
+--  --- Outer iteration 1 for the coupled problem  --  ---
+    --- Solution of the Lit. Pressure problem in global_domain --  ---
+        it_outer = 001: Solution of lit.pres domain global_domain in 0.75
+
+    --- Solution of the Stokes problem in wedge_domain --  ---
+                       iterative solver : KSP reason/its/rnormesh: 2 23 6.571e-04
+                                  [checks] min vel = 0.00000e+00, max vel = 3.36722e-03, RMS = 1.53467e-03
+        it_outer = 001: Solution of Stokes domain wedge_domain in 5.62
+
+    --- Solution of the Energy problem in global_domain --  ---
+        it_outer = 001: Solution of Temperature domain global_domain in 4.54
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+         Residual difference function :
+              Res velocity       =  1.937e-03 [n.d.], max = 6.376, min = 0.000 [cm/yr], RMS = 0.002 [n.d]
+              Res Temperature    =  9.789e-06 [n.d.], max = 1300.726, min = 0.000 [C], RMS = 1.031 [n.d.] 
+              Res pressure       =  8.262e-03 [n.d.], max = 2.856e-02, min = -4.437e+05 [GPa]
+              Res lithostatic    =  7.798e-07[n.d.], max = 1.817e+01, min = 0.000e+00 [GPa]
+              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  8.486e-03 [n.d.] 
+         Conservation residual :
+          Stokes Equation :
+              Res mom wedge = abs: 1.408e+00 [n.d],2.347e+03 [N/m3] | rel: 1.236e+00 [n.d.]
+              Res mom_slab  = abs: 9.045e-09 [n.d],1.508e-05 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res div_wedge = abs: 4.479e-07 [n.d],4.479e-19 [1/s]  | rel: 1.038e+00 [n.d.]
+              Res div_slab  = abs: 7.864e-11 [n.d],7.864e-23 [1/s]  | rel: 1.000e+00 [n.d.]
+          Energy Equation :
+              Res energy equation = abs: 4.565e-08 [n.d],9.513557e-32 [W/m3] | rel: 2.645e-01 [n.d.]
+         Combined residual =  abs 1.408e+00 [n.d.], rel 1.236e+00
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+   --- Outer iteration 1 with tolerance 8.486e-03, in 11.1 sec -- ---
+
+--  --- Outer iteration 2 for the coupled problem  --  ---
+    --- Solution of the Lit. Pressure problem in global_domain --  ---
+        it_outer = 002: Solution of lit.pres domain global_domain in 0.68
+
+    --- Solution of the Stokes problem in wedge_domain --  ---
+                       iterative solver : KSP reason/its/rnormesh: 2 24 3.778e-04
+                                  [checks] min vel = 0.00000e+00, max vel = 3.44783e-03, RMS = 1.53551e-03
+        it_outer = 002: Solution of Stokes domain wedge_domain in 5.65
+
+    --- Solution of the Energy problem in global_domain --  ---
+        it_outer = 002: Solution of Temperature domain global_domain in 4.54
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+         Residual difference function :
+              Res velocity       =  1.114e-03 [n.d.], max = 6.528, min = 0.000 [cm/yr], RMS = 0.002 [n.d]
+              Res Temperature    =  3.109e-06 [n.d.], max = 1300.731, min = 0.000 [C], RMS = 1.031 [n.d.] 
+              Res pressure       =  8.241e-04 [n.d.], max = 6.611e-03, min = -4.438e+05 [GPa]
+              Res lithostatic    =  6.619e-08[n.d.], max = 1.817e+01, min = 0.000e+00 [GPa]
+              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  1.386e-03 [n.d.] 
+         Conservation residual :
+          Stokes Equation :
+              Res mom wedge = abs: 4.985e-01 [n.d],8.309e+02 [N/m3] | rel: 4.375e-01 [n.d.]
+              Res mom_slab  = abs: 9.045e-09 [n.d],1.508e-05 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res div_wedge = abs: 4.434e-07 [n.d],4.434e-19 [1/s]  | rel: 1.027e+00 [n.d.]
+              Res div_slab  = abs: 7.864e-11 [n.d],7.864e-23 [1/s]  | rel: 1.000e+00 [n.d.]
+          Energy Equation :
+              Res energy equation = abs: 4.506e-08 [n.d],9.150954e-32 [W/m3] | rel: 2.611e-01 [n.d.]
+         Combined residual =  abs 4.985e-01 [n.d.], rel 4.375e-01
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+   --- Outer iteration 2 with tolerance 1.386e-03, in 11.0 sec -- ---
+
+--  --- Outer iteration 3 for the coupled problem  --  ---
+    --- Solution of the Lit. Pressure problem in global_domain --  ---
+        it_outer = 003: Solution of lit.pres domain global_domain in 0.79
+
+    --- Solution of the Stokes problem in wedge_domain --  ---
+                       iterative solver : KSP reason/its/rnormesh: 2 23 6.312e-04
+                                  [checks] min vel = 0.00000e+00, max vel = 3.50977e-03, RMS = 1.53276e-03
+        it_outer = 003: Solution of Stokes domain wedge_domain in 6.05
+
+    --- Solution of the Energy problem in global_domain --  ---
+        it_outer = 003: Solution of Temperature domain global_domain in 4.81
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+         Residual difference function :
+              Res velocity       =  1.993e-03 [n.d.], max = 6.646, min = 0.000 [cm/yr], RMS = 0.002 [n.d]
+              Res Temperature    =  2.314e-06 [n.d.], max = 1300.731, min = 0.000 [C], RMS = 1.031 [n.d.] 
+              Res pressure       =  2.439e-04 [n.d.], max = 9.925e-03, min = -4.437e+05 [GPa]
+              Res lithostatic    =  6.877e-09[n.d.], max = 1.817e+01, min = 0.000e+00 [GPa]
+              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  2.008e-03 [n.d.] 
+         Conservation residual :
+          Stokes Equation :
+              Res mom wedge = abs: 2.189e-01 [n.d],3.649e+02 [N/m3] | rel: 1.921e-01 [n.d.]
+              Res mom_slab  = abs: 9.045e-09 [n.d],1.508e-05 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res div_wedge = abs: 4.983e-07 [n.d],4.983e-19 [1/s]  | rel: 1.155e+00 [n.d.]
+              Res div_slab  = abs: 7.864e-11 [n.d],7.864e-23 [1/s]  | rel: 1.000e+00 [n.d.]
+          Energy Equation :
+              Res energy equation = abs: 4.423e-08 [n.d],8.655487e-32 [W/m3] | rel: 2.563e-01 [n.d.]
+         Combined residual =  abs 2.189e-01 [n.d.], rel 1.921e-01
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+   --- Outer iteration 3 with tolerance 2.008e-03, in 11.8 sec -- ---
+
+--  --- Outer iteration 4 for the coupled problem  --  ---
+    --- Solution of the Lit. Pressure problem in global_domain --  ---
+        it_outer = 004: Solution of lit.pres domain global_domain in 0.71
+
+    --- Solution of the Stokes problem in wedge_domain --  ---
+                       iterative solver : KSP reason/its/rnormesh: 2 23 6.413e-04
+                                  [checks] min vel = 0.00000e+00, max vel = 3.55419e-03, RMS = 1.53151e-03
+        it_outer = 004: Solution of Stokes domain wedge_domain in 5.86
+
+    --- Solution of the Energy problem in global_domain --  ---
+        it_outer = 004: Solution of Temperature domain global_domain in 4.62
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+         Residual difference function :
+              Res velocity       =  1.131e-03 [n.d.], max = 6.730, min = 0.000 [cm/yr], RMS = 0.002 [n.d]
+              Res Temperature    =  1.748e-06 [n.d.], max = 1300.727, min = 0.000 [C], RMS = 1.031 [n.d.] 
+              Res pressure       =  8.822e-05 [n.d.], max = 2.092e-02, min = -4.437e+05 [GPa]
+              Res lithostatic    =  1.038e-08[n.d.], max = 1.817e+01, min = 0.000e+00 [GPa]
+              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  1.134e-03 [n.d.] 
+         Conservation residual :
+          Stokes Equation :
+              Res mom wedge = abs: 1.061e-01 [n.d],1.769e+02 [N/m3] | rel: 9.315e-02 [n.d.]
+              Res mom_slab  = abs: 9.045e-09 [n.d],1.508e-05 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res div_wedge = abs: 5.186e-07 [n.d],5.186e-19 [1/s]  | rel: 1.202e+00 [n.d.]
+              Res div_slab  = abs: 7.864e-11 [n.d],7.864e-23 [1/s]  | rel: 1.000e+00 [n.d.]
+          Energy Equation :
+              Res energy equation = abs: 4.486e-08 [n.d],9.029634e-32 [W/m3] | rel: 2.600e-01 [n.d.]
+         Combined residual =  abs 1.061e-01 [n.d.], rel 9.315e-02
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+   --- Outer iteration 4 with tolerance 1.134e-03, in 11.3 sec -- ---
+
+--  --- Outer iteration 5 for the coupled problem  --  ---
+    --- Solution of the Lit. Pressure problem in global_domain --  ---
+        it_outer = 005: Solution of lit.pres domain global_domain in 0.70
+
+    --- Solution of the Stokes problem in wedge_domain --  ---
+                       iterative solver : KSP reason/its/rnormesh: 2 23 6.615e-04
+                                  [checks] min vel = 0.00000e+00, max vel = 3.58687e-03, RMS = 1.53077e-03
+        it_outer = 005: Solution of Stokes domain wedge_domain in 5.60
+
+    --- Solution of the Energy problem in global_domain --  ---
+        it_outer = 005: Solution of Temperature domain global_domain in 4.67
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+         Residual difference function :
+              Res velocity       =  8.204e-04 [n.d.], max = 6.792, min = 0.000 [cm/yr], RMS = 0.002 [n.d]
+              Res Temperature    =  1.372e-06 [n.d.], max = 1300.731, min = 0.000 [C], RMS = 1.031 [n.d.] 
+              Res pressure       =  3.505e-05 [n.d.], max = 1.326e-02, min = -4.437e+05 [GPa]
+              Res lithostatic    =  7.332e-09[n.d.], max = 1.817e+01, min = 0.000e+00 [GPa]
+              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  8.212e-04 [n.d.] 
+         Conservation residual :
+          Stokes Equation :
+              Res mom wedge = abs: 5.304e-02 [n.d],8.840e+01 [N/m3] | rel: 4.655e-02 [n.d.]
+              Res mom_slab  = abs: 9.045e-09 [n.d],1.508e-05 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res div_wedge = abs: 5.371e-07 [n.d],5.371e-19 [1/s]  | rel: 1.244e+00 [n.d.]
+              Res div_slab  = abs: 7.864e-11 [n.d],7.864e-23 [1/s]  | rel: 1.000e+00 [n.d.]
+          Energy Equation :
+              Res energy equation = abs: 4.423e-08 [n.d],8.653541e-32 [W/m3] | rel: 2.563e-01 [n.d.]
+         Combined residual =  abs 5.304e-02 [n.d.], rel 4.655e-02
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+   --- Outer iteration 5 with tolerance 8.212e-04, in 11.1 sec -- ---
+
+---------------------Timestep 5  took 67.58 ---------------------
+||--------------------- || ---------------------||
+Time = 0.097 Myr, timestep = 6
+||--------------------- || ---------------------||
+--  --- Outer iteration 0 for the coupled problem  --  ---
+    --- Solution of the Lit. Pressure problem in global_domain --  ---
+        it_outer = 000: Solution of lit.pres domain global_domain in 0.85
+
+    --- Solution of the Stokes problem in wedge_domain --  ---
+                       iterative solver : KSP reason/its/rnormesh: 2 23 6.679e-04
+                                  [checks] min vel = 0.00000e+00, max vel = 3.61072e-03, RMS = 1.53010e-03
+        it_outer = 000: Solution of Stokes domain wedge_domain in 5.83
+
+    --- Solution of the Energy problem in global_domain --  ---
+        it_outer = 000: Solution of Temperature domain global_domain in 4.69
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+         Residual difference function :
+              Res velocity       =  6.443e-04 [n.d.], max = 6.837, min = 0.000 [cm/yr], RMS = 0.002 [n.d]
+              Res Temperature    =  1.278e-04 [n.d.], max = 1300.729, min = 0.000 [C], RMS = 1.031 [n.d.] 
+              Res pressure       =  3.096e-05 [n.d.], max = 2.075e-02, min = -4.437e+05 [GPa]
+              Res lithostatic    =  5.224e-09[n.d.], max = 1.817e+01, min = 0.000e+00 [GPa]
+              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  6.575e-04 [n.d.] 
+         Conservation residual :
+          Stokes Equation :
+              Res mom wedge = abs: 3.121e-02 [n.d],5.202e+01 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res mom_slab  = abs: 9.045e-09 [n.d],1.508e-05 [N/m3] | rel: 1.000e+00 [n.d.]
+              Res div_wedge = abs: 5.531e-07 [n.d],5.531e-19 [1/s]  | rel: 1.000e+00 [n.d.]
+              Res div_slab  = abs: 7.864e-11 [n.d],7.864e-23 [1/s]  | rel: 1.000e+00 [n.d.]
+          Energy Equation :
+              Res energy equation = abs: 1.768e-07 [n.d],5.524947e-30 [W/m3] | rel: 1.000e+00 [n.d.]
+         Combined residual =  abs 3.121e-02 [n.d.], rel 1.000e+00
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+   --- Outer iteration 0 with tolerance 6.575e-04, in 11.5 sec -- ---
+
+---------------------Timestep 6  took 11.52 ---------------------
+||--------------------- || ---------------------||
+Time = 0.116 Myr, timestep = 7
+||--------------------- || ---------------------||
+--  --- Outer iteration 0 for the coupled problem  --  ---
+    --- Solution of the Lit. Pressure problem in global_domain --  ---
+        it_outer = 000: Solution of lit.pres domain global_domain in 0.82
+
+    --- Solution of the Stokes problem in wedge_domain --  ---
+                       iterative solver : KSP reason/its/rnormesh: 2 23 6.650e-04
+                                  [checks] min vel = 0.00000e+00, max vel = 3.68761e-03, RMS = 1.52840e-03
+        it_outer = 000: Solution of Stokes domain wedge_domain in 5.80
+
+    --- Solution of the Energy problem in global_domain --  ---
