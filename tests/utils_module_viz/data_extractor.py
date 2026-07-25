@@ -156,17 +156,16 @@ class Data_experiment():
                 self.NoTD = True
                 return None 
             
-            fl = h5py.File('%s/TimeDependent.h5'%f, 'r')
-            field = 'Function/Temperature  [degC]'
-            times = list(fl[field].keys())
-            time_list = [float(s.replace("_", ".")) for s in times]
-            time_sort = np.argsort(time_list)
-            time_list = [time_list[i] for i in time_sort]
-            times = [times[i] for i in time_sort]
-            TS = len(times) 
-            self.times = times
-            self.time_list = time_list
-            fl.close()
+            with h5py.File('%s/TimeDependent.h5'%f, 'r') as fl:
+                field = 'Function/Temperature  [degC]'
+                times = list(fl[field].keys())
+                time_list = [float(s.replace("_", ".")) for s in times]
+                time_sort = np.argsort(time_list)
+                time_list = [time_list[i] for i in time_sort]
+                times = [times[i] for i in time_sort]
+                TS = len(times)
+                self.times = times
+                self.time_list = time_list
         else: 
             TS = 0 
         
@@ -193,69 +192,63 @@ class Data_experiment():
         import h5py
         import numpy as np
         
-        if ts: 
+        if ts:
             # Direct to the time dependent file
-            fl = h5py.File('%s/TimeDependent.h5'%f, 'r')
-            for it, time in enumerate(self.times):
-                field_temp = '/Function/Temperature  [degC]/%s'%time
-                field_pres = '/Function/Pressure  [GPa]/%s'%time
-                field_litpres = '/Function/Lit Pres  [GPa]/%s'%time
-                field_v   = '/Function/Velocity  [cm/yr]/%s'%time
-                field_q   = '/Function/q  [W/m2]/%s'%time
-                
-                self.Temp[:,it]    = np.array(fl[field_temp]).flatten()
-                self.Pres[:,it]    = np.array(fl[field_pres]).flatten()
-                self.LitPres[:,it] = np.array(fl[field_litpres]).flatten()
-                
-                v                 = np.array(fl[field_v])
-                self.vx[:,it]     = v[:,0]
-                self.vy[:,it]     = v[:,1]
-                
-                qS               = np.array(fl[field_q])
-                self.qx[:,it]    = qS[:,0]
-                self.qy[:,it]    = qS[:,1]
-                
-            fl.close()
+            with h5py.File('%s/TimeDependent.h5'%f, 'r') as fl:
+                for it, time in enumerate(self.times):
+                    field_temp = '/Function/Temperature  [degC]/%s'%time
+                    field_pres = '/Function/Pressure  [GPa]/%s'%time
+                    field_litpres = '/Function/Lit Pres  [GPa]/%s'%time
+                    field_v   = '/Function/Velocity  [cm/yr]/%s'%time
+                    field_q   = '/Function/q  [W/m2]/%s'%time
+
+                    self.Temp[:,it]    = np.array(fl[field_temp]).flatten()
+                    self.Pres[:,it]    = np.array(fl[field_pres]).flatten()
+                    self.LitPres[:,it] = np.array(fl[field_litpres]).flatten()
+
+                    v                 = np.array(fl[field_v])
+                    self.vx[:,it]     = v[:,0]
+                    self.vy[:,it]     = v[:,1]
+
+                    qS               = np.array(fl[field_q])
+                    self.qx[:,it]    = qS[:,0]
+                    self.qy[:,it]    = qS[:,1]
         else:
-            # Direct to the steady state file 
+            # Direct to the steady state file
             f = '%s/Steady_State.h5'%f
 
-            # Extract mesh geometry 
-            fl = h5py.File(f, 'r')
+            # Extract mesh geometry
+            with h5py.File(f, 'r') as fl:
 
+                self.Temp               = np.array(fl['/Function/Temperature  [degC]/0']).flatten()
 
-            self.Temp               = np.array(fl['/Function/Temperature  [degC]/0']).flatten()
+                self.Pres               = np.array(fl['/Function/Pressure  [GPa]/0']).flatten()
 
-            self.Pres               = np.array(fl['/Function/Pressure  [GPa]/0']).flatten()
+                self.LitPres            = np.array(fl['/Function/Lit Pres  [GPa]/0']).flatten()
 
-            self.LitPres            = np.array(fl['/Function/Lit Pres  [GPa]/0']).flatten()
+                v                       =  np.array(fl['Function/Velocity  [cm/yr]/0'])
 
-            v                       =  np.array(fl['Function/Velocity  [cm/yr]/0'])
+                self.vx                 = v[:,0]
 
-            self.vx                 = v[:,0]
+                self.vy                 = v[:,1]
 
-            self.vy                 = v[:,1]
+                qS = np.array(fl['Function/Heat flux [W/m2]/0'])
 
-            qS = np.array(fl['Function/Heat flux [W/m2]/0'])
+                self.qx = qS[:,0]
 
-            self.qx = qS[:,0]
+                self.qy = qS[:,1]
 
-            self.qy = qS[:,1]
-            
-            self.Cp = np.array(fl['/Function/Cp  [J/kg]/0']).flatten()
-            
-            self.k  = np.array(fl['/Function/k  [W/m/K]/0']).flatten()
-            
-            self.rho = np.array(fl['/Function/Density  [kg/m3]/0']).flatten()
-            
-            self.eta = np.array(fl['/Function/Viscosity  [Pa.s]/0']).flatten()
-            
-            self.alpha = np.array(fl['/Function/alpha  [1/K]/0']).flatten()
-            
-            self.kappa = np.array(fl['/Function/kappa  [m2/s]/0']).flatten()
-            
+                self.Cp = np.array(fl['/Function/Cp  [J/kg]/0']).flatten()
 
-            fl.close()
+                self.k  = np.array(fl['/Function/k  [W/m/K]/0']).flatten()
+
+                self.rho = np.array(fl['/Function/Density  [kg/m3]/0']).flatten()
+
+                self.eta = np.array(fl['/Function/Viscosity  [Pa.s]/0']).flatten()
+
+                self.alpha = np.array(fl['/Function/alpha  [1/K]/0']).flatten()
+
+                self.kappa = np.array(fl['/Function/kappa  [m2/s]/0']).flatten()
         
 class MeshData(): 
     def __init__(self,f:str):
@@ -270,13 +263,11 @@ class MeshData():
         # Direct to the steady state file 
         f = '%s/Steady_State.h5'%f
         
-        # Extract mesh geometry 
-        fl = h5py.File(f, 'r')
+        # Extract mesh geometry
+        with h5py.File(f, 'r') as fl:
+            X                        = np.array(fl['/Mesh/mesh/geometry'])
+            ar_point = np.array(fl['Function/MeshTAG/0'])
 
-        X                        = np.array(fl['/Mesh/mesh/geometry'])
-    
-        ar_point = np.array(fl['Function/MeshTAG/0']) 
-        
         ind = np.where(ar_point!=0.0)
         
         ind = ind[0]
@@ -298,8 +289,6 @@ class MeshData():
         self.ind_topSlab  = (self.mesh_tag==8.0)| (self.mesh_tag==9.0)
     
         self.ind_Oceanic  = (self.mesh_tag==10.0)
-
-        fl.close()
 
     
     def create_polygon_slab(self): 
