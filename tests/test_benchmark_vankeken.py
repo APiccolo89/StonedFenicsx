@@ -7,7 +7,7 @@ import numpy as np
 from mpi4py import MPI
 # Global flag to decide wether or not to remove the results -> debug reason. 
 DEBUG = False
-#-------------------------------------------------------------------------------
+# ---
 def perform_test(option_viscous=0,option_thermal=0):
     # Path 2 test
     path_test = os.path.dirname(os.path.realpath(__file__))
@@ -156,7 +156,7 @@ def perform_test(option_viscous=0,option_thermal=0):
     # call this function, and run the simulation - hopefully, without throwing errors. 
     stoned_fenicsx(inp = inp, ph_in=ph_input)
 
-#-------------------------------------------------------------------------------
+# ---
 def read_data_base(option_viscous,option_thermal=0):
     import h5py as h5 
     import os
@@ -272,7 +272,7 @@ def read_data_base(option_viscous,option_thermal=0):
     f.close()
         
     return pass_flag
-#-------------------------------------------------------------------------------
+# ---
 def test_isoviscous():
     # Test Van Keken 
     perform_test(0) # IsoViscous
@@ -282,7 +282,7 @@ def test_isoviscous():
     # Remove folder after completing the test
     if not DEBUG:
         os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
-
+# ---
 def test_diffusion():
     # Test Van Keken 
     perform_test(1) # IsoViscous
@@ -292,8 +292,7 @@ def test_diffusion():
     # Remove folder after completing the test
     if not DEBUG:
         os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
-#-------------------------------------------------------------------------------
-
+# ---
 def test_composite():
     # Test Van Keken 
     perform_test(2) # IsoViscous
@@ -303,8 +302,7 @@ def test_composite():
     # Remove folder after completing the test
     if not DEBUG:
         os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
-#-------------------------------------------------------------------------------
-
+# ---
 def test_composite_NL_no_crust():
     # Test Van Keken 
     perform_test(2,1) # IsoViscous
@@ -314,8 +312,7 @@ def test_composite_NL_no_crust():
     # Remove folder after completing the test
     if not DEBUG:
         os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
-#-------------------------------------------------------------------------------
-
+# ---
 def test_composite_NL_crust():
     # Test Van Keken 
     perform_test(2,2) # IsoViscous
@@ -325,17 +322,17 @@ def test_composite_NL_crust():
     # Remove folder after completing the test
     if not DEBUG:
         os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
+# ---
+# ---
 if __name__ == '__main__': 
     
     DEBUG = True
     
-    #test_isoviscous()
+    test_isoviscous()
 
-    #test_diffusion()
+    test_diffusion()
 
-    #test_composite()
+    test_composite()
     
     test_composite_NL_no_crust()
     

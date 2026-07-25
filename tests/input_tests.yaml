@@ -14,7 +14,7 @@ Input:
     relax: 0.9
     g: 9.81
     eta_max: 1.0e26
-    time_max: 2.0  # Myr
+    time_max: 20.0  # Myr
     steady_state: 1
     decoupling_ctrl: 0
     model_shear: "NoShear" # [Constant,SelfConsistent,NoShear]

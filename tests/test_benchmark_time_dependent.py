@@ -276,38 +276,6 @@ def read_data_base(option_viscous,option_thermal=0):
     f.close()
         
     return pass_flag
-#-------------------------------------------------------------------------------
-def test_isoviscous():
-    # Test Van Keken 
-    perform_test(0) # IsoViscous
-    # Read Data Base and compare data 
-    if MPI.COMM_WORLD.rank == 0: 
-        read_data_base(0)
-    # Remove folder after completing the test
-    if not DEBUG:
-        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
-
-def test_diffusion():
-    # Test Van Keken 
-    perform_test(1) # IsoViscous
-    # Read Data Base and compare data 
-    if MPI.COMM_WORLD.rank == 0: 
-        read_data_base(1)
-    # Remove folder after completing the test
-    if not DEBUG:
-        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
-#-------------------------------------------------------------------------------
-
-def test_composite():
-    # Test Van Keken 
-    perform_test(2) # IsoViscous
-    # Read Data Base and compare data 
-    if MPI.COMM_WORLD.rank == 0: 
-        read_data_base(2)
-    # Remove folder after completing the test
-    if not DEBUG:
-        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
-#-------------------------------------------------------------------------------
 
 def test_composite_NL_no_crust():
     # Test Van Keken 
@@ -335,13 +303,7 @@ if __name__ == '__main__':
     
     DEBUG = True
     
-    #test_isoviscous()
-
-    #test_diffusion()
-
-    #test_composite()
-    
-    #test_composite_NL_no_crust()
+    test_composite_NL_no_crust()
     
     test_composite_NL_crust()
 #---------------------------------------------------------------------------------

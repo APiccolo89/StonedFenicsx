@@ -450,6 +450,19 @@ def _benchmark_van_keken(sol:Solution
            name = '%s/ts'%group_name 
            if name in van_keken_db.keys():
                del van_keken_db[name]
-           van_keken_db.create_dataset(name,data = sol.ts)        
+           van_keken_db.create_dataset(name,data = sol.ts)  
+           
+           name = '%s/r_cons_comb'%group_name 
+           if name in van_keken_db.keys():
+               del van_keken_db[name]
+           van_keken_db.create_dataset(name,data = sol.r_res_conv)   
+           
+           name = '%s/r_cons_comb_r'%group_name 
+           if name in van_keken_db.keys():
+               del van_keken_db[name]
+           van_keken_db.create_dataset(name,data = sol.r_res_conv_r)  
 
-
+           name = '%s/r_res_comb'%group_name 
+           if name in van_keken_db.keys():
+               del van_keken_db[name]
+           van_keken_db.create_dataset(name,data = sol.r_res_comb)  
