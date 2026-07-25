@@ -17,7 +17,6 @@ class NumericalControls:#ctrl
     
     """
     it_max: int = 20
-    it_inner_max: int = 10
     tol: float = 1e-4
     relax: float = 0.9
     g: float = 9.81                # gravity [m/s^2]

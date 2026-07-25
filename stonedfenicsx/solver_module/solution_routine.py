@@ -261,7 +261,7 @@ def time_loop(ctrl_sim:SimulationControls
     ts = 0
     output_class  = OUTPUT(domain=eg.domain,ctrl_sim=ctrl_sim,sc=sc,pdb=pdb,cach_mat_thermal=eg.cached_mat,comm=eg.domain.mesh.comm)
     outit = OUTERITERATION_SOL_VAL(sol)
-
+    t_pr = 0.0 
     while t<ctrl_sim.ctrl.time_max:
         time_A = timing.time()
         if ctrl_sim.ctrl.steady_state==0:
@@ -291,10 +291,11 @@ def time_loop(ctrl_sim:SimulationControls
                                   ,outit=outit
                                   ,ts=ts)
         
-        if ctrl_sim.ctrl.steady_state == 1 or (ts%10) == 0:
+        if ctrl_sim.ctrl.steady_state == 1 or (t-t_pr)*sc.time/sc.scale_myr2sec>1.0:
             print_ph('OUTPUT...')
             output_class.print_output(sol=sol,ctrl_sim=ctrl_sim,sc=sc,ts=ts,it_outer=0,time=t*sc.time/sc.scale_myr2sec)
             print_ph('finished')
+            t_pr = t 
 
         
     

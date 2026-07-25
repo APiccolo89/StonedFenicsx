@@ -268,6 +268,9 @@ class Solution():
         self.rdiv0: float 
         self.rT:NDArray[:]
         self.rT0:float
+        self.u_res:NDArray[:]
+        self.p_res:NDArray[:]
+        self.T_res:NDArray[:]
         self.mT : NDArray[:]
         self.MT : NDArray[:]     
         self.RMST : NDArray[:]
@@ -352,9 +355,10 @@ class Solution():
         self.outer_iteration = []
         self.ts             = []
         self.shear_heating = dolfinx.fem.Function(PG.FS)
-        self.rdiv = np.zeros(1,dtype=int)
-        self.rmom = np.zeros(1,dtype=int)
-        self.rT = np.zeros(1,dtype=int)
+        self.r_res_comb = np.zeros(PG.ctrl_sim.ctrl.it_max,dtype=float)
+        self.r_res_conv = np.zeros(PG.ctrl_sim.ctrl.it_max,dtype=float)
+        self.r_res_comb_r = np.zeros(PG.ctrl_sim.ctrl.it_max,dtype=float)
+        self.r_res_conv_r = np.zeros(PG.ctrl_sim.ctrl.it_max,dtype=float)
 # --- 
 class Global_thermal(Problem):
     def __init__(self,mesh:Mesh, elements:tuple, name:list,pdb:PhaseDataBase,ctrl_sim:SimulationControls):

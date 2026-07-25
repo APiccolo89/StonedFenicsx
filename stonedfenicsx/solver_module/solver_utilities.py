@@ -180,7 +180,10 @@ class OUTERITERATION_SOL_VAL:
         sol.u_global.x.array[:] = self.u.x.array[:]
         update_solution(sol.p_global,self.p,ctrl_sim.ctrl.relax)
         sol.p_global.x.array[:] = self.p.x.array[:]
-
+        
+        sol.r_res_conv[it_outer] = r_tot_conv
+        sol.r_res_conv_r[it_outer] = r_tot_conv/r_tot_rel
+        sol.r_res_comb[it_outer] = res_total
 
         sol.mT.append(minMaxT[0])
         sol.MT.append(minMaxT[1])
