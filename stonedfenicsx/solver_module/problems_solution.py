@@ -1035,8 +1035,11 @@ class Global_thermal(Problem):
         sol.T_N.x.scatter_forward()
         rT = self.compute_residual()
         if it_outer==0:
-            self.rT0 = rT 
-        time_B = timing.time()        
+            if rT == 0.0:
+                self.rT0 = 1.0
+            else:
+                self.rT0 = rT
+        time_B = timing.time()
         if self.ctrl_sim.ctrl.model_shear>0: 
 
             if ts == 0 and it_outer == 0:      

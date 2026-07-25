@@ -181,7 +181,7 @@ def modify_axis_pcolor_mesh(ax,label:list[str],label_bool:list[bool],x_tick_show
 def extract_data_from_data_base(name_test:str,path)->tuple[float,float,int]:
     
     with h5py.File(f'{path}/benchmark_van_keken.h5') as f: 
-        r_consv_a = f[f'{name_test}/r_cons_comb_r'][()]
+        r_consv_a = f[f'{name_test}/r_res_conv_r'][()]
         r_res_a = f[f'{name_test}/r_res_comb'][()]
             
     it_a = len(r_res_a[r_res_a!=0.0])
