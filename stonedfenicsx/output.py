@@ -237,7 +237,7 @@ class OUTPUT():
             # write each field at this physical_time
             # ...same for PL2, rho2, Cp2, k2, kappa2, e_T, eta2, flux
             
-            self.xdmf_main = XDMFFile(self.domain.comm, os.path.join(self.pt_save, "Time_dependent.xdmf"),
+            self.xdmf_main = XDMFFile(self.domain.comm, os.path.join(self.pt_save, "time_dependent.xdmf"),
                                       "a")
             
             self.xdmf_main.write_function(self.u_sol,          time)

@@ -35,6 +35,7 @@ class OUTERITERATION_SOL_VAL:
     div_res_slab : NDArray[float] =  field(init=False)
     div_res_wedge : NDArray[float] =  field(init=False)
     ene_res_gl : NDArray[float] =  field(init=False)
+    combined_residual_0: float = field(init=False)
     res: NDArray[float] = 1.0 
     def __post_init__(self,sol):
         self.T = sol.T_N.copy()
@@ -51,7 +52,7 @@ class OUTERITERATION_SOL_VAL:
         #---                    : mass conservation 
         self.div_res_slab = np.zeros(2)
         self.div_res_wedge = np.zeros(2)
-        
+        self.combined_residual_0 = 1.0 
         self.ene_res_gl = np.zeros(2)
     
     def update_iteration(self,sol): 
@@ -165,9 +166,11 @@ class OUTERITERATION_SOL_VAL:
         print_ph('          Energy Equation :')
         print_ph(f'              Res energy equation = abs: {self.ene_res_gl[0]:.3e} [n.d],{e**3:3e} [W/m3] | rel: {self.ene_res_gl[0]/self.ene_res_gl[1]:.3e} [n.d.]')
         r_tot_conv = np.sqrt(self.mom_res_wedge[0]**2+self.mom_res_slab[0]**2+self.div_res_slab[0]**2+self.div_res_wedge[0]**2+self.ene_res_gl[0]**2)
-        r_tot_rel  = np.sqrt(self.mom_res_wedge[1]**2+self.mom_res_slab[1]**2+self.div_res_slab[1]**2+self.div_res_wedge[1]**2+self.ene_res_gl[1]**2)
+        if it_outer == 0:
+            self.combined_residual_0  = np.sqrt(self.mom_res_wedge[1]**2+self.mom_res_slab[1]**2+self.div_res_slab[1]**2+self.div_res_wedge[1]**2+self.ene_res_gl[1]**2)
 
-        print_ph(f'         Combined residual =  abs {r_tot_conv:.3e} [n.d.], rel {r_tot_conv/r_tot_rel:.3e}')
+        print_ph(f'         Combined residual =  abs {r_tot_conv:.3e} [n.d.], rel {r_tot_conv/ self.combined_residual_0:.3e}')
+        print_ph(f'                           Initial residual ** {self.combined_residual_0:.3e}**')
         print_ph('        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ')
         print_ph('        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ')
 
@@ -194,11 +197,12 @@ class OUTERITERATION_SOL_VAL:
         sol.ts.append(ts)
         # Update the structure, update the residual
         # Switch between combined residual of the conservation 
-
-        self.res = np.min([res_total,r_tot_conv/r_tot_rel])
-        if res_total>r_tot_conv/r_tot_rel:
-            print_ph('     --- The conservation residual is less than the residual difference: the tol is evaluated against conservation equations.')
-        
+        if ctrl_sim.ctrl.steady_state==1:
+            self.res = np.min([res_total,r_tot_conv/self.combined_residual_0])
+            if res_total>r_tot_conv/ self.combined_residual_0 :
+                print_ph('     --- The conservation residual is less than the residual difference: the tol is evaluated against conservation equations.')
+        else: 
+            self.res = r_tot_conv/ self.combined_residual_0 
         self.update_iteration(sol)
         
 # ---
