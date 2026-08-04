@@ -32,6 +32,7 @@ class NumericalControls:#ctrl
     iterative_solver_tol: float = 1e-7
     eta_max : float = 1e26
     pressure_dependency: int = 1
+    initial_guess: int = 1 # Initial guess -> set to 0 after the first outer iteration 
     CFL: float = 0.8
     def convert_string(self):
         if (self.energy_solver_type) not in dict_solver_type.keys():

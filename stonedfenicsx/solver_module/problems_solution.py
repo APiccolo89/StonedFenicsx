@@ -677,9 +677,7 @@ class Global_thermal(Problem):
             print_ph(f'       old dt = {self.ctrl_sim.ctrl.dt:.2f}')
             self.ctrl_sim.ctrl.dt = self.ctrl_sim.ctrl.CFL*np.min([dt_a,dt_b])
             print_ph(f'       new dt = {self.ctrl_sim.ctrl.dt:.2f}')            
-            
-            
-            
+  
     #---
     def set_form_residual_TD(self
                             ,p :dolfinx.fem.function.Function = None
@@ -999,12 +997,12 @@ class Global_thermal(Problem):
         print_ph(f'    --- Solution of the Energy problem in {self.domain.name} --  ---')
 
         # choose the problemesh:
-        if self.ctrl_sim.ctrl.steady_state == 1 or (ts==0 and it_outer==0):
+        if self.ctrl_sim.ctrl.steady_state == 1 or (self.ctrl_sim.ctrl.initial_guess==1):
             self.set_linear = self.set_linear_picard_SS 
             self.set_residual = self.set_form_residual_SS
 
         else: 
-            if ts==1: 
+            if ts==0: 
                 # -> the intial guess is assuming a steady state solution with the initial condition ~ linear
                 self.cached_form = CACHED_FEM_FORM()             
             self.set_linear = self.set_linear_picard_TD
@@ -1489,7 +1487,7 @@ class Stokes_Problem(Problem):
 
         e = compute_strain_rate(vel)
         # If we are in the first iteration of the first timestep -> use the default viscosity for creating an initial guess. fem.Constant(M.domainG.mesh, PETSc.ScalarType([0.0, -ctrl.g]))   
-        if (it == 0 and ts == 0 and self.ctrl_sim.ctrl.steady_state==0) or slab == 1:
+        if (it == 0 and ts == 0 and self.ctrl_sim.ctrl.initial_guess==1) or slab == 1:
             eta = dolfinx.fem.Constant(self.domain.mesh,PETSc.ScalarType(self.cached_mat.eta_def))
         else: 
             eta = compute_viscosity_FX(e,temp,pres_l,self.pdb,self.cached_mat)
@@ -1664,7 +1662,7 @@ class Stokes_Problem(Problem):
         print_ph(f'    --- Solution of the Stokes problem in {self.domain.name} --  ---')
 
         self.bc   = self.setdirichlecht(self.V_subs,ts=ts,it_outer=it_outer) 
-        if ts == 1: # -> remove the first timestep 
+        if ts == 0: # -> remove the first timestep 
             self.cached_form = CACHED_FEM_FORM()
         
         a,ap0,L = self.initialise_fem_form(sol=sol,it_outer=it_outer,ts=ts)

@@ -142,7 +142,10 @@ def outerloop_operation(ctrl_sim:SimulationControls,
                                        ,ts=ts)
 
         # Interpolate from global to wedge/slab
-
+        outit.ene_res_gl[0], outit.ene_res_gl[1] = eg.Solve_the_Problem(sol
+                            ,it_outer = it_outer
+                            ,ts = ts)
+        
         interpolate_from_sub_to_main(sol.t_owedge
                                      ,sol.T_N
                                      ,we.domain.cell_par
@@ -185,11 +188,7 @@ def outerloop_operation(ctrl_sim:SimulationControls,
         interpolate_from_sub_to_main(sol.p_global
                                     ,sol.p_slab
                                     ,sl.domain.cell_par)
-        
-        outit.ene_res_gl[0], outit.ene_res_gl[1] = eg.Solve_the_Problem(sol
-                            ,it_outer = it_outer
-                            ,ts = ts)
-        
+                
         # Compute residuum 
         outit.compute_residuum_outer(sol=sol
                                      ,it_outer=it_outer
@@ -207,8 +206,36 @@ def outerloop_operation(ctrl_sim:SimulationControls,
     # reset outit res:
     outit.res = 1.0 
         
-        
-    
+def initial_guess_simulation(ctrl_sim:SimulationControls
+                             ,sc:Scal
+                             ,eg:Global_thermal
+                             ,lg:Global_pressure
+                             ,we:Wedge
+                             ,sl:Slab 
+                            ,sol:Solution
+                            ,pdb:PhaseDataBase
+                            ,outit:OUTERITERATION_SOL_VAL
+                            ,ts:int=0)->None:
+    """Compute the initial guess for the first Picard iteration of the simulation.
+    """
+    ts = 0 #  fake ts 
+    time_A = timing.time()
+    print_ph('              !!! Initial guess of the simulation !!!')
+    outerloop_operation(ctrl_sim=ctrl_sim
+                                  ,sc=sc
+                                  ,eg=eg
+                                  ,lg=lg
+                                 ,we=we
+                                  ,sl=sl
+                                  ,sol=sol
+                                  ,pdb=pdb
+                                  ,outit=outit
+                                  ,ts=ts)
+    ctrl_sim.ctrl.initial_guess = 0 
+    time_B = timing.time()
+    print_ph(f'              !!! Initial guess of the simulation took {time_B-time_A:.2f} seconds !!!')
+
+
 #---------------------------------------------------------------------------------------------------
 # Def time_loop 
 def time_loop(ctrl_sim:SimulationControls
@@ -268,6 +295,20 @@ def time_loop(ctrl_sim:SimulationControls
     output_class  = OUTPUT(domain=eg.domain,ctrl_sim=ctrl_sim,sc=sc,pdb=pdb,cach_mat_thermal=eg.cached_mat,comm=eg.domain.mesh.comm)
     outit = OUTERITERATION_SOL_VAL(sol)
 
+    # Initial guess for the outer loop: -> linear problem with constant viscosity, no shear heating. 
+    
+    initial_guess_simulation(ctrl_sim=ctrl_sim
+                                  ,sc=sc
+                                  ,eg=eg
+                                  ,lg=lg
+                                  ,we=we
+                                  ,sl=sl
+                                  ,sol=sol
+                                  ,pdb=pdb
+                                  ,outit=outit)
+    
+
+    # --- 
     while t<ctrl_sim.ctrl.time_max:
         time_A = timing.time()
         if ctrl_sim.ctrl.steady_state==0:
@@ -283,7 +324,6 @@ def time_loop(ctrl_sim:SimulationControls
             
         if ctrl_sim.ctrl_ky.constant == 0: 
             ctrl_sim.ctrl_ky.update_vel_age(t)
-
 
         # Prepare variable
         outerloop_operation(ctrl_sim=ctrl_sim
@@ -312,8 +352,9 @@ def time_loop(ctrl_sim:SimulationControls
                 from stonedfenicsx.output import _benchmark_van_keken
                 _benchmark_van_keken(sol,ctrl_sim.ctrl_io,sc)
 
-        if ts>0:
-            t = t+ctrl_sim.ctrl.dt
+        
+            
+        t = t+ctrl_sim.ctrl.dt
             
     
         sol.T_O.x.array[:] = sol.T_N.x.array[:]
