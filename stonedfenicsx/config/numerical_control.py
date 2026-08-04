@@ -60,7 +60,7 @@ class IOControls: # ctrlio
     sname: str = "MockTest"
     ts_out: int = 10
     dt_out: float = 1
-    ts_time: 'str'|int = 'step' # the value is converted into an integer after the initialisation of the class
+    ts_time: str|int = 'step' # the value is converted into an integer after the initialisation of the class
     path_test: Path = field(init=False)
     path_cached_information: Path = Path('Cached_information')
 

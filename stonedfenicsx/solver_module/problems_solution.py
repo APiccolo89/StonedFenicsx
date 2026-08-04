@@ -916,7 +916,7 @@ class Global_thermal(Problem):
         supg_old = tau_f * ((rhocp_old/dt)*T_O - (rhocp_old/2.0)*ufl.dot(u_global,ufl.grad(T_O)))*self.dx
         dx  = self.dx
         
-        if self.ctrl_sim.ctrl.model_shear>0 and it_inner !=0:
+        if self.ctrl_sim.ctrl.model_shear>0:
             f    = (self.energy_source) * self.test0 * dx + self.shear_heating # source term {energy_source is radiogenic heating compute before hand, shear heating is frictional heating already a form}
         else: 
             f = self.energy_source * self.test0 * dx 

@@ -1,5 +1,5 @@
 import numpy as np
-from typing import get_type_hints, get_origin, get_args
+from typing import get_type_hints, get_origin, get_args, Union
 
 
 
@@ -97,6 +97,16 @@ def cast_type(v: any, tp: any) -> any:
         v = tuple(cast_type(value, subtype) for value in v)
     elif origin is np.ndarray:
         v =  np.asarray(v)
+    elif len(args) > 1:
+        for arg in args:
+            try:
+                v = cast_type(v, arg)
+                break
+            except (ValueError, TypeError):
+                continue
+        else:
+            raise ValueError(f"Cannot cast value {v} to any of the types in {args}")
+           
     else:
         v = tp(v)
     return v

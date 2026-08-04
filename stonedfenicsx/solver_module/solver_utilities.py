@@ -393,9 +393,9 @@ def timestep_output(ctrlio: IOControls,ts:int,t:float,time_previous:float,flag_s
         flag_save (bool): Flag indicating whether to save the output files.
     """
 
-    if ctrlio.output_type == 1:
+    if ctrlio.ts_time == 1:
         dt = t - time_previous
-        if dt > ctrlio.dt_out:
+        if dt >= ctrlio.dt_out:
             flag_save = True
     else: 
         if ts % ctrlio.ts_out == 0:

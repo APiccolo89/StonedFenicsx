@@ -122,11 +122,14 @@ def outerloop_operation(ctrl_sim:SimulationControls,
     # Initialise the it outer and residual outer
     it_outer = 0 
     
-    if lg.typology == 'LinearProblem' and eg.typology == 'LinearProblem' and we.typology == 'LinearProblem':
-        ctrl_sim.ctrl.it_max = 2
+    if (lg.typology == 'LinearProblem' and eg.typology == 'LinearProblem' and we.typology == 'LinearProblem') \
+        or (ctrl_sim.ctrl.steady_state ==0 and ts == 0):
+        max_it = 2
+    else: 
+        max_it = ctrl_sim.ctrl.it_max        
     
     
-    while it_outer < ctrl_sim.ctrl.it_max and outit.res > ctrl_sim.ctrl.tol: 
+    while it_outer < max_it and outit.res > ctrl_sim.ctrl.tol: 
         
         print_ph(f'--  --- Outer iteration {it_outer:d} for the coupled problem  --  ---')
         
@@ -196,7 +199,10 @@ def outerloop_operation(ctrl_sim:SimulationControls,
                                      ,ctrl_sim=ctrl_sim
                                     )
         print_ph('')
+        if it_outer > max_it:
+            print_ph(f'Warning: Outer loop did not converge after {max_it:d} iterations. Residual = {outit.res:.3e}!!!!')
         it_outer = it_outer + 1
+        
     
     # reset outit res:
     outit.res = 1.0 
@@ -299,9 +305,6 @@ def time_loop(ctrl_sim:SimulationControls
             tbs = t 
             flag_output = False
 
-        
-    
-        
         if ctrl_sim.ctrl.steady_state == 1: 
             print_ph('---------------------End Steady State solution, printing the benchmarks')
             t = ctrl_sim.ctrl.time_max
