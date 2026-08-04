@@ -8,7 +8,7 @@ from dataclasses import InitVar
 # --- #
 dict_shear_modes = {"NoShear": 0, "SelfConsistent": 1, "Constant": 2}
 dict_solver_type = {"Direct": np.int32(1), "Iterative": np.int32(0)}
-
+dict_output_type = {"step": 0, "time": 1}
 
 @dataclass(slots=True)
 class NumericalControls:#ctrl 
@@ -32,6 +32,7 @@ class NumericalControls:#ctrl
     iterative_solver_tol: float = 1e-7
     eta_max : float = 1e26
     pressure_dependency: int = 1
+    CFL: float = 0.8
     def convert_string(self):
         if (self.energy_solver_type) not in dict_solver_type.keys():
             raise ValueError(f'Solver type is wrong: {self.energy_solver_type} is not valid. The options must be either Direct or Iterative' )
@@ -59,6 +60,7 @@ class IOControls: # ctrlio
     sname: str = "MockTest"
     ts_out: int = 10
     dt_out: float = 1
+    ts_time: 'str'|int = 'step' # the value is converted into an integer after the initialisation of the class
     path_test: Path = field(init=False)
     path_cached_information: Path = Path('Cached_information')
 
@@ -72,6 +74,7 @@ class IOControls: # ctrlio
         self.path_test.mkdir(parents=True, exist_ok=True)
         self.path_cached_information.mkdir(parents=True,exist_ok=True)
         print("Directory created:", self.path_test)
+        self.ts_time = dict_output_type[self.ts_time] # convert the string into an integer flag for the output type
 # --- #
 @dataclass(slots=True)
 class CTRLBC:

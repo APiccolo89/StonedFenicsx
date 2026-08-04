@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from dataclasses import dataclass, field, InitVar
 # --- 
 from stonedfenicsx.config.scal import Scal
-from stonedfenicsx.config.numerical_control import SimulationControls
+from stonedfenicsx.config.numerical_control import SimulationControls,IOControls
 from stonedfenicsx.config.geometry import GeomInput
 from stonedfenicsx.utils import print_ph, timing
 
@@ -380,3 +380,25 @@ def L2_norm_calculation(f:dolfinx.fem.Function) -> float:
     global_sq = comm.allreduce(local, op=MPI.SUM)
     return np.sqrt(global_sq)
 
+
+
+
+def timestep_output(ctrlio: IOControls,ts:int,t:float,time_previous:float,flag_save:bool)->bool:
+    """Write output files for the current timestep.
+
+    Args:
+        ctrlio (IOControls): I/O control settings, including output frequency and file paths.
+        ts (int): Current timestep index.
+        t (float): Current simulation time.
+        flag_save (bool): Flag indicating whether to save the output files.
+    """
+
+    if ctrlio.output_type == 1:
+        dt = t - time_previous
+        if dt > ctrlio.dt_out:
+            flag_save = True
+    else: 
+        if ts % ctrlio.ts_out == 0:
+            flag_save = True
+    
+    return flag_save

@@ -9,7 +9,7 @@ from stonedfenicsx.config.phase_db import PhaseDataBase
 from stonedfenicsx.utils import interpolate_from_sub_to_main,timing,print_ph
 from stonedfenicsx.solver_module.problems_solution import Solution, Slab, Wedge, Global_thermal, Global_pressure
 from stonedfenicsx.output import OUTPUT
-from stonedfenicsx.solver_module.solver_utilities import OUTERITERATION_SOL_VAL
+from stonedfenicsx.solver_module.solver_utilities import OUTERITERATION_SOL_VAL,timestep_output
 # --- mpi4py/petsc4py needed for the permanent per-timestep PETSc garbage
 # cleanup below (see time_loop).
 from mpi4py import MPI
@@ -255,8 +255,8 @@ def time_loop(ctrl_sim:SimulationControls
     else:
         print_ph('---------------------- Time Dependent Solution --------------------- ')
 
-         
-        
+    flag_output = False     
+    tbs = 0.0     
     t  = 0.0
     ts = 0
     output_class  = OUTPUT(domain=eg.domain,ctrl_sim=ctrl_sim,sc=sc,pdb=pdb,cach_mat_thermal=eg.cached_mat,comm=eg.domain.mesh.comm)
@@ -290,11 +290,14 @@ def time_loop(ctrl_sim:SimulationControls
                                   ,pdb=pdb
                                   ,outit=outit
                                   ,ts=ts)
-        
-        if ctrl_sim.ctrl.steady_state == 1 or (ts%10) == 0:
+        # --- Save the output if the timestep is a multiple of the output timestep, or if the time is a multiple of the output time, or if the steady state is reached.
+        flag_output = timestep_output(ctrlio=ctrl_sim.ctrl_io,ts=ts,t=t,time_previous=tbs,flag_save=flag_output)
+        if ctrl_sim.ctrl.steady_state == 1 or flag_output:
             print_ph('OUTPUT...')
             output_class.print_output(sol=sol,ctrl_sim=ctrl_sim,sc=sc,ts=ts,it_outer=0,time=t*sc.time/sc.scale_myr2sec)
             print_ph('finished')
+            tbs = t 
+            flag_output = False
 
         
     
