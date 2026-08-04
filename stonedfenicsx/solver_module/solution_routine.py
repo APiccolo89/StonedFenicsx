@@ -122,9 +122,10 @@ def outerloop_operation(ctrl_sim:SimulationControls,
     # Initialise the it outer and residual outer
     it_outer = 0 
     
-    if (lg.typology == 'LinearProblem' and eg.typology == 'LinearProblem' and we.typology == 'LinearProblem') \
-        or (ctrl_sim.ctrl.steady_state ==0 and ts == 0):
+    if (lg.typology == 'LinearProblem' and eg.typology == 'LinearProblem' and we.typology == 'LinearProblem'):
         max_it = 2
+    elif ctrl_sim.ctrl.initial_guess == 1:
+        max_it = 5
     else: 
         max_it = ctrl_sim.ctrl.it_max        
     
@@ -232,6 +233,8 @@ def initial_guess_simulation(ctrl_sim:SimulationControls
                                   ,outit=outit
                                   ,ts=ts)
     ctrl_sim.ctrl.initial_guess = 0 
+    sol.T_O.x.array[:] = sol.T_N.x.array[:]
+    sol.T_O.x.scatter_forward()
     time_B = timing.time()
     print_ph(f'              !!! Initial guess of the simulation took {time_B-time_A:.2f} seconds !!!')
 

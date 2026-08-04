@@ -3,6 +3,7 @@ from stonedfenicsx.utils import timing_function
 from stonedfenicsx.config.numerical_control import (CtrlKy,
                                                     CtrlTemperatureBC,
                                                     NumericalControls,
+                                                    IOControls,
                                                     SimulationControls)
 from stonedfenicsx.config.phase_db import PhaseDataBase
 from dataclasses import dataclass,field
