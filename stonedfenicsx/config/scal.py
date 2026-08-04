@@ -86,6 +86,7 @@ def scaling_simulation_physical(
         scaling_control_parameters(ctrl=ctrl_sim.ctrl,sc=sc)
         scaling_mesh(mesh=mesh,sc=sc)
         scaling_material_properties(pdb=pdb,sc=sc)
+        scaling_io_controls(ctrl_io=ctrl_sim.ctrl_io,sc=sc)
         ctrl_sim._scaled = True
     else: 
         raise ValueError ('Simulations controls cannot be scaled more than once!')
@@ -287,3 +288,15 @@ def scale_kinematic_bc(ctrl_ky:CtrlKy, sc: Scal)->None:
     """
     ctrl_ky.v_s *= sc.scale_vel * (sc.time/sc.length)
     ctrl_ky.interval_val *= sc.scale_myr2sec * 1/sc.time
+
+def scaling_io_controls(ctrl_io:IOControls,sc:Scal)->None:
+    """Non-dimensionalise input/output control parameters.
+
+    Converts the time-series interval array `interval_val` from Myr to the
+    dimensionless time unit.
+
+    Args:
+        ctrl_io (IOControls): Input/output controls; `interval_val` is overwritten in-place.
+        sc (Scal): Fully initialised scaling object.
+    """
+    ctrl_io.dt_out *= sc.scale_myr2sec * 1/sc.time
