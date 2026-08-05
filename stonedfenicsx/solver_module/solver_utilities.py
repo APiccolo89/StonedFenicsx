@@ -399,8 +399,11 @@ def timestep_output(ctrlio: IOControls,ts:int,t:float,time_previous:float,flag_s
         dt = t - time_previous
         if dt > ctrlio.dt_out:
             flag_save = True
+            print_ph(f'   --- Output files for timestep {ts:d} at time {t:.3e} ---')
+
     else: 
         if ts % ctrlio.ts_out == 0:
             flag_save = True
+        print_ph(f'   --- Output files for timestep {ts:d} at time {t:.3e} ---')
     
     return flag_save

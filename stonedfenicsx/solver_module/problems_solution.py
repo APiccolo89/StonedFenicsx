@@ -395,8 +395,8 @@ class Global_thermal(Problem):
         self.problem_shear_heating = None 
         self.problem_shear_heating_mass = None 
         self.dt_sim = dolfinx.fem.Constant(self.domain.mesh, PETSc.ScalarType(ctrl_sim.ctrl.dt))
-        self.rho0_cp0 = dolfinx.fem.Function(self.domain.phase.function_space)
-        self.k0 = dolfinx.fem.Function(self.domain.phase.function_space)
+        self.rho0_cp0 = dolfinx.fem.Function(self.FS)
+        self.k0 = dolfinx.fem.Function(self.FS)
     #---    
     @staticmethod
     def interpolate_1d_vector_boundary(function_space, z, temp_vec, dofs_intp):
@@ -941,9 +941,9 @@ class Global_thermal(Problem):
             self.cached_form.other_form['rho0cp0'] = rho_k0 * Cp_k0
             self.cached_form.other_form['k0'] = k_k0
         self.rho0_cp0.interpolate(dolfinx.fem.Expression(
-        self.cached_form.other_form['rho0cp0'], self.domain.phase.function_space.element.interpolation_points()))
+        self.cached_form.other_form['rho0cp0'], self.FS.element.interpolation_points()))
         self.k0.interpolate(dolfinx.fem.Expression(
-                        self.cached_form.other_form['k0'], self.domain.phase.function_space.element.interpolation_points()))
+                        self.cached_form.other_form['k0'], self.FS.element.interpolation_points()))
         
     #---
     def initialise_form(self,sol:Solution,it_outer:int,ts:int):
