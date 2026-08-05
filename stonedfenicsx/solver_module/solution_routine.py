@@ -5,6 +5,7 @@ from stonedfenicsx.config.numerical_control import SimulationControls
 from stonedfenicsx.config.geometry import Mesh
 from stonedfenicsx.config.scal import Scal
 from stonedfenicsx.config.phase_db import PhaseDataBase
+from stonedfenicsx.utils import timing_function
 # ---
 from stonedfenicsx.utils import interpolate_from_sub_to_main,timing,print_ph
 from stonedfenicsx.solver_module.problems_solution import Solution, Slab, Wedge, Global_thermal, Global_pressure
@@ -122,13 +123,19 @@ def outerloop_operation(ctrl_sim:SimulationControls,
     # Initialise the it outer and residual outer
     it_outer = 0 
     
-    if (lg.typology == 'LinearProblem' and eg.typology == 'LinearProblem' and we.typology == 'LinearProblem'):
+    if (lg.typology == 'LinearProblem' and eg.typology == 'LinearProblem' and we.typology == 'LinearProblem') \
+        or (ctrl_sim.ctrl.steady_state ==0 and ts == 0):
         max_it = 2
-    elif ctrl_sim.ctrl.initial_guess == 1:
-        max_it = 5
     else: 
         max_it = ctrl_sim.ctrl.it_max        
     
+    flag_solve_pressure = 0
+    # solve pressure flag: 
+    if ctrl_sim.ctrl.steady_state == 1:
+        if (lg.typology == 'NonlinearProblem'):
+            flag_solve_pressure = 1
+
+        
     
     while it_outer < max_it and outit.res > ctrl_sim.ctrl.tol: 
         
@@ -137,10 +144,11 @@ def outerloop_operation(ctrl_sim:SimulationControls,
         time_A_outer = timing.time()
         # Copy the old solution of the outer loop for computing the residual of the equations. 
         
-        if lg.typology == 'NonlinearProblem' or it_outer == 0:  
+        if flag_solve_pressure == 1 or it_outer == 0:  
             lg.Solve_the_Problem(sol,
                                        it_outer
                                        ,ts=ts)
+
 
         # Interpolate from global to wedge/slab
         outit.ene_res_gl[0], outit.ene_res_gl[1] = eg.Solve_the_Problem(sol
@@ -206,7 +214,7 @@ def outerloop_operation(ctrl_sim:SimulationControls,
     
     # reset outit res:
     outit.res = 1.0 
-        
+@timing_function       
 def initial_guess_simulation(ctrl_sim:SimulationControls
                              ,sc:Scal
                              ,eg:Global_thermal
@@ -232,9 +240,9 @@ def initial_guess_simulation(ctrl_sim:SimulationControls
                                   ,pdb=pdb
                                   ,outit=outit
                                   ,ts=ts)
-    ctrl_sim.ctrl.initial_guess = 0 
     sol.T_O.x.array[:] = sol.T_N.x.array[:]
     sol.T_O.x.scatter_forward()
+    ctrl_sim.ctrl.initial_guess = 0 
     time_B = timing.time()
     print_ph(f'              !!! Initial guess of the simulation took {time_B-time_A:.2f} seconds !!!')
 

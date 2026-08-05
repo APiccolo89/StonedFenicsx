@@ -394,6 +394,9 @@ class Global_thermal(Problem):
         self.e_ii_fr = 0.5 * (self.ctrl_sim.ctrl_ky.v_s[0] * 1 /self.g_input.wz_tk)
         self.problem_shear_heating = None 
         self.problem_shear_heating_mass = None 
+        self.dt_sim = dolfinx.fem.Constant(self.domain.mesh, PETSc.ScalarType(ctrl_sim.ctrl.dt))
+        self.rho0_cp0 = dolfinx.fem.Function(self.domain.phase.function_space)
+        self.k0 = dolfinx.fem.Function(self.domain.phase.function_space)
     #---    
     @staticmethod
     def interpolate_1d_vector_boundary(function_space, z, temp_vec, dofs_intp):
@@ -419,6 +422,7 @@ class Global_thermal(Problem):
             buf_fct.x.scatter_forward()
             return buf_fct
     #---    
+    @timing_function
     def create_bc_temp(self,u_global:dolfinx.fem.Function,it_outer:int,ts=0)->list:
         """Create the boundary condition
 
@@ -473,7 +477,7 @@ class Global_thermal(Problem):
         self.bc_right_wed = dolfinx.fem.dirichletbc(ctrl_tbc.temp_max, dofs_vel,self.FS)
         
         # Bottom wedge
-        facets                 = domain.facets.find(domain.bc_dict['Bottom_wed'])                        
+        facets     = domain.facets.find(domain.bc_dict['Bottom_wed'])                        
         dofs_bot_wed        = dolfinx.fem.locate_dofs_topological(self.FS, domain.mesh.topology.dim-1, facets)
         v_vel = u_global.sub(1) # index 1 = y-direction (2D)
         vel_T = dolfinx.fem.Function(self.FS)
@@ -482,22 +486,22 @@ class Global_thermal(Problem):
         vel_bc = vel_T.x.array[dofs_bot_wed]
         ind_z = np.where((vel_bc > 0.0))
         dofs_vel = dofs_bot_wed[ind_z[0]]   
-                    
-        
+                
         self.bc_bot_wed = dolfinx.fem.dirichletbc(ctrl_tbc.temp_max, dofs_vel,self.FS)
         
         self.bc = [ self.bc_left,  self.bc_right_wed,self.bc_bot_wed, self.bc_right_lit,self.bc_top]  
         # Shear heating bc informations
-        if self.ctrl_sim.ctrl.model_shear>0:
+        if self.ctrl_sim.ctrl.model_shear>0 :
             # decoupling_function mutates its `fun` argument in place and
             # returns the same object, so operate directly on wall_boundary
             # instead of copying it every outer iteration.
-            Z = self.FS.tabulate_dof_coordinates()[:,1]
-            decoupling_function(Z,self.wall_boundary,self.g_input)
-            self.wall_boundary.x.array[:] = self.wall_boundary.x.array[:] * self.ctrl_sim.ctrl_ky.v_s[0]
-            self.wall_boundary.x.scatter_forward()
+            if (ts == 0 and it_outer == 0):
+                Z = self.FS.tabulate_dof_coordinates()[:,1]
+                decoupling_function(Z,self.wall_boundary,self.g_input)
+            
             self.e_ii_fr = 0.5 * (self.ctrl_sim.ctrl_ky.v_s[0] * 1 /self.g_input.wz_tk)    
     #---
+    @timing_function
     def compute_shear_heating(self
                               ,p:dolfinx.fem.Function
                               ,T_k:dolfinx.fem.Function)->None:
@@ -522,11 +526,12 @@ class Global_thermal(Problem):
                 else: 
                     tau_eff = self.pdb.tau_min
                 # cache -> decoupling 
-                friction_heat = tau_eff * self.wall_boundary
+                friction_heat = tau_eff * self.wall_boundary * self.ctrl_sim.ctrl_ky.v_s[0] 
                 
                 expression = friction_heat('+') * self.test0('+') * (dS(domain.bc_dict['Subduction_top_lit']) + dS(domain.bc_dict['Subduction_top_wed']))
         self.shear_heating = expression
     #---
+    @timing_function
     def compute_friction_shear_expression(self
                                           ,T:dolfinx.fem.function.Function
                                           ,P:dolfinx.fem.function.Function):
@@ -545,6 +550,7 @@ class Global_thermal(Problem):
 
         return tau, tau_vs, tau_lim      
     #---
+    @timing_function
     def compute_energy_source(self):
         """Compute and cache the radiogenic heat production source term.
 
@@ -558,13 +564,15 @@ class Global_thermal(Problem):
         self.energy_source.x.array[:] = source.x.array[:]
         self.energy_source.x.scatter_forward()
     #---
+    @timing_function
     def set_form_residual_SS(self
                             ,p :dolfinx.fem.function.Function = None
                             ,T :dolfinx.fem.function.Function = None
                             ,T_O :dolfinx.fem.function.Function = None
                             ,u_global :dolfinx.fem.function.Function = None
                             ,it_inner:int=0
-                            ,dt:float = 0.0)->float:
+                            ,dt:float = 0.0
+                            ,L:dolfinx.fem.Form=None)->float:
         """Build the steady-state residual form of the energy equation (diffusion + SUPG-stabilised advection - sources).
 
         Args:
@@ -605,14 +613,13 @@ class Global_thermal(Problem):
         tau = h / (2.0 * u_norm+1e-12)
         SUPG = tau * ufl.dot(u_global, ufl.grad(self.test0)) * residual * self.dx
         SUPG_L = tau * ufl.dot(u_global, ufl.grad(self.test0)) * f * self.dx
-        if self.ctrl_sim.ctrl.model_shear>0:
-            L = ((f) * self.test0 * dx + self.shear_heating) 
-        else: 
-            L = (f) * self.test0 * dx
+
+
         R = dolfinx.fem.form(diff + adv + SUPG - L-SUPG_L)
         
         return R
     #---
+    @timing_function
     def compute_residual(self):
         """Assemble the cached temperature residual form and return its L2 norm.
 
@@ -642,9 +649,10 @@ class Global_thermal(Problem):
         RTemp = RT.norm(PETSc.NormType.NORM_2)  
         return RTemp 
     #--- 
+    @timing_function
     def compute_dt_update_dt(self,sol:Solution,it_outer:int,ts:int)->None:
         # compute the kappa form
-        if ts==1:
+        if ts==0 and it_outer==0:
             rho = density_FX(self.cached_mat,sol.T_N,sol.PL)
             cp = heat_capacity_FX(self.cached_mat,sol.T_N)
             k = heat_conductivity_FX(self.cached_mat,sol.T_N,sol.PL,cp,rho)
@@ -656,13 +664,9 @@ class Global_thermal(Problem):
             self.cached_form.other_form['dt_diff'] = dolfinx.fem.Expression(dt_diff,self.domain.solph.element.interpolation_points())
             self.cached_form.other_form['dt_adv'] = dolfinx.fem.Expression(dt_adv,self.domain.solph.element.interpolation_points())
 
-        if ts==1 or self.ctrl_sim.ctrl_ky.constant==0:
+        if (ts==0 and it_outer==0) or self.ctrl_sim.ctrl_ky.constant==0:
             tdim = self.domain.mesh.topology.dim
             ncells_local = self.domain.mesh.topology.index_map(tdim).size_local
-            # Allocate once and reuse: this branch runs every outer iteration
-            # whenever ctrl_ky.constant==0 (non-constant kinematic BC, i.e.
-            # any real transient run), so a fresh Function per call here
-            # leaked steadily across the whole time-dependent simulation.
             if not hasattr(self, '_dt_adv_fn'):
                 self._dt_adv_fn = dolfinx.fem.Function(self.domain.solph)
                 self._dt_dif_fn = dolfinx.fem.Function(self.domain.solph)
@@ -676,16 +680,19 @@ class Global_thermal(Problem):
             dt_b = self.domain.comm.allreduce(dt_b,op=MPI.MIN)
             print_ph(f'       old dt = {self.ctrl_sim.ctrl.dt:.2f}')
             self.ctrl_sim.ctrl.dt = self.ctrl_sim.ctrl.CFL*np.min([dt_a,dt_b])
-            print_ph(f'       new dt = {self.ctrl_sim.ctrl.dt:.2f}')            
+            print_ph(f'       new dt = {self.ctrl_sim.ctrl.dt:.2f}')   
+            self.dt_sim.value = self.ctrl_sim.ctrl.dt         
   
     #---
+    @timing_function
     def set_form_residual_TD(self
                             ,p :dolfinx.fem.function.Function = None
                             ,T :dolfinx.fem.function.Function = None
                             ,T_O :dolfinx.fem.function.Function = None
                             ,u_global :dolfinx.fem.function.Function = None
                             ,it_inner:int=0
-                            ,dt:float = 0.0)->float:
+                            ,dt:float = 0.0
+                            ,L:dolfinx.fem.Form=None)->float:
         """Assemble the time-dependent (Crank-Nicolson) energy residual and return its L2 norm.
 
         Builds the new/old diffusion, advection and mass terms (mirroring
@@ -705,7 +712,7 @@ class Global_thermal(Problem):
             float: L2 norm of the assembled residual vector, with Dirichlet
             dofs excluded.
         """
-        dt = self.ctrl_sim.ctrl.dt
+        dt = self.dt_sim 
 
         
         rho_k = density_FX(self.cached_mat, T, p)  # frozen
@@ -730,12 +737,12 @@ class Global_thermal(Problem):
         dx  = self.dx
         
         # SUPG : 
-        h = ufl.CellDiameter(self.domain.mesh)
-        u_norm = ufl.sqrt(ufl.dot(u_global,u_global)+1e-12)
-        tau = 1.0/ufl.sqrt((2.0/dt)**2+(2.0*u_norm/h)**2+1e-12)
-        tau_f = tau * ufl.dot(u_global,ufl.grad(self.test0))
-        supg_new = tau_f * ((rhocp/dt)*T + (rhocp/2.0)*ufl.dot(u_global,ufl.grad(T)))*self.dx 
-        supg_old = tau_f * ((rhocp_old/dt)*T_O - (rhocp_old/2.0)*ufl.dot(u_global,ufl.grad(T_O)))*self.dx
+        #h = ufl.CellDiameter(self.domain.mesh)
+        #u_norm = ufl.sqrt(ufl.dot(u_global,u_global)+1e-12)
+        #tau = 1.0/ufl.sqrt((2.0/dt)**2+(2.0*u_norm/h)**2+1e-12)
+        #tau_f = tau * ufl.dot(u_global,ufl.grad(self.test0))
+        #supg_new = tau_f * ((rhocp/dt)*T + (rhocp/2.0)*ufl.dot(u_global,ufl.grad(T)))*self.dx 
+        #supg_old = tau_f * ((rhocp_old/dt)*T_O - (rhocp_old/2.0)*ufl.dot(u_global,ufl.grad(T_O)))*self.dx
         
         if self.ctrl_sim.ctrl.model_shear>0:
             f    = (self.energy_source) * self.test0 * dx + self.shear_heating # source term {energy_source is radiogenic heating compute before hand, shear heating is frictional heating already a form}
@@ -753,15 +760,15 @@ class Global_thermal(Problem):
                         
    
             
-        adv_old =  - (rhocp_old / 2 ) * ufl.dot(u_global, ufl.grad(T_O)) * self.test0 * dx
-
-        diff_old =  - ( 1 / 2 ) * ufl.inner(k_k0 * ufl.grad(T_O), ufl.grad(self.test0)) * dx
+        #adv_old =  - (rhocp_old / 2 ) * ufl.dot(u_global, ufl.grad(T_O)) * self.test0 * dx
+        #
+        #diff_old =  - ( 1 / 2 ) * ufl.inner(k_k0 * ufl.grad(T_O), ufl.grad(self.test0)) * dx
+        #
+        #mass_old =  (rhocp_old / dt) * T_O * self.test0 * dx
+        #
+        #old = diff_old + adv_old + f + mass_old #+ supg_old
         
-        mass_old =  (rhocp_old / dt) * T_O * self.test0 * dx
-        
-        old = diff_old + adv_old + f + mass_old #+ supg_old
-        
-        R = new - old
+        R = new - L #+ old
 
            
         RT = dolfinx.fem.form(dolfinx.fem.form(R))
@@ -769,6 +776,7 @@ class Global_thermal(Problem):
         
         return RT
     #---
+    @timing_function
     def set_linear_picard_SS(self
                              ,p:dolfinx.fem.Function=None
                              ,T_k:dolfinx.fem.Function = None
@@ -829,18 +837,19 @@ class Global_thermal(Problem):
         
         SUPG_L = tau * ufl.dot(u_global, ufl.grad(self.test0)) * f * self.dx
 
-        a = dolfinx.fem.form(diff + adv+SUPG)
-        
+        a = diff + adv+SUPG
+
         
         # Linear operator with frozen coefficients
         if  self.ctrl_sim.ctrl.model_shear>0:
-            L = dolfinx.fem.form((f) * self.test0 * dx + SUPG_L +self.shear_heating) 
+            L = (f) * self.test0 * dx + SUPG_L +self.shear_heating
         else:     
-            L = dolfinx.fem.form((f) * self.test0 * dx +SUPG_L) 
+            L = (f) * self.test0 * dx +SUPG_L
                 
 
         return a, L
     #---
+    @timing_function
     def set_linear_picard_TD(self
                              ,p:dolfinx.fem.Function=None
                              ,T_k:dolfinx.fem.Function = None
@@ -883,35 +892,16 @@ class Global_thermal(Problem):
         # L - > Old temperature
         # -> Source term is assumed constant in time and do not vary between the timesteps
 
-        dt = self.ctrl_sim.ctrl.dt
-
+        dt = self.dt_sim  # self.ctrl_sim.ctrl.dt
+        # -- New
         rho_k = density_FX(self.cached_mat, T_k, p)  # frozen
                 
         Cp_k = heat_capacity_FX(self.cached_mat, T_k)  # frozen
 
         k_k = heat_conductivity_FX(self.cached_mat, T_k, p, Cp_k, rho_k)  # frozen
 
-
-        
-        rho_k0 = density_FX(self.cached_mat, T_O, p)  # frozen
-                
-        Cp_k0 = heat_capacity_FX(self.cached_mat, T_O)  # frozen
-        
-        k_k0 = heat_conductivity_FX(self.cached_mat, T_O, p, Cp_k0, rho_k0)  # frozen
-
-
-                
         rhocp        =  (rho_k * Cp_k)
-
-        rhocp_old    =  (rho_k0 * Cp_k0)
         
-        # SUPG : 
-        h = ufl.CellDiameter(self.domain.mesh)
-        u_norm = ufl.sqrt(ufl.dot(u_global,u_global)+1e-12)
-        tau = 1.0/ufl.sqrt((2.0/dt)**2+(2.0*u_norm/h)**2+1e-12)
-        tau_f = tau * ufl.dot(u_global,ufl.grad(self.test0))
-        supg_new = tau_f * ((rhocp/dt)*self.trial0 + (rhocp/2.0)*ufl.dot(u_global,ufl.grad(self.trial0)))*self.dx 
-        supg_old = tau_f * ((rhocp_old/dt)*T_O - (rhocp_old/2.0)*ufl.dot(u_global,ufl.grad(T_O)))*self.dx
         dx  = self.dx
         
         if self.ctrl_sim.ctrl.model_shear>0:
@@ -926,19 +916,35 @@ class Global_thermal(Problem):
         
         mass_new = (rhocp / dt) * self.trial0 * self.test0 * dx
         
-        a = dolfinx.fem.form(diff_new + adv_new + mass_new )#+ supg_new)
+        a = diff_new + adv_new + mass_new #+ supg_new)
                 
     
             
-        adv_old =  - (rhocp_old / 2 ) * ufl.dot(u_global, ufl.grad(T_O)) * self.test0 * dx
+        adv_old =  - (self.rho0_cp0 / 2 ) * ufl.dot(u_global, ufl.grad(T_O)) * self.test0 * dx
 
-        diff_old =  - ( 1 / 2 ) * ufl.inner(k_k0 * ufl.grad(T_O), ufl.grad(self.test0)) * dx
+        diff_old =  - ( 1 / 2 ) * ufl.inner(self.k0 * ufl.grad(T_O), ufl.grad(self.test0)) * dx
 
-        mass_old =  (rhocp_old / dt) * T_O * self.test0 * dx
+        mass_old =  (self.rho0_cp0 / dt) * T_O * self.test0 * dx
 
-        L = dolfinx.fem.form(diff_old + adv_old + f + mass_old)#+supg_old)
+        L = diff_old + adv_old + f + mass_old#+supg_old)
 
         return a, L
+    #---
+    def update_mass_old(self,sol:Solution,ts:int):
+        """Update the cached mass matrix and thermal conductivity for the next timestep.
+        """
+        
+        if ts == 0:
+            rho_k0 = density_FX(self.cached_mat, sol.T_O, sol.PL)  # frozen
+            Cp_k0 = heat_capacity_FX(self.cached_mat, sol.T_O)  # frozen
+            k_k0 = heat_conductivity_FX(self.cached_mat, sol.T_O, sol.PL, Cp_k0, rho_k0)  # frozen
+            self.cached_form.other_form['rho0cp0'] = rho_k0 * Cp_k0
+            self.cached_form.other_form['k0'] = k_k0
+        self.rho0_cp0.interpolate(dolfinx.fem.Expression(
+        self.cached_form.other_form['rho0cp0'], self.domain.phase.function_space.element.interpolation_points()))
+        self.k0.interpolate(dolfinx.fem.Expression(
+                        self.cached_form.other_form['k0'], self.domain.phase.function_space.element.interpolation_points()))
+        
     #---
     def initialise_form(self,sol:Solution,it_outer:int,ts:int):
         """Call the routine for setting up the form, and caching it during the first iteration 
@@ -953,6 +959,10 @@ class Global_thermal(Problem):
 
         if self.cached_form.a is None:
             self.compute_shear_heating(sol.PL,sol.T_N)
+            # if time dependent: 
+            if self.ctrl_sim.ctrl.steady_state == 0 and it_outer ==0:
+                self.update_mass_old(sol=sol,ts=ts)
+        
             a,L = self.set_linear(p=sol.PL
                               ,T_k=sol.T_N
                               ,T_O=sol.T_O
@@ -964,17 +974,19 @@ class Global_thermal(Problem):
                                   ,T=sol.T_N
                                   ,T_O = sol.T_O
                                   ,u_global = sol.u_global
-                                  ,it_inner=0)
-            self.cached_form.a = a
-            self.cached_form.L = L
-            self.cached_form.other_form['res_temp'] = R
+                                  ,it_inner=0
+                                  ,L=L)
+            self.cached_form.a = dolfinx.fem.form(a)
+            self.cached_form.L = dolfinx.fem.form(L)
+            self.cached_form.other_form['res_temp'] = dolfinx.fem.form(R)
             self.cached_form.other_form['res_temp_vec'] = dolfinx.fem.petsc.create_vector(R)
-        else:
-            a = self.cached_form.a 
-            L = self.cached_form.L 
+        
+        a = self.cached_form.a 
+        L = self.cached_form.L 
         
         return a,L
     #---
+    @timing_function
     def Solve_the_Problem(self
                           ,sol:Solution
                           ,it_outer:int=0
@@ -995,14 +1007,13 @@ class Global_thermal(Problem):
             ts (int, optional): Timestep index. Defaults to 0.
         """
         print_ph(f'    --- Solution of the Energy problem in {self.domain.name} --  ---')
-
         # choose the problemesh:
         if self.ctrl_sim.ctrl.steady_state == 1 or (self.ctrl_sim.ctrl.initial_guess==1):
             self.set_linear = self.set_linear_picard_SS 
             self.set_residual = self.set_form_residual_SS
 
         else: 
-            if ts==0: 
+            if ts==0 and it_outer==0: 
                 # -> the intial guess is assuming a steady state solution with the initial condition ~ linear
                 self.cached_form = CACHED_FEM_FORM()             
             self.set_linear = self.set_linear_picard_TD
@@ -1012,14 +1023,12 @@ class Global_thermal(Problem):
         
         self.create_bc_temp(u_global=sol.u_global,it_outer=it_outer,ts=ts)
                 
-        time_A = timing.time()
-
+        self.compute_dt_update_dt(sol=sol,it_outer=it_outer,ts=ts)
         # Create the solver object: 
         a,L = self.initialise_form(sol=sol,it_outer=it_outer,ts=ts)
 
         if it_outer == 0 and ts == 0: 
             self.solv = ScalarSolver(a,L,self.bc,self.domain.comm,self.ctrl_sim.ctrl.energy_solver_type)
-        self.compute_dt_update_dt(sol=sol,it_outer=it_outer,ts=ts)
         self.solve_the_linear(sol
                                       ,a
                                       ,L
@@ -1030,7 +1039,6 @@ class Global_thermal(Problem):
         rT = self.compute_residual()
         if it_outer==0:
             self.rT0 = rT 
-        time_B = timing.time()        
         if self.ctrl_sim.ctrl.model_shear>0: 
 
             if ts == 0 and it_outer == 0:      
@@ -1045,11 +1053,10 @@ class Global_thermal(Problem):
         else: 
             if it_outer ==0 and ts == 0: 
                 sol.shear_heating.x.array[:]=0.0
-                sol.shear_heating.x.scatter_forward()  
-        print_ph(f'        it_outer = {it_outer:03d}: Solution of Temperature domain {self.domain.name} in {time_B-time_A:.2f}')
-        
+                sol.shear_heating.x.scatter_forward()              
         return rT,self.rT0 
     #---
+    @timing_function
     def solve_the_linear(self
                          ,sol:Solution
                          ,a:dolfinx.fem.Form
@@ -1248,15 +1255,13 @@ class Global_pressure(Problem):
         time_A = timing.time()
         
         a,L = self.set_linear_picard(sol.PL,sol.T_N)
-        if it_outer == 0 & ts == 0: 
+        if ts == 0 and it_outer == 0: 
             self.solv = ScalarSolver(a,L,self.bc,self.domain.comm,self.ctrl_sim.ctrl.energy_solver_type) 
         
 
         self.solve_the_linear(a,L,sol.PL) 
         
         time_B = timing.time()
-        print_ph(f'        it_outer = {it_outer:03d}: Solution of lit.pres domain {self.domain.name} in {time_B-time_A:.2f}')
-        print_ph('')
     # ---    
     def solve_the_linear(self
                          ,a:dolfinx.fem.Form
@@ -1326,6 +1331,7 @@ class Stokes_Problem(Problem):
         self.moving_wall_ref = dolfinx.fem.Function(self.F0)
         self.moving_wall = dolfinx.fem.Function(self.F0)
     # ---
+    @timing_function
     def fem_stokes_form(self,a1,a2,a3,a_p):
         """Assemble the momentum/continuity blocks into compiled block forms.
 
@@ -1344,6 +1350,7 @@ class Stokes_Problem(Problem):
         a_p0  = [[a1, a2],[a3, a_p]]
         return dolfinx.fem.form(a),dolfinx.fem.form(a_p0)
     # ---
+    @timing_function
     def initialise_fem_form(self, sol:Solution,it_outer:int,ts:int):
         """Build and cache the Stokes system forms (momentum, continuity, preconditioner, residual forms).
 
@@ -1414,6 +1421,7 @@ class Stokes_Problem(Problem):
         
         return a,ap0,L            
     # --- 
+    @timing_function
     def compute_residuum_stokes(self):
         """Assemble the cached momentum/continuity residual forms and return their L2 norms.
 
@@ -1452,6 +1460,7 @@ class Stokes_Problem(Problem):
 
         return rmom, rdiv
     # --- 
+    @timing_function
     def set_linear_picard(self
                           ,vel : dolfinx.fem.function.Function 
                           ,temp : dolfinx.fem.function.Function 
@@ -1503,6 +1512,7 @@ class Stokes_Problem(Problem):
     
         return a1, a2, a3 , L , a_p0       
     # --- 
+    @timing_function
     def compute_moving_wall(self
                         ,facet:str
                         )->None:
@@ -1559,6 +1569,7 @@ class Stokes_Problem(Problem):
         
         return self.moving_wall_ref
     # --- 
+    @timing_function
     def solve_linear_picard(self
                             ,a:dolfinx.fem.Form
                             ,a_p0:dolfinx.fem.Form
@@ -1612,9 +1623,8 @@ class Stokes_Problem(Problem):
             rnorm  = self.solv.ksp.getResidualNorm()
             PETSc.Sys.Print(f"                       iterative solver : KSP reason/its/rnormesh: {reason} {its} {rnorm:.3e}")
 
-        minMaxU = min_max_array(u,vel=True)
-        print_ph(f'                                  [checks] min vel = {minMaxU[0]:.5e}, max vel = {minMaxU[1]:.5e}, RMS = {minMaxU[2]:.5e}')
     #---
+    @timing_function
     def Solve_the_Problem(self
                           ,sol : Solution
                           ,it_outer : int =0
@@ -1658,11 +1668,10 @@ class Stokes_Problem(Problem):
             p = sol.p_wedge
         else: 
             raise ValueError('Wrong DOMAIN!!!! FOR STOKES')
-            
         print_ph(f'    --- Solution of the Stokes problem in {self.domain.name} --  ---')
 
         self.bc   = self.setdirichlecht(self.V_subs,ts=ts,it_outer=it_outer) 
-        if ts == 0: # -> remove the first timestep 
+        if ts == 0 and it_outer == 0: # -> remove the first timestep 
             self.cached_form = CACHED_FEM_FORM()
         
         a,ap0,L = self.initialise_fem_form(sol=sol,it_outer=it_outer,ts=ts)
@@ -1681,10 +1690,6 @@ class Stokes_Problem(Problem):
             else: 
                 self.rdiv0 = rdiv
 
-        
-        time_B = timing.time()
-        print_ph(f'        it_outer = {it_outer:03d}: Solution of Stokes domain {self.domain.name} in {time_B-time_A:.2f}')
-        print_ph('')
 
         return rmom,self.rmom0,rdiv,self.rdiv0
 # ---   
@@ -1771,6 +1776,7 @@ class Wedge(Stokes_Problem):
         self.rdiv0 = 1.0 
         self.rmom0 = 1.0 
     # --- 
+    @timing_function
     def setdirichlecht(self
                        ,V : dolfinx.fem.FunctionSpace
                        ,it_outer : int = 0
@@ -1882,7 +1888,7 @@ class Slab(Stokes_Problem):
             pdb (PhaseDataBase): Phase/material database.
         """
         super().__init__(mesh=mesh,elements=elements,name=name,ctrl_sim=ctrl_sim,pdb=pdb)
-
+    @timing_function
     def setdirichlecht(self
                        ,Vsubs = None
                        ,it_outer : int = 0
@@ -1928,6 +1934,7 @@ class Slab(Stokes_Problem):
         
         return [bcx,bcy]       
     #---
+    @timing_function
     def compute_nitsche_FS(self
                            ,sol:Solution
                            ,dS:ufl.measure.Measure  

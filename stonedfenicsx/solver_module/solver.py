@@ -67,7 +67,7 @@ class  ScalarSolver(Solvers):
         if direct_solver == 0: 
         
             self.ksp.setType("fgmres")
-            self.ksp.setTolerances(rtol=1e-8, atol=1e-10, max_it=2000)
+            self.ksp.setTolerances(rtol=1e-8, atol=1e-10, max_it=1000)
             self.pc = self.ksp.getPC()
             self.pc.setType("hypre")
         else: 
@@ -200,7 +200,7 @@ class SolverStokes(Solvers):
         """
         #Return block operators and block RHS vector for the Stokes problem'
         # nullspace vector [0_u; 1_p] locally
-        if it == 0 or ts == 0:
+        if it == 0 and ts == 0:
             # Create the block operator and the pre-conditioner
             self.set_block_operator(a,a_p,bcs,L,F0,F1)
             
@@ -245,7 +245,7 @@ class SolverStokes(Solvers):
             self.ksp_u.setType("preonly")
             self.ksp_u.getPC().setType("hypre")
             self.ksp_p.setType("preonly")
-            self.ksp_p.getPC().setType("hypre")
+            self.ksp_p.getPC().setType("jacobi")
 
             monitor_n_digits = int(np.ceil(np.log10(self.ksp.max_it)))
             def monitor(ksp, it, r):
@@ -331,9 +331,10 @@ class SolverStokes(Solvers):
         # -------------------------
         # P (preconditioner matrix)
         # -------------------------
-        self.P.zeroEntries()
-        assemble_matrix_block(self.P, a_p, bcs=bcs)
-        self.P.assemble()
+        if self.direct_solver == 0:
+            self.P.zeroEntries()
+            assemble_matrix_block(self.P, a_p, bcs=bcs)
+            self.P.assemble()
 
         # -------------------------
         # b (RHS)
@@ -361,5 +362,5 @@ class SolverStokes(Solvers):
             #     print("A Fro norm:", self.A.norm(PETSc.NormType.FROBENIUS))
 
         else:
-            # Direct solver: do NOT call ksp.setUp() every timestep (expensive)
+        #    # Direct solver: do NOT call ksp.setUp() every timestep (expensive)
             self.ksp.setOperators(self.A)
