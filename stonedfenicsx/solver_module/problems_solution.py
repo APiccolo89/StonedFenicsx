@@ -905,14 +905,6 @@ class Global_thermal(Problem):
 
         rhocp_old    =  (rho_k0 * Cp_k0)
         
-        # SUPG : 
-        h = ufl.CellDiameter(self.domain.mesh)
-        u_norm = ufl.sqrt(ufl.dot(u_global,u_global)+1e-12)
-        tau = 1.0/ufl.sqrt((2.0/dt)**2+(2.0*u_norm/h)**2+1e-12)
-        tau_f = tau * ufl.dot(u_global,ufl.grad(self.test0))
-        supg_new = tau_f * ((rhocp/dt)*self.trial0 + (rhocp/2.0)*ufl.dot(u_global,ufl.grad(self.trial0)))*self.dx 
-        supg_old = tau_f * ((rhocp_old/dt)*T_O - (rhocp_old/2.0)*ufl.dot(u_global,ufl.grad(T_O)))*self.dx
-        dx  = self.dx
         
         if self.ctrl_sim.ctrl.model_shear>0:
             f    = (self.energy_source) * self.test0 * dx + self.shear_heating # source term {energy_source is radiogenic heating compute before hand, shear heating is frictional heating already a form}
@@ -1002,7 +994,7 @@ class Global_thermal(Problem):
             self.set_residual = self.set_form_residual_SS
 
         else: 
-            if ts==0: 
+            if ts==0 and it_outer==0: 
                 # -> the intial guess is assuming a steady state solution with the initial condition ~ linear
                 self.cached_form = CACHED_FEM_FORM()             
             self.set_linear = self.set_linear_picard_TD
