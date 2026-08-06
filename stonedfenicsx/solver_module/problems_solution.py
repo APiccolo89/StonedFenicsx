@@ -394,7 +394,326 @@ class Global_thermal(Problem):
         self.e_ii_fr = 0.5 * (self.ctrl_sim.ctrl_ky.v_s[0] * 1 /self.g_input.wz_tk)
         self.problem_shear_heating = None 
         self.problem_shear_heating_mass = None 
-    #---    
+    #---    # SETTING FORMS FOR THE PROBLEM
+    def set_linear_picard_TD(self
+                             ,p:dolfinx.fem.Function=None
+                             ,T_k:dolfinx.fem.Function = None
+                             ,T_O:dolfinx.fem.Function=None
+                             ,u_global:dolfinx.fem.Function=None
+                             ,it_outer :int=0
+                             ,it_inner:int =0
+                             ,ts:int = 0)->tuple[dolfinx.fem.Form,dolfinx.fem.Form|None]:
+        """Set up the bilinear/linear Crank-Nicolson forms for the time-dependent energy equation.
+
+        Builds the "new" (implicit) bilinear form `a` from the current
+        Picard-iterate coefficients every call, and the "old" (explicit)
+        linear form `L` only on the first inner iteration (`it_inner == 0`)
+        of a timestep, since it depends solely on the previous timestep's
+        temperature `T_O`. Source terms (radiogenic + shear heating, the
+        latter only once `it_inner != 0`, i.e. once `shear_heating` has been
+        computed for this outer iteration) are assumed constant across the
+        timestep.
+
+        Args:
+            p (dolfinx.fem.Function, optional): Lithostatic pressure field. Defaults to None.
+            T_k (dolfinx.fem.Function, optional): Current Picard-iterate temperature. Defaults to None.
+            T_O (dolfinx.fem.Function, optional): Temperature at the previous timestep. Defaults to None.
+            u_global (dolfinx.fem.Function, optional): Global velocity field. Defaults to None.
+            it_outer (int, optional): Outer (nonlinear) iteration index. Defaults to 0.
+            it_inner (int, optional): Inner (Picard) iteration index; controls
+                whether the shear-heating source is included and whether `L`
+                is rebuilt. Defaults to 0.
+            ts (int, optional): Timestep index. Defaults to 0.
+
+        Returns:
+            tuple[dolfinx.fem.Form, dolfinx.fem.Form | None]: Compiled
+            bilinear form `a`, and the linear form `L` (or `None` if
+            `it_inner != 0`, in which case the previously assembled `L`
+            should be reused).
+        """
+        # Function that set linear form and linear picard for picard iteration
+        # Crank Nicolson scheme
+        # a - > New temperature
+        # L - > Old temperature
+        # -> Source term is assumed constant in time and do not vary between the timesteps
+
+        dt = self.ctrl_sim.ctrl.dt
+
+        rho_k = density_FX(self.cached_mat, T_k, p)  # frozen
+                
+        Cp_k = heat_capacity_FX(self.cached_mat, T_k)  # frozen
+
+        k_k = heat_conductivity_FX(self.cached_mat, T_k, p, Cp_k, rho_k)  # frozen
+
+
+        
+        rho_k0 = density_FX(self.cached_mat, T_O, p)  # frozen
+                
+        Cp_k0 = heat_capacity_FX(self.cached_mat, T_O)  # frozen
+        
+        k_k0 = heat_conductivity_FX(self.cached_mat, T_O, p, Cp_k0, rho_k0)  # frozen
+
+
+                
+        rhocp        =  (rho_k * Cp_k)
+
+        rhocp_old    =  (rho_k0 * Cp_k0)
+        
+        
+        if self.ctrl_sim.ctrl.model_shear>0:
+            f    = (self.energy_source) * self.test0 * dx + self.shear_heating # source term {energy_source is radiogenic heating compute before hand, shear heating is frictional heating already a form}
+        else: 
+            f = self.energy_source * self.test0 * dx 
+        
+        # a -> New temperature 
+        diff_new = ( 1 / 2 ) * ufl.inner(k_k * ufl.grad(self.trial0), ufl.grad(self.test0)) * dx
+        
+        adv_new  = (rhocp / 2 )* ufl.dot(u_global, ufl.grad(self.trial0)) * self.test0 * dx
+        
+        mass_new = (rhocp / dt) * self.trial0 * self.test0 * dx
+        
+        a = dolfinx.fem.form(diff_new + adv_new + mass_new )#+ supg_new)
+                
+    
+            
+        adv_old =  - (rhocp_old / 2 ) * ufl.dot(u_global, ufl.grad(T_O)) * self.test0 * dx
+
+        diff_old =  - ( 1 / 2 ) * ufl.inner(k_k0 * ufl.grad(T_O), ufl.grad(self.test0)) * dx
+
+        mass_old =  (rhocp_old / dt) * T_O * self.test0 * dx
+
+        L = dolfinx.fem.form(diff_old + adv_old + f + mass_old)#+supg_old)
+
+        return a, L
+    #---
+    def set_linear_picard_SS(self
+                             ,p:dolfinx.fem.Function=None
+                             ,T_k:dolfinx.fem.Function = None
+                             ,T_O:dolfinx.fem.Function=None
+                             ,u_global:dolfinx.fem.Function=None
+                             ,it_outer :int=0
+                             ,it_inner:int =0
+                             ,ts:int = 0)->tuple[dolfinx.fem.Form,dolfinx.fem.Form]:
+        """Set up fem form for Steady state solution. 
+        Compute the coefficient from the current iteration temperature, form the bilinear form. 
+        if iteration > 0 not form the Linear one. 
+
+        Args:
+            p (dolfinx.fem.Function, optional): Lithostatic pressure function . Defaults to None.
+            T_k (dolfinx.fem.Function, optional): Current iteration/guess temperature. Defaults to None.
+            T_O (dolfinx.fem.Function, optional): Old temperature. Defaults to None.
+            u_global (dolfinx.fem.Function, optional): Global velocity. Defaults to None.
+            D (Domain, optional): Domain . Defaults to None.
+            FG (Functions_material_properties_global, optional):Cached material properties. Defaults to None.
+            ctrl (NumericalControls, optional): Numerical controls. Defaults to None.
+            dt (float, optional): dt . Defaults to None.
+            it (int, optional): outer iteration. Defaults to 0.
+
+        Returns:
+            tuple[dolfinx.fem.Form,dolfinx.fem.Form]: _description_
+        """
+        
+        # Function that set linear form and linear picard for picard iteration
+        
+        rho_k = density_FX(self.cached_mat, T_k, p)  # frozen
+        
+        Cp_k = heat_capacity_FX(self.cached_mat, T_k)  # frozen
+
+        k_k = heat_conductivity_FX(self.cached_mat, T_k, p, Cp_k, rho_k)  # frozen
+
+
+        f    = self.energy_source# source term
+        
+        dx  = self.dx            
+        
+        diff = ufl.inner(k_k * ufl.grad(self.trial0), ufl.grad(self.test0)) * dx
+            
+        adv  = rho_k * Cp_k *ufl.dot(u_global, ufl.grad(self.trial0)) * self.test0 * dx
+        
+        # SUPG 
+        
+        # --- SUPG parameter tau ---
+        h = ufl.CellDiameter(self.domain.mesh)
+        
+        u_norm = ufl.sqrt(ufl.dot(u_global, u_global) + 1.0e-8)
+        # Simple tau based on advection
+        tau = h / (2.0 * u_norm+1e-12)
+        
+        
+        residual = (rho_k * Cp_k * ufl.dot(u_global, ufl.grad(self.trial0)))
+        
+        SUPG = tau * ufl.dot(u_global, ufl.grad(self.test0)) * residual * self.dx
+        
+        SUPG_L = tau * ufl.dot(u_global, ufl.grad(self.test0)) * f * self.dx
+
+        a = dolfinx.fem.form(diff + adv+SUPG)
+        
+        
+        # Linear operator with frozen coefficients
+        if  self.ctrl_sim.ctrl.model_shear>0:
+            L = dolfinx.fem.form((f) * self.test0 * dx + SUPG_L +self.shear_heating) 
+        else:     
+            L = dolfinx.fem.form((f) * self.test0 * dx +SUPG_L) 
+                
+
+        return a, L
+    #---
+    def set_form_residual_SS(self
+                            ,p :dolfinx.fem.function.Function = None
+                            ,T :dolfinx.fem.function.Function = None
+                            ,T_O :dolfinx.fem.function.Function = None
+                            ,u_global :dolfinx.fem.function.Function = None
+                            ,it_inner:int=0
+                            ,dt:float = 0.0
+                            ,L:dolfinx.fem.Form=None)->float:
+        """Build the steady-state residual form of the energy equation (diffusion + SUPG-stabilised advection - sources).
+
+        Args:
+            p (dolfinx.fem.Function, optional): Lithostatic pressure field.
+            T (dolfinx.fem.Function, optional): Current temperature field.
+            T_O (dolfinx.fem.Function, optional): Old temperature (unused in
+                steady state; kept for interface parity with the TD variant).
+            u_global (dolfinx.fem.Function, optional): Global velocity field.
+            it_inner (int, optional): Inner (Picard) iteration index. Defaults to 0.
+            dt (float, optional): Unused in steady state; kept for interface parity.
+
+        Returns:
+            dolfinx.fem.Form: Compiled residual form (diffusion + advection +
+            SUPG stabilisation - source, including shear heating if
+            `model_shear > 0`).
+        """
+        rho_k = density_FX(self.cached_mat, T, p)  # frozen
+
+        Cp_k = heat_capacity_FX(self.cached_mat, T)  # frozen
+
+        k_k = heat_conductivity_FX(self.cached_mat, T, p, Cp_k, rho_k)  # frozen
+
+        f    = self.energy_source# source term
+
+        dx  = self.dx
+
+        diff = ufl.inner(k_k * ufl.grad(T), ufl.grad(self.test0)) * dx
+        
+        adv  = rho_k * Cp_k *ufl.dot(u_global, ufl.grad(T)) * self.test0 * dx
+        
+        # SUPG 
+        
+        # --- SUPG parameter tau ---
+        h = ufl.CellDiameter(self.domain.mesh)
+        u_norm = ufl.sqrt(ufl.dot(u_global, u_global) + 1.0e-8)
+        # SUPG CORRECTION
+        residual = (rho_k * Cp_k * ufl.dot(u_global, ufl.grad(T)))
+        tau = h / (2.0 * u_norm+1e-12)
+        SUPG = tau * ufl.dot(u_global, ufl.grad(self.test0)) * residual * self.dx
+        
+        R =(diff + adv + SUPG - L)
+        
+        return R
+    #---
+    def set_form_residual_TD(self
+                            ,p :dolfinx.fem.function.Function = None
+                            ,T :dolfinx.fem.function.Function = None
+                            ,T_O :dolfinx.fem.function.Function = None
+                            ,u_global :dolfinx.fem.function.Function = None
+                            ,it_inner:int=0
+                            ,dt:float = 0.0
+                            ,L:dolfinx.fem.Form=None)->float:
+        """Assemble the time-dependent (Crank-Nicolson) energy residual and return its L2 norm.
+
+        Builds the new/old diffusion, advection and mass terms (mirroring
+        `set_linear_picard_TD`) directly as a residual form `R = new + old`,
+        assembles it, zeroes the entries at Dirichlet dofs, and reduces to a
+        global L2 norm.
+
+        Args:
+            p (dolfinx.fem.Function, optional): Lithostatic pressure field.
+            T (dolfinx.fem.Function, optional): Current (new) temperature field.
+            T_O (dolfinx.fem.Function, optional): Old (previous timestep) temperature field.
+            u_global (dolfinx.fem.Function, optional): Global velocity field.
+            it_inner (int, optional): Inner (Picard) iteration index. Defaults to 0.
+            dt (float, optional): Timestep size. Defaults to 0.0.
+
+        Returns:
+            float: L2 norm of the assembled residual vector, with Dirichlet
+            dofs excluded.
+        """
+        dt = self.ctrl_sim.ctrl.dt
+
+        
+        rho_k = density_FX(self.cached_mat, T, p)  # frozen
+
+        Cp_k = heat_capacity_FX(self.cached_mat, T)  # frozen
+
+        k_k = heat_conductivity_FX(self.cached_mat, T, p, Cp_k, rho_k)  # frozen
+
+
+        rho_k0 = density_FX(self.cached_mat, T_O, p)  # frozen
+                
+        Cp_k0 = heat_capacity_FX(self.cached_mat, T_O)  # frozen
+        
+        k_k0 = heat_conductivity_FX(self.cached_mat, T_O, p, Cp_k0, rho_k0)  # frozen
+                
+        rhocp        =  (rho_k * Cp_k)
+
+        rhocp_old    =  (rho_k0 * Cp_k0)
+    
+        dx  = self.dx
+        
+        # a -> New temperature 
+        diff_new = ( 1 / 2 ) * ufl.inner(k_k * ufl.grad(T), ufl.grad(self.test0)) * dx
+        
+        adv_new  = (rhocp / 2 )* ufl.dot(u_global, ufl.grad(T)) * self.test0 * dx
+        
+        mass_new = (rhocp / dt) * T * self.test0 * dx
+        
+        new = diff_new + adv_new + mass_new #+ supg_new
+                        
+        
+        R = new - L
+        
+        
+        return R
+    #---
+    def initialise_form(self,sol:Solution,it_outer:int,ts:int):
+        """Call the routine for setting up the form, and caching it during the first iteration 
+        and first 
+
+        Args:
+            sol (Solution): _description_
+            it_outer (int): _description_
+            ts (int): _description_
+        """
+        # -> Initialise the vector of temp_k for avoiding idiotic solution
+
+        if self.cached_form.a is None:
+            self.compute_shear_heating(sol.PL,sol.T_N)
+            a,L = self.set_linear(p=sol.PL
+                              ,T_k=sol.T_N
+                              ,T_O=sol.T_O
+                              ,u_global = sol.u_global
+                              ,it_outer=0
+                              ,it_inner=0
+                              ,ts=0)
+            R = self.set_residual(p=sol.PL
+                                  ,T=sol.T_N
+                                  ,T_O = sol.T_O
+                                  ,u_global = sol.u_global
+                                  ,it_inner=0
+                                  ,L=L)
+            self.cached_form.a = dolfinx.fem.form(a)
+            self.cached_form.L = dolfinx.fem.form(L)
+            self.cached_form.other_form['res_temp'] = R
+            self.cached_form.other_form['res_temp_vec'] = dolfinx.fem.petsc.create_vector(R)
+        a = self.cached_form.a 
+        L = self.cached_form.L 
+        
+        return a,L
+    #---
+
+    
+    
+    
+    #---
     @staticmethod
     def interpolate_1d_vector_boundary(function_space, z, temp_vec, dofs_intp):
             """Nearest-neighbour interpolate a 1D depth profile onto a boundary Function.
@@ -558,61 +877,6 @@ class Global_thermal(Problem):
         self.energy_source.x.array[:] = source.x.array[:]
         self.energy_source.x.scatter_forward()
     #---
-    def set_form_residual_SS(self
-                            ,p :dolfinx.fem.function.Function = None
-                            ,T :dolfinx.fem.function.Function = None
-                            ,T_O :dolfinx.fem.function.Function = None
-                            ,u_global :dolfinx.fem.function.Function = None
-                            ,it_inner:int=0
-                            ,dt:float = 0.0)->float:
-        """Build the steady-state residual form of the energy equation (diffusion + SUPG-stabilised advection - sources).
-
-        Args:
-            p (dolfinx.fem.Function, optional): Lithostatic pressure field.
-            T (dolfinx.fem.Function, optional): Current temperature field.
-            T_O (dolfinx.fem.Function, optional): Old temperature (unused in
-                steady state; kept for interface parity with the TD variant).
-            u_global (dolfinx.fem.Function, optional): Global velocity field.
-            it_inner (int, optional): Inner (Picard) iteration index. Defaults to 0.
-            dt (float, optional): Unused in steady state; kept for interface parity.
-
-        Returns:
-            dolfinx.fem.Form: Compiled residual form (diffusion + advection +
-            SUPG stabilisation - source, including shear heating if
-            `model_shear > 0`).
-        """
-        rho_k = density_FX(self.cached_mat, T, p)  # frozen
-
-        Cp_k = heat_capacity_FX(self.cached_mat, T)  # frozen
-
-        k_k = heat_conductivity_FX(self.cached_mat, T, p, Cp_k, rho_k)  # frozen
-
-        f    = self.energy_source# source term
-
-        dx  = self.dx
-
-        diff = ufl.inner(k_k * ufl.grad(T), ufl.grad(self.test0)) * dx
-        
-        adv  = rho_k * Cp_k *ufl.dot(u_global, ufl.grad(T)) * self.test0 * dx
-        
-        # SUPG 
-        
-        # --- SUPG parameter tau ---
-        h = ufl.CellDiameter(self.domain.mesh)
-        u_norm = ufl.sqrt(ufl.dot(u_global, u_global) + 1.0e-8)
-        # SUPG CORRECTION
-        residual = (rho_k * Cp_k * ufl.dot(u_global, ufl.grad(T)))
-        tau = h / (2.0 * u_norm+1e-12)
-        SUPG = tau * ufl.dot(u_global, ufl.grad(self.test0)) * residual * self.dx
-        SUPG_L = tau * ufl.dot(u_global, ufl.grad(self.test0)) * f * self.dx
-        if self.ctrl_sim.ctrl.model_shear>0:
-            L = ((f) * self.test0 * dx + self.shear_heating) 
-        else: 
-            L = (f) * self.test0 * dx
-        R = dolfinx.fem.form(diff + adv + SUPG - L-SUPG_L)
-        
-        return R
-    #---
     def compute_residual(self):
         """Assemble the cached temperature residual form and return its L2 norm.
 
@@ -678,294 +942,6 @@ class Global_thermal(Problem):
             self.ctrl_sim.ctrl.dt = self.ctrl_sim.ctrl.CFL*np.min([dt_a,dt_b])
             print_ph(f'       new dt = {self.ctrl_sim.ctrl.dt:.2f}')            
   
-    #---
-    def set_form_residual_TD(self
-                            ,p :dolfinx.fem.function.Function = None
-                            ,T :dolfinx.fem.function.Function = None
-                            ,T_O :dolfinx.fem.function.Function = None
-                            ,u_global :dolfinx.fem.function.Function = None
-                            ,it_inner:int=0
-                            ,dt:float = 0.0)->float:
-        """Assemble the time-dependent (Crank-Nicolson) energy residual and return its L2 norm.
-
-        Builds the new/old diffusion, advection and mass terms (mirroring
-        `set_linear_picard_TD`) directly as a residual form `R = new + old`,
-        assembles it, zeroes the entries at Dirichlet dofs, and reduces to a
-        global L2 norm.
-
-        Args:
-            p (dolfinx.fem.Function, optional): Lithostatic pressure field.
-            T (dolfinx.fem.Function, optional): Current (new) temperature field.
-            T_O (dolfinx.fem.Function, optional): Old (previous timestep) temperature field.
-            u_global (dolfinx.fem.Function, optional): Global velocity field.
-            it_inner (int, optional): Inner (Picard) iteration index. Defaults to 0.
-            dt (float, optional): Timestep size. Defaults to 0.0.
-
-        Returns:
-            float: L2 norm of the assembled residual vector, with Dirichlet
-            dofs excluded.
-        """
-        dt = self.ctrl_sim.ctrl.dt
-
-        
-        rho_k = density_FX(self.cached_mat, T, p)  # frozen
-
-        Cp_k = heat_capacity_FX(self.cached_mat, T)  # frozen
-
-        k_k = heat_conductivity_FX(self.cached_mat, T, p, Cp_k, rho_k)  # frozen
-
-
-        rho_k0 = density_FX(self.cached_mat, T_O, p)  # frozen
-                
-        Cp_k0 = heat_capacity_FX(self.cached_mat, T_O)  # frozen
-        
-        k_k0 = heat_conductivity_FX(self.cached_mat, T_O, p, Cp_k0, rho_k0)  # frozen
-
-
-                
-        rhocp        =  (rho_k * Cp_k)
-
-        rhocp_old    =  (rho_k0 * Cp_k0)
-    
-        dx  = self.dx
-        
-        # SUPG : 
-        h = ufl.CellDiameter(self.domain.mesh)
-        u_norm = ufl.sqrt(ufl.dot(u_global,u_global)+1e-12)
-        tau = 1.0/ufl.sqrt((2.0/dt)**2+(2.0*u_norm/h)**2+1e-12)
-        tau_f = tau * ufl.dot(u_global,ufl.grad(self.test0))
-        supg_new = tau_f * ((rhocp/dt)*T + (rhocp/2.0)*ufl.dot(u_global,ufl.grad(T)))*self.dx 
-        supg_old = tau_f * ((rhocp_old/dt)*T_O - (rhocp_old/2.0)*ufl.dot(u_global,ufl.grad(T_O)))*self.dx
-        
-        if self.ctrl_sim.ctrl.model_shear>0:
-            f    = (self.energy_source) * self.test0 * dx + self.shear_heating # source term {energy_source is radiogenic heating compute before hand, shear heating is frictional heating already a form}
-        else: 
-            f    = (self.energy_source) * self.test0 * dx 
-        
-        # a -> New temperature 
-        diff_new = ( 1 / 2 ) * ufl.inner(k_k * ufl.grad(T), ufl.grad(self.test0)) * dx
-        
-        adv_new  = (rhocp / 2 )* ufl.dot(u_global, ufl.grad(T)) * self.test0 * dx
-        
-        mass_new = (rhocp / dt) * T * self.test0 * dx
-        
-        new = diff_new + adv_new + mass_new #+ supg_new
-                        
-   
-            
-        adv_old =  - (rhocp_old / 2 ) * ufl.dot(u_global, ufl.grad(T_O)) * self.test0 * dx
-
-        diff_old =  - ( 1 / 2 ) * ufl.inner(k_k0 * ufl.grad(T_O), ufl.grad(self.test0)) * dx
-        
-        mass_old =  (rhocp_old / dt) * T_O * self.test0 * dx
-        
-        old = diff_old + adv_old + f + mass_old #+ supg_old
-        
-        R = new - old
-
-           
-        RT = dolfinx.fem.form(dolfinx.fem.form(R))
-        
-        
-        return RT
-    #---
-    def set_linear_picard_SS(self
-                             ,p:dolfinx.fem.Function=None
-                             ,T_k:dolfinx.fem.Function = None
-                             ,T_O:dolfinx.fem.Function=None
-                             ,u_global:dolfinx.fem.Function=None
-                             ,it_outer :int=0
-                             ,it_inner:int =0
-                             ,ts:int = 0)->tuple[dolfinx.fem.Form,dolfinx.fem.Form]:
-        """Set up fem form for Steady state solution. 
-        Compute the coefficient from the current iteration temperature, form the bilinear form. 
-        if iteration > 0 not form the Linear one. 
-
-        Args:
-            p (dolfinx.fem.Function, optional): Lithostatic pressure function . Defaults to None.
-            T_k (dolfinx.fem.Function, optional): Current iteration/guess temperature. Defaults to None.
-            T_O (dolfinx.fem.Function, optional): Old temperature. Defaults to None.
-            u_global (dolfinx.fem.Function, optional): Global velocity. Defaults to None.
-            D (Domain, optional): Domain . Defaults to None.
-            FG (Functions_material_properties_global, optional):Cached material properties. Defaults to None.
-            ctrl (NumericalControls, optional): Numerical controls. Defaults to None.
-            dt (float, optional): dt . Defaults to None.
-            it (int, optional): outer iteration. Defaults to 0.
-
-        Returns:
-            tuple[dolfinx.fem.Form,dolfinx.fem.Form]: _description_
-        """
-        
-        # Function that set linear form and linear picard for picard iteration
-        
-        rho_k = density_FX(self.cached_mat, T_k, p)  # frozen
-        
-        Cp_k = heat_capacity_FX(self.cached_mat, T_k)  # frozen
-
-        k_k = heat_conductivity_FX(self.cached_mat, T_k, p, Cp_k, rho_k)  # frozen
-
-
-        f    = self.energy_source# source term
-        
-        dx  = self.dx            
-        
-        diff = ufl.inner(k_k * ufl.grad(self.trial0), ufl.grad(self.test0)) * dx
-            
-        adv  = rho_k * Cp_k *ufl.dot(u_global, ufl.grad(self.trial0)) * self.test0 * dx
-        
-        # SUPG 
-        
-        # --- SUPG parameter tau ---
-        h = ufl.CellDiameter(self.domain.mesh)
-        
-        u_norm = ufl.sqrt(ufl.dot(u_global, u_global) + 1.0e-8)
-        # Simple tau based on advection
-        tau = h / (2.0 * u_norm+1e-12)
-        
-        
-        residual = (rho_k * Cp_k * ufl.dot(u_global, ufl.grad(self.trial0)))
-        
-        SUPG = tau * ufl.dot(u_global, ufl.grad(self.test0)) * residual * self.dx
-        
-        SUPG_L = tau * ufl.dot(u_global, ufl.grad(self.test0)) * f * self.dx
-
-        a = dolfinx.fem.form(diff + adv+SUPG)
-        
-        
-        # Linear operator with frozen coefficients
-        if  self.ctrl_sim.ctrl.model_shear>0:
-            L = dolfinx.fem.form((f) * self.test0 * dx + SUPG_L +self.shear_heating) 
-        else:     
-            L = dolfinx.fem.form((f) * self.test0 * dx +SUPG_L) 
-                
-
-        return a, L
-    #---
-    def set_linear_picard_TD(self
-                             ,p:dolfinx.fem.Function=None
-                             ,T_k:dolfinx.fem.Function = None
-                             ,T_O:dolfinx.fem.Function=None
-                             ,u_global:dolfinx.fem.Function=None
-                             ,it_outer :int=0
-                             ,it_inner:int =0
-                             ,ts:int = 0)->tuple[dolfinx.fem.Form,dolfinx.fem.Form|None]:
-        """Set up the bilinear/linear Crank-Nicolson forms for the time-dependent energy equation.
-
-        Builds the "new" (implicit) bilinear form `a` from the current
-        Picard-iterate coefficients every call, and the "old" (explicit)
-        linear form `L` only on the first inner iteration (`it_inner == 0`)
-        of a timestep, since it depends solely on the previous timestep's
-        temperature `T_O`. Source terms (radiogenic + shear heating, the
-        latter only once `it_inner != 0`, i.e. once `shear_heating` has been
-        computed for this outer iteration) are assumed constant across the
-        timestep.
-
-        Args:
-            p (dolfinx.fem.Function, optional): Lithostatic pressure field. Defaults to None.
-            T_k (dolfinx.fem.Function, optional): Current Picard-iterate temperature. Defaults to None.
-            T_O (dolfinx.fem.Function, optional): Temperature at the previous timestep. Defaults to None.
-            u_global (dolfinx.fem.Function, optional): Global velocity field. Defaults to None.
-            it_outer (int, optional): Outer (nonlinear) iteration index. Defaults to 0.
-            it_inner (int, optional): Inner (Picard) iteration index; controls
-                whether the shear-heating source is included and whether `L`
-                is rebuilt. Defaults to 0.
-            ts (int, optional): Timestep index. Defaults to 0.
-
-        Returns:
-            tuple[dolfinx.fem.Form, dolfinx.fem.Form | None]: Compiled
-            bilinear form `a`, and the linear form `L` (or `None` if
-            `it_inner != 0`, in which case the previously assembled `L`
-            should be reused).
-        """
-        # Function that set linear form and linear picard for picard iteration
-        # Crank Nicolson scheme
-        # a - > New temperature
-        # L - > Old temperature
-        # -> Source term is assumed constant in time and do not vary between the timesteps
-
-        dt = self.ctrl_sim.ctrl.dt
-
-        rho_k = density_FX(self.cached_mat, T_k, p)  # frozen
-                
-        Cp_k = heat_capacity_FX(self.cached_mat, T_k)  # frozen
-
-        k_k = heat_conductivity_FX(self.cached_mat, T_k, p, Cp_k, rho_k)  # frozen
-
-
-        
-        rho_k0 = density_FX(self.cached_mat, T_O, p)  # frozen
-                
-        Cp_k0 = heat_capacity_FX(self.cached_mat, T_O)  # frozen
-        
-        k_k0 = heat_conductivity_FX(self.cached_mat, T_O, p, Cp_k0, rho_k0)  # frozen
-
-
-                
-        rhocp        =  (rho_k * Cp_k)
-
-        rhocp_old    =  (rho_k0 * Cp_k0)
-        
-        
-        if self.ctrl_sim.ctrl.model_shear>0:
-            f    = (self.energy_source) * self.test0 * dx + self.shear_heating # source term {energy_source is radiogenic heating compute before hand, shear heating is frictional heating already a form}
-        else: 
-            f = self.energy_source * self.test0 * dx 
-        
-        # a -> New temperature 
-        diff_new = ( 1 / 2 ) * ufl.inner(k_k * ufl.grad(self.trial0), ufl.grad(self.test0)) * dx
-        
-        adv_new  = (rhocp / 2 )* ufl.dot(u_global, ufl.grad(self.trial0)) * self.test0 * dx
-        
-        mass_new = (rhocp / dt) * self.trial0 * self.test0 * dx
-        
-        a = dolfinx.fem.form(diff_new + adv_new + mass_new )#+ supg_new)
-                
-    
-            
-        adv_old =  - (rhocp_old / 2 ) * ufl.dot(u_global, ufl.grad(T_O)) * self.test0 * dx
-
-        diff_old =  - ( 1 / 2 ) * ufl.inner(k_k0 * ufl.grad(T_O), ufl.grad(self.test0)) * dx
-
-        mass_old =  (rhocp_old / dt) * T_O * self.test0 * dx
-
-        L = dolfinx.fem.form(diff_old + adv_old + f + mass_old)#+supg_old)
-
-        return a, L
-    #---
-    def initialise_form(self,sol:Solution,it_outer:int,ts:int):
-        """Call the routine for setting up the form, and caching it during the first iteration 
-        and first 
-
-        Args:
-            sol (Solution): _description_
-            it_outer (int): _description_
-            ts (int): _description_
-        """
-        # -> Initialise the vector of temp_k for avoiding idiotic solution
-
-        if self.cached_form.a is None:
-            self.compute_shear_heating(sol.PL,sol.T_N)
-            a,L = self.set_linear(p=sol.PL
-                              ,T_k=sol.T_N
-                              ,T_O=sol.T_O
-                              ,u_global = sol.u_global
-                              ,it_outer=0
-                              ,it_inner=0
-                              ,ts=0)
-            R = self.set_residual(p=sol.PL
-                                  ,T=sol.T_N
-                                  ,T_O = sol.T_O
-                                  ,u_global = sol.u_global
-                                  ,it_inner=0)
-            self.cached_form.a = a
-            self.cached_form.L = L
-            self.cached_form.other_form['res_temp'] = R
-            self.cached_form.other_form['res_temp_vec'] = dolfinx.fem.petsc.create_vector(R)
-        else:
-            a = self.cached_form.a 
-            L = self.cached_form.L 
-        
-        return a,L
     #---
     def Solve_the_Problem(self
                           ,sol:Solution
