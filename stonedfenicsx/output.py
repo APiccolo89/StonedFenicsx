@@ -254,6 +254,7 @@ class OUTPUT():
             self.xdmf_main.write_function(self.eta,         time)
             self.xdmf_main.write_function(self.flux,         time)
             self.xdmf_main.write_function(self.tag,          time)
+            self.xdmf_main.write_function(self.shear_heating,          time)
             self.xdmf_main.write_function(self.partition,          time)
 
             
@@ -279,6 +280,7 @@ class OUTPUT():
                 ufile_xdmf.write_function(self.eta)
                 ufile_xdmf.write_function(self.flux)
                 ufile_xdmf.write_function(self.tag)
+                ufile_xdmf.write_function(self.shear_heating)
                 ufile_xdmf.write_function(self.partition)
                 self.domain.mesh.geometry.x[:] = coord
                 print_ph('... Finished')
