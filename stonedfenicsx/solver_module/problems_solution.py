@@ -707,11 +707,6 @@ class Global_thermal(Problem):
         
         return a,L
     #---
-
-    
-    
-    
-    #---
     @staticmethod
     def interpolate_1d_vector_boundary(function_space, z, temp_vec, dofs_intp):
             """Nearest-neighbour interpolate a 1D depth profile onto a boundary Function.
@@ -911,20 +906,7 @@ class Global_thermal(Problem):
     #--- 
     @timing_function
     def compute_dt_update_dt(self,sol:Solution,it_outer:int,ts:int)->None:
-        # compute the kappa form
-        if ts==1:
-            rho = density_FX(self.cached_mat,sol.T_N,sol.PL)
-            cp = heat_capacity_FX(self.cached_mat,sol.T_N)
-            k = heat_conductivity_FX(self.cached_mat,sol.T_N,sol.PL,cp,rho)
-            kappa = k/rho/cp
-            h = ufl.CellDiameter(self.domain.mesh)
-            u_norm = ufl.sqrt(ufl.dot(sol.u_global, sol.u_global) + 1.0e-30)
-            dt_diff = 0.5 * (h**2/kappa)
-            dt_adv  = 0.8 * (h/u_norm)
-            self.cached_form.other_form['dt_diff'] = dolfinx.fem.Expression(dt_diff,self.domain.solph.element.interpolation_points())
-            self.cached_form.other_form['dt_adv'] = dolfinx.fem.Expression(dt_adv,self.domain.solph.element.interpolation_points())
-
-        if ts==1 or self.ctrl_sim.ctrl_ky.constant==0:
+        def clausure_compute_dt_update_dt()->None:
             tdim = self.domain.mesh.topology.dim
             ncells_local = self.domain.mesh.topology.index_map(tdim).size_local
             # Allocate once and reuse: this branch runs every outer iteration
@@ -944,7 +926,25 @@ class Global_thermal(Problem):
             dt_b = self.domain.comm.allreduce(dt_b,op=MPI.MIN)
             print_ph(f'       old dt = {self.ctrl_sim.ctrl.dt:.2f}')
             self.ctrl_sim.ctrl.dt = self.ctrl_sim.ctrl.CFL*np.min([dt_a,dt_b])
-            print_ph(f'       new dt = {self.ctrl_sim.ctrl.dt:.2f}')            
+            print_ph(f'       new dt = {self.ctrl_sim.ctrl.dt:.2f}')           
+        
+        # compute the kappa form
+        if ts==0 and it_outer==0:
+            rho = density_FX(self.cached_mat,sol.T_N,sol.PL)
+            cp = heat_capacity_FX(self.cached_mat,sol.T_N)
+            k = heat_conductivity_FX(self.cached_mat,sol.T_N,sol.PL,cp,rho)
+            kappa = k/rho/cp
+            h = ufl.CellDiameter(self.domain.mesh)
+            u_norm = ufl.sqrt(ufl.dot(sol.u_global, sol.u_global) + 1.0e-30)
+            dt_diff = 0.5 * (h**2/kappa)
+            dt_adv  = 0.8 * (h/u_norm)
+            self.cached_form.other_form['dt_diff'] = dolfinx.fem.Expression(dt_diff,self.domain.solph.element.interpolation_points())
+            self.cached_form.other_form['dt_adv'] = dolfinx.fem.Expression(dt_adv,self.domain.solph.element.interpolation_points())
+
+        if ts==0 and it_outer==0:
+            clausure_compute_dt_update_dt()
+        elif self.ctrl_sim.ctrl_ky.constant==0 and it_outer==0:
+            clausure_compute_dt_update_dt()
   
     #---
     @timing_function
@@ -980,12 +980,11 @@ class Global_thermal(Problem):
                 self.cached_form = CACHED_FEM_FORM()             
             self.set_linear = self.set_linear_picard_TD
             self.set_residual = self.set_form_residual_TD                    
-        if it_outer == 0:         
+        if it_outer == 0 and ts == 0:         
             self.compute_energy_source()
         
         self.create_bc_temp(u_global=sol.u_global,it_outer=it_outer,ts=ts)
                 
-        time_A = timing.time()
 
         # Create the solver object: 
         a,L = self.initialise_form(sol=sol,it_outer=it_outer,ts=ts)
@@ -1004,6 +1003,17 @@ class Global_thermal(Problem):
         if it_outer==0:
             self.rT0 = rT 
         time_B = timing.time()        
+        
+        return rT,self.rT0 
+    #---
+    @timing_function
+    def compute_shear_heating_visualisation(self,sol:Solution,ts:int,it_outer:int)->None:
+        """Compute the shear heating for visualisation purposes.
+
+        This method is a placeholder for future implementation. It is intended
+        to compute the shear heating field for visualization, but currently
+        does not perform any operations.
+        """
         if self.ctrl_sim.ctrl.model_shear>0: 
 
             if ts == 0 and it_outer == 0:      
@@ -1018,10 +1028,7 @@ class Global_thermal(Problem):
         else: 
             if it_outer ==0 and ts == 0: 
                 sol.shear_heating.x.array[:]=0.0
-                sol.shear_heating.x.scatter_forward()  
-        print_ph(f'        it_outer = {it_outer:03d}: Solution of Temperature domain {self.domain.name} in {time_B-time_A:.2f}')
-        
-        return rT,self.rT0 
+                sol.shear_heating.x.scatter_forward()      
     #---
     @timing_function
     def solve_the_linear(self
@@ -1218,8 +1225,6 @@ class Global_pressure(Problem):
             ts (int, optional): Timestep index. Defaults to 0.
         """
         print_ph(f'    --- Solution of the Lit. Pressure problem in {self.domain.name} --  ---')
-
-        time_A = timing.time()
         
         a,L = self.set_linear_picard(sol.PL,sol.T_N)
         if it_outer == 0 & ts == 0: 
@@ -1227,10 +1232,7 @@ class Global_pressure(Problem):
         
 
         self.solve_the_linear(a,L,sol.PL) 
-        
-        time_B = timing.time()
-        print_ph(f'        it_outer = {it_outer:03d}: Solution of lit.pres domain {self.domain.name} in {time_B-time_A:.2f}')
-        print_ph('')
+    
     # ---    
     def solve_the_linear(self
                          ,a:dolfinx.fem.Form
@@ -1300,6 +1302,7 @@ class Stokes_Problem(Problem):
         self.moving_wall_ref = dolfinx.fem.Function(self.F0)
         self.moving_wall = dolfinx.fem.Function(self.F0)
     # ---
+    @timing_function
     def fem_stokes_form(self,a1,a2,a3,a_p):
         """Assemble the momentum/continuity blocks into compiled block forms.
 
@@ -1318,6 +1321,7 @@ class Stokes_Problem(Problem):
         a_p0  = [[a1, a2],[a3, a_p]]
         return dolfinx.fem.form(a),dolfinx.fem.form(a_p0)
     # ---
+    @timing_function
     def initialise_fem_form(self, sol:Solution,it_outer:int,ts:int):
         """Build and cache the Stokes system forms (momentum, continuity, preconditioner, residual forms).
 
@@ -1388,6 +1392,7 @@ class Stokes_Problem(Problem):
         
         return a,ap0,L            
     # --- 
+    @timing_function
     def compute_residuum_stokes(self):
         """Assemble the cached momentum/continuity residual forms and return their L2 norms.
 
@@ -1426,6 +1431,7 @@ class Stokes_Problem(Problem):
 
         return rmom, rdiv
     # --- 
+    @timing_function
     def set_linear_picard(self
                           ,vel : dolfinx.fem.function.Function 
                           ,temp : dolfinx.fem.function.Function 
@@ -1477,6 +1483,7 @@ class Stokes_Problem(Problem):
     
         return a1, a2, a3 , L , a_p0       
     # --- 
+    @timing_function
     def compute_moving_wall(self
                         ,facet:str
                         )->None:
@@ -1533,6 +1540,7 @@ class Stokes_Problem(Problem):
         
         return self.moving_wall_ref
     # --- 
+    @timing_function
     def solve_linear_picard(self
                             ,a:dolfinx.fem.Form
                             ,a_p0:dolfinx.fem.Form
@@ -1589,6 +1597,7 @@ class Stokes_Problem(Problem):
         minMaxU = min_max_array(u,vel=True)
         print_ph(f'                                  [checks] min vel = {minMaxU[0]:.5e}, max vel = {minMaxU[1]:.5e}, RMS = {minMaxU[2]:.5e}')
     #---
+    @timing_function
     def Solve_the_Problem(self
                           ,sol : Solution
                           ,it_outer : int =0
@@ -1640,8 +1649,6 @@ class Stokes_Problem(Problem):
             self.cached_form = CACHED_FEM_FORM()
         
         a,ap0,L = self.initialise_fem_form(sol=sol,it_outer=it_outer,ts=ts)
-        
-        time_A = timing.time()
         self.solve_linear_picard(dolfinx.fem.form(a),dolfinx.fem.form(ap0),dolfinx.fem.form(L), u,p,it_outer=it_outer,ts=ts)
         rmom, rdiv = self.compute_residuum_stokes()
         if it_outer == 0: 
@@ -1654,11 +1661,6 @@ class Stokes_Problem(Problem):
                 self.rdiv0 = 1.0
             else: 
                 self.rdiv0 = rdiv
-
-        
-        time_B = timing.time()
-        print_ph(f'        it_outer = {it_outer:03d}: Solution of Stokes domain {self.domain.name} in {time_B-time_A:.2f}')
-        print_ph('')
 
         return rmom,self.rmom0,rdiv,self.rdiv0
 # ---   
@@ -1745,6 +1747,7 @@ class Wedge(Stokes_Problem):
         self.rdiv0 = 1.0 
         self.rmom0 = 1.0 
     # --- 
+    @timing_function
     def setdirichlecht(self
                        ,V : dolfinx.fem.FunctionSpace
                        ,it_outer : int = 0
@@ -1856,7 +1859,8 @@ class Slab(Stokes_Problem):
             pdb (PhaseDataBase): Phase/material database.
         """
         super().__init__(mesh=mesh,elements=elements,name=name,ctrl_sim=ctrl_sim,pdb=pdb)
-
+    # --- 
+    @timing_function
     def setdirichlecht(self
                        ,Vsubs = None
                        ,it_outer : int = 0
@@ -1902,6 +1906,7 @@ class Slab(Stokes_Problem):
         
         return [bcx,bcy]       
     #---
+    @timing_function
     def compute_nitsche_FS(self
                            ,sol:Solution
                            ,dS:ufl.measure.Measure  

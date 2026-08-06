@@ -8,7 +8,7 @@ import dolfinx
 from functools import wraps
 from numpy.typing import NDArray
 # ---------------------------------------------------------------------------------------------------------
-_DEBUG_ = True
+_DEBUG_ = False
 def timing_function(fun: Callable) -> Callable:
     """Extract the execution time of the function.
 

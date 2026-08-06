@@ -343,6 +343,7 @@ def time_loop(ctrl_sim:SimulationControls
         flag_output = timestep_output(ctrlio=ctrl_sim.ctrl_io,ts=ts,t=t,time_previous=tbs,flag_save=flag_output)
         if ctrl_sim.ctrl.steady_state == 1 or flag_output:
             print_ph('OUTPUT...')
+            eg.compute_shear_heating_visualisation(sol=sol,ts=ts,it_outer=0)
             output_class.print_output(sol=sol,ctrl_sim=ctrl_sim,sc=sc,ts=ts,it_outer=0,time=t*sc.time/sc.scale_myr2sec)
             print_ph('finished')
             tbs = t 
