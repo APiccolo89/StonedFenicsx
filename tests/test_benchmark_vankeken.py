@@ -186,9 +186,9 @@ def read_data_base(option_viscous,option_thermal=0):
         [388.73, 504.03, 854.99],
         [390.40, 488.0, 847.70],
          ])
-        v1 = 390.60
-        v2 = 505.50
-        v3 = 853.55
+        v1 = 389.7962
+        v2 = 505.4634
+        v3 = 855.6999
         
         # 
            
@@ -233,7 +233,7 @@ def read_data_base(option_viscous,option_thermal=0):
         db_vk2 = [np.mean(data[:,1]), np.min(data[:,1]), np.max(data[:,1])]
         db_vk3 = [np.mean(data[:,2]), np.min(data[:,2]), np.max(data[:,2])]
  
-    test_1 = np.isclose(T_11_11, v1, rtol=1e-3, atol=1e-1)
+    test_1 = np.isclose(T_11_11, v1, rtol=1e-3, atol=1e-2)
     test_2 = np.isclose(L2_A, v2,rtol=1e-3, atol=1e-1)
     test_3 = np.isclose(L2_B, v3,rtol=1e-3,atol= 1e-1)
     
@@ -243,7 +243,6 @@ def read_data_base(option_viscous,option_thermal=0):
         rel_err = (T_11_11 - db_vk1[1])/(db_vk1[2]-db_vk1[1])
         print(f'                             Van Keken benchmark : mean T_11_11 = {db_vk1[0]:.2f}.')
         print(f'                             Van Keken benchmark : range T_11_11 = {db_vk1[1]:.2f}-{db_vk1[2]:.2f}.')
-        print(f'                             Van Keken benchmark : rel_err = {rel_err:.2f}')
 
     print(f'Test_viscous{option_viscous}, L2_A is {L2_A:.4f}. Tested against {v2:.4f}.')
     if option_thermal == 0: 
@@ -251,14 +250,12 @@ def read_data_base(option_viscous,option_thermal=0):
 
         print(f'                             Van Keken benchmark : mean L2_A = {db_vk2[0]:.2f}.')
         print(f'                             Van Keken benchmark : range L2_A = {db_vk2[1]:.2f}-{db_vk2[2]:.2f}.')
-        print(f'                             Van Keken benchmark : rel_err = {rel_err:.2f}')
 
     print(f'Test_viscous{option_viscous}, L2_B is {L2_B:.4f}. Tested against {v3:.4f}.')
     if option_thermal == 0: 
         rel_err = (L2_B - db_vk3[1])/(db_vk3[2]-db_vk3[1])
         print(f'                             Van Keken benchmark : mean L2_A = {db_vk3[0]:.2f}.')
         print(f'                             Van Keken benchmark : range L2_A = {db_vk3[1]:.2f}-{db_vk3[2]:.2f}.')
-        print(f'                             Van Keken benchmark : rel_err = {rel_err:.2f}')
 
 
     if test_1 and test_2 and test_3:         
@@ -331,11 +328,11 @@ if __name__ == '__main__':
     
     DEBUG = True
     
-    #test_isoviscous()
+    test_isoviscous()
 
-    #test_diffusion()
+    test_diffusion()
 
-    #test_composite()
+    test_composite()
     
     test_composite_NL_no_crust()
     

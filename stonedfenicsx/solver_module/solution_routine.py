@@ -142,10 +142,6 @@ def outerloop_operation(ctrl_sim:SimulationControls,
                                        it_outer
                                        ,ts=ts)
 
-        # Interpolate from global to wedge/slab
-        outit.ene_res_gl[0], outit.ene_res_gl[1] = eg.Solve_the_Problem(sol
-                            ,it_outer = it_outer
-                            ,ts = ts)
         
         interpolate_from_sub_to_main(sol.t_owedge
                                      ,sol.T_N
@@ -189,7 +185,10 @@ def outerloop_operation(ctrl_sim:SimulationControls,
         interpolate_from_sub_to_main(sol.p_global
                                     ,sol.p_slab
                                     ,sl.domain.cell_par)
-                
+        # Interpolate from global to wedge/slab
+        outit.ene_res_gl[0], outit.ene_res_gl[1] = eg.Solve_the_Problem(sol
+                            ,it_outer = it_outer
+                            ,ts = ts)                
         # Compute residuum 
         outit.compute_residuum_outer(sol=sol
                                      ,it_outer=it_outer
@@ -299,8 +298,8 @@ def time_loop(ctrl_sim:SimulationControls
     outit = OUTERITERATION_SOL_VAL(sol)
 
     # Initial guess for the outer loop: -> linear problem with constant viscosity, no shear heating. 
-    
-    initial_guess_simulation(ctrl_sim=ctrl_sim
+    if ctrl_sim.ctrl.steady_state==0:
+        initial_guess_simulation(ctrl_sim=ctrl_sim
                                   ,sc=sc
                                   ,eg=eg
                                   ,lg=lg

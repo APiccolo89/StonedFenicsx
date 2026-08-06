@@ -550,7 +550,7 @@ class Global_thermal(Problem):
         
         SUPG_L = tau * ufl.dot(u_global, ufl.grad(self.test0)) * f * self.dx
 
-        a = (diff + adv+SUPG)
+        a = (diff + adv)
         
         
         # Linear operator with frozen coefficients
@@ -600,17 +600,8 @@ class Global_thermal(Problem):
         
         adv  = rho_k * Cp_k *ufl.dot(u_global, ufl.grad(T)) * self.test0 * dx
         
-        # SUPG 
         
-        # --- SUPG parameter tau ---
-        h = ufl.CellDiameter(self.domain.mesh)
-        u_norm = ufl.sqrt(ufl.dot(u_global, u_global) + 1.0e-8)
-        # SUPG CORRECTION
-        residual = (rho_k * Cp_k * ufl.dot(u_global, ufl.grad(T)))
-        tau = h / (2.0 * u_norm+1e-12)
-        SUPG = tau * ufl.dot(u_global, ufl.grad(self.test0)) * residual * self.dx
-        
-        R =(diff + adv + SUPG - L)
+        R =(diff + adv  - L)
         
         return R
     #---
