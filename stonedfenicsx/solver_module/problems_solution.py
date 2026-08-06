@@ -395,6 +395,7 @@ class Global_thermal(Problem):
         self.problem_shear_heating = None 
         self.problem_shear_heating_mass = None 
     #---    # SETTING FORMS FOR THE PROBLEM
+    @timing_function
     def set_linear_picard_TD(self
                              ,p:dolfinx.fem.Function=None
                              ,T_k:dolfinx.fem.Function = None
@@ -437,7 +438,7 @@ class Global_thermal(Problem):
         # L - > Old temperature
         # -> Source term is assumed constant in time and do not vary between the timesteps
 
-        dt = self.ctrl_sim.ctrl.dt
+         
 
         rho_k = density_FX(self.cached_mat, T_k, p)  # frozen
                 
@@ -471,7 +472,7 @@ class Global_thermal(Problem):
         
         adv_new  = (rhocp / 2 )* ufl.dot(u_global, ufl.grad(self.trial0)) * self.test0 * dx
         
-        mass_new = (rhocp / dt) * self.trial0 * self.test0 * dx
+        mass_new = (rhocp / self.ctrl_sim.ctrl.dt) * self.trial0 * self.test0 * dx
         
         a = (diff_new + adv_new + mass_new )#+ supg_new)
                 
@@ -481,12 +482,13 @@ class Global_thermal(Problem):
 
         diff_old =  - ( 1 / 2 ) * ufl.inner(k_k0 * ufl.grad(T_O), ufl.grad(self.test0)) * dx
 
-        mass_old =  (rhocp_old / dt) * T_O * self.test0 * dx
+        mass_old =  (rhocp_old / self.ctrl_sim.ctrl.dt) * T_O * self.test0 * dx
 
         L = (diff_old + adv_old + f + mass_old)#+supg_old)
 
         return a, L
     #---
+    @timing_function
     def set_linear_picard_SS(self
                              ,p:dolfinx.fem.Function=None
                              ,T_k:dolfinx.fem.Function = None
@@ -559,6 +561,7 @@ class Global_thermal(Problem):
 
         return a, L
     #---
+    @timing_function
     def set_form_residual_SS(self
                             ,p :dolfinx.fem.function.Function = None
                             ,T :dolfinx.fem.function.Function = None
@@ -611,6 +614,7 @@ class Global_thermal(Problem):
         
         return R
     #---
+    @timing_function
     def set_form_residual_TD(self
                             ,p :dolfinx.fem.function.Function = None
                             ,T :dolfinx.fem.function.Function = None
@@ -638,7 +642,7 @@ class Global_thermal(Problem):
             float: L2 norm of the assembled residual vector, with Dirichlet
             dofs excluded.
         """
-        dt = self.ctrl_sim.ctrl.dt
+        
 
         
         rho_k = density_FX(self.cached_mat, T, p)  # frozen
@@ -647,16 +651,8 @@ class Global_thermal(Problem):
 
         k_k = heat_conductivity_FX(self.cached_mat, T, p, Cp_k, rho_k)  # frozen
 
-
-        rho_k0 = density_FX(self.cached_mat, T_O, p)  # frozen
-                
-        Cp_k0 = heat_capacity_FX(self.cached_mat, T_O)  # frozen
-        
-        k_k0 = heat_conductivity_FX(self.cached_mat, T_O, p, Cp_k0, rho_k0)  # frozen
                 
         rhocp        =  (rho_k * Cp_k)
-
-        rhocp_old    =  (rho_k0 * Cp_k0)
     
         dx  = self.dx
         
@@ -665,7 +661,7 @@ class Global_thermal(Problem):
         
         adv_new  = (rhocp / 2 )* ufl.dot(u_global, ufl.grad(T)) * self.test0 * dx
         
-        mass_new = (rhocp / dt) * T * self.test0 * dx
+        mass_new = (rhocp / self.ctrl_sim.ctrl.dt) * T * self.test0 * dx
         
         new = diff_new + adv_new + mass_new #+ supg_new
                         
@@ -675,6 +671,7 @@ class Global_thermal(Problem):
         
         return R
     #---
+    @timing_function
     def initialise_form(self,sol:Solution,it_outer:int,ts:int):
         """Call the routine for setting up the form, and caching it during the first iteration 
         and first 
@@ -739,6 +736,7 @@ class Global_thermal(Problem):
             buf_fct.x.scatter_forward()
             return buf_fct
     #---    
+    @timing_function
     def create_bc_temp(self,u_global:dolfinx.fem.Function,it_outer:int,ts=0)->list:
         """Create the boundary condition
 
@@ -818,6 +816,7 @@ class Global_thermal(Problem):
             self.wall_boundary.x.scatter_forward()
             self.e_ii_fr = 0.5 * (self.ctrl_sim.ctrl_ky.v_s[0] * 1 /self.g_input.wz_tk)    
     #---
+    @timing_function
     def compute_shear_heating(self
                               ,p:dolfinx.fem.Function
                               ,T_k:dolfinx.fem.Function)->None:
@@ -847,6 +846,7 @@ class Global_thermal(Problem):
                 expression = friction_heat('+') * self.test0('+') * (dS(domain.bc_dict['Subduction_top_lit']) + dS(domain.bc_dict['Subduction_top_wed']))
         self.shear_heating = expression
     #---
+    @timing_function
     def compute_friction_shear_expression(self
                                           ,T:dolfinx.fem.function.Function
                                           ,P:dolfinx.fem.function.Function):
@@ -865,6 +865,7 @@ class Global_thermal(Problem):
 
         return tau, tau_vs, tau_lim      
     #---
+    @timing_function
     def compute_energy_source(self):
         """Compute and cache the radiogenic heat production source term.
 
@@ -878,6 +879,7 @@ class Global_thermal(Problem):
         self.energy_source.x.array[:] = source.x.array[:]
         self.energy_source.x.scatter_forward()
     #---
+    @timing_function
     def compute_residual(self):
         """Assemble the cached temperature residual form and return its L2 norm.
 
@@ -907,6 +909,7 @@ class Global_thermal(Problem):
         RTemp = RT.norm(PETSc.NormType.NORM_2)  
         return RTemp 
     #--- 
+    @timing_function
     def compute_dt_update_dt(self,sol:Solution,it_outer:int,ts:int)->None:
         # compute the kappa form
         if ts==1:
@@ -944,6 +947,7 @@ class Global_thermal(Problem):
             print_ph(f'       new dt = {self.ctrl_sim.ctrl.dt:.2f}')            
   
     #---
+    @timing_function
     def Solve_the_Problem(self
                           ,sol:Solution
                           ,it_outer:int=0
@@ -1019,6 +1023,7 @@ class Global_thermal(Problem):
         
         return rT,self.rT0 
     #---
+    @timing_function
     def solve_the_linear(self
                          ,sol:Solution
                          ,a:dolfinx.fem.Form

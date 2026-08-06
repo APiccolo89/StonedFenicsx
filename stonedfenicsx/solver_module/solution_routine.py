@@ -137,7 +137,7 @@ def outerloop_operation(ctrl_sim:SimulationControls,
         time_A_outer = timing.time()
         # Copy the old solution of the outer loop for computing the residual of the equations. 
         
-        if lg.typology == 'NonlinearProblem' or it_outer == 0:  
+        if it_outer == 0:  
             lg.Solve_the_Problem(sol,
                                        it_outer
                                        ,ts=ts)
