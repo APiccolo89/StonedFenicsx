@@ -459,7 +459,8 @@ class Global_thermal(Problem):
 
         rhocp_old    =  (rho_k0 * Cp_k0)
         
-        
+        dx  = self.dx            
+
         if self.ctrl_sim.ctrl.model_shear>0:
             f    = (self.energy_source) * self.test0 * dx + self.shear_heating # source term {energy_source is radiogenic heating compute before hand, shear heating is frictional heating already a form}
         else: 
@@ -472,7 +473,7 @@ class Global_thermal(Problem):
         
         mass_new = (rhocp / dt) * self.trial0 * self.test0 * dx
         
-        a = dolfinx.fem.form(diff_new + adv_new + mass_new )#+ supg_new)
+        a = (diff_new + adv_new + mass_new )#+ supg_new)
                 
     
             
@@ -482,7 +483,7 @@ class Global_thermal(Problem):
 
         mass_old =  (rhocp_old / dt) * T_O * self.test0 * dx
 
-        L = dolfinx.fem.form(diff_old + adv_old + f + mass_old)#+supg_old)
+        L = (diff_old + adv_old + f + mass_old)#+supg_old)
 
         return a, L
     #---
@@ -546,14 +547,14 @@ class Global_thermal(Problem):
         
         SUPG_L = tau * ufl.dot(u_global, ufl.grad(self.test0)) * f * self.dx
 
-        a = dolfinx.fem.form(diff + adv+SUPG)
+        a = (diff + adv+SUPG)
         
         
         # Linear operator with frozen coefficients
         if  self.ctrl_sim.ctrl.model_shear>0:
-            L = dolfinx.fem.form((f) * self.test0 * dx + SUPG_L +self.shear_heating) 
+            L = ((f) * self.test0 * dx + SUPG_L +self.shear_heating) 
         else:     
-            L = dolfinx.fem.form((f) * self.test0 * dx +SUPG_L) 
+            L = ((f) * self.test0 * dx +SUPG_L) 
                 
 
         return a, L
@@ -702,8 +703,8 @@ class Global_thermal(Problem):
                                   ,L=L)
             self.cached_form.a = dolfinx.fem.form(a)
             self.cached_form.L = dolfinx.fem.form(L)
-            self.cached_form.other_form['res_temp'] = R
-            self.cached_form.other_form['res_temp_vec'] = dolfinx.fem.petsc.create_vector(R)
+            self.cached_form.other_form['res_temp'] = dolfinx.fem.form(R)
+            self.cached_form.other_form['res_temp_vec'] = dolfinx.fem.petsc.create_vector(self.cached_form.other_form['res_temp'])
         a = self.cached_form.a 
         L = self.cached_form.L 
         
