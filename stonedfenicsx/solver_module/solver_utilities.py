@@ -37,6 +37,8 @@ class OUTERITERATION_SOL_VAL:
     ene_res_gl : NDArray[float] =  field(init=False)
     combined_residual_0: float = field(init=False)
     res: NDArray[float] = 1.0 
+    old_t_max : float = 0.0
+    old_t_min : float = 0.0 
     def __post_init__(self,sol):
         self.T = sol.T_N.copy()
         self.T.x.scatter_forward()
@@ -116,9 +118,9 @@ class OUTERITERATION_SOL_VAL:
         # Prepare the variables 
 
         res_u,res_du = compute_residuum(sol.u_global,self.u)
-        res_p = compute_residuum(sol.p_global,self.p)
+        res_p,_ = compute_residuum(sol.p_global,self.p)
         res_T,res_dT = compute_residuum(sol.T_N,self.T)
-        res_PL= compute_residuum(sol.PL,self.PL)
+        res_PL,_= compute_residuum(sol.PL,self.PL)
 
         # Compute the ranges
         minMaxU = min_max_array(sol.u_global, vel=True)
@@ -134,19 +136,21 @@ class OUTERITERATION_SOL_VAL:
         minMaxPL = minMaxPL*sc.stress/1e9
         # Warnings and data 
         # Printing state: warning for the mismatch: 
-        if it_outer == 0: 
-            self.old_t_max = minMaxT[1]
-            self.old_t_min = minMaxT[0]
-        else: 
-            dT_m = (self.old_t_max - minMaxT[1])
-            dT_M = (self.old_t_min - minMaxT[0])
-            if np.abs(dT_m) > 0.1: 
-                print_ph(f'min temperature is changing too much between iterations:dT_min = {dT_m:.2f} [K]')
-            if np.abs(dT_M) > 0.1: 
-                print_ph(f'max temperature is changing too much between iterations:dT_max = {dT_m:.2f} [K]')
-            
-            if np.abs(dT_M) > 10 or np.abs(dT_m): 
-                raise ValueError('Simulation has something wrong, dT_M is increasing of at least 10 K. Check the data!')
+        if ctrl_sim.ctrl.initial_guess==0:
+            if it_outer == 0: 
+                self.old_t_max = minMaxT[1]
+                self.old_t_min = minMaxT[0]
+            else: 
+                dT_M = (self.old_t_max - minMaxT[1])
+                dT_m = (self.old_t_min - minMaxT[0])
+                print_ph('Check min-max temperature BC: ')
+
+                print_ph(f'         dT_min = {dT_m:.2f} [K]')
+
+                print_ph(f'         dT_max = {dT_M:.2f} [K]')
+                # During the initial guess temperature might have a few artifcats due to the initial temperature field
+                if np.abs(dT_M) > 10 or np.abs(dT_m)>10: 
+                    raise ValueError('Simulation has something wrong, dT_M is increasing of at least 10 K. Check the data!')
             
         if minMaxT[1]-(ctrl_sim.ctrl_tbc.temp_max * sc.temp-273.15)>1.0: 
             print_ph(' WARNING:::Temperature higher than the maximum temperature')
@@ -240,12 +244,7 @@ def compute_residuum(a:dolfinx.fem.Function,b:dolfinx.fem.Function)->float:
     Returns:
         float: Dimensionless relative residual in [0, inf).
     """
-    
-    
-    
-    # Use explicit duplicate/axpy + destroy: the `+`/`-` operator overloads on
-    # PETSc Vec allocate a new temporary Vec each call that is never freed,
-    # which leaks across every outer Picard iteration if left to the operators.
+
     diff = a.x.petsc_vec.copy()
     diff.axpy(-1.0, b.x.petsc_vec)  # diff = a - b
     res = diff.norm(PETSc.NormType.NORM_2)
@@ -255,8 +254,11 @@ def compute_residuum(a:dolfinx.fem.Function,b:dolfinx.fem.Function)->float:
     total.axpy(1.0, b.x.petsc_vec)  # total = a + b
     dxa = total.norm(PETSc.NormType.NORM_2)
     total.destroy()
+    
+    n_dofs = a.x.petsc_vec.getSize()  # global size, already MPI-aware
+    
 
-    return res / dxa, res
+    return res / dxa, res/np.sqrt(n_dofs)
 # ---
 def min_max_array(a:dolfinx.fem.function.Function
                 ,vel = False)->NDArray[np.float64]:
