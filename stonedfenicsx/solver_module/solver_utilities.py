@@ -117,10 +117,10 @@ class OUTERITERATION_SOL_VAL:
         """
         # Prepare the variables 
 
-        res_u,res_du = compute_residuum(sol.u_global,self.u)
-        res_p,_ = compute_residuum(sol.p_global,self.p)
-        res_T,res_dT = compute_residuum(sol.T_N,self.T)
-        res_PL,_= compute_residuum(sol.PL,self.PL)
+        res_u,res_du,linfv = compute_residuum(sol.u_global,self.u)
+        res_p,_,_ = compute_residuum(sol.p_global,self.p)
+        res_T,res_dT,linft = compute_residuum(sol.T_N,self.T)
+        res_PL,_,_= compute_residuum(sol.PL,self.PL)
 
         # Compute the ranges
         minMaxU = min_max_array(sol.u_global, vel=True)
@@ -143,14 +143,15 @@ class OUTERITERATION_SOL_VAL:
             else: 
                 dT_M = (self.old_t_max - minMaxT[1])
                 dT_m = (self.old_t_min - minMaxT[0])
-                print_ph('Check min-max temperature BC: ')
+                if np.abs(dT_M) > 0.1 or np.abs(dT_m):
+                    print_ph('Check min-max temperature BC: ')
 
-                print_ph(f'         dT_min = {dT_m:.2f} [K]')
+                    print_ph(f'         dT_min = {dT_m:.2f} [K]')
 
-                print_ph(f'         dT_max = {dT_M:.2f} [K]')
-                # During the initial guess temperature might have a few artifcats due to the initial temperature field
-                if np.abs(dT_M) > 10 or np.abs(dT_m)>10: 
-                    raise ValueError('Simulation has something wrong, dT_M is increasing of at least 10 K. Check the data!')
+                    print_ph(f'         dT_max = {dT_M:.2f} [K]')
+                    # During the initial guess temperature might have a few artifcats due to the initial temperature field
+                    if np.abs(dT_M) > 10 or np.abs(dT_m)>10: 
+                        raise ValueError('Simulation has something wrong, dT_M is increasing of at least 10 K. Check the data!')
             
         if minMaxT[1]-(ctrl_sim.ctrl_tbc.temp_max * sc.temp-273.15)>1.0: 
             print_ph(' WARNING:::Temperature higher than the maximum temperature')
@@ -172,8 +173,10 @@ class OUTERITERATION_SOL_VAL:
         print_ph(f'              Res pressure       =  {res_p:.3e} [n.d.], max = {minMaxP[1]:.3e}, min = {minMaxP[0]:.3e} [GPa]')
         print_ph(f'              Res lithostatic    =  {res_PL:.3e}[n.d.], max = {minMaxPL[1]:.3e}, min = {minMaxPL[0]:.3e} [GPa]')
         print_ph(f'              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  {res_total:.3e} [n.d.] ')
-        print_ph(f'              [] dimensional residual temperature = {res_dT*sc.temp:.3e} [K],')
-        print_ph(f'              [] dimensional residual velocity = {res_du*(sc.length/sc.time)/sc.scale_vel:.3e} [cm/yr]')
+        print_ph(f'              [L2Norm] dimensional residual temperature = {res_dT*sc.temp:.3e} [K],')
+        print_ph(f'              [L2Norm] dimensional residual velocity = {res_du*(sc.length/sc.time)/sc.scale_vel:.3e} [cm/yr]')
+        print_ph(f'              [L2inf] dimensional residual velocity = {linfv*(sc.length/sc.time)/sc.scale_vel:.3e} [cm/yr]')
+        print_ph(f'              [L2inf] dimensional residual temperature = {linft*sc.temp:.3e} [K]')
         print_ph('         Conservation residual :')
         print_ph('          Stokes Equation :')
         a = self.mom_res_wedge[0] * sc.force/sc.length**3
@@ -248,6 +251,7 @@ def compute_residuum(a:dolfinx.fem.Function,b:dolfinx.fem.Function)->float:
     diff = a.x.petsc_vec.copy()
     diff.axpy(-1.0, b.x.petsc_vec)  # diff = a - b
     res = diff.norm(PETSc.NormType.NORM_2)
+    Linf = diff.norm(PETSc.NormType.NORM_INFINITY)
     diff.destroy()
 
     total = a.x.petsc_vec.copy()
@@ -258,7 +262,7 @@ def compute_residuum(a:dolfinx.fem.Function,b:dolfinx.fem.Function)->float:
     n_dofs = a.x.petsc_vec.getSize()  # global size, already MPI-aware
     
 
-    return res / dxa, res/np.sqrt(n_dofs)
+    return res / dxa, res/np.sqrt(n_dofs),Linf
 # ---
 def min_max_array(a:dolfinx.fem.function.Function
                 ,vel = False)->NDArray[np.float64]:

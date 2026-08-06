@@ -394,6 +394,8 @@ class Global_thermal(Problem):
         self.e_ii_fr = 0.5 * (self.ctrl_sim.ctrl_ky.v_s[0] * 1 /self.g_input.wz_tk)
         self.problem_shear_heating = None 
         self.problem_shear_heating_mass = None 
+        # - > prepare the dt 
+        self.dt = dolfinx.fem.Constant(self.domain.mesh,self.ctrl_sim.ctrl.dt)
     #---    # SETTING FORMS FOR THE PROBLEM
     @timing_function
     def set_linear_picard_TD(self
@@ -472,7 +474,7 @@ class Global_thermal(Problem):
         
         adv_new  = (rhocp / 2 )* ufl.dot(u_global, ufl.grad(self.trial0)) * self.test0 * dx
         
-        mass_new = (rhocp / self.ctrl_sim.ctrl.dt) * self.trial0 * self.test0 * dx
+        mass_new = (rhocp / self.dt) * self.trial0 * self.test0 * dx
         
         a = (diff_new + adv_new + mass_new )#+ supg_new)
                 
@@ -482,7 +484,7 @@ class Global_thermal(Problem):
 
         diff_old =  - ( 1 / 2 ) * ufl.inner(k_k0 * ufl.grad(T_O), ufl.grad(self.test0)) * dx
 
-        mass_old =  (rhocp_old / self.ctrl_sim.ctrl.dt) * T_O * self.test0 * dx
+        mass_old =  (rhocp_old / self.dt) * T_O * self.test0 * dx
 
         L = (diff_old + adv_old + f + mass_old)#+supg_old)
 
@@ -509,7 +511,6 @@ class Global_thermal(Problem):
             D (Domain, optional): Domain . Defaults to None.
             FG (Functions_material_properties_global, optional):Cached material properties. Defaults to None.
             ctrl (NumericalControls, optional): Numerical controls. Defaults to None.
-            dt (float, optional): dt . Defaults to None.
             it (int, optional): outer iteration. Defaults to 0.
 
         Returns:
@@ -568,7 +569,6 @@ class Global_thermal(Problem):
                             ,T_O :dolfinx.fem.function.Function = None
                             ,u_global :dolfinx.fem.function.Function = None
                             ,it_inner:int=0
-                            ,dt:float = 0.0
                             ,L:dolfinx.fem.Form=None)->float:
         """Build the steady-state residual form of the energy equation (diffusion + SUPG-stabilised advection - sources).
 
@@ -621,7 +621,6 @@ class Global_thermal(Problem):
                             ,T_O :dolfinx.fem.function.Function = None
                             ,u_global :dolfinx.fem.function.Function = None
                             ,it_inner:int=0
-                            ,dt:float = 0.0
                             ,L:dolfinx.fem.Form=None)->float:
         """Assemble the time-dependent (Crank-Nicolson) energy residual and return its L2 norm.
 
@@ -661,7 +660,7 @@ class Global_thermal(Problem):
         
         adv_new  = (rhocp / 2 )* ufl.dot(u_global, ufl.grad(T)) * self.test0 * dx
         
-        mass_new = (rhocp / self.ctrl_sim.ctrl.dt) * T * self.test0 * dx
+        mass_new = (rhocp / self.dt) * T * self.test0 * dx
         
         new = diff_new + adv_new + mass_new #+ supg_new
                         
@@ -925,7 +924,7 @@ class Global_thermal(Problem):
             dt_b = np.min(dt_dif.x.array[:ncells_local])
             dt_b = self.domain.comm.allreduce(dt_b,op=MPI.MIN)
             print_ph(f'       old dt = {self.ctrl_sim.ctrl.dt:.2f}')
-            self.ctrl_sim.ctrl.dt = self.ctrl_sim.ctrl.CFL*np.min([dt_a,dt_b])
+            self.dt.value = self.ctrl_sim.ctrl.CFL*np.min([dt_a,dt_b])
             print_ph(f'       new dt = {self.ctrl_sim.ctrl.dt:.2f}')           
         
         # compute the kappa form
