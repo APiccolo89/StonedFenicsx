@@ -54,6 +54,8 @@ class OUTERITERATION_SOL_VAL:
         self.div_res_wedge = np.zeros(2)
         self.combined_residual_0 = 1.0 
         self.ene_res_gl = np.zeros(2)
+        self.old_t_max = 0.0 
+        self.old_t_min = 0.0 
     
     def update_iteration(self,sol): 
         self.T.x.array[:] = sol.T_N.x.array[:]
@@ -113,9 +115,9 @@ class OUTERITERATION_SOL_VAL:
         """
         # Prepare the variables 
 
-        res_u = compute_residuum(sol.u_global,self.u)
+        res_u,res_du = compute_residuum(sol.u_global,self.u)
         res_p = compute_residuum(sol.p_global,self.p)
-        res_T = compute_residuum(sol.T_N,self.T)
+        res_T,res_dT = compute_residuum(sol.T_N,self.T)
         res_PL= compute_residuum(sol.PL,self.PL)
 
         # Compute the ranges
@@ -130,8 +132,22 @@ class OUTERITERATION_SOL_VAL:
         minMaxP = minMaxP*sc.stress/1e9 
         minMaxT[0:2] = minMaxT[0:2]*sc.temp -273.15
         minMaxPL = minMaxPL*sc.stress/1e9
-    
-
+        # Warnings and data 
+        # Printing state: warning for the mismatch: 
+        if it_outer == 0: 
+            self.old_t_max = minMaxT[1]
+            self.old_t_min = minMaxT[0]
+        else: 
+            dT_m = (self.old_t_max - minMaxT[1])
+            dT_M = (self.old_t_min - minMaxT[0])
+            if np.abs(dT_m) > 0.1: 
+                print_ph(f'min temperature is changing too much between iterations:dT_min = {dT_m:.2f} [K]')
+            if np.abs(dT_M) > 0.1: 
+                print_ph(f'max temperature is changing too much between iterations:dT_max = {dT_m:.2f} [K]')
+            
+            if np.abs(dT_M) > 10 or np.abs(dT_m): 
+                raise ValueError('Simulation has something wrong, dT_M is increasing of at least 10 K. Check the data!')
+            
         if minMaxT[1]-(ctrl_sim.ctrl_tbc.temp_max * sc.temp-273.15)>1.0: 
             print_ph(' WARNING:::Temperature higher than the maximum temperature')
         if minMaxT[0] < 0.0: 
@@ -152,6 +168,8 @@ class OUTERITERATION_SOL_VAL:
         print_ph(f'              Res pressure       =  {res_p:.3e} [n.d.], max = {minMaxP[1]:.3e}, min = {minMaxP[0]:.3e} [GPa]')
         print_ph(f'              Res lithostatic    =  {res_PL:.3e}[n.d.], max = {minMaxPL[1]:.3e}, min = {minMaxPL[0]:.3e} [GPa]')
         print_ph(f'              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  {res_total:.3e} [n.d.] ')
+        print_ph(f'              [] dimensional residual temperature = {res_dT*sc.temp:.3e} [K],')
+        print_ph(f'              [] dimensional residual velocity = {res_du*(sc.length/sc.time)/sc.scale_vel:.3e} [cm/yr]')
         print_ph('         Conservation residual :')
         print_ph('          Stokes Equation :')
         a = self.mom_res_wedge[0] * sc.force/sc.length**3
@@ -238,7 +256,7 @@ def compute_residuum(a:dolfinx.fem.Function,b:dolfinx.fem.Function)->float:
     dxa = total.norm(PETSc.NormType.NORM_2)
     total.destroy()
 
-    return res / dxa
+    return res / dxa, res
 # ---
 def min_max_array(a:dolfinx.fem.function.Function
                 ,vel = False)->NDArray[np.float64]:
