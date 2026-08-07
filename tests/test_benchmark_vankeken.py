@@ -201,10 +201,9 @@ def read_data_base(option_viscous,option_thermal=0):
         [581.30, 607.26, 1003.35],
         [584.20, 592.8, 1000.0],
         ])
-        v1 = 563.13
-        v2 = 601.45
-        v3 = 999.1
-
+        v1 = 573.3844
+        v2 = 602.8806
+        v3 = 1001.7503
     if option_viscous==2 and option_thermal == 0: 
         
         data = np.array([
@@ -216,9 +215,9 @@ def read_data_base(option_viscous,option_thermal=0):
         [583.11, 604.96, 1000.05],
         [585.70, 591.30, 996.60]
         ])
-        v1 = 571.50
-        v2 = 599.36
-        v3 = 996.35 
+        v1 = 576.1815
+        v2 = 600.3638
+        v3 = 997.9291 
     if option_thermal==1: 
         v1 = 554.58
         v2 = 608.76

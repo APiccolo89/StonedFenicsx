@@ -1457,7 +1457,7 @@ class Stokes_Problem(Problem):
 
         e = compute_strain_rate(vel)
         # If we are in the first iteration of the first timestep -> use the default viscosity for creating an initial guess. fem.Constant(M.domainG.mesh, PETSc.ScalarType([0.0, -ctrl.g]))   
-        if (it == 0 and ts == 0 and self.ctrl_sim.ctrl.initial_guess==1) or slab == 1:
+        if (self.ctrl_sim.ctrl.initial_guess==1) or slab == 1:
             eta = dolfinx.fem.Constant(self.domain.mesh,PETSc.ScalarType(self.cached_mat.eta_def))
         else: 
             eta = compute_viscosity_FX(e,temp,pres_l,self.pdb,self.cached_mat)

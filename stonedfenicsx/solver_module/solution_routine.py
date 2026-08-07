@@ -124,10 +124,10 @@ def outerloop_operation(ctrl_sim:SimulationControls,
     
     if (lg.typology == 'LinearProblem' and eg.typology == 'LinearProblem' and we.typology == 'LinearProblem'):
         max_it = 2
-    elif ctrl_sim.ctrl.initial_guess == 1:
+    elif ctrl_sim.ctrl.initial_guess == 1 and ctrl_sim.ctrl.steady_state==0:
         max_it = 5
     else: 
-        max_it = ctrl_sim.ctrl.it_max        
+        max_it = ctrl_sim.ctrl.it_max 
     
     
     while it_outer < max_it and outit.res > ctrl_sim.ctrl.tol: 
