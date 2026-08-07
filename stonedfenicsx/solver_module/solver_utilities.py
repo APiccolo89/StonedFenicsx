@@ -36,12 +36,13 @@ class ResidualLogger:
             self.file.write("STEADY STATE SOLUTION\n")
             self.file.flush()
 
-    def log_iteration(self, it_outer, res_cons, res_diff, L1_temp):
+    def log_iteration(self, it_outer, res_cons, res_diff, L1_temp,res_alt_T):
         self.file.write(
             f"  it_outer = {it_outer:4d}  "
             f"res_cons = {res_cons:.6e}  "
             f"res_diff = {res_diff:.6e}  "
-            f"L1_temp  = {L1_temp:.6e}\n"
+            f"L1_temp  = {L1_temp:.6e} "
+            f"res_alt = {res_alt_T:.6e}\n"
         )
         self.file.flush()
 
@@ -111,12 +112,12 @@ class OUTERITERATION_SOL_VAL:
         self.p.x.array[:] = sol.p_global.x.array[:]
         self.p.x.scatter_forward()
     
-    def check_convergence(self,ctrl_sim:SimulationControls,res_total:float,r_tot_conv:float,dtemp_l1:float,ts:int,it_outer:int)->int:
+    def check_convergence(self,ctrl_sim:SimulationControls,res_total:float,r_tot_conv:float,dtemp_l1:float,res_alt:float,ts:int,it_outer:int)->int:
         
 
         
-        if dtemp_l1 < 1e-2: 
-            print_ph('L1_norm of the temperature difference is less than 0.01 [K]. The problem is converged.')
+        if dtemp_l1 < 1e-5: 
+            print_ph(f'L1_norm of the temperature difference is less than {1e-5:.5e} [K]. The problem is converged.')
             self.res = ctrl_sim.ctrl.tol 
             return 0 
         
@@ -139,13 +140,11 @@ class OUTERITERATION_SOL_VAL:
                 self.log.new_timestep(ts)
                 self.log.ts = ts 
         
-            self.log.log_iteration(it_outer, res_consv_rel, res_total, dtemp_l1)
+            self.log.log_iteration(it_outer, res_consv_rel, res_total, dtemp_l1,res_alt)
         
         return 0 
-        
     
-    
-    
+    # --- 
     def compute_residuum_outer(self
                                ,sol:Solution
                                ,it_outer:int
@@ -194,10 +193,10 @@ class OUTERITERATION_SOL_VAL:
         """
         # Prepare the variables 
 
-        res_u,res_du,linfv = compute_residuum(sol.u_global,self.u)
-        res_p,_,_ = compute_residuum(sol.p_global,self.p)
-        res_T,res_dT,linft = compute_residuum(sol.T_N,self.T)
-        res_PL,_,_= compute_residuum(sol.PL,self.PL)
+        res_u,res_du,linfv,_ = compute_residuum(sol.u_global,self.u)
+        res_p,_,_,_ = compute_residuum(sol.p_global,self.p)
+        res_T,res_dT,linft,res_T_alt = compute_residuum(sol.T_N,self.T)
+        res_PL,_,_,_= compute_residuum(sol.PL,self.PL)
 
         # Compute the ranges
         minMaxU = min_max_array(sol.u_global, vel=True)
@@ -252,8 +251,10 @@ class OUTERITERATION_SOL_VAL:
         print_ph(f'              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  {res_total:.3e} [n.d.] ')
         print_ph(f'              [L2Norm] dimensional residual temperature = {res_dT*sc.temp:.3e} [K],')
         print_ph(f'              [L2Norm] dimensional residual velocity = {res_du*(sc.length/sc.time)/sc.scale_vel:.3e} [cm/yr]')
-        print_ph(f'              [L2inf] dimensional residual velocity = {linfv*(sc.length/sc.time)/sc.scale_vel:.3e} [cm/yr]')
-        print_ph(f'              [L2inf] dimensional residual temperature = {linft*sc.temp:.3e} [K]')
+        print_ph(f'              [L1inf] dimensional residual velocity = {linfv*(sc.length/sc.time)/sc.scale_vel:.3e} [cm/yr]')
+        print_ph(f'              [L1inf] dimensional residual temperature = {linft*sc.temp:.3e} [K]')
+        print_ph(f'              [L2_alt] L2(T()-T(-1))/T()) dimensional residual temperature = {res_T_alt:.3e} [K]')
+
         print_ph('         Conservation residual :')
         print_ph('          Stokes Equation :')
         a = self.mom_res_wedge[0] * sc.force/sc.length**3
@@ -297,10 +298,12 @@ class OUTERITERATION_SOL_VAL:
 
         sol.outer_iteration.append(res_total)
         sol.ts.append(ts)
+        
         self.check_convergence(ctrl_sim=ctrl_sim
                                ,res_total=res_total
                                ,r_tot_conv=r_tot_conv/self.combined_residual_0
                                ,dtemp_l1=linft*sc.temp
+                               ,res_alt = res_T_alt
                                ,ts=ts
                                ,it_outer=it_outer)
         
@@ -337,8 +340,9 @@ def compute_residuum(a:dolfinx.fem.Function,b:dolfinx.fem.Function)->float:
     
     n_dofs = a.x.petsc_vec.getSize()  # global size, already MPI-aware
     
+    rel_dif = a.x.petsc_vec.norm(PETSc.NormType.NORM_2)
 
-    return res / dxa, res/np.sqrt(n_dofs),Linf
+    return res / dxa, res/np.sqrt(n_dofs),Linf, res/rel_dif
 # ---
 def min_max_array(a:dolfinx.fem.function.Function
                 ,vel = False)->NDArray[np.float64]:
