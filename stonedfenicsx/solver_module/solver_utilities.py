@@ -221,7 +221,7 @@ class OUTERITERATION_SOL_VAL:
                 dT_M = (self.old_t_max - minMaxT[1])
                 dT_m = (self.old_t_min - minMaxT[0])
                 if np.abs(dT_M) > 0.1 or np.abs(dT_m):
-                    print_ph('Check min-max temperature BC: ')
+                    print_ph('            Check min-max temperature BC: ')
 
                     print_ph(f'         dT_min = {dT_m:.2f} [K]')
 
