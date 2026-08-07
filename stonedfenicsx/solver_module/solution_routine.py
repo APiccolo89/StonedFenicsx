@@ -308,7 +308,7 @@ def time_loop(ctrl_sim:SimulationControls
     t  = 0.0
     ts = 0
     output_class  = OUTPUT(domain=eg.domain,ctrl_sim=ctrl_sim,sc=sc,pdb=pdb,cach_mat_thermal=eg.cached_mat,comm=eg.domain.mesh.comm)
-    outit = OUTERITERATION_SOL_VAL(sol)
+    outit = OUTERITERATION_SOL_VAL(sol=sol,ctrl=ctrl_sim.ctrl,ctrl_io=ctrl_sim.ctrl_io)
 
     # Initial guess for the outer loop: -> linear problem with constant viscosity, no shear heating. 
     if ctrl_sim.ctrl.steady_state==0:

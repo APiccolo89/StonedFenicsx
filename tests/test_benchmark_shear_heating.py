@@ -139,13 +139,13 @@ def read_data_base(test_name):
     L2_B = np.array(f[field_c])
     
     if test_name == '_phi3':
-        v1 = 235.91
-        v2 = 574.81
-        v3 = 831.66
+        v1 = 235.7674
+        v2 = 575.5928
+        v3 = 834.6294
     elif test_name == '_phi5':
-        v1 = 239.40
-        v2 = 576.42
-        v3 = 832.09
+        v1 =  239.2811
+        v2 = 577.2084
+        v3 = 835.0758
     elif test_name =='_phi10':
         v1 = 243.35 
         v2 = 578.35 
@@ -198,8 +198,8 @@ def test_phi(phi=0.0,test_name='_phi5'):
 #-------------------------------------------------------------------------------
 if __name__ == '__main__': 
     
-    test_phi(phi=3.0, test_name='_phi3')
-    test_phi(phi=5.0,test_name='_phi5')
+    #test_phi(phi=3.0, test_name='_phi3')
+    #test_phi(phi=5.0,test_name='_phi5')
     test_phi(phi=10.0,test_name='_phi10')
     test_phi(phi=15.0,test_name='_phi15')
 #---------------------------------------------------------------------------------

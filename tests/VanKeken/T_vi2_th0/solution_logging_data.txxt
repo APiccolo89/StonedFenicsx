@@ -1,0 +1,6 @@
+STEADY STATE SOLUTION
+  it_outer =    0  res_cons = 1.000000e+00  res_diff = 1.734350e+00  L1_temp  = 1.105871e+03
+STEADY STATE SOLUTION
+  it_outer =    1  res_cons = 3.361449e+00  res_diff = 8.268902e-01  L1_temp  = 2.322509e+02
+STEADY STATE SOLUTION
+  it_outer =    2  res_cons = 2.013816e+00  res_diff = 7.075458e-01  L1_temp  = 1.535272e+02

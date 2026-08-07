@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from dataclasses import dataclass, field, InitVar
 # --- 
 from stonedfenicsx.config.scal import Scal
-from stonedfenicsx.config.numerical_control import SimulationControls,IOControls
+from stonedfenicsx.config.numerical_control import SimulationControls,IOControls,NumericalControls
 from stonedfenicsx.config.geometry import GeomInput
 from stonedfenicsx.utils import print_ph, timing
 
@@ -19,13 +19,54 @@ if TYPE_CHECKING:
     from stonedfenicsx.solver_module.problems_solution import Solution
 
 # ---
+class ResidualLogger:
+    def __init__(self, filepath:str, max_it:int=50, tol:float =1e-8, steady_state:int=0):
+        filepath = filepath/'solution_logging_data.txxt'
+        self.max_it:int = max_it
+        self.tol:float = tol
+        self.file:str = open(filepath, "w")
+        self.steady_state:int = steady_state
+        self.ts = 0
+
+    def new_timestep(self, ts):
+        if self.steady_state == 0: 
+            self.file.write(f"\nts = {ts}\n")
+            self.file.flush()
+        else: 
+            self.file.write("STEADY STATE SOLUTION\n")
+            self.file.flush()
+
+    def log_iteration(self, it_outer, res_cons, res_diff, L1_temp):
+        self.file.write(
+            f"  it_outer = {it_outer:4d}  "
+            f"res_cons = {res_cons:.6e}  "
+            f"res_diff = {res_diff:.6e}  "
+            f"L1_temp  = {L1_temp:.6e}\n"
+        )
+        self.file.flush()
+
+    def check_divergence(self, it_outer, res):
+        diverged = (it_outer >= self.max_it) and (res > self.tol)
+        if diverged:
+            self.file.write(
+                f"  >>> DIVERGED: it_outer={it_outer} reached max_it={self.max_it} "
+                f"with res={res:.3e} > tol={self.tol:.1e}\n"
+            )
+            self.file.flush()
+        return diverged
+
+    def close(self):
+        self.file.close()
 # ---
 @dataclass(slots=True)
 class OUTERITERATION_SOL_VAL:
     """Class that handles the outer iteration variables
     """
-    
     sol: InitVar[Solution]
+    ctrl: InitVar[NumericalControls]
+    ctrl_io : InitVar[IOControls]
+    log: ResidualLogger = field(init=False)
+    
     T        : dolfinx.fem.function =  field(init=False)
     PL       : dolfinx.fem.function =  field(init=False)
     u : dolfinx.fem.function =  field(init=False)
@@ -39,7 +80,7 @@ class OUTERITERATION_SOL_VAL:
     res: NDArray[float] = 1.0 
     old_t_max : float = 0.0
     old_t_min : float = 0.0 
-    def __post_init__(self,sol):
+    def __post_init__(self,sol:Solution,ctrl:NumericalControls,ctrl_io:IOControls):
         self.T = sol.T_N.copy()
         self.T.x.scatter_forward()
         self.PL = sol.PL.copy()
@@ -58,6 +99,7 @@ class OUTERITERATION_SOL_VAL:
         self.ene_res_gl = np.zeros(2)
         self.old_t_max = 0.0 
         self.old_t_min = 0.0 
+        self.log = ResidualLogger(ctrl_io.path_test,ctrl.it_max,ctrl.tol,ctrl.steady_state)
     
     def update_iteration(self,sol): 
         self.T.x.array[:] = sol.T_N.x.array[:]
@@ -68,7 +110,42 @@ class OUTERITERATION_SOL_VAL:
         self.u.x.scatter_forward() 
         self.p.x.array[:] = sol.p_global.x.array[:]
         self.p.x.scatter_forward()
-           
+    
+    def check_convergence(self,ctrl_sim:SimulationControls,res_total:float,r_tot_conv:float,dtemp_l1:float,ts:int,it_outer:int)->int:
+        
+
+        
+        if dtemp_l1 < 1e-2: 
+            print_ph('L1_norm of the temperature difference is less than 0.01 [K]. The problem is converged.')
+            self.res = ctrl_sim.ctrl.tol 
+            return 0 
+        
+        res_consv_rel = r_tot_conv
+        if (res_consv_rel < res_total) and (ctrl_sim.ctrl.steady_state==1) and (ctrl_sim.ctrl.initial_guess==0): 
+            print_ph('     --- The conservation residual is less than the residual difference: the tol is evaluated against conservation equations.')
+            self.res = res_total
+        else: 
+            self.res = res_consv_rel 
+            
+        if MPI.COMM_WORLD.rank == 0 and ctrl_sim.ctrl.initial_guess==0:
+            log_ts = 0 
+            if ctrl_sim.ctrl.steady_state == 1: 
+                if it_outer == 0: 
+                    log_ts = 1 
+            else: 
+                log_ts = 1
+            
+            if self.log.ts != ts and log_ts==1: 
+                self.log.new_timestep(ts)
+                self.log.ts = ts 
+        
+            self.log.log_iteration(it_outer, res_consv_rel, res_total, dtemp_l1)
+        
+        return 0 
+        
+    
+    
+    
     def compute_residuum_outer(self
                                ,sol:Solution
                                ,it_outer:int
@@ -220,14 +297,13 @@ class OUTERITERATION_SOL_VAL:
 
         sol.outer_iteration.append(res_total)
         sol.ts.append(ts)
-        # Update the structure, update the residual
-        # Switch between combined residual of the conservation 
-        if ctrl_sim.ctrl.steady_state==1:
-            self.res = np.min([res_total,r_tot_conv/self.combined_residual_0])
-            if res_total>r_tot_conv/ self.combined_residual_0 :
-                print_ph('     --- The conservation residual is less than the residual difference: the tol is evaluated against conservation equations.')
-        else: 
-            self.res = r_tot_conv/ self.combined_residual_0 
+        self.check_convergence(ctrl_sim=ctrl_sim
+                               ,res_total=res_total
+                               ,r_tot_conv=r_tot_conv/self.combined_residual_0
+                               ,dtemp_l1=linft*sc.temp
+                               ,ts=ts
+                               ,it_outer=it_outer)
+        
         self.update_iteration(sol)
         
 # ---

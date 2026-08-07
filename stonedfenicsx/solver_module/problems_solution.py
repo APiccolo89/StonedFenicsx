@@ -536,28 +536,14 @@ class Global_thermal(Problem):
         
         # SUPG 
         
-        # --- SUPG parameter tau ---
-        h = ufl.CellDiameter(self.domain.mesh)
-        
-        u_norm = ufl.sqrt(ufl.dot(u_global, u_global) + 1.0e-8)
-        # Simple tau based on advection
-        tau = h / (2.0 * u_norm+1e-12)
-        
-        
-        residual = (rho_k * Cp_k * ufl.dot(u_global, ufl.grad(self.trial0)))
-        
-        SUPG = tau * ufl.dot(u_global, ufl.grad(self.test0)) * residual * self.dx
-        
-        SUPG_L = tau * ufl.dot(u_global, ufl.grad(self.test0)) * f * self.dx
-
         a = (diff + adv)
         
         
         # Linear operator with frozen coefficients
         if  self.ctrl_sim.ctrl.model_shear>0:
-            L = ((f) * self.test0 * dx + SUPG_L +self.shear_heating) 
+            L = ((f) * self.test0 * dx  +self.shear_heating) 
         else:     
-            L = ((f) * self.test0 * dx +SUPG_L) 
+            L = ((f) * self.test0 * dx ) 
                 
 
         return a, L
