@@ -142,6 +142,15 @@ def outerloop_operation(ctrl_sim:SimulationControls,
                                        it_outer
                                        ,ts=ts)
 
+        # Interpolate from global to wedge/slab
+        if ctrl_sim.ctrl.steady_state == 0: 
+            if ts==0 and it_outer == 0: 
+                print_ph('                 Time dep. state solution energy:-> solved before the velocity')
+                
+            outit.ene_res_gl[0], outit.ene_res_gl[1] = eg.Solve_the_Problem(sol
+                            ,it_outer = it_outer
+                            ,ts = ts)                      
+        
         
         interpolate_from_sub_to_main(sol.t_owedge
                                      ,sol.T_N
@@ -186,7 +195,11 @@ def outerloop_operation(ctrl_sim:SimulationControls,
                                     ,sol.p_slab
                                     ,sl.domain.cell_par)
         # Interpolate from global to wedge/slab
-        outit.ene_res_gl[0], outit.ene_res_gl[1] = eg.Solve_the_Problem(sol
+        if ctrl_sim.ctrl.steady_state == 1 or ctrl_sim.ctrl.initial_guess == 1: 
+            if ts==0 and it_outer == 0: 
+                print_ph('                 Steady state solution energy:-> solved after the velocity')
+                
+            outit.ene_res_gl[0], outit.ene_res_gl[1] = eg.Solve_the_Problem(sol
                             ,it_outer = it_outer
                             ,ts = ts)                
         # Compute residuum 
