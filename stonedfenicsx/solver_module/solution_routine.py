@@ -143,7 +143,7 @@ def outerloop_operation(ctrl_sim:SimulationControls,
                                        ,ts=ts)
 
         # Interpolate from global to wedge/slab
-        if ctrl_sim.ctrl.steady_state == 0: 
+        if ctrl_sim.ctrl.steady_state == 0 and ctrl_sim.ctrl.initial_guess==0: 
             if ts==0 and it_outer == 0: 
                 print_ph('                 Time dep. state solution energy:-> solved before the velocity')
                 
