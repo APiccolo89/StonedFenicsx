@@ -536,6 +536,7 @@ class Global_thermal(Problem):
         
         # SUPG 
         
+  
         a = (diff + adv)
         
         
@@ -543,7 +544,7 @@ class Global_thermal(Problem):
         if  self.ctrl_sim.ctrl.model_shear>0:
             L = ((f) * self.test0 * dx  +self.shear_heating) 
         else:     
-            L = ((f) * self.test0 * dx ) 
+            L = ((f) * self.test0 * dx) 
                 
 
         return a, L

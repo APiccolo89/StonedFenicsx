@@ -14,14 +14,14 @@ from stonedfenicsx.config.scal import Scal
 from stonedfenicsx.config.numerical_control import SimulationControls,IOControls,NumericalControls
 from stonedfenicsx.config.geometry import GeomInput
 from stonedfenicsx.utils import print_ph, timing
-
+from pathlib import Path
 if TYPE_CHECKING:
     from stonedfenicsx.solver_module.problems_solution import Solution
 
 # ---
 class ResidualLogger:
-    def __init__(self, filepath:str, max_it:int=50, tol:float =1e-8, steady_state:int=0):
-        filepath = filepath/'solution_logging_data.txxt'
+    def __init__(self, filepath:str,name:str, max_it:int=50, tol:float =1e-8, steady_state:int=0):
+        filepath = Path(filepath) /f'{name}.txt'
         self.max_it:int = max_it
         self.tol:float = tol
         self.file:str = open(filepath, "w")
@@ -36,13 +36,15 @@ class ResidualLogger:
             self.file.write("STEADY STATE SOLUTION\n")
             self.file.flush()
 
-    def log_iteration(self, it_outer, res_cons, res_diff, L1_temp,res_alt_T):
+    def log_iteration(self, it_outer, res_cons, res_diff, L1_temp,res_alt_T,rmom,reg):
         self.file.write(
             f"  it_outer = {it_outer:4d}  "
             f"res_cons = {res_cons:.6e}  "
             f"res_diff = {res_diff:.6e}  "
             f"L1_temp  = {L1_temp:.6e} "
-            f"res_alt = {res_alt_T:.6e}\n"
+            f"res_alt = {res_alt_T:.6e}"
+            f"rmom_wg = {rmom:.6e}"
+            f"reng_gl = {reg:.6e}\n"
         )
         self.file.flush()
 
@@ -100,7 +102,7 @@ class OUTERITERATION_SOL_VAL:
         self.ene_res_gl = np.zeros(2)
         self.old_t_max = 0.0 
         self.old_t_min = 0.0 
-        self.log = ResidualLogger(ctrl_io.path_test,ctrl.it_max,ctrl.tol,ctrl.steady_state)
+        self.log = ResidualLogger(ctrl_io.path_save,ctrl_io.test_name,ctrl.it_max,ctrl.tol,ctrl.steady_state)
     
     def update_iteration(self,sol): 
         self.T.x.array[:] = sol.T_N.x.array[:]
@@ -112,11 +114,19 @@ class OUTERITERATION_SOL_VAL:
         self.p.x.array[:] = sol.p_global.x.array[:]
         self.p.x.scatter_forward()
     
-    def check_convergence(self,ctrl_sim:SimulationControls,res_total:float,r_tot_conv:float,dtemp_l1:float,res_alt:float,ts:int,it_outer:int)->int:
-        
+    def check_convergence(self,ctrl_sim:SimulationControls
+                          ,res_total:float
+                          ,r_tot_conv:float
+                          ,dtemp_l1:float
+                          ,res_alt:float
+                          ,ts:int
+                          ,it_outer:int
+                          ,rmom_wg:float
+                          ,reseg:float)->int:
+
 
         
-        if dtemp_l1 < 1e-5: 
+        if dtemp_l1 < 1e-3: 
             print_ph(f'L1_norm of the temperature difference is less than {1e-5:.5e} [K]. The problem is converged.')
             self.res = ctrl_sim.ctrl.tol 
             return 0 
@@ -140,7 +150,7 @@ class OUTERITERATION_SOL_VAL:
                 self.log.new_timestep(ts)
                 self.log.ts = ts 
         
-            self.log.log_iteration(it_outer, res_consv_rel, res_total, dtemp_l1,res_alt)
+            self.log.log_iteration(it_outer, res_consv_rel, res_total, dtemp_l1,res_alt,rmom_wg,reseg)
         
         return 0 
     
@@ -305,7 +315,9 @@ class OUTERITERATION_SOL_VAL:
                                ,dtemp_l1=linft*sc.temp
                                ,res_alt = res_T_alt
                                ,ts=ts
-                               ,it_outer=it_outer)
+                               ,it_outer=it_outer
+                               ,rmom_wg=self.mom_res_wedge[0]/self.mom_res_wedge[1],
+                               reseg = self.ene_res_gl[0]/self.ene_res_gl[1])
         
         self.update_iteration(sol)
         
