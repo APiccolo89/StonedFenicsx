@@ -1,0 +1,60 @@
+STEADY STATE SOLUTION
+  it_outer =    0  res_cons = 1.000000e+00  res_diff = 1.734555e+00  L1_temp  = 1.074385e+03
+STEADY STATE SOLUTION
+  it_outer =    1  res_cons = 2.352484e+00  res_diff = 8.869550e-01  L1_temp  = 2.508327e+02
+STEADY STATE SOLUTION
+  it_outer =    2  res_cons = 2.804131e+00  res_diff = 1.675013e-01  L1_temp  = 1.620118e+02
+STEADY STATE SOLUTION
+  it_outer =    3  res_cons = 6.310434e-01  res_diff = 7.773787e-01  L1_temp  = 1.134852e+02
+STEADY STATE SOLUTION
+  it_outer =    4  res_cons = 1.912150e-01  res_diff = 7.121898e-01  L1_temp  = 8.110606e+01
+STEADY STATE SOLUTION
+  it_outer =    5  res_cons = 7.564353e-02  res_diff = 4.727673e-01  L1_temp  = 5.874387e+01
+STEADY STATE SOLUTION
+  it_outer =    6  res_cons = 3.582573e-02  res_diff = 2.617138e-01  L1_temp  = 4.387704e+01
+STEADY STATE SOLUTION
+  it_outer =    7  res_cons = 1.903573e-02  res_diff = 1.596850e-01  L1_temp  = 3.378593e+01
+STEADY STATE SOLUTION
+  it_outer =    8  res_cons = 1.092286e-02  res_diff = 1.081268e-01  L1_temp  = 2.669334e+01
+STEADY STATE SOLUTION
+  it_outer =    9  res_cons = 6.614346e-03  res_diff = 7.666758e-02  L1_temp  = 2.152624e+01
+STEADY STATE SOLUTION
+  it_outer =   10  res_cons = 4.163724e-03  res_diff = 5.549438e-02  L1_temp  = 1.763276e+01
+STEADY STATE SOLUTION
+  it_outer =   11  res_cons = 2.698199e-03  res_diff = 4.070215e-02  L1_temp  = 1.461362e+01
+STEADY STATE SOLUTION
+  it_outer =   12  res_cons = 1.788790e-03  res_diff = 3.020089e-02  L1_temp  = 1.221336e+01
+STEADY STATE SOLUTION
+  it_outer =   13  res_cons = 1.208559e-03  res_diff = 2.266789e-02  L1_temp  = 1.026959e+01
+STEADY STATE SOLUTION
+  it_outer =   14  res_cons = 8.302490e-04  res_diff = 1.721221e-02  L1_temp  = 8.673832e+00
+STEADY STATE SOLUTION
+  it_outer =   15  res_cons = 5.791930e-04  res_diff = 1.322230e-02  L1_temp  = 7.350374e+00
+STEADY STATE SOLUTION
+  it_outer =   16  res_cons = 4.100365e-04  res_diff = 1.027460e-02  L1_temp  = 6.243990e+00
+STEADY STATE SOLUTION
+  it_outer =   17  res_cons = 2.944844e-04  res_diff = 8.073598e-03  L1_temp  = 5.312779e+00
+STEADY STATE SOLUTION
+  it_outer =   18  res_cons = 2.145158e-04  res_diff = 6.411772e-03  L1_temp  = 4.525528e+00
+STEADY STATE SOLUTION
+  it_outer =   19  res_cons = 1.584628e-04  res_diff = 5.142483e-03  L1_temp  = 3.857135e+00
+STEADY STATE SOLUTION
+  it_outer =   20  res_cons = 1.186689e-04  res_diff = 4.161581e-03  L1_temp  = 3.288663e+00
+STEADY STATE SOLUTION
+  it_outer =   21  res_cons = 9.005144e-05  res_diff = 3.394656e-03  L1_temp  = 2.803755e+00
+STEADY STATE SOLUTION
+  it_outer =   22  res_cons = 6.920139e-05  res_diff = 2.788220e-03  L1_temp  = 2.389702e+00
+STEADY STATE SOLUTION
+  it_outer =   23  res_cons = 5.381019e-05  res_diff = 2.303570e-03  L1_temp  = 2.035938e+00
+STEADY STATE SOLUTION
+  it_outer =   24  res_cons = 4.229968e-05  res_diff = 1.912472e-03  L1_temp  = 1.733584e+00
+STEADY STATE SOLUTION
+  it_outer =   25  res_cons = 3.358091e-05  res_diff = 1.594134e-03  L1_temp  = 1.475206e+00
+STEADY STATE SOLUTION
+  it_outer =   26  res_cons = 2.689516e-05  res_diff = 1.333072e-03  L1_temp  = 1.254584e+00
+STEADY STATE SOLUTION
+  it_outer =   27  res_cons = 2.170842e-05  res_diff = 1.117614e-03  L1_temp  = 1.066200e+00
+STEADY STATE SOLUTION
+  it_outer =   28  res_cons = 1.764086e-05  res_diff = 9.388501e-04  L1_temp  = 9.054675e-01
+STEADY STATE SOLUTION
+  it_outer =   29  res_cons = 1.441929e-05  res_diff = 7.898856e-04  L1_temp  = 7.684833e-01

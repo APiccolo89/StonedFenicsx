@@ -160,7 +160,7 @@ def scaling_material_properties(pdb:PhaseDataBase,sc:Scal)->PhaseDataBase:
     pdb.k_c /= sc.temp
     pdb.k_d /= sc.length**2/sc.time
     pdb.k_e /= sc.temp
-    pdb.k_f /= sc.k/sc.stress
+    pdb.k_f /= 1/sc.stress
 
     pdb.alpha0 /= 1/sc.temp
     pdb.alpha1 /= 1/sc.temp**2
