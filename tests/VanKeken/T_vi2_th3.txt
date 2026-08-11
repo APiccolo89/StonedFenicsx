@@ -1,30 +1,3 @@
   it_outer =    0  res_cons = 1.000000e+00  res_diff = 1.734491e+00  L1_temp  = 1.070332e+03 res_alt = 1.934820e-01rmom_wg = 1.000000e+00reng_gl = 1.000000e+00
   it_outer =    1  res_cons = 2.077200e+00  res_diff = 8.814028e-01  L1_temp  = 2.338841e+02 res_alt = 4.461281e-02rmom_wg = 2.077200e+00reng_gl = 1.740417e-01
   it_outer =    2  res_cons = 2.685214e+00  res_diff = 1.260768e-01  L1_temp  = 1.481115e+02 res_alt = 3.078246e-02rmom_wg = 2.685214e+00reng_gl = 1.030605e-01
-  it_outer =    3  res_cons = 6.406930e-01  res_diff = 7.404440e-01  L1_temp  = 1.007970e+02 res_alt = 2.091076e-02rmom_wg = 6.406930e-01reng_gl = 5.364055e-02
-  it_outer =    4  res_cons = 2.007338e-01  res_diff = 6.761211e-01  L1_temp  = 7.167151e+01 res_alt = 1.399503e-02rmom_wg = 2.007338e-01reng_gl = 2.935906e-02
-  it_outer =    5  res_cons = 8.179978e-02  res_diff = 4.600012e-01  L1_temp  = 5.175010e+01 res_alt = 9.641875e-03rmom_wg = 8.179978e-02reng_gl = 1.788081e-02
-  it_outer =    6  res_cons = 3.898116e-02  res_diff = 2.630053e-01  L1_temp  = 3.846471e+01 res_alt = 7.005128e-03rmom_wg = 3.898116e-02reng_gl = 1.197335e-02
-  it_outer =    7  res_cons = 2.085172e-02  res_diff = 1.603212e-01  L1_temp  = 2.942337e+01 res_alt = 5.324278e-03rmom_wg = 2.085172e-02reng_gl = 8.519363e-03
-  it_outer =    8  res_cons = 1.204208e-02  res_diff = 1.080703e-01  L1_temp  = 2.306388e+01 res_alt = 4.171423e-03rmom_wg = 1.204208e-02reng_gl = 6.284587e-03
-  it_outer =    9  res_cons = 7.342487e-03  res_diff = 7.679795e-02  L1_temp  = 1.843981e+01 res_alt = 3.333072e-03rmom_wg = 7.342487e-03reng_gl = 4.744043e-03
-  it_outer =   10  res_cons = 4.658901e-03  res_diff = 5.593658e-02  L1_temp  = 1.497248e+01 res_alt = 2.699152e-03rmom_wg = 4.658901e-03reng_gl = 3.641057e-03
-  it_outer =   11  res_cons = 3.046168e-03  res_diff = 4.130994e-02  L1_temp  = 1.230258e+01 res_alt = 2.207335e-03rmom_wg = 3.046168e-03reng_gl = 2.831974e-03
-  it_outer =   12  res_cons = 2.038897e-03  res_diff = 3.082388e-02  L1_temp  = 1.019896e+01 res_alt = 1.818775e-03rmom_wg = 2.038897e-03reng_gl = 2.228032e-03
-  it_outer =   13  res_cons = 1.391009e-03  res_diff = 2.321756e-02  L1_temp  = 8.509767e+00 res_alt = 1.507480e-03rmom_wg = 1.391009e-03reng_gl = 1.770607e-03
-  it_outer =   14  res_cons = 9.645414e-04  res_diff = 1.764802e-02  L1_temp  = 7.133894e+00 res_alt = 1.255249e-03rmom_wg = 9.645414e-04reng_gl = 1.419643e-03
-  it_outer =   15  res_cons = 6.785105e-04  res_diff = 1.353454e-02  L1_temp  = 5.999871e+00 res_alt = 1.048968e-03rmom_wg = 6.785105e-04reng_gl = 1.147169e-03
-  it_outer =   16  res_cons = 4.836249e-04  res_diff = 1.047115e-02  L1_temp  = 5.057869e+00 res_alt = 8.789720e-04rmom_wg = 4.836249e-04reng_gl = 9.333252e-04
-  it_outer =   17  res_cons = 3.490039e-04  res_diff = 8.170854e-03  L1_temp  = 4.270319e+00 res_alt = 7.380046e-04rmom_wg = 3.490039e-04reng_gl = 7.638183e-04
-  it_outer =   18  res_cons = 2.548491e-04  res_diff = 6.429060e-03  L1_temp  = 3.608625e+00 res_alt = 6.205347e-04rmom_wg = 2.548491e-04reng_gl = 6.282396e-04
-  it_outer =   19  res_cons = 1.882281e-04  res_diff = 5.098839e-03  L1_temp  = 3.051178e+00 res_alt = 5.222666e-04rmom_wg = 1.882281e-04reng_gl = 5.189139e-04
-  it_outer =   20  res_cons = 1.405628e-04  res_diff = 4.074058e-03  L1_temp  = 2.580102e+00 res_alt = 4.398216e-04rmom_wg = 1.405628e-04reng_gl = 4.301219e-04
-  it_outer =   21  res_cons = 1.060893e-04  res_diff = 3.277650e-03  L1_temp  = 2.181441e+00 res_alt = 3.705047e-04rmom_wg = 1.060893e-04reng_gl = 3.575544e-04
-  it_outer =   22  res_cons = 8.089046e-05  res_diff = 2.653348e-03  L1_temp  = 1.843768e+00 res_alt = 3.121380e-04rmom_wg = 8.089046e-05reng_gl = 2.979275e-04
-  it_outer =   23  res_cons = 6.227725e-05  res_diff = 2.159849e-03  L1_temp  = 1.557656e+00 res_alt = 2.629429e-04rmom_wg = 6.227725e-05reng_gl = 2.487107e-04
-  it_outer =   24  res_cons = 4.838620e-05  res_diff = 1.766641e-03  L1_temp  = 1.315174e+00 res_alt = 2.214527e-04rmom_wg = 4.838620e-05reng_gl = 2.079323e-04
-  it_outer =   25  res_cons = 3.791427e-05  res_diff = 1.451038e-03  L1_temp  = 1.109784e+00 res_alt = 1.864510e-04rmom_wg = 3.791427e-05reng_gl = 1.740407e-04
-  it_outer =   26  res_cons = 2.994230e-05  res_diff = 1.196038e-03  L1_temp  = 9.358004e-01 res_alt = 1.569223e-04rmom_wg = 2.994230e-05reng_gl = 1.458022e-04
-  it_outer =   27  res_cons = 2.381616e-05  res_diff = 9.887822e-04  L1_temp  = 7.886198e-01 res_alt = 1.320149e-04rmom_wg = 2.381616e-05reng_gl = 1.222265e-04
-  it_outer =   28  res_cons = 1.906621e-05  res_diff = 8.194583e-04  L1_temp  = 6.641249e-01 res_alt = 1.110115e-04rmom_wg = 1.906621e-05reng_gl = 1.025124e-04
-  it_outer =   29  res_cons = 1.535224e-05  res_diff = 6.805079e-04  L1_temp  = 5.589202e-01 res_alt = 9.330724e-05rmom_wg = 1.535224e-05reng_gl = 8.600693e-05

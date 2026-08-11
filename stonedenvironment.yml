@@ -1,4 +1,4 @@
-name: stoned_fenicsx
+name: stonedfenicsx
 channels:
   - conda-forge
 dependencies:
@@ -15,8 +15,10 @@ dependencies:
   - myst-parser
   - pyyaml
   - pip
+  - psutil
   - pip:
       - gmsh
       - e
       - piccolo_theme
       - sphinxcontrib-bibtex
+      - cmccrameri

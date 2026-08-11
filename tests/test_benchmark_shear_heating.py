@@ -147,9 +147,9 @@ def read_data_base(test_name):
         v2 = 577.2084
         v3 = 835.0758
     elif test_name =='_phi10':
-        v1 = 243.35 
-        v2 = 578.35 
-        v3 = 832.57
+        v1 = 243.28
+        v2 = 579.15
+        v3 = 835.59
     elif test_name =='_phi15':
         v1 = 245.19 
         v2 = 579.28 
@@ -200,6 +200,6 @@ if __name__ == '__main__':
     
     #test_phi(phi=3.0, test_name='_phi3')
     #test_phi(phi=5.0,test_name='_phi5')
-    test_phi(phi=10.0,test_name='_phi10')
+    #test_phi(phi=10.0,test_name='_phi10')
     test_phi(phi=15.0,test_name='_phi15')
 #---------------------------------------------------------------------------------
