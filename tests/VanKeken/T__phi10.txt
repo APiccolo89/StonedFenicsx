@@ -1,0 +1,1 @@
+  it_outer =    0  res_cons = 1.000000e+00  res_diff = 1.734416e+00  L1_temp  = 1.114775e+03 res_alt = 1.894529e-01rmom_wg = 1.000000e+00reng_gl = 1.000000e+00

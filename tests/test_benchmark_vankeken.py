@@ -5,6 +5,7 @@ from pathlib import Path
 import os 
 import numpy as np 
 from mpi4py import MPI
+import pytest
 # Global flag to decide wether or not to remove the results -> debug reason. 
 DEBUG = False
 #-------------------------------------------------------------------------------
@@ -60,8 +61,9 @@ def perform_test(option_viscous=0,option_thermal=0):
         rho0_C = 3300.0
         radio_flag = 1 
         inp.ctrl.pressure_dependency = 0
+
         
-    elif option_thermal == 2: 
+    elif option_thermal == 2 or option_thermal==3: 
 
         alpha_nameC = 'Oceanic_crust'
         alpha_nameM = 'Mantle'
@@ -78,6 +80,9 @@ def perform_test(option_viscous=0,option_thermal=0):
         inp.g_input.ocr = 6.0 
         inp.g_input.cr = 6.0 
         inp.g_input.lc = 0.0
+        if option_thermal == 3: 
+            inp.ctrl.pressure_dependency = 1
+
 
     if option_viscous == 0:
         name_diffusion = 'Constant'
@@ -227,6 +232,11 @@ def read_data_base(option_viscous,option_thermal=0):
         v2 = 635.9449
         v3 = 962.3271
 
+    if option_thermal==3: 
+        v1 = 599.46
+        v2 = 640.36
+        v3 = 960.93
+
     if option_thermal == 0: 
         db_vk1 = [np.mean(data[:,0]), np.min(data[:,0]), np.max(data[:,0])]
         db_vk2 = [np.mean(data[:,1]), np.min(data[:,1]), np.max(data[:,1])]
@@ -257,17 +267,12 @@ def read_data_base(option_viscous,option_thermal=0):
         print(f'                             Van Keken benchmark : range L2_A = {db_vk3[1]:.2f}-{db_vk3[2]:.2f}.')
 
 
-    if test_1 and test_2 and test_3:         
-        pass_flag = True
-        print(f'Test_viscous{option_viscous} passed... ')
-    else: 
-        assert test_1 
-        assert test_2
-        assert test_3 
+
+    assert test_1 
+    assert test_2
+    assert test_3 
     
-    f.close()
-        
-    return pass_flag
+    f.close()        
 #-------------------------------------------------------------------------------
 def test_isoviscous():
     # Test Van Keken 
@@ -321,19 +326,31 @@ def test_composite_NL_crust():
     # Remove folder after completing the test
     if not DEBUG:
         os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
+        
+def test_composite_NL_crust_P():
+    # Test Van Keken 
+    perform_test(2,3) # IsoViscous
+    # Read Data Base and compare data 
+    if MPI.COMM_WORLD.rank == 0: 
+        read_data_base(2,3)
+    # Remove folder after completing the test
+    if not DEBUG:
+        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 if __name__ == '__main__': 
     
     DEBUG = True
     
-    test_isoviscous()
+    #test_isoviscous()
 
-    test_diffusion()
+    #test_diffusion()
 
-    test_composite()
+    #test_composite()
     
-    test_composite_NL_no_crust()
+    #test_composite_NL_no_crust()
     
-    test_composite_NL_crust()
+    #test_composite_NL_crust()
+
+    test_composite_NL_crust_P()
 #---------------------------------------------------------------------------------
