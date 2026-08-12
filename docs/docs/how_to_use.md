@@ -27,7 +27,7 @@ The input file is divided into 8 subsections:
     decoupling_ctrl: 0 # Flag that activates the decoupling depth 
     model_shear: "NoShear" # [Constant,SelfConsistent,NoShear] # Flag that activates shear heating
     dt: 0.015 # Initial guess for the timestep [SI = Myr]
-    stokes_solver_type : "Direct" # Flag that controls if the solver is direct or iterative for the Stokes problem 
+    stokes_solver_type : "Direct" # Flag that controls if the solver is direct or iterative for the Stokes problem  ['Iterative' for iterative solver]
     energy_solver_type : "Direct" # Flag that controls if the solver is direct or iterative for the Energy problem
     pressure_dependency: 1 # Flag that activates the pressure-dependency of the material properties (e.g. conductivity, density, thermal expansion)
     iterative_solver_tol : 1e-9 # Relative tolerance of iterative solver
