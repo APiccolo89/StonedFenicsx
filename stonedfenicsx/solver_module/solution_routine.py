@@ -122,11 +122,12 @@ def outerloop_operation(ctrl_sim:SimulationControls,
     # Initialise the it outer and residual outer
     it_outer = 0 
     
-    if (lg.typology == 'LinearProblem' and eg.typology == 'LinearProblem' and we.typology == 'LinearProblem') \
-        or (ctrl_sim.ctrl.steady_state ==0 and ts == 0):
+    if (lg.typology == 'LinearProblem' and eg.typology == 'LinearProblem' and we.typology == 'LinearProblem'):
         max_it = 2
+    elif ctrl_sim.ctrl.initial_guess == 1 and ctrl_sim.ctrl.steady_state==0:
+        max_it = 5
     else: 
-        max_it = ctrl_sim.ctrl.it_max        
+        max_it = ctrl_sim.ctrl.it_max 
     
     
     while it_outer < max_it and outit.res > ctrl_sim.ctrl.tol: 
@@ -136,13 +137,21 @@ def outerloop_operation(ctrl_sim:SimulationControls,
         time_A_outer = timing.time()
         # Copy the old solution of the outer loop for computing the residual of the equations. 
         
-        if lg.typology == 'NonlinearProblem' or it_outer == 0:  
+        if it_outer == 0:  
             lg.Solve_the_Problem(sol,
                                        it_outer
                                        ,ts=ts)
 
         # Interpolate from global to wedge/slab
-
+        if ctrl_sim.ctrl.steady_state == 0 and ctrl_sim.ctrl.initial_guess==0: 
+            if ts==0 and it_outer == 0: 
+                print_ph('                 Time dep. state solution energy:-> solved before the velocity')
+                
+            outit.ene_res_gl[0], outit.ene_res_gl[1] = eg.Solve_the_Problem(sol
+                            ,it_outer = it_outer
+                            ,ts = ts)                      
+        
+        
         interpolate_from_sub_to_main(sol.t_owedge
                                      ,sol.T_N
                                      ,we.domain.cell_par
@@ -185,11 +194,14 @@ def outerloop_operation(ctrl_sim:SimulationControls,
         interpolate_from_sub_to_main(sol.p_global
                                     ,sol.p_slab
                                     ,sl.domain.cell_par)
-        
-        outit.ene_res_gl[0], outit.ene_res_gl[1] = eg.Solve_the_Problem(sol
+        # Interpolate from global to wedge/slab
+        if ctrl_sim.ctrl.steady_state == 1 or ctrl_sim.ctrl.initial_guess == 1: 
+            if ts==0 and it_outer == 0: 
+                print_ph('                 Steady state solution energy:-> solved after the velocity')
+                
+            outit.ene_res_gl[0], outit.ene_res_gl[1] = eg.Solve_the_Problem(sol
                             ,it_outer = it_outer
-                            ,ts = ts)
-        
+                            ,ts = ts)                
         # Compute residuum 
         outit.compute_residuum_outer(sol=sol
                                      ,it_outer=it_outer
@@ -207,8 +219,38 @@ def outerloop_operation(ctrl_sim:SimulationControls,
     # reset outit res:
     outit.res = 1.0 
         
-        
-    
+def initial_guess_simulation(ctrl_sim:SimulationControls
+                             ,sc:Scal
+                             ,eg:Global_thermal
+                             ,lg:Global_pressure
+                             ,we:Wedge
+                             ,sl:Slab 
+                            ,sol:Solution
+                            ,pdb:PhaseDataBase
+                            ,outit:OUTERITERATION_SOL_VAL
+                            ,ts:int=0)->None:
+    """Compute the initial guess for the first Picard iteration of the simulation.
+    """
+    ts = 0 #  fake ts 
+    time_A = timing.time()
+    print_ph('              !!! Initial guess of the simulation !!!')
+    outerloop_operation(ctrl_sim=ctrl_sim
+                                  ,sc=sc
+                                  ,eg=eg
+                                  ,lg=lg
+                                 ,we=we
+                                  ,sl=sl
+                                  ,sol=sol
+                                  ,pdb=pdb
+                                  ,outit=outit
+                                  ,ts=ts)
+    ctrl_sim.ctrl.initial_guess = 0 
+    sol.T_O.x.array[:] = sol.T_N.x.array[:]
+    sol.T_O.x.scatter_forward()
+    time_B = timing.time()
+    print_ph(f'              !!! Initial guess of the simulation took {time_B-time_A:.2f} seconds !!!')
+
+
 #---------------------------------------------------------------------------------------------------
 # Def time_loop 
 def time_loop(ctrl_sim:SimulationControls
@@ -266,8 +308,22 @@ def time_loop(ctrl_sim:SimulationControls
     t  = 0.0
     ts = 0
     output_class  = OUTPUT(domain=eg.domain,ctrl_sim=ctrl_sim,sc=sc,pdb=pdb,cach_mat_thermal=eg.cached_mat,comm=eg.domain.mesh.comm)
-    outit = OUTERITERATION_SOL_VAL(sol)
+    outit = OUTERITERATION_SOL_VAL(sol=sol,ctrl=ctrl_sim.ctrl,ctrl_io=ctrl_sim.ctrl_io)
 
+    # Initial guess for the outer loop: -> linear problem with constant viscosity, no shear heating. 
+    if ctrl_sim.ctrl.steady_state==0:
+        initial_guess_simulation(ctrl_sim=ctrl_sim
+                                  ,sc=sc
+                                  ,eg=eg
+                                  ,lg=lg
+                                  ,we=we
+                                  ,sl=sl
+                                  ,sol=sol
+                                  ,pdb=pdb
+                                  ,outit=outit)
+    
+
+    # --- 
     while t<ctrl_sim.ctrl.time_max:
         time_A = timing.time()
         if ctrl_sim.ctrl.steady_state==0:
@@ -284,7 +340,6 @@ def time_loop(ctrl_sim:SimulationControls
         if ctrl_sim.ctrl_ky.constant == 0: 
             ctrl_sim.ctrl_ky.update_vel_age(t)
 
-
         # Prepare variable
         outerloop_operation(ctrl_sim=ctrl_sim
                                   ,sc=sc
@@ -300,6 +355,7 @@ def time_loop(ctrl_sim:SimulationControls
         flag_output = timestep_output(ctrlio=ctrl_sim.ctrl_io,ts=ts,t=t,time_previous=tbs,flag_save=flag_output)
         if ctrl_sim.ctrl.steady_state == 1 or flag_output:
             print_ph('OUTPUT...')
+            eg.compute_shear_heating_visualisation(sol=sol,ts=ts,it_outer=0)
             output_class.print_output(sol=sol,ctrl_sim=ctrl_sim,sc=sc,ts=ts,it_outer=0,time=t*sc.time/sc.scale_myr2sec)
             print_ph('finished')
             tbs = t 
@@ -312,8 +368,9 @@ def time_loop(ctrl_sim:SimulationControls
                 from stonedfenicsx.output import _benchmark_van_keken
                 _benchmark_van_keken(sol,ctrl_sim.ctrl_io,sc)
 
-        if ts>0:
-            t = t+ctrl_sim.ctrl.dt
+        
+            
+        t = t+ctrl_sim.ctrl.dt
             
     
         sol.T_O.x.array[:] = sol.T_N.x.array[:]

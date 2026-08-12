@@ -8,6 +8,7 @@ import dolfinx
 from functools import wraps
 from numpy.typing import NDArray
 # ---------------------------------------------------------------------------------------------------------
+_DEBUG_ = False
 def timing_function(fun: Callable) -> Callable:
     """Extract the execution time of the function.
 
@@ -17,7 +18,9 @@ def timing_function(fun: Callable) -> Callable:
     Returns:
         (callable): the output of the given **fun**.
     """
-
+    if not _DEBUG_:
+        return fun
+    
     @wraps(fun)
     def wrapper(*args, **kwargs):
         comm = MPI.COMM_WORLD
@@ -30,7 +33,7 @@ def timing_function(fun: Callable) -> Callable:
             if dt > 60.0:
                 m, s = divmod(dt, 60)
                 print(f".  {fun.__name__} took {m:.2f} min and {s:.2f} sec")
-            if dt > 3600.0:
+            elif dt > 3600.0:
                 m, s = divmod(dt, 60)
                 h, m = divmod(m, 60)
                 print(

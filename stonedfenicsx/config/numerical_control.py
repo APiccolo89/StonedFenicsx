@@ -4,6 +4,8 @@ import numpy as np
 from numpy.typing import NDArray
 from stonedfenicsx.config.geometry import GeomInput
 from dataclasses import InitVar
+from stonedfenicsx.utils import print_ph
+import warnings
 # --- #
 # --- #
 dict_shear_modes = {"NoShear": 0, "SelfConsistent": 1, "Constant": 2}
@@ -32,7 +34,14 @@ class NumericalControls:#ctrl
     iterative_solver_tol: float = 1e-7
     eta_max : float = 1e26
     pressure_dependency: int = 1
+    initial_guess: int = 1 # Initial guess -> set to 0 after the first outer iteration 
     CFL: float = 0.8
+    def __post_init__(self):
+        if self.initial_guess == 1 and self.steady_state == 1: 
+            warnings.warn('Initial guess is incompatible with steady state solution. Steady state controls has priority')
+            self.initial_guess = 0
+            print_ph('Initial guess has been deactivated!!!!')
+          
     def convert_string(self):
         if (self.energy_solver_type) not in dict_solver_type.keys():
             raise ValueError(f'Solver type is wrong: {self.energy_solver_type} is not valid. The options must be either Direct or Iterative' )

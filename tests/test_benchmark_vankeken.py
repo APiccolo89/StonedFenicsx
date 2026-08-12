@@ -5,6 +5,7 @@ from pathlib import Path
 import os 
 import numpy as np 
 from mpi4py import MPI
+import pytest
 # Global flag to decide wether or not to remove the results -> debug reason. 
 DEBUG = False
 #-------------------------------------------------------------------------------
@@ -60,8 +61,9 @@ def perform_test(option_viscous=0,option_thermal=0):
         rho0_C = 3300.0
         radio_flag = 1 
         inp.ctrl.pressure_dependency = 0
+
         
-    elif option_thermal == 2: 
+    elif option_thermal == 2 or option_thermal==3: 
 
         alpha_nameC = 'Oceanic_crust'
         alpha_nameM = 'Mantle'
@@ -78,6 +80,9 @@ def perform_test(option_viscous=0,option_thermal=0):
         inp.g_input.ocr = 6.0 
         inp.g_input.cr = 6.0 
         inp.g_input.lc = 0.0
+        if option_thermal == 3: 
+            inp.ctrl.pressure_dependency = 1
+
 
     if option_viscous == 0:
         name_diffusion = 'Constant'
@@ -186,9 +191,9 @@ def read_data_base(option_viscous,option_thermal=0):
         [388.73, 504.03, 854.99],
         [390.40, 488.0, 847.70],
          ])
-        v1 = 390.60
-        v2 = 505.50
-        v3 = 853.55
+        v1 = 389.7962
+        v2 = 505.4634
+        v3 = 855.6999
         
         # 
            
@@ -201,10 +206,9 @@ def read_data_base(option_viscous,option_thermal=0):
         [581.30, 607.26, 1003.35],
         [584.20, 592.8, 1000.0],
         ])
-        v1 = 563.13
-        v2 = 601.45
-        v3 = 999.1
-
+        v1 = 573.3844
+        v2 = 602.8806
+        v3 = 1001.7503
     if option_viscous==2 and option_thermal == 0: 
         
         data = np.array([
@@ -216,24 +220,29 @@ def read_data_base(option_viscous,option_thermal=0):
         [583.11, 604.96, 1000.05],
         [585.70, 591.30, 996.60]
         ])
-        v1 = 571.50
-        v2 = 599.36
-        v3 = 996.35 
+        v1 = 576.1815
+        v2 = 600.3638
+        v3 = 997.9291 
     if option_thermal==1: 
-        v1 = 554.58
-        v2 = 608.76
-        v3 = 940.40
+        v1 = 558.5840
+        v2 = 609.5550
+        v3 = 942.9349
     if option_thermal==2: 
-        v1 = 595.05
-        v2 = 635.08
-        v3 = 960.09
+        v1 = 599.8287
+        v2 = 635.9449
+        v3 = 962.3271
+
+    if option_thermal==3: 
+        v1 = 599.46
+        v2 = 640.36
+        v3 = 960.93
 
     if option_thermal == 0: 
         db_vk1 = [np.mean(data[:,0]), np.min(data[:,0]), np.max(data[:,0])]
         db_vk2 = [np.mean(data[:,1]), np.min(data[:,1]), np.max(data[:,1])]
         db_vk3 = [np.mean(data[:,2]), np.min(data[:,2]), np.max(data[:,2])]
  
-    test_1 = np.isclose(T_11_11, v1, rtol=1e-3, atol=1e-1)
+    test_1 = np.isclose(T_11_11, v1, rtol=1e-3, atol=1e-2)
     test_2 = np.isclose(L2_A, v2,rtol=1e-3, atol=1e-1)
     test_3 = np.isclose(L2_B, v3,rtol=1e-3,atol= 1e-1)
     
@@ -243,7 +252,6 @@ def read_data_base(option_viscous,option_thermal=0):
         rel_err = (T_11_11 - db_vk1[1])/(db_vk1[2]-db_vk1[1])
         print(f'                             Van Keken benchmark : mean T_11_11 = {db_vk1[0]:.2f}.')
         print(f'                             Van Keken benchmark : range T_11_11 = {db_vk1[1]:.2f}-{db_vk1[2]:.2f}.')
-        print(f'                             Van Keken benchmark : rel_err = {rel_err:.2f}')
 
     print(f'Test_viscous{option_viscous}, L2_A is {L2_A:.4f}. Tested against {v2:.4f}.')
     if option_thermal == 0: 
@@ -251,27 +259,20 @@ def read_data_base(option_viscous,option_thermal=0):
 
         print(f'                             Van Keken benchmark : mean L2_A = {db_vk2[0]:.2f}.')
         print(f'                             Van Keken benchmark : range L2_A = {db_vk2[1]:.2f}-{db_vk2[2]:.2f}.')
-        print(f'                             Van Keken benchmark : rel_err = {rel_err:.2f}')
 
     print(f'Test_viscous{option_viscous}, L2_B is {L2_B:.4f}. Tested against {v3:.4f}.')
     if option_thermal == 0: 
         rel_err = (L2_B - db_vk3[1])/(db_vk3[2]-db_vk3[1])
         print(f'                             Van Keken benchmark : mean L2_A = {db_vk3[0]:.2f}.')
         print(f'                             Van Keken benchmark : range L2_A = {db_vk3[1]:.2f}-{db_vk3[2]:.2f}.')
-        print(f'                             Van Keken benchmark : rel_err = {rel_err:.2f}')
 
 
-    if test_1 and test_2 and test_3:         
-        pass_flag = True
-        print(f'Test_viscous{option_viscous} passed... ')
-    else: 
-        assert test_1 
-        assert test_2
-        assert test_3 
+
+    assert test_1 
+    assert test_2
+    assert test_3 
     
-    f.close()
-        
-    return pass_flag
+    f.close()        
 #-------------------------------------------------------------------------------
 def test_isoviscous():
     # Test Van Keken 
@@ -325,6 +326,16 @@ def test_composite_NL_crust():
     # Remove folder after completing the test
     if not DEBUG:
         os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
+        
+def test_composite_NL_crust_P():
+    # Test Van Keken 
+    perform_test(2,3) # IsoViscous
+    # Read Data Base and compare data 
+    if MPI.COMM_WORLD.rank == 0: 
+        read_data_base(2,3)
+    # Remove folder after completing the test
+    if not DEBUG:
+        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 if __name__ == '__main__': 
@@ -337,7 +348,9 @@ if __name__ == '__main__':
 
     #test_composite()
     
-    test_composite_NL_no_crust()
+    #test_composite_NL_no_crust()
     
-    test_composite_NL_crust()
+    #test_composite_NL_crust()
+
+    test_composite_NL_crust_P()
 #---------------------------------------------------------------------------------

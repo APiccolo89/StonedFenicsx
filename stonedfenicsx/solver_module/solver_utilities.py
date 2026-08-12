@@ -11,21 +11,65 @@ from typing import TYPE_CHECKING
 from dataclasses import dataclass, field, InitVar
 # --- 
 from stonedfenicsx.config.scal import Scal
-from stonedfenicsx.config.numerical_control import SimulationControls,IOControls
+from stonedfenicsx.config.numerical_control import SimulationControls,IOControls,NumericalControls
 from stonedfenicsx.config.geometry import GeomInput
 from stonedfenicsx.utils import print_ph, timing
-
+from pathlib import Path
 if TYPE_CHECKING:
     from stonedfenicsx.solver_module.problems_solution import Solution
 
 # ---
+class ResidualLogger:
+    def __init__(self, filepath:str,name:str, max_it:int=50, tol:float =1e-8, steady_state:int=0):
+        filepath = Path(filepath) /f'{name}.txt'
+        self.max_it:int = max_it
+        self.tol:float = tol
+        self.file:str = open(filepath, "w")
+        self.steady_state:int = steady_state
+        self.ts = 0
+
+    def new_timestep(self, ts):
+        if self.steady_state == 0: 
+            self.file.write(f"\nts = {ts}\n")
+            self.file.flush()
+        else: 
+            self.file.write("STEADY STATE SOLUTION\n")
+            self.file.flush()
+
+    def log_iteration(self, it_outer, res_cons, res_diff, L1_temp,res_alt_T,rmom,reg):
+        self.file.write(
+            f"  it_outer = {it_outer:4d}  "
+            f"res_cons = {res_cons:.6e}  "
+            f"res_diff = {res_diff:.6e}  "
+            f"L1_temp  = {L1_temp:.6e} "
+            f"res_alt = {res_alt_T:.6e}"
+            f"rmom_wg = {rmom:.6e}"
+            f"reng_gl = {reg:.6e}\n"
+        )
+        self.file.flush()
+
+    def check_divergence(self, it_outer, res):
+        diverged = (it_outer >= self.max_it) and (res > self.tol)
+        if diverged:
+            self.file.write(
+                f"  >>> DIVERGED: it_outer={it_outer} reached max_it={self.max_it} "
+                f"with res={res:.3e} > tol={self.tol:.1e}\n"
+            )
+            self.file.flush()
+        return diverged
+
+    def close(self):
+        self.file.close()
 # ---
 @dataclass(slots=True)
 class OUTERITERATION_SOL_VAL:
     """Class that handles the outer iteration variables
     """
-    
     sol: InitVar[Solution]
+    ctrl: InitVar[NumericalControls]
+    ctrl_io : InitVar[IOControls]
+    log: ResidualLogger = field(init=False)
+    
     T        : dolfinx.fem.function =  field(init=False)
     PL       : dolfinx.fem.function =  field(init=False)
     u : dolfinx.fem.function =  field(init=False)
@@ -37,7 +81,9 @@ class OUTERITERATION_SOL_VAL:
     ene_res_gl : NDArray[float] =  field(init=False)
     combined_residual_0: float = field(init=False)
     res: NDArray[float] = 1.0 
-    def __post_init__(self,sol):
+    old_t_max : float = 0.0
+    old_t_min : float = 0.0 
+    def __post_init__(self,sol:Solution,ctrl:NumericalControls,ctrl_io:IOControls):
         self.T = sol.T_N.copy()
         self.T.x.scatter_forward()
         self.PL = sol.PL.copy()
@@ -54,6 +100,9 @@ class OUTERITERATION_SOL_VAL:
         self.div_res_wedge = np.zeros(2)
         self.combined_residual_0 = 1.0 
         self.ene_res_gl = np.zeros(2)
+        self.old_t_max = 0.0 
+        self.old_t_min = 0.0 
+        self.log = ResidualLogger(ctrl_io.path_save,ctrl_io.test_name,ctrl.it_max,ctrl.tol,ctrl.steady_state)
     
     def update_iteration(self,sol): 
         self.T.x.array[:] = sol.T_N.x.array[:]
@@ -64,7 +113,48 @@ class OUTERITERATION_SOL_VAL:
         self.u.x.scatter_forward() 
         self.p.x.array[:] = sol.p_global.x.array[:]
         self.p.x.scatter_forward()
-           
+    
+    def check_convergence(self,ctrl_sim:SimulationControls
+                          ,res_total:float
+                          ,r_tot_conv:float
+                          ,dtemp_l1:float
+                          ,res_alt:float
+                          ,ts:int
+                          ,it_outer:int
+                          ,rmom_wg:float
+                          ,reseg:float)->int:
+
+
+        
+        if dtemp_l1 < 1e-3: 
+            print_ph(f'L1_norm of the temperature difference is less than {1e-5:.5e} [K]. The problem is converged.')
+            self.res = ctrl_sim.ctrl.tol 
+            return 0 
+        
+        res_consv_rel = r_tot_conv
+        if (res_consv_rel < res_total) and (ctrl_sim.ctrl.steady_state==1) and (ctrl_sim.ctrl.initial_guess==0): 
+            print_ph('     --- The conservation residual is less than the residual difference: the tol is evaluated against conservation equations.')
+            self.res = res_total
+        else: 
+            self.res = res_consv_rel 
+            
+        if MPI.COMM_WORLD.rank == 0 and ctrl_sim.ctrl.initial_guess==0:
+            log_ts = 0 
+            if ctrl_sim.ctrl.steady_state == 1: 
+                if it_outer == 0: 
+                    log_ts = 1 
+            else: 
+                log_ts = 1
+            
+            if self.log.ts != ts and log_ts==1: 
+                self.log.new_timestep(ts)
+                self.log.ts = ts 
+        
+            self.log.log_iteration(it_outer, res_consv_rel, res_total, dtemp_l1,res_alt,rmom_wg,reseg)
+        
+        return 0 
+    
+    # --- 
     def compute_residuum_outer(self
                                ,sol:Solution
                                ,it_outer:int
@@ -113,10 +203,10 @@ class OUTERITERATION_SOL_VAL:
         """
         # Prepare the variables 
 
-        res_u = compute_residuum(sol.u_global,self.u)
-        res_p = compute_residuum(sol.p_global,self.p)
-        res_T = compute_residuum(sol.T_N,self.T)
-        res_PL= compute_residuum(sol.PL,self.PL)
+        res_u,res_du,linfv,_ = compute_residuum(sol.u_global,self.u)
+        res_p,_,_,_ = compute_residuum(sol.p_global,self.p)
+        res_T,res_dT,linft,res_T_alt = compute_residuum(sol.T_N,self.T)
+        res_PL,_,_,_= compute_residuum(sol.PL,self.PL)
 
         # Compute the ranges
         minMaxU = min_max_array(sol.u_global, vel=True)
@@ -130,8 +220,25 @@ class OUTERITERATION_SOL_VAL:
         minMaxP = minMaxP*sc.stress/1e9 
         minMaxT[0:2] = minMaxT[0:2]*sc.temp -273.15
         minMaxPL = minMaxPL*sc.stress/1e9
-    
+        # Warnings and data 
+        # Printing state: warning for the mismatch: 
+        if ctrl_sim.ctrl.initial_guess==0:
+            if it_outer == 0: 
+                self.old_t_max = minMaxT[1]
+                self.old_t_min = minMaxT[0]
+            else: 
+                dT_M = (self.old_t_max - minMaxT[1])
+                dT_m = (self.old_t_min - minMaxT[0])
+                if np.abs(dT_M) > 0.1 or np.abs(dT_m):
+                    print_ph('            Check min-max temperature BC: ')
 
+                    print_ph(f'         dT_min = {dT_m:.2f} [K]')
+
+                    print_ph(f'         dT_max = {dT_M:.2f} [K]')
+                    # During the initial guess temperature might have a few artifcats due to the initial temperature field
+                    if np.abs(dT_M) > 10 or np.abs(dT_m)>10: 
+                        raise ValueError('Simulation has something wrong, dT_M is increasing of at least 10 K. Check the data!')
+            
         if minMaxT[1]-(ctrl_sim.ctrl_tbc.temp_max * sc.temp-273.15)>1.0: 
             print_ph(' WARNING:::Temperature higher than the maximum temperature')
         if minMaxT[0] < 0.0: 
@@ -152,6 +259,12 @@ class OUTERITERATION_SOL_VAL:
         print_ph(f'              Res pressure       =  {res_p:.3e} [n.d.], max = {minMaxP[1]:.3e}, min = {minMaxP[0]:.3e} [GPa]')
         print_ph(f'              Res lithostatic    =  {res_PL:.3e}[n.d.], max = {minMaxPL[1]:.3e}, min = {minMaxPL[0]:.3e} [GPa]')
         print_ph(f'              Res total (sqrt(rT^2+rp^2+ru^2+rPL^2)) =  {res_total:.3e} [n.d.] ')
+        print_ph(f'              [L2Norm] dimensional residual temperature = {res_dT*sc.temp:.3e} [K],')
+        print_ph(f'              [L2Norm] dimensional residual velocity = {res_du*(sc.length/sc.time)/sc.scale_vel:.3e} [cm/yr]')
+        print_ph(f'              [L1inf] dimensional residual velocity = {linfv*(sc.length/sc.time)/sc.scale_vel:.3e} [cm/yr]')
+        print_ph(f'              [L1inf] dimensional residual temperature = {linft*sc.temp:.3e} [K]')
+        print_ph(f'              [L2_alt] L2(T()-T(-1))/T()) dimensional residual temperature = {res_T_alt:.3e} [K]')
+
         print_ph('         Conservation residual :')
         print_ph('          Stokes Equation :')
         a = self.mom_res_wedge[0] * sc.force/sc.length**3
@@ -195,14 +308,17 @@ class OUTERITERATION_SOL_VAL:
 
         sol.outer_iteration.append(res_total)
         sol.ts.append(ts)
-        # Update the structure, update the residual
-        # Switch between combined residual of the conservation 
-        if ctrl_sim.ctrl.steady_state==1:
-            self.res = np.min([res_total,r_tot_conv/self.combined_residual_0])
-            if res_total>r_tot_conv/ self.combined_residual_0 :
-                print_ph('     --- The conservation residual is less than the residual difference: the tol is evaluated against conservation equations.')
-        else: 
-            self.res = r_tot_conv/ self.combined_residual_0 
+        
+        self.check_convergence(ctrl_sim=ctrl_sim
+                               ,res_total=res_total
+                               ,r_tot_conv=r_tot_conv/self.combined_residual_0
+                               ,dtemp_l1=linft*sc.temp
+                               ,res_alt = res_T_alt
+                               ,ts=ts
+                               ,it_outer=it_outer
+                               ,rmom_wg=self.mom_res_wedge[0]/self.mom_res_wedge[1],
+                               reseg = self.ene_res_gl[0]/self.ene_res_gl[1])
+        
         self.update_iteration(sol)
         
 # ---
@@ -222,23 +338,23 @@ def compute_residuum(a:dolfinx.fem.Function,b:dolfinx.fem.Function)->float:
     Returns:
         float: Dimensionless relative residual in [0, inf).
     """
-    
-    
-    
-    # Use explicit duplicate/axpy + destroy: the `+`/`-` operator overloads on
-    # PETSc Vec allocate a new temporary Vec each call that is never freed,
-    # which leaks across every outer Picard iteration if left to the operators.
+
     diff = a.x.petsc_vec.copy()
     diff.axpy(-1.0, b.x.petsc_vec)  # diff = a - b
     res = diff.norm(PETSc.NormType.NORM_2)
+    Linf = diff.norm(PETSc.NormType.NORM_INFINITY)
     diff.destroy()
 
     total = a.x.petsc_vec.copy()
     total.axpy(1.0, b.x.petsc_vec)  # total = a + b
     dxa = total.norm(PETSc.NormType.NORM_2)
     total.destroy()
+    
+    n_dofs = a.x.petsc_vec.getSize()  # global size, already MPI-aware
+    
+    rel_dif = a.x.petsc_vec.norm(PETSc.NormType.NORM_2)
 
-    return res / dxa
+    return res / dxa, res/np.sqrt(n_dofs),Linf, res/rel_dif
 # ---
 def min_max_array(a:dolfinx.fem.function.Function
                 ,vel = False)->NDArray[np.float64]:

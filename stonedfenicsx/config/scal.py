@@ -3,6 +3,7 @@ from stonedfenicsx.utils import timing_function
 from stonedfenicsx.config.numerical_control import (CtrlKy,
                                                     CtrlTemperatureBC,
                                                     NumericalControls,
+                                                    IOControls,
                                                     SimulationControls)
 from stonedfenicsx.config.phase_db import PhaseDataBase
 from dataclasses import dataclass,field
@@ -86,6 +87,7 @@ def scaling_simulation_physical(
         scaling_control_parameters(ctrl=ctrl_sim.ctrl,sc=sc)
         scaling_mesh(mesh=mesh,sc=sc)
         scaling_material_properties(pdb=pdb,sc=sc)
+        scaling_io_controls(ctrl_io=ctrl_sim.ctrl_io,sc=sc)
         ctrl_sim._scaled = True
     else: 
         raise ValueError ('Simulations controls cannot be scaled more than once!')
@@ -158,7 +160,7 @@ def scaling_material_properties(pdb:PhaseDataBase,sc:Scal)->PhaseDataBase:
     pdb.k_c /= sc.temp
     pdb.k_d /= sc.length**2/sc.time
     pdb.k_e /= sc.temp
-    pdb.k_f /= sc.k/sc.stress
+    pdb.k_f /= 1/sc.stress
 
     pdb.alpha0 /= 1/sc.temp
     pdb.alpha1 /= 1/sc.temp**2
@@ -287,3 +289,15 @@ def scale_kinematic_bc(ctrl_ky:CtrlKy, sc: Scal)->None:
     """
     ctrl_ky.v_s *= sc.scale_vel * (sc.time/sc.length)
     ctrl_ky.interval_val *= sc.scale_myr2sec * 1/sc.time
+
+def scaling_io_controls(ctrl_io:IOControls,sc:Scal)->None:
+    """Non-dimensionalise input/output control parameters.
+
+    Converts the time-series interval array `interval_val` from Myr to the
+    dimensionless time unit.
+
+    Args:
+        ctrl_io (IOControls): Input/output controls; `interval_val` is overwritten in-place.
+        sc (Scal): Fully initialised scaling object.
+    """
+    ctrl_io.dt_out *= sc.scale_myr2sec * 1/sc.time

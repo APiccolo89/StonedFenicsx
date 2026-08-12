@@ -9,12 +9,12 @@
 
 Input:
   NumericalControls:
-    it_max: 50
-    tol: 1.0e-5
-    relax: 0.9
+    it_max: 40
+    tol: 5e-5
+    relax: 1.0
     g: 9.81
-    eta_max: 1.0e26
-    time_max: 2.0  # Myr
+    eta_max: 1.0e25
+    time_max: 30.0  # Myr
     steady_state: 1
     decoupling_ctrl: 1
     model_shear: "SelfConsistent" # [Constant,SelfConsistent,NoShear]
@@ -22,7 +22,11 @@ Input:
     adiabatic_heating: 0
     stokes_solver_type : "Direct"
     energy_solver_type : "Direct"
-    pressure_dependency: 1
+    iterative_solver_tol : 1e-9
+    pressure_dependency: 0
+    CFL : 0.8
+    initial_guess : 0 
+
 
   Shear_Heating: 
     shear_heating_disl_phi: 5.0 
@@ -33,15 +37,16 @@ Input:
     test_name: "Output"
     sname: "Output"
     path_test: "../Results"
+    ts_time : "step"
+    ts_out : 20 
+    dt_out : 0.5
 
-  # Scaling parameters [in SI unit meter, Pa, Pas, K]!!
   scaling:
     length: 600e3
     stress: 1.0e9
     eta: 1.0e21
     temp: 1333.0
 
-  # Left boundary condition
   thermal_boundary_condition:
     temp_max: 1300.0
     temp_top: 0.0
@@ -55,7 +60,7 @@ Input:
     self_consistent_flag: 1
     right_boundary : 'Continental'  # Oceanic 
     right_age: 50.0
-    recalculate : 0 # Option to compute on the fly the boundary -> useful if user wants to change thermal properties. 
+    recalculate : 1 # Option to compute on the fly the boundary -> useful if user wants to change thermal properties. 
 
   kinematic_boundary_condition:
     v_s : [5.0,0.0]
@@ -203,7 +208,7 @@ Input:
     y: [-600.0, 0.0] # Coordinate of Y
     redo_mesh : False
     van_keken: False
-    sub_constant_flag : True
+    sub_constant_flag : False
     slab_tk: 130.0 # Slab Thickness
     cr: 30.0 # Overriding Crust {if lc==0.0 -> only overriding upper crust}
     ocr: 7.0 # Oceanic crust
