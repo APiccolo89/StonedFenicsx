@@ -179,7 +179,7 @@ Thermal expansivity laws available:
 - PT : pressure and temperature is active (pressure if the pressure dependency is active)
 - Constant: flag that tells the code to use only the reference density *rho0*
 
-## geometry 
+### geometry 
 ```
     x: [0.0, 660.0] # Coordinate of X
     y: [-600.0, 0.0] # Coordinate of Y
