@@ -6,26 +6,24 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
-  docs:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r sphinx_guide/docs/requirements.txt
       - name: Build
         run: sphinx-build sphinx_guide/docs sphinx_guide/docs/_build/html
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
-        if: github.ref == 'refs/heads/main'
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: sphinx_guide/docs/_build/html
-
+          path: sphinx_guide/docs/_build/html
 
   deploy:
     needs: build
