@@ -35,6 +35,7 @@ installation
 how_to_use
 Computational_domain
 Material_properties
+reference
 ```
 
 ## Indices and tables
