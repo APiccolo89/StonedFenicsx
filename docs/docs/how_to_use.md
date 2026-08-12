@@ -54,10 +54,10 @@ The input file is divided into 8 subsections:
 **Note**
 
 - The dislocation creep laws available are: 
-  - Wet_Plagioclase_Dislocation_creep :cite:p:`rybacki2004deformation`
-  - Hirareth_Serpentinite_Dislocation_creep :cite:p:`hilairet2007high`
-  - Wet_Quartzite_2001_Dislocation_creep :cite:p:`hirth2001evaluation`
-  - Glaucophane_2025_Dislocation_creep :cite:p:`hufford2026blueschist`
+  - Wet_Plagioclase_Dislocation_creep {cite}`rybacki2004deformation`
+  - Hirareth_Serpentinite_Dislocation_creep {cite}`hilairet2007high`
+  - Wet_Quartzite_2001_Dislocation_creep {cite}`hirth2001evaluation`
+  - Glaucophane_2025_Dislocation_creep {cite}`hufford2026blueschist`
 
 ### InputOutputControl
 ```
@@ -137,41 +137,41 @@ The user can change the value of diffusion creep and dislocation creep rheologie
 
 **Diffusion creep laws available**: 
 
-- Hirth_dry_Diffusion_creep: :cite:p:`hirth2003rheology`
-- VK_Diffusion_creep: :cite:p:`van2008community`
-- Hirth_wet_Diffusion_creep: :cite:p:`hirth2003rheology`
+- Hirth_dry_Diffusion_creep: {cite}`hirth2003rheology`
+- VK_Diffusion_creep: {cite}`van2008community`
+- Hirth_wet_Diffusion_creep: {cite}`hirth2003rheology`
 - Constant: it is a flag that tells the code to not use the diffusion creep rheologies in the calculation
 
 **Dislocation creep laws available**:
 
-- Hirth_dry_Dislocation_creep: :cite:p:`hirth2003rheology`
-- VK_Dislocation_creep: :cite:p:`van2008community`
-- Hirth_wet_Dislocation_creep: :cite:p:`hirth2003rheology`
+- Hirth_dry_Dislocation_creep: {cite}`hirth2003rheology`
+- VK_Dislocation_creep: {cite}`van2008community`
+- Hirth_wet_Dislocation_creep: {cite}`hirth2003rheology`
 - Constant: it is a flag that indicates to use the dislocation creep rheology
 
 **Note** if both dislocation and diffusion creep are constant, the code automatically assumes that the model is linear. Thus, it will use  either the default viscosity or the viscosity in the phase.
 
 **Conductivity laws available**: 
 
-- Mantle_Richards_2018: :cite:p:`richards2020structure`
-- Crust_Richards_2018: :cite:p:`richards2020structure`
+- Mantle_Richards_2018: {cite}`richards2020structure`
+- Crust_Richards_2018: {cite}`richards2020structure`
 - Constant: flag that tells the code to use the constant conductivity *k* of the phase. 
 
 **Heat capacity laws available**: 
 
-- Mantle_Bernard_1988_FO: :cite:p:`berman1988internally`
-- Mantle_Bernard_1988_FA: :cite:p:`berman1988internally`
-- Mantle_Bernard_Ar_199x_FO: :cite:p:`berman1996optimized`
-- Mantle_Bernard_Ar_199x_FA: :cite:p:`berman1996optimized`
-- Mantle_Bernard_1988_FO_FA: :cite:p:`berman1988internally`
-- Mantle_Bernard_Ar_199x_FO_FA: :cite:p:`berman1996optimized`
-- Oceanic_crust:  :cite:p:`richards2020structure`
+- Mantle_Bernard_1988_FO: {cite}`berman1988internally`
+- Mantle_Bernard_1988_FA: {cite}`berman1988internally`
+- Mantle_Bernard_Ar_199x_FO: {cite}`berman1996optimized`
+- Mantle_Bernard_Ar_199x_FA: {cite}`berman1996optimized`
+- Mantle_Bernard_1988_FO_FA: {cite}`berman1988internally`
+- Mantle_Bernard_Ar_199x_FO_FA: {cite}`berman1996optimized`
+- Oceanic_crust:  {cite}`richards2020structure`
 - Constant: flag that tells the code to use the constant conductivity *cp* of the phase. 
 **Note**: _FO, _FA, FO_FA are flags that indicate which mixture of olivine to use. FO means fosterite, FA means fayalite. FO_FA implies that a mixture of 0.9 FO and 0.1 FA is used for computing the heat capacity.
 Thermal expansivity laws available: 
 
-- Mantle: :cite:p:`richards2020structure`
-- Oceanic_crust: :cite:p:`richards2020structure`
+- Mantle: {cite}`richards2020structure`
+- Oceanic_crust: {cite}`richards2020structure`
 - Constant: flag that tells the code to use the constant conductivity *alpha* of the phase.
 
 **Density laws available**: 
@@ -446,3 +446,9 @@ if __name__ == '__main__':
 ```
 
 **Note**: In case the user wants to use an oceanic plate as overriding plate, the user should use the crustal unit **overriding_upper_crust** to create an oceanic-like crust and set to 0.0 **lc** in the geometry input (or in inp.g_input.lc=0)
+
+## References
+
+```{bibliography}
+:all:
+```
