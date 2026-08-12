@@ -83,9 +83,7 @@ stonedfenicsx/
 
 ## Documentation
 
-- [`HPC_read.md`](HPC_read.md) — HPC (Aire/Spack) installation notes.
-- `docs/` — Sphinx documentation (installation, computational domain, material properties); build with `sphinx-build docs docs/build`.
-- `stonedfenicsx/config/thermal_boundary_flow.md` — call-flow diagram for the thermal boundary condition module.
+The documentation of the code - which is still in a working progress can be found here: [StonedFEniCSx](https://apiccolo89.github.io/StonedFenicsx/index.html)
 
 # How to use 
 
