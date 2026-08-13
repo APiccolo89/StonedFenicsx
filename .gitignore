@@ -98,3 +98,4 @@ tests/VanKeken/Cached_information/mesh_meta_data.yml
 memory_growth_findings.md
 tests/test_bench_td.txt
 stonedfenicsx/config/numerical_control.py
+.DS_Store
