@@ -115,10 +115,12 @@ The rheological database should be constructed introducing the original data, an
 Most of the time, typesetter or authors themselves are not caring so much about the unit of measure. If user wants to introduce his customize rheology, they needs to check the unit of measures. The code is designed to convert the unit of measure before the configuration stage, so, it is necessary to properly handle the unit of measure. 
 
 In the following portion, the main rheologies in the code will be listed. Additionally, the rheology avaialable for the virtual shear zone will be described. 
-
+#### Tables
 **Common parameters:** n = 1.0, m = 0.0, d = 1.0, ah2o = 1.0, bh2o = 5521×10⁶, eh2o = 31.28×10³, vh2o = −2.009×10⁻⁵
 
-### Diffusion Creep
+Name is the actual string that must be used in the *input.yml* file. 
+
+##### Diffusion Creep
 
 | Name | b | e  [J/mol] | v  [m³/mol] | m | r | d [μm] | f (correction) | mpa | b_si | Water corr. | Ref (short) |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -126,7 +128,7 @@ In the following portion, the main rheologies in the code will be listed. Additi
 | `Hirth_wet_Diffusion_creep` | 2.7e7 | 375.0e3 | 10e-6 | 3.0 | 0.8 | 10e3 | Simpleshear | 1 | MPa⁻¹ s⁻¹ COH⁻ʳ | COH |{cite}`hirth2003rheology` |
 | `VK_Diffusion_creep` | 3.79e-10 | 335.0e3 | 0e-6 | 1.0 | 0.8 | 1.0 | None | 0 | Pa⁻¹ s⁻¹ | None |{cite}`van2008community` |
 
-### Dislocation Creep
+##### Dislocation Creep
 
 | Name | b | e  [J/mol] | v [m³/mol] | n | r | f (correction) | mpa | b_si | Water corr. | Ref (short) |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -148,13 +150,21 @@ where {math}`\eta_{eff}` is the effective viscosity and {math}`eta_{max}` is the
 
 **Note**: The reference represents where I first encounter this rheology. For example, `VK_Diffusion_creep` is originally coming from {cite}`karato1993rheology`
 
-### Conductivity
+### Thermal properties 
 
-### Heat capacity
+The code follows the descriptions of the thermal properties coming from {cite}`richards2020structure`, {cite}`grose2013comprehensive` and {cite}`korenaga2016evolution`. The material property computations follow the equations of these sources, and the material properties have been copied from these manuscripts. 
 
-### Thermal expansivity
+In general, the code can handle pressure-dependency properties. However, the user should be careful on doing so, as the kinematic subduction models are not compressible, thus there is a concrete risk to over-under estimate the thermal field. Adiabatic heating cannot easily be introduced in this framework. The pressure singularities {cite}`van2008community` prevents the computation of the shear heating without introducing several inconsistencies or arbitrary choices. 
 
-### Density
+
+#### Heat capacity
+
+#### Thermal expansivity
+
+#### Density
+
+#### Conductivity
+
 
 ## References
 
