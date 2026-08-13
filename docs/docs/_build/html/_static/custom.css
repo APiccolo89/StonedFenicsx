@@ -1,0 +1,19 @@
+/* Make wide tables horizontally scrollable */
+.docutils.table-wrapper,
+table.docutils {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+/* Optional: style the scrollbar itself so it reads as a visible "bar" */
+table.docutils::-webkit-scrollbar {
+    height: 8px;
+}
+table.docutils::-webkit-scrollbar-thumb {
+    background-color: #b0b0b0;
+    border-radius: 4px;
+}
+table.docutils::-webkit-scrollbar-track {
+    background: transparent;
+}
