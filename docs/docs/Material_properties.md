@@ -47,7 +47,70 @@ B_{\mathrm{dif|dis}}
 ```
 {math}`B_{dif|dis}` is the pre-exponential factor for either diffusion (dif) or dislocation creep. {math}`\dot{\varepsilon}_{II}` is the second invariant of the strain rate tensor. {math}`n` is the stress-exponent ({math}`n = 1` in case of diffusion creep mechanism). {math}`E_{\mathrm{dif|dis}}` and {math}`V_{\mathrm{dif|dis}}`. {math}`T` and {math}`P` are the temperature and pressure and {math}`R` is the perfect gas constant. 
 
-User can customise each of the parameter of diffusion and dislocation creep. In StonedFEniCSx there are few internal rheological database, that can be instantiated in the input file: 
+User can customize each of the parameter of diffusion and dislocation creep. In **StonedFEniCSx** there is an internal database that collects the rheologies. A small portion of the database is shown to illustrate the diffusion and dislocation creep database:
+**diffusion**
+```
+Common: 
+  n: 1.0
+  m : 0.0
+  d : 1.0
+  ah2o: 1.0
+  bh2o: 5521e6 
+  eh2o: 31.28e3 
+  vh2o: -2.009e-5 
+
+
+Diffusion_creep: 
+  Diffusion_DryOlivine: 
+    b: 1.5e9
+    e: 375.0e3
+    v: 5e-6
+    f: 'Simpleshear'
+    d: 10e3
+    mpa: 1
+    r: 0
+    m: 3.0
+    b_si: 'MPa^-1s^-1 m^{m}'
+    water_correction: 'None'
+    ref: 'Hirth, Greg, and David Kohlstedt. "Rheology of the upper mantle and the mantle wedge: A view from the experimentalists." Geophysical monograph series 138 (2003): 83-105.'
+```
+This database is build with the original rheological data. There are a few common parameters (e.g., the water fugacity parameters). 
+- b: pre-exponential factor 
+- e: activation energy
+- v: activation volume
+- f: Correction:
+  - SimpleShear: corrects for simple shear experiment
+  - UniAxial: corrects for uniaxial experiments
+  - NoCorrection: the data are not corrected
+- mpa: tells explicitly the unit of measure (to convert from MPa->Pa)
+- d: is the reference grain size
+- m: is the grain size exponent
+- water_correction: Tells whether or not a water correction must be applied:
+  - Fugacity : corrects the pre-exponential factor with water fugacity
+  - COH: corrects the pre-exponential factor for Concentration.
+- ref: hopefully the reference of the rheological flow law.
+**dislocation**
+```
+  Dislocation_WetOlivine: 
+    b: 1600
+    e: 520.0e3
+    v: 22e-6
+    f: 'Simpleshear'
+    mpa: 1
+    r: 1.2
+    n: 3.5
+    b_si: 'MPa^-n s^-1 COH^-r'
+    water_correction: 'COH'
+    ref: 'Hirth, Greg, and David Kohlstedt. "Rheology of the upper mantle and the mantle wedge: A view from the experimentalists." Geophysical monograph series 138 (2003): 83-105.'
+```
+- n: stress exponent
+- r: water exponent
+  
+The rheological database should be constructed introducing the original data, and flagging what the required corrections to apply. For example: diffusion rheologies are the best fit of experimental data; this fit is made with a specific law that incorporate explicitly the grain size. **StonedFEniCSx** cannot handle grain size evolution, thus, the reference grain size is used to correct the pre-exponential factor and transforming into `MPa^(-1)s^{-1}`, then, as a function of the type of experiment an additional correction is applied. If the experiments accounted water content, there is a small flag that tells whether or not the fitting has been carried out with fugacity laws or water concentration. The pre-exponential factor is then corrected with a reference water fugacity/concentration and then ultimately converted into the final unit of measure (math)`Pa^{-1}s^{-1}`.
+
+
+
+
 (table:rheological_flow_law)=
 (table:rheological_flow_law)=
 | Rheological flow law | {math}`B_{dif}`<br>{math}`\scriptstyle Pa^{-1}\,s^{-1}` | {math}`E_{dif}`<br>{math}`\scriptstyle J\,mol^{-1}` | {math}`\scriptstyle V_{dif}`<br>{math}`\scriptstyle(m^{3}\,mol^{-1})` | {math}`n`<br>n.d. | {math}`B_{dis}`<br>{math}`\scriptstyle Pa^{-n}\,s^{-1}` | {math}`E_{dis}`<br>{math}`\scriptstyle J\,mol^{-1}` | {math}`V_{dis}`<br>{math}`\scriptstyle m^{3}\,mol^{-1}` |
