@@ -120,34 +120,24 @@ In the following portion, the main rheologies in the code will be listed. Additi
 
 ### Diffusion Creep
 
-| Name | b (A) | e (Q) [J/mol] | v (V) [m³/mol] | m | r | d [μm] | f (geometry) | mpa | b_si | Water corr. | Ref (short) |
+| Name | b | e  [J/mol] | v  [m³/mol] | m | r | d [μm] | f (correction) | mpa | b_si | Water corr. | Ref (short) |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| Diffusion_DryOlivine | 1.5e9 | 375.0e3 | 5e-6 | 3.0 | 0 | 10e3 | Simpleshear | 1 | MPa⁻¹ s⁻¹ | None | Hirth & Kohlstedt (2003) |
-| Diffusion_WetOlivine | 2.7e7 | 375.0e3 | 10e-6 | 3.0 | 0.8 | 10e3 | Simpleshear | 1 | MPa⁻¹ s⁻¹ COH⁻ʳ | COH | Hirth & Kohlstedt (2003) |
-| Diffusion_vanKeken | 3.7866452594987994e-10 | 335.0e3 | 0e-6 | 1.0 | 0.8 | 1.0 | None | 0 | Pa⁻¹ s⁻¹ | None | van Keken et al. (2008) |
+| `Hirth_dry_Dislocation_creep` | 1.5e9 | 375.0e3 | 5e-6 | 3.0 | 0 | 10e3 | Simpleshear | 1 | MPa⁻¹ s⁻¹ | None |{cite}`hirth2003rheology` |
+| `Hirth_wet_Diffusion_creep` | 2.7e7 | 375.0e3 | 10e-6 | 3.0 | 0.8 | 10e3 | Simpleshear | 1 | MPa⁻¹ s⁻¹ COH⁻ʳ | COH |{cite}`hirth2003rheology` |
+| `VK_Diffusion_creep` | 3.79e-10 | 335.0e3 | 0e-6 | 1.0 | 0.8 | 1.0 | None | 0 | Pa⁻¹ s⁻¹ | None |{cite}`van2008community` |
 
 ### Dislocation Creep
 
-| Name | b (A) | e (Q) [J/mol] | v (V) [m³/mol] | n | r | f (geometry) | mpa | b_si | Water corr. | Ref (short) |
+| Name | b | e  [J/mol] | v [m³/mol] | n | r | f (correction) | mpa | b_si | Water corr. | Ref (short) |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Dislocation_DryOlivine | 1.1e5 | 345.0e3 | 15e-6 | 3.5 | 0.0 | Simpleshear | 1 | MPa⁻ⁿ s⁻¹ | None | Hirth & Kohlstedt (2003) |
-| Dislocation_WetOlivine | 1600 | 520.0e3 | 22e-6 | 3.5 | 1.2 | Simpleshear | 1 | MPa⁻ⁿ s⁻¹ COH⁻ʳ | COH | Hirth & Kohlstedt (2003) |
-| Dislocation_vanKeken | 2.1362335945103194e-17 | 540.0e3 | 0.0 | 3.5 | 0.0 | None | 0 | MPa⁻ⁿ s⁻¹ COH⁻ʳ | None | Hirth & Kohlstedt (2003) |
-| Dislocation_WetPlagio | 2.7e7 | 345.0e3 | 38e-6 | 3.0 | 0.0 | Uniaxial | 1 | MPa⁻ⁿ s⁻¹ | None | (ref pending) |
-| Dislocation_serpentinite | 2.82e-15 | 8900 | 3.2e-6 | 3.8 | 0.0 | Uniaxial | 1 | MPa⁻ⁿ s⁻¹ | None | Hilairet et al. (2007) |
-| Dislocation_wetquartzite | 6.309573444801943e-12 | 135.0e3 | 0e6 | 4.0 | 1.0 | Uniaxial | 1 | MPa⁻⁽ⁿ⁺ʳ⁾ s⁻¹ | Fugacity | Hirth, Teyssier & Dunlap (2001) |
-| Dislocation_glaucophane | 2.32e10 | 450.0e3 | 0e-6 | 3.0 | 0.0 | Uniaxial | 1 | MPa⁻ⁿ s⁻¹ | None | Glaucophane blueschist exp. (subduction) |
+| `Hirth_dry_Dislocation_creep` | 1.1e5 | 345.0e3 | 15e-6 | 3.5 | 0.0 | Simpleshear | 1 | MPa⁻ⁿ s⁻¹ | None | {cite}`hirth2003rheology` |
+| `Hirth_wet_Dislocation_creep` | 1600 | 520.0e3 | 22e-6 | 3.5 | 1.2 | Simpleshear | 1 | MPa⁻ⁿ s⁻¹ COH⁻ʳ | COH |{cite}`hirth2003rheology` |
+| `VK_Dislocation_creep` | 2.136e-17 | 540.0e3 | 0.0 | 3.5 | 0.0 | None | 0 | MPa⁻ⁿ s⁻¹ COH⁻ʳ | None | {cite}`van2008community` |
+| `Wet_Quartzite_2001_Dislocation_creep` | 2.7e7 | 345.0e3 | 38e-6 | 3.0 | 0.0 | Uniaxial | 1 | MPa⁻ⁿ s⁻¹ | None | {cite}`rybacki2004deformation` |
+| `Hirareth_Serpentinite_Dislocation_creep` | 2.82e-15 | 8900 | 3.2e-6 | 3.8 | 0.0 | Uniaxial | 1 | MPa⁻ⁿ s⁻¹ | None | {cite}`hilairet2007high` |
+| `Wet_Quartzite_2001_Dislocation_creep` | 6.31e-12 | 135.0e3 | 0e6 | 4.0 | 1.0 | Uniaxial | 1 | MPa⁻⁽ⁿ⁺ʳ⁾ s⁻¹ | Fugacity | {cite}`hirth2001evaluation` |
+| `Glaucophane_2025_Dislocation_creep` | 2.32e10 | 450.0e3 | 0e-6 | 3.0 | 0.0 | Uniaxial | 1 | MPa⁻ⁿ s⁻¹ | None | {cite}`hufford2026blueschist`|
 
-(table:rheological_flow_law)=
-(table:rheological_flow_law)=
-| Rheological flow law | {math}`B_{dif}`<br>{math}`\scriptstyle Pa^{-1}\,s^{-1}` | {math}`E_{dif}`<br>{math}`\scriptstyle J\,mol^{-1}` | {math}`\scriptstyle V_{dif}`<br>{math}`\scriptstyle(m^{3}\,mol^{-1})` | {math}`n`<br>n.d. | {math}`B_{dis}`<br>{math}`\scriptstyle Pa^{-n}\,s^{-1}` | {math}`E_{dis}`<br>{math}`\scriptstyle J\,mol^{-1}` | {math}`V_{dis}`<br>{math}`\scriptstyle m^{3}\,mol^{-1}` |
-|----------------------|-----------------------------------------------|-------------------------------------------|---------------------------------------------|-----------|-----------------------------------------------|-------------------------------------------|---------------------------------------------|
-| Hirth_Dry_Olivine_diff |  | 375e3 | 5e-6 | / | / | / | / |
-| Hirth_Dry_Olivine_disl |  |  |  |  |  |  |  |
-| Van_Keken_diff         |  |  |  |  |  |  |  |
-| Van_Keken_disl         |  |  |  |  |  |  |  |
-| Hirth_Wet_Olivine_diff |  |  |  |  |  |  |  |
-| Hirth_Wet_Olivine_disl |  |  |  |  |  |  |  | 
 
 The viscosity is computed using the harmonic average: 
 
@@ -155,6 +145,8 @@ The viscosity is computed using the harmonic average:
     \eta_{eff} = (\eta_{dif}^{-1}+\eta_{dis}^{-1}+\eta_{max}^{-1})^{-1}
 ```
 where {math}`\eta_{eff}` is the effective viscosity and {math}`eta_{max}` is the maximum viscosity (parameter that stabilises the numerical computation). There are two main scenarios: the only active mechanism is diffusion creep and the full composite one. In case of simulation with only diffusion creep, the harmonic average omits the dislocation creep viscosity. 
+
+**Note**: The reference represents where I first encounter this rheology. For example, `VK_Diffusion_creep` is originally coming from {cite}`karato1993rheology`
 
 ### Conductivity
 
@@ -164,6 +156,9 @@ where {math}`\eta_{eff}` is the effective viscosity and {math}`eta_{max}` is the
 
 ### Density
 
-% Reference
+## References
 
+```{bibliography}
+:all:
+```
 
