@@ -25,8 +25,9 @@ autosummary_generate = True
 
 autodoc_mock_imports = ["dolfinx", "gmsh", "petsc4py", "mpi4py", "ufl", "basix", "ffcx"]
 
-autodoc_typehints = "description"   # or "none"
-autodoc_typehints_format = "short"
+autodoc2_packages = [
+    "../../stonedfenicsx",
+]
 
 bibtex_bibfiles = ["bibliography.bib"]
 numfig = True
