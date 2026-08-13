@@ -2,7 +2,7 @@
 
 Material properties are defined using the input values defined in the *input.yml* (*Material properties* in *How to use*). **StonedFEniCSx** uses the option listed defined in the *input.yml*, over-writes the options that are not needed (see below), and create a small database. The small database is a small collection of arrays associated to specific properties, featuring a size equal to the total number of phases. Internally, **StonedFEniCSx** access to the specific property using the *ID* number of the subregions. 
 
-Inside *config* folder  (`\stonedfenicsx\config`) there is a folder containing the material properties and the relative dictionaries. These databases contain the original value of the material properties parameters; these parameters are always converted into the suitable unit of measure (e.g., MPa -> Pa) and then they are divided by the characteristic scales. This process is always done during the configuration stage of the numerical simulation. 
+Inside *config* folder (`\stonedfenicsx\config`) there is a folder containing the material properties and the relative dictionaries. These databases contain the original value of the material properties parameters; these parameters are always converted into the suitable unit of measure (e.g., MPa -> Pa) and then they are divided by the characteristic scales. This process is always done during the configuration stage of the numerical simulation. 
 
 ## Rock phase and IDs
 
@@ -48,6 +48,8 @@ B_{\mathrm{dif|dis}}
 {math}`B_{dif|dis}` is the pre-exponential factor for either diffusion (dif) or dislocation creep. {math}`\dot{\varepsilon}_{II}` is the second invariant of the strain rate tensor. {math}`n` is the stress-exponent ({math}`n = 1` in case of diffusion creep mechanism). {math}`E_{\mathrm{dif|dis}}` and {math}`V_{\mathrm{dif|dis}}`. {math}`T` and {math}`P` are the temperature and pressure and {math}`R` is the perfect gas constant. 
 
 User can customize each of the parameter of diffusion and dislocation creep. In **StonedFEniCSx** there is an internal database that collects the rheologies. A small portion of the database is shown to illustrate the diffusion and dislocation creep database:
+
+
 **diffusion**
 ```
 Common: 
@@ -89,6 +91,8 @@ This database is build with the original rheological data. There are a few commo
   - Fugacity : corrects the pre-exponential factor with water fugacity
   - COH: corrects the pre-exponential factor for Concentration.
 - ref: hopefully the reference of the rheological flow law.
+
+
 **dislocation**
 ```
   Dislocation_WetOlivine: 
@@ -106,10 +110,33 @@ This database is build with the original rheological data. There are a few commo
 - n: stress exponent
 - r: water exponent
   
-The rheological database should be constructed introducing the original data, and flagging what the required corrections to apply. For example: diffusion rheologies are the best fit of experimental data; this fit is made with a specific law that incorporate explicitly the grain size. **StonedFEniCSx** cannot handle grain size evolution, thus, the reference grain size is used to correct the pre-exponential factor and transforming into `MPa^(-1)s^{-1}`, then, as a function of the type of experiment an additional correction is applied. If the experiments accounted water content, there is a small flag that tells whether or not the fitting has been carried out with fugacity laws or water concentration. The pre-exponential factor is then corrected with a reference water fugacity/concentration and then ultimately converted into the final unit of measure (math)`Pa^{-1}s^{-1}`.
+The rheological database should be constructed introducing the original data, and flagging what the required corrections to apply are. For example: diffusion rheologies are the best fit of experimental data; this fit is made with a specific law that incorporate explicitly the grain size. **StonedFEniCSx** cannot handle grain size evolution, thus, the reference grain size is used to correct the pre-exponential factor and transforming into {math}`MPa^{-1}s^{-1}`, then, as a function of the type of experiment an additional correction is applied. If the experiments accounted water content, there is a small flag that tells whether or not the fitting has been carried out with fugacity laws or water concentration. The pre-exponential factor is then corrected with a reference water fugacity/concentration and then ultimately converted into the final unit of measure {math}`Pa^{-1}s^{-1}`.
 
+Most of the time, typesetter or authors themselves are not caring so much about the unit of measure. If user wants to introduce his customize rheology, they needs to check the unit of measures. The code is designed to convert the unit of measure before the configuration stage, so, it is necessary to properly handle the unit of measure. 
 
+In the following portion, the main rheologies in the code will be listed. Additionally, the rheology avaialable for the virtual shear zone will be described. 
 
+**Common parameters:** n = 1.0, m = 0.0, d = 1.0, ah2o = 1.0, bh2o = 5521×10⁶, eh2o = 31.28×10³, vh2o = −2.009×10⁻⁵
+
+### Diffusion Creep
+
+| Name | b (A) | e (Q) [J/mol] | v (V) [m³/mol] | m | r | d [μm] | f (geometry) | mpa | b_si | Water corr. | Ref (short) |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Diffusion_DryOlivine | 1.5e9 | 375.0e3 | 5e-6 | 3.0 | 0 | 10e3 | Simpleshear | 1 | MPa⁻¹ s⁻¹ | None | Hirth & Kohlstedt (2003) |
+| Diffusion_WetOlivine | 2.7e7 | 375.0e3 | 10e-6 | 3.0 | 0.8 | 10e3 | Simpleshear | 1 | MPa⁻¹ s⁻¹ COH⁻ʳ | COH | Hirth & Kohlstedt (2003) |
+| Diffusion_vanKeken | 3.7866452594987994e-10 | 335.0e3 | 0e-6 | 1.0 | 0.8 | 1.0 | None | 0 | Pa⁻¹ s⁻¹ | None | van Keken et al. (2008) |
+
+### Dislocation Creep
+
+| Name | b (A) | e (Q) [J/mol] | v (V) [m³/mol] | n | r | f (geometry) | mpa | b_si | Water corr. | Ref (short) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Dislocation_DryOlivine | 1.1e5 | 345.0e3 | 15e-6 | 3.5 | 0.0 | Simpleshear | 1 | MPa⁻ⁿ s⁻¹ | None | Hirth & Kohlstedt (2003) |
+| Dislocation_WetOlivine | 1600 | 520.0e3 | 22e-6 | 3.5 | 1.2 | Simpleshear | 1 | MPa⁻ⁿ s⁻¹ COH⁻ʳ | COH | Hirth & Kohlstedt (2003) |
+| Dislocation_vanKeken | 2.1362335945103194e-17 | 540.0e3 | 0.0 | 3.5 | 0.0 | None | 0 | MPa⁻ⁿ s⁻¹ COH⁻ʳ | None | Hirth & Kohlstedt (2003) |
+| Dislocation_WetPlagio | 2.7e7 | 345.0e3 | 38e-6 | 3.0 | 0.0 | Uniaxial | 1 | MPa⁻ⁿ s⁻¹ | None | (ref pending) |
+| Dislocation_serpentinite | 2.82e-15 | 8900 | 3.2e-6 | 3.8 | 0.0 | Uniaxial | 1 | MPa⁻ⁿ s⁻¹ | None | Hilairet et al. (2007) |
+| Dislocation_wetquartzite | 6.309573444801943e-12 | 135.0e3 | 0e6 | 4.0 | 1.0 | Uniaxial | 1 | MPa⁻⁽ⁿ⁺ʳ⁾ s⁻¹ | Fugacity | Hirth, Teyssier & Dunlap (2001) |
+| Dislocation_glaucophane | 2.32e10 | 450.0e3 | 0e-6 | 3.0 | 0.0 | Uniaxial | 1 | MPa⁻ⁿ s⁻¹ | None | Glaucophane blueschist exp. (subduction) |
 
 (table:rheological_flow_law)=
 (table:rheological_flow_law)=
