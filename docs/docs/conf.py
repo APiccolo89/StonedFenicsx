@@ -18,6 +18,7 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinxcontrib.bibtex",
     "sphinx.ext.githubpages",
+    'sphinx.ext.autodoc',
 ]
 
 autosummary_generate = True
