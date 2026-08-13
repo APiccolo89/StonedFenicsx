@@ -11,6 +11,7 @@ html_short_title = project
 
 extensions = [
     "myst_parser",
+    "autodoc2",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
@@ -18,7 +19,6 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinxcontrib.bibtex",
     "sphinx.ext.githubpages",
-    'sphinx.ext.autodoc',
 ]
 
 autosummary_generate = True

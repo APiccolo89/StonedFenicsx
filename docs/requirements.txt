@@ -2,3 +2,4 @@ sphinx
 myst-parser
 sphinxcontrib-bibtex
 piccolo-theme
+sphinx-autodoc2
