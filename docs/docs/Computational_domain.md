@@ -148,13 +148,13 @@ The geometry of the slab require also the thickness of the slab `slab_tk`. Howev
 
 The user can introduce an additional region of the plate: the oceanic crust. The oceanic crust thickness is defined using `ocr` parameters in the geometry section of the *input.yml* file. 
 
-:::{Important}
+```{Important}
 The subduction plate phases are: 
 
 - `subducting_plate_mantle`
 - `oceanic_crust`
-see [](Rocks_ID)
-:::
+see {ref}(Rocks_ID)
+```
 
 ### Overriding plate 
 
