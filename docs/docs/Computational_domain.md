@@ -1,20 +1,15 @@
-# Computational domain
+# Computational Domain and Boundary Conditions
 
 (fig:f1_simplified_initial_setup)=
 ```{figure} images_doc/Initial_setup.png
 :width: 500px
-
-Simplified initial computational domain.
-
-This section is based on the supplementary material section of the paper that is going to be published out of this project. This section has two part: one part that reads like a method section of a paper. The second part is explaining the discoursive implementation. The details of the API are integrated into a different section that will be more technical. 
+```
 
 The computational domain is generated using `gmsh` and consists of an unstructured triangular mesh {cite}`geuzaine2009gmsh`.  
 In **{numref}`fig:f1_simplified_initial_setup`**, we sketch a simplified initial computational domain.  
 This sketch highlights the features that are common to all numerical realisations.
 
 The main portions of the numerical domain are shown using different colours, the points defining the physical boundaries are labelled with capital letters (`A–L`), and the boundaries are denoted by bracketed lowercase letters (**[a–i]**).
-
-
 ## *Domain geometry*
 
 The main computational domain can be approximated by a trapezoid defined by `A`, `B`, `C`, `D`, `E`, and `F`.  
@@ -31,7 +26,7 @@ The horizontal extent of the numerical domain (i.e., the coordinate `x` of `F` a
   \(x_t + 60, -600\) km and \(x_t + 60, 0)\ km, respectively.
 
 
-## **Subdomains**
+## Overview
 
 The initial setup is divided into three subdomains:
 
@@ -53,36 +48,17 @@ Velocity is imposed **parallel to the slab surface**, with magnitude equal to th
 
 The base of the *overriding plate* is treated as a *no-slip boundary*.
 
-
-## **Governing-equation domains**
-
-The subdivision into three smaller domains simplifies the computation of the **Stokes equations**:
-
-- 'Mass and momentum conservation' are solved only in *S* and *W*.
-- 'Lithostatic pressure' and 'energy conservation' are solved in the **entire domain**.
-
-The subdomains are independent, non-overlapping computational regions, defined by boundaries that may be shared with neighbouring subdomains.
-
-Each subdomain can contain different material properties. For example, the overriding plate may include crustal units and lithospheric mantle, which primarily affect **thermal properties**.
-
-In the following sections, we first describe the Stokes subdomains (slab and wedge) and their boundary conditions. We then discuss the thermal boundary conditions applied to the global domain.
-
-```{math}
-\mathbf{G} = \mathbf{OP} + \mathbf{S} + \mathbf{W}.
-```
-## Domains
-
-### Slab
+### Slab subdomain 
 
 In {numref}`fig:f1_simplified_initial_setup`, **S** is shown in red and is defined by points `A`, `B`, `C`, and `D`. It is bounded by four boundaries: `[a]`, `[c]`, `[d]`, and `[e]`.
 
-On `[a]`, we prescribe an **internal moving-wall boundary condition**. The velocity \(v_c\) represents the convergence velocity and is locally parallel to the tangent of `[a]`. Its magnitude is constant and equal to \(v_c\). Boundary `[c]` is the **base of the plate**, where a **free-slip boundary condition** is applied using the Nitsche method {cite}`sime2020automatic,sime2024thermal`. Boundaries `[d]` and `[e]` are **open boundaries**, whose inflow or outflow velocities depend on the convergence velocity applied on `[a]`.
+On `[a]`, we prescribe an **internal moving-wall boundary condition**. Boundary `[c]` is the **base of the plate**, where a **free-slip boundary condition** is applied using the Nitsche method {cite}`sime2020automatic,sime2024thermal`. Boundaries `[d]` and `[e]` are **open boundaries**, whose inflow or outflow velocities depend on the convergence velocity applied on `[a]`.
 
-The viscosity within **S** is constant and equal to {math}`\eta_{\mathrm{slab}}`, regardless of the number of material phases. This allows the **Stokes equations** to be solved only once per numerical realisation, both for steady-state and time-dependent problems.
+The viscosity within **S** is constant and equal to {math}`\eta_{\mathrm{slab}}`, regardless of the number of material phases. 
 
 The slab may contain different material phases (lithospheric mantle and oceanic crust), each with distinct **heat capacity, density, and conductivity**.
 
-### Wedge
+### Wedge subdomain
 
 The **W** subdomain is defined by points `H`, `D`, `E`, and `F` (see {numref}`fig:f1_simplified_initial_setup`).  It is bounded by a portion of `[a]` (from `H` to `D`) and by `[f]`, `[g]`, and `[b]`. Boundaries `[f]` and `[g]` are **open (do-nothing) boundaries**:
 
@@ -91,13 +67,129 @@ The **W** subdomain is defined by points `H`, `D`, `E`, and `F` (see {numref}`fi
 
 On `[b]`, a **no-slip boundary condition** is imposed. Only part of `[a]` controls the wedge kinematics. As in the slab, a **moving-wall boundary condition** is prescribed, but a shallow segment simulates **partial decoupling** between wedge and slab (similar to {cite}`van2023introductory`).
 
-Two approaches exist:
+### Overriding plate subdomain
 
-1. Introduce a **weak phase** between wedge and slab {cite}`wada2009common`.  
-2. Explicitly define a **decoupling depth** \(d_c\) and smoothly vary the velocity  
-   {cite}`van2023introductory,sime2024thermal,hobson2025sensitivity`.
+The overriding plate domain is defined by points [`A`], [`H`], [`G`], [`F`]. This domain is not used in the computation, it is a geometrical entity that is considered only in the *Global domain* for solving the lithostatic pressure differential equation and the energy equation. 
 
-Both are valid; here we adopt the **explicit decoupling depth**, as it is easier to treat as a free parameter {cite}`hobson2025sensitivity`.
+It may feature one or more phases as a function of the user needs. 
+
+### Global domain
+
+At each iteration and/or time step, the velocity and dynamic pressure field computed in **S** and **W** are interpolated back onto the global domain mesh. The velocity is used for solving the energy conservation equation. We briefly describe the boundary conditions prescribed at the external boundaries of the global domain.
+
+## Module create mesh 
+
+The user can define the subducting plate geometry using the parameters of *geometry* in the *input.yml* file. Moreover, they can choose the depth of the overriding plate using `ns_depth`.
+
+```
+  x: [0.0, 660.0] # Coordinate of X
+  y: [-600.0, 0.0] # Coordinate of Y
+  van_keken: False # Activate the geometry of Van Keken benchmark
+  sub_constant_flag : False # Tells the code to have a slab with a constant bending angle
+  slab_tk: 130.0 # Slab Thickness 
+  cr: 30.0 # Overriding Crust {if lc==0.0 -> only overriding upper crust}
+  ocr: 7.0 # Oceanic crust of the subducting plate 
+  lc: 0.3 # lower to upper continental crust ratio
+  resolution_normal: 3.0 # resolution far from the singularity point
+  resolution_refine: 1.5 # resolution around the slab surface and singularity point
+  ns_depth: 50.0 # depth of the no-slip condition 
+  lab_d: 100.0 # depth of lithosphere-astenosphere boundary (necessary to compute the continental geotherm)
+  decoupling: 80.0 # depth of decoupling
+  transition: 10.0 # transition zone thickness (between fully coupled and uncoupled wedge flow regime)
+  wz_tk: 0.5 # thickness of the virtual shear zone for computing the shear heating 
+  sub_lb: 300.0 # total cumulative length in which the bending angle is evolving (necessary for the CustomRibe)
+  sub_dl: 10.0 # length of segment to compute the slab surface
+  sub_theta0: 5.0 # initial bending angle 
+  sub_theta_max: 45.0 # final bending angle 
+  sub_trench: 0.0 # position of the trench
+  sub_parabolic_a: 8e-4 # [km^-1] -> curvature of the parabolic slab (necessary for the CustomParabolic)
+  slab_type: "CustomParabolic" # [CustomParabolic,CustomRibe,FromFile] 
+  sub_path: "Not Defined" # Required for the real geometry of the subducting plate
+```
+
+
+
+The geometry of the numerical domain needs the definition of `ns_depth` and the top surface of the slab. From these two geometrical entities all the subdomains are defined. Below, a detailed explaination is offered, with a few note of future developments. 
+
+
+
+### Mesh Generation 
+
+The mesh-generation submodule requires a set of geometric inputs, which are used to populate the Geom_input dataclass. 
+
+The computational domain is constructed starting from the subudcting plate geometry from this geometry the {math}`x` extend is decided three informations: the depth of the model (decided by the user) and by the coordinate x of the intersection of the top surface of the subducting plate and the maximum depth horizontal line and the intersection of the bottom of the subducting plate with the maximum depth (the default value is {math}`-600` km). 
+
+In **Fig.** {ref}`fig:f1_simplified_initial_setup` the computational domain is defined by `A`, `B`, `C` and `F`. `A` is the trench (`sub_trench` is the x-coordinate of the point in the geometry section of the input file). `B` is the intersection of the bottom of the subducting plate with the vertical axis located at `sub_trench`. `C` is the intersection between the bottom of the slab and the maximum depth. `E` is defined using `D` (the intersection of the top surface of the slab and the maximum depth), by adding {math}`60` km to the coordinate-x. `F` is defined using the coordinate-x of `E` and the coordinate-y of `A`. 
+
+### Geometry of the subducting plate 
+
+The subduction geometry is constructed with a combination of several parameters. First the user should choose whether the subduction feauture a constant angle or the geometry is the benchmark geometry: 
+
+-  `sub_constant_flag`: controls the constant bending angle option
+-  `van_keken`: controls the geometry using default value for reproducing the benchmarks of {cite}`van2008community`. In case the user wants to use the benchmarks, they needs to activate `van_keken` and `sub_constant_flag`. 
+
+Then the user can choose the type of subduction: 
+
+- `slab_type`:
+  - `CustomParabolic`: uses the parabula equation for defining the surface of the subducting slab.
+    - `sub_parabolic_a`: curvature of the parabula used to describe the geometry [SI km^-1]
+  - `CustomRibe`: uses the bending equation of Ribe {cite}`ribe2010bending`
+    - sub_lb: a critical along the surface distance in which the bending angle is evolving till the maximum angle (`theta_max`)
+    - `sub_theta_0` minimal angle. The angle at the trench, to avoid degenerate meshes. 
+  - `FromFile`: uses a pz/txt file where the top surface of a real slab is defined. 
+
+Then, the user needs to define the length step used for defining the geometry of the slab: 
+
+- `sub_dl`
+
+The geometry of the subduction is computed using the coordinate of the trench, `sub_dl` and the bending angle. 
+
+The geometry of the slab require also the thickness of the slab `slab_tk`. However, as a function of the bending geometry, the user defined thickness can be overwritten for avoiding geometrical problems (i.e., when the curvature as a function of the length of the slab is changing too rapidly). 
+
+The user can introduce an additional region of the plate: the oceanic crust. The oceanic crust thickness is defined using `ocr` parameters in the geometry section of the *input.yml* file. 
+
+:::{Important}
+The subduction plate phases are: 
+
+- `subducting_plate_mantle`
+- `oceanic_crust`
+see [](Rocks_ID)
+:::
+
+### Overriding plate 
+
+The overriding plate is defined using the following parameters: 
+
+- {math}`ns_{depth}`, the no-slip boundary depth [meters] always positive and internally converted into negative coordinate. 
+- {math}`cr`, the overriding crust thickness [meters] always positive. 
+- {math}`lc`, fraction of lower crust [n.d.] between {math}`0,0.5` 
+
+The {math}`ns_depth` define the depth at which the no-slip boundary condition is defined. The no-slip boundary condition is a horizontal line that ranges from right boundary (defined by the points `E`-`F`). `H` and `G` are the points in which the no-slip boundary condition intersect the right top-surface of the slab and the right boundary respectively. The small area defined by `A`,`F`,`G` and `H` can have a different rock-phase. If no crust is defined, the overriding plate is automatically considered `lithospheric mantle phase`. If the crustal unit is defined without any lower crust ({math}`lc = 0.0`), the overriding plate will be filled from the depth {math}`cr` with `overriding upper crust material` (this unit can be costumised to have more oceanic or continental-like material property). In case {math}`lc` is different from zero, then, the layer of the overriding plate spanning from {math}`cr` and {math}`cr*lc` is composed of `overriding lower crust material`, while from  {math}`cr*lc` to the surface is composed of `overriding upper crust material`.
+
+### Wedge
+
+The wedge is automatically defined after the definition of the Overriding plate. It is composed of only one rock-phase (`mantle wedge`). The mantle wedge phase can have non-linear rheologies and while the material properties are the same of the `subducting mantle phase`. 
+
+## Boundary Conditions 
+
+At the top boundary (`[h]` in **Fig.** {ref}`fig:f1_simplified_initial_setup`), an isothermal boundary condition is imposed, where the temperature is equal to the surface temperature {math}`T_{s}`. At the open boundaries, such as `[d]`, `[f]`, and `[g]`, the prescribed boundary conditions depend on the velocity vector: if there is an inflow velocity within these boundaries, the portion of the boundary becomes isothermal, with a temperature equal to the mantle potential temperature; if there is an outflow velocity field, the local boundary condition is no-flux. The only exception to this general rule is a portion of `[g]` (from point `L` to `F`). The depth of point `L` can be an independent parameter, but for convenience is always equal to {math}`d_c`. Within this portion of `[g]`, the boundary condition is no-flux regardless of the velocity field. This strategy allows simulation of a realistic lithosphere temperature field.
+
+At boundaries `[e]` and `[i]`, the temperature is prescribed as a function of depth. For `[i]`, the temperature varies linearly with depth, and the linear gradient is computed as
+
+```{math}
+gr = \frac{(T_{p} - T_{s})}{d_{lab}}
+```
+
+where {math}`T_p` is the mantle potential temperature and {math}`d_{lab}` is the depth of the astenopshere and lithosphere boundary. Before initialisation of the experiment, an initial guess of the temperature field is computed assuming a continental-like thermal structure everywhere. This continental-like geotherm uses the decoupling depth (or the depth of point `L`) as the effective base of the lithosphere.
+
+For boundary `[e]`, the temperature structure is either computed analytically using a half-space cooling model with a given age {cite}`turcotte2014geodynamics,van2008community`, or computed numerically. We adopt the plate model described in {cite}`richards2020structure` and solve the numerical energy conservation equation without the advection term on a 1D numerical domain extending from −140 to 0 km. The temperature at the top is always the surface temperature, while the bottom temperature can be either the mantle potential temperature or the adiabatic temperature if adiabatic processes are active.
+
+The numerical method used to compute the thermal structure of the incoming plate (i.e., the prescribed temperature at boundary `[e]`) is a finite-difference Crank–Nicolson scheme, similar to {cite}`richards2020structure,van2023effect`. The numerical scheme is described in the appendix of {cite}`van2023effect`; in the present work, a Picard iteration scheme is added to handle nonlinearities and compute the lithostatic pressure. The lithostatic pressure is obtained from a depth-dependent integral of rock density. We solve the time-dependent energy conservation equation without the advective term, and the residual is evaluated using Eq. XX with a tolerance of {math}`10^{-5}`. The lithostatic pressure is computed once per time step, prior to solving the energy equation, accounting for nonlinearities using the current temperature field.
+
+
+
+## Domains
+
 
 #### Velocity scaling along the slab
 
@@ -118,102 +210,8 @@ where {math}`z` is the depth coordinate, {math}`d_c` is the decoupling depth, an
 
 where {math}`\mathbf{v}_{slab}` is the effective slab velocity and {math}`\hat{\mathbf{v}}_{slab}` is the unit vector parallel to the local tangent of the slab surface.
 
-### Global domains
-
-At each iteration and/or time step, the velocity and dynamic pressure field computed in **S** and **W** are interpolated back onto the global domain mesh. The velocity is used for solving the energy conservation equation. We briefly describe the boundary conditions prescribed at the external boundaries of the global domain.
-
-At the top boundary (`[h]` in **Fig.** {ref}`fig:f1_simplified_initial_setup`), an isothermal boundary condition is imposed, where the temperature is equal to the surface temperature {math}`T_{s}`. At the open boundaries, such as `[d]`, `[f]`, and `[g]`, the prescribed boundary conditions depend on the velocity vector: if there is an inflow velocity within these boundaries, the portion of the boundary becomes isothermal, with a temperature equal to the mantle potential temperature; if there is an outflow velocity field, the local boundary condition is no-flux. The only exception to this general rule is a portion of `[g]` (from point `L` to `F`). The depth of point `L` can be an independent parameter, but for convenience is always equal to {math}`d_c`. Within this portion of `[g]`, the boundary condition is no-flux regardless of the velocity field. This strategy allows simulation of a realistic lithosphere temperature field.
-
-At boundaries `[e]` and `[i]`, the temperature is prescribed as a function of depth. For `[i]`, the temperature varies linearly with depth, and the linear gradient is computed as
-
-```{math}
-gr = \frac{(T_{p} - T_{s})}{d_{lab}}
-```
-
-where {math}`T_p` is the mantle potential temperature and {math}`d_{lab}` is the depth of the astenopshere and lithosphere boundary. Before initialisation of the experiment, an initial guess of the temperature field is computed assuming a continental-like thermal structure everywhere. This continental-like geotherm uses the decoupling depth (or the depth of point `L`) as the effective base of the lithosphere.
-
-For boundary `[e]`, the temperature structure is either computed analytically using a half-space cooling model with a given age {cite}`turcotte2014geodynamics,van2008community`, or computed numerically. We adopt the plate model described in {cite}`richards2020structure` and solve the numerical energy conservation equation without the advection term on a 1D numerical domain extending from −140 to 0 km. The temperature at the top is always the surface temperature, while the bottom temperature can be either the mantle potential temperature or the adiabatic temperature if adiabatic processes are active.
-
-The numerical method used to compute the thermal structure of the incoming plate (i.e., the prescribed temperature at boundary `[e]`) is a finite-difference Crank–Nicolson scheme, similar to {cite}`richards2020structure,van2023effect`. The numerical scheme is described in the appendix of {cite}`van2023effect`; in the present work, a Picard iteration scheme is added to handle nonlinearities and compute the lithostatic pressure. The lithostatic pressure is obtained from a depth-dependent integral of rock density. We solve the time-dependent energy conservation equation without the advective term, and the residual is evaluated using Eq. XX with a tolerance of {math}`10^{-5}`. The lithostatic pressure is computed once per time step, prior to solving the energy equation, accounting for nonlinearities using the current temperature field.
-
-### Overriding plate 
-
-The overriding plate is composed of either mantle, or mantle and crustal unit, as a function of the input parameters. It is a separated domain, but without any specific FEM problem associated. 
-
-## Module create mesh 
-
-The mesh-generation submodule requires a set of geometric inputs, which are used to populate the Geom_input dataclass. This class stores the geometry needed to construct the computational domain. The create_mesh.py module first generates the slab top surface and then defines the geometric entities specified by the user. The mesh is generated with gmsh and written to the output directory. The resulting .msh file is then read, converted into a dolfinx mesh, and passed to the main solver.
-
-The computational domain is constructed starting from the subudcting plate geometry from this geometry the {math}`x` extend is decided three informations: the depth of the model (decided by the user) and by the coordinate x of the intersection of the top surface of the subducting plate and the maximum depth horizontal line and the intersection of the bottom of the subducting plate with the maximum depth (the default value is {math}`-600` km). 
-
-In **Fig.** {ref}`fig:f1_simplified_initial_setup` the computational domain is defined by `A`, `B`, `C` and `F`. `A` is the trench ({math}`X_{trench}` is the coordinate of the point). `B` is the intersection of the bottom of the subducting plate with the vertical axis located at {math}`X_{trench}`. `C` is the intersection between the bottom of the slab and the maximum depth. `E` is defined using `D` (the intersection of the top surface of the slab and the maximum depth), by adding {math}`60` km to the coordinate-x. `F` is defined using the coordinate-x of `E` and the coordinate-y of `A`. 
-
-### Geometry of the subducting plate 
-
-The geometry of the top surface slab can be either a parametrised curve or a real slab geometry (not yet implemented). The parametrised curve requires the following parameters: 
-
-- {math}`s_{tk}` slab thickness, the thickness of the subudcting plate in meters, and always positive.
-- {math}`\theta_{max}` the maximum bending angle. 
-- {math}`\theta_{0}` the minimum bending angle.
-- {math}`L_{b}` the critical along the slab distance in meters and always positive. 
-- {math}`F_{vk}` flag of constant bending angle. 
-- {math}`d\ell` length of the slab segment.
-- {math}`X_{trench}` coordinate of the trench in meters. 
 
 
-if {math}`F_{vk}` is active, {math}`\theta_{max}` becomes the constant angle of the slab. This feature is mostly used for benchmarking purpose (i.e., for reproducing the benchmarks of {cite}`van2008community`). 
-
-The parametrised slab surface is computed using {math}`d\ell` and a function that describe {math}`\theta(\ell0)`. The function that describe the evolution of the bending angle as a function of the cumulative arc-length distance along the slab surface from the trench ({math}`\ell`) is: 
-
-```{math}
-\theta(\ell) =
-\begin{cases}
-\theta_{\max}\, \ell^{2}\, \dfrac{3L_b - 2\ell}{L_b^{3}}, & \text{if } \ell \le L_b, \\
-\theta_{\max}, & \text{otherwise.}
-\end{cases}
-```
-The algorithm starts from the trench. It computes {math}`\theta(\ell(trench))` at the trench position, and {math}`\theta(\ell(trench)+d\ell)`. It averages the two angle, and then compute the coordinate of the new point of the slab: 
-```{math}
-:label: eq:trench_update
-
-\mathbf{X}_{\text{new}}
-=
-\mathbf{X}_{\text{trench}}
-+
-d\ell \, \hat{\mathbf{t}},
-\qquad
-\hat{\mathbf{t}} = (\cos\theta, -\sin\theta).
-```
-Then repeat the same operation starting from the new coordinate points till the coordinate_y is equal to the maximum depth of the model.
-
-The bottom of the slab and the bottom of the potential oceanic crust layer are computed using the top surface using the following equations:
-```{math}
-:label: eq:bottom_slab
-\mathbf{X}_{\mathrm{bot}}(\ell)
-=
-\mathbf{X}_{\mathrm{top}}(\ell)
-+
-s_{tk}\,\hat{\mathbf{n}}(\ell),
-\qquad
-\hat{\mathbf{n}}(\ell)=(-\sin\theta(\ell),\,-\cos\theta(\ell)).
-```
-where {math}`\mathbf{X}_{bot}(\ell)` is the array containing the coordinate of either the bottom of the subducting plate or the oceanic crust's moho and {math}`\mathbf{X}_{top}(\ell)` is the coordinate array of the top surface of the subducting plate. The slab can be composed of one or two rock-phase. In case the user does not define the oceanic crust, the subducting plate is composed only by the `subducting mantle phase` (see material property section). In case the thickness of the oceanic crust is different from zero, an additional layer of rocks is added from the top surface of the slab. This layer is composed of `oceanic crust phase`. 
-
-The geometry of the slab then is fully defined, and as explained above, the rest of main points that defines the computational domain are computed. 
-
-### Overriding plate 
-
-The overriding plate is defined using the following parameters: 
-
-- {math}`ns_{depth}`, the no-slip boundary depth [meters] always positive and internally converted into negative coordinate. 
-- {math}`cr`, the overriding crust thickness [meters] always positive. 
-- {math}`lc`, fraction of lower crust [n.d.] between {math}`0,0.5` 
-
-The {math}`ns_{depth}` define the depth at which the no-slip boundary condition is defined. The no-slip boundary condition is a horizontal line that ranges from right boundary (defined by the points `E`-`F`). `H` and `G` are the points in which the no-slip boundary condition intersect the right top-surface of the slab and the right boundary respectively. The small area defined by `A`,`F`,`G` and `H` can have a different rock-phase. If no crust is defined, the overriding plate is automatically considered `lithospheric mantle phase`. If the crustal unit is defined without any lower crust ({math}`lc = 0.0`), the overriding plate will be filled from the depth {math}`cr` with `overriding upper crust material` (this unit can be costumised to have more oceanic or continental-like material property). In case {math}`lc` is different from zero, then, the layer of the overriding plate spanning from {math}`cr` and {math}`cr*lc` is composed of `overriding lower crust material`, while from  {math}`cr*lc` to the surface is composed of `overriding upper crust material`.
-
-### Wedge
-
-The wedge is automatically defined after the definition of the Overriding plate. It is composed of only one rock-phase (`mantle wedge`). The mantle wedge phase can have non-linear rheologies and while the material properties are the same of the `subducting mantle phase`. 
 
 ### Additional geometrical input 
 
