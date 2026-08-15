@@ -82,7 +82,7 @@ At each iteration and/or time step, the velocity and dynamic pressure field comp
 
 The mesh-generation submodule requires a set of geometric inputs, which are used to populate the Geom_input dataclass. 
 
-`````{admonition} Geometry
+`````{admonition} Geometry:
   :class: input_snips
   ```yaml
 x: [0.0, 660.0] # Coordinate of X
@@ -119,7 +119,7 @@ In **Fig.** {ref}`fig:f1_simplified_initial_setup` the computational domain is d
 The subduction geometry is constructed with a combination of several parameters. First the user should choose whether the subduction feautures a constant angle or the geometry is the benchmark geometry: 
 
 -  `sub_constant_flag`: controls the constant bending angle option
--  `van_keken`: controls the geometry using default value for reproducing the benchmarks of {cite}`van2008community`. In case the user wants to use the benchmarks, they needs to activate `van_keken` and `sub_constant_flag`. 
+-  `van_keken`: controls the geometry using default value for reproducing the benchmarks of {cite}`van2008community`. In case the user wants to use the benchmarks, they need to activate `van_keken` and `sub_constant_flag`. 
 
 Then the user can choose the type of subduction: 
 
@@ -141,12 +141,12 @@ The geometry of the slab require also the thickness of the slab `slab_tk`. Howev
 
 The user can introduce an additional region of the plate: the oceanic crust. The oceanic crust thickness is defined using `ocr` parameters in the geometry section of the *input.yml* file. 
 
-```{Important}
+```{important}
 The subduction plate phases are: 
 
 - `subducting_plate_mantle`
 - `oceanic_crust`
-see {ref}(Rocks_ID)
+see {ref}`Rocks_ID`
 ```
 
 The overriding plate is defined using the following parameters: 
@@ -162,8 +162,7 @@ The wedge is automatically defined after the definition of the Overriding plate.
 ## Boundary Conditions 
 
 ### Kinematic boundary condition 
-`````
-{admonition} kinematic_boundary_condition:
+`````{admonition} kinematic_boundary_condition:
   :class: input_snips
   ```yaml
 v_s : [5.0,0.0]
@@ -229,7 +228,23 @@ The left boundary condition is active between the points [`A`] and [`B`] while t
 
 The other boundary condition [`C`-`E`] and [`G`-`E`] are defined as a function of the current velocity field: if the velocity field is pointing outward the numerical domain, the thermal boundary condition are do-nothing. If the velocity is inward the temperature of is equal to `temp_max`. The only exception is the small segment [`G`-`L`] in which the temperature is determined by the right boundary condition. 
 
+### Shear heating  
 
+Shear heating is applied along the slab surface from point [`A`] to point [`H`]. The shear heating is computed using `wz_tk`. The procedure is the following: first a shear strain rate is computed using the velocity of the slab and the thickness of the virtual weak zone; then, from the strain rate is computed the total shear stress. 
+
+`````{admonition} Shear Heating:
+  :class: input_snips
+
+
+```yml
+  shear_heating_disl_phi: 5.0 
+  shear_heating_disl_tau_min: 0.0 
+  shear_heating_disl_law: "Wet_Quartzite_2001_Dislocation_creep"
+```
+`````  
+If in `NumericalControls` the option selected is `SelfConsistent`,the strength will be computed using the shear dislocation law (`shear_heating_disl_law`), the friction angle. It is computed using a Drucker-Prager yield criterion without cohesion. In the case the user chooses the `Constant`, the strenght of the shear zone is computed using a constant stress (`tau_min`).
+
+After the strength is computed, the shear heating contribution is computed by multiplying the shear stress with the velocity of the slab and the scaling function that define the decoupling. 
 
 
 ## References
