@@ -21,6 +21,7 @@ import dolfinx
 from dataclasses import asdict
 from dolfinx.io import gmshio
 from dolfinx import fem
+import yaml 
 
 
 
@@ -76,7 +77,6 @@ def write_mesh_data(g_input:GeomInput,ioctrl:IOControls)->None:
     Returns:
         None
     """
-    import yaml 
     def convert_yaml_friendly(vl):
         if isinstance(vl, np.ndarray):
             return vl.tolist()
