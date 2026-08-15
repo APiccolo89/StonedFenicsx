@@ -26,3 +26,12 @@ table.docutils::-webkit-scrollbar-track {
   background-color: #6a4c93;
   color: white;
 }
+
+.summary_questions {
+  border-left: 4px solid #6a4c93;
+  background-color: #27ac5a;
+}
+.summary_questions > .admonition-title {
+  background-color: #6a4c93;
+  color: rgb(9, 167, 40);
+}
