@@ -85,29 +85,29 @@ The mesh-generation submodule requires a set of geometric inputs, which are used
 `````{admonition} Geometry
   :class: input_snips
   ```yaml
-  x: [0.0, 660.0] # Coordinate of X
-  y: [-600.0, 0.0] # Coordinate of Y
-  van_keken: False # Activate the geometry of Van Keken benchmark
-  sub_constant_flag : False # Tells the code to have a slab with a constant bending angle
-  slab_tk: 130.0 # Slab Thickness 
-  cr: 30.0 # Overriding Crust {if lc==0.0 -> only overriding upper crust}
-  ocr: 7.0 # Oceanic crust of the subducting plate 
-  lc: 0.3 # lower to upper continental crust ratio
-  resolution_normal: 3.0 # resolution far from the singularity point
-  resolution_refine: 1.5 # resolution around the slab surface and singularity point
-  ns_depth: 50.0 # depth of the no-slip condition 
-  lab_d: 100.0 # depth of lithosphere-astenosphere boundary (necessary to compute the continental geotherm)
-  decoupling: 80.0 # depth of decoupling
-  transition: 10.0 # transition zone thickness (between fully coupled and uncoupled wedge flow regime)
-  wz_tk: 0.5 # thickness of the virtual shear zone for computing the shear heating 
-  sub_lb: 300.0 # total cumulative length in which the bending angle is evolving (necessary for the CustomRibe)
-  sub_dl: 10.0 # length of segment to compute the slab surface
-  sub_theta0: 5.0 # initial bending angle 
-  sub_theta_max: 45.0 # final bending angle 
-  sub_trench: 0.0 # position of the trench
-  sub_parabolic_a: 8e-4 # [km^-1] -> curvature of the parabolic slab (necessary for the CustomParabolic)
-  slab_type: "CustomParabolic" # [CustomParabolic,CustomRibe,FromFile] 
-  sub_path: "Not Defined" # Required for the real geometry of the subducting plate
+x: [0.0, 660.0] # Coordinate of X
+y: [-600.0, 0.0] # Coordinate of Y
+van_keken: False # Activate the geometry of VanKeken benchmark
+sub_constant_flag : False # Tells the code to have aslab with a constant bending angle
+slab_tk: 130.0 # Slab Thickness 
+cr: 30.0 # Overriding Crust {if lc==0.0 -> onlyoverriding upper crust}
+ocr: 7.0 # Oceanic crust of the subducting plate 
+lc: 0.3 # lower to upper continental crust ratio
+resolution_normal: 3.0 # resolution far from thesingularity point
+resolution_refine: 1.5 # resolution around the slabsurface and singularity point
+ns_depth: 50.0 # depth of the no-slip condition 
+lab_d: 100.0 # depth of lithosphere-astenosphereboundary (necessary to compute the continentalgeotherm)
+decoupling: 80.0 # depth of decoupling
+transition: 10.0 # transition zone thickness(between fully coupled and uncoupled wedge flowregime)
+wz_tk: 0.5 # thickness of the virtual shear zone forcomputing the shear heating 
+sub_lb: 300.0 # total cumulative length in which thebending angle is evolving (necessary for theCustomRibe)
+sub_dl: 10.0 # length of segment to compute the slabsurface
+sub_theta0: 5.0 # initial bending angle 
+sub_theta_max: 45.0 # final bending angle 
+sub_trench: 0.0 # position of the trench
+sub_parabolic_a: 8e-4 # [km^-1] -> curvature of theparabolic slab (necessary for the CustomParabolic)
+slab_type: "CustomParabolic" # [CustomParabolicCustomRibe,FromFile] 
+sub_path: "Not Defined" # Required for the realgeometry of the subducting plate
 ```
 `````
 **StonedFEniCSx** creates the mesh starting from the subduction geometry (see below, and reference to the geometry *input.yml* snipet) and the depth of the overriding plate. Then, after defining the main subdomains, it will generate the subregions and populate the domain with rocks-ID. 
@@ -163,13 +163,13 @@ The wedge is automatically defined after the definition of the Overriding plate.
 
 ### Kinematic boundary condition 
 `````
-{admonition}  kinematic_boundary_condition:
+{admonition} kinematic_boundary_condition:
   :class: input_snips
   ```yaml
-  v_s : [5.0,0.0]
-  constant : 1 
-  interval_val : [5.0,1.0]
-  interval_time : [20,40]
+v_s : [5.0,0.0]
+constant : 1 
+interval_val : [5.0,1.0]
+interval_time : [20,40]
 
 ```
 `````
@@ -193,7 +193,7 @@ The other kinematic boundary condition is the no-slip. This boundary condition h
 
 
 ### Thermal boundary condition 
-`````{admonition}   thermal_boundary_condition:
+`````{admonition} thermal_boundary_condition:
   :class: input_snips
 ```yaml
 temp_max: 1300.0
