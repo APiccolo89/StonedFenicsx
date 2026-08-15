@@ -17,3 +17,12 @@ table.docutils::-webkit-scrollbar-thumb {
 table.docutils::-webkit-scrollbar-track {
     background: transparent;
 }
+
+.input_snips {
+  border-left: 4px solid #6a4c93;
+  background-color: #baa7dc;
+}
+.input_snips > .admonition-title {
+  background-color: #6a4c93;
+  color: white;
+}

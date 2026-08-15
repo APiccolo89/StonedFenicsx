@@ -13,17 +13,17 @@ The main portions of the numerical domain are shown using different colours, the
 ## *Domain geometry*
 
 The main computational domain can be approximated by a trapezoid defined by `A`, `B`, `C`, `D`, `E`, and `F`.  
-The computational domain extends from the surface \(0\) km to a maximum depth of \(-600\) km.
+The computational domain extends from the surface \(0\) km to a maximum depth that is decided by the user (`zmax`).
 
 The horizontal extent of the numerical domain (i.e., the coordinate `x` of `F` and `E`) depends on the slab geometry.
 
 - Point `A` represents the origin with coordinates \(0, 0\) km.
-- Point `B` represents the base of the subducting plate at \(0, -140)\ km.
+- Point `B` represents the base of the subducting plate at \(0, `zslab`)\ km, where `zslab` is the thickness of the subducting plate.
 - Points `C` and `D` have coordinates  
-  \(x_b, -600\) km and \(x_t, -600\) km,  
+  \(x_b, `zmax`\) km and \(x_t, `zmax`\) km,  
   where \(x_b)\ and \(x_t\) depend on the chosen slab geometry.
 - Points `E` and `F` are the rightmost points with coordinates  
-  \(x_t + 60, -600\) km and \(x_t + 60, 0)\ km, respectively.
+  \(x_t + 60, `zmax`) km and \(x_t + 60, 0)\ km, respectively.
 
 
 ## Overview
@@ -78,10 +78,13 @@ It may feature one or more phases as a function of the user needs.
 At each iteration and/or time step, the velocity and dynamic pressure field computed in **S** and **W** are interpolated back onto the global domain mesh. The velocity is used for solving the energy conservation equation. We briefly describe the boundary conditions prescribed at the external boundaries of the global domain.
 
 ## Module create mesh 
+### Mesh Generation 
 
-The user can define the subducting plate geometry using the parameters of *geometry* in the *input.yml* file. Moreover, they can choose the depth of the overriding plate using `ns_depth`.
+The mesh-generation submodule requires a set of geometric inputs, which are used to populate the Geom_input dataclass. 
 
-```
+```{admonition} Geometry
+  :class: input_snips
+
   x: [0.0, 660.0] # Coordinate of X
   y: [-600.0, 0.0] # Coordinate of Y
   van_keken: False # Activate the geometry of Van Keken benchmark
@@ -107,23 +110,13 @@ The user can define the subducting plate geometry using the parameters of *geome
   sub_path: "Not Defined" # Required for the real geometry of the subducting plate
 ```
 
-
-
-The geometry of the numerical domain needs the definition of `ns_depth` and the top surface of the slab. From these two geometrical entities all the subdomains are defined. Below, a detailed explaination is offered, with a few note of future developments. 
-
-
-
-### Mesh Generation 
-
-The mesh-generation submodule requires a set of geometric inputs, which are used to populate the Geom_input dataclass. 
-
-The computational domain is constructed starting from the subudcting plate geometry from this geometry the {math}`x` extend is decided three informations: the depth of the model (decided by the user) and by the coordinate x of the intersection of the top surface of the subducting plate and the maximum depth horizontal line and the intersection of the bottom of the subducting plate with the maximum depth (the default value is {math}`-600` km). 
+**StonedFEniCSx** creates the mesh starting from the subduction geometry (see below, and reference to the geometry *input.yml* snipet) and the depth of the overriding plate. Then, after defining the main subdomains, it will generate the subregions and populate the domain with rocks-ID. 
 
 In **Fig.** {ref}`fig:f1_simplified_initial_setup` the computational domain is defined by `A`, `B`, `C` and `F`. `A` is the trench (`sub_trench` is the x-coordinate of the point in the geometry section of the input file). `B` is the intersection of the bottom of the subducting plate with the vertical axis located at `sub_trench`. `C` is the intersection between the bottom of the slab and the maximum depth. `E` is defined using `D` (the intersection of the top surface of the slab and the maximum depth), by adding {math}`60` km to the coordinate-x. `F` is defined using the coordinate-x of `E` and the coordinate-y of `A`. 
 
 ### Geometry of the subducting plate 
 
-The subduction geometry is constructed with a combination of several parameters. First the user should choose whether the subduction feauture a constant angle or the geometry is the benchmark geometry: 
+The subduction geometry is constructed with a combination of several parameters. First the user should choose whether the subduction feautures a constant angle or the geometry is the benchmark geometry: 
 
 -  `sub_constant_flag`: controls the constant bending angle option
 -  `van_keken`: controls the geometry using default value for reproducing the benchmarks of {cite}`van2008community`. In case the user wants to use the benchmarks, they needs to activate `van_keken` and `sub_constant_flag`. 
@@ -156,21 +149,64 @@ The subduction plate phases are:
 see {ref}(Rocks_ID)
 ```
 
-### Overriding plate 
-
 The overriding plate is defined using the following parameters: 
 
-- {math}`ns_{depth}`, the no-slip boundary depth [meters] always positive and internally converted into negative coordinate. 
-- {math}`cr`, the overriding crust thickness [meters] always positive. 
-- {math}`lc`, fraction of lower crust [n.d.] between {math}`0,0.5` 
+- `ns_{depth}`, the no-slip boundary depth [meters] always positive and internally converted into negative coordinate. 
+- `cr`, the overriding crust thickness [meters] always positive. 
+- `lc`, fraction of lower crust [n.d.] between `0,0.5` 
 
 The {math}`ns_depth` define the depth at which the no-slip boundary condition is defined. The no-slip boundary condition is a horizontal line that ranges from right boundary (defined by the points `E`-`F`). `H` and `G` are the points in which the no-slip boundary condition intersect the right top-surface of the slab and the right boundary respectively. The small area defined by `A`,`F`,`G` and `H` can have a different rock-phase. If no crust is defined, the overriding plate is automatically considered `lithospheric mantle phase`. If the crustal unit is defined without any lower crust ({math}`lc = 0.0`), the overriding plate will be filled from the depth {math}`cr` with `overriding upper crust material` (this unit can be costumised to have more oceanic or continental-like material property). In case {math}`lc` is different from zero, then, the layer of the overriding plate spanning from {math}`cr` and {math}`cr*lc` is composed of `overriding lower crust material`, while from  {math}`cr*lc` to the surface is composed of `overriding upper crust material`.
-
-### Wedge
 
 The wedge is automatically defined after the definition of the Overriding plate. It is composed of only one rock-phase (`mantle wedge`). The mantle wedge phase can have non-linear rheologies and while the material properties are the same of the `subducting mantle phase`. 
 
 ## Boundary Conditions 
+
+### Kinematic boundary condition 
+```  
+{admonition}   kinematic_boundary_condition:
+  :class: input_snips
+  v_s : [5.0,0.0]
+  constant : 1 
+  interval_val : [5.0,1.0]
+  interval_time : [20,40]
+
+```
+The kinematic boundary condition is applied along the slab surface. The component of the velocity field vector along the top surface of the slab are computed in a such way that the velocity is always tangential to the slab surface. 
+
+- `v_s` is the velocity vector
+- `constant` is the flag that indicate if the velocity change over time 
+- `interval_time` is the time in which the velocity vector magnitude linearly changes. 
+
+The boundary is applied along the entire subduction surface within the subducting plate domain; while, in the wedge domain it is applied from the point [`H`] and [`D`]. Moreover, there is a scaling function that progressively increase the velocity from 0 to `|v_s|` between the point [`H`] and [`I`]
+
+This function is computed using the tangent hyperbolic transition described in {cite}`hobson2025sensitivity`. 
+
+This decoupling zone requires two information:
+
+- `decoupling`: the decoupling depth (['I'])
+- `transition`: the depth interval in which the hyperbolic tangent increase the velocity. 
+
+### Thermal boundary condition 
+```{admonition}   thermal_boundary_condition:
+  :class: input_snips
+temp_max: 1300.0
+temp_top: 0.0
+constant: 1 
+interval_val : [50.0,30]
+interval_time: [20,40]
+nz: 108
+end_time: 180.0
+dt: 0.005
+slab_age: 50.0
+self_consistent_flag: 1
+right_boundary : 'Continental'  # Oceanic 
+right_age: 50.0
+recalculate : 1 # Option to compute on the fly theboundary -> useful if user wants to change thermalproperties. 
+```
+
+
+
+
 
 At the top boundary (`[h]` in **Fig.** {ref}`fig:f1_simplified_initial_setup`), an isothermal boundary condition is imposed, where the temperature is equal to the surface temperature {math}`T_{s}`. At the open boundaries, such as `[d]`, `[f]`, and `[g]`, the prescribed boundary conditions depend on the velocity vector: if there is an inflow velocity within these boundaries, the portion of the boundary becomes isothermal, with a temperature equal to the mantle potential temperature; if there is an outflow velocity field, the local boundary condition is no-flux. The only exception to this general rule is a portion of `[g]` (from point `L` to `F`). The depth of point `L` can be an independent parameter, but for convenience is always equal to {math}`d_c`. Within this portion of `[g]`, the boundary condition is no-flux regardless of the velocity field. This strategy allows simulation of a realistic lithosphere temperature field.
 
@@ -188,34 +224,6 @@ The numerical method used to compute the thermal structure of the incoming plate
 
 
 
-## Domains
-
-
-#### Velocity scaling along the slab
-
-The decoupled portion of `[a]` lies between points `H` and `I`. The slab-parallel unit vector is multiplied by the convergence velocity and a **scaling function** adapted from {cite}`hobson2025sensitivity`.
-
-(eq:scaling_function)=
-```{math}
-sc(z) = \frac{1}{2}\left[1 + \tanh\!\left(\frac{z - d_c}{\delta z_{tr}}\right)\right]
-```
-
-
-where {math}`z` is the depth coordinate, {math}`d_c` is the decoupling depth, and {math}`\delta z_{tr}` is the transition distance from fully decoupled to fully coupled ({math}`\delta z_{tr} = 10/4` km). The velocity along `[a]` in the wedge is then:
-
-(eq:velocity_jump)=
-```{math}
-\mathbf{v}_{slab} = sc(z)\, v_{mag}\, \hat{\mathbf{v}}_{slab}
-```
-
-where {math}`\mathbf{v}_{slab}` is the effective slab velocity and {math}`\hat{\mathbf{v}}_{slab}` is the unit vector parallel to the local tangent of the slab surface.
-
-
-
-
-### Additional geometrical input 
-
-The user can define the decoupling depth ({math}`d_c`), and the LAB depth (({math}`d_{lab}`)). The decoupling depth is used for computing the velocity jump between wedge material and slab (at {math}`d_c` wedge and subudcting plate are fully coupled). The LAB depth, instead, is used to tune the right thermal boundary condition. If the user define a LAB depth whose value is higher than the `ns_{depth}`, the energy boundary condition from that depth and surface will be `no-flux`. Below {math}`d_{lab}` the thermal boundary condition is determined using the velocity field: if the velocity field is inward, the energy boundary condition is isothermal, with a temperature equal to the {math}`T_p`, if it is outward the energy boundary condition is `no-flux`. An additional parameter is {math}`\delta z_{tr}` which controls the partially-coupling fully coupling transition. 
 
 ## References
 
