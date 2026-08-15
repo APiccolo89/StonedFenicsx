@@ -82,9 +82,9 @@ At each iteration and/or time step, the velocity and dynamic pressure field comp
 
 The mesh-generation submodule requires a set of geometric inputs, which are used to populate the Geom_input dataclass. 
 
-```{admonition} Geometry
+`````{admonition} Geometry
   :class: input_snips
-
+  ```yaml
   x: [0.0, 660.0] # Coordinate of X
   y: [-600.0, 0.0] # Coordinate of Y
   van_keken: False # Activate the geometry of Van Keken benchmark
@@ -109,7 +109,7 @@ The mesh-generation submodule requires a set of geometric inputs, which are used
   slab_type: "CustomParabolic" # [CustomParabolic,CustomRibe,FromFile] 
   sub_path: "Not Defined" # Required for the real geometry of the subducting plate
 ```
-
+`````
 **StonedFEniCSx** creates the mesh starting from the subduction geometry (see below, and reference to the geometry *input.yml* snipet) and the depth of the overriding plate. Then, after defining the main subdomains, it will generate the subregions and populate the domain with rocks-ID. 
 
 In **Fig.** {ref}`fig:f1_simplified_initial_setup` the computational domain is defined by `A`, `B`, `C` and `F`. `A` is the trench (`sub_trench` is the x-coordinate of the point in the geometry section of the input file). `B` is the intersection of the bottom of the subducting plate with the vertical axis located at `sub_trench`. `C` is the intersection between the bottom of the slab and the maximum depth. `E` is defined using `D` (the intersection of the top surface of the slab and the maximum depth), by adding {math}`60` km to the coordinate-x. `F` is defined using the coordinate-x of `E` and the coordinate-y of `A`. 
@@ -162,15 +162,17 @@ The wedge is automatically defined after the definition of the Overriding plate.
 ## Boundary Conditions 
 
 ### Kinematic boundary condition 
-```  
+`````
 {admonition}   kinematic_boundary_condition:
   :class: input_snips
+  ```yaml
   v_s : [5.0,0.0]
   constant : 1 
   interval_val : [5.0,1.0]
   interval_time : [20,40]
 
 ```
+`````
 The kinematic boundary condition is applied along the slab surface. The component of the velocity field vector along the top surface of the slab are computed in a such way that the velocity is always tangential to the slab surface. 
 
 - `v_s` is the velocity vector
@@ -187,8 +189,9 @@ This decoupling zone requires two information:
 - `transition`: the depth interval in which the hyperbolic tangent increase the velocity. 
 
 ### Thermal boundary condition 
-```{admonition}   thermal_boundary_condition:
+`````{admonition}   thermal_boundary_condition:
   :class: input_snips
+```yaml
 temp_max: 1300.0
 temp_top: 0.0
 constant: 1 
@@ -203,7 +206,7 @@ right_boundary : 'Continental'  # Oceanic
 right_age: 50.0
 recalculate : 1 # Option to compute on the fly theboundary -> useful if user wants to change thermalproperties. 
 ```
-
+`````
 
 
 

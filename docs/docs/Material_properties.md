@@ -3,7 +3,7 @@
 Material properties are defined using the input values defined in the *input.yml* (*Material properties* in *How to use*). **StonedFEniCSx** uses the option listed defined in the *input.yml*, over-writes the options that are not needed (see below), and create a small database. The small database is a small collection of arrays associated to specific properties, featuring a size equal to the total number of phases. Internally, **StonedFEniCSx** access to the specific property using the *ID* number of the subregions. 
 
 Inside *config* folder (`\stonedfenicsx\config`) there is a folder containing the material properties and the relative dictionaries. These databases contain the original value of the material properties parameters; these parameters are always converted into the suitable unit of measure (e.g., MPa -> Pa) and then they are divided by the characteristic scales. This process is always done during the configuration stage of the numerical simulation. 
-
+(Rocks_ID) = 
 ## Rock phase and IDs
 
 The numerical domain is divided into three different computational meshes: overriding plate, subducting plate, and mantle wedge. These subdomains can be made of one or more rocks phase. The rocks phases represent different lithologies, and their ID number connects them to a material database. The mandatory phases are: 

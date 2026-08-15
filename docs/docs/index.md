@@ -1,6 +1,6 @@
 <!-- StonedFenicsx documentation master file -->
 
-# StonedFEniCSx documentation
+# StonedFEniCSx
 
 Documentation of the FEM package **StonedFEniCSx**.
 The purpose of the library is to compute the thermal evolution of a subducting plate using the FEniCSx library.  
@@ -25,6 +25,9 @@ The code has benefitted of several additional sources:
 - [FEniCS-discourse](https://fenicsproject.discourse.group/) - especially the tutorials and the discussion concerning how to set solvers, how to optimise the routines 
 - [FieldStone](https://cedrict.github.io/) - a useful and pedagogical introduction to finite element - 
 
+The documentation is organized in a such way that the code's component are connected to the relative method. It is a mix of scientific-technical documentation. The guide will introduce a few examples that will be part of manuscript in preparation. The package will link to the repository of these experiments to reproduce the results. 
+
+**StonedFEniCSx** is still underdevelopment, and the documentation is the current state of the numerical code. 
 
 
 
