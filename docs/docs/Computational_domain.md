@@ -163,7 +163,7 @@ The wedge is automatically defined after the definition of the Overriding plate.
 
 ### Kinematic boundary condition 
 `````
-{admonition}   kinematic_boundary_condition:
+{admonition}  kinematic_boundary_condition:
   :class: input_snips
   ```yaml
   v_s : [5.0,0.0]
@@ -188,6 +188,10 @@ This decoupling zone requires two information:
 - `decoupling`: the decoupling depth (['I'])
 - `transition`: the depth interval in which the hyperbolic tangent increase the velocity. 
 
+The other kinematic boundary condition is the no-slip. This boundary condition has been described above, and it is introduced during the generation of the numerical domain. 
+
+
+
 ### Thermal boundary condition 
 `````{admonition}   thermal_boundary_condition:
   :class: input_snips
@@ -208,22 +212,22 @@ recalculate : 1 # Option to compute on the fly theboundary -> useful if user wan
 ```
 `````
 
+The thermal boundary conditions are the top surface (isothermal, whose value is `temp_top`), and the one specificied in the right lithospheric boundary condition and the left inlet boundary condition where the subducting plate is entering the numerical domain. 
 
+- `left boundary`: the left boundary condition is computed self-consistently using the thermal property and geometrical information of the subducting plate. It is always a plate cooling model of an oceanic plate. The temperature field is computed using a finite difference thermal diffusion code that is run at the configuration stage of the simulation.
 
+  -`end_time`: simply tells the code when to stop the thermal diffusion numerical code. 
+  -`temp_max`: describe the potential temperature of the mantle, which is applied as Dirichlet boundary condition at the bottom of the plate. 
+  - `slab_age`: is the age of the slab: the code computed 2D arrays with thermal profile as a function of time, and these parameters select the appropriate profile for the given problem. 
+  - `nz` is the number of node for solving the 1D thermal diffusion code
+  - `dt` is the timestep for computing the plate-cooling model
+  - As for the kinematic_boundary_condition, the user can decide if the age of the plate changes over time. If so, the flag of constant must be set to 0, and an interval of value and time should be specificied. 
 
-At the top boundary (`[h]` in **Fig.** {ref}`fig:f1_simplified_initial_setup`), an isothermal boundary condition is imposed, where the temperature is equal to the surface temperature {math}`T_{s}`. At the open boundaries, such as `[d]`, `[f]`, and `[g]`, the prescribed boundary conditions depend on the velocity vector: if there is an inflow velocity within these boundaries, the portion of the boundary becomes isothermal, with a temperature equal to the mantle potential temperature; if there is an outflow velocity field, the local boundary condition is no-flux. The only exception to this general rule is a portion of `[g]` (from point `L` to `F`). The depth of point `L` can be an independent parameter, but for convenience is always equal to {math}`d_c`. Within this portion of `[g]`, the boundary condition is no-flux regardless of the velocity field. This strategy allows simulation of a realistic lithosphere temperature field.
+- `Right boundary`: The right boundary condition can be `Continental` or `Oceanic`. In the case of oceanic the code will compute (or use) the same 2D array for the left boundary condition using as age `right_age`. This will depend on the material properties of the rocks-ID that compose the overriding plate. In case of `Continental` the code will first compute an initial linear gradient guess using `temp_top`, `temp_max` and a geometrical parameter called `lab_d` (the litospheric-astenosphere boundary). After that, the code will run a thermal diffusion solver for an amount of time that is decided always by `right_age`. This produces a quasi-steady-state and allow to consider the radiogenic heating. 
 
-At boundaries `[e]` and `[i]`, the temperature is prescribed as a function of depth. For `[i]`, the temperature varies linearly with depth, and the linear gradient is computed as
+The left boundary condition is active between the points [`A`] and [`B`] while the right boundary condition is applied between the points [`F`] and [`L`]. 
 
-```{math}
-gr = \frac{(T_{p} - T_{s})}{d_{lab}}
-```
-
-where {math}`T_p` is the mantle potential temperature and {math}`d_{lab}` is the depth of the astenopshere and lithosphere boundary. Before initialisation of the experiment, an initial guess of the temperature field is computed assuming a continental-like thermal structure everywhere. This continental-like geotherm uses the decoupling depth (or the depth of point `L`) as the effective base of the lithosphere.
-
-For boundary `[e]`, the temperature structure is either computed analytically using a half-space cooling model with a given age {cite}`turcotte2014geodynamics,van2008community`, or computed numerically. We adopt the plate model described in {cite}`richards2020structure` and solve the numerical energy conservation equation without the advection term on a 1D numerical domain extending from −140 to 0 km. The temperature at the top is always the surface temperature, while the bottom temperature can be either the mantle potential temperature or the adiabatic temperature if adiabatic processes are active.
-
-The numerical method used to compute the thermal structure of the incoming plate (i.e., the prescribed temperature at boundary `[e]`) is a finite-difference Crank–Nicolson scheme, similar to {cite}`richards2020structure,van2023effect`. The numerical scheme is described in the appendix of {cite}`van2023effect`; in the present work, a Picard iteration scheme is added to handle nonlinearities and compute the lithostatic pressure. The lithostatic pressure is obtained from a depth-dependent integral of rock density. We solve the time-dependent energy conservation equation without the advective term, and the residual is evaluated using Eq. XX with a tolerance of {math}`10^{-5}`. The lithostatic pressure is computed once per time step, prior to solving the energy equation, accounting for nonlinearities using the current temperature field.
+The other boundary condition [`C`-`E`] and [`G`-`E`] are defined as a function of the current velocity field: if the velocity field is pointing outward the numerical domain, the thermal boundary condition are do-nothing. If the velocity is inward the temperature of is equal to `temp_max`. The only exception is the small segment [`G`-`L`] in which the temperature is determined by the right boundary condition. 
 
 
 
