@@ -48,6 +48,7 @@ import psutil as pst
 from pathlib import Path
 from stonedfenicsx.utils import timing_function
 from scipy.special import erf as erf_sc
+from stonedfenicsx.utils import check_race_condition
 
 _NAME_H5_FILE_TMP = 'temporary_file.h5'
 
@@ -65,39 +66,7 @@ def save_data_set(f:h5py.File,buf:any,name:str)->None:
         del f[name]
 
     f.create_dataset(name,data=buf)
-
-def check_race_condition(ioctrl:IOControls)->bool:
-    """Check whether the temporary HDF5 cache file is held open by another process.
-
-    Iterates over all running processes via psutil. Returns True if any process
-    has the cache file open, False otherwise. Processes that have died or are
-    inaccessible between iteration and inspection are silently skipped.
-
-    Args:
-        ioctrl (IOControls): I/O control object providing path_cached_information.
-
-    Returns:
-        bool: True if the file is currently open by another process, False if safe to write.
-    """
-
-    path_cached = ioctrl.path_cached_information
-
-    path_h5 = path_cached/_NAME_H5_FILE_TMP
-    
-    race = False
-    
-    for proc in pst.process_iter(['pid', 'name']):
-        try:
-            for f in proc.open_files():
-                if Path(f.path).resolve() == Path(path_h5):
-                    race = True
-        except (pst.NoSuchProcess,
-                pst.AccessDenied,
-                pst.ZombieProcess):
-            pass
-
-    return race
-# --- 
+# --–
 @njit
 def _compute_lithostatic_pressure(
                                  nz: int,
@@ -630,7 +599,7 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
     rank = mpi4py.MPI.COMM_WORLD.Get_rank()
 
     if rank == 0:
-        race_condition = check_race_condition(ioctrl)
+        race_condition = check_race_condition(ioctrl=ioctrl,name=_NAME_H5_FILE_TMP)
         if race_condition and ctrl_tbc.recalculate == 0: 
             print('    The file is opened for an other process, skip the save.')
         if save_data and not race_condition:

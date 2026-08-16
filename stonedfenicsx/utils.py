@@ -7,8 +7,46 @@ import ufl
 import dolfinx
 from functools import wraps
 from numpy.typing import NDArray
+import psutil as pst
+from stonedfenicsx.config.numerical_control import IOControls
+from pathlib import Path
 # ---------------------------------------------------------------------------------------------------------
 _DEBUG_ = False
+def check_race_condition(ioctrl:IOControls,file:str)->bool:
+    """Check whether the temporary  cache file is held open by another process.
+
+    Iterates over all running processes via psutil. Returns True if any process
+    has the cache file open, False otherwise. Processes that have died or are
+    inaccessible between iteration and inspection are silently skipped.
+
+    Args:
+        ioctrl (IOControls): I/O control object providing path_cached_information.
+
+    Returns:
+        bool: True if the file is currently open by another process, False if safe to write.
+    """
+
+    path_cached = ioctrl.path_cached_information
+
+    path_h5 = path_cached/file
+    
+    race = False
+    
+    for proc in pst.process_iter(['pid', 'name']):
+        try:
+            for f in proc.open_files():
+                if Path(f.path).resolve() == Path(path_h5):
+                    race = True
+        except (pst.NoSuchProcess,
+                pst.AccessDenied,
+                pst.ZombieProcess):
+            pass
+
+    return race
+
+
+
+# ---
 def timing_function(fun: Callable) -> Callable:
     """Extract the execution time of the function.
 

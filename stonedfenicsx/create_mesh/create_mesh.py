@@ -1,7 +1,7 @@
 # input for iFieldstone
 from stonedfenicsx.config.numerical_control import IOControls, NumericalControls
 from stonedfenicsx.config.scal import scaling_mesh, Scal,dimensionless_ginput
-from stonedfenicsx.utils import print_ph
+from stonedfenicsx.utils import print_ph,check_race_condition
 from dolfinx.mesh import create_submesh
 from stonedfenicsx.create_mesh.aux_create_mesh import  Class_Points, Class_Line
 from stonedfenicsx.config.geometry import GeomInput, Mesh, Domain
@@ -22,7 +22,7 @@ from dataclasses import asdict
 from dolfinx.io import gmshio
 from dolfinx import fem
 import yaml 
-
+import time
 
 
 def _differs(cached, current) -> bool:
@@ -209,6 +209,9 @@ def create_gmesh(ioctrl: IOControls, g_input: GeomInput):
     if  not Path(ioctrl.path_cached_information, "mesh.msh").is_file() \
         or not Path(ioctrl.path_cached_information, "mesh_meta_data.yml").is_file() or g_input.redo_mesh:
 
+
+
+
         mesh_model = create_gmsh(slab_x, slab_y, bot_x, bot_y, oc_cx, oc_cy, g_input)
 
         mesh_model.geo.removeAllDuplicates()
@@ -221,11 +224,18 @@ def create_gmesh(ioctrl: IOControls, g_input: GeomInput):
 
         mesh_name = Path(ioctrl.path_cached_information, "mesh.msh")
 
-        gmsh.write(f"{mesh_name}")
-
+        # Check Race Condtion
+        race_condition = check_race_condition(ioctrl=ioctrl,file=f"{mesh_name}")
+        if not race_condition: 
+            print_ph('Writing mesh')
+            gmsh.write(f"{mesh_name}")
+            write_mesh_data(g_input=g_input,ioctrl=ioctrl)
+        else: 
+            print_ph('Mesh is already written elsewhere: wait 10 sec')
+            time.sleep(10) 
+            print_ph('The show must go on!')
+        
         gmsh.finalize()
-
-        write_mesh_data(g_input=g_input,ioctrl=ioctrl)
     else:
         # Compare the file meta_data and actual class
         compare_data(g_input = g_input,ioctrl = ioctrl)
@@ -512,7 +522,7 @@ def create_physical_line(
 
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    return mesh_model
+    return x
 
 
 # ----------------------------------------------------------------------------------------------------------------------
