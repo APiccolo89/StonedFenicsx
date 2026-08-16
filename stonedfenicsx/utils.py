@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import get_type_hints, get_origin, get_args, Callable
 from dataclasses import dataclass, field
 import numpy as np
@@ -8,8 +9,11 @@ import dolfinx
 from functools import wraps
 from numpy.typing import NDArray
 import psutil as pst
-from stonedfenicsx.config.numerical_control import IOControls
 from pathlib import Path
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from stonedfenicsx.config.numerical_control import IOControls
+
 # ---------------------------------------------------------------------------------------------------------
 _DEBUG_ = False
 def check_race_condition(ioctrl:IOControls,file:str)->bool:
