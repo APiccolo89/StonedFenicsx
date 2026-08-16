@@ -599,7 +599,7 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
     rank = mpi4py.MPI.COMM_WORLD.Get_rank()
 
     if rank == 0:
-        race_condition = check_race_condition(ioctrl=ioctrl,name=_NAME_H5_FILE_TMP)
+        race_condition = check_race_condition(ioctrl=ioctrl,file=_NAME_H5_FILE_TMP)
         if race_condition and ctrl_tbc.recalculate == 0: 
             print('    The file is opened for an other process, skip the save.')
         if save_data and not race_condition:
