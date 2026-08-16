@@ -598,6 +598,7 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
     
     rank = mpi4py.MPI.COMM_WORLD.Get_rank()
 
+<<<<<<< HEAD
     if rank == 0:
         race_condition = check_race_condition(ioctrl=ioctrl,file=_NAME_H5_FILE_TMP)
         if race_condition and ctrl_tbc.recalculate == 0: 
@@ -665,6 +666,8 @@ def compute_thermal_boundary(ctrl_tbc:CtrlTemperatureBC
                         
                 print('             temporary data base is saved...')
 
+=======
+>>>>>>> 1bab630 (Remove the temporary database computation. Better to compute on the fly)
 def check_material_property(f,pdb,ph_id,main_grp)->bool:
     """Verify that the material properties in the HDF5 cache match the current phase database.
 
@@ -848,8 +851,7 @@ def configure_thermal_bc(ctrl_tbc:CtrlTemperatureBC
 
     Modifies ctrl_tbc in place: sets temperature_1d / temp_1d_right and z / z_right.
     """
-    if ctrl_tbc.recalculate:
-        compute_thermal_boundary(ctrl_tbc=ctrl_tbc
+    compute_thermal_boundary(ctrl_tbc=ctrl_tbc
                                  ,ctrl=ctrl
                                  ,ioctrl=ioctrl
                                  ,sc=sc
@@ -857,14 +859,7 @@ def configure_thermal_bc(ctrl_tbc:CtrlTemperatureBC
                                  ,g_input=g_input
                                  ,save_data=True
                                  ,left_right=left_right)
-    else:
-        read_temporary_file(ctrl_tbc=ctrl_tbc
-                            ,ctrl=ctrl
-                            ,pdb=pdb
-                            ,g_input=g_input
-                            ,ioctrl=ioctrl
-                            ,sc=sc
-                            ,left_right=left_right)
+
 
 # --- # 
 def configure_boundary_condition(ctrl_tbc:CtrlTemperatureBC
@@ -974,3 +969,73 @@ def test_configure_boundary():
     
     return 0
 
+
+
+'''
+    if rank == 0:
+        race_condition = check_race_condition(ioctrl=ioctrl,name=_NAME_H5_FILE_TMP)
+        if race_condition and ctrl_tbc.recalculate == 0: 
+            print('    The file is opened for an other process, skip the save.')
+        if save_data and not race_condition:
+            ttime,zz = np.meshgrid(time_v,z)
+            ttime = ttime*sc.time/365.25/60/60/24/1e6
+            ttime = ttime[:,1::]
+            zz    = zz[:,1::]
+            zz    = zz*sc.length/1e3
+            temp_save = temperature.T[:,1::]*sc.temp - 273.15
+            id_phase = np.unique(ph)
+            path_cache = ioctrl.path_cached_information
+            path_h5_file = path_cache/_NAME_H5_FILE_TMP
+            with h5py.File(path_h5_file,'a') as f:
+                if left_right:
+                    grp = 'left_bc'
+                else:
+                    grp = 'right_bc'
+                save_data_set(f,temp_save,f'{grp}/temp_save')
+                save_data_set(f,ttime,f'{grp}/time_2d')
+                save_data_set(f,id_phase,f'{grp}/phases')
+                for _,i in enumerate(id_phase):
+                    array_cp = [pdb.c0[i],
+                                pdb.c1[i],
+                                pdb.c2[i],
+                                pdb.c3[i],
+                                pdb.c4[i],
+                                pdb.c5[i]]
+                    array_k = [pdb.k0[i],
+                               pdb.k_a[i],
+                               pdb.k_b[i],
+                               pdb.k_c[i],
+                               pdb.k_d[i],
+                               pdb.k_e[i],
+                               pdb.k_f[i],
+                               pdb.radiative_conductivity[i]]
+                    array_rho = [pdb.rho0[i],
+                                 pdb.alpha0[i],
+                                 pdb.alpha1[i],
+                                 pdb.alpha2[i],
+                                 pdb.kb[i]]
+                    hr = pdb.radiogenic_heat[i]
+                    name = f'{grp}/phase_properties_{i}'
+                    save_data_set(f,hr,f'{name}/hr')
+                    save_data_set(f,array_rho,f'{name}/rho_prop')
+                    save_data_set(f,array_cp,f'{name}/array_cp')
+                    save_data_set(f,array_k,f'{name}/array_cond')
+                name = f'{grp}/data_2_load'
+                if left_right:
+                    save_data_set(f,ctrl_tbc.temperature_1d,name=f'{name}/temperature_1d')
+                    save_data_set(f,ctrl_tbc.slab_age,name=f'{name}/slab_age')
+                    save_data_set(f,ctrl_tbc.z,name=f'{name}/z')
+                    save_data_set(f,ctrl_tbc.t_res_vec,name=f'{name}/t_res_v')
+
+
+                else: 
+                    save_data_set(f,ctrl_tbc.temp_1d_right,name=f'{name}/temp_1d_right')
+                    save_data_set(f,ctrl_tbc.right_age,name=f'{name}/right_age')
+                    save_data_set(f,ctrl_tbc.z_right,name=f'{name}/z')
+
+                    
+                save_data_set(f,temperature,name=f'{name}/temperature')
+                save_data_set(f,time_v,name=f'{name}/time_v')
+                        
+                print('             temporary data base is saved...')
+'''
