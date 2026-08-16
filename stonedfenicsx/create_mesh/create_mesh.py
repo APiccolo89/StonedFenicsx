@@ -522,7 +522,7 @@ def create_physical_line(
 
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
 
-    return x
+    return mesh_model
 
 
 # ----------------------------------------------------------------------------------------------------------------------
