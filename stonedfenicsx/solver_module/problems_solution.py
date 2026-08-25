@@ -903,7 +903,8 @@ class Global_thermal(Problem):
             dt_b = self.domain.comm.allreduce(dt_b,op=MPI.MIN)
             print_ph(f'       old dt = {self.ctrl_sim.ctrl.dt:.2f}')
             self.dt.value = self.ctrl_sim.ctrl.CFL * np.min([dt_a,dt_b])
-            print_ph(f'       new dt = {self.ctrl_sim.ctrl.CFL * np.min([dt_a,dt_b]):.2f}')           
+            print_ph(f'       new dt = {self.ctrl_sim.ctrl.CFL * np.min([dt_a,dt_b]):.2f}') 
+            self.ctrl_sim.ctrl.dt = self.ctrl_sim.ctrl.CFL * np.min([dt_a,dt_b])          
         
         # compute the kappa form
         if ts==0 and it_outer==0:
