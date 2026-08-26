@@ -1,35 +1,48 @@
 # --- libraries --- 
-import dolfinx
-import basix 
-import ufl
-import numpy as np 
-import mpi4py.MPI as MPI
-from numpy.typing import NDArray
-from scipy.interpolate import griddata   
-import petsc4py.PETSc as PETSc
-from dataclasses import field,dataclass
-# --- ufl 
+import time as timing
+from dataclasses import dataclass, field
 
+import basix
+import dolfinx
+import numpy as np
+import petsc4py.PETSc as PETSc
+import ufl
+from mpi4py import MPI
+from numpy.typing import NDArray
+from scipy.interpolate import griddata
+
+from stonedfenicsx.config.geometry import Domain, GeomInput, Mesh
+
+# --- ufl 
 # --- from config module 
 from stonedfenicsx.config.numerical_control import SimulationControls
-from stonedfenicsx.config.geometry import Mesh, GeomInput, Domain
 from stonedfenicsx.config.phase_db import PhaseDataBase
-# --- from solver module
-from stonedfenicsx.solver_module.solver import Solvers,ScalarSolver,SolverStokes
-from stonedfenicsx.solver_module.solver_utilities import (decoupling_function
-                                                          ,update_solution
-                                                          ,compute_residuum
-                                                          ,min_max_array)
-from stonedfenicsx.utils import compute_strain_rate
+
 # --- from material properties 
-from stonedfenicsx.material_property.compute_material_property import (compute_plastic_strain
-                                                                       ,MATERIALS,RHEOLOGYCACHED,THERMALCACHED
-                                                                       ,compute_radiogenic,
-                                                                       density_FX,heat_capacity_FX,heat_conductivity_FX
-                                                                       ,compute_viscosity_FX)
+from stonedfenicsx.material_property.compute_material_property import (
+    MATERIALS,
+    RHEOLOGYCACHED,
+    THERMALCACHED,
+    compute_plastic_strain,
+    compute_radiogenic,
+    compute_viscosity_FX,
+    density_FX,
+    heat_capacity_FX,
+    heat_conductivity_FX,
+)
+
+# --- from solver module
+from stonedfenicsx.solver_module.solver import ScalarSolver, Solvers, SolverStokes
+from stonedfenicsx.solver_module.solver_utilities import (
+    compute_residuum,
+    decoupling_function,
+    min_max_array,
+    update_solution,
+)
+
 # --- from src 
-from stonedfenicsx.utils import print_ph,timing_function
-import time as timing 
+from stonedfenicsx.utils import compute_strain_rate, print_ph, timing_function
+
 
 def debug_boundary_condition(bc, name):
     """Print the global min/max of a Dirichlet BC value across all MPI ranks.
@@ -1342,7 +1355,7 @@ class Stokes_Problem(Problem):
                                                      ts=ts,
                                                      slab=slab)
                 
-            if self.domain.name == 'subduction_plate_domain':
+            if self.domain.name == 'subduction_plate_domain' and not self.g_input.model_full:
                 # Add Nitsche Boundary Conditions 
                 dS_bot = self.domain.bc_dict["bot_subduction"]
                 a1,a2,a3 = self.compute_nitsche_FS(sol=sol

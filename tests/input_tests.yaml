@@ -223,3 +223,4 @@ Input:
     sub_parabolic_a: 8e-4 # [km^-1] -> curvature of the parabolic slab
     slab_type: "CustomParabolic" # [CustomParabolic,CustomRibe,FromFile] 
     sub_path: "Not Defined"
+    model_full: True

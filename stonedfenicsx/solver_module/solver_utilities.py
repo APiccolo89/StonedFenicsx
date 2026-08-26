@@ -1,20 +1,29 @@
 # --- 
 from __future__ import annotations
-import numpy as np 
-import dolfinx.fem as fem 
-import dolfinx 
-import ufl
-from mpi4py import MPI
-from petsc4py import PETSc
-from numpy.typing import NDArray
+
+from dataclasses import InitVar, dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING
-from dataclasses import dataclass, field, InitVar
+
+import dolfinx
+import numpy as np
+import ufl
+from dolfinx import fem
+from mpi4py import MPI
+from numpy.typing import NDArray
+from petsc4py import PETSc
+
+from stonedfenicsx.config.geometry import GeomInput
+from stonedfenicsx.config.numerical_control import (
+    IOControls,
+    NumericalControls,
+    SimulationControls,
+)
+
 # --- 
 from stonedfenicsx.config.scal import Scal
-from stonedfenicsx.config.numerical_control import SimulationControls,IOControls,NumericalControls
-from stonedfenicsx.config.geometry import GeomInput
 from stonedfenicsx.utils import print_ph, timing
-from pathlib import Path
+
 if TYPE_CHECKING:
     from stonedfenicsx.solver_module.problems_solution import Solution
 

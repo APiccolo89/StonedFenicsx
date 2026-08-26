@@ -35,7 +35,7 @@ def print_information_code() -> None:
     print_ph(f"      Authors = {_AUTHORS_}")
     print_ph(f"      Version = {_VERSION_}")
     print_ph(f"      Date = {_DATE_}")
-    print_ph(" git informations:      StonedFEniCSx: ")
+    print_ph(" git informations:")
 
     meta_data = git_info()
     if meta_data is None:
@@ -45,6 +45,7 @@ def print_information_code() -> None:
     dirty = " (uncommitted changes)" if meta_data["dirty"] else ""
     print_ph(f" Branch = {meta_data['branch']}")
     print_ph(f" Commit = {meta_data['short']}{dirty}")
+    print_ph("main repo link: https://github.com/APiccolo89/StonedFenicsx")
     print_ph("================================================================")
 
 

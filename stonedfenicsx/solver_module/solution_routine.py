@@ -1,19 +1,32 @@
 
 
 # ---
-from stonedfenicsx.config.numerical_control import SimulationControls
-from stonedfenicsx.config.geometry import Mesh
-from stonedfenicsx.config.scal import Scal
-from stonedfenicsx.config.phase_db import PhaseDataBase
-# ---
-from stonedfenicsx.utils import interpolate_from_sub_to_main,timing,print_ph
-from stonedfenicsx.solver_module.problems_solution import Solution, Slab, Wedge, Global_thermal, Global_pressure
-from stonedfenicsx.output import OUTPUT
-from stonedfenicsx.solver_module.solver_utilities import OUTERITERATION_SOL_VAL,timestep_output
 # --- mpi4py/petsc4py needed for the permanent per-timestep PETSc garbage
 # cleanup below (see time_loop).
 from mpi4py import MPI
 from petsc4py import PETSc
+
+from stonedfenicsx.config.geometry import Mesh
+from stonedfenicsx.config.numerical_control import SimulationControls
+from stonedfenicsx.config.phase_db import PhaseDataBase
+from stonedfenicsx.config.scal import Scal
+from stonedfenicsx.output import OUTPUT
+from stonedfenicsx.solver_module.problems_solution import (
+    Global_pressure,
+    Global_thermal,
+    Slab,
+    Solution,
+    Wedge,
+)
+from stonedfenicsx.solver_module.solver_utilities import (
+    OUTERITERATION_SOL_VAL,
+    timestep_output,
+)
+
+# ---
+from stonedfenicsx.utils import interpolate_from_sub_to_main, print_ph, timing
+
+
 # ---
 def initialise_the_simulation(ctrl_sim:SimulationControls = None
                               ,pdb:PhaseDataBase = None

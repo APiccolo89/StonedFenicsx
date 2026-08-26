@@ -107,6 +107,7 @@ class GeomInput:
     sub_dl: float = 1.0
     wz_tk: float = 2.0
     van_keken : bool = True
+    model_full : bool = False
 
     def check_class_consistency(self):
         """Check the integrity of the input, and if it respect 
