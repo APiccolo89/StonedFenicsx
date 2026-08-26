@@ -1,15 +1,16 @@
 """Modules"""
 
-from stonedfenicsx.config.input_parser import PhInput, Input, parse_input
 from pathlib import Path
-from stonedfenicsx.create_mesh.create_mesh import create_mesh
-from stonedfenicsx.config.phase_db import generate_phase_database
-from stonedfenicsx.config.numerical_control import SimulationControls
-from stonedfenicsx.config.phase_db import PhaseDataBase
+
 from stonedfenicsx.config.geometry import Mesh
-from stonedfenicsx.config.scal import Scal,scaling_simulation_physical
-from stonedfenicsx.utils import timing_function
+from stonedfenicsx.config.input_parser import Input, PhInput, parse_input
+from stonedfenicsx.config.numerical_control import SimulationControls
+from stonedfenicsx.config.phase_db import PhaseDataBase, generate_phase_database
+from stonedfenicsx.config.scal import Scal, scaling_simulation_physical
 from stonedfenicsx.config.thermal_boundary_bc_set import configure_boundary_condition
+from stonedfenicsx.create_mesh.create_mesh import create_mesh
+from stonedfenicsx.utils import timing_function
+
 
 @timing_function
 def configure_simulation(
@@ -28,6 +29,7 @@ def configure_simulation(
 
     ctrl = inp.ctrl
     inp.ctrl.convert_string()
+    inp.ctrl.update_initial_guess()
     ctrl_io = inp.ctrl_io
     ctrl_tbc = inp.ctrl_tbc
     ctrl_ky = inp.ctrl_ky

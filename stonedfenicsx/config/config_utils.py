@@ -75,7 +75,7 @@ def cast_type(v: any, tp: any) -> any:
                 vbuf = True
             if vbuf in ("false", "no", "n", "NO", "FALSE", "False"):
                 vbuf = False
-        if isinstance(vbuf, int) or isinstance(vbuf, float):
+        if isinstance(vbuf, (int, float)):
             vbuf = bool(vbuf)
 
         return vbuf

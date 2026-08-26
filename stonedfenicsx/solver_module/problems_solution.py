@@ -919,9 +919,7 @@ class Global_thermal(Problem):
             self.cached_form.other_form['dt_diff'] = dolfinx.fem.Expression(dt_diff,self.domain.solph.element.interpolation_points())
             self.cached_form.other_form['dt_adv'] = dolfinx.fem.Expression(dt_adv,self.domain.solph.element.interpolation_points())
 
-        if ts==0 and it_outer==0:
-            clausure_compute_dt_update_dt()
-        elif self.ctrl_sim.ctrl_ky.constant==0 and it_outer==0:
+        if ts==0 and it_outer==0 or self.ctrl_sim.ctrl_ky.constant==0:
             clausure_compute_dt_update_dt()
   
     #---
