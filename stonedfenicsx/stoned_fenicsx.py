@@ -1,9 +1,53 @@
+import subprocess
+from pathlib import Path
+
 from stonedfenicsx.config.input_parser import Input
 from stonedfenicsx.config.phase_db import PhInput
 from stonedfenicsx.config.simulation_config import configure_simulation
 from stonedfenicsx.solver_module.solution_routine import solution_routine
-from stonedfenicsx.utils import timing_function
-from pathlib import Path
+from stonedfenicsx.utils import print_ph, timing_function
+
+_VERSION_ = "0.0.1"
+_DATE_ = "26/08/2026"
+_AUTHORS_="Andrea Piccolo, Timothy Craig" 
+
+# From StackOVERFLOW
+def git_info(repo=None):
+    repo =  Path(__file__).parents[1]
+    def run(*args):
+        return subprocess.run(["git", "-C", repo, *args],
+                              capture_output=True, text=True,
+                              check=True).stdout.strip()
+    try:
+        return {
+            "commit": run("rev-parse", "HEAD"),
+            "short": run("rev-parse", "--short", "HEAD"),
+            "branch": run("rev-parse", "--abbrev-ref", "HEAD"),
+            "dirty": run("status", "--porcelain") != "",
+        }
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None  # not a repo, or git not installed
+
+
+def print_information_code() -> None:
+    print_ph("================================================================")    
+    print_ph("||||||||| ->        StonedFEniCSx       <- |||||||||")
+    print_ph(f"      Authors = {_AUTHORS_}")
+    print_ph(f"      Version = {_VERSION_}")
+    print_ph(f"      Date = {_DATE_}")
+    print_ph(" git informations:      StonedFEniCSx: ")
+
+    meta_data = git_info()
+    if meta_data is None:
+        print_ph(" Branch = unavailable (not a git checkout)")
+        print_ph(" Commit = unavailable")
+        return
+    dirty = " (uncommitted changes)" if meta_data["dirty"] else ""
+    print_ph(f" Branch = {meta_data['branch']}")
+    print_ph(f" Commit = {meta_data['short']}{dirty}")
+    print_ph("================================================================")
+
+
 
 @timing_function
 def stoned_fenicsx(inp:Input,ph_in:PhInput) -> None:
@@ -23,8 +67,10 @@ def stoned_fenicsx(inp:Input,ph_in:PhInput) -> None:
             (wedge mantle, slab mantle, oceanic crust, overriding crust, etc.).
     """
 
-    ctrl_sim, mesh, pdb, sc= configure_simulation(ph_in=ph_in,inp=inp)
+    print_information_code()
 
+    ctrl_sim, mesh, pdb, sc= configure_simulation(ph_in=ph_in,inp=inp)
+    
     solution_routine(ctrl_sim=ctrl_sim,pdb=pdb,mesh=mesh,sc=sc)
 
 

@@ -3,28 +3,38 @@
     
 """
     
-from .utils import compute_strain_rate,compute_eii,print_ph
-from .material_property.compute_material_property import compute_viscosity_FX,density_FX,heat_capacity_FX,heat_conductivity_FX,alpha_FX
+import os
+from pathlib import Path
+
+import basix
 import dolfinx.fem as fem
+import h5py
 import numpy as np
 import ufl
-from mpi4py import MPI
 from dolfinx.io import XDMFFile
-from pathlib import Path
-import os
-import basix 
-import h5py
-from stonedfenicsx.config.scal import Scal
-from stonedfenicsx.config.numerical_control import SimulationControls,IOControls
+from mpi4py import MPI
+
 from stonedfenicsx.config.geometry import Domain
+from stonedfenicsx.config.numerical_control import IOControls, SimulationControls
 from stonedfenicsx.config.phase_db import PhaseDataBase
+from stonedfenicsx.config.scal import Scal
+from stonedfenicsx.material_property.compute_material_property import (
+    RHEOLOGYCACHED,
+    THERMALCACHED,
+)
 from stonedfenicsx.solver_module.problems_solution import Solution
-from stonedfenicsx.material_property.compute_material_property import RHEOLOGYCACHED, THERMALCACHED
+
+from .material_property.compute_material_property import (
+    alpha_FX,
+    compute_viscosity_FX,
+    density_FX,
+    heat_capacity_FX,
+    heat_conductivity_FX,
+)
+from .utils import compute_eii, compute_strain_rate, print_ph
 
 
-
-
-class OUTPUT(): 
+class OUTPUT: 
     """
     This class handles output operations for the simulation. This class has been written partially asking chatgpt but then modified to fit my needs.
     """ 
