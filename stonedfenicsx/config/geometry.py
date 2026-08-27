@@ -1,10 +1,11 @@
 from dataclasses import dataclass, field
+
+import basix
 import dolfinx
 import numpy as np
-from numpy.typing import NDArray
 from mpi4py import MPI
-import basix 
-    
+from numpy.typing import NDArray
+
 _ELEMENT_P           = basix.ufl.element("Lagrange","triangle", 1) 
 
 _ELEMENT_PT          = basix.ufl.element("Lagrange","triangle",2)

@@ -1,11 +1,13 @@
+import warnings
+from dataclasses import InitVar, dataclass, field
 from pathlib import Path
-from dataclasses import field, dataclass
+
 import numpy as np
 from numpy.typing import NDArray
+
 from stonedfenicsx.config.geometry import GeomInput
-from dataclasses import InitVar
 from stonedfenicsx.utils import print_ph
-import warnings
+
 # --- #
 # --- #
 dict_shear_modes = {"NoShear": 0, "SelfConsistent": 1, "Constant": 2}

@@ -34,21 +34,31 @@ Convergence criterion:
 """
 
 # modules
-from stonedfenicsx.config.phase_db import PhaseDataBase,compute_thermal_properties,density,heat_capacity
-from stonedfenicsx.config.scal import Scal
-from stonedfenicsx.config.numerical_control import CtrlTemperatureBC,NumericalControls,IOControls
-from stonedfenicsx.config.geometry import GeomInput
-from stonedfenicsx.create_mesh.create_mesh import dict_surf
-import h5py
-import numpy as np
-from numpy.typing import NDArray
-from numba import njit
-import mpi4py 
-import psutil as pst
 from pathlib import Path
-from stonedfenicsx.utils import timing_function
+
+import h5py
+import mpi4py
+import numpy as np
+import psutil as pst
+from numba import njit
+from numpy.typing import NDArray
 from scipy.special import erf as erf_sc
-from stonedfenicsx.utils import check_race_condition
+
+from stonedfenicsx.config.geometry import GeomInput
+from stonedfenicsx.config.numerical_control import (
+    CtrlTemperatureBC,
+    IOControls,
+    NumericalControls,
+)
+from stonedfenicsx.config.phase_db import (
+    PhaseDataBase,
+    compute_thermal_properties,
+    density,
+    heat_capacity,
+)
+from stonedfenicsx.config.scal import Scal
+from stonedfenicsx.create_mesh.create_mesh import dict_surf
+from stonedfenicsx.utils import check_race_condition, timing_function
 
 _NAME_H5_FILE_TMP = 'temporary_file.h5'
 

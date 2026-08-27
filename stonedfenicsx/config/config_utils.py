@@ -1,7 +1,6 @@
+from typing import get_args, get_origin, get_type_hints
+
 import numpy as np
-from typing import get_type_hints, get_origin, get_args, Union
-
-
 
 dict_shear_modes = {"NoShear": 0, "SelfConsistent": 1, "Constant": 2}
 dict_stokes = {"Direct": np.int32(1), "Iterative": np.int32(0)}

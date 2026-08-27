@@ -1,17 +1,19 @@
 """Modules"""
-from stonedfenicsx.config.config_utils import update_ip_file
-from stonedfenicsx.config.numerical_control import (
-    NumericalControls,
-    IOControls,
-    CtrlTemperatureBC,
-    CtrlKy
-)
-from stonedfenicsx.config.geometry import GeomInput
-from stonedfenicsx.config.scal import Scal
-from stonedfenicsx.config.phase_db import Phase,PhInput
-from stonedfenicsx.utils import timing_function
+from dataclasses import dataclass, field
 from pathlib import Path
-from dataclasses import field, dataclass
+
+from stonedfenicsx.config.config_utils import update_ip_file
+from stonedfenicsx.config.geometry import GeomInput
+from stonedfenicsx.config.numerical_control import (
+    CtrlKy,
+    CtrlTemperatureBC,
+    IOControls,
+    NumericalControls,
+)
+from stonedfenicsx.config.phase_db import Phase, PhInput
+from stonedfenicsx.config.scal import Scal
+from stonedfenicsx.utils import timing_function
+
 
 @dataclass(slots=True)
 class Input:

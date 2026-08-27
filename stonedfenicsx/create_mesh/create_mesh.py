@@ -501,10 +501,9 @@ def create_physical_line(
 
     mesh_model.addPhysicalGroup(1, LC.tag_L_B[1:], tag=dict_tag_lines["Bottom_sla"])
 
-    if not g_input.model_full:
-        # In model_full mode the subducting-plate domain is extended past the slab's own
-        # base down to the box corner, so lines_BS is purely interior and is not a boundary.
-        mesh_model.addPhysicalGroup(1, LC.tag_L_Bsub, tag=dict_tag_lines["Subduction_bot"])
+    # In model_full mode lines_BS is embedded into the extended sub_plate surface (see
+    # create_gmsh), so this stays a valid interior facet set rather than a dangling curve.
+    mesh_model.addPhysicalGroup(1, LC.tag_L_Bsub, tag=dict_tag_lines["Subduction_bot"])
 
     if g_input.model_full:
         mesh_model.addPhysicalGroup(1, LC.tag_L_L[1:], tag=dict_tag_lines["Left_inlet"])
@@ -633,6 +632,13 @@ def create_gmsh(
 
     # Create the physical surface the effective domain
     mesh_model.geo.synchronize()
+
+    if g_input.model_full:
+        # lines_BS (slab base) is now interior to the extended sub_plate surface rather
+        # than part of its boundary loop: embed it so the 2D mesh conforms to it and the
+        # "Subduction_bot" physical line stays usable (post-processing/BC) as a genuine
+        # facet set instead of a curve with no adjacent cells.
+        mesh_model.mesh.embed(1, LC.tag_L_Bsub, 2, Left_side_of_subduction_surf)
 
     mesh_model.addPhysicalGroup(
         2, [Left_side_of_subduction_surf], tag=dict_surf["sub_plate"]
@@ -818,7 +824,6 @@ def create_subdomain(
     name: str,
     phase: dolfinx.fem.function.Function,
     ioctrl: IOControls,
-    g_input: GeomInput,
 ) -> Domain:
     """Create the subdomain from the global mesh, and interpolate the phases from the global mesh to the local mesh
 
@@ -916,21 +921,12 @@ def create_subdomain(
         # top subduction 8-9 For the subduction subdomain, the tag of the subdcution
         # are the entire top surface
         # --
-        if g_input.model_full:
-            # lines_BS (tag 6) is interior in model_full mode: the subducting-plate
-            # domain now extends past the slab's own base down to the box corner.
-            specs = [
-                ([8, 9], 1),
-                ([7], 3),
-                ([5], 4),
-            ]
-        else:
-            specs = [
-                ([8, 9], 1),
-                ([6], 2),
-                ([7], 3),
-                ([5], 4),
-            ]  # [8,9] are the top subduction[6] is the bottom subduction, [7] is the left side of the subduction, [5] is the right side of the subduction
+        specs = [
+            ([8, 9], 1),
+            ([6], 2),
+            ([7], 3),
+            ([5], 4),
+        ]  # [8,9] are the top subduction[6] is the bottom subduction, [7] is the left side of the subduction, [5] is the right side of the subduction
         dict_local = {
             "top_subduction": 1,  # Top subduction
             "bot_subduction": 2,  # Right side of the subduction
@@ -1112,19 +1108,19 @@ def create_mesh_object( ioctrl: IOControls, g_input: GeomInput) -> Mesh:
     print_ph(" Creating the Subudcting plate domain")
 
     subduction_plate = create_subdomain(
-        mesh, cell_markers, facet_markers, [1, 2], "subduction_plate_domain", phase, ioctrl, g_input
+        mesh, cell_markers, facet_markers, [1, 2], "subduction_plate_domain", phase, ioctrl
     )
     # Wedge plate domain
     print_ph(" Creating the Wedge domain")
 
     wedge_plate = create_subdomain(
-        mesh, cell_markers, facet_markers, [3], "wedge_domain", phase, ioctrl, g_input
+        mesh, cell_markers, facet_markers, [3], "wedge_domain", phase, ioctrl
     )
     # Overriding plate domain
     print_ph(" Creating the Overriding plate domain")
 
     crust_domain = create_subdomain(
-        mesh, cell_markers, facet_markers, [4, 5, 6], "overriding_plate_domain", phase, ioctrl, g_input
+        mesh, cell_markers, facet_markers, [4, 5, 6], "overriding_plate_domain", phase, ioctrl
     )
 
     # write_partition(mesh,filename=os.path.join(ioctrl.path_save,'%s_global_partition.xdmf'%ioctrl.sname))

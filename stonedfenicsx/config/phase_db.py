@@ -1,14 +1,15 @@
 """Modules"""
-from numba import float64,int32
-from numba.experimental import jitclass
-import numpy as np
-from numpy.typing import NDArray
-from stonedfenicsx.utils import print_ph
-from stonedfenicsx.config.config_utils import update_ip_file
+from dataclasses import InitVar, asdict, dataclass, field
 from pathlib import Path
+
+import numpy as np
 import yaml
-from dataclasses import dataclass, field, asdict,InitVar
-from numba import njit
+from numba import float64, int32, njit
+from numba.experimental import jitclass
+from numpy.typing import NDArray
+
+from stonedfenicsx.config.config_utils import update_ip_file
+from stonedfenicsx.utils import print_ph
 
 #TO DO in the future. 
 #The jit class is a pain in the ass. I used to use the numba routine for creating the left boundary condition and right 
