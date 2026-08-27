@@ -23,7 +23,7 @@ Input:
     stokes_solver_type : "Direct"
     energy_solver_type : "Direct"
     pressure_dependency: 1
-    time_ini_guess : 0.3
+    time_ini_guess : 0.5
     initial_guess: "Thermal_Diffusion" 
 
   Shear_Heating: 

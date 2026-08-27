@@ -37,7 +37,7 @@ def perform_test(option_viscous=0,option_thermal=0):
     #inp.g_input.sub_path = '/Users/wlnw570/Work/Leeds/Fenics_tutorial/examples/data/Mexico_slab.pz'
     inp.g_input.resolution_normal = 10
     # Control 
-    inp.ctrl.decoupling_ctrl = 0 
+    inp.ctrl.decoupling_ctrl = 1 
     inp.ctrl.steady_state = 0 
     # In this case, for testing the Van Keken benchmark, I opted to create a simple script
     # that has: option viscosity and thermal for testing several potential configuration. 

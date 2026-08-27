@@ -9,24 +9,24 @@ ocr: 6.0
 redo_mesh: true
 resolution_normal: 10
 resolution_refine: 1.5
-slab_tk: 75.0
-slab_type: FromFile
+slab_tk: 130.0
+slab_type: CustomRibe
 sub_constant_flag: false
 sub_dl: 10.0
 sub_lb: 300.0
 sub_parabolic_a: 0.0008
-sub_path: /Users/wlnw570/Work/Leeds/Fenics_tutorial/examples/data/Mexico_slab.pz
+sub_path: Not Defined
 sub_theta0: 0.08726646259971647
 sub_theta_max: 0.7853981633974483
 sub_trench: 0.0
-theta_in_slab: 0.1601903641878721
+theta_in_slab: 0.08726646259971647
 theta_out_slab: 45.0
 transition: 10.0
 van_keken: false
 wz_tk: 0.5
 x:
 - 0.0
-- 552.9668828175188
+- 812.5679580075386
 y:
-- -378.103
+- -600.0
 - 0.0

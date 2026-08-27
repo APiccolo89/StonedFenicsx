@@ -72,7 +72,7 @@ def outerloop_operation_initial_guess(ctrl_sim:SimulationControls,
     # Initialise the it outer and residual outer
     it_outer = 0 
 
-    max_it = 5
+    max_it = 3
     
     
     while it_outer < max_it and outit.res > ctrl_sim.ctrl.tol: 
