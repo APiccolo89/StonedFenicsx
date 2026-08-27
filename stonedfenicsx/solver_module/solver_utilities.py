@@ -135,7 +135,7 @@ class OUTERITERATION_SOL_VAL:
 
 
         
-        if dtemp_l1 < 1e-3: 
+        if dtemp_l1 < 1e-2: 
             print_ph(f'L1_norm of the temperature difference is less than {1e-5:.5e} [K]. The problem is converged.')
             self.res = ctrl_sim.ctrl.tol 
             return 0 

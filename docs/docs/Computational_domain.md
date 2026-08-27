@@ -69,6 +69,8 @@ The viscosity within **S** is constant and equal to {math}`\eta_{\mathrm{slab}}`
 
 The slab may contain different material phases (lithospheric mantle and oceanic crust), each with distinct **heat capacity, density, and conductivity**.
 
+If the flag `model_full` is active, whilst the geometry of the slab is saved, the subduction domain will have also the mantle below the subducting plate. This flag has been added to give the possibility to track also the mantle temperature below the slab. 
+
 ### Wedge subdomain
 
 The **W** subdomain is defined by points `H`, `D`, `E`, and `F` (see {numref}`fig:f1_simplified_initial_setup`).  It is bounded by a portion of `[a]` (from `H` to `D`) and by `[f]`, `[g]`, and `[b]`. Boundaries `[f]` and `[g]` are **open (do-nothing) boundaries**:
@@ -119,6 +121,7 @@ sub_trench: 0.0 # position of the trench
 sub_parabolic_a: 8e-4 # [km^-1] -> curvature of theparabolic slab (necessary for the CustomParabolic)
 slab_type: "CustomParabolic" # [CustomParabolicCustomRibe,FromFile] 
 sub_path: "Not Defined" # Required for the realgeometry of the subducting plate
+model_full: "False" # Flag to have the entirity of the model. 
 ```
 `````
 **StonedFEniCSx** creates the mesh starting from the subduction geometry (see below, and reference to the geometry *input.yml* snipet) and the depth of the overriding plate. Then, after defining the main subdomains, it will generate the subregions and populate the domain with rocks-ID. 
