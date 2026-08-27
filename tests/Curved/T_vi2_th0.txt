@@ -1752,3 +1752,18 @@ ts = 181
 ts = 182
   it_outer =    0  res_cons = 1.000000e+00  res_diff = 2.176326e-03  L1_temp  = 2.506482e+00 res_alt = 5.489487e-04rmom_wg = 1.000000e+00reng_gl = 1.000000e+00
   it_outer =    1  res_cons = 6.645825e-01  res_diff = 2.244849e-04  L1_temp  = 2.506482e-01 res_alt = 5.490089e-05rmom_wg = 6.645825e-01reng_gl = 9.945164e-01
+  it_outer =    2  res_cons = 4.484854e-01  res_diff = 5.572360e-05  L1_temp  = 2.506482e-02 res_alt = 5.494977e-06rmom_wg = 4.484854e-01reng_gl = 9.978507e-01
+  it_outer =    3  res_cons = 3.051879e-01  res_diff = 3.649665e-05  L1_temp  = 2.506482e-03 res_alt = 5.548196e-07rmom_wg = 3.051879e-01reng_gl = 1.001994e+00
+  it_outer =    4  res_cons = 2.088146e-01  res_diff = 2.548537e-05  L1_temp  = 1.497946e-03 res_alt = 6.736470e-08rmom_wg = 2.088146e-01reng_gl = 9.998077e-01
+  it_outer =    5  res_cons = 1.434281e-01  res_diff = 1.789192e-05  L1_temp  = 1.052566e-03 res_alt = 2.559707e-08rmom_wg = 1.434281e-01reng_gl = 9.958365e-01
+
+ts = 183
+  it_outer =    0  res_cons = 1.000000e+00  res_diff = 2.182067e-03  L1_temp  = 2.502190e+00 res_alt = 5.487144e-04rmom_wg = 1.000000e+00reng_gl = 1.000000e+00
+  it_outer =    1  res_cons = 6.636240e-01  res_diff = 2.248334e-04  L1_temp  = 2.502190e-01 res_alt = 5.487741e-05rmom_wg = 6.636240e-01reng_gl = 1.004956e+00
+  it_outer =    2  res_cons = 4.473511e-01  res_diff = 5.552678e-05  L1_temp  = 2.502190e-02 res_alt = 5.492593e-06rmom_wg = 4.473511e-01reng_gl = 1.002885e+00
+  it_outer =    3  res_cons = 3.041554e-01  res_diff = 3.635613e-05  L1_temp  = 2.502190e-03 res_alt = 5.545584e-07rmom_wg = 3.041554e-01reng_gl = 1.003305e+00
+  it_outer =    4  res_cons = 2.079626e-01  res_diff = 2.538961e-05  L1_temp  = 1.503854e-03 res_alt = 6.733903e-08rmom_wg = 2.079626e-01reng_gl = 9.998768e-01
+  it_outer =    5  res_cons = 1.427590e-01  res_diff = 1.782534e-05  L1_temp  = 1.056869e-03 res_alt = 2.561357e-08rmom_wg = 1.427590e-01reng_gl = 1.001711e+00
+
+ts = 184
+  it_outer =    0  res_cons = 1.000000e+00  res_diff = 2.187877e-03  L1_temp  = 2.498021e+00 res_alt = 5.484811e-04rmom_wg = 1.000000e+00reng_gl = 1.000000e+00
