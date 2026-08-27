@@ -1,28 +1,33 @@
 # input for iFieldstone
-from stonedfenicsx.config.numerical_control import IOControls, NumericalControls
-from stonedfenicsx.config.scal import scaling_mesh, Scal,dimensionless_ginput
-from stonedfenicsx.utils import print_ph,check_race_condition
+import math
+import time
+from dataclasses import asdict
+from pathlib import Path
+
+import dolfinx
+import gmsh
+import meshio
+import numpy as np
+import yaml
+from dolfinx import fem
+from dolfinx.io import gmshio
 from dolfinx.mesh import create_submesh
-from stonedfenicsx.create_mesh.aux_create_mesh import  Class_Points, Class_Line
-from stonedfenicsx.config.geometry import GeomInput, Mesh, Domain
-from stonedfenicsx.create_mesh.aux_create_mesh import dict_tag_lines, dict_surf, find_line_index, create_loop
+from mpi4py import MPI
+
+from stonedfenicsx.config.geometry import Domain, GeomInput, Mesh
+from stonedfenicsx.config.numerical_control import IOControls, NumericalControls
 from stonedfenicsx.create_mesh.aux_create_mesh import (
+    Class_Line,
+    Class_Points,
     assign_phases,
+    create_loop,
+    dict_surf,
+    dict_tag_lines,
+    find_line_index,
     from_line_to_point_coordinate,
     function_create_subducting_plate_geometry,
 )
-from mpi4py import MPI
-from pathlib import Path
-import gmsh
-import numpy as np
-import math
-import meshio
-import dolfinx
-from dataclasses import asdict
-from dolfinx.io import gmshio
-from dolfinx import fem
-import yaml 
-import time
+from stonedfenicsx.utils import check_race_condition, print_ph
 
 
 def _differs(cached, current) -> bool:
@@ -108,7 +113,7 @@ def write_mesh_data(g_input:GeomInput,ioctrl:IOControls)->None:
 
 # ------------------------------------------------------------------------------------------------------
 def create_mesh(
-    ioctrl: IOControls, sc: Scal, g_input: GeomInput, ctrl: NumericalControls
+    ioctrl: IOControls, g_input: GeomInput, ctrl: NumericalControls
 ) -> Mesh:
     """
     Create a Gmsh model and convert it into a FEniCSx mesh.
@@ -140,7 +145,7 @@ def create_mesh(
     if rank == 0:
         g_input = create_gmesh(ioctrl, g_input)
     # Convert the mesh from gmsh to mesh objects
-    mesh = create_mesh_object(sc, ioctrl, g_input)
+    mesh = create_mesh_object(ioctrl, g_input)
 
     return mesh
 
@@ -209,9 +214,6 @@ def create_gmesh(ioctrl: IOControls, g_input: GeomInput):
     if  not Path(ioctrl.path_cached_information, "mesh.msh").is_file() \
         or not Path(ioctrl.path_cached_information, "mesh_meta_data.yml").is_file() or g_input.redo_mesh:
 
-
-
-
         mesh_model = create_gmsh(slab_x, slab_y, bot_x, bot_y, oc_cx, oc_cy, g_input)
 
         mesh_model.geo.removeAllDuplicates()
@@ -266,15 +268,23 @@ def create_domain_subduction_plate(
     gmsh.model
         The updated Gmsh model with the sub-domain loop entities added.
     """
+    
 
     if g_input.ocr != 0.0:
-
-        l_list = [
+        if not g_input.model_full: 
+            l_list = [
             LC.lines_oc[2, :],
             -LC.lines_B[2, -1],
             -LC.lines_BS[2, ::-1],
             LC.lines_L[2, 0],
-        ]
+            ]
+        else: 
+            l_list = [
+            LC.lines_oc[2, :],
+            -LC.lines_B[2, 2:],
+            LC.lines_L[2, :-1],
+            ]
+            
         mesh_model = create_loop(l_list, mesh_model, 10)
 
         # Oceanic crust
@@ -286,12 +296,21 @@ def create_domain_subduction_plate(
         ]
         mesh_model = create_loop(l_list, mesh_model, 15)
     else:
-        l_list = [
-            LC.lines_S[2, :],
-            LC.lines_B[2, -1],
-            -LC.lines_BS[2, ::-1],
-            -LC.lines_L[2, 0],
-        ]
+        if not g_input.model_full: 
+        
+            l_list = [
+                LC.lines_S[2, :],
+                LC.lines_B[2, -1],
+                -LC.lines_BS[2, ::-1],
+                -LC.lines_L[2, 0],
+            ]
+        else:
+            l_list = [
+                LC.lines_S[2, :],
+                LC.lines_B[2, -2:],
+                -LC.lines_L[2, :],
+            ]
+
         mesh_model = create_loop(l_list, mesh_model, 15)
 
     print("Finished to generate the curved loop for domain A [Subducting plate]")
@@ -482,9 +501,18 @@ def create_physical_line(
 
     mesh_model.addPhysicalGroup(1, LC.tag_L_B[1:], tag=dict_tag_lines["Bottom_sla"])
 
-    mesh_model.addPhysicalGroup(1, LC.tag_L_Bsub, tag=dict_tag_lines["Subduction_bot"])
+    if not g_input.model_full:
+        # In model_full mode the subducting-plate domain is extended past the slab's own
+        # base down to the box corner, so lines_BS is purely interior and is not a boundary.
+        mesh_model.addPhysicalGroup(1, LC.tag_L_Bsub, tag=dict_tag_lines["Subduction_bot"])
 
-    mesh_model.addPhysicalGroup(1, LC.tag_L_L, tag=dict_tag_lines["Left_inlet"])
+    if g_input.model_full:
+        mesh_model.addPhysicalGroup(1, LC.tag_L_L[1:], tag=dict_tag_lines["Left_inlet"])
+        mesh_model.addPhysicalGroup(1, [LC.tag_L_L[0]], tag=dict_tag_lines["Left_inlet_bt"])
+
+    else: 
+        mesh_model.addPhysicalGroup(1, LC.tag_L_L, tag=dict_tag_lines["Left_inlet"])
+
 
     for i in range(len(LC.tag_L_sub)):
         L = LC.tag_L_sub[i]
@@ -790,6 +818,7 @@ def create_subdomain(
     name: str,
     phase: dolfinx.fem.function.Function,
     ioctrl: IOControls,
+    g_input: GeomInput,
 ) -> Domain:
     """Create the subdomain from the global mesh, and interpolate the phases from the global mesh to the local mesh
 
@@ -887,12 +916,21 @@ def create_subdomain(
         # top subduction 8-9 For the subduction subdomain, the tag of the subdcution
         # are the entire top surface
         # --
-        specs = [
-            ([8, 9], 1),
-            ([6], 2),
-            ([7], 3),
-            ([5], 4),
-        ]  # [8,9] are the top subduction[6] is the bottom subduction, [7] is the left side of the subduction, [5] is the right side of the subduction
+        if g_input.model_full:
+            # lines_BS (tag 6) is interior in model_full mode: the subducting-plate
+            # domain now extends past the slab's own base down to the box corner.
+            specs = [
+                ([8, 9], 1),
+                ([7], 3),
+                ([5], 4),
+            ]
+        else:
+            specs = [
+                ([8, 9], 1),
+                ([6], 2),
+                ([7], 3),
+                ([5], 4),
+            ]  # [8,9] are the top subduction[6] is the bottom subduction, [7] is the left side of the subduction, [5] is the right side of the subduction
         dict_local = {
             "top_subduction": 1,  # Top subduction
             "bot_subduction": 2,  # Right side of the subduction
@@ -966,7 +1004,7 @@ def create_subdomain(
 
 # ------------------------------------------------------------------------------------------------------
 def read_mesh(
-    ioctrl: IOControls, sc: Scal
+    ioctrl: IOControls
 ) -> tuple([dolfinx.mesh.Mesh, dolfinx.mesh.MeshTags, dolfinx.mesh.MeshTags]):
     """read the .msh file, and convert into a dolfinx mesh object and extract mesh tags from .msh
     Parameter
@@ -991,7 +1029,7 @@ def read_mesh(
     rank = comm.Get_rank()  # 0, 1, ..., size-1
 
     path_file = Path(ioctrl.path_cached_information,'mesh.msh')
-
+    comm.Set_errhandler(MPI.ERRORS_RETURN)
     mesh, cell_markers, facet_markers = gmshio.read_from_msh(
         path_file, MPI.COMM_WORLD, gdim=2
     )
@@ -1007,7 +1045,7 @@ def read_mesh(
 
 
 # ------------------------------------------------------------------------------------------------------
-def create_mesh_object(sc: Scal, ioctrl: IOControls, g_input: GeomInput) -> Mesh:
+def create_mesh_object( ioctrl: IOControls, g_input: GeomInput) -> Mesh:
     """
     Create a subdomain mesh from the global mesh and interpolate phase information.
 
@@ -1041,7 +1079,7 @@ def create_mesh_object(sc: Scal, ioctrl: IOControls, g_input: GeomInput) -> Mesh
 
     print_ph(" Reading global mesh and creating the global domain")
 
-    mesh, cell_markers, facet_markers = read_mesh(ioctrl, sc)
+    mesh, cell_markers, facet_markers = read_mesh(ioctrl)
 
     pph = fem.functionspace(
         mesh, ("DG", 0)
@@ -1074,19 +1112,19 @@ def create_mesh_object(sc: Scal, ioctrl: IOControls, g_input: GeomInput) -> Mesh
     print_ph(" Creating the Subudcting plate domain")
 
     subduction_plate = create_subdomain(
-        mesh, cell_markers, facet_markers, [1, 2], "subduction_plate_domain", phase, ioctrl
+        mesh, cell_markers, facet_markers, [1, 2], "subduction_plate_domain", phase, ioctrl, g_input
     )
     # Wedge plate domain
     print_ph(" Creating the Wedge domain")
 
     wedge_plate = create_subdomain(
-        mesh, cell_markers, facet_markers, [3], "wedge_domain", phase, ioctrl
+        mesh, cell_markers, facet_markers, [3], "wedge_domain", phase, ioctrl, g_input
     )
     # Overriding plate domain
     print_ph(" Creating the Overriding plate domain")
 
     crust_domain = create_subdomain(
-        mesh, cell_markers, facet_markers, [4, 5, 6], "overriding_plate_domain", phase, ioctrl
+        mesh, cell_markers, facet_markers, [4, 5, 6], "overriding_plate_domain", phase, ioctrl, g_input
     )
 
     # write_partition(mesh,filename=os.path.join(ioctrl.path_save,'%s_global_partition.xdmf'%ioctrl.sname))

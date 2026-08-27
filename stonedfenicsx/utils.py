@@ -1,16 +1,17 @@
 from __future__ import annotations
-from typing import get_type_hints, get_origin, get_args, Callable
-from dataclasses import dataclass, field
-import numpy as np
-import mpi4py.MPI as MPI
-import time as timing 
-import ufl 
-import dolfinx
+
+import time as timing
+from collections.abc import Callable
 from functools import wraps
-from numpy.typing import NDArray
-import psutil as pst
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+import dolfinx
+import numpy as np
+import psutil as pst
+import ufl
+from mpi4py import MPI
+
 if TYPE_CHECKING:
     from stonedfenicsx.config.numerical_control import IOControls
 

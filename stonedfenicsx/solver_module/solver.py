@@ -1,8 +1,10 @@
-from stonedfenicsx.utils import *
-from dolfinx.fem.petsc          import assemble_matrix_block, assemble_vector_block
-from petsc4py import PETSc
-from mpi4py import MPI
 from dolfinx import fem
+from dolfinx.fem.petsc import assemble_matrix_block, assemble_vector_block
+from mpi4py import MPI
+from petsc4py import PETSc
+
+from stonedfenicsx.utils import *
+
 """This section has been created using the default tutorials of FEniCSx. 
 I choose to use monolithic direct/iterative solvers. The choiche of the options depends
 on the preconditioner that I set up for the stokes for the given problem. 

@@ -1,11 +1,13 @@
-from stonedfenicsx.config.geometry import GeomInput
+from pathlib import Path
+
+import dolfinx
 import gmsh
 import numpy as np
 from numpy import ndarray
-import dolfinx
-from petsc4py import PETSc
-from pathlib import Path
 from numpy.typing import NDArray
+from petsc4py import PETSc
+
+from stonedfenicsx.config.geometry import GeomInput
 
 #---------------------------------------------------------
 
@@ -34,6 +36,7 @@ dict_tag_lines = {
     'Overriding_mantle' : 11,
     'Crust_overplate'   : 12,
     'LCrust_overplate'  : 13,
+    'Left_inlet_bt'        : 14,
 }     
 #-----------------------------------------------------------------------------------------------------------------
 class Class_Points():
@@ -84,9 +87,16 @@ class Class_Points():
         #-- Create the subduction,channel and oceanic crust points 
 
         self.max_tag_s,  self.tag_subduction, self.coord_sub,     mesh_model     = _create_points(mesh_model, sx,    sy,    g_input.resolution_refine, 0)
+        
+        
         self.max_tag_bots,  self.tag_bottom,    self.coord_bottom, mesh_model     = _create_points(mesh_model, bx,    by,    g_input.resolution_normal, self.max_tag_s)
+        if g_input.model_full: 
+            self.max_tags_ltbt, self.tag_ltpt, self.coord_ltpt, mesh_model = _create_points(mesh_model,  g_input.x[0], g_input.y[0], g_input.resolution_normal,  self.max_tag_bots,  True)
+            self.max_tag_bots = self.max_tags_ltbt
+        else: 
+            self.coord_ltpt = None   
         if g_input.ocr != 0.0: 
-            self.max_tag_oc, self.tag_oc,         self.coord_ocean,   mesh_model     = _create_points(mesh_model, oc_cx, oc_cy, g_input.resolution_normal, self.max_tag_bots)
+            self.max_tag_oc, self.tag_oc,         self.coord_ocean,   mesh_model     = _create_points(mesh_model, oc_cx, oc_cy, g_input.resolution_refine, self.max_tag_bots)
         else: 
             self.max_tag_oc = self.max_tag_bots; self.coord_ocean  = None
         # -- Here are the points at the boundary of the model. The size of the model is defined earlier, and subduction zone is modified as such to comply the main geometrical input, 
@@ -108,7 +118,7 @@ class Class_Points():
             self.coord_crust = None
 
         # Thank Chatgpt 
-        arr = [self.coord_sub, self.coord_bottom, self.coord_ocean, self.coord_bc, self.coord_lr, self.coord_top, self.coord_crust, self.coord_lcr]
+        arr = [self.coord_sub, self.coord_bottom, self.coord_ltpt, self.coord_ocean, self.coord_bc, self.coord_lr, self.coord_top, self.coord_crust, self.coord_lcr]
         arrays = [a for a in arr if a is not None]
 
         self.global_points = np.hstack(arrays)
@@ -160,8 +170,6 @@ class Class_Line():
         self.max_tag_top, self.tag_L_T, self.lines_T, mesh_model  = _create_lines(mesh_model,0,p_list,False)
 
         #[right boundary]
-
-
         if g_input.cr !=0: 
             if g_input.lc !=0:
                 p_list = [CP.tag_right_c_t[0],  CP.tag_right_c_lcr[0],  CP.tag_right_c_cr[0],  CP.tag_right_c_l[0], CP.tag_right_c_b[0]]
@@ -177,16 +185,22 @@ class Class_Line():
             p_list                                                      = [CP.tag_right_c_b[0], CP.tag_subduction[-1], CP.tag_oc[-1], CP.tag_bottom[-1]]
         else: 
             p_list                                                      = [CP.tag_right_c_b[0], CP.tag_subduction[-1], CP.tag_bottom[-1]]
+        if g_input.model_full: 
+            p_list.append(CP.tag_ltpt[0])
         self.max_tag_bottom, self.tag_L_B, self.lines_B, mesh_model = _create_lines(mesh_model, self.max_tag_right, p_list, False)
         
         # ] curved line
         if g_input.ocr != 0.0:
             p_list                                                    = [CP.tag_bottom[0], CP.tag_oc[0], CP.tag_subduction[0]]
+            if g_input.model_full: 
+                p_list                                                    = [CP.tag_ltpt[0], CP.tag_bottom[0], CP.tag_oc[0], CP.tag_subduction[0]]
         else: 
             p_list                                                    = [CP.tag_bottom[0], CP.tag_subduction[0]]
+            if g_input.model_full: 
+                p_list                                                    = [CP.tag_ltpt[0], CP.tag_bottom[0], CP.tag_subduction[0]]
+        
         self.max_tag_left, self.tag_L_L, self.lines_L, mesh_model = _create_lines(mesh_model,  self.max_tag_bottom,  p_list,  False)
-        
-        
+
         # -- Create Lines 
         self.max_tag_line_subduction,  self.tag_L_sub, self.lines_S,   mesh_model      = _create_lines(mesh_model,  self.max_tag_left,           CP.tag_subduction,False)
         self.max_tag_line_Bsubduction, self.tag_L_Bsub,self.lines_BS,  mesh_model      = _create_lines(mesh_model,  self.max_tag_line_subduction,     CP.tag_bottom,False)
@@ -294,7 +308,7 @@ def create_loop(l_list:list,
         a.extend(val)
         
     
-    mesh_model.geo.addCurveLoop(a,tag) # Left side of the subudction zone
+    mesh_model.geo.addCurveLoop(a,tag,reorient=True) # Left side of the subudction zone
    
     return mesh_model
 #-----------------------------------------------------------------------------------------------------------------
@@ -470,7 +484,7 @@ def create_slab_surface(f:callable, y_min:float,stp=float,depth:float=0.0)->tupl
     statement = True 
     while statement:
         if lghn < 100:
-            dl = 5 * stp
+            dl = 2 * stp
         else: 
             dl = stp
         lghn += dl

@@ -1,35 +1,46 @@
 # --- libraries --- 
-import dolfinx
-import basix 
-import ufl
-import numpy as np 
-import mpi4py.MPI as MPI
-from numpy.typing import NDArray
-from scipy.interpolate import griddata   
-import petsc4py.PETSc as PETSc
-from dataclasses import field,dataclass
-# --- ufl 
+import time as timing
+from dataclasses import dataclass, field
 
+import basix
+import dolfinx
+import numpy as np
+import ufl
+from mpi4py import MPI
+from numpy.typing import NDArray
+from petsc4py import PETSc
+from scipy.interpolate import griddata
+
+from stonedfenicsx.config.geometry import Domain, GeomInput, Mesh
+
+# --- ufl 
 # --- from config module 
 from stonedfenicsx.config.numerical_control import SimulationControls
-from stonedfenicsx.config.geometry import Mesh, GeomInput, Domain
 from stonedfenicsx.config.phase_db import PhaseDataBase
-# --- from solver module
-from stonedfenicsx.solver_module.solver import Solvers,ScalarSolver,SolverStokes
-from stonedfenicsx.solver_module.solver_utilities import (decoupling_function
-                                                          ,update_solution
-                                                          ,compute_residuum
-                                                          ,min_max_array)
-from stonedfenicsx.utils import compute_strain_rate
+
 # --- from material properties 
-from stonedfenicsx.material_property.compute_material_property import (compute_plastic_strain
-                                                                       ,MATERIALS,RHEOLOGYCACHED,THERMALCACHED
-                                                                       ,compute_radiogenic,
-                                                                       density_FX,heat_capacity_FX,heat_conductivity_FX
-                                                                       ,compute_viscosity_FX)
+from stonedfenicsx.material_property.compute_material_property import (
+    MATERIALS,
+    RHEOLOGYCACHED,
+    THERMALCACHED,
+    compute_plastic_strain,
+    compute_radiogenic,
+    compute_viscosity_FX,
+    density_FX,
+    heat_capacity_FX,
+    heat_conductivity_FX,
+)
+
+# --- from solver module
+from stonedfenicsx.solver_module.solver import ScalarSolver, Solvers, SolverStokes
+from stonedfenicsx.solver_module.solver_utilities import (
+    decoupling_function,
+    min_max_array,
+)
+
 # --- from src 
-from stonedfenicsx.utils import print_ph,timing_function
-import time as timing 
+from stonedfenicsx.utils import compute_strain_rate, print_ph, timing_function
+
 
 def debug_boundary_condition(bc, name):
     """Print the global min/max of a Dirichlet BC value across all MPI ranks.
@@ -233,7 +244,7 @@ class Problem:
             self.cached_mat = RHEOLOGYCACHED(pdb=self.pdb,phase=self.domain.phase)
 # --- 
 # --- 
-class Solution():
+class Solution:
     def __init__(self):
         """Declare (without allocating) every field and residual/history array
         carried by a simulation state.
@@ -735,6 +746,9 @@ class Global_thermal(Problem):
             dofs_left              = dolfinx.fem.locate_dofs_topological(self.FS, domain.mesh.topology.dim-1, facets)
             # Interpolate + CORRECTION initial z vector -> If angle slab != 0.0 => z = z/cos(theta_in_slab) 
             temp_bc_left = self.interpolate_1d_vector_boundary(self.FS,ctrl_tbc.z,ctrl_tbc.temperature_1d,cd_dof)
+            if self.g_input.model_full: 
+                Z = self.FS.tabulate_dof_coordinates()[:,1]
+                temp_bc_left.x.array[Z<-self.g_input.slab_tk] = self.ctrl_sim.ctrl_tbc.temp_max
             # Update dirichletbc
             self.bc_left = dolfinx.fem.dirichletbc(temp_bc_left, dofs_left)
 
@@ -802,8 +816,7 @@ class Global_thermal(Problem):
         dS = ufl.Measure("dS", domain=domain.mesh, subdomain_data=domain.facets)
         mode_shear = self.ctrl_sim.ctrl.model_shear
         expression = dolfinx.fem.Constant(domain.mesh,(0.0))* (dS(domain.bc_dict['Subduction_top_lit']) + dS(domain.bc_dict['Subduction_top_wed']))
-        if self.ctrl_sim.ctrl.decoupling_ctrl == 1 and mode_shear>0:
-    
+        if self.ctrl_sim.ctrl.decoupling_ctrl == 1:
             if mode_shear>0:
                 # compute the plastic strain rate ratio and viscous shear heating strain rate 
                 # Place holder function
@@ -978,7 +991,6 @@ class Global_thermal(Problem):
         rT = self.compute_residual()
         if it_outer==0:
             self.rT0 = rT 
-        time_B = timing.time()        
         
         return rT,self.rT0 
     #---
@@ -1066,9 +1078,10 @@ class Global_thermal(Problem):
         Returns:
             dolfinx.fem.Function: Initial temperature field on `self.FS`.
         """
-        from scipy.interpolate import griddata
-        from ufl import conditional, Or, eq
         from functools import reduce
+
+        from scipy.interpolate import griddata
+        from ufl import Or, conditional, eq
         #- Create part of the thermal field: create function, extract dofs,
         ctrl_tbc = self.ctrl_sim.ctrl_tbc
         
@@ -1077,12 +1090,19 @@ class Global_thermal(Problem):
         T_i_A = dolfinx.fem.Function(X)
         cd_dof = X.tabulate_dof_coordinates()
         T_i_A.x.array[:] = griddata(ctrl_tbc.z, ctrl_tbc.temperature_1d, cd_dof[:,1], method='nearest')
+        ind_B = np.where(cd_dof[:,1] <= -self.g_input.slab_tk)[0]
+        T_i_A.x.scatter_forward() 
+        T_i_A.x.array[ind_B] = ctrl_tbc.temp_max
         T_i_A.x.scatter_forward() 
         #- 
 
         T_expr = dolfinx.fem.Function(X)
-        ind_A = np.where(cd_dof[:,1] >= -self.g_input.lab_d)[0]
-        ind_B = np.where(cd_dof[:,1] < -self.g_input.lab_d)[0]
+        if not self.g_input.model_full:
+            ind_A = np.where(cd_dof[:,1] >= -self.g_input.lab_d)[0]
+            ind_B = np.where(cd_dof[:,1] < -self.g_input.lab_d)[0]
+        else: 
+            ind_A = np.where(cd_dof[:,1] >= -self.g_input.ns_depth)[0]
+            ind_B = np.where(cd_dof[:,1] < -self.g_input.ns_depth)[0]
         T_expr.x.array[ind_A] = griddata(ctrl_tbc.z_right, ctrl_tbc.temp_1d_right, cd_dof[ind_A,1], method='nearest')
         T_expr.x.array[ind_B] = ctrl_tbc.temp_max
         T_expr.x.scatter_forward()
@@ -1093,7 +1113,6 @@ class Global_thermal(Problem):
             T_i_A
         )
         T_i.interpolate(dolfinx.fem.Expression(expr, X.element.interpolation_points()))
-        T_i.x.array[ind_B] = ctrl_tbc.temp_max
         T_i.x.scatter_forward()
         return T_i 
 # --- 
@@ -1342,7 +1361,7 @@ class Stokes_Problem(Problem):
                                                      ts=ts,
                                                      slab=slab)
                 
-            if self.domain.name == 'subduction_plate_domain':
+            if self.domain.name == 'subduction_plate_domain' and not self.g_input.model_full:
                 # Add Nitsche Boundary Conditions 
                 dS_bot = self.domain.bc_dict["bot_subduction"]
                 a1,a2,a3 = self.compute_nitsche_FS(sol=sol

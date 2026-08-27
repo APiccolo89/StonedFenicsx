@@ -1,19 +1,169 @@
 
 
 # ---
-from stonedfenicsx.config.numerical_control import SimulationControls
-from stonedfenicsx.config.geometry import Mesh
-from stonedfenicsx.config.scal import Scal
-from stonedfenicsx.config.phase_db import PhaseDataBase
-# ---
-from stonedfenicsx.utils import interpolate_from_sub_to_main,timing,print_ph
-from stonedfenicsx.solver_module.problems_solution import Solution, Slab, Wedge, Global_thermal, Global_pressure
-from stonedfenicsx.output import OUTPUT
-from stonedfenicsx.solver_module.solver_utilities import OUTERITERATION_SOL_VAL,timestep_output
 # --- mpi4py/petsc4py needed for the permanent per-timestep PETSc garbage
 # cleanup below (see time_loop).
 from mpi4py import MPI
 from petsc4py import PETSc
+
+from stonedfenicsx.config.geometry import Mesh
+from stonedfenicsx.config.numerical_control import SimulationControls
+from stonedfenicsx.config.phase_db import PhaseDataBase
+from stonedfenicsx.config.scal import Scal
+from stonedfenicsx.output import OUTPUT
+from stonedfenicsx.solver_module.problems_solution import (
+    Global_pressure,
+    Global_thermal,
+    Slab,
+    Solution,
+    Wedge,
+)
+from stonedfenicsx.solver_module.solver_utilities import (
+    OUTERITERATION_SOL_VAL,
+    timestep_output,
+)
+
+# ---
+from stonedfenicsx.utils import interpolate_from_sub_to_main, print_ph, timing
+
+
+def outerloop_operation_initial_guess(ctrl_sim:SimulationControls,
+                        sc:Scal,
+                        eg:Global_thermal,
+                        lg:Global_pressure,
+                        we:Wedge,
+                        sl:Slab,
+                        sol:Solution
+                        ,pdb:PhaseDataBase
+                        ,outit:OUTERITERATION_SOL_VAL
+                        ,ts:int=0)->None:
+    """Execute one complete Picard outer-loop sweep over all coupled sub-problems.
+
+    At each outer iteration the sub-problems are solved in the following order:
+      1. Global lithostatic pressure  (lg) -- skipped after it_outer=0 if linear.
+      2. Temperature and pressure interpolated from global to wedge/slab sub-meshes.
+      3. Slab Stokes                  (sl) -- solved only at the first outer iteration
+         of each timestep, or when the kinematic BC changes.
+      4. Wedge Stokes                 (we) -- solved every iteration when nonlinear.
+      5. Stokes solutions interpolated back to the global mesh.
+      6. Global thermal energy        (eg) -- always solved.
+      7. Outer-loop residual computed; loop exits when below ctrl_sim.ctrl.tol
+         or ctrl_sim.ctrl.it_max iterations are reached.
+
+    If all three sub-problems are linear the maximum number of outer iterations
+    is capped at 2 (one solve + one residual check).
+
+    Args:
+        ctrl_sim (SimulationControls): Simulation controls (tolerances, max
+            iterations, solver types, boundary-condition parameters).
+        sc (Scal): Non-dimensionalisation scaling object.
+        eg (Global_thermal): Global thermal energy problem.
+        lg (Global_pressure): Global lithostatic pressure problem.
+        we (Wedge): Mantle-wedge Stokes problem.
+        sl (Slab): Subducting-plate Stokes problem.
+        sol (Solution): Current solution container; updated in-place and returned.
+        pdb (PhaseDataBase): Material-property database.
+        ts (int, optional): Current timestep index. Defaults to 0.
+
+    Returns:
+        Solution: Updated solution container after the outer Picard loop has
+        converged (or exhausted the iteration budget).
+    """
+    # Initialise the it outer and residual outer
+    it_outer = 0 
+
+    max_it = 5
+    
+    
+    while it_outer < max_it and outit.res > ctrl_sim.ctrl.tol: 
+        
+        print_ph(f'--  --- Outer iteration {it_outer:d} for the thermal diffusion initial guess  --  ---')
+        
+        time_A_outer = timing.time()
+        # Copy the old solution of the outer loop for computing the residual of the equations. 
+        
+        if it_outer == 0:  
+            lg.Solve_the_Problem(sol,
+                                       it_outer
+                                       ,ts=ts)
+
+    
+        outit.ene_res_gl[0], outit.ene_res_gl[1] = eg.Solve_the_Problem(sol
+                            ,it_outer = it_outer
+                            ,ts = ts)                      
+        
+        outit.compute_residuum_outer_initial_guess_diffusion(sol=sol
+                                     ,it_outer=it_outer
+                                     ,sc=sc
+                                     ,tA=time_A_outer
+                                     ,ts=ts
+                                     ,ctrl_sim=ctrl_sim
+                                    )
+        print_ph('')
+        if it_outer > max_it:
+            print_ph(f'Warning: Outer loop did not converge after {max_it:d} iterations. Residual = {outit.res:.3e}!!!!')
+        it_outer = it_outer + 1
+        
+    
+    # reset outit res:
+    outit.res = 1.0 
+
+
+def diffusion_initial_guess(ctrl_sim:SimulationControls
+              ,eg : Global_thermal
+              ,lg : Global_pressure
+              ,we : Wedge
+              ,sl : Slab
+              ,sol : Solution
+              ,pdb: PhaseDataBase
+              ,sc: Scal
+             ) -> None:
+    outit_td = OUTERITERATION_SOL_VAL(sol=sol,ctrl=ctrl_sim.ctrl,ctrl_io=ctrl_sim.ctrl_io)
+    t = 0.0
+    ts = 0
+    while t<ctrl_sim.ctrl.time_ini_guess:
+        time_A = timing.time()
+        if ctrl_sim.ctrl.steady_state==0:
+            print_ph('||--------------------- || ---------------------||')
+            print_ph(f'Time = {t*sc.time/sc.scale_myr2sec:.3f} Myr, timestep = {ts:d}')
+            print_ph('||--------------------- || ---------------------||')
+            
+        # Prepare variable
+        outerloop_operation_initial_guess(ctrl_sim=ctrl_sim
+                                  ,sc=sc
+                                  ,eg=eg
+                                  ,lg=lg
+                                  ,we=we
+                                  ,sl=sl
+                                  ,sol=sol
+                                  ,pdb=pdb
+                                  ,outit=outit_td
+                                  ,ts=ts)
+        # --- Save the output if the timestep is a multiple of the output timestep, or if the time is a multiple of the output time, or if the steady state is reached.
+        t = t+ctrl_sim.ctrl.dt
+            
+    
+        sol.T_O.x.array[:] = sol.T_N.x.array[:]
+        sol.T_O.x.scatter_forward()
+        
+        time_B = timing.time()
+        print_ph(f'---------------------Timestep {ts}  took {time_B-time_A:.2f} ---------------------')
+
+        # petsc4py defers destruction of PETSc objects caught in reference
+        # cycles (or that require a collective destroy call) into an
+        # internal queue; nothing else flushes it during a run, so without
+        # this it accumulates unboundedly (confirmed experimentally: RSS
+        # grew from 2.67 to 4.81 GB over one run with this disabled). Cheap,
+        # collective, must be called on every rank.
+        # Ref: https://gitlab.com/petsc/petsc/-/work_items/1309 
+        # Ref2 : https://fenicsproject.discourse.group/t/memory-management-with-petsc4py/18199/2
+        PETSc.garbage_cleanup(MPI.COMM_WORLD)
+
+        ts = ts + 1
+
+    print_ph('Thermal diffusion initial guess finished. The show must go on... ')
+
+
 # ---
 def initialise_the_simulation(ctrl_sim:SimulationControls = None
                               ,pdb:PhaseDataBase = None
@@ -233,17 +383,32 @@ def initial_guess_simulation(ctrl_sim:SimulationControls
     """
     ts = 0 #  fake ts 
     time_A = timing.time()
-    print_ph('              !!! Initial guess of the simulation !!!')
-    outerloop_operation(ctrl_sim=ctrl_sim
-                                  ,sc=sc
-                                  ,eg=eg
-                                  ,lg=lg
-                                 ,we=we
-                                  ,sl=sl
-                                  ,sol=sol
-                                  ,pdb=pdb
-                                  ,outit=outit
-                                  ,ts=ts)
+    if ctrl_sim.ctrl.initial_guess == 0: return
+    if ctrl_sim.ctrl.initial_guess == 1:
+        print_ph('  STEADY STATE  !!! Initial guess of the simulation !!!')
+        outerloop_operation(ctrl_sim=ctrl_sim
+                                      ,sc=sc
+                                      ,eg=eg
+                                      ,lg=lg
+                                     ,we=we
+                                      ,sl=sl
+                                      ,sol=sol
+                                      ,pdb=pdb
+                                      ,outit=outit
+                                      ,ts=ts)
+    elif ctrl_sim.ctrl.initial_guess == 2: 
+        diffusion_initial_guess(ctrl_sim = ctrl_sim
+              ,eg = eg
+              ,lg = lg
+              ,we = we
+              ,sl = sl
+              ,sol = sol
+              ,pdb =  pdb
+              ,sc = sc
+             )
+        
+        
+        
     ctrl_sim.ctrl.initial_guess = 0 
     sol.T_O.x.array[:] = sol.T_N.x.array[:]
     sol.T_O.x.scatter_forward()

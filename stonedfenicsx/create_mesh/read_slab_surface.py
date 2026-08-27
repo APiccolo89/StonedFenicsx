@@ -1,17 +1,15 @@
 
 
 import numpy as np
-
-
+from numpy.typing import NDArray
 from scipy.interpolate import CubicSpline
 
 from stonedfenicsx.create_mesh.aux_create_mesh import create_slab_surface
 
-from numpy.typing import NDArray
 
 def apply_Savitzky_Golay(yd,order,cf):
     
-    from scipy.signal import savgol_filter as sgf 
+    from scipy.signal import savgol_filter as sgf
     
     yd_smooth = sgf(yd,cf,order)
     
@@ -228,7 +226,7 @@ def read_file_slab(file_path:str)->tuple[NDArray[float],NDArray[float]]:
     slab_top, theta_mean = curve_fitting(ax,ay,path.parent,path.stem)
 
 
-    return slab_top*1000, theta_mean 
+    return slab_top, theta_mean 
 
 
 

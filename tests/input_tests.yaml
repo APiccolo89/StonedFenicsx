@@ -14,7 +14,7 @@ Input:
     relax: 0.9
     g: 9.81
     eta_max: 1.0e26
-    time_max: 2.0  # Myr
+    time_max: 20.0  # Myr
     steady_state: 1
     decoupling_ctrl: 0
     model_shear: "NoShear" # [Constant,SelfConsistent,NoShear]
@@ -23,6 +23,8 @@ Input:
     stokes_solver_type : "Direct"
     energy_solver_type : "Direct"
     pressure_dependency: 1
+    time_ini_guess : 0.3
+    initial_guess: "Thermal_Diffusion" 
 
   Shear_Heating: 
     shear_heating_disl_phi: 5.0 
@@ -223,3 +225,4 @@ Input:
     sub_parabolic_a: 8e-4 # [km^-1] -> curvature of the parabolic slab
     slab_type: "CustomParabolic" # [CustomParabolic,CustomRibe,FromFile] 
     sub_path: "Not Defined"
+    model_full: True

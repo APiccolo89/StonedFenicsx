@@ -44,7 +44,7 @@ def configure_simulation(
     # update the input/output
     ctrl_io.generate_io()
     # Create the mesh
-    mesh = create_mesh(ioctrl=ctrl_io, sc= sc,g_input=g_input,ctrl=ctrl)
+    mesh = create_mesh(ioctrl=ctrl_io,g_input=g_input,ctrl=ctrl)
     # Generate the phase data base
     pdb = generate_phase_database(
         pressure_dependency=ctrl.pressure_dependency, eta_max=ctrl.eta_max, phin=ph_in
