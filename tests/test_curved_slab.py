@@ -33,8 +33,8 @@ def perform_test(option_viscous=0,option_thermal=0):
     inp.g_input.decoupling = 80.0 
     inp.g_input.van_keken = False 
     inp.g_input.sub_constant_flag = False
-    inp.g_input.slab_type = 'FromFile'
-    inp.g_input.sub_path = '/Users/wlnw570/Work/Leeds/Fenics_tutorial/examples/data/Mexico_slab.pz'
+    inp.g_input.slab_type = 'CustomRibe'
+    #inp.g_input.sub_path = '/Users/wlnw570/Work/Leeds/Fenics_tutorial/examples/data/Mexico_slab.pz'
     inp.g_input.resolution_normal = 10
     # Control 
     inp.ctrl.decoupling_ctrl = 0 

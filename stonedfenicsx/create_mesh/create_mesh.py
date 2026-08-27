@@ -506,8 +506,9 @@ def create_physical_line(
     mesh_model.addPhysicalGroup(1, LC.tag_L_Bsub, tag=dict_tag_lines["Subduction_bot"])
 
     if g_input.model_full:
-        mesh_model.addPhysicalGroup(1, LC.tag_L_L[1:], tag=dict_tag_lines["Left_inlet"])
         mesh_model.addPhysicalGroup(1, [LC.tag_L_L[0]], tag=dict_tag_lines["Left_inlet_bt"])
+        mesh_model.addPhysicalGroup(1, LC.tag_L_L[1:], tag=dict_tag_lines["Left_inlet"])
+
 
     else: 
         mesh_model.addPhysicalGroup(1, LC.tag_L_L, tag=dict_tag_lines["Left_inlet"])

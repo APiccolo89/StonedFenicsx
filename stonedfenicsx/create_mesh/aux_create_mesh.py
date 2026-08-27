@@ -39,7 +39,7 @@ dict_tag_lines = {
     'Left_inlet_bt'        : 14,
 }     
 #-----------------------------------------------------------------------------------------------------------------
-class Class_Points():
+class Class_Points:
     def update_points(self,
                       mesh_model : gmsh.model,
                       sx : np.ndarray,
@@ -126,7 +126,7 @@ class Class_Points():
         return mesh_model
 #-----------------------------------------------------------------------------------------------------------------
  
-class Class_Line():
+class Class_Line:
     def update_lines(self, 
                      mesh_model:gmsh.model, 
                      CP:Class_Points, 
