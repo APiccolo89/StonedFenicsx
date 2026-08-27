@@ -1,8 +1,31 @@
+# Numerical Design 
+
+**StonedFEniCSx** is a numerical code that is written in Python, and it highly relies on the FEniCSx library. The code is conceived to solve *problems*. A *problem* is a set of differential equations that are solved in a specific domain. For example: the stokes problem is solved only in the `subducting_plate_domain` and in the `wedge_domain`; the lithostatic pressure problem and energy problem are solved in the `Global_domain`. 
+
+**StonedFEniCSx** can solve the steady-state and time-dependent problems. 
+
+**StonedFEniCSx** reads the input, generate a user-layer in which the user can modify the data coming from *input.yml*. **StonedFEniCSx** uses the information from the input or from the configuration script to configure and run the simulation.
+
+The `subducting_plate_domain` stokes problem is solved once per numerical simulation, unless the velocity of the slab changes over-time in the time-dependent solution. This saves computation time. The `subducting_plate_domain` is designed in this manner, because the kinematic boundary condition over-constrain the velocity field of the slab. `wedge_domain` is solved only one time if the rheology is linear, otherwise is solved every-iteration. 
+
+The lithostatic-pressure problem is solved once per timestep in case of time-dependent problem, while, in steady-state problem is solved at every iteration. The variation of lithostatic pressure in the time-dependent problems is negligible between time-step, and it is necessary to compute once. The energy problem is solved each time-step. 
+
+The information between the domains are interpolated back-forth between the meshes of each sub-domains. 
+
+The solution is iterated using a fixed-point iteration. We choose the following criteria to assess whether the solution is converged or not:
+
+- The combined conservation residual.
+- The {math}`L1-\inf` norm of the temperature difference between iteration. 
+  
+If {math}`L1-\inf` is less than 1e-2 [K], the problem is considered converged; if the residual of the conservation equation is less than the threshold decided by the user, then the problem is considered converged regardless the actual value of {math}`L1-\inf`. 
+ 
+
 # How to use 
 
 The code is organized to always require the definition of an *input_file.yml*. The blue-print of the input file can be found in the main folder of the package. 
 
 The units of measure in the input code are always: **Myr**, **km**, **cm/yr**, **deg** and **degC** for time, length, velocity, angles and temperatures respectively; the only exception is for the *scaling* options; in this case, the unit of measure are **m**, **Pa**, **Pa s** and **deg C** The conversions in SI units and the relative scaling are performed internally during the configuration step of the simulation. 
+
 ## Input File 
 The input file is divided into 8 subsections: 
 

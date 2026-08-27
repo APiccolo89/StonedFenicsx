@@ -135,17 +135,12 @@ class OUTERITERATION_SOL_VAL:
 
 
         
-        if dtemp_l1 < 1e-2: 
-            print_ph(f'L1_norm of the temperature difference is less than {1e-5:.5e} [K]. The problem is converged.')
+        if dtemp_l1 <= ctrl_sim.ctrl.tol_dtemp: 
+            print_ph(f'L1_norm of the temperature difference is less than {ctrl_sim.ctrl.tol_dtemp:.3e} [K]. The problem is converged.')
             self.res = ctrl_sim.ctrl.tol 
             return 0 
         
-        res_consv_rel = r_tot_conv
-        if (res_consv_rel < res_total) and (ctrl_sim.ctrl.steady_state==1) and (ctrl_sim.ctrl.initial_guess==0): 
-            print_ph('     --- The conservation residual is less than the residual difference: the tol is evaluated against conservation equations.')
-            self.res = res_total
-        else: 
-            self.res = res_consv_rel 
+        self.res = r_tot_conv 
             
         if MPI.COMM_WORLD.rank == 0 and ctrl_sim.ctrl.initial_guess==0:
             log_ts = 0 

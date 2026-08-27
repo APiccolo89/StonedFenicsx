@@ -24,7 +24,8 @@ class NumericalControls:#ctrl
     it_max: int = 20
     it_inner_max: int = 10
     tol: float = 1e-4
-    relax: float = 0.9
+    tol_dtemp :float = 5e-2
+    relax: float = 1.0
     g: float = 9.81                # gravity [m/s^2]
     time_max: float = 30.0         # [Myr]
     dt: float = 500.0              # [yr]
@@ -40,6 +41,7 @@ class NumericalControls:#ctrl
     time_ini_guess : float = 0.3
     initial_guess: str = "None" # Initial guess -> set to 0 after the first outer iteration 
     CFL: float = 0.8
+    
     def update_initial_guess(self):
         
         try: 

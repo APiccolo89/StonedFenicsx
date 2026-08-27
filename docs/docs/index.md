@@ -45,7 +45,7 @@ input_data, ph_in = parse_input("input.yaml")
 stoned_fenicsx(input_data, ph_in)
 ```
 
-`input.yaml` at the repo root is a commented example covering units, numerical controls, shear-heating options, and thermal/kinematic boundary conditions. `stonedfenicsx/stoned_fenicsx.py::test_function` shows a fully scripted example that also overrides material properties in code after parsing. `examples/` contains region-specific driver scripts (`Japan_slab.py`, `Mexico_slab.py`, `Chile_slab.py`, `Tonga_slab copy.py`) built the same way.
+`input.yaml` at the repo root is a commented example covering units, numerical controls, shear-heating options, and thermal/kinematic boundary conditions. `stonedfenicsx/stoned_fenicsx.py::test_function` shows a fully scripted example that also overrides material properties in code after parsing. `examples/` contains region-specific driver scripts (`Japan_slab.py`, `Mexico_slab.py`, `Chile_slab.py`, `Tonga_slab.py`) built the same way.
 
 Results are written under `Results/<test_name>/` as XDMF/HDF5 fields, plus cached material-property lookups.
 
@@ -59,7 +59,6 @@ installation
 how_to_use
 Computational_domain
 Material_properties
-Numerical_Strategy
 Examples
 ```
 
