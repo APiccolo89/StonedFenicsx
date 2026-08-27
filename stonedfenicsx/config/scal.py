@@ -1,13 +1,17 @@
 """Modules"""
-from stonedfenicsx.utils import timing_function
-from stonedfenicsx.config.numerical_control import (CtrlKy,
-                                                    CtrlTemperatureBC,
-                                                    NumericalControls,
-                                                    IOControls,
-                                                    SimulationControls)
+from dataclasses import dataclass, field
+
+from stonedfenicsx.config.geometry import GeomInput, Mesh
+from stonedfenicsx.config.numerical_control import (
+    CtrlKy,
+    CtrlTemperatureBC,
+    IOControls,
+    NumericalControls,
+    SimulationControls,
+)
 from stonedfenicsx.config.phase_db import PhaseDataBase
-from dataclasses import dataclass,field
-from stonedfenicsx.config.geometry import GeomInput,Mesh
+from stonedfenicsx.utils import timing_function
+
 _KELVIN_ = 273.15
 _KM_2_M_ = 1000
 
@@ -220,6 +224,7 @@ def scaling_control_parameters(ctrl:NumericalControls,sc:Scal)->None:
 
     ctrl.g = ctrl.g / (sc.length/sc.time**2)
     ctrl.time_max = ctrl.time_max * (sc.scale_myr2sec/sc.time)
+    ctrl.time_ini_guess = ctrl.time_ini_guess * (sc.scale_myr2sec/sc.time)
     ctrl.dt = ctrl.dt * (sc.scale_myr2sec/sc.time)
 
 def scaling_mesh(mesh:Mesh,sc:Scal)->None:

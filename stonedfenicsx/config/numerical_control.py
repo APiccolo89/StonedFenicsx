@@ -11,6 +11,7 @@ import warnings
 dict_shear_modes = {"NoShear": 0, "SelfConsistent": 1, "Constant": 2}
 dict_solver_type = {"Direct": np.int32(1), "Iterative": np.int32(0)}
 dict_output_type = {"step": 0, "time": 1}
+dict_initial_guess = {"None":0, "Steady_State":1, "Thermal_Diffusion":2}
 
 @dataclass(slots=True)
 class NumericalControls:#ctrl 
@@ -34,9 +35,21 @@ class NumericalControls:#ctrl
     iterative_solver_tol: float = 1e-7
     eta_max : float = 1e26
     pressure_dependency: int = 1
-    initial_guess: int = 1 # Initial guess -> set to 0 after the first outer iteration 
+    time_ini_guess : float = 0.3
+    initial_guess: str = "None" # Initial guess -> set to 0 after the first outer iteration 
     CFL: float = 0.8
     def update_initial_guess(self):
+        
+        try: 
+            self.initial_guess = dict_initial_guess[self.initial_guess]
+        except: 
+            print_ph(f'{self.initial_guess} is not a valid option')
+            print_ph('The valid options are:')
+            print_ph('.     1. None: do not have an initial guess')
+            print_ph('.     2. Steady_State: perform a linear steady state solution')
+            print_ph(f'.     3. Thermal_Diffusion: perform a thermal diffusion for {self.time_ini_guess} Myr')
+            raise ValueError('Wrong Initial guess option')
+
         if self.initial_guess == 1 and self.steady_state == 1: 
             warnings.warn('Initial guess is incompatible with steady state solution. Steady state controls has priority')
             self.initial_guess = 0
@@ -56,7 +69,7 @@ class NumericalControls:#ctrl
             raise ValueError('Decoupling control must be active if the shear heating flag is either Constant or SelfConsistent')
 
         
-        print('Controls updated')
+        print_ph('Controls updated')
 # --- #
 @dataclass(slots=True)
 class IOControls: # ctrlio

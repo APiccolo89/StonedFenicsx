@@ -99,3 +99,4 @@ memory_growth_findings.md
 tests/test_bench_td.txt
 stonedfenicsx/config/numerical_control.py
 .DS_Store
+tests/Curved/T_vi2_th0.txt

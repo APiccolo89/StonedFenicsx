@@ -246,7 +246,7 @@ class Problem:
             self.cached_mat = RHEOLOGYCACHED(pdb=self.pdb,phase=self.domain.phase)
 # --- 
 # --- 
-class Solution():
+class Solution:
     def __init__(self):
         """Declare (without allocating) every field and residual/history array
         carried by a simulation state.
@@ -748,6 +748,9 @@ class Global_thermal(Problem):
             dofs_left              = dolfinx.fem.locate_dofs_topological(self.FS, domain.mesh.topology.dim-1, facets)
             # Interpolate + CORRECTION initial z vector -> If angle slab != 0.0 => z = z/cos(theta_in_slab) 
             temp_bc_left = self.interpolate_1d_vector_boundary(self.FS,ctrl_tbc.z,ctrl_tbc.temperature_1d,cd_dof)
+            if self.g_input.model_full: 
+                Z = self.FS.tabulate_dof_coordinates()[:,1]
+                temp_bc_left.x.array[Z<-self.g_input.slab_tk] = self.ctrl_sim.ctrl_tbc.temp_max
             # Update dirichletbc
             self.bc_left = dolfinx.fem.dirichletbc(temp_bc_left, dofs_left)
 
@@ -815,8 +818,7 @@ class Global_thermal(Problem):
         dS = ufl.Measure("dS", domain=domain.mesh, subdomain_data=domain.facets)
         mode_shear = self.ctrl_sim.ctrl.model_shear
         expression = dolfinx.fem.Constant(domain.mesh,(0.0))* (dS(domain.bc_dict['Subduction_top_lit']) + dS(domain.bc_dict['Subduction_top_wed']))
-        if self.ctrl_sim.ctrl.decoupling_ctrl == 1 and mode_shear>0:
-    
+        if self.ctrl_sim.ctrl.decoupling_ctrl == 1:
             if mode_shear>0:
                 # compute the plastic strain rate ratio and viscous shear heating strain rate 
                 # Place holder function
@@ -991,7 +993,6 @@ class Global_thermal(Problem):
         rT = self.compute_residual()
         if it_outer==0:
             self.rT0 = rT 
-        time_B = timing.time()        
         
         return rT,self.rT0 
     #---
@@ -1079,9 +1080,10 @@ class Global_thermal(Problem):
         Returns:
             dolfinx.fem.Function: Initial temperature field on `self.FS`.
         """
-        from scipy.interpolate import griddata
-        from ufl import conditional, Or, eq
         from functools import reduce
+
+        from scipy.interpolate import griddata
+        from ufl import Or, conditional, eq
         #- Create part of the thermal field: create function, extract dofs,
         ctrl_tbc = self.ctrl_sim.ctrl_tbc
         
@@ -1089,13 +1091,20 @@ class Global_thermal(Problem):
         X     = self.FS
         T_i_A = dolfinx.fem.Function(X)
         cd_dof = X.tabulate_dof_coordinates()
-        T_i_A.x.array[:] = self.ctrl_sim.ctrl_tbc.temp_max
+        T_i_A.x.array[:] = griddata(ctrl_tbc.z, ctrl_tbc.temperature_1d, cd_dof[:,1], method='nearest')
+        ind_B = np.where(cd_dof[:,1] <= -self.g_input.slab_tk)[0]
+        T_i_A.x.scatter_forward() 
+        T_i_A.x.array[ind_B] = ctrl_tbc.temp_max
         T_i_A.x.scatter_forward() 
         #- 
 
         T_expr = dolfinx.fem.Function(X)
-        ind_A = np.where(cd_dof[:,1] >= -self.g_input.lab_d)[0]
-        ind_B = np.where(cd_dof[:,1] < -self.g_input.lab_d)[0]
+        if not self.g_input.model_full:
+            ind_A = np.where(cd_dof[:,1] >= -self.g_input.lab_d)[0]
+            ind_B = np.where(cd_dof[:,1] < -self.g_input.lab_d)[0]
+        else: 
+            ind_A = np.where(cd_dof[:,1] >= -self.g_input.ns_depth)[0]
+            ind_B = np.where(cd_dof[:,1] < -self.g_input.ns_depth)[0]
         T_expr.x.array[ind_A] = griddata(ctrl_tbc.z_right, ctrl_tbc.temp_1d_right, cd_dof[ind_A,1], method='nearest')
         T_expr.x.array[ind_B] = ctrl_tbc.temp_max
         T_expr.x.scatter_forward()
@@ -1106,7 +1115,6 @@ class Global_thermal(Problem):
             T_i_A
         )
         T_i.interpolate(dolfinx.fem.Expression(expr, X.element.interpolation_points()))
-        T_i.x.array[ind_B] = ctrl_tbc.temp_max
         T_i.x.scatter_forward()
         return T_i 
 # --- 

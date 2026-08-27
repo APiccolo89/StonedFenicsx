@@ -25,7 +25,8 @@ Input:
     iterative_solver_tol : 1e-9
     pressure_dependency: 0
     CFL : 0.8
-    initial_guess : 0 
+    time_ini_guess : 0.3
+    initial_guess : "Thermal_Diffusion" # {Thermal_Diffusion} -> Run Thermal diffusion without velocity for 0.3 Myr -> smoothing the asperities {None}
 
 
   Shear_Heating: 

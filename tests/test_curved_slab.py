@@ -1,11 +1,14 @@
 # Import the required path for processing the simulation
+import os
+from pathlib import Path
+
+import numpy as np
+import pytest
+from mpi4py import MPI
+
 from stonedfenicsx.config.input_parser import parse_input
 from stonedfenicsx.stoned_fenicsx import stoned_fenicsx
-from pathlib import Path
-import os 
-import numpy as np 
-from mpi4py import MPI
-import pytest
+
 # Global flag to decide wether or not to remove the results -> debug reason. 
 DEBUG = False
 #-------------------------------------------------------------------------------
@@ -26,8 +29,8 @@ def perform_test(option_viscous=0,option_thermal=0):
     inp.g_input.lc = .0
     inp.g_input.ocr = 6.0 
     inp.g_input.lit_mt = 50.
-    inp.g_input.lab_d = 50.
-    inp.g_input.decoupling = .0 
+    inp.g_input.lab_d = 80.
+    inp.g_input.decoupling = 80.0 
     inp.g_input.van_keken = False 
     inp.g_input.sub_constant_flag = False
     inp.g_input.slab_type = 'FromFile'

@@ -328,6 +328,133 @@ class OUTERITERATION_SOL_VAL:
                                reseg = self.ene_res_gl[0]/self.ene_res_gl[1])
         
         self.update_iteration(sol)
+    
+    def compute_residuum_outer_initial_guess_diffusion(self
+                               ,sol:Solution
+                               ,it_outer:int
+                               ,sc:Scal
+                               ,tA:float
+                               ,ts:int
+                               ,ctrl_sim:SimulationControls
+                               ) -> tuple[float]:
+        """Compute the outer-loop Picard residual and print diagnostic statistics.
+
+        Computes a normalised L2 residual for each of the four solution fields
+        (velocity, dynamic pressure, temperature, lithostatic pressure) between
+        the current and previous outer iterations.  The combined residual is the
+        Euclidean norm of the four individual residuals.  Physical-unit ranges
+        (min, max, RMS) are rescaled for printing.
+
+        Appends per-timestep diagnostics (min/max T, min/max v, RMS, outer
+        residual, timestep index) to the history arrays stored in `sol`.
+
+        Raises ValueError if the combined residual is non-finite, which signals
+        a diverged or ill-conditioned solve.
+
+        Args:
+            sol (Solution): Current solution container (fields read, history
+                arrays appended in-place).
+            T (dolfinx.fem.Function): Temperature at the start of this outer
+                iteration (snapshot copy made by `outerloop_operation`).
+            PL (dolfinx.fem.Function): Lithostatic pressure at the start of this
+                outer iteration.
+            u (dolfinx.fem.Function): Velocity at the start of this outer
+                iteration.
+            p (dolfinx.fem.Function): Dynamic pressure at the start of this outer
+                iteration.
+            it_outer (int): Current outer-loop iteration index (for printing).
+            sc (Scal): Non-dimensionalisation scaling object for unit rescaling.
+            tA (float): Wall-clock time (from `timing.time()`) at the start of
+                the outer iteration, used to report elapsed time.
+            ts (int): Current timestep index.
+            ctrl_sim (SimulationControls): Simulation controls; used to check
+                whether temperature has exceeded the prescribed maximum.
+
+        Returns:
+            tuple[float, Solution]:
+                res_total -- combined outer-loop residual (dimensionless).
+                sol       -- solution container with updated history arrays.
+        """
+        # Prepare the variables 
+
+        res_T,res_dT,linft,res_T_alt = compute_residuum(sol.T_N,self.T)
+
+        # Compute the ranges
+        minMaxT = min_max_array(sol.T_N)
+
+        # scal back 
+
+        minMaxT[0:2] = minMaxT[0:2]*sc.temp -273.15
+        # Warnings and data 
+        # Printing state: warning for the mismatch: 
+        if ctrl_sim.ctrl.initial_guess==0:
+            if it_outer == 0: 
+                self.old_t_max = minMaxT[1]
+                self.old_t_min = minMaxT[0]
+            else: 
+                dT_M = (self.old_t_max - minMaxT[1])
+                dT_m = (self.old_t_min - minMaxT[0])
+                if np.abs(dT_M) > 0.1 or np.abs(dT_m) and ts>3:
+                    print_ph('            Check min-max temperature BC: ')
+
+                    print_ph(f'         dT_min = {dT_m:.2f} [K]')
+
+                    print_ph(f'         dT_max = {dT_M:.2f} [K]')
+                    # During the initial guess temperature might have a few artifcats due to the initial temperature field
+
+            
+        if minMaxT[1]-(ctrl_sim.ctrl_tbc.temp_max * sc.temp-273.15)>1.0: 
+            print_ph(' WARNING:::Temperature higher than the maximum temperature')
+        if minMaxT[0] < 0.0: 
+            print_ph("Problem with the thermal solver")
+
+
+        res_total = np.sqrt(res_T**2)
+        if not np.isfinite(res_total):
+            raise ValueError("res_total is NaN/Inf; check inputs and residual computations.")
+
+        time_B_outer = timing.time()
+    
+        print_ph('        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ')
+        print_ph('        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ')
+        print_ph('         Residual difference function :')
+        print_ph(f'              Res Temperature    =  {res_T:.3e} [n.d.], max = {minMaxT[1]:.3f}, min = {minMaxT[0]:.3f} [C], RMS = {minMaxT[2]:.3f} [n.d.] ')
+        print_ph(f'              Res total (sqrt(rT^2)) =  {res_total:.3e} [n.d.] ')
+        print_ph(f'              [L2Norm] dimensional residual temperature = {res_dT*sc.temp:.3e} [K],')
+        print_ph(f'              [L2_alt] L2(T()-T(-1))/T()) dimensional residual temperature = {res_T_alt:.3e} [n.d.]')
+        print_ph('         Conservation residual :')
+        print_ph('          Energy Equation :')
+        print_ph(f'              Res energy equation = abs: {self.ene_res_gl[0]:.3e} [n.d]| rel: {self.ene_res_gl[0]/self.ene_res_gl[1]:.3e} [n.d.]')
+        r_tot_conv = np.sqrt(self.ene_res_gl[0]**2)
+        if it_outer == 0:
+            self.combined_residual_0  = np.sqrt(self.ene_res_gl[1]**2)
+
+        print_ph(f'         Combined residual =  abs {r_tot_conv:.3e} [n.d.], rel {r_tot_conv/ self.combined_residual_0:.3e}')
+        print_ph(f'                           Initial residual ** {self.combined_residual_0:.3e}**')
+        print_ph('        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ')
+        print_ph('        --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ')
+
+        print_ph(f'   --- Outer iteration {it_outer:d} with tolerance {res_total:.3e}, in {time_B_outer-tA:.1f} sec -- ---')
+
+        # Update solution 
+        update_solution(sol.T_N,self.T,ctrl_sim.ctrl.relax)
+        sol.T_N.x.array[:] = self.T.x.array[:]
+        update_solution(sol.u_global,self.u,ctrl_sim.ctrl.relax)
+        sol.u_global.x.array[:] = self.u.x.array[:]
+        update_solution(sol.p_global,self.p,ctrl_sim.ctrl.relax)
+        sol.p_global.x.array[:] = self.p.x.array[:]
+        
+        self.check_convergence(ctrl_sim=ctrl_sim
+                               ,res_total=res_total
+                               ,r_tot_conv=r_tot_conv/self.combined_residual_0
+                               ,dtemp_l1=linft*sc.temp
+                               ,res_alt = res_T_alt
+                               ,ts=ts
+                               ,it_outer=it_outer
+                               ,rmom_wg=self.mom_res_wedge[0]/self.mom_res_wedge[1],
+                               reseg = self.ene_res_gl[0]/self.ene_res_gl[1])
+        
+        self.update_iteration(sol)
         
 # ---
 def compute_residuum(a:dolfinx.fem.Function,b:dolfinx.fem.Function)->float:
