@@ -5,10 +5,10 @@ from dataclasses import dataclass, field
 import basix
 import dolfinx
 import numpy as np
-import petsc4py.PETSc as PETSc
 import ufl
 from mpi4py import MPI
 from numpy.typing import NDArray
+from petsc4py import PETSc
 from scipy.interpolate import griddata
 
 from stonedfenicsx.config.geometry import Domain, GeomInput, Mesh
@@ -34,10 +34,8 @@ from stonedfenicsx.material_property.compute_material_property import (
 # --- from solver module
 from stonedfenicsx.solver_module.solver import ScalarSolver, Solvers, SolverStokes
 from stonedfenicsx.solver_module.solver_utilities import (
-    compute_residuum,
     decoupling_function,
     min_max_array,
-    update_solution,
 )
 
 # --- from src 

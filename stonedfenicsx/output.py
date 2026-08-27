@@ -4,13 +4,12 @@
 """
     
 import os
-from pathlib import Path
 
 import basix
-import dolfinx.fem as fem
 import h5py
 import numpy as np
 import ufl
+from dolfinx import fem
 from dolfinx.io import XDMFFile
 from mpi4py import MPI
 

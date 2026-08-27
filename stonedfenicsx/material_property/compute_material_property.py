@@ -1,12 +1,15 @@
 
 # modules
-from stonedfenicsx.config.phase_db import PhaseDataBase
-from stonedfenicsx.config.scal import Scal
-from ufl import cos, sin, tan, conditional, eq,exp, sqrt,inner
+from dataclasses import InitVar, dataclass
+
+import numpy as np
 import ufl
-import dolfinx.fem as fem 
-import numpy as np 
-from dataclasses import dataclass, InitVar
+from dolfinx import fem
+from ufl import conditional, eq, exp, inner, sin, sqrt
+
+from stonedfenicsx.config.phase_db import PhaseDataBase
+
+
 # ---
 @dataclass
 class MATERIALS:

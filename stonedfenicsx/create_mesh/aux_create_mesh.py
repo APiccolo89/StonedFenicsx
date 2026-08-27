@@ -1,11 +1,13 @@
-from stonedfenicsx.config.geometry import GeomInput
+from pathlib import Path
+
+import dolfinx
 import gmsh
 import numpy as np
 from numpy import ndarray
-import dolfinx
-from petsc4py import PETSc
-from pathlib import Path
 from numpy.typing import NDArray
+from petsc4py import PETSc
+
+from stonedfenicsx.config.geometry import GeomInput
 
 #---------------------------------------------------------
 
