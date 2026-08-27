@@ -12,17 +12,24 @@
 
 ### Effects of non-linearities on the benchmark values
 
-<a id="fig-benchmark"></a>
-<img src="images_doc/Benchmark.png" width="500" alt="Benchmark temperature fields and convergence">
+```{figure} images_doc/Benchmark.png
+:name: fig:f1_benchmark
+:width: 500px
+:align: center
 
-**Figure 1.** [a]: **Case 2b** steady-state temperature field; [b]: **case 2b non-linear and crustal unit** steady-state temperature field. [c–d]: Convergence rate vs number of iterations. The *green lines* represent the mass, momentum, and energy conservation relative residuum; *red lines* represent the relative combined difference of the solution as a function of iteration.
+[a]: **Case 2b** steady-state temperature field; [b]: **case 2b non-linear and
+crustal unit** steady-state temperature field. [c–d]: Convergence rate vs number
+of iterations. The *green lines* represent the mass, momentum, and energy
+conservation relative residuum; *red lines* represent the relative combined
+difference of the solution as a function of iteration.
+```
 
 Case `2b` has been repeated with non-linearities and with crustal units in both the overriding and the subducting plate.
 
 - **case 2b non-linear**: T<sub>11,11</sub> = 558.5840 °C, ‖T<sub>slab</sub>‖ = 609.5550 °C, ‖T<sub>wedge</sub>‖ = 942.9349 °C
 - **case 2b non-linear and crustal unit**: T<sub>11,11</sub> = 599.8287 °C, ‖T<sub>slab</sub>‖ = 635.9449 °C, ‖T<sub>wedge</sub>‖ = 962.3271 °C
 
-In [Figure 1](#fig-benchmark), two representative cases are shown (**Case 2b** and **case 2b non-linear and crustal unit**). The figure has been produced with supplementary scripts that will be released together with the package.
+In {numref}`fig:f1_benchmark`, two representative cases are shown (**Case 2b** and **case 2b non-linear and crustal unit**). The figure has been produced with supplementary scripts that will be released together with the package.
 
 ## Sensitivity study
 

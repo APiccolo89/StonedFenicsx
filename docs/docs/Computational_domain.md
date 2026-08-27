@@ -17,7 +17,7 @@
 ```
 
 The computational domain is generated using `gmsh` and consists of an unstructured triangular mesh {cite}`geuzaine2009gmsh`.  
-In **{numref}`fig:f1_simplified_initial_setup`**, we sketch a simplified initial computational domain.  
+In {numref}`fig:f1_simplified_initial_setup`, we sketch a simplified initial computational domain.  
 This sketch highlights the features that are common to all numerical realisations.
 
 The main portions of the numerical domain are shown using different colours, the points defining the physical boundaries are labelled with capital letters (`A–L`), and the boundaries are denoted by bracketed lowercase letters (**[a–i]**).
