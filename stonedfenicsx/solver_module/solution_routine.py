@@ -246,6 +246,7 @@ def initial_guess_simulation(ctrl_sim:SimulationControls
     """
     ts = 0 #  fake ts 
     time_A = timing.time()
+    if ctrl_sim.ctrl.initial_guess == 0: return
     print_ph('              !!! Initial guess of the simulation !!!')
     outerloop_operation(ctrl_sim=ctrl_sim
                                   ,sc=sc

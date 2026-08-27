@@ -1089,7 +1089,7 @@ class Global_thermal(Problem):
         X     = self.FS
         T_i_A = dolfinx.fem.Function(X)
         cd_dof = X.tabulate_dof_coordinates()
-        T_i_A.x.array[:] = griddata(ctrl_tbc.z, ctrl_tbc.temperature_1d, cd_dof[:,1], method='nearest')
+        T_i_A.x.array[:] = self.ctrl_sim.ctrl_tbc.temp_max
         T_i_A.x.scatter_forward() 
         #- 
 

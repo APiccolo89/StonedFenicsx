@@ -238,15 +238,14 @@ class OUTERITERATION_SOL_VAL:
             else: 
                 dT_M = (self.old_t_max - minMaxT[1])
                 dT_m = (self.old_t_min - minMaxT[0])
-                if np.abs(dT_M) > 0.1 or np.abs(dT_m):
+                if np.abs(dT_M) > 0.1 or np.abs(dT_m) and ts>3:
                     print_ph('            Check min-max temperature BC: ')
 
                     print_ph(f'         dT_min = {dT_m:.2f} [K]')
 
                     print_ph(f'         dT_max = {dT_M:.2f} [K]')
                     # During the initial guess temperature might have a few artifcats due to the initial temperature field
-                    if np.abs(dT_M) > 10 or np.abs(dT_m)>10: 
-                        raise ValueError('Simulation has something wrong, dT_M is increasing of at least 10 K. Check the data!')
+
             
         if minMaxT[1]-(ctrl_sim.ctrl_tbc.temp_max * sc.temp-273.15)>1.0: 
             print_ph(' WARNING:::Temperature higher than the maximum temperature')

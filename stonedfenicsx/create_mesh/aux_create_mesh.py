@@ -94,7 +94,7 @@ class Class_Points():
         else: 
             self.coord_ltpt = None   
         if g_input.ocr != 0.0: 
-            self.max_tag_oc, self.tag_oc,         self.coord_ocean,   mesh_model     = _create_points(mesh_model, oc_cx, oc_cy, g_input.resolution_normal, self.max_tag_bots)
+            self.max_tag_oc, self.tag_oc,         self.coord_ocean,   mesh_model     = _create_points(mesh_model, oc_cx, oc_cy, g_input.resolution_refine, self.max_tag_bots)
         else: 
             self.max_tag_oc = self.max_tag_bots; self.coord_ocean  = None
         # -- Here are the points at the boundary of the model. The size of the model is defined earlier, and subduction zone is modified as such to comply the main geometrical input, 
@@ -482,7 +482,7 @@ def create_slab_surface(f:callable, y_min:float,stp=float,depth:float=0.0)->tupl
     statement = True 
     while statement:
         if lghn < 100:
-            dl = 5 * stp
+            dl = 2 * stp
         else: 
             dl = stp
         lghn += dl

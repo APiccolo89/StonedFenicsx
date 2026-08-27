@@ -228,7 +228,7 @@ def read_file_slab(file_path:str)->tuple[NDArray[float],NDArray[float]]:
     slab_top, theta_mean = curve_fitting(ax,ay,path.parent,path.stem)
 
 
-    return slab_top*1000, theta_mean 
+    return slab_top, theta_mean 
 
 
 
