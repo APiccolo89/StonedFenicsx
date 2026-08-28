@@ -35,7 +35,9 @@ def perform_test(option_viscous=0,option_thermal=0):
     inp.g_input.sub_constant_flag = False
     inp.g_input.slab_type = 'CustomRibe'
     #inp.g_input.sub_path = '/Users/wlnw570/Work/Leeds/Fenics_tutorial/examples/data/Mexico_slab.pz'
-    inp.g_input.resolution_normal = 8
+    inp.g_input.resolution_normal = 10
+    inp.g_input.resolution_refine = 2.0
+
     # Control 
     inp.ctrl.decoupling_ctrl = 1 
     inp.ctrl.steady_state = 0 

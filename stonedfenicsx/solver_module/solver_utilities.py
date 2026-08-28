@@ -140,6 +140,8 @@ class OUTERITERATION_SOL_VAL:
             self.res = ctrl_sim.ctrl.tol 
             return 0 
         
+        res_consv_rel = r_tot_conv
+
         self.res = r_tot_conv 
             
         if MPI.COMM_WORLD.rank == 0 and ctrl_sim.ctrl.initial_guess==0:
