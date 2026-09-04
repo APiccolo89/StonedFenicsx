@@ -223,9 +223,10 @@ def create_gmesh(ioctrl: IOControls, g_input: GeomInput):
         gmsh.option.setNumber("Mesh.Optimize", 1)
 
         mesh_model.mesh.generate(2)
-
-        mesh_name = Path(ioctrl.path_cached_information, "mesh.msh")
-
+        if not g_input.redo_mesh:
+            mesh_name = Path(ioctrl.path_cached_information, "mesh.msh")
+        else: 
+            mesh_name = Path(ioctrl.path_test, "mesh.msh")
         # Check Race Condtion
         race_condition = check_race_condition(ioctrl=ioctrl,file=f"{mesh_name}")
         if not race_condition: 
@@ -1001,7 +1002,8 @@ def create_subdomain(
 
 # ------------------------------------------------------------------------------------------------------
 def read_mesh(
-    ioctrl: IOControls
+    ioctrl: IOControls,
+    redo_mesh:bool
 ) -> tuple([dolfinx.mesh.Mesh, dolfinx.mesh.MeshTags, dolfinx.mesh.MeshTags]):
     """read the .msh file, and convert into a dolfinx mesh object and extract mesh tags from .msh
     Parameter
@@ -1024,20 +1026,21 @@ def read_mesh(
 
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()  # 0, 1, ..., size-1
-
-    path_file = Path(ioctrl.path_cached_information,'mesh.msh')
+    if not redo_mesh:
+        path_file = Path(ioctrl.path_cached_information,'mesh.msh')
+    else: 
+        path_file = Path(ioctrl.path_test,'mesh.msh')
     comm.Set_errhandler(MPI.ERRORS_RETURN)
     mesh, cell_markers, facet_markers = gmshio.read_from_msh(
         path_file, MPI.COMM_WORLD, gdim=2
     )
 
-    if rank == 0:
+    if rank == 0 and redo_mesh:
         # Read in mesh
-        
-        msh = meshio.read(path_file)
-
-        pt_save = ioctrl.path_cached_information
+        path_file.unlink()
+        print(f'removed {path_file}')        
         # Remove gmsh file, to save memory: every information of the mesh is already known by fenicsx
+    
     return mesh, cell_markers, facet_markers
 
 
@@ -1076,7 +1079,7 @@ def create_mesh_object( ioctrl: IOControls, g_input: GeomInput) -> Mesh:
 
     print_ph(" Reading global mesh and creating the global domain")
 
-    mesh, cell_markers, facet_markers = read_mesh(ioctrl)
+    mesh, cell_markers, facet_markers = read_mesh(ioctrl,g_input.redo_mesh)
 
     pph = fem.functionspace(
         mesh, ("DG", 0)

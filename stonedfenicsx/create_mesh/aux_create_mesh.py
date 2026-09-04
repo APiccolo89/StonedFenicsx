@@ -453,7 +453,7 @@ def find_slab_surface(g_input:GeomInput)->tuple([ndarray[float],ndarray[float]])
         if not path2subduction.is_file():
             raise ValueError('The txt file of subduction does not exist, please change the path.')
         # TO DO: DIVIDE THE READING WITH THE POST_PROCESSING!!!
-        slab_top, theta_mean = read_file_slab(g_input.sub_path)
+        slab_top, theta_mean = read_file_slab(g_input.sub_path,np.min(g_input.y))
         g_input.y[0] = np.min(slab_top[:,1])
     else: 
         raise ValueError(f"Slab surface method '{g_input.slab_type}' is not implemented. Please choose 'CustomRibe', 'CustomParabolic', or 'FromFile'.")    
