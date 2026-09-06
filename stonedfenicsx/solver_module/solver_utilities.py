@@ -282,7 +282,7 @@ class OUTERITERATION_SOL_VAL:
         print_ph(f'              Res div_wedge = abs: {self.div_res_wedge[0]:.3e} [n.d],{c:.3e} [1/s]  | rel: {self.div_res_wedge[0]/self.div_res_wedge[1]:.3e} [n.d.]') 
         print_ph(f'              Res div_slab  = abs: {self.div_res_slab[0]:.3e} [n.d],{d:.3e} [1/s]  | rel: {self.div_res_slab[0]/self.div_res_slab[1]:.3e} [n.d.]') 
         print_ph('          Energy Equation :')
-        print_ph(f'              Res energy equation = abs: {self.ene_res_gl[0]:.3e} [n.d],{e**3:3e} [W/m3] | rel: {self.ene_res_gl[0]/self.ene_res_gl[1]:.3e} [n.d.]')
+        print_ph(f'              Res energy equation = abs: {self.ene_res_gl[0]:.3e} [n.d],{e:3e} [W/m3] | rel: {self.ene_res_gl[0]/self.ene_res_gl[1]:.3e} [n.d.]')
         r_tot_conv = np.sqrt(self.mom_res_wedge[0]**2+self.mom_res_slab[0]**2+self.div_res_slab[0]**2+self.div_res_wedge[0]**2+self.ene_res_gl[0]**2)
         if it_outer == 0:
             self.combined_residual_0  = np.sqrt(self.mom_res_wedge[1]**2+self.mom_res_slab[1]**2+self.div_res_slab[1]**2+self.div_res_wedge[1]**2+self.ene_res_gl[1]**2)
