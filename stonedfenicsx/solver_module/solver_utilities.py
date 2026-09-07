@@ -28,48 +28,6 @@ if TYPE_CHECKING:
     from stonedfenicsx.solver_module.problems_solution import Solution
 
 # ---
-class ResidualLogger:
-    def __init__(self, filepath:str,name:str, max_it:int=50, tol:float =1e-8, steady_state:int=0):
-        filepath = Path(filepath) /f'{name}.txt'
-        self.max_it:int = max_it
-        self.tol:float = tol
-        self.file:str = open(filepath, "w")
-        self.steady_state:int = steady_state
-        self.ts = 0
-
-    def new_timestep(self, ts):
-        if self.steady_state == 0: 
-            self.file.write(f"\nts = {ts}\n")
-            self.file.flush()
-        else: 
-            self.file.write("STEADY STATE SOLUTION\n")
-            self.file.flush()
-
-    def log_iteration(self, it_outer, res_cons, res_diff, L1_temp,res_alt_T,rmom,reg):
-        self.file.write(
-            f"  it_outer = {it_outer:4d}  "
-            f"res_cons = {res_cons:.6e}  "
-            f"res_diff = {res_diff:.6e}  "
-            f"L1_temp  = {L1_temp:.6e} "
-            f"res_alt = {res_alt_T:.6e}"
-            f"rmom_wg = {rmom:.6e}"
-            f"reng_gl = {reg:.6e}\n"
-        )
-        self.file.flush()
-
-    def check_divergence(self, it_outer, res):
-        diverged = (it_outer >= self.max_it) and (res > self.tol)
-        if diverged:
-            self.file.write(
-                f"  >>> DIVERGED: it_outer={it_outer} reached max_it={self.max_it} "
-                f"with res={res:.3e} > tol={self.tol:.1e}\n"
-            )
-            self.file.flush()
-        return diverged
-
-    def close(self):
-        self.file.close()
-# ---
 @dataclass(slots=True)
 class OUTERITERATION_SOL_VAL:
     """Class that handles the outer iteration variables
@@ -77,7 +35,6 @@ class OUTERITERATION_SOL_VAL:
     sol: InitVar[Solution]
     ctrl: InitVar[NumericalControls]
     ctrl_io : InitVar[IOControls]
-    log: ResidualLogger = field(init=False)
     
     T        : dolfinx.fem.function =  field(init=False)
     PL       : dolfinx.fem.function =  field(init=False)
@@ -111,7 +68,6 @@ class OUTERITERATION_SOL_VAL:
         self.ene_res_gl = np.zeros(2)
         self.old_t_max = 0.0 
         self.old_t_min = 0.0 
-        self.log = ResidualLogger(ctrl_io.path_save,ctrl_io.test_name,ctrl.it_max,ctrl.tol,ctrl.steady_state)
     
     def update_iteration(self,sol): 
         self.T.x.array[:] = sol.T_N.x.array[:]
@@ -140,24 +96,8 @@ class OUTERITERATION_SOL_VAL:
             self.res = ctrl_sim.ctrl.tol 
             return 0 
         
-        res_consv_rel = r_tot_conv
-
         self.res = r_tot_conv 
-            
-        if MPI.COMM_WORLD.rank == 0 and ctrl_sim.ctrl.initial_guess==0:
-            log_ts = 0 
-            if ctrl_sim.ctrl.steady_state == 1: 
-                if it_outer == 0: 
-                    log_ts = 1 
-            else: 
-                log_ts = 1
-            
-            if self.log.ts != ts and log_ts==1: 
-                self.log.new_timestep(ts)
-                self.log.ts = ts 
-        
-            self.log.log_iteration(it_outer, res_consv_rel, res_total, dtemp_l1,res_alt,rmom_wg,reseg)
-        
+    
         return 0 
     
     # --- 
