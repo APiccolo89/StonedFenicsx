@@ -26,7 +26,6 @@ from stonedfenicsx.solver_module.solver_utilities import (
 # ---
 from stonedfenicsx.utils import interpolate_from_sub_to_main, print_ph, timing
 
-
 def outerloop_operation_initial_guess(ctrl_sim:SimulationControls,
                         sc:Scal,
                         eg:Global_thermal,
@@ -279,8 +278,8 @@ def outerloop_operation(ctrl_sim:SimulationControls,
         max_it = 5
     else: 
         max_it = ctrl_sim.ctrl.it_max 
-    
-    
+    import matplotlib.pyplot as plt
+
     while it_outer < max_it and outit.res > ctrl_sim.ctrl.tol: 
         
         print_ph(f'--  --- Outer iteration {it_outer:d} for the coupled problem  --  ---')
@@ -364,8 +363,9 @@ def outerloop_operation(ctrl_sim:SimulationControls,
         print_ph('')
         if it_outer > max_it:
             print_ph(f'Warning: Outer loop did not converge after {max_it:d} iterations. Residual = {outit.res:.3e}!!!!')
-        it_outer = it_outer + 1
         
+        
+        it_outer = it_outer + 1
     
     # reset outit res:
     outit.res = 1.0 

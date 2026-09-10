@@ -11,7 +11,7 @@ DEBUG = False
 #-------------------------------------------------------------------------------
 def perform_test(option_viscous=0,option_thermal=0):
     # Path 2 test
-    path_test = os.path.dirname(os.path.realpath(__file__))
+    path_test = Path(__file__).resolve().parents[0]
     # Path 2 imput fie
     path_input = f"{path_test}/input_tests.yaml"
     # Parse the input: 
