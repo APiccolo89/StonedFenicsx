@@ -690,7 +690,10 @@ def generate_parallel_layer_subducting_plate(sx:ndarray[np.float64],
     kappa = np.zeros_like(sx)
     kappa[1:] = np.abs(dth_ds)
     
-    if 0.8 * np.nanmin(1/kappa) < lt: 
+    if np.nanmin(kappa) == 0 and not all(dth==0): 
+        raise ValueError('The curvature of the slab is wrong, check the geometry')
+    
+    if 0.8 * np.nanmin(1/kappa) < lt and not all(dth==0): 
         lt = np.floor(0.8 * np.min(1/kappa))
     
     
@@ -833,7 +836,7 @@ def _create_points(mesh:gmsh.model,                                            #
 
     tag_list = []
 
-    if point_flag == True:
+    if point_flag:
         coord = np.zeros([3,1],dtype=np.float64)
         mesh.geo.addPoint(x, y, 0.0,res,tag_pr+1) 
         tag_list.append(tag_pr+1)
