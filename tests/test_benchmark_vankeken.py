@@ -1,4 +1,13 @@
-# Import the required path for processing the simulation
+"""
+Module with the Van Keken classical benchmarks. 
+ALLERT0: These tests relies on the input_test.yml. Do not modify the input_test.yml otherwise
+these test will fail. 
+ALLERT1: The benchmark are sensitive to the resolution of the mesh. These tests, then, are 
+valid specifically for the resolution that has been set. In the manuscript, the tests have 
+been performed with an higher resolution. 
+ALLERT2: The tests have been updated 19.09.2026 to have a lower resolution, because with high
+resolution the test took too much time. 
+"""
 from stonedfenicsx.config.input_parser import parse_input
 from stonedfenicsx.stoned_fenicsx import stoned_fenicsx
 from pathlib import Path
@@ -6,8 +15,15 @@ import os
 import numpy as np 
 from mpi4py import MPI
 import pytest
+import shutil
 # Global flag to decide wether or not to remove the results -> debug reason. 
 DEBUG = False
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_output():
+    yield
+    pt = str(Path(__file__).resolve().parents[0])
+    shutil.rmtree(f"{pt}/VanKeken", ignore_errors=True)
+
 #-------------------------------------------------------------------------------
 def perform_test(option_viscous=0,option_thermal=0):
     # Path 2 test
@@ -191,10 +207,9 @@ def read_data_base(option_viscous,option_thermal=0):
         [388.73, 504.03, 854.99],
         [390.40, 488.0, 847.70],
          ])
-        v1 = 389.7962
-        v2 = 505.4634
-        v3 = 855.6999
-        
+        v1 = 392.5243
+        v2 = 506.2739
+        v3 = 855.8698
         # 
            
     if option_viscous == 1 and option_thermal == 0: 
@@ -206,9 +221,9 @@ def read_data_base(option_viscous,option_thermal=0):
         [581.30, 607.26, 1003.35],
         [584.20, 592.8, 1000.0],
         ])
-        v1 = 573.3844
-        v2 = 602.8806
-        v3 = 1001.7503
+        v1 = 576.2053
+        v2 = 603.6481
+        v3 = 1002.0377
     if option_viscous==2 and option_thermal == 0: 
         
         data = np.array([
@@ -220,22 +235,22 @@ def read_data_base(option_viscous,option_thermal=0):
         [583.11, 604.96, 1000.05],
         [585.70, 591.30, 996.60]
         ])
-        v1 = 576.1815
-        v2 = 600.3638
-        v3 = 997.9291 
+        v1 = 577.3382
+        v2 = 600.8615
+        v3 = 998.1870 
     if option_thermal==1: 
-        v1 = 558.5840
-        v2 = 609.5550
-        v3 = 942.9349
+        v1 = 560.6396
+        v2 = 610.1700
+        v3 = 943.2377
     if option_thermal==2: 
-        v1 = 599.8287
-        v2 = 635.9449
-        v3 = 962.3271
+        v1 = 601.8515
+        v2 = 636.5036
+        v3 = 962.5845
 
     if option_thermal==3: 
-        v1 = 599.46
-        v2 = 640.36
-        v3 = 960.93
+        v1 = 601.42
+        v2 = 640.82
+        v3 = 960.90
 
     if option_thermal == 0: 
         db_vk1 = [np.mean(data[:,0]), np.min(data[:,0]), np.max(data[:,0])]
@@ -280,9 +295,7 @@ def test_isoviscous():
     # Read Data Base and compare data 
     if MPI.COMM_WORLD.rank == 0: 
         read_data_base(0)
-    # Remove folder after completing the test
-    if not DEBUG:
-        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
+
 
 def test_diffusion():
     # Test Van Keken 
@@ -290,9 +303,7 @@ def test_diffusion():
     # Read Data Base and compare data 
     if MPI.COMM_WORLD.rank == 0: 
         read_data_base(1)
-    # Remove folder after completing the test
-    if not DEBUG:
-        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
+
 #-------------------------------------------------------------------------------
 
 def test_composite():
@@ -301,9 +312,7 @@ def test_composite():
     # Read Data Base and compare data 
     if MPI.COMM_WORLD.rank == 0: 
         read_data_base(2)
-    # Remove folder after completing the test
-    if not DEBUG:
-        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
+
 #-------------------------------------------------------------------------------
 
 def test_composite_NL_no_crust():
@@ -312,9 +321,7 @@ def test_composite_NL_no_crust():
     # Read Data Base and compare data 
     if MPI.COMM_WORLD.rank == 0: 
         read_data_base(2,1)
-    # Remove folder after completing the test
-    if not DEBUG:
-        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
+
 #-------------------------------------------------------------------------------
 
 def test_composite_NL_crust():
@@ -323,9 +330,7 @@ def test_composite_NL_crust():
     # Read Data Base and compare data 
     if MPI.COMM_WORLD.rank == 0: 
         read_data_base(2,2)
-    # Remove folder after completing the test
-    if not DEBUG:
-        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
+
         
 def test_composite_NL_crust_P():
     # Test Van Keken 
@@ -333,24 +338,5 @@ def test_composite_NL_crust_P():
     # Read Data Base and compare data 
     if MPI.COMM_WORLD.rank == 0: 
         read_data_base(2,3)
-    # Remove folder after completing the test
-    if not DEBUG:
-        os.remove(f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken')
+
 #-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-if __name__ == '__main__': 
-    
-    DEBUG = True
-    
-    #test_isoviscous()
-
-    #test_diffusion()
-
-    #test_composite()
-    
-    #test_composite_NL_no_crust()
-    
-    #test_composite_NL_crust()
-
-    test_composite_NL_crust_P()
-#---------------------------------------------------------------------------------
