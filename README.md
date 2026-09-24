@@ -896,11 +896,13 @@ The code is still under development. The next steps are to introduce new tests a
 
 ## Historical Note
 
-The project initially built on the [xFieldStone] repository, itself based on the FieldStone framework. I first attempted to improve its performance using Numba and PETSc, and this work evolved into [iFieldStone_AP].
+The project initially built on the [xFieldStone](https://github.com/irisvanzelst/xFieldstone) repository, itself based on the FieldStone framework. I first attempted to improve its performance using Numba and PETSc, and this work evolved into [iFieldStone_AP](github.com/APiccolo89/iFieldstone_AP).
 
 After reaching the limits of what I could achieve by optimising the existing assembly without introducing explicit parallelisation, I decided to migrate the project to FEniCSx. The migration also provided greater flexibility for implementing and testing different formulations, including Nitsche boundary conditions and adiabatic heating. Implementing similar extensions in the previous codebase would have required substantial modifications and made the code increasingly difficult to maintain.
 
 The current version of StonedFEniCSx is the result of this migration and of several subsequent experiments with new numerical and physical features. The first stable version will be released after this development and testing phase.
+
+The code has benefitted of several external resources such as similar project [fenics-sz](https://github.com/cianwilson/fenics-sz) and the FEniCSx stackoverflow [FEniCSxDiscourse](https://fenicsproject.discourse.group/) 
 
 
 ```python
