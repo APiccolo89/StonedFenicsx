@@ -355,7 +355,6 @@ The user can change the value of diffusion creep and dislocation creep rheologie
 - Constant: it is a flag that indicates the use of the dislocation creep rheology
 
 > [!IMPORTANT]
-
 > if both dislocation and diffusion creep are constant, the code automatically assumes that the model is linear. Thus, it will use either the default viscosity or the viscosity in the phase.
 
 
@@ -887,7 +886,6 @@ stoned_fenicsx(inp = inp, ph_in=ph_input)
 ```
 
 > [!NOTE]
-
 > If the user wants to use an oceanic plate as the overriding plate, the user should use the crustal unit **overriding_upper_crust** to create an oceanic-like crust and set to 0.0 **lc** in the geometry input (or in inp.g_input.lc=0)
 
 
