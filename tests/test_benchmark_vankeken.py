@@ -23,7 +23,6 @@ def cleanup_output():
     yield
     pt = str(Path(__file__).resolve().parents[0])
     shutil.rmtree(f"{pt}/VanKeken", ignore_errors=True)
-
 #-------------------------------------------------------------------------------
 def perform_test(option_viscous=0,option_thermal=0):
     # Path 2 test
@@ -331,12 +330,11 @@ def test_composite_NL_crust():
     if MPI.COMM_WORLD.rank == 0: 
         read_data_base(2,2)
 
-        
+#-------------------------------------------------------------------------------        
 def test_composite_NL_crust_P():
     # Test Van Keken 
     perform_test(2,3) # IsoViscous
     # Read Data Base and compare data 
     if MPI.COMM_WORLD.rank == 0: 
         read_data_base(2,3)
-
 #-------------------------------------------------------------------------------
