@@ -54,7 +54,7 @@ class NumericalControls:#ctrl
             print_ph(f'.     3. Thermal_Diffusion: perform a thermal diffusion for {self.time_ini_guess} Myr')
             raise ValueError('Wrong Initial guess option')
 
-        if self.initial_guess == 1 and self.steady_state == 1: 
+        if self.initial_guess != 0 and self.steady_state == 1: 
             warnings.warn('Initial guess is incompatible with steady state solution. Steady state controls has priority')
             self.initial_guess = 0
             print_ph('Initial guess has been deactivated!!!!')
