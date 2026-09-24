@@ -276,7 +276,7 @@ interval_val : [5.0,1.0] # interval of velocities [SI=cm/yr]
 interval_time : [20,40] # interval of time when the velocity change occurs
 
 ```
-[!NOTE]
+>[!NOTE]
 > For both the kinematic and thermal boundary conditions, the variation of velocity and age over time is linear. Currently, these featuress have not been tested.
 
 
