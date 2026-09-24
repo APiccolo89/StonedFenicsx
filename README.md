@@ -902,7 +902,7 @@ After reaching the limits of what I could achieve by optimising the existing ass
 
 The current version of StonedFEniCSx is the result of this migration and of several subsequent experiments with new numerical and physical features. The first stable version will be released after this development and testing phase.
 
-The code has benefitted of several external resources such as similar project [fenics-sz](https://github.com/cianwilson/fenics-sz) and the FEniCSx stackoverflow [FEniCSxDiscourse](https://fenicsproject.discourse.group/) 
+The code has benefitted of several external resources such as similar project [fenics-sz](https://github.com/cianwilson/fenics-sz) and the FEniCSx stackoverflow [FEniCSxDiscourse](https://fenicsproject.discourse.group/) [FenicsTutorial](https://jsdokken.com/dolfinx-tutorial/)
 
 
 ```python
