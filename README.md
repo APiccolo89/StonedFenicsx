@@ -87,7 +87,6 @@ The main physical validation is and `tests/test_benchmark_vankeken.py`, which re
 The documentation of the code: [StonedFEniCSx](https://apiccolo89.github.io/StonedFenicsx/index.html)
 
 > [!WARNING]
-
 > The documentation is still under construction and will be finalised before the final draft of the manuscript. If you have questions, you can send me an email and I will promptly answer.
 
 
@@ -159,7 +158,6 @@ time_ini_guess : 0.3
 ```
 
 > [!NOTE]
-
 > The iterative solver is still a work in progress; it must be revisited to make it usable.
 
 - **model_shear**: activates the shear-heating boundary conditions. However, *SelfConsistent* and *Constant* require that *decoupling_ctrl* is 1
@@ -189,7 +187,6 @@ shear_heating_disl_law: "Wet_Quartzite_2001_Dislocation_creep" # dislocation law
 
 ```
 
-**Note**
 
 - The available dislocation creep laws are:
 
@@ -280,8 +277,8 @@ interval_val : [5.0,1.0] # interval of velocities [SI=cm/yr]
 interval_time : [20,40] # interval of time when the velocity change occurs
 
 ```
-
-**Note**: For both the kinematic and thermal boundary conditions, the variation of velocity and age over time is linear. Currently, these featuress have not been tested.
+[!NOTE]
+> For both the kinematic and thermal boundary conditions, the variation of velocity and age over time is linear. Currently, these featuress have not been tested.
 
 
 
@@ -390,7 +387,6 @@ The user can change the value of diffusion creep and dislocation creep rheologie
 - Constant: flag that tells the code to use the constant conductivity *cp* of the phase.
 
 > [!NOTE]
-
 > _FO, _FA, FO_FA are flags that indicate which mixture of olivine to use. FO means forsterite, FA means fayalite. FO_FA implies that a mixture of 0.9 FO and 0.1 FA is used for computing the heat capacity.
 
 **Thermal expansivity laws available**:
@@ -460,7 +456,6 @@ sub_path: "Not Defined" # Required for the real geometry of the subducting plate
 ```
 
 > [!CAUTION]
-
 > CustomParabolic is still under debugging, so, it must not be used.
 
 ## Usage
