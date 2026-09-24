@@ -1,12 +1,14 @@
 # StonedFEniCSx
-
+![Simplified model setup](docs/docs/images_doc/Initial_setup.png)
 A FEniCSx (dolfinx)-based FEM package for simulating the thermal and mechanical evolution of a 2D subduction zone: coupled steady-state/time-dependent thermal, Stokes (velocity–pressure), and lithostatic pressure problems on wedge, slab, and global sub-domains, with temperature- and pressure-dependent rheology and shear heating.
 
 The project started as a Python script built on the [FieldStone](https://cedricthieulot.net/fieldstone.html) educational framework and has since grown into a structured, class-based FEM package. 
 
 
 > [!NOTE]
-> Research code developed at the University of Leeds. Solo-maintained; interfaces may still change between branches. At the moment, portions of the codebase are still under review; the final version will be available after the completion of the manuscript associated with this package.
+> Research code developed at the University of Leeds. Solo-maintained; interfaces may still change between branches. At the moment, portions of the codebase are still under review; the final version will be available after the completion of the manuscript associated with this package. 
+> The code has a specific scope, however, the module can be easily re-adapted to extend the package and use the FEniCSx for other problems. 
+
 
 ## Package layout
 
