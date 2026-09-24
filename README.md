@@ -2,7 +2,8 @@
 
 A FEniCSx (dolfinx)-based FEM package for simulating the thermal and mechanical evolution of a 2D subduction zone: coupled steady-state/time-dependent thermal, Stokes (velocity–pressure), and lithostatic pressure problems on wedge, slab, and global sub-domains, with temperature- and pressure-dependent rheology and shear heating.
 
-The project started as a Python script built on the [FieldStone](https://cedricthieulot.net/fieldstone.html) educational framework and has since grown into a structured, class-based FEM package
+The project started as a Python script built on the [FieldStone](https://cedricthieulot.net/fieldstone.html) educational framework and has since grown into a structured, class-based FEM package. 
+
 
 > [!NOTE]
 > Research code developed at the University of Leeds. Solo-maintained; interfaces may still change between branches. At the moment, portions of the codebase are still under review; the final version will be available after the completion of the manuscript associated with this package.
@@ -892,6 +893,20 @@ stoned_fenicsx(inp = inp, ph_in=ph_input)
 ## Status
 
 The code is still under development. The next steps are to introduce new tests and provide an automatic testing framework. The user guide needs to be updated, and it should refer to additional repositories where a few examples have been set up.
+
+## Historical Note
+
+The project initially built on the [xFieldStone] repository, itself based on the FieldStone framework. I first attempted to improve its performance using Numba and PETSc, and this work evolved into [iFieldStone_AP].
+
+After reaching the limits of what I could achieve by optimising the existing assembly without introducing explicit parallelisation, I decided to migrate the project to FEniCSx. The migration also provided greater flexibility for implementing and testing different formulations, including Nitsche boundary conditions and adiabatic heating. Implementing similar extensions in the previous codebase would have required substantial modifications and made the code increasingly difficult to maintain.
+
+The current version of StonedFEniCSx is the result of this migration and of several subsequent experiments with new numerical and physical features. The first stable version will be released after this development and testing phase.
+
+
+```python
+    print_ph('You will hear of wars and rumors of wars, but see to it that you are not alarmed. Such things must happen, but the end is still to come:')
+    print_ph('Ex Falso sequitor quodlibet.')
+```
 
 ## License
 
