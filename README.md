@@ -5,7 +5,6 @@ A FEniCSx (dolfinx)-based FEM package for simulating the thermal and mechanical 
 The project started as a Python script built on the [FieldStone](https://cedricthieulot.net/fieldstone.html) educational framework and has since grown into a structured, class-based FEM package
 
 > [!NOTE]
-
 > Research code developed at the University of Leeds. Solo-maintained; interfaces may still change between branches. At the moment, portions of the codebase are still under review; the final version will be available after the completion of the manuscript associated with this package.
 
 ## Package layout
