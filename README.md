@@ -1,44 +1,58 @@
 # StonedFEniCSx
 ![Simplified model setup](docs/docs/images_doc/Initial_setup.png)
+*Fig 1: Simplified model setup used in StonedFEniCSx*
+
 A FEniCSx (dolfinx)-based FEM package for simulating the thermal and mechanical evolution of a 2D subduction zone: coupled steady-state/time-dependent thermal, Stokes (velocity–pressure), and lithostatic pressure problems on wedge, slab, and global sub-domains, with temperature- and pressure-dependent rheology and shear heating.
 
 The project started as a Python script built on the [FieldStone](https://cedricthieulot.net/fieldstone.html) educational framework and has since grown into a structured, class-based FEM package. 
 
+## Status
+
+The code is still under development. The next steps are to introduce new tests and provide an automatic testing framework. The user guide needs to be updated, and it should refer to additional repositories where a few examples have been set up. For now, I released the version v 0.0.0-alpha. 
 
 > [!NOTE]
-> Research code developed at the University of Leeds. Solo-maintained; interfaces may still change between branches. At the moment, portions of the codebase are still under review; the final version will be available after the completion of the manuscript associated with this package. 
-> The code has a specific scope, however, the module can be easily re-adapted to extend the package and use the FEniCSx for other problems. 
+> **Development status**
+>
+> StonedFEniCSx is research software developed at the University of Leeds and is currently maintained by a single developer. The package is under active development, and some interfaces may change between development versions.
+>
+> This README currently serves as the main user and configuration guide. A dedicated and more comprehensive user manual is under development and will progressively replace the detailed documentation provided here. The first stable version of the package and its accompanying documentation are planned for release following completion of the associated manuscript.
 
 
 ## Package layout
 
 ```
-
 stonedfenicsx/
 ├── config/              # Configuration module                                                
 ├── create_mesh/         # Create Mesh module                
 ├── material_property/   # Compute material properties
-│                       
-├── solver_module/      # Solution routines
-│                       
-│            
-├── output.py           
-└── stoned_fenicsx.py   
-
+├── solver_module/       # Solution routines
+├── output.py            # output module
+└── stoned_fenicsx.py    
 ```
+### Features
 
+- 2-D kinematic subduction-zone models
+- Steady-state and time-dependent thermal problems
+- Stokes velocity–pressure solution in the mantle wedge
+- Lithostatic-pressure calculation
+- Temperature- and pressure-dependent material properties
+- Diffusion and dislocation creep rheologies
+- Parametrised shear heating along the slab interface
+- Configurable slab and overriding-plate geometries
+- Crank–Nicolson time integration
+- MPI-parallel execution through FEniCSx/PETSc
+- XDMF/HDF5 output
+- Validation against the van Keken et al. subduction benchmarks
 ## Installation
 
-### Local, with conda
-
 ```bash
+git clone https://github.com/APiccolo89/StonedFenicsx.git
+cd StonedFenicsx
 
 conda env create -f stoned_environment.yml
-
 conda activate stoned_fenicsx
 
 pip install --no-deps -e .
-
 ```
 
 ## Quick start
@@ -46,15 +60,10 @@ pip install --no-deps -e .
 A simulation is configured with two YAML-parsed inputs — numerical/I-O/thermal/kinematic controls, and per-phase material properties — which drive `stonedfenicsx.stoned_fenicsx`:
 
 ```python
-
 from stonedfenicsx.config.input_parser import parse_input
-
 from stonedfenicsx.stoned_fenicsx import stoned_fenicsx
-
 input_data, ph_in = parse_input("input.yaml")
-
 stoned_fenicsx(input_data, ph_in)
-
 ```
 
 `input.yaml` at the repo root is a commented example covering units, numerical controls, shear-heating options, and thermal/kinematic boundary conditions. `stonedfenicsx/stoned_fenicsx.py::test_function` shows a fully scripted example that also overrides material properties in code after parsing. `examples/data` contains region-specific driver datasets. Soon, there will be simple scripts to run simulations for specific regions.
@@ -66,29 +75,22 @@ Simulations are MPI-parallel; run under `mpirun`/`srun` for multi-rank execution
 ## Running the tests
 
 ```bash
-
 pytest tests/
-
 ```
 
-The main physical validation is and `tests/test_benchmark_vankeken.py`, which reproduce reference results from the Van Keken et al. subduction zone benchmark suite (`tests/VanKeken/`) across viscosity/thermal configurations and, for the shear-heating case, several friction-angle (`phi`) values.
+The main physical validation is and `tests/test_benchmark_vankeken.py`, which reproduce reference results from the Van Keken et al. subduction zone benchmark suite (`tests/VanKeken/`) across viscosity/thermal configurations.
 
 ## Documentation
 
 The documentation of the code: [StonedFEniCSx](https://apiccolo89.github.io/StonedFenicsx/index.html)
-
 > [!WARNING]
 > The documentation is still under construction and will be finalised before the final draft of the manuscript. If you have questions, you can send me an email and I will promptly answer.
 
-
-
-# How to use
-
+## How to use
 The code is organized to always require the definition of an *input_file.yml*. The blueprint of the input file can be found in the main folder of the package.
-
 The units of measure in the input code are always: **Myr**, **km**, **cm/yr**, **deg** and **degC** for time, length, velocity, angles and temperatures respectively; the only exception is for the *scaling* options; in this case, the units of measure are **m**, **Pa**, **Pa s** and **deg C** The conversions to SI units and the corresponding scaling are performed internally during the configuration step of the simulation.
 
-## Input File
+### Input File
 
 The input file is divided into 8 subsections:
 
@@ -108,7 +110,7 @@ The input file is divided into 8 subsections:
 
 - **geometry**: the geometric configuration parameters.
 
-### Numerical Controls
+#### Numerical Controls
 
 ```yaml
 it_max: 30 # Maximum number of iterations
@@ -148,7 +150,7 @@ time_ini_guess : 0.3
   - `Steady_State`: Run a linear steady-state simulation before introducing the timedependent solver. 
   - `None`: No initial guess. 
 
-### ShearHeating
+#### ShearHeating
 
 ```yaml
 
@@ -168,7 +170,7 @@ shear_heating_disl_law: "Wet_Quartzite_2001_Dislocation_creep" # dislocation law
 
   - Glaucophane_2025_Dislocation_creep 
 
-### InputOutputControl
+#### InputOutputControl
 
 ```yaml
 test_name: "Output" # Name of the test
@@ -181,7 +183,7 @@ dt_out : 0.5 # Time interval required to print a timestep result.
 To run the numerical code, the user has to specify the test name and the path of the folder in which the output is stored. *StonedFEniCSx* automatically creates the parent folder, and the relative test folder. 
 
 
-### scaling
+#### scaling
 
 ```yaml
 length: 600e3 # Scaling of the length
@@ -192,7 +194,7 @@ temp: 1333.0 # Temperature scale
 
 All the derived scalings are automatically computed after the configuration of the simulation. For example, time is computed using the stress scale and the viscosity scale. The dimensions must be given in **m**, **Pa**, **Pa s** and **deg C**.
 
-### thermal_boundary_condition
+#### thermal_boundary_condition
 
 ```yaml
 temp_max: 1300.0 # Maximum temperature (mantle temperature) [SI = deg C]
@@ -211,7 +213,7 @@ recalculate : 1 # Option to compute on the fly the boundary -> useful if user wa
 
 The left and right boundary conditions are computed using a finite difference scheme with Crank-Nicolson. For the left boundary condition, the code computes from 0 to *end_time* a half-space cooling model, and then selects the appropriate thermal profile as a function of the *slab_age*. For the right boundary condition the user must choose whether the boundary represents a continental margin or an oceanic plate. In the case of *Oceanic*, the code will compute the same 2D array of thermal profiles; otherwise, in the case of *Continental*, the code computes an initial linear geotherm as a function of the geometrical input. Then, it will run a thermal diffusion to reach a quasi-steady state. This is particularly useful when radiogenic heating is active.
 
-### kinematic_boundary_condition
+#### kinematic_boundary_condition
 
 ```yaml
 v_s : [5.0,0.0] # Initial vector for the velocity of the slab [SI=cm/yr]
@@ -225,7 +227,7 @@ interval_time : [20,40] # interval of time when the velocity change occurs
 
 
 
-### Material properties
+#### Material properties
 
 ```yaml
 wedge_mantle:
@@ -324,7 +326,7 @@ The user can change the value of diffusion creep and dislocation creep rheologie
 
 - Constant: flag that tells the code to use only the reference density *rho0*
 
-## geometry
+#### geometry
 
 ```yaml
 x: [0.0, 660.0] # Coordinate of X
@@ -356,7 +358,7 @@ sub_path: "Not Defined" # Required for the real geometry of the subducting plate
 > [!CAUTION]
 > CustomParabolic is still under debugging, so, it must not be used.
 
-## Usage
+### Usage
 
 In the following section, a small example script is provided (see also the tests folder, with the benchmark examples) :
 
@@ -435,7 +437,6 @@ inp.ctrl.steady_state = 1
 
 3) After the inputs are modified accordingly, the user must call the stoned_fenicsx function:
 
-*Example without modifying the input file**
 
 ```python
 # Path 2 test
@@ -452,170 +453,14 @@ inp,ph_input = parse_input(path_input)
 stoned_fenicsx(inp = inp, ph_in=ph_input)
 ```
 4) After the simulation configuration stage, the code configures the numerical experiments and proceeds with generating the mesh and boundary conditions and scaling the input parameters accordingly.
-The following snippet represents the configuration script for running the van keken benchmarks tests:
-```python
-def perform_test(option_viscous=0,option_thermal=0):
-# Path 2 test
-path_test = Path(__file__).resolve().parents[0]
-# Path 2 input file
-path_input = f"{path_test}/input_tests.yaml"
-# Parse the input: 
-# The input file is required to run a simulation. You can modify  
-# it and parse the input and then call the function for running simulation. 
-# Alternatively, you can generate the input file using it as blueprint for the 
-# common property of the simulation, and modify the produced object for personalising 
-# the ensemble of simulations. 
-inp,ph_input = parse_input(path_input)
-# Geometric Input: [inp.g_input.attributes -> change]
-inp.g_input.cr = .0 
-inp.g_input.lc = .0
-inp.g_input.ocr = 6.0 
-inp.g_input.lit_mt = 50.
-inp.g_input.lab_d = 50.
-inp.g_input.decoupling = .0 
-inp.g_input.van_keken = True 
-
-# Control 
-
-inp.ctrl.decoupling_ctrl = 0 
-inp.ctrl.steady_state = 1 
-
-# In this case, for testing the Van Keken benchmark, I opted to create a simple script
-# that has: option viscosity and thermal for testing several potential configurationss. 
-if option_thermal == 0: 
-    alpha_nameC = 'Constant'
-    alpha_nameM = 'Constant'
-    density_nameC = 'Constant'
-    density_nameM = 'Constant'
-    capacity_nameM = 'Constant'
-    capacity_nameC = 'Constant'
-    conductivity_nameM = 'Constant'
-    conductivity_nameC = 'Constant'
-    rho0_M = 3300.0
-    rho0_C = 3300.0
-    radio_flag = 0 
-elif option_thermal == 1: 
-    alpha_nameC = 'Mantle'
-    alpha_nameM = 'Mantle'
-    density_nameC = 'PT'
-    density_nameM = 'PT'
-    capacity_nameM = 'Mantle_Bernard_Ar_199x_FO_FA'
-    capacity_nameC = 'Mantle_Bernard_Ar_199x_FO_FA'
-    conductivity_nameM = 'Mantle_Richards_2018'
-    conductivity_nameC = 'Mantle_Richards_2018'
-    rho0_M = 3300.0
-    rho0_C = 3300.0
-    radio_flag = 1 
-    inp.ctrl.pressure_dependency = 0
-elif option_thermal == 2 or option_thermal==3: 
-    alpha_nameC = 'Oceanic_crust'
-    alpha_nameM = 'Mantle'
-    density_nameC = 'PT'
-    density_nameM = 'PT'
-    capacity_nameM = 'Mantle_Bernard_Ar_199x_FO_FA'
-    capacity_nameC = 'Oceanic_crust'
-    conductivity_nameM = 'Mantle_Richards_2018'
-    conductivity_nameC = 'Crust_Richards_2018'
-    rho0_M = 3300.0
-    rho0_C = 3300.0
-    radio_flag = 1 
-    inp.ctrl.pressure_dependency = 0
-    inp.g_input.ocr = 6.0 
-    inp.g_input.cr = 6.0 
-    inp.g_input.lc = 0.0
-
-    if option_thermal == 3: 
-        inp.ctrl.pressure_dependency = 1
-
-
-
-if option_viscous == 0:
-    name_diffusion = 'Constant'
-    name_dislocation = 'Constant'              
-
-elif option_viscous == 1: 
-    name_diffusion = 'VK_Diffusion_creep'
-    name_dislocation = 'Constant'       
-
-elif option_viscous == 2: 
-    name_diffusion = 'Constant'
-    name_dislocation = 'VK_Dislocation_creep'     
-
-# ph_input contains the compositional phase -> you can modify them. The problem 
-# of kinematic simulations does not give a lot of freedom, and indeed, the possibility 
-# to have different rheologies is a design choice to allow extension of the code 
-# in the future. It would be easier to start a new branch with more complex dynamics using the 
-# the config module. 
-# Modify the phase with the new data: 
-
-ph_input.subducting_plate_mantle.rho0 = rho0_M
-ph_input.subducting_plate_mantle.name_capacity = capacity_nameM
-ph_input.subducting_plate_mantle.name_conductivity = conductivity_nameM
-ph_input.subducting_plate_mantle.name_alpha = alpha_nameM
-ph_input.subducting_plate_mantle.name_density = density_nameM
-ph_input.subducting_plate_mantle.radiative_conductivity = radio_flag
-
-
-
-ph_input.oceanic_crust.rho0 = rho0_C
-ph_input.oceanic_crust.name_capacity = capacity_nameC
-ph_input.oceanic_crust.name_conductivity = conductivity_nameC
-ph_input.oceanic_crust.name_alpha = alpha_nameC
-ph_input.oceanic_crust.name_density = density_nameC
-ph_input.oceanic_crust.radiative_conductivity = radio_flag
-
-
-
-ph_input.wedge_mantle.name_diffusion = name_diffusion
-ph_input.wedge_mantle.name_dislocation = name_dislocation
-ph_input.wedge_mantle.rho0 = rho0_M
-ph_input.wedge_mantle.name_capacity = capacity_nameM 
-ph_input.wedge_mantle.name_conductivity = conductivity_nameM
-ph_input.wedge_mantle.name_alpha = alpha_nameM
-ph_input.wedge_mantle.name_density = density_nameM
-ph_input.wedge_mantle.radiative_conductivity = radio_flag
-
-
-ph_input.overriding_mantle.rho0 = rho0_M 
-ph_input.overriding_mantle.name_capacity = capacity_nameM
-ph_input.overriding_mantle.name_conductivity = conductivity_nameM
-ph_input.overriding_mantle.name_alpha = alpha_nameM
-ph_input.overriding_mantle.name_density = density_nameM
-ph_input.overriding_mantle.radiative_conductivity = radio_flag
-ph_input.overriding_upper_crust.rho0 = rho0_C 
-ph_input.overriding_upper_crust.name_capacity = capacity_nameC
-ph_input.overriding_upper_crust.name_conductivity = conductivity_nameC
-ph_input.overriding_upper_crust.name_alpha = alpha_nameC
-ph_input.overriding_upper_crust.name_density = density_nameC
-ph_input.overriding_upper_crust.radiative_conductivity = radio_flag
-
-
-
-ph_input.overriding_lower_crust.rho0 = rho0_C 
-ph_input.overriding_lower_crust.name_capacity = capacity_nameC
-ph_input.overriding_lower_crust.name_conductivity = conductivity_nameC
-ph_input.overriding_lower_crust.name_alpha = alpha_nameC
-ph_input.overriding_lower_crust.name_density = density_nameC
-ph_input.overriding_lower_crust.radiative_conductivity = radio_flag
-#ph_input.virtual_weak_zone.name_diffusion = 'Hirth_Wet_Olivine_disl'
-#ph_input.virtual_weak_zone.name_dislocation = 'Hirth_Wet_Olivine_disl' 
-# -> Important: where to save and the name of the test. You can fully automate the creation of new
-# folder. 
-inp.ctrl_io.test_name = f'T_vi{option_viscous}_th{option_thermal}'
-inp.ctrl_io.path_save = os.path.join(os.path.dirname(os.path.realpath(__file__)),'VanKeken')
-
-# Initialise the input
-# After the user changess the required data and updates the input and phase input, they must 
-# call this function, and run the simulation - hopefully, without throwing errors. 
-stoned_fenicsx(inp = inp, ph_in=ph_input)
-```
+The following snippet represents the configuration script for running the van keken benchmarks tests (see `tests/test_benchmark_vankeken.py`, in particular `perform_test` function)
 
 > [!NOTE]
 > If the user wants to use an oceanic plate as the overriding plate, the user should use the crustal unit **overriding_upper_crust** to create an oceanic-like crust and set to 0.0 **lc** in the geometry input (or in inp.g_input.lc=0)
-## Accessing the variables
+### Accessing the variables
 Assuming that the names of the scripts presented here are kept, this table shows how to access each of the main configuration parameters. I enforced the use of an external input file because having a trackable source of all the parameters needed is better than relying on obscure default values. Accessing these data through a configuration script should only be used to modify a subset of parameters.
 
-### NumericalControls
+#### NumericalControls
 
 | YAML field | Python access |
 |---|---|
@@ -637,7 +482,7 @@ Assuming that the names of the scripts presented here are kept, this table shows
 | `initial_guess` | `inp.ctrl.initial_guess` |
 | `time_ini_guess` | `inp.ctrl.time_ini_guess` |
 
-### ShearHeating
+#### ShearHeating
 
 | YAML field | Python access |
 |---|---|
@@ -645,7 +490,7 @@ Assuming that the names of the scripts presented here are kept, this table shows
 | `shear_heating_disl_tau_min` | `ph_input.shear_heating_disl_tau_min` |
 | `shear_heating_disl_law` | `ph_input.shear_heating_disl_law` |
 
-### InputOutputControl
+#### InputOutputControl
 
 | YAML field | Python access |
 |---|---|
@@ -655,7 +500,7 @@ Assuming that the names of the scripts presented here are kept, this table shows
 | `ts_out` | `inp.ctrl_io.ts_out` |
 | `dt_out` | `inp.ctrl_io.dt_out` |
 
-### scaling
+#### scaling
 
 | YAML field | Python access |
 |---|---|
@@ -664,7 +509,7 @@ Assuming that the names of the scripts presented here are kept, this table shows
 | `eta` | `inp.sc.eta` |
 | `temp` | `inp.sc.temp` |
 
-### thermal_boundary_condition
+#### thermal_boundary_condition
 
 | YAML field | Python access |
 |---|---|
@@ -681,7 +526,7 @@ Assuming that the names of the scripts presented here are kept, this table shows
 | `right_age` | `inp.ctrl_tbc.right_age` |
 | `recalculate` | `inp.ctrl_tbc.recalculate` |
 
-### kinematic_boundary_condition
+#### kinematic_boundary_condition
 
 | YAML field | Python access |
 |---|---|
@@ -690,7 +535,7 @@ Assuming that the names of the scripts presented here are kept, this table shows
 | `interval_val` | `inp.ctrl_ky.interval_val` |
 | `interval_time` | `inp.ctrl_ky.interval_time` |
 
-### Material_properties
+#### Material_properties
 
 `<phase>` is one of: `subducting_plate_mantle`, `oceanic_crust`, `wedge_mantle`, `overriding_mantle`, `overriding_upper_crust`, `overriding_lower_crust`.
 
@@ -717,7 +562,7 @@ Assuming that the names of the scripts presented here are kept, this table shows
 | `radiative_conductivity` | `ph_input.<phase>.radiative_conductivity` |
 | `radiogenic_heat` | `ph_input.<phase>.radiogenic_heat` |
 
-### geometry
+#### geometry
 
 | YAML field | Python access |
 |---|---|
@@ -746,28 +591,25 @@ Assuming that the names of the scripts presented here are kept, this table shows
 | `sub_path` | `inp.g_input.sub_path` |
 
 
+### Historical Note
 
-## Status
-
-The code is still under development. The next steps are to introduce new tests and provide an automatic testing framework. The user guide needs to be updated, and it should refer to additional repositories where a few examples have been set up. For now, I released the version v 0.0.0-alpha. 
-
-## Historical Note
-
-The project initially built on the [xFieldStone](https://github.com/irisvanzelst/xFieldstone) repository, itself based on the FieldStone framework. I first attempted to improve its performance using Numba and PETSc, and this work evolved into [iFieldStone_AP](github.com/APiccolo89/iFieldstone_AP).
+The project initially built on the [xFieldStone](https://github.com/irisvanzelst/xFieldstone) repository, itself based on the FieldStone framework. I first attempted to improve its performance using Numba and PETSc, and this work evolved into [iFieldStone_AP](github.com/APiccolo89/iFieldstone_AP). This explains the odd name of the package; it tries to summerise the origin of this package. 
 
 After reaching the limits of what I could achieve by optimising the existing assembly without introducing explicit parallelisation, I decided to migrate the project to FEniCSx. The migration also provided greater flexibility for implementing and testing different formulations, including Nitsche boundary conditions and adiabatic heating. Implementing similar extensions in the previous codebase would have required substantial modifications and made the code increasingly difficult to maintain.  
 
 The current version of StonedFEniCSx is the result of this migration and of several subsequent experiments with new numerical and physical features. The first stable version will be released after this development and testing phase.
 
-The code has benefitted of several external resources such as similar project [fenics-sz](https://github.com/cianwilson/fenics-sz) and the FEniCSx stackoverflow [FEniCSxDiscourse](https://fenicsproject.discourse.group/) [FenicsTutorial](https://jsdokken.com/dolfinx-tutorial/)
+The code has benefitted from several external resources such as similar project [fenics-sz](https://github.com/cianwilson/fenics-sz) and the FEniCSx stackoverflow [FEniCSxDiscourse](https://fenicsproject.discourse.group/) [FenicsTutorial](https://jsdokken.com/dolfinx-tutorial/)
 
 The message at end of each simulation as a parting gift:
 ```python
-    print_ph('You will hear of wars and rumors of wars,
-     'but see to it that you are not alarmed. Such things must happen, but the end is still to come:')
-    print_ph('Ex Falso sequitor quodlibet.')
+print_ph(
+    "You will hear of wars and rumors of wars, "
+    "but see to it that you are not alarmed. Such things must happen, "
+    "but the end is still to come:"
+)
+print_ph("Ex Falso sequitor quodlibet.")
 ```
-
 ## License
 
 MIT License
