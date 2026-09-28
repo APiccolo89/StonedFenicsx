@@ -21,13 +21,14 @@ The code is still under development. The next steps are to introduce new tests a
 ## Package layout
 
 ```
-stonedfenicsx/
-├── config/              # Configuration module                                                
-├── create_mesh/         # Create Mesh module                
-├── material_property/   # Compute material properties
-├── solver_module/       # Solution routines
-├── output.py            # output module
-└── stoned_fenicsx.py    
+src/
+    stonedfenicsx/
+    ├── config/              # Configuration module                                                
+    ├── create_mesh/         # Create Mesh module                
+    ├── material_property/   # Compute material properties
+    ├── solver_module/       # Solution routines
+    ├── output.py            # output module
+    └── stoned_fenicsx.py    
 ```
 ### Features
 
@@ -49,10 +50,8 @@ stonedfenicsx/
 git clone https://github.com/APiccolo89/StonedFenicsx.git
 cd StonedFenicsx
 
-conda env create -f stoned_environment.yml
-conda activate stoned_fenicsx
-
-pip install --no-deps -e .
+conda env create -f stonedenvironment.yml
+conda activate stonedfenicsx
 ```
 
 ## Quick start
@@ -260,52 +259,48 @@ The user can change the value of diffusion creep and dislocation creep rheologie
 
 **Diffusion creep laws available**:
 
-- Hirth_dry_Diffusion_creep: :cite:p:`hirth2003rheology`
+- Hirth_dry_Diffusion_creep
 
-- VK_Diffusion_creep: :cite:p:`van2008community`
+- VK_Diffusion_creep
 
-- Hirth_wet_Diffusion_creep: :cite:p:`hirth2003rheology`
+- Hirth_wet_Diffusion_creep
 
 - Constant: it is a flag that tells the code not to use the diffusion creep rheologies in the calculation
 
 **Dislocation creep laws available**:
 
-- Hirth_dry_Dislocation_creep: :cite:p:`hirth2003rheology`
+- Hirth_dry_Dislocation_creep
 
-- VK_Dislocation_creep: :cite:p:`van2008community`
+- VK_Dislocation_creep
 
-- Hirth_wet_Dislocation_creep: :cite:p:`hirth2003rheology`
+- Hirth_wet_Dislocation_creep
 
 - Constant: it is a flag that indicates the use of the dislocation creep rheology
 
 > [!IMPORTANT]
 > if both dislocation and diffusion creep are constant, the code automatically assumes that the model is linear. Thus, it will use either the default viscosity or the viscosity in the phase.
 
-
-
 **Conductivity laws available**:
 
-- Mantle_Richards_2018: :cite:p:`richards2020structure`
-
-- Crust_Richards_2018: :cite:p:`richards2020structure`
-
+- Mantle_Richards_2018
+- Crust_Richards_2018
 - Constant: flag that tells the code to use the constant conductivity *k* of the phase.
 
 **Heat capacity laws available**:
 
-- Mantle_Bernard_1988_FO: :cite:p:`berman1988internally`
+- Mantle_Bernard_1988_FO
 
-- Mantle_Bernard_1988_FA: :cite:p:`berman1988internally`
+- Mantle_Bernard_1988_FA
 
-- Mantle_Bernard_Ar_199x_FO: :cite:p:`berman1996optimized`
+- Mantle_Bernard_Ar_199x_FO
 
-- Mantle_Bernard_Ar_199x_FA: :cite:p:`berman1996optimized`
+- Mantle_Bernard_Ar_199x_FA
 
-- Mantle_Bernard_1988_FO_FA: :cite:p:`berman1988internally`
+- Mantle_Bernard_1988_FO_FA
 
-- Mantle_Bernard_Ar_199x_FO_FA: :cite:p:`berman1996optimized`
+- Mantle_Bernard_Ar_199x_FO_FA
 
-- Oceanic_crust:  :cite:p:`richards2020structure`
+- Oceanic_crust
 
 - Constant: flag that tells the code to use the constant conductivity *cp* of the phase.
 
@@ -315,15 +310,12 @@ The user can change the value of diffusion creep and dislocation creep rheologie
 **Thermal expansivity laws available**:
 
 - Mantle: :cite:p:`richards2020structure`
-
 - Oceanic_crust: :cite:p:`richards2020structure`
-
 - Constant: flag that tells the code to use the constant conductivity *alpha* of the phase.
 
 **Density laws available**:
 
 - PT : pressure and temperature are active (pressure if the pressure dependency is active)
-
 - Constant: flag that tells the code to use only the reference density *rho0*
 
 #### geometry

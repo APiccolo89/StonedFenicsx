@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "StonedFenicsx"
-version = "2026.0.1"
+version = "0.0.0-alpha"
 requires-python = ">=3.10,<3.14"
 dependencies = [
     "numpy==2.2.6",
@@ -27,7 +27,9 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/APiccolo89/StonedFenicsx"
 
+# Forgot to say where when I updated the layout of the project, I use this as reminder for eternity
 [tool.setuptools.packages.find]
+where = ["src"]
 include = ["stonedfenicsx*"]
 
 [tool.pytest.ini_options]
