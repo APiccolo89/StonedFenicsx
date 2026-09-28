@@ -10,7 +10,7 @@ dependencies = [
     "numpy==2.2.6",
     "scipy>=1.15",
     "gmsh==4.13.1",
-    "pandas==3.0.3",
+    "pandas==2.3.3",
     "meshio==5.3.5",
     "numba==0.61.2",
     "pytest",
@@ -35,11 +35,11 @@ include = ["stonedfenicsx*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
-[tool.spack]
-python = "3.11"
-mpi = true
-petsc = true
-dolfinx = true
+#[tool.spack]
+#python = "3.11"
+#mpi = true
+#petsc = true
+#dolfinx = true
 h5py = true
 
 # FOR HPC user

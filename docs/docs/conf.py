@@ -26,7 +26,7 @@ autosummary_generate = True
 autodoc_mock_imports = ["dolfinx", "gmsh", "petsc4py", "mpi4py", "ufl", "basix", "ffcx"]
 
 autodoc2_packages = [
-    "../../stonedfenicsx",
+    "../../src/stonedfenicsx",
 ]
 
 bibtex_bibfiles = ["bibliography.bib"]

@@ -16,6 +16,7 @@ dependencies:
   - pyyaml
   - pip
   - psutil
+  - h5py=3.12.1
   - pip:
       - gmsh
       - --editable .
