@@ -59,8 +59,10 @@ conda activate stonedfenicsx # or your personalised name
 >  conda install -n base conda-libmamba-solver
 >  conda config --set solver libmamba
 >```
-> However, consider to read a bit how to install before doing it. 
-## Quick startc
+> However, consider to read a bit how to install before doing it.
+
+ 
+## Quick start
 
 A simulation is configured with two YAML-parsed inputs — numerical/I-O/thermal/kinematic controls, and per-phase material properties — which drive `stonedfenicsx.stoned_fenicsx`:
 
