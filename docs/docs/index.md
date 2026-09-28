@@ -29,27 +29,9 @@ The code has benefitted of several additional sources:
 - [FEniCS-SZ](https://cianwilson.github.io/fenics-sz/notebooks/0_index.html)- for the overall organisation of the problems - 
 - [FEniCS-discourse](https://fenicsproject.discourse.group/) - especially the tutorials and the discussion concerning how to set solvers, how to optimise the routines 
 - [FieldStone](https://cedrict.github.io/) - a useful and pedagogical introduction to finite element - 
+- [ResearSoftwareEng_Leeds](https://arctraining.github.io/research-software-development/) - a useful guide on how to setting up a python project, and handling all the intricacies on how to follow the FAIR practices. 
 
 The documentation is organized in a such way that the code's component are connected to the relative method. It is a mix of scientific-technical documentation. The guide will introduce a few examples that will be part of manuscript in preparation. The package will link to the repository of these experiments to reproduce the results. 
-
-
-## Quick start
-
-A simulation is configured with two YAML-parsed inputs — numerical/I-O/thermal/kinematic controls, and per-phase material properties — which drive `stonedfenicsx.stoned_fenicsx`:
-
-```python
-from stonedfenicsx.config.input_parser import parse_input
-from stonedfenicsx.stoned_fenicsx import stoned_fenicsx
-
-input_data, ph_in = parse_input("input.yaml")
-stoned_fenicsx(input_data, ph_in)
-```
-
-`input.yaml` at the repo root is a commented example covering units, numerical controls, shear-heating options, and thermal/kinematic boundary conditions. `stonedfenicsx/stoned_fenicsx.py::test_function` shows a fully scripted example that also overrides material properties in code after parsing. `examples/` contains region-specific driver scripts (`Japan_slab.py`, `Mexico_slab.py`, `Chile_slab.py`, `Tonga_slab.py`) built the same way.
-
-Results are written under `Results/<test_name>/` as XDMF/HDF5 fields, plus cached material-property lookups.
-
-Simulations are MPI-parallel; run under `mpirun`/`srun` for multi-rank execution (see the example SLURM script in `HPC_read.md`).
 
 ```{toctree}
 :maxdepth: 2

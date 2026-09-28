@@ -2,8 +2,13 @@ import os
 import sys
 from pathlib import Path
 
+
+ROOT = Path(__file__).resolve().parents[3]
+SRC = ROOT / "src"
+
+sys.path.insert(0, str(SRC))
+
 # repo root (docs/..)
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 project = "StonedFEniCSx"
 html_title = project
@@ -26,7 +31,7 @@ autosummary_generate = True
 autodoc_mock_imports = ["dolfinx", "gmsh", "petsc4py", "mpi4py", "ufl", "basix", "ffcx"]
 
 autodoc2_packages = [
-    "../../src/stonedfenicsx",
+    str(SRC / "stonedfenicsx"),
 ]
 
 bibtex_bibfiles = ["bibliography.bib"]

@@ -8,14 +8,17 @@ been performed with an higher resolution.
 ALLERT2: The tests have been updated 19.09.2026 to have a lower resolution, because with high
 resolution the test took too much time. 
 """
+import os
+import shutil
+from pathlib import Path
+
+import numpy as np
+import pytest
+from mpi4py import MPI
+
 from stonedfenicsx.config.input_parser import parse_input
 from stonedfenicsx.stoned_fenicsx import stoned_fenicsx
-from pathlib import Path
-import os 
-import numpy as np 
-from mpi4py import MPI
-import pytest
-import shutil
+
 # Global flag to decide wether or not to remove the results -> debug reason. 
 DEBUG = False
 @pytest.fixture(scope="session", autouse=True)
@@ -178,8 +181,9 @@ def perform_test(option_viscous=0,option_thermal=0):
 
 #-------------------------------------------------------------------------------
 def read_data_base(option_viscous,option_thermal=0):
-    import h5py as h5 
     import os
+
+    import h5py as h5
     
     # File h5 that stores data of benchmarks
     file_h5 = f'{os.path.dirname(os.path.realpath(__file__))}/VanKeken/benchmark_van_keken.h5'
