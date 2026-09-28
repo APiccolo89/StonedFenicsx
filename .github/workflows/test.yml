@@ -21,7 +21,7 @@ jobs:
     - name: Install dependencies
       run: |
         conda env update --file stonedenvironment.yml --name base
-    - name: Test with pytest
+    - name: Test with pytest and coverage
       run: |
-        conda install pytest
-        pytest
+        conda install pytest pytest-cov
+        pytest --cov=stonedfenicsx --cov-report=xml
