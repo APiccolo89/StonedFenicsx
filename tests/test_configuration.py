@@ -1,11 +1,18 @@
-import dolfinx
-import numpy as np
 from pathlib import Path
 
+import dolfinx
+import numpy as np
 import pytest
+import shutil
 
 from stonedfenicsx.config.input_parser import parse_input
 from stonedfenicsx.config.simulation_config import configure_simulation
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_output():
+    yield
+    pt = str(Path(__file__).resolve().parents[0])
+    shutil.rmtree(f"{pt}/Results", ignore_errors=True)
 
 def configure() -> int:
     """Test Function for configuring the simulation
@@ -19,7 +26,7 @@ def configure() -> int:
     # parse the input file
     input_data, ph_in = parse_input(input_file)
     # Set the path of the tests
-    path_save = pkg_root.parents[2] / "Results"
+    path_save = pkg_root.parents[0] / "Results"
     test_name = "Mock_test"
     input_data.ctrl_io.test_name = test_name
     input_data.ctrl_io.path_save = path_save
