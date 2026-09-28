@@ -45,7 +45,7 @@ src/
 - XDMF/HDF5 output
 - Validation against the van Keken et al. subduction benchmarks
 ## Installation
-
+### Installation with Conda/Miniconda
 ```bash
 git clone https://github.com/APiccolo89/StonedFenicsx.git # Clone the repository
 cd StonedFenicsx # Go to the folder of the repository
@@ -61,7 +61,6 @@ conda activate stonedfenicsx # or your personalised name
 >```
 > However, consider to read a bit how to install before doing it.
 
- 
 ## Quick start
 
 A simulation is configured with two YAML-parsed inputs — numerical/I-O/thermal/kinematic controls, and per-phase material properties — which drive `stonedfenicsx.stoned_fenicsx`:
