@@ -37,6 +37,7 @@ autodoc2_packages = [
         "auto_mode": True,
     }
 ]
+autodoc2_render_plugin = "myst"
 bibtex_bibfiles = ["bibliography.bib"]
 numfig = True
 
