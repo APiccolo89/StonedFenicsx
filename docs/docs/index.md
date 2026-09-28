@@ -42,6 +42,7 @@ how_to_use
 Computational_domain
 Material_properties
 Examples
+apidocs/index
 ```
 
 ## Indices and tables
