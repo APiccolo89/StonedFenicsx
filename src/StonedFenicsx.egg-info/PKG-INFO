@@ -10,13 +10,13 @@ Requires-Dist: gmsh==4.13.1
 Requires-Dist: pandas==2.3.3
 Requires-Dist: meshio==5.3.5
 Requires-Dist: numba==0.61.2
-Requires-Dist: fenics-dolfinx==0.9.0
 Requires-Dist: pytest
 Requires-Dist: sphinx==9.0.0
 Requires-Dist: myst-parser
-Requires-Dist: pyyaml==6.0.3
+Requires-Dist: pyyaml
 Requires-Dist: piccolo_theme
 Requires-Dist: sphinxcontrib-bibtex
+Requires-Dist: pyyaml==6.0.3
 Requires-Dist: h5py==3.12.1
 Requires-Dist: shapely==2.1.2
 Dynamic: license-file
