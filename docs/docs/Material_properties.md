@@ -35,6 +35,8 @@ The customisation of the material properties of each phase depends on the subdom
 
 ## Material properties
 
+At the end of the pages, there is a succint code interface to call these non-linear properties. 
+
 ### Rheological material properties
 
 Viscosity can be constant, temperature-dependent, or non-linear and temperature-dependent. The `wedge mantle` is the only phase for which different rheological models can be selected. Temperature-dependent viscosity is described by a diffusion-creep mechanism, while non-linear temperature-dependent viscosity is described by a dislocation-creep mechanism. The general equation for both mechanisms is:
