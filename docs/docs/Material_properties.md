@@ -179,6 +179,39 @@ The implementation of the thermal properties follows {cite}`richards2020structur
 In general, the code can handle pressure-dependent material properties. However, these should be used with caution because the kinematic subduction models are incompressible. Consequently, pressure-dependent properties may introduce inconsistencies in the computed thermal field. Adiabatic heating cannot be introduced straightforwardly within this framework. Furthermore, the pressure singularities described by {cite}`van2008community` complicate the computation of shear heating without introducing additional assumptions or arbitrary choices.
 
 #### Heat capacity
+**Heat capacity** is computed using the following equation:
+
+```{math}
+:label: eq:heat_capacity
+
+\begin{aligned}
+C_p(X,T) ={}& C_{p,0}(X)
++ C_{p,1}(X)T^{-0.5}
++ C_{p,2}(X)T^{-2} \\
+&+ C_{p,3}(X)T^{-3}
++ C_{p,4}(X)T
++ C_{p,5}(X)T^{2}
+\end{aligned}
+```
+
+where $C_{p,i}$ are empirical parameters that depend on the mineralogical composition. The data are taken from {cite}`grose2013comprehensive` and {cite}`berman1996optimized`. The main parameters used in the current implementation are listed in {ref}`tab:heat_capacity`.
+
+The coefficients are defined such that $C_p$ is expressed in $\mathrm{J\,kg^{-1}\,K^{-1}}$, with $T$ in K. Forsterite and fayalite are the end-member experimental data from {cite}`berman1996optimized`, while olivine, augite, and plagioclase are the mineral properties listed in {cite}`grose2013comprehensive`.
+
+The heat capacity of the mantle is computed using a mixture of 0.9 forsterite and 0.1 fayalite. The crustal heat capacity is computed using a mixture of 0.65 plagioclase, 0.2 augite, and 0.15 olivine, as listed in {cite}`grose2013comprehensive`.
+
+
+(tab:heat_capacity)=
+
+*Heat capacity coefficients used in the non-linear formulation*
+
+| Mineral | $C_{p,0}$ [J kg$^{-1}$ K$^{-1}$] | $C_{p,1}$ [J kg$^{-1}$ K$^{-1/2}$] | $C_{p,2}$ [J kg$^{-1}$ K] | $C_{p,3}$ [J kg$^{-1}$ K$^{2}$] | $C_{p,4}$ [J kg$^{-1}$ K$^{-2}$] | $C_{p,5}$ [J kg$^{-1}$ K$^{-3}$] |
+|---|---:|---:|---:|---:|---:|---:|
+| Forsterite | 1657.39 | $-1.281\times10^{4}$ | 0 | $-1.904\times10^{9}$ | 0 | 0 |
+| Fayalite | 1236.68 | $-9.882\times10^{3}$ | 0 | $-3.052\times10^{8}$ | 0 | 0 |
+| Olivine | 1610.80 | $-1.248\times10^{4}$ | 0 | $-1.728\times10^{9}$ | 0 | 0 |
+| Augite | 2171.50 | $-2.227\times10^{4}$ | $1.133\times10^{6}$ | 0 | $-4.555\times10^{-1}$ | $1.299\times10^{-4}$ |
+| Plagioclase | 1857.57 | $-1.649\times10^{4}$ | $-5.061\times10^{6}$ | 0 | $-3.324\times10^{-1}$ | $1.505\times10^{-4}$ |
 
 #### Thermal expansivity
 
@@ -221,7 +254,7 @@ A_r \exp\left(-\frac{(T-T_a)^2}{2x_a^2}\right)
 B_r \exp\left(-\frac{(T-T_b)^2}{2x_b^2}\right)
 ```
 
-where {math}`A_r`[W/m/K], {math}`B_r` [W/m/K], {math}`T_a` [K], {math}`x_a` [K], {math}`x_b` [K], and {math}`T_b` [K] are computed using the grain size $d$:
+where {math}`A_r`[W/m/K], {math}`B_r` [W/m/K], {math}`T_a` [K], {math}`x_a` [K], {math}`x_b` [K], and {math}`T_b` [K] are computed using the grain size *d*:
 
 ```{math}
 :label: eq:radiative_parameters
@@ -264,7 +297,7 @@ k_{\mathrm{rad}}(T)
 
  *Experimental data of thermal diffusivity*
 
-| Name | $\kappa_0$ [mm<sup>2</sup>/s] | $\kappa_1$ [mm<sup>2</sup>/s] | $T_1$ [K] | $\kappa_2$ [mm<sup>2</sup>/s] | $T_2$ [K] | f |
+| Name | {math}`\kappa_0` [mm<sup>2</sup>/s] | {math}`\kappa_1` [mm<sup>2</sup>/s] | {math}`T_1` [K] | {math}`\kappa_2` [mm<sup>2</sup>/s] | {math}`T_2`[K] | f [Pa<sup>-1</sup>] |
 |---|---:|---:|---:|---:|---:|---:|
 | `Mantle_Richards_2018` | 0.565e-6 | 0.67e-6 | 590.0 | 1.4e-6 | 135.0 | 0.05e-9 |
 | `Augite` | 0.59e-6 | 1.03e-6 | 386.0 | 0.928e-6 | 125.0 | 0.05e-9 |
