@@ -194,7 +194,7 @@ C_p(X,T) ={}& C_{p,0}(X)
 \end{aligned}
 ```
 
-where $C_{p,i}$ are empirical parameters that depend on the mineralogical composition. The data are taken from {cite}`grose2013comprehensive` and {cite}`berman1996optimized`. The main parameters used in the current implementation are listed in {ref}`tab:heat_capacity`.
+where {math}`C_{p,i}` are empirical parameters that depend on the mineralogical composition. The data are taken from {cite}`grose2013comprehensive` and {cite}`berman1996optimized`. The main parameters used in the current implementation are listed in {ref}`tab:heat_capacity`.
 
 The coefficients are defined such that $C_p$ is expressed in {math}`\mathrm{J\,kg^{-1}\,K^{-1}}`, with T in K. Forsterite and fayalite are the end-member experimental data from {cite}`berman1996optimized`, while olivine, augite, and plagioclase are the mineral properties listed in {cite}`grose2013comprehensive`.
 
@@ -207,11 +207,11 @@ The heat capacity of the mantle is computed using a mixture of 0.9 forsterite an
 
 | Mineral | {math}`C_{p,0}` [J {math}`kg^{-1} K^{-1}`] | {math}`C_{p,1}` [J {math}`kg^{-1} K^{-0.5}`] |{math}`C_{p,2}` [J {math}`kg^{-1} K`]|{math}`C_{p,3}` [J {math}`kg^{-1} K^{2}`]| {math}`C_{p,4}` [J {math}`kg^{-1} K^{-2}`] | {math}`C_{p,5}` [J {math}`kg^{-1} K^{-3}`] |
 |---|---:|---:|---:|---:|---:|---:|
-| Forsterite | 1657.39 | $-1.281\times10^{4}$ | 0 | $-1.904\times10^{9}$ | 0 | 0 |
-| Fayalite | 1236.68 | $-9.882\times10^{3}$ | 0 | $-3.052\times10^{8}$ | 0 | 0 |
-| Olivine | 1610.80 | $-1.248\times10^{4}$ | 0 | $-1.728\times10^{9}$ | 0 | 0 |
-| Augite | 2171.50 | $-2.227\times10^{4}$ | $1.133\times10^{6}$ | 0 | $-4.555\times10^{-1}$ | $1.299\times10^{-4}$ |
-| Plagioclase | 1857.57 | $-1.649\times10^{4}$ | $-5.061\times10^{6}$ | 0 | $-3.324\times10^{-1}$ | $1.505\times10^{-4}$ |
+| Forsterite | 1657.39 | {math}`-1.281\times10^{4}` | 0 | {math}`-1.904\times10^{9}` | 0 | 0 |
+| Fayalite | 1236.68 | {math}`-9.882\times10^{3}` | 0 | {math}`-3.052\times10^{8}` | 0 | 0 |
+| Olivine | 1610.80 | {math}`-1.248\times10^{4}` | 0 | {math}`-1.728\times10^{9}` | 0 | 0 |
+| Augite | 2171.50 | {math}`-2.227\times10^{4}` | {math}`1.133\times10^{6}` | 0 | {math}`-4.555\times10^{-1}` | {math}`1.299\times10^{-4}` |
+| Plagioclase | 1857.57 | {math}`-1.649\times10^{4}` | {math}`-5.061\times10^{6}` | 0 | {math}`-3.324\times10^{-1}` | {math}`1.505\times10^{-4}` |
 
 #### Thermal expansivity
 
