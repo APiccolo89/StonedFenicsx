@@ -129,15 +129,19 @@ The main rheologies available in the code are listed in the following section. T
 
 `Name` is the actual string that must be used in the *input.yml* file.
 
-##### Diffusion Creep
 
+(Table_Diffusion_Creep)=
+
+*Dislocation Creep*
 | Name | b | e [J/mol] | v [m³/mol] | m | r | d [μm] | f (correction) | mpa | b_si | Water corr. | Ref (short) |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | `Hirth_dry_Dislocation_creep` | 1.5e9 | 375.0e3 | 5e-6 | 3.0 | 0 | 10e3 | Simpleshear | 1 | MPa⁻¹ s⁻¹ | None | {cite}`hirth2003rheology` |
 | `Hirth_wet_Diffusion_creep` | 2.7e7 | 375.0e3 | 10e-6 | 3.0 | 0.8 | 10e3 | Simpleshear | 1 | MPa⁻¹ s⁻¹ COH⁻ʳ | COH | {cite}`hirth2003rheology` |
 | `VK_Diffusion_creep` | 3.79e-10 | 335.0e3 | 0e-6 | 1.0 | 0.8 | 1.0 | None | 0 | Pa⁻¹ s⁻¹ | None | {cite}`van2008community` |
 
-##### Dislocation Creep
+(Table_Dislocation_Creep)=
+
+*Dislocation Creep*
 
 | Name | b | e [J/mol] | v [m³/mol] | n | r | f (correction) | mpa | b_si | Water corr. | Ref (short) |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -215,7 +219,7 @@ A_r \exp\left(-\frac{(T-T_a)^2}{2x_a^2}\right)
 B_r \exp\left(-\frac{(T-T_b)^2}{2x_b^2}\right)
 ```
 
-where $A_r$ [$\mathrm{W/m/K}$], $B_r$ [$\mathrm{W/m/K}$], $T_a$ [$\mathrm{K}$], $x_a$ [$\mathrm{K}$], $x_b$ [$\mathrm{K}$], and $T_b$ [$\mathrm{K}$] are computed using the grain size $d$:
+where {math}`A_r`[W/m/K], {math}`B_r` [W/m/K], {math}`T_a` [K], {math}`x_a` [K], {math}`x_b` [K], and {math}`T_b` [K] are computed using the grain size $d$:
 
 ```{math}
 :label: eq:radiative_parameters
@@ -237,7 +241,7 @@ x_b &= 465
 \end{aligned}
 ```
 
-The default grain size $d$ is 0.5 cm. This set of equations is given by {cite:p}`grose2013comprehensive` and is based on the work of {cite:p}`hofmeister2005dependence`. In {cite:p}`hofmeister2005dependence`, radiative conductivity is described by three equations applicable to different grain-size ranges. The formulation of {cite:p}`grose2013comprehensive` provides a convenient unified parameterisation and has subsequently been used to model the thermal evolution of cooling oceanic lithosphere in {cite:p}`richards2020structure` and {cite:p}`korenaga2016evolution`.
+The default grain size {math}`d` is 0.5 cm. This set of equations is given by {cite:p}`grose2013comprehensive` and is based on the work of {cite:p}`hofmeister2005dependence`. In {cite:p}`hofmeister2005dependence`, radiative conductivity is described by three equations applicable to different grain-size ranges. The formulation of {cite:p}`grose2013comprehensive` provides a convenient unified parameterisation and has subsequently been used to model the thermal evolution of cooling oceanic lithosphere in {cite:p}`richards2020structure` and {cite:p}`korenaga2016evolution`.
 
 ##### Effective thermal conductivity
 
@@ -254,10 +258,9 @@ C_p(T,X)
 +
 k_{\mathrm{rad}}(T)
 ```
+(Table_lattice_dif)=
 
-:::{table} Experimental data of thermal diffusivity
-:label: Table_lattice_dif
-:align: center
+ *Experimental data of thermal diffusivity*
 
 | Name | $\kappa_0$ [mm<sup>2</sup>/s] | $\kappa_1$ [mm<sup>2</sup>/s] | $T_1$ [K] | $\kappa_2$ [mm<sup>2</sup>/s] | $T_2$ [K] | f |
 |---|---:|---:|---:|---:|---:|---:|
@@ -265,7 +268,6 @@ k_{\mathrm{rad}}(T)
 | `Augite` | 0.59e-6 | 1.03e-6 | 386.0 | 0.928e-6 | 125.0 | 0.05e-9 |
 | `AnAb` | 0.36e-6 | 0.4e-6 | 300.0 | 0.0 | 1.0 | 0.05e-9 |
 | `Crust_Richards_2018` | 0.432e-6 | 0.44e-6 | 380 | 0.305e-6 | 145.0 | 0.05e-9 |
-:::
 
 ## References
 
