@@ -22,4 +22,5 @@ dependencies:
       - --editable .
       - piccolo_theme
       - sphinxcontrib-bibtex
+      - sphinx-autodoc2
       - cmcrameri
