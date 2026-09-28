@@ -149,12 +149,10 @@ def diffusion_initial_guess(ctrl_sim:SimulationControls
         time_B = timing.time()
         print_ph(f'---------------------Timestep {ts}  took {time_B-time_A:.2f} ---------------------')
 
-        # petsc4py defers destruction of PETSc objects caught in reference
-        # cycles (or that require a collective destroy call) into an
-        # internal queue; nothing else flushes it during a run, so without
-        # this it accumulates unboundedly (confirmed experimentally: RSS
-        # grew from 2.67 to 4.81 GB over one run with this disabled). Cheap,
-        # collective, must be called on every rank.
+        # I remove a few comments and just highlight the refenrece of this: 
+        # Long Story short: I have been having a few problems related to the petsc version 
+        # I have been tracking the memory with the sys monitor manually and after found the issue 
+        # I just called garbage_cleanup
         # Ref: https://gitlab.com/petsc/petsc/-/work_items/1309 
         # Ref2 : https://fenicsproject.discourse.group/t/memory-management-with-petsc4py/18199/2
         PETSc.garbage_cleanup(MPI.COMM_WORLD)
@@ -544,13 +542,10 @@ def time_loop(ctrl_sim:SimulationControls
         
         time_B = timing.time()
         print_ph(f'---------------------Timestep {ts}  took {time_B-time_A:.2f} ---------------------')
-
-        # petsc4py defers destruction of PETSc objects caught in reference
-        # cycles (or that require a collective destroy call) into an
-        # internal queue; nothing else flushes it during a run, so without
-        # this it accumulates unboundedly (confirmed experimentally: RSS
-        # grew from 2.67 to 4.81 GB over one run with this disabled). Cheap,
-        # collective, must be called on every rank.
+        # I remove a few comments and just highlight the refenrece of this: 
+        # Long Story short: I have been having a few problems related to the petsc version 
+        # I have been tracking the memory with the sys monitor manually and after found the issue 
+        # I just called garbage_cleanup
         # Ref: https://gitlab.com/petsc/petsc/-/work_items/1309 
         # Ref2 : https://fenicsproject.discourse.group/t/memory-management-with-petsc4py/18199/2
         PETSc.garbage_cleanup(MPI.COMM_WORLD)

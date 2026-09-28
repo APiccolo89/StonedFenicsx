@@ -11,7 +11,10 @@ _VERSION_ = "0.0.1"
 _DATE_ = "26/08/2026"
 _AUTHORS_="Andrea Piccolo, Timothy Craig" 
 
-# From StackOVERFLOW
+# From  https://medium.com/@wide4head/interfacing-git-from-python-abb55c548853
+# Readapted, then I merged other sources: 
+# run function collects the command information *args is basically arbitrary arguments
+#run("rev-parse", "HEAD")) git -C repo rev-parse HEAD 
 def git_info(repo=None):
     repo =  Path(__file__).parents[1]
     def run(*args):
