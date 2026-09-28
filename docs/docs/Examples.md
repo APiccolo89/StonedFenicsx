@@ -32,8 +32,13 @@ Case `2b` has been repeated with non-linearities and with crustal units in both 
 In {numref}`fig:f1_benchmark`, two representative cases are shown (**Case 2b** and **case 2b non-linear and crustal unit**). The figure has been produced with supplementary scripts that will be released together with the package.
 
 ## Sensitivity study
+```{figure} images_doc/eye_candy.png
+:name: fig:f2_example_sensitivity
+:width: 500px
+:align: center
 
-## Mexico example slab
-
-## Time dependent
+[a]: T–P conditions of the slab. The different colours represent different sensitivity studies. Grey represents a generic mesh in which the full range of parameters was tested; red represents the Mexican case, in which the sensitivity study was performed using constrained parameters; green represents the Central Honshu sensitivity study.
+[b–d]: Heat fluxes for the different sensitivity studies. The purple bands represent the different decoupling depths tested in each sensitivity study, while the orange bands represent the depth of maximum shear heating.
+```
+The sensitivity study can be consulted in the following repository [Sensitivity_study](https://github.com/APiccolo89/Sensitivity_test). This repository will be released after the pubblication of the manuscripts. In this repository, there is a workflow for using the numerical code for doing sensitivity study, and using the realistic geometries. 
 
