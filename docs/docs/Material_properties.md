@@ -196,7 +196,7 @@ C_p(X,T) ={}& C_{p,0}(X)
 
 where $C_{p,i}$ are empirical parameters that depend on the mineralogical composition. The data are taken from {cite}`grose2013comprehensive` and {cite}`berman1996optimized`. The main parameters used in the current implementation are listed in {ref}`tab:heat_capacity`.
 
-The coefficients are defined such that $C_p$ is expressed in $\mathrm{J\,kg^{-1}\,K^{-1}}$, with $T$ in K. Forsterite and fayalite are the end-member experimental data from {cite}`berman1996optimized`, while olivine, augite, and plagioclase are the mineral properties listed in {cite}`grose2013comprehensive`.
+The coefficients are defined such that $C_p$ is expressed in {math}`\mathrm{J\,kg^{-1}\,K^{-1}}`, with T in K. Forsterite and fayalite are the end-member experimental data from {cite}`berman1996optimized`, while olivine, augite, and plagioclase are the mineral properties listed in {cite}`grose2013comprehensive`.
 
 The heat capacity of the mantle is computed using a mixture of 0.9 forsterite and 0.1 fayalite. The crustal heat capacity is computed using a mixture of 0.65 plagioclase, 0.2 augite, and 0.15 olivine, as listed in {cite}`grose2013comprehensive`.
 
@@ -205,7 +205,7 @@ The heat capacity of the mantle is computed using a mixture of 0.9 forsterite an
 
 *Heat capacity coefficients used in the non-linear formulation*
 
-| Mineral | $C_{p,0}$ [J kg$^{-1}$ K$^{-1}$] | $C_{p,1}$ [J kg$^{-1}$ K$^{-1/2}$] | $C_{p,2}$ [J kg$^{-1}$ K] | $C_{p,3}$ [J kg$^{-1}$ K$^{2}$] | $C_{p,4}$ [J kg$^{-1}$ K$^{-2}$] | $C_{p,5}$ [J kg$^{-1}$ K$^{-3}$] |
+| Mineral | {math}`C_{p,0}` [J {math}`kg^{-1} K^{-1}`] | {math}`C_{p,1}` [J {math}`kg^{-1} K^{-0.5}`] |{math}`C_{p,2}` [J {math}`kg^{-1} K`]|{math}`C_{p,3}` [J {math}`kg^{-1} K^{2}`]| {math}`C_{p,4}` [J {math}`kg^{-1} K^{-2}`] | {math}`C_{p,5}` [J {math}`kg^{-1} K^{-3}`] |
 |---|---:|---:|---:|---:|---:|---:|
 | Forsterite | 1657.39 | $-1.281\times10^{4}$ | 0 | $-1.904\times10^{9}$ | 0 | 0 |
 | Fayalite | 1236.68 | $-9.882\times10^{3}$ | 0 | $-3.052\times10^{8}$ | 0 | 0 |
