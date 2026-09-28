@@ -603,6 +603,7 @@ The current version of StonedFEniCSx is the result of this migration and of seve
 
 The code has benefitted from several external resources such as similar project [fenics-sz](https://github.com/cianwilson/fenics-sz) and the FEniCSx stackoverflow [FEniCSxDiscourse](https://fenicsproject.discourse.group/) [FenicsTutorial](https://jsdokken.com/dolfinx-tutorial/)
 
+
 The message at end of each simulation as a parting gift:
 ```python
 print_ph(
