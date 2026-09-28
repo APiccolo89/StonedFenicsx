@@ -47,14 +47,20 @@ src/
 ## Installation
 
 ```bash
-git clone https://github.com/APiccolo89/StonedFenicsx.git
-cd StonedFenicsx
-
-conda env create -f stonedenvironment.yml
-conda activate stonedfenicsx
+git clone https://github.com/APiccolo89/StonedFenicsx.git # Clone the repository
+cd StonedFenicsx # Go to the folder of the repository
+conda env create -f stonedenvironment.yml # Create the enviroment ** optional --name personalised_name (choose what do you like)
+conda activate stonedfenicsx # or your personalised name
 ```
-
-## Quick start
+>[!TIP]
+> Conda can be slow for installing all the dependency. The solution that has been found is the following [conda-lib-mamba]('https://conda.github.io/conda-libmamba-solver/'). So, 
+> in the case in which the installation of the depencency tooks ages, you can install it:
+> ```bash
+>  conda install -n base conda-libmamba-solver
+>  conda config --set solver libmamba
+>```
+> However, consider to read a bit how to install before doing it. 
+## Quick startc
 
 A simulation is configured with two YAML-parsed inputs — numerical/I-O/thermal/kinematic controls, and per-phase material properties — which drive `stonedfenicsx.stoned_fenicsx`:
 

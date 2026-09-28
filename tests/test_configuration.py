@@ -1,12 +1,24 @@
+"""Test configuration module
+
+The configuration tests simply checks wheter or not the mesh is created, or if the scaling
+are read properly. 
+
+This section is still under-construction, and most likely will results in a few refractoring. 
+Each part of the configuration module is interconnected, the next steps are to create indipendency between
+the component and testing if from the scaled material parameters is possible to recompute the original
+values. 
+"""
+
+import shutil
 from pathlib import Path
 
 import dolfinx
 import numpy as np
 import pytest
-import shutil
 
 from stonedfenicsx.config.input_parser import parse_input
 from stonedfenicsx.config.simulation_config import configure_simulation
+
 
 @pytest.fixture(scope="session", autouse=True)
 def cleanup_output():
