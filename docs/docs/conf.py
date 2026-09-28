@@ -31,9 +31,12 @@ autosummary_generate = True
 autodoc_mock_imports = ["dolfinx", "gmsh", "petsc4py", "mpi4py", "ufl", "basix", "ffcx"]
 
 autodoc2_packages = [
-    str(SRC / "stonedfenicsx"),
+    {
+        "path": str(SRC / "stonedfenicsx"),
+        "module": "stonedfenicsx",
+        "auto_mode": True,
+    }
 ]
-
 bibtex_bibfiles = ["bibliography.bib"]
 numfig = True
 
