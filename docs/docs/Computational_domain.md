@@ -1,11 +1,11 @@
 # Computational Domain and Boundary Conditions
 `````{admonition} Questions: 
   :class: summary_questions
-- �How the geometry is generated?
-- �How many sub-domains are generated?
-  - �What are the parameters to modify? 
-- �What are the boundary conditions?
-  -�What are the parameters that controls the boundary conditions?
+- How the geometry is generated?
+- How many sub-domains are generated?
+  - What are the parameters to modify? 
+- What are the boundary conditions?
+  -What are the parameters that controls the boundary conditions?
 `````
 
 
