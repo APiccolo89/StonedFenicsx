@@ -140,8 +140,7 @@
           <div class="body" role="main">
             
   <h1>Source code for stonedfenicsx.material_property.compute_material_property</h1><div class="highlight"><pre>
-<span></span>
-<span class="c1"># modules</span>
+<span></span><span class="c1"># modules</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitVar</span><span class="p">,</span> <span class="n">dataclass</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -171,8 +170,11 @@
 <span class="sd">        phase (fem.Function): DG0 Function whose `.x.array[:]` holds the</span>
 <span class="sd">            integer phase ID for every cell in the sub-mesh.</span>
 <span class="sd">    """</span>
-    <span class="n">pdb</span> <span class="p">:</span> <span class="n">InitVar</span><span class="p">[</span><span class="n">PhaseDataBase</span><span class="p">]</span>
-    <span class="n">phase</span> <span class="p">:</span> <span class="n">InitVar</span><span class="p">[</span><span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">]</span></div>
+
+    <span class="n">pdb</span><span class="p">:</span> <span class="n">InitVar</span><span class="p">[</span><span class="n">PhaseDataBase</span><span class="p">]</span>
+    <span class="n">phase</span><span class="p">:</span> <span class="n">InitVar</span><span class="p">[</span><span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">]</span></div>
+
+
 
 <span class="c1"># ---</span>
 <span class="c1"># ---</span>
@@ -189,11 +191,12 @@
 <span class="sd">    rho0, alpha0, alpha1, alpha2, Kb: density parameters and alpha parameters</span>
 <span class="sd">    option_rho: flag to choose the density formulation</span>
 <span class="sd">    radio: radiogenic heating</span>
-<span class="sd">    Tref, R, A, B, T_A, x_A, T_B, x_B: parameters for the radiative conductivity    </span>
+<span class="sd">    Tref, R, A, B, T_A, x_A, T_B, x_B: parameters for the radiative conductivity</span>
 <span class="sd">    """</span>
+
     <span class="c1"># Heat Conductivity properties</span>
-    <span class="n">k0</span> <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span> 
-    <span class="n">rg_cached</span> <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">k0</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">rg_cached</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">k_a</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">k_b</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">k_c</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
@@ -201,36 +204,34 @@
     <span class="n">k_e</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">k_f</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="c1"># Heat Capacity properties</span>
-    <span class="n">c0</span> <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">c1</span> <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">c2</span> <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">c3</span> <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">c4</span> <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">c5</span> <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">c0</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">c1</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">c2</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">c3</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">c4</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">c5</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="c1"># Density properties</span>
-    <span class="n">rho0</span>    <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">alpha0</span>  <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">alpha1</span>  <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">alpha2</span>  <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">kb</span>      <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">option_rho</span> <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">rho0</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">alpha0</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">alpha1</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">alpha2</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">kb</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">option_rho</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="c1"># Radiogenic heating properties</span>
-    <span class="n">radiogenic</span>   <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">radiogenic</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="c1"># Other properties</span>
-    <span class="n">temp_ref</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="n">gas_constant</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">8.3145</span>
-    <span class="n">a_rad</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="n">b_rad</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="n">temp_a</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="n">x_a</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="n">temp_b</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="n">x_b</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">temp_ref</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">gas_constant</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">8.3145</span>
+    <span class="n">a_rad</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">b_rad</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">temp_a</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">x_a</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">temp_b</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">x_b</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+
 <div class="viewcode-block" id="THERMALCACHED.__post_init__">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.material_property.compute_material_property.html#stonedfenicsx.material_property.compute_material_property.THERMALCACHED.__post_init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span>
-                     <span class="p">,</span><span class="n">pdb</span><span class="p">:</span><span class="n">PhaseDataBase</span>
-                     <span class="p">,</span><span class="n">phase</span><span class="p">:</span><span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
-
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span><span class="p">,</span> <span class="n">phase</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Allocate and fill all thermal material-property fem.Functions.</span>
 
 <span class="sd">        Uses the integer phase-ID array from `phase.x.array` to index into</span>
@@ -253,16 +254,16 @@
         <span class="n">ph_fs</span> <span class="o">=</span> <span class="n">phase</span><span class="o">.</span><span class="n">function_space</span>
 
         <span class="c1"># Heat Conductivity properties</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">k0</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>  
-        <span class="bp">self</span><span class="o">.</span><span class="n">rg_cached</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>  
-        <span class="bp">self</span><span class="o">.</span><span class="n">k_a</span><span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>  
-        <span class="bp">self</span><span class="o">.</span><span class="n">k_b</span><span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>  
-        <span class="bp">self</span><span class="o">.</span><span class="n">k_c</span><span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>  
-        <span class="bp">self</span><span class="o">.</span><span class="n">k_d</span><span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>  
-        <span class="bp">self</span><span class="o">.</span><span class="n">k_e</span><span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>  
-        <span class="bp">self</span><span class="o">.</span><span class="n">k_f</span><span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">k0</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span>  <span class="n">pdb</span><span class="o">.</span><span class="n">k0</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">rg_cached</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span>  <span class="n">pdb</span><span class="o">.</span><span class="n">radiative_conductivity</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k0</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rg_cached</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k_a</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k_b</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k_c</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k_d</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k_e</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k_f</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k0</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">k0</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rg_cached</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">radiative_conductivity</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">k_a</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">k_a</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">k_b</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">k_b</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">k_c</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">k_c</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
@@ -271,11 +272,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">k_f</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">k_f</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
         <span class="c1"># Heat Capacity properties</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">c0</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">c1</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span> 
-        <span class="bp">self</span><span class="o">.</span><span class="n">c2</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span> 
-        <span class="bp">self</span><span class="o">.</span><span class="n">c3</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span> 
-        <span class="bp">self</span><span class="o">.</span><span class="n">c4</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span> 
-        <span class="bp">self</span><span class="o">.</span><span class="n">c5</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">c1</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">c2</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">c3</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">c4</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">c5</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">c0</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">c0</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">c1</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">c1</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">c2</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">c2</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
@@ -283,32 +284,34 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">c4</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">c4</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">c5</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">c5</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
         <span class="c1"># Density properties</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">rho0</span>    <span class="o">=</span>    <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>   
-        <span class="bp">self</span><span class="o">.</span><span class="n">alpha0</span>  <span class="o">=</span>    <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>   
-        <span class="bp">self</span><span class="o">.</span><span class="n">alpha1</span>  <span class="o">=</span>    <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>   
-        <span class="bp">self</span><span class="o">.</span><span class="n">alpha2</span>  <span class="o">=</span>    <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>   
-        <span class="bp">self</span><span class="o">.</span><span class="n">kb</span>      <span class="o">=</span>    <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>   
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho0</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha0</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha1</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha2</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kb</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">option_rho</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">rho0</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span>    <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">rho0</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">alpha0</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span>  <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">alpha0</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">alpha1</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span>  <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">alpha1</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">alpha2</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span>  <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">alpha2</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">kb</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span>      <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">kb</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho0</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">rho0</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha0</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">alpha0</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha1</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">alpha1</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha2</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">alpha2</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kb</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">kb</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">option_rho</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">option_rho</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">radiogenic</span>   <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">radiogenic</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span>     <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">radiogenic_heat</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radiogenic</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radiogenic</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">radiogenic_heat</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">radiogenic</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">scatter_forward</span><span class="p">()</span>
-        
-        <span class="bp">self</span><span class="o">.</span><span class="n">temp_ref</span>    <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">temp_ref</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gas_constant</span>       <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">gas_constant</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a_rad</span>       <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">a_rad</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b_rad</span>       <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">b_rad</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">temp_a</span>     <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">temp_a</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">x_a</span>     <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">x_a</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">temp_b</span>     <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">temp_b</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">x_b</span>     <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">x_b</span></div>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">temp_ref</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">temp_ref</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gas_constant</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">gas_constant</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a_rad</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">a_rad</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b_rad</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">b_rad</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">temp_a</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">temp_a</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_a</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">x_a</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">temp_b</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">temp_b</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_b</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">x_b</span></div>
 </div>
+
+
 
 <span class="c1"># ---</span>
 <span class="c1"># ---</span>
@@ -316,29 +319,28 @@
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.material_property.compute_material_property.html#stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">RHEOLOGYCACHED</span><span class="p">(</span><span class="n">MATERIALS</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Initialise the rheological properties </span>
-<span class="sd">    </span>
+<span class="w">    </span><span class="sd">"""Initialise the rheological properties</span>
+
 <span class="sd">    Note: Stokes equation can be evaluated in a sub-domain (wedge). The class</span>
-<span class="sd">    is separated rg_cachedom the main material properties dataclass for this reason. </span>
+<span class="sd">    is separated rg_cachedom the main material properties dataclass for this reason.</span>
 <span class="sd">    """</span>
-    <span class="n">b_dif</span>    <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">b_dis</span>    <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="o">=</span> <span class="kc">None</span>
-    <span class="n">n</span>       <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">e_dif</span>   <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">e_dis</span>   <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">v_dif</span>   <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">v_dis</span>   <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">eta</span>     <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">eta_def</span> <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span> 
-    <span class="n">option_eta</span> <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">eta_max</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">gas_constant</span>     <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">b_dif</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">b_dis</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">n</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">e_dif</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">e_dis</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">v_dif</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">v_dis</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">eta</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">eta_def</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">option_eta</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">eta_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">gas_constant</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="RHEOLOGYCACHED.__post_init__">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.material_property.compute_material_property.html#stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED.__post_init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-                      <span class="n">pdb</span><span class="p">:</span><span class="n">PhaseDataBase</span>
-                      <span class="p">,</span><span class="n">phase</span><span class="p">:</span><span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span><span class="p">,</span> <span class="n">phase</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Allocate and fill all rheological material-property fem.Functions.</span>
 
 <span class="sd">        Mirrors the pattern of THERMALCACHED.__post_init__: indexes `pdb`</span>
@@ -359,38 +361,42 @@
         <span class="n">ph</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">phase</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">)</span>
         <span class="n">ph_fs</span> <span class="o">=</span> <span class="n">phase</span><span class="o">.</span><span class="n">function_space</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">b_dif</span>    <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>  
-        <span class="bp">self</span><span class="o">.</span><span class="n">b_dis</span>    <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>  
-        <span class="bp">self</span><span class="o">.</span><span class="n">n</span>        <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>   
-        <span class="bp">self</span><span class="o">.</span><span class="n">e_dif</span>    <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>  
-        <span class="bp">self</span><span class="o">.</span><span class="n">e_dis</span>    <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>  
-        <span class="bp">self</span><span class="o">.</span><span class="n">v_dif</span>    <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>  
-        <span class="bp">self</span><span class="o">.</span><span class="n">v_dis</span>    <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>  
-        <span class="bp">self</span><span class="o">.</span><span class="n">eta</span>      <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>   
+        <span class="bp">self</span><span class="o">.</span><span class="n">b_dif</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b_dis</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">e_dif</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">e_dis</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">v_dif</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">v_dis</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">option_eta</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">ph_fs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b_dif</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span>     <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">b_dif</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b_dis</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span>     <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">b_dis</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span>        <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">n</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">e_dif</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span>     <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">e_dif</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">e_dis</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span>     <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">e_dis</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">v_dif</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span>     <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">v_dif</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">v_dis</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span>     <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">v_dis</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">eta</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span>      <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">eta</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b_dif</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">b_dif</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b_dis</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">b_dis</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">n</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">e_dif</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">e_dif</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">e_dis</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">e_dis</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">v_dif</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">v_dif</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">v_dis</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">v_dis</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eta</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">eta</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">option_eta</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">option_eta</span><span class="p">[</span><span class="n">ph</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eta_max</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">eta_max</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eta_def</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">eta_def</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gas_constant</span>       <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">gas_constant</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gas_constant</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">gas_constant</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eta</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">scatter_forward</span><span class="p">()</span></div>
 </div>
+
+
 
 <span class="c1"># ---</span>
 <div class="viewcode-block" id="heat_conductivity_FX">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.material_property.compute_material_property.html#stonedfenicsx.material_property.compute_material_property.heat_conductivity_FX">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">heat_conductivity_FX</span><span class="p">(</span><span class="n">scal_cached</span> <span class="p">:</span> <span class="n">THERMALCACHED</span>
-                         <span class="p">,</span><span class="n">T</span> <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span>
-                         <span class="p">,</span><span class="n">p</span> <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span>
-                         <span class="p">,</span><span class="n">Cp</span> <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Expression</span>
-                         <span class="p">,</span><span class="n">rho</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">heat_conductivity_FX</span><span class="p">(</span>
+    <span class="n">scal_cached</span><span class="p">:</span> <span class="n">THERMALCACHED</span><span class="p">,</span>
+    <span class="n">T</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">,</span>
+    <span class="n">p</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">,</span>
+    <span class="n">Cp</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span>
+    <span class="n">rho</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build the UFL expression for thermal conductivity as a function of T and P.</span>
 
 <span class="sd">    Implements the composite conductivity law:</span>
@@ -419,23 +425,30 @@
 <span class="sd">        fem.Expression: UFL expression for k, to be used directly in the</span>
 <span class="sd">        bilinear form of the energy equation.</span>
 <span class="sd">    """</span>
-    
-    <span class="c1"># Compute the radiative conductivity</span>
-    <span class="n">k_rad</span> <span class="o">=</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">a_rad</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">T</span><span class="o">-</span><span class="n">scal_cached</span><span class="o">.</span><span class="n">temp_a</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">scal_cached</span><span class="o">.</span><span class="n">x_a</span> <span class="o">**</span> <span class="mi">2</span> <span class="p">))</span> <span class="o">+</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">b_rad</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">T</span> <span class="o">-</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">temp_b</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">x_b</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
-    <span class="c1"># Compute the lattice conductivity</span>
-    <span class="n">kappa_lat</span> <span class="o">=</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">k_a</span> <span class="o">+</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">k_b</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">T</span><span class="o">-</span><span class="n">scal_cached</span><span class="o">.</span><span class="n">temp_ref</span><span class="p">)</span><span class="o">/</span><span class="n">scal_cached</span><span class="o">.</span><span class="n">k_c</span><span class="p">)</span> <span class="o">+</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">k_d</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">T</span><span class="o">-</span><span class="n">scal_cached</span><span class="o">.</span><span class="n">temp_ref</span><span class="p">)</span><span class="o">/</span><span class="n">scal_cached</span><span class="o">.</span><span class="n">k_e</span><span class="p">)</span>
-    <span class="c1"># Compute the pressure dependence of the conductivity</span>
-    <span class="n">kappa_p</span>   <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="n">scal_cached</span><span class="o">.</span><span class="n">k_f</span> <span class="o">*</span> <span class="n">p</span><span class="p">)</span>  
-    <span class="c1"># Compute the total conductivity scal_cached.k0 -&gt; constant conductivity, if the phase has it, otherwise 0.0</span>
-    <span class="n">k</span> <span class="o">=</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">k0</span>  <span class="o">+</span> <span class="p">(</span><span class="n">kappa_lat</span> <span class="o">*</span> <span class="n">kappa_p</span> <span class="o">*</span> <span class="n">Cp</span> <span class="o">*</span> <span class="n">rho</span> <span class="o">+</span> <span class="n">k_rad</span> <span class="o">*</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">rg_cached</span><span class="p">)</span>  
 
-    <span class="k">return</span> <span class="n">k</span> </div>
+    <span class="c1"># Compute the radiative conductivity</span>
+    <span class="n">k_rad</span> <span class="o">=</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">a_rad</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span>
+        <span class="o">-</span><span class="p">((</span><span class="n">T</span> <span class="o">-</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">temp_a</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">x_a</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="p">)</span> <span class="o">+</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">b_rad</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">((</span><span class="n">T</span> <span class="o">-</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">temp_b</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">x_b</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+    <span class="c1"># Compute the lattice conductivity</span>
+    <span class="n">kappa_lat</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">scal_cached</span><span class="o">.</span><span class="n">k_a</span>
+        <span class="o">+</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">k_b</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">T</span> <span class="o">-</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">temp_ref</span><span class="p">)</span> <span class="o">/</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">k_c</span><span class="p">)</span>
+        <span class="o">+</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">k_d</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">T</span> <span class="o">-</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">temp_ref</span><span class="p">)</span> <span class="o">/</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">k_e</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="c1"># Compute the pressure dependence of the conductivity</span>
+    <span class="n">kappa_p</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="n">scal_cached</span><span class="o">.</span><span class="n">k_f</span> <span class="o">*</span> <span class="n">p</span><span class="p">)</span>
+    <span class="c1"># Compute the total conductivity scal_cached.k0 -&gt; constant conductivity, if the phase has it, otherwise 0.0</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">k0</span> <span class="o">+</span> <span class="p">(</span><span class="n">kappa_lat</span> <span class="o">*</span> <span class="n">kappa_p</span> <span class="o">*</span> <span class="n">Cp</span> <span class="o">*</span> <span class="n">rho</span> <span class="o">+</span> <span class="n">k_rad</span> <span class="o">*</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">rg_cached</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">k</span></div>
+
+
 
 <span class="c1"># ---</span>
 <div class="viewcode-block" id="heat_capacity_FX">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.material_property.compute_material_property.html#stonedfenicsx.material_property.compute_material_property.heat_capacity_FX">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">heat_capacity_FX</span><span class="p">(</span><span class="n">scal_cached</span> <span class="p">:</span> <span class="n">THERMALCACHED</span>
-                     <span class="p">,</span><span class="n">T</span> <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">heat_capacity_FX</span><span class="p">(</span><span class="n">scal_cached</span><span class="p">:</span> <span class="n">THERMALCACHED</span><span class="p">,</span> <span class="n">T</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build the UFL expression for heat capacity as a polynomial in T.</span>
 
 <span class="sd">    Implements the Berman (1988) polynomial:</span>
@@ -454,14 +467,22 @@
 <span class="sd">        bilinear form and passed to `heat_conductivity_FX`.</span>
 <span class="sd">    """</span>
     <span class="c1"># General formula for the heat capacity, it is an expression because it depends on T. C0 = Cp in case the heat capacity is constant, otherwise the other parameters are active.</span>
-    <span class="n">C_p</span> <span class="o">=</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">c0</span> <span class="o">+</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">c1</span> <span class="o">*</span> <span class="p">(</span><span class="n">T</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">))</span> <span class="o">+</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">c2</span> <span class="o">*</span> <span class="n">T</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">2.</span><span class="p">)</span> <span class="o">+</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">c3</span> <span class="o">*</span> <span class="p">(</span><span class="n">T</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">3.</span><span class="p">))</span> <span class="o">+</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">c4</span> <span class="o">*</span> <span class="n">T</span> <span class="o">+</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">c5</span> <span class="o">*</span> <span class="n">T</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">C_p</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">scal_cached</span><span class="o">.</span><span class="n">c0</span>
+        <span class="o">+</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">c1</span> <span class="o">*</span> <span class="p">(</span><span class="n">T</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">))</span>
+        <span class="o">+</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">c2</span> <span class="o">*</span> <span class="n">T</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mf">2.0</span><span class="p">)</span>
+        <span class="o">+</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">c3</span> <span class="o">*</span> <span class="p">(</span><span class="n">T</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mf">3.0</span><span class="p">))</span>
+        <span class="o">+</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">c4</span> <span class="o">*</span> <span class="n">T</span>
+        <span class="o">+</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">c5</span> <span class="o">*</span> <span class="n">T</span><span class="o">**</span><span class="mi">2</span>
+    <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">C_p</span></div>
 
-  
+
+
 <div class="viewcode-block" id="compute_radiogenic">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.material_property.compute_material_property.html#stonedfenicsx.material_property.compute_material_property.compute_radiogenic">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">compute_radiogenic</span><span class="p">(</span><span class="n">scal_cached</span><span class="p">:</span><span class="n">THERMALCACHED</span><span class="p">,</span> <span class="n">hs</span><span class="p">:</span><span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_radiogenic</span><span class="p">(</span><span class="n">scal_cached</span><span class="p">:</span> <span class="n">THERMALCACHED</span><span class="p">,</span> <span class="n">hs</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Interpolate the cached radiogenic heating field into a pre-allocated Function.</span>
 
 <span class="sd">    Copies the per-element radiogenic heat production (already stored as a</span>
@@ -480,12 +501,12 @@
     <span class="n">hs</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">scal_cached</span><span class="o">.</span><span class="n">radiogenic</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">hs</span></div>
 
+
+
 <span class="c1"># ---</span>
 <div class="viewcode-block" id="density_FX">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.material_property.compute_material_property.html#stonedfenicsx.material_property.compute_material_property.density_FX">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">density_FX</span><span class="p">(</span><span class="n">scal_cached</span><span class="p">:</span><span class="n">THERMALCACHED</span>
-               <span class="p">,</span><span class="n">T</span><span class="p">:</span><span class="n">fem</span><span class="o">.</span><span class="n">Function</span>
-               <span class="p">,</span><span class="n">p</span><span class="p">:</span><span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">density_FX</span><span class="p">(</span><span class="n">scal_cached</span><span class="p">:</span> <span class="n">THERMALCACHED</span><span class="p">,</span> <span class="n">T</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build the UFL expression for density as a function of T and P.</span>
 
 <span class="sd">    Selects one of three density formulations per element via UFL conditional</span>
@@ -511,26 +532,26 @@
 <span class="sd">    """</span>
 
     <span class="c1"># Base density (with temperature dependence)</span>
-    <span class="n">temp_term</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span> <span class="n">p</span> <span class="o">*</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">alpha2</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">scal_cached</span><span class="o">.</span><span class="n">alpha0</span> <span class="o">*</span> <span class="p">(</span><span class="n">T</span> <span class="o">-</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">temp_ref</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">scal_cached</span><span class="o">.</span><span class="n">alpha1</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">T</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">temp_ref</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
-    <span class="n">rho_temp</span> <span class="o">=</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">rho0</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">temp_term</span><span class="p">)</span>
+    <span class="n">temp_term</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">p</span> <span class="o">*</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">alpha2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span>
+        <span class="n">scal_cached</span><span class="o">.</span><span class="n">alpha0</span> <span class="o">*</span> <span class="p">(</span><span class="n">T</span> <span class="o">-</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">temp_ref</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">scal_cached</span><span class="o">.</span><span class="n">alpha1</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">T</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">temp_ref</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">rho_temp</span> <span class="o">=</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">rho0</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">temp_term</span><span class="p">)</span>
 
     <span class="c1"># Add pressure dependence if needed</span>
     <span class="n">rho</span> <span class="o">=</span> <span class="n">conditional</span><span class="p">(</span>
-        <span class="n">eq</span><span class="p">(</span><span class="n">scal_cached</span><span class="o">.</span><span class="n">option_rho</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">rho0</span><span class="p">,</span>
-        <span class="n">conditional</span><span class="p">(</span>
-            <span class="n">eq</span><span class="p">(</span><span class="n">scal_cached</span><span class="o">.</span><span class="n">option_rho</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">rho_temp</span><span class="p">,</span>
-            <span class="n">rho_temp</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="n">p</span> <span class="o">/</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">kb</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="n">eq</span><span class="p">(</span><span class="n">scal_cached</span><span class="o">.</span><span class="n">option_rho</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+        <span class="n">scal_cached</span><span class="o">.</span><span class="n">rho0</span><span class="p">,</span>
+        <span class="n">conditional</span><span class="p">(</span><span class="n">eq</span><span class="p">(</span><span class="n">scal_cached</span><span class="o">.</span><span class="n">option_rho</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">rho_temp</span><span class="p">,</span> <span class="n">rho_temp</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="n">p</span> <span class="o">/</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">kb</span><span class="p">)),</span>
     <span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">rho</span> </div>
+    <span class="k">return</span> <span class="n">rho</span></div>
+
+
 
 <span class="c1"># ---</span>
 <div class="viewcode-block" id="alpha_FX">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.material_property.compute_material_property.html#stonedfenicsx.material_property.compute_material_property.alpha_FX">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">alpha_FX</span><span class="p">(</span><span class="n">scal_cached</span> <span class="p">:</span> <span class="n">THERMALCACHED</span>
-             <span class="p">,</span><span class="n">T</span> <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span>
-             <span class="p">,</span><span class="n">p</span> <span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">alpha_FX</span><span class="p">(</span><span class="n">scal_cached</span><span class="p">:</span> <span class="n">THERMALCACHED</span><span class="p">,</span> <span class="n">T</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build the UFL expression for thermal expansivity as a function of T and P.</span>
 
 <span class="sd">    Implements the linearised Birch-Murnaghan expansivity:</span>
@@ -552,20 +573,22 @@
 <span class="sd">    """</span>
 
     <span class="c1"># Base density (with temperature dependence)</span>
-    <span class="n">alpha</span> <span class="o">=</span>  <span class="n">exp</span><span class="p">(</span><span class="o">-</span> <span class="n">p</span> <span class="o">*</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">alpha2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">scal_cached</span><span class="o">.</span><span class="n">alpha0</span>  <span class="o">+</span> <span class="p">(</span><span class="n">scal_cached</span><span class="o">.</span><span class="n">alpha1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">T</span><span class="o">-</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">temp_ref</span><span class="p">))</span>
+    <span class="n">alpha</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">p</span> <span class="o">*</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">alpha2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">scal_cached</span><span class="o">.</span><span class="n">alpha0</span> <span class="o">+</span> <span class="p">(</span><span class="n">scal_cached</span><span class="o">.</span><span class="n">alpha1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">T</span> <span class="o">-</span> <span class="n">scal_cached</span><span class="o">.</span><span class="n">temp_ref</span><span class="p">))</span>
 
+    <span class="k">return</span> <span class="n">alpha</span></div>
 
-    <span class="k">return</span> <span class="n">alpha</span> </div>
 
 
 <span class="c1"># ---</span>
 <div class="viewcode-block" id="compute_viscosity_FX">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.material_property.compute_material_property.html#stonedfenicsx.material_property.compute_material_property.compute_viscosity_FX">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">compute_viscosity_FX</span><span class="p">(</span><span class="n">e</span><span class="p">:</span><span class="n">fem</span><span class="o">.</span><span class="n">Expression</span>
-                        <span class="p">,</span><span class="n">temp_in</span><span class="p">:</span><span class="n">fem</span><span class="o">.</span><span class="n">Function</span>
-                        <span class="p">,</span><span class="n">pres_in</span><span class="p">:</span><span class="n">fem</span><span class="o">.</span><span class="n">Function</span>
-                        <span class="p">,</span><span class="n">pdb</span><span class="p">:</span><span class="n">PhaseDataBase</span>
-                        <span class="p">,</span><span class="n">rg_cached</span><span class="p">:</span><span class="n">RHEOLOGYCACHED</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_viscosity_FX</span><span class="p">(</span>
+    <span class="n">e</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span>
+    <span class="n">temp_in</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">,</span>
+    <span class="n">pres_in</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">,</span>
+    <span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span><span class="p">,</span>
+    <span class="n">rg_cached</span><span class="p">:</span> <span class="n">RHEOLOGYCACHED</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build the UFL expression for effective viscosity from strain rate, T, and P.</span>
 
 <span class="sd">    Computes a composite diffusion + dislocation creep viscosity with a</span>
@@ -599,47 +622,54 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        fem.Expression: UFL expression for eta, to be inserted into the Stokes</span>
 <span class="sd">        bilinear form.</span>
-<span class="sd">    """</span>    
-    
+<span class="sd">    """</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_eii</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
-        <span class="n">e_ii</span>  <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="mf">0.5</span><span class="o">*</span><span class="n">inner</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-15</span><span class="p">)</span>    
+        <span class="n">e_ii</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">inner</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-15</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">e_ii</span>
-    
+
     <span class="n">e_ii</span> <span class="o">=</span> <span class="n">compute_eii</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-    
-    <span class="c1"># Eta max </span>
-    <span class="c1"># strain indipendent  </span>
-    <span class="n">cdf</span> <span class="o">=</span> <span class="n">rg_cached</span><span class="o">.</span><span class="n">b_dif</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">rg_cached</span><span class="o">.</span><span class="n">e_dif</span> <span class="o">+</span> <span class="n">pres_in</span> <span class="o">*</span> <span class="n">pdb</span><span class="o">.</span><span class="n">pres_scal</span> <span class="o">*</span> <span class="n">rg_cached</span><span class="o">.</span><span class="n">v_dif</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">rg_cached</span><span class="o">.</span><span class="n">gas_constant</span> <span class="o">*</span> <span class="n">temp_in</span> <span class="o">*</span> <span class="n">pdb</span><span class="o">.</span><span class="n">temp_scal</span><span class="p">))</span>
-    <span class="n">cds</span> <span class="o">=</span> <span class="n">rg_cached</span><span class="o">.</span><span class="n">b_dis</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">rg_cached</span><span class="o">.</span><span class="n">e_dis</span> <span class="o">+</span> <span class="n">pres_in</span> <span class="o">*</span> <span class="n">pdb</span><span class="o">.</span><span class="n">pres_scal</span> <span class="o">*</span> <span class="n">rg_cached</span><span class="o">.</span><span class="n">v_dis</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">rg_cached</span><span class="o">.</span><span class="n">gas_constant</span> <span class="o">*</span> <span class="n">temp_in</span> <span class="o">*</span> <span class="n">pdb</span><span class="o">.</span><span class="n">temp_scal</span><span class="p">))</span>
+
+    <span class="c1"># Eta max</span>
+    <span class="c1"># strain indipendent</span>
+    <span class="n">cdf</span> <span class="o">=</span> <span class="n">rg_cached</span><span class="o">.</span><span class="n">b_dif</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span>
+        <span class="o">-</span><span class="p">(</span><span class="n">rg_cached</span><span class="o">.</span><span class="n">e_dif</span> <span class="o">+</span> <span class="n">pres_in</span> <span class="o">*</span> <span class="n">pdb</span><span class="o">.</span><span class="n">pres_scal</span> <span class="o">*</span> <span class="n">rg_cached</span><span class="o">.</span><span class="n">v_dif</span><span class="p">)</span>
+        <span class="o">/</span> <span class="p">(</span><span class="n">rg_cached</span><span class="o">.</span><span class="n">gas_constant</span> <span class="o">*</span> <span class="n">temp_in</span> <span class="o">*</span> <span class="n">pdb</span><span class="o">.</span><span class="n">temp_scal</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">cds</span> <span class="o">=</span> <span class="n">rg_cached</span><span class="o">.</span><span class="n">b_dis</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span>
+        <span class="o">-</span><span class="p">(</span><span class="n">rg_cached</span><span class="o">.</span><span class="n">e_dis</span> <span class="o">+</span> <span class="n">pres_in</span> <span class="o">*</span> <span class="n">pdb</span><span class="o">.</span><span class="n">pres_scal</span> <span class="o">*</span> <span class="n">rg_cached</span><span class="o">.</span><span class="n">v_dis</span><span class="p">)</span>
+        <span class="o">/</span> <span class="p">(</span><span class="n">rg_cached</span><span class="o">.</span><span class="n">gas_constant</span> <span class="o">*</span> <span class="n">temp_in</span> <span class="o">*</span> <span class="n">pdb</span><span class="o">.</span><span class="n">temp_scal</span><span class="p">)</span>
+    <span class="p">)</span>
     <span class="c1"># compute tau guess</span>
-    <span class="n">n_co</span>  <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">rg_cached</span><span class="o">.</span><span class="n">n</span><span class="p">)</span><span class="o">/</span><span class="n">rg_cached</span><span class="o">.</span><span class="n">n</span>
-    <span class="n">n_inv</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="n">rg_cached</span><span class="o">.</span><span class="n">n</span> 
-    <span class="c1"># Se esiste un cazzo di inferno in culo a Satana ci vanno quelli che hanno generato </span>
-    <span class="c1"># sto modo creativo di fare gli esponenti. </span>
-    <span class="n">etads</span>     <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">cds</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="n">n_inv</span><span class="p">)</span> <span class="o">*</span> <span class="n">e_ii</span><span class="o">**</span><span class="n">n_co</span>
-    <span class="n">etadf</span>     <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">cdf</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">eta_av</span>    <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">etads</span> <span class="o">+</span> <span class="mi">1</span><span class="o">/</span><span class="n">etadf</span> <span class="o">+</span> <span class="mi">1</span><span class="o">/</span><span class="n">rg_cached</span><span class="o">.</span><span class="n">eta_max</span><span class="p">)</span>
-    <span class="n">eta_df</span>    <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">etadf</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">rg_cached</span><span class="o">.</span><span class="n">eta_max</span><span class="p">)</span> 
-        
-    <span class="c1"># check if the option_eta -&gt; constant or not, otherwise release the composite eta </span>
+    <span class="n">n_co</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">rg_cached</span><span class="o">.</span><span class="n">n</span><span class="p">)</span> <span class="o">/</span> <span class="n">rg_cached</span><span class="o">.</span><span class="n">n</span>
+    <span class="n">n_inv</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">rg_cached</span><span class="o">.</span><span class="n">n</span>
+    <span class="c1"># Se esiste un cazzo di inferno in culo a Satana ci vanno quelli che hanno generato</span>
+    <span class="c1"># sto modo creativo di fare gli esponenti.</span>
+    <span class="n">etads</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">cds</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">n_inv</span><span class="p">)</span> <span class="o">*</span> <span class="n">e_ii</span><span class="o">**</span><span class="n">n_co</span>
+    <span class="n">etadf</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">cdf</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">eta_av</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">etads</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">etadf</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">rg_cached</span><span class="o">.</span><span class="n">eta_max</span><span class="p">)</span>
+    <span class="n">eta_df</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">etadf</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">rg_cached</span><span class="o">.</span><span class="n">eta_max</span><span class="p">)</span>
+
+    <span class="c1"># check if the option_eta -&gt; constant or not, otherwise release the composite eta</span>
     <span class="n">eta</span> <span class="o">=</span> <span class="n">ufl</span><span class="o">.</span><span class="n">conditional</span><span class="p">(</span>
-        <span class="n">ufl</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">rg_cached</span><span class="o">.</span><span class="n">option_eta</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">rg_cached</span><span class="o">.</span><span class="n">eta</span><span class="p">,</span>
-        <span class="n">ufl</span><span class="o">.</span><span class="n">conditional</span><span class="p">(</span>
-            <span class="n">ufl</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">rg_cached</span><span class="o">.</span><span class="n">option_eta</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="n">eta_df</span><span class="p">,</span>
-            <span class="n">eta_av</span>
-        <span class="p">)</span>
+        <span class="n">ufl</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">rg_cached</span><span class="o">.</span><span class="n">option_eta</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+        <span class="n">rg_cached</span><span class="o">.</span><span class="n">eta</span><span class="p">,</span>
+        <span class="n">ufl</span><span class="o">.</span><span class="n">conditional</span><span class="p">(</span><span class="n">ufl</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">rg_cached</span><span class="o">.</span><span class="n">option_eta</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="n">eta_df</span><span class="p">,</span> <span class="n">eta_av</span><span class="p">),</span>
     <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">eta</span></div>
 
+
+
 <span class="c1"># ---</span>
 <div class="viewcode-block" id="compute_plastic_strain">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.material_property.compute_material_property.html#stonedfenicsx.material_property.compute_material_property.compute_plastic_strain">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">compute_plastic_strain</span><span class="p">(</span><span class="n">e_ii</span><span class="p">:</span><span class="n">fem</span><span class="o">.</span><span class="n">Expression</span>
-                           <span class="p">,</span><span class="n">temp_in</span><span class="p">:</span><span class="n">fem</span><span class="o">.</span><span class="n">Function</span>
-                           <span class="p">,</span><span class="n">pres_in</span><span class="p">:</span><span class="n">fem</span><span class="o">.</span><span class="n">Function</span>
-                           <span class="p">,</span><span class="n">pdb</span><span class="p">:</span><span class="n">PhaseDataBase</span>
-                           <span class="p">)</span><span class="o">-&gt;</span><span class="nb">tuple</span><span class="p">[</span><span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span> <span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span> <span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_plastic_strain</span><span class="p">(</span>
+    <span class="n">e_ii</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span>
+    <span class="n">temp_in</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">,</span>
+    <span class="n">pres_in</span><span class="p">:</span> <span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">,</span>
+    <span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span> <span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span> <span class="n">fem</span><span class="o">.</span><span class="n">Expression</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Build UFL expressions for the effective shear stress in the plastic weak zone.</span>
 
 <span class="sd">    Computes the visco-plastic effective stress using a dislocation-creep</span>
@@ -687,7 +717,7 @@
 <span class="sd">            tau_vis  -- viscous stress before plastic cap (UFL expression).</span>
 <span class="sd">            tau_lim  -- Drucker-Prager yield stress (UFL expression).</span>
 <span class="sd">    """</span>
-    
+
     <span class="c1"># UNFORTUNATELY I AM STUPID and i do not have any idea how to scale the energies such that it would be easier to handle. Since the scale of force and legth is self-consistently related to mass, i do not know how to deal with the fucking useless mol in the energy of activation</span>
     <span class="c1"># NOTE: rescale as UFL expressions on temp_in/pres_in directly (do NOT .copy() into</span>
     <span class="c1"># a detached Function) -&gt; compute_shear_heating() is only called once (its form is</span>
@@ -696,31 +726,34 @@
     <span class="n">temp</span> <span class="o">=</span> <span class="n">temp_in</span> <span class="o">*</span> <span class="n">pdb</span><span class="o">.</span><span class="n">temp_scal</span>
     <span class="n">pres</span> <span class="o">=</span> <span class="n">pres_in</span> <span class="o">*</span> <span class="n">pdb</span><span class="o">.</span><span class="n">pres_scal</span>
     <span class="c1"># Gather material parameters as UFL expressions via indexing</span>
-    <span class="n">bdis</span> <span class="o">=</span>  <span class="n">pdb</span><span class="o">.</span><span class="n">bdis_wz</span>
-    <span class="n">n</span>    <span class="o">=</span>  <span class="n">pdb</span><span class="o">.</span><span class="n">n_wz</span>
-    <span class="n">edis</span> <span class="o">=</span>  <span class="n">pdb</span><span class="o">.</span><span class="n">edis_wz</span>
-    <span class="n">vdis</span> <span class="o">=</span>  <span class="n">pdb</span><span class="o">.</span><span class="n">vdis_wz</span>
+    <span class="n">bdis</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">bdis_wz</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">n_wz</span>
+    <span class="n">edis</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">edis_wz</span>
+    <span class="n">vdis</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">vdis_wz</span>
     <span class="n">eh2o</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">eh2o_wz</span>
     <span class="n">vh2o</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">vh2o_wz</span>
     <span class="n">temp_ref</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">temp_ref</span> <span class="o">*</span> <span class="n">pdb</span><span class="o">.</span><span class="n">temp_scal</span>
     <span class="n">pres_ref</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">pres_ref</span> <span class="o">*</span> <span class="n">pdb</span><span class="o">.</span><span class="n">pres_scal</span>
-    
-    <span class="c1"># strain indipendent  </span>
-    <span class="n">cds</span> <span class="o">=</span> <span class="n">bdis</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">edis</span> <span class="o">+</span> <span class="n">pres</span> <span class="o">*</span> <span class="n">vdis</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">pdb</span><span class="o">.</span><span class="n">gas_constant</span> <span class="o">*</span> <span class="n">temp</span><span class="p">))</span>
+
+    <span class="c1"># strain indipendent</span>
+    <span class="n">cds</span> <span class="o">=</span> <span class="n">bdis</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">edis</span> <span class="o">+</span> <span class="n">pres</span> <span class="o">*</span> <span class="n">vdis</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">pdb</span><span class="o">.</span><span class="n">gas_constant</span> <span class="o">*</span> <span class="n">temp</span><span class="p">))</span>
     <span class="c1"># compute tau guess</span>
-    
-    <span class="k">if</span> <span class="n">pdb</span><span class="o">.</span><span class="n">water_cor</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span> 
-        <span class="n">water</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">eh2o</span><span class="o">+</span><span class="n">pres</span><span class="o">*</span><span class="n">vh2o</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">pdb</span><span class="o">.</span><span class="n">gas_constant</span> <span class="o">*</span> <span class="n">temp</span><span class="p">))</span><span class="o">/</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">eh2o</span><span class="o">+</span><span class="n">pres_ref</span><span class="o">*</span><span class="n">vh2o</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">pdb</span><span class="o">.</span><span class="n">gas_constant</span> <span class="o">*</span> <span class="n">temp_ref</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">pdb</span><span class="o">.</span><span class="n">water_cor</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">water</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">eh2o</span> <span class="o">+</span> <span class="n">pres</span> <span class="o">*</span> <span class="n">vh2o</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">pdb</span><span class="o">.</span><span class="n">gas_constant</span> <span class="o">*</span> <span class="n">temp</span><span class="p">))</span> <span class="o">/</span> <span class="n">exp</span><span class="p">(</span>
+            <span class="o">-</span><span class="p">(</span><span class="n">eh2o</span> <span class="o">+</span> <span class="n">pres_ref</span> <span class="o">*</span> <span class="n">vh2o</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">pdb</span><span class="o">.</span><span class="n">gas_constant</span> <span class="o">*</span> <span class="n">temp_ref</span><span class="p">)</span>
+        <span class="p">)</span>
         <span class="n">cds</span> <span class="o">=</span> <span class="n">cds</span> <span class="o">*</span> <span class="n">water</span> <span class="o">**</span> <span class="p">(</span><span class="n">pdb</span><span class="o">.</span><span class="n">r_wz</span><span class="p">)</span>
 
-    <span class="n">tau_vis</span>  <span class="o">=</span> <span class="n">cds</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="o">/</span><span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="n">e_ii</span><span class="o">**</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">n</span><span class="p">)</span>
-        
-    <span class="c1"># -&gt; Compute the tau lim </span>
-    <span class="n">tau_lim</span>  <span class="o">=</span> <span class="n">pres_in</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">pdb</span><span class="o">.</span><span class="n">phi</span><span class="p">)</span>
+    <span class="n">tau_vis</span> <span class="o">=</span> <span class="n">cds</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">/</span> <span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="n">e_ii</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">n</span><span class="p">)</span>
 
-    <span class="n">tau_eff</span> <span class="o">=</span> <span class="n">tau_vis</span> <span class="o">*</span> <span class="n">ufl</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">tau_lim</span><span class="o">/</span><span class="n">tau_vis</span><span class="p">)</span>
+    <span class="c1"># -&gt; Compute the tau lim</span>
+    <span class="n">tau_lim</span> <span class="o">=</span> <span class="n">pres_in</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">pdb</span><span class="o">.</span><span class="n">phi</span><span class="p">)</span>
+
+    <span class="n">tau_eff</span> <span class="o">=</span> <span class="n">tau_vis</span> <span class="o">*</span> <span class="n">ufl</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">tau_lim</span> <span class="o">/</span> <span class="n">tau_vis</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">tau_eff</span><span class="p">,</span> <span class="n">tau_vis</span><span class="p">,</span> <span class="n">tau_lim</span></div>
+
 
 
 <span class="c1"># ---</span>

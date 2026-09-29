@@ -26,42 +26,26 @@ class Domain:
     and extracted submeshes, ensuring consistent handling of markers, facets,
     material phases, and boundary conditions.
 
-    Attributes
-    ----------
-    hierarchy : str
-        Mesh hierarchy level:
-        - `"parent"` for the global mesh
-        - `"child"` for a submesh
+    Attributes:
+        hierarchy (str): Mesh hierarchy level:
 
-    cell_par : NDArray[np.int32] | None
-        Parent cell relationships mapping submesh cells to the global mesh cells.
-        Only defined if the domain is a submesh.
+            - `"parent"` for the global mesh
+            - `"child"` for a submesh
+        cell_par (NDArray[np.int32] | None): Parent cell relationships mapping submesh cells to the global mesh cells.
+            Only defined if the domain is a submesh.
+        node_par (NDArray[np.int32] | None): Parent node relationships mapping submesh nodes to the global mesh nodes.
+            Only defined if the domain is a submesh.
+        facets (dolfinx.mesh.MeshTags | None): Tagged facet markers representing boundary features
+            (e.g., trench, free surface, inflow/outflow).
+        Tagcells (dolfinx.mesh.MeshTags | None): Tagged cell markers representing physical regions/material domains.
+        bc_dict (dict): Dictionary mapping boundary condition names to integer tags.
+        solPh (dolfinx.fem.FunctionSpace | None): Function space used to define material property fields or phase functions.
+        phase (dolfinx.fem.Function | None): Material phase indicator function defined on the domain.
 
-    node_par : NDArray[np.int32] | None
-        Parent node relationships mapping submesh nodes to the global mesh nodes.
-        Only defined if the domain is a submesh.
-
-    facets : dolfinx.mesh.MeshTags | None
-        Tagged facet markers representing boundary features
-        (e.g., trench, free surface, inflow/outflow).
-
-    Tagcells : dolfinx.mesh.MeshTags | None
-        Tagged cell markers representing physical regions/material domains.
-
-    bc_dict : dict
-        Dictionary mapping boundary condition names to integer tags.
-
-    solPh : dolfinx.fem.FunctionSpace | None
-        Function space used to define material property fields or phase functions.
-
-    phase : dolfinx.fem.Function | None
-        Material phase indicator function defined on the domain.
-
-    Notes
-    -----
-    The `Domain` class is a lightweight container for all domain-specific mesh data.
-    It allows safe communication of field variables, markers, and boundary tags
-    between the global mesh and its corresponding subdomains.
+    Notes:
+        The `Domain` class is a lightweight container for all domain-specific mesh data.
+        It allows safe communication of field variables, markers, and boundary tags
+        between the global mesh and its corresponding subdomains.
     """
 
     hierarchy: str = "Parent"
@@ -148,37 +132,17 @@ class Mesh:
     its associated subdomains, and the finite element definitions required for the
     numerical discretization of pressure, temperature, and velocity.
 
-    Attributes
-    ----------
-    g_input : Geom_input
-        Geometric input parameters defining the model setup.
-
-    domainG : Domain
-        Global computational domain (full mesh).
-
-    domainA : Domain
-        Subduction zone domain (submesh extracted from the global mesh).
-
-    domainB : Domain
-        Wedge domain (submesh extracted from the global mesh).
-
-    domainC : Domain
-        Overriding plate domain (submesh extracted from the global mesh).
-
-    rank : int
-        MPI rank of the current process.
-
-    size : int
-        Total number of MPI processes.
-
-    element_p : ufl.FiniteElement
-        Finite element definition for the pressure field.
-
-    element_PT : ufl.FiniteElement
-        Finite element definition for the temperature field.
-
-    element_V : ufl.FiniteElement
-        Finite element definition for the velocity field.
+    Attributes:
+        g_input (Geom_input): Geometric input parameters defining the model setup.
+        domainG (Domain): Global computational domain (full mesh).
+        domainA (Domain): Subduction zone domain (submesh extracted from the global mesh).
+        domainB (Domain): Wedge domain (submesh extracted from the global mesh).
+        domainC (Domain): Overriding plate domain (submesh extracted from the global mesh).
+        rank (int): MPI rank of the current process.
+        size (int): Total number of MPI processes.
+        element_p (ufl.FiniteElement): Finite element definition for the pressure field.
+        element_PT (ufl.FiniteElement): Finite element definition for the temperature field.
+        element_V (ufl.FiniteElement): Finite element definition for the velocity field.
     """
 
     g_input: GeomInput  # Geometric input

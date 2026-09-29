@@ -4,6 +4,7 @@
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.config
+:parser: napoleon_parser
 :allowtitles:
 ```
 

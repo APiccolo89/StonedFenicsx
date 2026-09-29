@@ -4,6 +4,7 @@
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh
+:parser: napoleon_parser
 :allowtitles:
 ```
 
@@ -17,62 +18,77 @@
 
 * - {py:obj}`_differs <stonedfenicsx.create_mesh.create_mesh._differs>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh._differs
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`compare_data <stonedfenicsx.create_mesh.create_mesh.compare_data>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.compare_data
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`write_mesh_data <stonedfenicsx.create_mesh.create_mesh.write_mesh_data>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.write_mesh_data
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`create_mesh <stonedfenicsx.create_mesh.create_mesh.create_mesh>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.create_mesh
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`create_gmesh <stonedfenicsx.create_mesh.create_mesh.create_gmesh>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.create_gmesh
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`create_domain_subduction_plate <stonedfenicsx.create_mesh.create_mesh.create_domain_subduction_plate>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.create_domain_subduction_plate
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`create_domain_wedge <stonedfenicsx.create_mesh.create_mesh.create_domain_wedge>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.create_domain_wedge
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`create_domain_crust <stonedfenicsx.create_mesh.create_mesh.create_domain_crust>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.create_domain_crust
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`create_physical_line <stonedfenicsx.create_mesh.create_mesh.create_physical_line>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.create_physical_line
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`create_gmsh <stonedfenicsx.create_mesh.create_mesh.create_gmsh>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.create_gmsh
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`create_mesh_fenicsx <stonedfenicsx.create_mesh.create_mesh.create_mesh_fenicsx>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.create_mesh_fenicsx
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`extract_facet_boundary <stonedfenicsx.create_mesh.create_mesh.extract_facet_boundary>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.extract_facet_boundary
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`create_subdomain <stonedfenicsx.create_mesh.create_mesh.create_subdomain>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.create_subdomain
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`read_mesh <stonedfenicsx.create_mesh.create_mesh.read_mesh>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.read_mesh
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`create_mesh_object <stonedfenicsx.create_mesh.create_mesh.create_mesh_object>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.create_mesh_object
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -83,6 +99,7 @@
 :canonical: stonedfenicsx.create_mesh.create_mesh._differs
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh._differs
+:parser: napoleon_parser
 ```
 ````
 
@@ -90,6 +107,7 @@
 :canonical: stonedfenicsx.create_mesh.create_mesh.compare_data
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.compare_data
+:parser: napoleon_parser
 ```
 ````
 
@@ -97,6 +115,7 @@
 :canonical: stonedfenicsx.create_mesh.create_mesh.write_mesh_data
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.write_mesh_data
+:parser: napoleon_parser
 ```
 ````
 
@@ -104,6 +123,7 @@
 :canonical: stonedfenicsx.create_mesh.create_mesh.create_mesh
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.create_mesh
+:parser: napoleon_parser
 ```
 ````
 
@@ -111,6 +131,7 @@
 :canonical: stonedfenicsx.create_mesh.create_mesh.create_gmesh
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.create_gmesh
+:parser: napoleon_parser
 ```
 ````
 
@@ -118,6 +139,7 @@
 :canonical: stonedfenicsx.create_mesh.create_mesh.create_domain_subduction_plate
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.create_domain_subduction_plate
+:parser: napoleon_parser
 ```
 ````
 
@@ -125,6 +147,7 @@
 :canonical: stonedfenicsx.create_mesh.create_mesh.create_domain_wedge
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.create_domain_wedge
+:parser: napoleon_parser
 ```
 ````
 
@@ -132,6 +155,7 @@
 :canonical: stonedfenicsx.create_mesh.create_mesh.create_domain_crust
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.create_domain_crust
+:parser: napoleon_parser
 ```
 ````
 
@@ -139,6 +163,7 @@
 :canonical: stonedfenicsx.create_mesh.create_mesh.create_physical_line
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.create_physical_line
+:parser: napoleon_parser
 ```
 ````
 
@@ -146,6 +171,7 @@
 :canonical: stonedfenicsx.create_mesh.create_mesh.create_gmsh
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.create_gmsh
+:parser: napoleon_parser
 ```
 ````
 
@@ -153,13 +179,15 @@
 :canonical: stonedfenicsx.create_mesh.create_mesh.create_mesh_fenicsx
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.create_mesh_fenicsx
+:parser: napoleon_parser
 ```
 ````
 
-````{py:function} extract_facet_boundary(Mesh: dolfinx.mesh.Mesh, Mfacet_tag: dolfinx.mesh.MeshTags, submesh: dolfinx.mesh.Mesh, sm_vertex_maps: numpy.ndarray, boundary: list, m_id: int) -> tuple([np.ndarray, np.ndarray])
+````{py:function} extract_facet_boundary(Mesh: dolfinx.mesh.Mesh, Mfacet_tag: dolfinx.mesh.MeshTags, submesh: dolfinx.mesh.Mesh, sm_vertex_maps: numpy.ndarray, boundary: list, m_id: int) -> tuple[numpy.ndarray, numpy.ndarray]
 :canonical: stonedfenicsx.create_mesh.create_mesh.extract_facet_boundary
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.extract_facet_boundary
+:parser: napoleon_parser
 ```
 ````
 
@@ -167,13 +195,15 @@
 :canonical: stonedfenicsx.create_mesh.create_mesh.create_subdomain
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.create_subdomain
+:parser: napoleon_parser
 ```
 ````
 
-````{py:function} read_mesh(ioctrl: stonedfenicsx.config.numerical_control.IOControls, redo_mesh: bool) -> tuple([dolfinx.mesh.Mesh, dolfinx.mesh.MeshTags, dolfinx.mesh.MeshTags])
+````{py:function} read_mesh(ioctrl: stonedfenicsx.config.numerical_control.IOControls, redo_mesh: bool) -> tuple[dolfinx.mesh.Mesh, dolfinx.mesh.MeshTags, dolfinx.mesh.MeshTags]
 :canonical: stonedfenicsx.create_mesh.create_mesh.read_mesh
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.read_mesh
+:parser: napoleon_parser
 ```
 ````
 
@@ -181,5 +211,6 @@
 :canonical: stonedfenicsx.create_mesh.create_mesh.create_mesh_object
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.create_mesh.create_mesh_object
+:parser: napoleon_parser
 ```
 ````

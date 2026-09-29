@@ -143,10 +143,10 @@
 <span></span><span class="sd">"""</span>
 <span class="sd">**create_mesh**</span>
 
-<span class="sd">Module that create the geometry of the numerical experiment: </span>
-<span class="sd">From the g_input data creates the fundamental boundary and </span>
+<span class="sd">Module that create the geometry of the numerical experiment:</span>
+<span class="sd">From the g_input data creates the fundamental boundary and</span>
 <span class="sd">surfaces through which the gmesh generate an unstructured mesh.</span>
-<span class="sd">It saves the mesh in the .msh file, then reads through </span>
+<span class="sd">It saves the mesh in the .msh file, then reads through</span>
 <span class="sd">meshio generating the domain:</span>
 <span class="sd">- global_domain</span>
 <span class="sd">- wedge_domain</span>
@@ -154,13 +154,10 @@
 <span class="sd">- subducting_plate_domain</span>
 <span class="sd">Then it creates the MESH object where all the relevant information of each domain</span>
 <span class="sd">are stored (i.e., internal boundaries, map from subdomain-global mesh and viceversa)</span>
-<span class="sd">and the Phase function space as DG mesh of 1st order. </span>
-<span class="sd">--- </span>
-<span class="sd">aux_create_mesh =&gt; gregary module that stores the functions to create the fundamental </span>
+<span class="sd">and the Phase function space as DG mesh of 1st order.</span>
+<span class="sd">aux_create_mesh =&gt; gregary module that stores the functions to create the fundamental</span>
 <span class="sd">geometrical entity for the gmsh, and that stores the dictionary related to the boundary</span>
 <span class="sd">"""</span>
-
-
 
 <span class="c1"># input for iFieldstone</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
@@ -191,18 +188,18 @@
     <span class="n">from_line_to_point_coordinate</span><span class="p">,</span>
     <span class="n">function_create_subducting_plate_geometry</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_race_condition</span><span class="p">,</span> <span class="n">print_ph</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">print_ph</span>
 
 
 <div class="viewcode-block" id="_differs">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.create_mesh.html#stonedfenicsx.create_mesh.create_mesh._differs">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">_differs</span><span class="p">(</span><span class="n">cached</span><span class="p">,</span> <span class="n">current</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
     <span class="n">cur</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="k">else</span> <span class="n">current</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cur</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>                       <span class="c1"># x, y, array</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cur</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>  <span class="c1"># x, y, array</span>
         <span class="k">return</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">cached</span><span class="p">,</span> <span class="n">cur</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cur</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>                      <span class="c1"># tolleranza sui float</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cur</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>  <span class="c1"># tolleranza sui float</span>
         <span class="k">return</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">cached</span><span class="p">,</span> <span class="n">cur</span><span class="p">,</span> <span class="n">rel_tol</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">,</span> <span class="n">abs_tol</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">cached</span> <span class="o">!=</span> <span class="n">cur</span>                            <span class="c1"># int, str, bool</span></div>
+    <span class="k">return</span> <span class="n">cached</span> <span class="o">!=</span> <span class="n">cur</span>  <span class="c1"># int, str, bool</span></div>
 
 
 
@@ -219,12 +216,13 @@
 <span class="sd">        ValueError: _description_</span>
 <span class="sd">    """</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
+
     <span class="n">path_cached</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">ioctrl</span><span class="o">.</span><span class="n">path_cached_information</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"mesh_meta_data.yml"</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path_cached</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="n">cached</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">cached_val</span> <span class="ow">in</span> <span class="n">cached</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"decoupling"</span><span class="p">,</span><span class="s2">"redo_mesh"</span><span class="p">):</span>          
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"decoupling"</span><span class="p">,</span> <span class="s2">"redo_mesh"</span><span class="p">):</span>
             <span class="k">continue</span>
         <span class="n">current_val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">g_input</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">_differs</span><span class="p">(</span><span class="n">cached_val</span><span class="p">,</span> <span class="n">current_val</span><span class="p">):</span>
@@ -238,49 +236,49 @@
 
 
 
-<span class="c1">#-----------------------------------------------------------</span>
+<span class="c1"># -----------------------------------------------------------</span>
 <div class="viewcode-block" id="write_mesh_data">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.create_mesh.html#stonedfenicsx.create_mesh.create_mesh.write_mesh_data">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">write_mesh_data</span><span class="p">(</span><span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span><span class="p">,</span><span class="n">ioctrl</span><span class="p">:</span><span class="n">IOControls</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Save a small database in yaml of the mesh metadata. </span>
-<span class="sd">    In case the cached metadata is different from the main mesh data </span>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_mesh_data</span><span class="p">(</span><span class="n">g_input</span><span class="p">:</span> <span class="n">GeomInput</span><span class="p">,</span> <span class="n">ioctrl</span><span class="p">:</span> <span class="n">IOControls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Save a small database in yaml of the mesh metadata.</span>
+<span class="sd">    In case the cached metadata is different from the main mesh data</span>
 <span class="sd">    it will be compared with the current realisation of the model, and</span>
-<span class="sd">    it blocks the simulation. </span>
+<span class="sd">    it blocks the simulation.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        g_input (GeomInput): geometrical input </span>
+<span class="sd">        g_input (GeomInput): geometrical input</span>
 <span class="sd">        ioctrl (IOControls): input and output control</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        None</span>
 <span class="sd">    """</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">convert_yaml_friendly</span><span class="p">(</span><span class="n">vl</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vl</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">vl</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vl</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">generic</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">vl</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>       <span class="c1"># np.float64, np.int32, ...</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vl</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>          
+            <span class="k">return</span> <span class="n">vl</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>  <span class="c1"># np.float64, np.int32, ...</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vl</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="k">return</span> <span class="p">{</span><span class="n">j</span><span class="p">:</span> <span class="n">convert_yaml_friendly</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">vl</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vl</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
             <span class="k">return</span> <span class="p">[</span><span class="n">convert_yaml_friendly</span><span class="p">(</span><span class="n">j</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">vl</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">vl</span>
-    
-    <span class="k">def</span><span class="w"> </span><span class="nf">clean_class</span><span class="p">(</span><span class="n">dic_class</span><span class="p">:</span><span class="nb">dict</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">dic_class</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean_class</span><span class="p">(</span><span class="n">dic_class</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dic_class</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">dic_class</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">convert_yaml_friendly</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-        
+
         <span class="k">return</span> <span class="n">dic_class</span>
-    
-    
-    <span class="n">path_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">ioctrl</span><span class="o">.</span><span class="n">path_cached_information</span><span class="p">,</span><span class="s1">'mesh_meta_data.yml'</span><span class="p">)</span>
-    <span class="c1"># Read the geometric input: </span>
+
+    <span class="n">path_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">ioctrl</span><span class="o">.</span><span class="n">path_cached_information</span><span class="p">,</span> <span class="s2">"mesh_meta_data.yml"</span><span class="p">)</span>
+    <span class="c1"># Read the geometric input:</span>
     <span class="n">class_dump</span> <span class="o">=</span> <span class="n">asdict</span><span class="p">(</span><span class="n">g_input</span><span class="p">)</span>
     <span class="n">class_dump</span> <span class="o">=</span> <span class="n">clean_class</span><span class="p">(</span><span class="n">class_dump</span><span class="p">)</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path_file</span><span class="p">,</span><span class="s1">'w'</span><span class="p">,</span><span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-        <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">class_dump</span><span class="p">,</span><span class="n">f</span><span class="p">,</span><span class="n">default_flow_style</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>    
-    
-    <span class="n">print_ph</span><span class="p">(</span><span class="s1">'The metadata of the mesh have been saved into the cached folder'</span><span class="p">)</span></div>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path_file</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">class_dump</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">default_flow_style</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">print_ph</span><span class="p">(</span><span class="s2">"The metadata of the mesh have been saved into the cached folder"</span><span class="p">)</span></div>
 
 
 
@@ -296,22 +294,15 @@
 <span class="sd">    This function generates the computational geometry using Gmsh, builds the</span>
 <span class="sd">    corresponding `.msh` file, and imports it into dolfinx as a finite element mesh.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    ioctrl : IOControls</span>
-<span class="sd">        I/O controller handling file paths and output directories.</span>
-<span class="sd">    sc : Scal</span>
-<span class="sd">        Scaling object storing nondimensionalisation parameters.</span>
-<span class="sd">    g_input : GeomInput</span>
-<span class="sd">        Geometrical input defining the domain and mesh construction.</span>
-<span class="sd">    ctrl : NumericalControls</span>
-<span class="sd">        Numerical controls determining the problem setup.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        ioctrl (IOControls): I/O controller handling file paths and output directories.</span>
+<span class="sd">        sc (Scal): Scaling object storing nondimensionalisation parameters.</span>
+<span class="sd">        g_input (GeomInput): Geometrical input defining the domain and mesh construction.</span>
+<span class="sd">        ctrl (NumericalControls): Numerical controls determining the problem setup.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    Mesh</span>
-<span class="sd">        Mesh wrapper object containing the global mesh, extracted subdomains,</span>
-<span class="sd">        and associated boundary/cell tags.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Mesh: Mesh wrapper object containing the global mesh, extracted subdomains,</span>
+<span class="sd">            and associated boundary/cell tags.</span>
 <span class="sd">    """</span>
 
     <span class="c1"># Collect the rank and comm</span>
@@ -345,20 +336,14 @@
 <span class="sd">    extending the horizontal size by an additional 60 km from the intersection</span>
 <span class="sd">    between the slab top surface and the maximum depth of the model.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    ctrl : NumericalControls</span>
-<span class="sd">        Numerical controls defining the simulation type.</span>
-<span class="sd">    ctrlio : IOControls</span>
-<span class="sd">        I/O controller storing input/output directories.</span>
-<span class="sd">    g_input : GeomInput</span>
-<span class="sd">        Geometrical input parameters used to construct the domain.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        ctrl (NumericalControls): Numerical controls defining the simulation type.</span>
+<span class="sd">        ctrlio (IOControls): I/O controller storing input/output directories.</span>
+<span class="sd">        g_input (GeomInput): Geometrical input parameters used to construct the domain.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    GeomInput</span>
-<span class="sd">        Updated geometrical input object containing the computed slab angles and</span>
-<span class="sd">        modified domain extent.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        GeomInput: Updated geometrical input object containing the computed slab angles and</span>
+<span class="sd">            modified domain extent.</span>
 <span class="sd">    """</span>
 
     <span class="n">min_x</span> <span class="o">=</span> <span class="n">g_input</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># The beginning of the model is the trench of the slab</span>
@@ -388,10 +373,12 @@
     <span class="n">min_x</span> <span class="o">=</span> <span class="n">g_input</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># The beginning of the model is the trench of the slab</span>
     <span class="n">max_x</span> <span class="o">=</span> <span class="n">g_input</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
-    <span class="c1"># if the cache folder does not exist and the mesh file does not exist -&gt; create the mesh. </span>
-    <span class="k">if</span>  <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">ioctrl</span><span class="o">.</span><span class="n">path_cached_information</span><span class="p">,</span> <span class="s2">"mesh.msh"</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> \
-        <span class="ow">or</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">ioctrl</span><span class="o">.</span><span class="n">path_cached_information</span><span class="p">,</span> <span class="s2">"mesh_meta_data.yml"</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">or</span> <span class="n">g_input</span><span class="o">.</span><span class="n">redo_mesh</span><span class="p">:</span>
-
+    <span class="c1"># if the cache folder does not exist and the mesh file does not exist -&gt; create the mesh.</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">ioctrl</span><span class="o">.</span><span class="n">path_cached_information</span><span class="p">,</span> <span class="s2">"mesh.msh"</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span>
+        <span class="ow">or</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">ioctrl</span><span class="o">.</span><span class="n">path_cached_information</span><span class="p">,</span> <span class="s2">"mesh_meta_data.yml"</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span>
+        <span class="ow">or</span> <span class="n">g_input</span><span class="o">.</span><span class="n">redo_mesh</span>
+    <span class="p">):</span>
         <span class="n">mesh_model</span> <span class="o">=</span> <span class="n">create_gmsh</span><span class="p">(</span><span class="n">slab_x</span><span class="p">,</span> <span class="n">slab_y</span><span class="p">,</span> <span class="n">bot_x</span><span class="p">,</span> <span class="n">bot_y</span><span class="p">,</span> <span class="n">oc_cx</span><span class="p">,</span> <span class="n">oc_cy</span><span class="p">,</span> <span class="n">g_input</span><span class="p">)</span>
 
         <span class="n">mesh_model</span><span class="o">.</span><span class="n">geo</span><span class="o">.</span><span class="n">removeAllDuplicates</span><span class="p">()</span>
@@ -403,23 +390,16 @@
         <span class="n">mesh_model</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">g_input</span><span class="o">.</span><span class="n">redo_mesh</span><span class="p">:</span>
             <span class="n">mesh_name</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">ioctrl</span><span class="o">.</span><span class="n">path_cached_information</span><span class="p">,</span> <span class="s2">"mesh.msh"</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span> 
+        <span class="k">else</span><span class="p">:</span>
             <span class="n">mesh_name</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">ioctrl</span><span class="o">.</span><span class="n">path_test</span><span class="p">,</span> <span class="s2">"mesh.msh"</span><span class="p">)</span>
-        <span class="c1"># Check Race Condtion</span>
-        <span class="n">race_condition</span> <span class="o">=</span> <span class="n">check_race_condition</span><span class="p">(</span><span class="n">ioctrl</span><span class="o">=</span><span class="n">ioctrl</span><span class="p">,</span><span class="n">file</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">mesh_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">race_condition</span><span class="p">:</span> 
-            <span class="n">print_ph</span><span class="p">(</span><span class="s1">'Writing mesh'</span><span class="p">)</span>
-            <span class="n">gmsh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">mesh_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-            <span class="n">write_mesh_data</span><span class="p">(</span><span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span><span class="p">,</span><span class="n">ioctrl</span><span class="o">=</span><span class="n">ioctrl</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span> 
-            <span class="n">print_ph</span><span class="p">(</span><span class="s1">'Mesh is already written elsewhere: wait 10 sec'</span><span class="p">)</span>
-            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> 
-            <span class="n">print_ph</span><span class="p">(</span><span class="s1">'The show must go on!'</span><span class="p">)</span>
-        
+        <span class="c1"># Check Race Condtion [DEPRECATED, but also Place Holders]</span>
+        <span class="n">print_ph</span><span class="p">(</span><span class="s2">"Writing mesh"</span><span class="p">)</span>
+        <span class="n">gmsh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">mesh_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">write_mesh_data</span><span class="p">(</span><span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span><span class="p">,</span> <span class="n">ioctrl</span><span class="o">=</span><span class="n">ioctrl</span><span class="p">)</span>
         <span class="n">gmsh</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># Compare the file meta_data and actual class</span>
-        <span class="n">compare_data</span><span class="p">(</span><span class="n">g_input</span> <span class="o">=</span> <span class="n">g_input</span><span class="p">,</span><span class="n">ioctrl</span> <span class="o">=</span> <span class="n">ioctrl</span><span class="p">)</span>
+        <span class="n">compare_data</span><span class="p">(</span><span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span><span class="p">,</span> <span class="n">ioctrl</span><span class="o">=</span><span class="n">ioctrl</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">g_input</span></div>
 
@@ -434,39 +414,31 @@
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Create the subducting-plate loop in the Gmsh model.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    mesh_model : gmsh.model</span>
-<span class="sd">        Gmsh model object containing the geometry/mesh entities.</span>
-<span class="sd">    CP : Class_Points</span>
-<span class="sd">        Container of points defining the global mesh (coordinates, point IDs, target resolution).</span>
-<span class="sd">    LP : Class_Line</span>
-<span class="sd">        Container of lines defining the global mesh (line IDs and point connectivity).</span>
-<span class="sd">    g_input : GeomInput</span>
-<span class="sd">        Geometry input parameters.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        mesh_model (gmsh.model): Gmsh model object containing the geometry/mesh entities.</span>
+<span class="sd">        CP (Class_Points): Container of points defining the global mesh (coordinates, point IDs, target resolution).</span>
+<span class="sd">        LP (Class_Line): Container of lines defining the global mesh (line IDs and point connectivity).</span>
+<span class="sd">        g_input (GeomInput): Geometry input parameters.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    gmsh.model</span>
-<span class="sd">        The updated Gmsh model with the sub-domain loop entities added.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        gmsh.model: The updated Gmsh model with the sub-domain loop entities added.</span>
 <span class="sd">    """</span>
-    
 
     <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">ocr</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">g_input</span><span class="o">.</span><span class="n">model_full</span><span class="p">:</span> 
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">g_input</span><span class="o">.</span><span class="n">model_full</span><span class="p">:</span>
             <span class="n">l_list</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">LC</span><span class="o">.</span><span class="n">lines_oc</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="p">:],</span>
-            <span class="o">-</span><span class="n">LC</span><span class="o">.</span><span class="n">lines_B</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-            <span class="o">-</span><span class="n">LC</span><span class="o">.</span><span class="n">lines_BS</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-            <span class="n">LC</span><span class="o">.</span><span class="n">lines_L</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="n">LC</span><span class="o">.</span><span class="n">lines_oc</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="p">:],</span>
+                <span class="o">-</span><span class="n">LC</span><span class="o">.</span><span class="n">lines_B</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                <span class="o">-</span><span class="n">LC</span><span class="o">.</span><span class="n">lines_BS</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">LC</span><span class="o">.</span><span class="n">lines_L</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
             <span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span> 
+        <span class="k">else</span><span class="p">:</span>
             <span class="n">l_list</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">LC</span><span class="o">.</span><span class="n">lines_oc</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="p">:],</span>
-            <span class="o">-</span><span class="n">LC</span><span class="o">.</span><span class="n">lines_B</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">:],</span>
-            <span class="n">LC</span><span class="o">.</span><span class="n">lines_L</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">LC</span><span class="o">.</span><span class="n">lines_oc</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="p">:],</span>
+                <span class="o">-</span><span class="n">LC</span><span class="o">.</span><span class="n">lines_B</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">:],</span>
+                <span class="n">LC</span><span class="o">.</span><span class="n">lines_L</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
             <span class="p">]</span>
-            
+
         <span class="n">mesh_model</span> <span class="o">=</span> <span class="n">create_loop</span><span class="p">(</span><span class="n">l_list</span><span class="p">,</span> <span class="n">mesh_model</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
 
         <span class="c1"># Oceanic crust</span>
@@ -478,8 +450,7 @@
         <span class="p">]</span>
         <span class="n">mesh_model</span> <span class="o">=</span> <span class="n">create_loop</span><span class="p">(</span><span class="n">l_list</span><span class="p">,</span> <span class="n">mesh_model</span><span class="p">,</span> <span class="mi">15</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">g_input</span><span class="o">.</span><span class="n">model_full</span><span class="p">:</span> 
-        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">g_input</span><span class="o">.</span><span class="n">model_full</span><span class="p">:</span>
             <span class="n">l_list</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">LC</span><span class="o">.</span><span class="n">lines_S</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="p">:],</span>
                 <span class="n">LC</span><span class="o">.</span><span class="n">lines_B</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
@@ -508,25 +479,17 @@
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Create the Wedge loop in the Gmsh model.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    mesh_model : gmsh.model</span>
-<span class="sd">        Gmsh model object containing the geometry/mesh entities.</span>
-<span class="sd">    CP : Class_Points</span>
-<span class="sd">        Container of points defining the global mesh (coordinates, point IDs, target resolution).</span>
-<span class="sd">    LP : Class_Line</span>
-<span class="sd">        Container of lines defining the global mesh (line IDs and point connectivity).</span>
-<span class="sd">    g_input : GeomInput</span>
-<span class="sd">        Geometry input parameters.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        mesh_model (gmsh.model): Gmsh model object containing the geometry/mesh entities.</span>
+<span class="sd">        CP (Class_Points): Container of points defining the global mesh (coordinates, point IDs, target resolution).</span>
+<span class="sd">        LP (Class_Line): Container of lines defining the global mesh (line IDs and point connectivity).</span>
+<span class="sd">        g_input (GeomInput): Geometry input parameters.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    gmsh.model</span>
-<span class="sd">        The updated Gmsh model with the sub-domain loop entities added.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        gmsh.model: The updated Gmsh model with the sub-domain loop entities added.</span>
 <span class="sd">    """</span>
 
     <span class="n">index</span> <span class="o">=</span> <span class="n">find_line_index</span><span class="p">(</span><span class="n">LC</span><span class="o">.</span><span class="n">lines_S</span><span class="p">,</span> <span class="n">CP</span><span class="o">.</span><span class="n">coord_sub</span><span class="p">,</span> <span class="n">g_input</span><span class="o">.</span><span class="n">ns_depth</span><span class="p">)</span>
-    <span class="n">index</span> <span class="o">=</span> <span class="n">index</span>
     <span class="n">buf_array</span> <span class="o">=</span> <span class="n">LC</span><span class="o">.</span><span class="n">lines_S</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">index</span><span class="p">:]</span>
     <span class="n">buf_array</span> <span class="o">=</span> <span class="o">-</span><span class="n">buf_array</span>
     <span class="n">buf_array</span> <span class="o">=</span> <span class="n">buf_array</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -546,27 +509,18 @@
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Create the Overriding plate loop in the Gmsh model.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    mesh_model : gmsh.model</span>
-<span class="sd">        Gmsh model object containing the geometry/mesh entities.</span>
-<span class="sd">    CP : Class_Points</span>
-<span class="sd">        Container of points defining the global mesh (coordinates, point IDs, target resolution).</span>
-<span class="sd">    LP : Class_Line</span>
-<span class="sd">        Container of lines defining the global mesh (line IDs and point connectivity).</span>
-<span class="sd">    g_input : GeomInput</span>
-<span class="sd">        Geometry input parameters.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        mesh_model (gmsh.model): Gmsh model object containing the geometry/mesh entities.</span>
+<span class="sd">        CP (Class_Points): Container of points defining the global mesh (coordinates, point IDs, target resolution).</span>
+<span class="sd">        LP (Class_Line): Container of lines defining the global mesh (line IDs and point connectivity).</span>
+<span class="sd">        g_input (GeomInput): Geometry input parameters.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    gmsh.model</span>
-<span class="sd">        The updated Gmsh model with the sub-domain loop entities added.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        gmsh.model: The updated Gmsh model with the sub-domain loop entities added.</span>
 <span class="sd">    """</span>
 
     <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">cr</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-
         <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">lc</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-
             <span class="n">index_a</span> <span class="o">=</span> <span class="n">find_line_index</span><span class="p">(</span><span class="n">LC</span><span class="o">.</span><span class="n">lines_S</span><span class="p">,</span> <span class="n">CP</span><span class="o">.</span><span class="n">coord_sub</span><span class="p">,</span> <span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="p">)</span>
             <span class="n">index_b</span> <span class="o">=</span> <span class="n">find_line_index</span><span class="p">(</span><span class="n">LC</span><span class="o">.</span><span class="n">lines_S</span><span class="p">,</span> <span class="n">CP</span><span class="o">.</span><span class="n">coord_sub</span><span class="p">,</span> <span class="n">g_input</span><span class="o">.</span><span class="n">ns_depth</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
             <span class="n">buf_array</span> <span class="o">=</span> <span class="n">LC</span><span class="o">.</span><span class="n">lines_S</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">index_a</span> <span class="p">:</span> <span class="n">index_b</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
@@ -653,21 +607,14 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gmsh</span><span class="o">.</span><span class="n">model</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Create the physical line using the lines.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    mesh_model : gmsh.model</span>
-<span class="sd">        Gmsh model object containing the geometry/mesh entities.</span>
-<span class="sd">    CP : Class_Points</span>
-<span class="sd">        Container of points defining the global mesh (coordinates, point IDs, target resolution).</span>
-<span class="sd">    LP : Class_Line</span>
-<span class="sd">        Container of lines defining the global mesh (line IDs and point connectivity).</span>
-<span class="sd">    g_input : GeomInput</span>
-<span class="sd">        Geometry input parameters.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        mesh_model (gmsh.model): Gmsh model object containing the geometry/mesh entities.</span>
+<span class="sd">        CP (Class_Points): Container of points defining the global mesh (coordinates, point IDs, target resolution).</span>
+<span class="sd">        LP (Class_Line): Container of lines defining the global mesh (line IDs and point connectivity).</span>
+<span class="sd">        g_input (GeomInput): Geometry input parameters.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    gmsh.model</span>
-<span class="sd">        The updated Gmsh model with the physical line loop entities added.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        gmsh.model: The updated Gmsh model with the physical line loop entities added.</span>
 <span class="sd">    """</span>
 
     <span class="n">mesh_model</span><span class="o">.</span><span class="n">geo</span><span class="o">.</span><span class="n">synchronize</span><span class="p">()</span>  <span class="c1"># synchronize before adding physical groups {thanks chatgpt}</span>
@@ -677,7 +624,7 @@
     <span class="c1"># Find point above the lithosphere</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">LC</span><span class="o">.</span><span class="n">tag_L_R</span><span class="p">)):</span>
         <span class="n">L</span> <span class="o">=</span> <span class="n">LC</span><span class="o">.</span><span class="n">tag_L_R</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-        <span class="n">p0</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span> <span class="o">=</span> <span class="n">from_line_to_point_coordinate</span><span class="p">(</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">cy</span> <span class="o">=</span> <span class="n">from_line_to_point_coordinate</span><span class="p">(</span>
             <span class="n">L</span><span class="p">,</span> <span class="n">LC</span><span class="o">.</span><span class="n">line_global</span><span class="p">,</span> <span class="n">CP</span><span class="o">.</span><span class="n">global_points</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">cy</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="n">g_input</span><span class="o">.</span><span class="n">ns_depth</span> <span class="ow">or</span> <span class="n">cy</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="n">g_input</span><span class="o">.</span><span class="n">ns_depth</span><span class="p">:</span>
@@ -697,17 +644,17 @@
     <span class="n">mesh_model</span><span class="o">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">LC</span><span class="o">.</span><span class="n">tag_L_Bsub</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">dict_tag_lines</span><span class="p">[</span><span class="s2">"Subduction_bot"</span><span class="p">])</span>
 
     <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">model_full</span><span class="p">:</span>
-        <span class="n">mesh_model</span><span class="o">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">[</span><span class="n">LC</span><span class="o">.</span><span class="n">tag_L_L</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">tag</span><span class="o">=</span><span class="n">dict_tag_lines</span><span class="p">[</span><span class="s2">"Left_inlet_bt"</span><span class="p">])</span>
+        <span class="n">mesh_model</span><span class="o">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span>
+            <span class="mi">1</span><span class="p">,</span> <span class="p">[</span><span class="n">LC</span><span class="o">.</span><span class="n">tag_L_L</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">tag</span><span class="o">=</span><span class="n">dict_tag_lines</span><span class="p">[</span><span class="s2">"Left_inlet_bt"</span><span class="p">]</span>
+        <span class="p">)</span>
         <span class="n">mesh_model</span><span class="o">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">LC</span><span class="o">.</span><span class="n">tag_L_L</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">tag</span><span class="o">=</span><span class="n">dict_tag_lines</span><span class="p">[</span><span class="s2">"Left_inlet"</span><span class="p">])</span>
 
-
-    <span class="k">else</span><span class="p">:</span> 
+    <span class="k">else</span><span class="p">:</span>
         <span class="n">mesh_model</span><span class="o">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">LC</span><span class="o">.</span><span class="n">tag_L_L</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">dict_tag_lines</span><span class="p">[</span><span class="s2">"Left_inlet"</span><span class="p">])</span>
-
 
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">LC</span><span class="o">.</span><span class="n">tag_L_sub</span><span class="p">)):</span>
         <span class="n">L</span> <span class="o">=</span> <span class="n">LC</span><span class="o">.</span><span class="n">tag_L_sub</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-        <span class="n">p0</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span> <span class="o">=</span> <span class="n">from_line_to_point_coordinate</span><span class="p">(</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">cy</span> <span class="o">=</span> <span class="n">from_line_to_point_coordinate</span><span class="p">(</span>
             <span class="n">L</span><span class="p">,</span> <span class="n">LC</span><span class="o">.</span><span class="n">line_global</span><span class="p">,</span> <span class="n">CP</span><span class="o">.</span><span class="n">global_points</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">cy</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="n">g_input</span><span class="o">.</span><span class="n">ns_depth</span> <span class="ow">or</span> <span class="n">cy</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="n">g_input</span><span class="o">.</span><span class="n">ns_depth</span><span class="p">:</span>
@@ -729,7 +676,6 @@
     <span class="n">mesh_model</span><span class="o">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">LC</span><span class="o">.</span><span class="n">tag_L_ov</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">dict_tag_lines</span><span class="p">[</span><span class="s2">"Overriding_mantle"</span><span class="p">])</span>
 
     <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">cr</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-
         <span class="n">mesh_model</span><span class="o">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span>
             <span class="mi">1</span><span class="p">,</span> <span class="n">LC</span><span class="o">.</span><span class="n">tag_L_cr</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">dict_tag_lines</span><span class="p">[</span><span class="s2">"Crust_overplate"</span><span class="p">]</span>
         <span class="p">)</span>
@@ -760,29 +706,19 @@
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Create a Gmsh model from the slab and crust geometry.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    sx : np.ndarray</span>
-<span class="sd">        x-coordinates of the top surface of the subducting plate.</span>
-<span class="sd">    sy : np.ndarray</span>
-<span class="sd">        y-coordinates of the top surface of the subducting plate.</span>
-<span class="sd">    bsx : np.ndarray</span>
-<span class="sd">        x-coordinates of the bottom surface of the subducting plate.</span>
-<span class="sd">    bsy : np.ndarray</span>
-<span class="sd">        y-coordinates of the bottom surface of the subducting plate.</span>
-<span class="sd">    oc_cx : np.ndarray</span>
-<span class="sd">        x-coordinates of the oceanic crust Moho.</span>
-<span class="sd">    oc_cy : np.ndarray</span>
-<span class="sd">        y-coordinates of the oceanic crust Moho.</span>
-<span class="sd">    g_input : GeomInput</span>
-<span class="sd">        Object containing the geometrical input parameters used to construct the model.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        sx (np.ndarray): x-coordinates of the top surface of the subducting plate.</span>
+<span class="sd">        sy (np.ndarray): y-coordinates of the top surface of the subducting plate.</span>
+<span class="sd">        bsx (np.ndarray): x-coordinates of the bottom surface of the subducting plate.</span>
+<span class="sd">        bsy (np.ndarray): y-coordinates of the bottom surface of the subducting plate.</span>
+<span class="sd">        oc_cx (np.ndarray): x-coordinates of the oceanic crust Moho.</span>
+<span class="sd">        oc_cy (np.ndarray): y-coordinates of the oceanic crust Moho.</span>
+<span class="sd">        g_input (GeomInput): Object containing the geometrical input parameters used to construct the model.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    object</span>
-<span class="sd">        The generated Gmsh model handle (`gmsh.model`), containing the geometry</span>
-<span class="sd">        definition (points, curves, surfaces) and the associated physical groups</span>
-<span class="sd">        (mesh tags).</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        object: The generated Gmsh model handle (`gmsh.model`), containing the geometry</span>
+<span class="sd">            definition (points, curves, surfaces) and the associated physical groups</span>
+<span class="sd">            (mesh tags).</span>
 <span class="sd">    """</span>
 
     <span class="c1"># -&gt; USE GMSH FUNCTION</span>
@@ -864,17 +800,14 @@
     <span class="n">mesh</span><span class="p">:</span> <span class="n">meshio</span><span class="o">.</span><span class="n">_mesh</span><span class="o">.</span><span class="n">Mesh</span><span class="p">,</span> <span class="n">cell_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">prune_z</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">dolfinx</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Convert gmsh into meshio object</span>
-<span class="sd">    Parameters</span>
-<span class="sd">    -----------</span>
-<span class="sd">        mesh : meshio._mesh.Mesh</span>
-<span class="sd">            meshio object that contains the .msh model</span>
-<span class="sd">        cell_type: str</span>
-<span class="sd">                element type to process {triangle} or {line}</span>
-<span class="sd">        prune_z : Bool</span>
-<span class="sd">            flag to remove the z coordinate from the mesh model</span>
-<span class="sd">    Returns</span>
-<span class="sd">    -----------</span>
-<span class="sd">        _type_: _description_</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        mesh (meshio._mesh.Mesh): meshio object that contains the .msh model</span>
+<span class="sd">        cell_type (str): element type to process {triangle} or {line}</span>
+<span class="sd">        prune_z (bool): flag to remove the z coordinate from the mesh model</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        meshio.Mesh: meshio mesh restricted to the requested cell type.</span>
 <span class="sd">    """</span>
 
     <span class="c1"># From the tutorials of dolfinx</span>
@@ -901,7 +834,7 @@
     <span class="n">sm_vertex_maps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="n">boundary</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
     <span class="n">m_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]):</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Extract facet indices for a submesh boundary from global boundary markers.</span>
 
@@ -926,27 +859,19 @@
 
 <span class="sd">    For the slab subdomain boundary, you may need to combine S(1) and S(2).</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    mesh : dolfinx.mesh.Mesh</span>
-<span class="sd">        The global mesh.</span>
-<span class="sd">    mfacet_tag : dolfinx.mesh.meshtags.MeshTags</span>
-<span class="sd">        Facet MeshTags on the global mesh (dimension = tdim - 1).</span>
-<span class="sd">    submesh : dolfinx.mesh.Mesh</span>
-<span class="sd">        The subdomain mesh.</span>
-<span class="sd">    sm_vertex_maps : np.ndarray | list[int]</span>
-<span class="sd">        Mapping from submesh vertices to parent (global) mesh vertices.</span>
-<span class="sd">    boundary : Sequence[int]</span>
-<span class="sd">        List of global boundary marker IDs to be combined for this submesh boundary.</span>
-<span class="sd">    m_id : int</span>
-<span class="sd">        Marker ID to assign to the extracted facets on the submesh.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        mesh (dolfinx.mesh.Mesh): The global mesh.</span>
+<span class="sd">        mfacet_tag (dolfinx.mesh.meshtags.MeshTags): Facet MeshTags on the global mesh (dimension = tdim - 1).</span>
+<span class="sd">        submesh (dolfinx.mesh.Mesh): The subdomain mesh.</span>
+<span class="sd">        sm_vertex_maps (np.ndarray | list[int]): Mapping from submesh vertices to parent (global) mesh vertices.</span>
+<span class="sd">        boundary (Sequence[int]): List of global boundary marker IDs to be combined for this submesh boundary.</span>
+<span class="sd">        m_id (int): Marker ID to assign to the extracted facets on the submesh.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    chosen_facets : np.ndarray</span>
-<span class="sd">        Indices of submesh facets that belong to the extracted (internal/external) boundary.</span>
-<span class="sd">    values : np.ndarray</span>
-<span class="sd">        Array of shape (len(chosen_facets),) filled with `m_id`.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: A tuple containing:</span>
+
+<span class="sd">            - chosen_facets (np.ndarray): Indices of submesh facets that belong to the extracted (internal/external) boundary.</span>
+<span class="sd">            - values (np.ndarray): Array of shape (len(chosen_facets),) filled with `m_id`.</span>
 <span class="sd">    """</span>
 
     <span class="c1"># Extract facet from the parent mesh. Boundary -&gt; list of marker of the boundary [i.e., {5,6}].</span>
@@ -980,10 +905,6 @@
     <span class="c1"># Extract the vertex from submesh</span>
     <span class="n">cell_dim</span> <span class="o">=</span> <span class="n">submesh</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">dim</span>
     <span class="n">cell_to_vertex</span> <span class="o">=</span> <span class="n">submesh</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">connectivity</span><span class="p">(</span><span class="n">cell_dim</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-
-    <span class="c1"># Extract the vertices</span>
-    <span class="n">v_ids</span> <span class="o">=</span> <span class="n">cell_to_vertex</span><span class="o">.</span><span class="n">links</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-
     <span class="c1"># Extract the indices and then find the unique one</span>
     <span class="n">all_vertex_ids</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">submesh</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">index_map</span><span class="p">(</span><span class="n">cell_dim</span><span class="p">)</span><span class="o">.</span><span class="n">size_local</span><span class="p">):</span>
@@ -1031,25 +952,16 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Domain</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Create the subdomain from the global mesh, and interpolate the phases from the global mesh to the local mesh</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">        mesh : dolfinx.mesh.Mesh</span>
-<span class="sd">            global mesh information</span>
-<span class="sd">        mesh_tag : dolfinx.mesh.MeshTags</span>
-<span class="sd">            the mesh tag of the surface {i.e., phase}</span>
-<span class="sd">        facet_tag : dolfinx.mesh.MeshTags</span>
-<span class="sd">            the mesh tag of the linear feature (e.g., subducting top surface)</span>
-<span class="sd">        phase_set :list</span>
-<span class="sd">            the cell marker that constitute the subdomain</span>
-<span class="sd">        name : str</span>
-<span class="sd">            the name of the subdomain</span>
-<span class="sd">        phase : dolfinx.fem.function.Function</span>
-<span class="sd">            function that stores the information of the phase.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        mesh (dolfinx.mesh.Mesh): global mesh information</span>
+<span class="sd">        mesh_tag (dolfinx.mesh.MeshTags): the mesh tag of the surface {i.e., phase}</span>
+<span class="sd">        facet_tag (dolfinx.mesh.MeshTags): the mesh tag of the linear feature (e.g., subducting top surface)</span>
+<span class="sd">        phase_set (list): the cell marker that constitute the subdomain</span>
+<span class="sd">        name (str): the name of the subdomain</span>
+<span class="sd">        phase (dolfinx.fem.function.Function): function that stores the information of the phase.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    ----------</span>
-<span class="sd">        domain : Domain</span>
-<span class="sd">              Class that contains the information of the subdomain.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Domain: Class that contains the information of the subdomain.</span>
 <span class="sd">    """</span>
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">dolfinx.mesh</span><span class="w"> </span><span class="kn">import</span> <span class="n">meshtags</span>
@@ -1064,37 +976,33 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">dolfinx</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">MeshTags</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""From the list of facets of the global mesh, generate the mesh tag of the subdomain</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
+<span class="sd">        Args:</span>
 <span class="sd">            mesh (dolfinx.mesh.Mesh): Global mesh object storing the information of the main mesh</span>
 <span class="sd">            facet_tag (dolfinx.mesh.MeshTags): The facet tags object from the global mesh</span>
 <span class="sd">            submesh (dolfinx.mesh.Mesh): Submesh object</span>
 <span class="sd">            vertex_maps (numpy.ndarray): The maps of the vertex of the mesh tag</span>
 <span class="sd">            specs (list): a 2D list containing [facet_tag_id_global_mesh,newIDsubmesh]</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        ----------</span>
-<span class="sd">            FT: (dolfinx.mesh.MeshTags): the mesh tag object of the subdomain</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            dolfinx.mesh.MeshTags: the mesh tag object of the subdomain</span>
 
-<span class="sd">        Source of portion of the code, and general explanation</span>
-<span class="sd">        https://fenicsproject.discourse.group/t/how-to-define-bcs-on-boundaries-of-submeshes-of-a-parent-mesh/5470/3</span>
-
+<span class="sd">        Note:</span>
+<span class="sd">            Source of portion of the code, and general explanation:</span>
+<span class="sd">            https://fenicsproject.discourse.group/t/how-to-define-bcs-on-boundaries-of-submeshes-of-a-parent-mesh/5470/3</span>
 <span class="sd">        """</span>
 
         <span class="c1"># preparing the lists</span>
         <span class="n">chosen_total</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="n">val_total</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="c1">#</span>
         <span class="k">for</span> <span class="n">boundary</span><span class="p">,</span> <span class="n">m_id</span> <span class="ow">in</span> <span class="n">specs</span><span class="p">:</span>
             <span class="n">ch_f</span><span class="p">,</span> <span class="n">val</span> <span class="o">=</span> <span class="n">extract_facet_boundary</span><span class="p">(</span>
                 <span class="n">mesh</span><span class="p">,</span> <span class="n">facet_tag</span><span class="p">,</span> <span class="n">submesh</span><span class="p">,</span> <span class="n">vertex_maps</span><span class="p">,</span> <span class="n">boundary</span><span class="p">,</span> <span class="n">m_id</span>
             <span class="p">)</span>
             <span class="n">chosen_total</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">ch_f</span><span class="p">)</span>
             <span class="n">val_total</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
-        <span class="c1">#</span>
+
         <span class="n">fac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">chosen_total</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
-        <span class="c1">#</span>
         <span class="n">val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">val_total</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
         <span class="c1"># Create the mesh tag for the given domain</span>
         <span class="n">FT</span> <span class="o">=</span> <span class="n">meshtags</span><span class="p">(</span><span class="n">submesh</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">fac</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
@@ -1109,8 +1017,7 @@
         <span class="n">marked_cells</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">mesh_tag</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">marker</span><span class="p">))</span>
 
     <span class="n">marked_cells</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">marked_cells</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
-    <span class="c1">#</span>
-    <span class="n">submesh</span><span class="p">,</span> <span class="n">entity_maps</span><span class="p">,</span> <span class="n">vertex_maps</span><span class="p">,</span> <span class="n">node_maps</span> <span class="o">=</span> <span class="n">create_submesh</span><span class="p">(</span>
+    <span class="n">submesh</span><span class="p">,</span> <span class="n">entity_maps</span><span class="p">,</span> <span class="n">vertex_maps</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">create_submesh</span><span class="p">(</span>
         <span class="n">mesh</span><span class="p">,</span> <span class="n">mesh</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">marked_cells</span>
     <span class="p">)</span>
 
@@ -1141,7 +1048,6 @@
         <span class="n">bc</span> <span class="o">=</span> <span class="n">facet_BC</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">facet_tag</span><span class="p">,</span> <span class="n">submesh</span><span class="p">,</span> <span class="n">vertex_maps</span><span class="p">,</span> <span class="n">specs</span><span class="p">)</span>
         <span class="c1"># --</span>
     <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"wedge_domain"</span><span class="p">:</span>
-
         <span class="n">specs</span> <span class="o">=</span> <span class="p">[</span>
             <span class="p">([</span><span class="mi">11</span><span class="p">],</span> <span class="mi">1</span><span class="p">),</span>
             <span class="p">([</span><span class="mi">4</span><span class="p">],</span> <span class="mi">2</span><span class="p">),</span>
@@ -1157,7 +1063,6 @@
         <span class="n">bc</span> <span class="o">=</span> <span class="n">facet_BC</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">facet_tag</span><span class="p">,</span> <span class="n">submesh</span><span class="p">,</span> <span class="n">vertex_maps</span><span class="p">,</span> <span class="n">specs</span><span class="p">)</span>
 
     <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"overriding_plate_domain"</span><span class="p">:</span>
-
         <span class="n">specs</span> <span class="o">=</span> <span class="p">[</span>
             <span class="p">([</span><span class="mi">11</span><span class="p">],</span> <span class="mi">1</span><span class="p">),</span>
             <span class="p">([</span><span class="mi">1</span><span class="p">],</span> <span class="mi">2</span><span class="p">),</span>
@@ -1194,7 +1099,7 @@
         <span class="n">phase</span><span class="o">=</span><span class="n">ph</span><span class="p">,</span>
         <span class="n">solph</span><span class="o">=</span><span class="n">sol_spaceph</span><span class="p">,</span>
         <span class="n">bc_dict</span><span class="o">=</span><span class="n">dict_local</span><span class="p">,</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># write_partition(submesh, filename=os.path.join(ioctrl.path_save,f'{ioctrl.sname}_{name}_partition.xdmf'))</span>
@@ -1206,35 +1111,30 @@
 <span class="c1"># ------------------------------------------------------------------------------------------------------</span>
 <div class="viewcode-block" id="read_mesh">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.create_mesh.html#stonedfenicsx.create_mesh.create_mesh.read_mesh">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">read_mesh</span><span class="p">(</span>
-    <span class="n">ioctrl</span><span class="p">:</span> <span class="n">IOControls</span><span class="p">,</span>
-    <span class="n">redo_mesh</span><span class="p">:</span><span class="nb">bool</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">dolfinx</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh</span><span class="p">,</span> <span class="n">dolfinx</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">MeshTags</span><span class="p">,</span> <span class="n">dolfinx</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">MeshTags</span><span class="p">]):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_mesh</span><span class="p">(</span><span class="n">ioctrl</span><span class="p">:</span> <span class="n">IOControls</span><span class="p">,</span> <span class="n">redo_mesh</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
+    <span class="n">dolfinx</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh</span><span class="p">,</span> <span class="n">dolfinx</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">MeshTags</span><span class="p">,</span> <span class="n">dolfinx</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">MeshTags</span>
+<span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""read the .msh file, and convert into a dolfinx mesh object and extract mesh tags from .msh</span>
-<span class="sd">    Parameter</span>
-<span class="sd">    ----------</span>
-<span class="sd">        ioctrl : IOControls</span>
-<span class="sd">            Input/Output controls object, stores the information of the path of the .msh file</span>
-<span class="sd">        sc     : Scal</span>
-<span class="sd">            Scal object containing the scaling parameters</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    ----------</span>
-<span class="sd">        mesh : dolfinx.mesh.Mesh</span>
-<span class="sd">            dolfinx mesh</span>
-<span class="sd">        cell_markers: dolfinx.mesh.MeshTags</span>
-<span class="sd">            cell markers (i.e., physical surface tags)</span>
-<span class="sd">        facet_markers : dolfinx.mesh.MeshTags</span>
-<span class="sd">            facet markers (i.e., physical line tags )</span>
+<span class="sd">    Args:</span>
+<span class="sd">        ioctrl (IOControls): Input/Output controls object, stores the information of the path of the .msh file</span>
+<span class="sd">        sc (Scal): Scal object containing the scaling parameters</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: A tuple containing:</span>
+
+<span class="sd">            - mesh (dolfinx.mesh.Mesh): dolfinx mesh</span>
+<span class="sd">            - cell_markers (dolfinx.mesh.MeshTags): cell markers (i.e., physical surface tags)</span>
+<span class="sd">            - facet_markers (dolfinx.mesh.MeshTags): facet markers (i.e., physical line tags )</span>
 
 <span class="sd">    """</span>
 
     <span class="n">comm</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span>
     <span class="n">rank</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">Get_rank</span><span class="p">()</span>  <span class="c1"># 0, 1, ..., size-1</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">redo_mesh</span><span class="p">:</span>
-        <span class="n">path_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">ioctrl</span><span class="o">.</span><span class="n">path_cached_information</span><span class="p">,</span><span class="s1">'mesh.msh'</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span> 
-        <span class="n">path_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">ioctrl</span><span class="o">.</span><span class="n">path_test</span><span class="p">,</span><span class="s1">'mesh.msh'</span><span class="p">)</span>
+        <span class="n">path_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">ioctrl</span><span class="o">.</span><span class="n">path_cached_information</span><span class="p">,</span> <span class="s2">"mesh.msh"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">path_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">ioctrl</span><span class="o">.</span><span class="n">path_test</span><span class="p">,</span> <span class="s2">"mesh.msh"</span><span class="p">)</span>
     <span class="n">comm</span><span class="o">.</span><span class="n">Set_errhandler</span><span class="p">(</span><span class="n">MPI</span><span class="o">.</span><span class="n">ERRORS_RETURN</span><span class="p">)</span>
     <span class="n">mesh</span><span class="p">,</span> <span class="n">cell_markers</span><span class="p">,</span> <span class="n">facet_markers</span> <span class="o">=</span> <span class="n">gmshio</span><span class="o">.</span><span class="n">read_from_msh</span><span class="p">(</span>
         <span class="n">path_file</span><span class="p">,</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">,</span> <span class="n">gdim</span><span class="o">=</span><span class="mi">2</span>
@@ -1243,9 +1143,9 @@
     <span class="k">if</span> <span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">redo_mesh</span><span class="p">:</span>
         <span class="c1"># Read in mesh</span>
         <span class="n">path_file</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'removed </span><span class="si">{</span><span class="n">path_file</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>        
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"removed </span><span class="si">{</span><span class="n">path_file</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="c1"># Remove gmsh file, to save memory: every information of the mesh is already known by fenicsx</span>
-    
+
     <span class="k">return</span> <span class="n">mesh</span><span class="p">,</span> <span class="n">cell_markers</span><span class="p">,</span> <span class="n">facet_markers</span></div>
 
 
@@ -1253,7 +1153,7 @@
 <span class="c1"># ------------------------------------------------------------------------------------------------------</span>
 <div class="viewcode-block" id="create_mesh_object">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.create_mesh.html#stonedfenicsx.create_mesh.create_mesh.create_mesh_object">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">create_mesh_object</span><span class="p">(</span> <span class="n">ioctrl</span><span class="p">:</span> <span class="n">IOControls</span><span class="p">,</span> <span class="n">g_input</span><span class="p">:</span> <span class="n">GeomInput</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Mesh</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_mesh_object</span><span class="p">(</span><span class="n">ioctrl</span><span class="p">:</span> <span class="n">IOControls</span><span class="p">,</span> <span class="n">g_input</span><span class="p">:</span> <span class="n">GeomInput</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Mesh</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Create a subdomain mesh from the global mesh and interpolate phase information.</span>
 
@@ -1261,33 +1161,24 @@
 <span class="sd">    (phases) from the global mesh. The phase function defined on the global mesh is</span>
 <span class="sd">    then interpolated or transferred onto the subdomain mesh.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    mesh : dolfinx.mesh.Mesh</span>
-<span class="sd">        The global computational mesh.</span>
-<span class="sd">    mesh_tag : dolfinx.mesh.meshtags.MeshTags</span>
-<span class="sd">        Cell tags of the global mesh, typically used to identify material phases.</span>
-<span class="sd">    facet_tag : dolfinx.mesh.meshtags.MeshTags</span>
-<span class="sd">        Facet tags of the global mesh, defining boundary features (e.g. slab top surface).</span>
-<span class="sd">    phase_set : list[int]</span>
-<span class="sd">        List of cell marker IDs that define the subdomain to extract.</span>
-<span class="sd">    name : str</span>
-<span class="sd">        Name of the subdomain (used for identification and debugging).</span>
-<span class="sd">    phase : dolfinx.fem.Function</span>
-<span class="sd">        Cell-wise (or DG) function storing phase/material information on the global mesh.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        mesh (dolfinx.mesh.Mesh): The global computational mesh.</span>
+<span class="sd">        mesh_tag (dolfinx.mesh.meshtags.MeshTags): Cell tags of the global mesh, typically used to identify material phases.</span>
+<span class="sd">        facet_tag (dolfinx.mesh.meshtags.MeshTags): Facet tags of the global mesh, defining boundary features (e.g. slab top surface).</span>
+<span class="sd">        phase_set (list[int]): List of cell marker IDs that define the subdomain to extract.</span>
+<span class="sd">        name (str): Name of the subdomain (used for identification and debugging).</span>
+<span class="sd">        phase (dolfinx.fem.Function): Cell-wise (or DG) function storing phase/material information on the global mesh.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    Domain</span>
-<span class="sd">        A `Domain` object containing the submesh, associated tags, and interpolated</span>
-<span class="sd">        phase information.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Domain: A `Domain` object containing the submesh, associated tags, and interpolated</span>
+<span class="sd">            phase information.</span>
 <span class="sd">    """</span>
 
-    <span class="c1">#from stonedfenicsx.scal import dimensionless_ginput</span>
+    <span class="c1"># from stonedfenicsx.scal import dimensionless_ginput</span>
 
     <span class="n">print_ph</span><span class="p">(</span><span class="s2">" Reading global mesh and creating the global domain"</span><span class="p">)</span>
 
-    <span class="n">mesh</span><span class="p">,</span> <span class="n">cell_markers</span><span class="p">,</span> <span class="n">facet_markers</span> <span class="o">=</span> <span class="n">read_mesh</span><span class="p">(</span><span class="n">ioctrl</span><span class="p">,</span><span class="n">g_input</span><span class="o">.</span><span class="n">redo_mesh</span><span class="p">)</span>
+    <span class="n">mesh</span><span class="p">,</span> <span class="n">cell_markers</span><span class="p">,</span> <span class="n">facet_markers</span> <span class="o">=</span> <span class="n">read_mesh</span><span class="p">(</span><span class="n">ioctrl</span><span class="p">,</span> <span class="n">g_input</span><span class="o">.</span><span class="n">redo_mesh</span><span class="p">)</span>
 
     <span class="n">pph</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">functionspace</span><span class="p">(</span>
         <span class="n">mesh</span><span class="p">,</span> <span class="p">(</span><span class="s2">"DG"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
@@ -1302,7 +1193,9 @@
     <span class="p">)</span>  <span class="c1"># Assign phases using the cell tags and physical surfaces -&gt; i.e. 10000 = Mantle ? is going to assign unique phase to each node?</span>
 
     <span class="c1"># Correct the phase:</span>
-    <span class="n">phase</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">-=</span> <span class="mi">1</span>  <span class="c1"># Rather necessary remember to put plus one once you publish it</span>
+    <span class="n">phase</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">-=</span> <span class="p">(</span>
+        <span class="mi">1</span>  <span class="c1"># Rather necessary remember to put plus one once you publish it</span>
+    <span class="p">)</span>
 
     <span class="c1"># -- Create additional facet for the shear heating. Since this hell is requiring a lot of useless work,</span>
     <span class="c1"># -- I need to create a yet another ad hoc function for this.</span>
@@ -1314,13 +1207,19 @@
         <span class="n">phase</span><span class="o">=</span><span class="n">phase</span><span class="p">,</span>
         <span class="n">solph</span><span class="o">=</span><span class="n">pph</span><span class="p">,</span>
         <span class="n">bc_dict</span><span class="o">=</span><span class="n">dict_tag_lines</span><span class="p">,</span>
-        <span class="n">name</span><span class="o">=</span><span class="s1">'global_domain'</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"global_domain"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="c1"># Subducting plate domain</span>
     <span class="n">print_ph</span><span class="p">(</span><span class="s2">" Creating the Subudcting plate domain"</span><span class="p">)</span>
 
     <span class="n">subduction_plate</span> <span class="o">=</span> <span class="n">create_subdomain</span><span class="p">(</span>
-        <span class="n">mesh</span><span class="p">,</span> <span class="n">cell_markers</span><span class="p">,</span> <span class="n">facet_markers</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="s2">"subduction_plate_domain"</span><span class="p">,</span> <span class="n">phase</span><span class="p">,</span> <span class="n">ioctrl</span>
+        <span class="n">mesh</span><span class="p">,</span>
+        <span class="n">cell_markers</span><span class="p">,</span>
+        <span class="n">facet_markers</span><span class="p">,</span>
+        <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+        <span class="s2">"subduction_plate_domain"</span><span class="p">,</span>
+        <span class="n">phase</span><span class="p">,</span>
+        <span class="n">ioctrl</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="c1"># Wedge plate domain</span>
     <span class="n">print_ph</span><span class="p">(</span><span class="s2">" Creating the Wedge domain"</span><span class="p">)</span>
@@ -1332,7 +1231,13 @@
     <span class="n">print_ph</span><span class="p">(</span><span class="s2">" Creating the Overriding plate domain"</span><span class="p">)</span>
 
     <span class="n">crust_domain</span> <span class="o">=</span> <span class="n">create_subdomain</span><span class="p">(</span>
-        <span class="n">mesh</span><span class="p">,</span> <span class="n">cell_markers</span><span class="p">,</span> <span class="n">facet_markers</span><span class="p">,</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="s2">"overriding_plate_domain"</span><span class="p">,</span> <span class="n">phase</span><span class="p">,</span> <span class="n">ioctrl</span>
+        <span class="n">mesh</span><span class="p">,</span>
+        <span class="n">cell_markers</span><span class="p">,</span>
+        <span class="n">facet_markers</span><span class="p">,</span>
+        <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span>
+        <span class="s2">"overriding_plate_domain"</span><span class="p">,</span>
+        <span class="n">phase</span><span class="p">,</span>
+        <span class="n">ioctrl</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># write_partition(mesh,filename=os.path.join(ioctrl.path_save,'%s_global_partition.xdmf'%ioctrl.sname))</span>
@@ -1341,16 +1246,15 @@
     <span class="n">wedge_plate</span><span class="o">.</span><span class="n">comm</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span>
     <span class="n">subduction_plate</span><span class="o">.</span><span class="n">comm</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span>
     <span class="n">global_domain</span><span class="o">.</span><span class="n">comm</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span>
-    
-    
+
     <span class="n">mesh</span> <span class="o">=</span> <span class="n">Mesh</span><span class="p">(</span>
         <span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span><span class="p">,</span>
         <span class="n">global_domain</span><span class="o">=</span><span class="n">global_domain</span><span class="p">,</span>
-        <span class="n">subduction_plate_domain</span><span class="o">=</span> <span class="n">subduction_plate</span><span class="p">,</span>
+        <span class="n">subduction_plate_domain</span><span class="o">=</span><span class="n">subduction_plate</span><span class="p">,</span>
         <span class="n">wedge_domain</span><span class="o">=</span><span class="n">wedge_plate</span><span class="p">,</span>
         <span class="n">crust_domain</span><span class="o">=</span><span class="n">crust_domain</span><span class="p">,</span>
         <span class="n">comm</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">,</span>
-        <span class="n">rank</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="o">.</span><span class="n">Get_rank</span><span class="p">()</span>
+        <span class="n">rank</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="o">.</span><span class="n">Get_rank</span><span class="p">(),</span>
     <span class="p">)</span>
 
     <span class="n">print_ph</span><span class="p">(</span><span class="s2">" Computational mesh and domains have been created..."</span><span class="p">)</span>

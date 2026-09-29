@@ -4,6 +4,7 @@
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver
+:parser: napoleon_parser
 :allowtitles:
 ```
 
@@ -17,14 +18,17 @@
 
 * - {py:obj}`Solvers <stonedfenicsx.solver_module.solver.Solvers>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.solver.Solvers
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`ScalarSolver <stonedfenicsx.solver_module.solver.ScalarSolver>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.solver.ScalarSolver
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`SolverStokes <stonedfenicsx.solver_module.solver.SolverStokes>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.solver.SolverStokes
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -35,12 +39,14 @@
 :canonical: stonedfenicsx.solver_module.solver.Solvers
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver.Solvers
+:parser: napoleon_parser
 ```
 
 ````{py:method} destroy()
 :canonical: stonedfenicsx.solver_module.solver.Solvers.destroy
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver.Solvers.destroy
+:parser: napoleon_parser
 ```
 
 ````
@@ -53,12 +59,14 @@
 Bases: {py:obj}`stonedfenicsx.solver_module.solver.Solvers`
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver.ScalarSolver
+:parser: napoleon_parser
 ```
 
 ```{rubric} Initialization
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver.ScalarSolver.__init__
+:parser: napoleon_parser
 ```
 
 ````
@@ -69,18 +77,21 @@ Bases: {py:obj}`stonedfenicsx.solver_module.solver.Solvers`
 Bases: {py:obj}`stonedfenicsx.solver_module.solver.Solvers`
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver.SolverStokes
+:parser: napoleon_parser
 ```
 
 ```{rubric} Initialization
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver.SolverStokes.__init__
+:parser: napoleon_parser
 ```
 
 ````{py:method} set_direct_solver(a, a_p, L, COMM, nl, bcs, F0, F1, ctrl, J=None, r=None, it=0, ts=0)
 :canonical: stonedfenicsx.solver_module.solver.SolverStokes.set_direct_solver
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver.SolverStokes.set_direct_solver
+:parser: napoleon_parser
 ```
 
 ````
@@ -89,6 +100,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.solver.Solvers`
 :canonical: stonedfenicsx.solver_module.solver.SolverStokes.set_iterative_solver
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver.SolverStokes.set_iterative_solver
+:parser: napoleon_parser
 ```
 
 ````
@@ -97,6 +109,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.solver.Solvers`
 :canonical: stonedfenicsx.solver_module.solver.SolverStokes.set_block_operator
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver.SolverStokes.set_block_operator
+:parser: napoleon_parser
 ```
 
 ````
@@ -105,6 +118,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.solver.Solvers`
 :canonical: stonedfenicsx.solver_module.solver.SolverStokes.update_block_operator
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver.SolverStokes.update_block_operator
+:parser: napoleon_parser
 ```
 
 ````

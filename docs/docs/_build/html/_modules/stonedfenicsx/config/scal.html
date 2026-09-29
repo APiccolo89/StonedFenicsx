@@ -141,6 +141,7 @@
             
   <h1>Source code for stonedfenicsx.config.scal</h1><div class="highlight"><pre>
 <span></span><span class="sd">"""Modules"""</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.geometry</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeomInput</span><span class="p">,</span> <span class="n">Mesh</span>
@@ -157,32 +158,34 @@
 <span class="n">_KELVIN_</span> <span class="o">=</span> <span class="mf">273.15</span>
 <span class="n">_KM_2_M_</span> <span class="o">=</span> <span class="mi">1000</span>
 
+
 <div class="viewcode-block" id="Scal">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.Scal">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Scal</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Scaling class: </span>
-<span class="sd">        Class that stores the scaling value. From the input characteristic length, stress, viscosity and temperature</span>
-<span class="sd">        it derives the other scaling for the other SI units.  </span>
+<span class="w">    </span><span class="sd">"""Scaling class:</span>
+<span class="sd">    Class that stores the scaling value. From the input characteristic length, stress, viscosity and temperature</span>
+<span class="sd">    it derives the other scaling for the other SI units.</span>
 <span class="sd">    """</span>
-   
-    <span class="n">length</span><span class="p">:</span><span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># Length</span>
-    <span class="n">temp</span><span class="p">:</span><span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span> <span class="c1"># Temperature</span>
-    <span class="n">eta</span><span class="p">:</span><span class="nb">float</span> <span class="o">=</span> <span class="mf">1e24</span> <span class="c1"># Viscosity</span>
-    <span class="n">stress</span><span class="p">:</span><span class="nb">float</span>  <span class="o">=</span> <span class="mf">1e9</span> <span class="c1"># Stress</span>
 
-    <span class="n">time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>         <span class="c1"># [s]</span>
-    <span class="n">mass</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>         <span class="c1"># [kg]</span>
-    <span class="n">ac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>           <span class="c1"># [m/s^2]</span>
-    <span class="n">rho</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>          <span class="c1"># [kg/m^3]</span>
-    <span class="n">force</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>        <span class="c1"># [N]</span>
-    <span class="n">energy</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>       <span class="c1"># [J]</span>
-    <span class="n">watt</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>         <span class="c1"># [W]</span>
+    <span class="n">length</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># Length</span>
+    <span class="n">temp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span>  <span class="c1"># Temperature</span>
+    <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e24</span>  <span class="c1"># Viscosity</span>
+    <span class="n">stress</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e9</span>  <span class="c1"># Stress</span>
+
+    <span class="n">time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># [s]</span>
+    <span class="n">mass</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># [kg]</span>
+    <span class="n">ac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># [m/s^2]</span>
+    <span class="n">rho</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># [kg/m^3]</span>
+    <span class="n">force</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># [N]</span>
+    <span class="n">energy</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># [J]</span>
+    <span class="n">watt</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># [W]</span>
     <span class="n">strain_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># [1/s]</span>
-    <span class="n">k</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>            <span class="c1"># [W/(m K)]</span>
-    <span class="n">cp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>           <span class="c1"># [J/(kg K)]</span>
-    <span class="n">scale_vel</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-2</span> <span class="o">/</span> <span class="mf">365.25</span> <span class="o">/</span> <span class="mi">24</span> <span class="o">/</span> <span class="mi">60</span> <span class="o">/</span> <span class="mi">60</span> <span class="c1"># scaling velocity from cm/yr to m/s</span>
-    <span class="n">scale_myr2sec</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e6</span> <span class="o">*</span> <span class="mf">365.25</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">24</span> <span class="c1"># scale Myr to second </span>
+    <span class="n">k</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># [W/(m K)]</span>
+    <span class="n">cp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># [J/(kg K)]</span>
+    <span class="n">scale_vel</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-2</span> <span class="o">/</span> <span class="mf">365.25</span> <span class="o">/</span> <span class="mi">24</span> <span class="o">/</span> <span class="mi">60</span> <span class="o">/</span> <span class="mi">60</span>  <span class="c1"># scaling velocity from cm/yr to m/s</span>
+    <span class="n">scale_myr2sec</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e6</span> <span class="o">*</span> <span class="mf">365.25</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">24</span>  <span class="c1"># scale Myr to second</span>
+
 <div class="viewcode-block" id="Scal.compute_the_derivative_scal">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.Scal.compute_the_derivative_scal">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_the_derivative_scal</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -198,26 +201,26 @@
 <span class="sd">          - cp     = energy / (T * mass)    [J/(kg·K)]</span>
 <span class="sd">          etc.</span>
 <span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eta</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">stress</span> <span class="c1"># Time [eta/stress=Pas/Pa=s]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stress</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> \
-            <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="c1"># Scaling mass [Pa L**2 = N = kgm/s2 /s2 /m = kg]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="o">**</span><span class="mi">2</span> <span class="c1"># acceleration</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="o">**</span><span class="mi">3</span> <span class="c1"># density </span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">force</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ac</span> <span class="c1"># Force </span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">energy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">force</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="c1"># Energy</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">watt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">energy</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="c1"># Power</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">strain_rate</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="c1"># Stress</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">k</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">watt</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">temp</span><span class="p">)</span> <span class="c1"># Conductivity</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">energy</span><span class="o">/</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">temp</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span><span class="p">)</span> <span class="c1"># Heat capacity</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">stress</span>  <span class="c1"># Time [eta/stress=Pas/Pa=s]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stress</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span>
+        <span class="p">)</span>  <span class="c1"># Scaling mass [Pa L**2 = N = kgm/s2 /s2 /m = kg]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="o">**</span><span class="mi">2</span>  <span class="c1"># acceleration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="o">**</span><span class="mi">3</span>  <span class="c1"># density</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">force</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ac</span>  <span class="c1"># Force</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">force</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span>  <span class="c1"># Energy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">watt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">energy</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span>  <span class="c1"># Power</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">strain_rate</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span>  <span class="c1"># Stress</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">watt</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">temp</span><span class="p">)</span>  <span class="c1"># Conductivity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">energy</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">temp</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span><span class="p">)</span>  <span class="c1"># Heat capacity</span></div>
 </div>
+
 
 
 <div class="viewcode-block" id="scaling_simulation_physical">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.scaling_simulation_physical">[docs]</a>
 <span class="nd">@timing_function</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">scaling_simulation_physical</span><span class="p">(</span>
-    <span class="n">ctrl_sim</span><span class="p">:</span> <span class="n">SimulationControls</span><span class="p">,</span> <span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span><span class="p">,</span> <span class="n">mesh</span><span class="p">:</span> <span class="n">Mesh</span>
-<span class="p">,</span><span class="n">sc</span><span class="p">:</span><span class="n">Scal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">scaling_simulation_physical</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="p">:</span> <span class="n">SimulationControls</span><span class="p">,</span> <span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span><span class="p">,</span> <span class="n">mesh</span><span class="p">:</span> <span class="n">Mesh</span><span class="p">,</span> <span class="n">sc</span><span class="p">:</span> <span class="n">Scal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Non-dimensionalise the entire simulation state in-place.</span>
 
 <span class="sd">    Dispatches to the five individual scaling functions in the correct</span>
@@ -235,22 +238,22 @@
 <span class="sd">            are overwritten with their dimensionless equivalents.</span>
 <span class="sd">        sc (Scal): Fully initialised scaling object (primary + derived scales).</span>
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">_scaled</span> <span class="p">:</span>
-        <span class="n">scale_kinematic_bc</span><span class="p">(</span><span class="n">ctrl_ky</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_ky</span><span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">)</span>
-        <span class="n">scale_parameters</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">)</span>
-        <span class="n">scaling_control_parameters</span><span class="p">(</span><span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">)</span>
-        <span class="n">scaling_mesh</span><span class="p">(</span><span class="n">mesh</span><span class="o">=</span><span class="n">mesh</span><span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">)</span>
-        <span class="n">scaling_material_properties</span><span class="p">(</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">)</span>
-        <span class="n">scaling_io_controls</span><span class="p">(</span><span class="n">ctrl_io</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_io</span><span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">_scaled</span><span class="p">:</span>
+        <span class="n">scale_kinematic_bc</span><span class="p">(</span><span class="n">ctrl_ky</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_ky</span><span class="p">,</span> <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">)</span>
+        <span class="n">scale_parameters</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="p">,</span> <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">)</span>
+        <span class="n">scaling_control_parameters</span><span class="p">(</span><span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="p">,</span> <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">)</span>
+        <span class="n">scaling_mesh</span><span class="p">(</span><span class="n">mesh</span><span class="o">=</span><span class="n">mesh</span><span class="p">,</span> <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">)</span>
+        <span class="n">scaling_material_properties</span><span class="p">(</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span> <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">)</span>
+        <span class="n">scaling_io_controls</span><span class="p">(</span><span class="n">ctrl_io</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_io</span><span class="p">,</span> <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">)</span>
         <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">_scaled</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="k">else</span><span class="p">:</span> 
-        <span class="k">raise</span> <span class="ne">ValueError</span> <span class="p">(</span><span class="s1">'Simulations controls cannot be scaled more than once!'</span><span class="p">)</span></div>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Simulations controls cannot be scaled more than once!"</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="scaling_material_properties">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.scaling_material_properties">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">scaling_material_properties</span><span class="p">(</span><span class="n">pdb</span><span class="p">:</span><span class="n">PhaseDataBase</span><span class="p">,</span><span class="n">sc</span><span class="p">:</span><span class="n">Scal</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">PhaseDataBase</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">scaling_material_properties</span><span class="p">(</span><span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span><span class="p">,</span> <span class="n">sc</span><span class="p">:</span> <span class="n">Scal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PhaseDataBase</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Non-dimensionalise all material-property parameters in the phase database.</span>
 
 <span class="sd">    Divides every parameter in `pdb` by its composite SI scaling factor</span>
@@ -269,38 +272,38 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        PhaseDataBase: The same `pdb` object with all fields scaled.</span>
 <span class="sd">    """</span>
-    <span class="c1"># scal the references values   </span>
+    <span class="c1"># scal the references values</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">temp_ref</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">pres_ref</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">stress</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">temp_scal</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">pres_scal</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">stress</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">tau_min</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">stress</span>
-    
+
     <span class="n">pdb</span><span class="o">.</span><span class="n">a_rad</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">k</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">b_rad</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">k</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">temp_a</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">temp_b</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">x_a</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">x_b</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span>
-    
+
     <span class="c1"># Viscosity</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">eta</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">eta</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">eta_min</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">eta</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">eta_max</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">eta</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">eta_def</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">eta</span>
-    
+
     <span class="c1"># B_dif/disl</span>
-    <span class="n">scal_bdsl</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">stress</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="n">pdb</span><span class="o">.</span><span class="n">n</span><span class="p">)</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">time</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>    <span class="c1"># Pa^-ns-1</span>
-    <span class="n">scal_bdif</span> <span class="o">=</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">stress</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">time</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">scal_bdsl</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">stress</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">pdb</span><span class="o">.</span><span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">time</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># Pa^-ns-1</span>
+    <span class="n">scal_bdif</span> <span class="o">=</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">stress</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">time</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">b_dif</span> <span class="o">/=</span> <span class="n">scal_bdif</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">b_dis</span> <span class="o">/=</span> <span class="n">scal_bdsl</span>
 
     <span class="c1"># Scal the heat capacity</span>
-    <span class="n">scal_c1</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">energy</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">mass</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="o">**</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
-    <span class="n">scal_c2</span> <span class="o">=</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">energy</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="p">)</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">mass</span>
-    <span class="n">scal_c3</span> <span class="o">=</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">energy</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">mass</span>
-    <span class="n">scal_c4</span> <span class="o">=</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">energy</span><span class="p">)</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">mass</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="o">**</span><span class="mi">2</span>
-    <span class="n">scal_c5</span> <span class="o">=</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">energy</span><span class="p">)</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">mass</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="o">**</span><span class="mi">3</span>
+    <span class="n">scal_c1</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">energy</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">mass</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span> <span class="o">**</span> <span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">scal_c2</span> <span class="o">=</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">energy</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="p">)</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">mass</span>
+    <span class="n">scal_c3</span> <span class="o">=</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">energy</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">mass</span>
+    <span class="n">scal_c4</span> <span class="o">=</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">energy</span><span class="p">)</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">mass</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">scal_c5</span> <span class="o">=</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">energy</span><span class="p">)</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">mass</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="o">**</span><span class="mi">3</span>
 
     <span class="n">pdb</span><span class="o">.</span><span class="n">c0</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">cp</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">c1</span> <span class="o">/=</span> <span class="n">scal_c1</span>
@@ -309,32 +312,33 @@
     <span class="n">pdb</span><span class="o">.</span><span class="n">c4</span> <span class="o">/=</span> <span class="n">scal_c4</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">c5</span> <span class="o">/=</span> <span class="n">scal_c5</span>
     <span class="c1"># conductivity      D = a + b * np.exp(-T/c) + d * np.exp(-T/e)</span>
-    
+
     <span class="n">pdb</span><span class="o">.</span><span class="n">k0</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">k</span>
 
-    <span class="n">pdb</span><span class="o">.</span><span class="n">k_a</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">length</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">time</span>      
-    <span class="n">pdb</span><span class="o">.</span><span class="n">k_b</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">length</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">time</span>
+    <span class="n">pdb</span><span class="o">.</span><span class="n">k_a</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">length</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">time</span>
+    <span class="n">pdb</span><span class="o">.</span><span class="n">k_b</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">length</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">time</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">k_c</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span>
-    <span class="n">pdb</span><span class="o">.</span><span class="n">k_d</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">length</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">time</span>
+    <span class="n">pdb</span><span class="o">.</span><span class="n">k_d</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">length</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">time</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">k_e</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span>
-    <span class="n">pdb</span><span class="o">.</span><span class="n">k_f</span> <span class="o">/=</span> <span class="mi">1</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">stress</span>
+    <span class="n">pdb</span><span class="o">.</span><span class="n">k_f</span> <span class="o">/=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">stress</span>
 
-    <span class="n">pdb</span><span class="o">.</span><span class="n">alpha0</span> <span class="o">/=</span> <span class="mi">1</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">temp</span>
-    <span class="n">pdb</span><span class="o">.</span><span class="n">alpha1</span> <span class="o">/=</span> <span class="mi">1</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="o">**</span><span class="mi">2</span>
-    <span class="n">pdb</span><span class="o">.</span><span class="n">alpha2</span> <span class="o">/=</span> <span class="mi">1</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">stress</span>
+    <span class="n">pdb</span><span class="o">.</span><span class="n">alpha0</span> <span class="o">/=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span>
+    <span class="n">pdb</span><span class="o">.</span><span class="n">alpha1</span> <span class="o">/=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">pdb</span><span class="o">.</span><span class="n">alpha2</span> <span class="o">/=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">stress</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">kb</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">stress</span>
     <span class="n">pdb</span><span class="o">.</span><span class="n">rho0</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">rho</span>
-    <span class="n">scal_radio</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">watt</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">length</span><span class="o">**</span><span class="mi">3</span>
-    
+    <span class="n">scal_radio</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">watt</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">length</span><span class="o">**</span><span class="mi">3</span>
+
     <span class="n">pdb</span><span class="o">.</span><span class="n">radiogenic_heat</span> <span class="o">/=</span> <span class="n">scal_radio</span>
-    <span class="n">scal_bdsl</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">stress</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="n">pdb</span><span class="o">.</span><span class="n">n_wz</span><span class="p">)</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">time</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>    <span class="c1"># Pa^-ns-1</span>
+    <span class="n">scal_bdsl</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">stress</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">pdb</span><span class="o">.</span><span class="n">n_wz</span><span class="p">)</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">time</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># Pa^-ns-1</span>
 
     <span class="n">pdb</span><span class="o">.</span><span class="n">bdis_wz</span> <span class="o">/=</span> <span class="n">scal_bdsl</span></div>
 
 
+
 <div class="viewcode-block" id="scale_parameters">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.scale_parameters">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">scale_parameters</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="p">:</span><span class="n">CtrlTemperatureBC</span><span class="p">,</span><span class="n">sc</span><span class="p">:</span><span class="n">Scal</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">scale_parameters</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="p">:</span> <span class="n">CtrlTemperatureBC</span><span class="p">,</span> <span class="n">sc</span><span class="p">:</span> <span class="n">Scal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Non-dimensionalise all thermal boundary-condition parameters.</span>
 
 <span class="sd">    Converts temperatures from Celsius to Kelvin then divides by `sc.temp`.</span>
@@ -350,25 +354,26 @@
 <span class="sd">            all fields overwritten in-place with dimensionless values.</span>
 <span class="sd">        sc (Scal): Fully initialised scaling object.</span>
 <span class="sd">    """</span>
-    
-    <span class="n">scal_factor</span> <span class="o">=</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">scale_myr2sec</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
-    <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_top</span> <span class="o">=</span> <span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_top</span><span class="o">+</span><span class="n">_KELVIN_</span><span class="p">)</span><span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span>
-    <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_max</span> <span class="o">=</span> <span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_max</span><span class="o">+</span><span class="n">_KELVIN_</span><span class="p">)</span><span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span>
+
+    <span class="n">scal_factor</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scale_myr2sec</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">time</span>
+    <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_top</span> <span class="o">=</span> <span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_top</span> <span class="o">+</span> <span class="n">_KELVIN_</span><span class="p">)</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span>
+    <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_max</span> <span class="o">=</span> <span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_max</span> <span class="o">+</span> <span class="n">_KELVIN_</span><span class="p">)</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span>
     <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">end_time</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">end_time</span> <span class="o">*</span> <span class="n">scal_factor</span>
     <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">dt</span> <span class="o">*</span> <span class="n">scal_factor</span>
     <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">slab_age</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">slab_age</span> <span class="o">*</span> <span class="n">scal_factor</span>
     <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">interval_time</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">interval_time</span> <span class="o">*</span> <span class="n">scal_factor</span>
     <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">interval_val</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">interval_val</span> <span class="o">*</span> <span class="n">scal_factor</span>
-    <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">dz</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">dz</span><span class="o">*</span><span class="n">_KM_2_M_</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">length</span>
+    <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">dz</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">dz</span> <span class="o">*</span> <span class="n">_KM_2_M_</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">length</span>
     <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">k</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">k</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">k</span>
     <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">cp</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">cp</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">cp</span>
     <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">rho</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">rho</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">rho</span>
     <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">right_age</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">right_age</span> <span class="o">*</span> <span class="n">scal_factor</span></div>
 
 
+
 <div class="viewcode-block" id="scaling_control_parameters">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.scaling_control_parameters">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">scaling_control_parameters</span><span class="p">(</span><span class="n">ctrl</span><span class="p">:</span><span class="n">NumericalControls</span><span class="p">,</span><span class="n">sc</span><span class="p">:</span><span class="n">Scal</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">scaling_control_parameters</span><span class="p">(</span><span class="n">ctrl</span><span class="p">:</span> <span class="n">NumericalControls</span><span class="p">,</span> <span class="n">sc</span><span class="p">:</span> <span class="n">Scal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Non-dimensionalise numerical solver controls.</span>
 
 <span class="sd">    Scales gravity `g` by the characteristic acceleration (length/time^2),</span>
@@ -381,15 +386,16 @@
 <span class="sd">        sc (Scal): Fully initialised scaling object.</span>
 <span class="sd">    """</span>
 
-    <span class="n">ctrl</span><span class="o">.</span><span class="n">g</span> <span class="o">=</span> <span class="n">ctrl</span><span class="o">.</span><span class="n">g</span> <span class="o">/</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">length</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">time</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
-    <span class="n">ctrl</span><span class="o">.</span><span class="n">time_max</span> <span class="o">=</span> <span class="n">ctrl</span><span class="o">.</span><span class="n">time_max</span> <span class="o">*</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">scale_myr2sec</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
-    <span class="n">ctrl</span><span class="o">.</span><span class="n">time_ini_guess</span> <span class="o">=</span> <span class="n">ctrl</span><span class="o">.</span><span class="n">time_ini_guess</span> <span class="o">*</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">scale_myr2sec</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
-    <span class="n">ctrl</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="n">ctrl</span><span class="o">.</span><span class="n">dt</span> <span class="o">*</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">scale_myr2sec</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">time</span><span class="p">)</span></div>
+    <span class="n">ctrl</span><span class="o">.</span><span class="n">g</span> <span class="o">=</span> <span class="n">ctrl</span><span class="o">.</span><span class="n">g</span> <span class="o">/</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">length</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">time</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">ctrl</span><span class="o">.</span><span class="n">time_max</span> <span class="o">=</span> <span class="n">ctrl</span><span class="o">.</span><span class="n">time_max</span> <span class="o">*</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">scale_myr2sec</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+    <span class="n">ctrl</span><span class="o">.</span><span class="n">time_ini_guess</span> <span class="o">=</span> <span class="n">ctrl</span><span class="o">.</span><span class="n">time_ini_guess</span> <span class="o">*</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">scale_myr2sec</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+    <span class="n">ctrl</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="n">ctrl</span><span class="o">.</span><span class="n">dt</span> <span class="o">*</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">scale_myr2sec</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">time</span><span class="p">)</span></div>
+
 
 
 <div class="viewcode-block" id="scaling_mesh">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.scaling_mesh">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">scaling_mesh</span><span class="p">(</span><span class="n">mesh</span><span class="p">:</span><span class="n">Mesh</span><span class="p">,</span><span class="n">sc</span><span class="p">:</span><span class="n">Scal</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">scaling_mesh</span><span class="p">(</span><span class="n">mesh</span><span class="p">:</span> <span class="n">Mesh</span><span class="p">,</span> <span class="n">sc</span><span class="p">:</span> <span class="n">Scal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Non-dimensionalise mesh geometry and geometric input parameters.</span>
 
 <span class="sd">    Divides all mesh node coordinates (in metres) by `sc.length / 1000` for</span>
@@ -403,20 +409,20 @@
 <span class="sd">            `g_input` are overwritten in-place.</span>
 <span class="sd">        sc (Scal): Fully initialised scaling object.</span>
 <span class="sd">    """</span>
-    
-    <span class="n">domain</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="s1">'global_domain'</span><span class="p">,</span><span class="s1">'crust_domain'</span><span class="p">,</span>
-                    <span class="s1">'subduction_plate_domain'</span><span class="p">,</span><span class="s1">'wedge_domain'</span><span class="p">])</span>
-    
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">domain</span><span class="p">:</span> 
+
+    <span class="n">domain</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"global_domain"</span><span class="p">,</span> <span class="s2">"crust_domain"</span><span class="p">,</span> <span class="s2">"subduction_plate_domain"</span><span class="p">,</span> <span class="s2">"wedge_domain"</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">domain</span><span class="p">:</span>
         <span class="n">sub</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
-        <span class="n">sub</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">x</span><span class="p">[:]</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">length</span><span class="o">/</span><span class="n">_KM_2_M_</span>
-    
-    <span class="n">dimensionless_ginput</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">g_input</span><span class="p">,</span><span class="n">sc</span><span class="p">)</span></div>
+        <span class="n">sub</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">x</span><span class="p">[:]</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">length</span> <span class="o">/</span> <span class="n">_KM_2_M_</span>
+
+    <span class="n">dimensionless_ginput</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">g_input</span><span class="p">,</span> <span class="n">sc</span><span class="p">)</span></div>
+
 
 
 <div class="viewcode-block" id="dimensionless_ginput">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.dimensionless_ginput">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">dimensionless_ginput</span><span class="p">(</span><span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span><span class="p">,</span><span class="n">sc</span><span class="p">:</span><span class="n">Scal</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">dimensionless_ginput</span><span class="p">(</span><span class="n">g_input</span><span class="p">:</span> <span class="n">GeomInput</span><span class="p">,</span> <span class="n">sc</span><span class="p">:</span> <span class="n">Scal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Non-dimensionalise all scalar geometric parameters in GeomInput.</span>
 
 <span class="sd">    Divides every length parameter (grid extents, layer thicknesses, weak zone</span>
@@ -429,25 +435,26 @@
 <span class="sd">            are overwritten in-place.</span>
 <span class="sd">        sc (Scal): Fully initialised scaling object.</span>
 <span class="sd">    """</span>
-    <span class="n">scale_lenght</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">length</span><span class="o">/</span><span class="n">_KM_2_M_</span>
-    <span class="n">g_input</span><span class="o">.</span><span class="n">x</span> <span class="o">/=</span> <span class="n">scale_lenght</span> <span class="c1"># main grid coordinate</span>
+    <span class="n">scale_lenght</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">length</span> <span class="o">/</span> <span class="n">_KM_2_M_</span>
+    <span class="n">g_input</span><span class="o">.</span><span class="n">x</span> <span class="o">/=</span> <span class="n">scale_lenght</span>  <span class="c1"># main grid coordinate</span>
     <span class="n">g_input</span><span class="o">.</span><span class="n">y</span> <span class="o">/=</span> <span class="n">scale_lenght</span>
-    <span class="n">g_input</span><span class="o">.</span><span class="n">cr</span> <span class="o">/=</span> <span class="n">scale_lenght</span> <span class="c1"># crust </span>
-    <span class="n">g_input</span><span class="o">.</span><span class="n">ocr</span> <span class="o">/=</span> <span class="n">scale_lenght</span> <span class="c1"># oceanic crust</span>
-    <span class="n">g_input</span><span class="o">.</span><span class="n">lit_mt</span> <span class="o">/=</span> <span class="n">scale_lenght</span> <span class="c1"># lithosperic mantle  </span>
-    <span class="n">g_input</span><span class="o">.</span><span class="n">wz_tk</span> <span class="o">/=</span> <span class="n">scale_lenght</span> <span class="c1"># weak zone </span>
-    <span class="n">g_input</span><span class="o">.</span><span class="n">ns_depth</span> <span class="o">/=</span> <span class="n">scale_lenght</span> <span class="c1"># total lithosphere thickness</span>
-    <span class="n">g_input</span><span class="o">.</span><span class="n">decoupling</span> <span class="o">/=</span> <span class="n">scale_lenght</span> <span class="c1"># decoupling depth -&gt; i.e. where the weak zone is prolonged </span>
+    <span class="n">g_input</span><span class="o">.</span><span class="n">cr</span> <span class="o">/=</span> <span class="n">scale_lenght</span>  <span class="c1"># crust</span>
+    <span class="n">g_input</span><span class="o">.</span><span class="n">ocr</span> <span class="o">/=</span> <span class="n">scale_lenght</span>  <span class="c1"># oceanic crust</span>
+    <span class="n">g_input</span><span class="o">.</span><span class="n">lit_mt</span> <span class="o">/=</span> <span class="n">scale_lenght</span>  <span class="c1"># lithosperic mantle</span>
+    <span class="n">g_input</span><span class="o">.</span><span class="n">wz_tk</span> <span class="o">/=</span> <span class="n">scale_lenght</span>  <span class="c1"># weak zone</span>
+    <span class="n">g_input</span><span class="o">.</span><span class="n">ns_depth</span> <span class="o">/=</span> <span class="n">scale_lenght</span>  <span class="c1"># total lithosphere thickness</span>
+    <span class="n">g_input</span><span class="o">.</span><span class="n">decoupling</span> <span class="o">/=</span> <span class="n">scale_lenght</span>  <span class="c1"># decoupling depth -&gt; i.e. where the weak zone is prolonged</span>
     <span class="n">g_input</span><span class="o">.</span><span class="n">resolution_normal</span> <span class="o">/=</span> <span class="n">scale_lenght</span>  <span class="c1"># To Do</span>
     <span class="n">g_input</span><span class="o">.</span><span class="n">resolution_refine</span> <span class="o">/=</span> <span class="n">scale_lenght</span>  <span class="c1"># To Do</span>
-    <span class="n">g_input</span><span class="o">.</span><span class="n">transition</span> <span class="o">/=</span> <span class="n">scale_lenght</span> <span class="c1"># the transition between coupled and uncoupled</span>
-    <span class="n">g_input</span><span class="o">.</span><span class="n">lab_d</span> <span class="o">/=</span> <span class="n">scale_lenght</span> <span class="c1"># Astenosphere-lithosphere </span>
+    <span class="n">g_input</span><span class="o">.</span><span class="n">transition</span> <span class="o">/=</span> <span class="n">scale_lenght</span>  <span class="c1"># the transition between coupled and uncoupled</span>
+    <span class="n">g_input</span><span class="o">.</span><span class="n">lab_d</span> <span class="o">/=</span> <span class="n">scale_lenght</span>  <span class="c1"># Astenosphere-lithosphere</span>
     <span class="n">g_input</span><span class="o">.</span><span class="n">slab_tk</span> <span class="o">/=</span> <span class="n">scale_lenght</span></div>
+
 
 
 <div class="viewcode-block" id="scale_kinematic_bc">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.scale_kinematic_bc">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">scale_kinematic_bc</span><span class="p">(</span><span class="n">ctrl_ky</span><span class="p">:</span><span class="n">CtrlKy</span><span class="p">,</span> <span class="n">sc</span><span class="p">:</span> <span class="n">Scal</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">scale_kinematic_bc</span><span class="p">(</span><span class="n">ctrl_ky</span><span class="p">:</span> <span class="n">CtrlKy</span><span class="p">,</span> <span class="n">sc</span><span class="p">:</span> <span class="n">Scal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Non-dimensionalise kinematic boundary-condition parameters.</span>
 
 <span class="sd">    Converts the slab surface velocity `v_s` from cm/yr to m/s using</span>
@@ -460,13 +467,14 @@
 <span class="sd">            `interval_val` are overwritten in-place.</span>
 <span class="sd">        sc (Scal): Fully initialised scaling object.</span>
 <span class="sd">    """</span>
-    <span class="n">ctrl_ky</span><span class="o">.</span><span class="n">v_s</span> <span class="o">*=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scale_vel</span> <span class="o">*</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">time</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">length</span><span class="p">)</span>
-    <span class="n">ctrl_ky</span><span class="o">.</span><span class="n">interval_val</span> <span class="o">*=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scale_myr2sec</span> <span class="o">*</span> <span class="mi">1</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">time</span></div>
+    <span class="n">ctrl_ky</span><span class="o">.</span><span class="n">v_s</span> <span class="o">*=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scale_vel</span> <span class="o">*</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">time</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">length</span><span class="p">)</span>
+    <span class="n">ctrl_ky</span><span class="o">.</span><span class="n">interval_val</span> <span class="o">*=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scale_myr2sec</span> <span class="o">*</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">time</span></div>
+
 
 
 <div class="viewcode-block" id="scaling_io_controls">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.scaling_io_controls">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">scaling_io_controls</span><span class="p">(</span><span class="n">ctrl_io</span><span class="p">:</span><span class="n">IOControls</span><span class="p">,</span><span class="n">sc</span><span class="p">:</span><span class="n">Scal</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">scaling_io_controls</span><span class="p">(</span><span class="n">ctrl_io</span><span class="p">:</span> <span class="n">IOControls</span><span class="p">,</span> <span class="n">sc</span><span class="p">:</span> <span class="n">Scal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Non-dimensionalise input/output control parameters.</span>
 
 <span class="sd">    Converts the time-series interval array `interval_val` from Myr to the</span>
@@ -476,7 +484,7 @@
 <span class="sd">        ctrl_io (IOControls): Input/output controls; `interval_val` is overwritten in-place.</span>
 <span class="sd">        sc (Scal): Fully initialised scaling object.</span>
 <span class="sd">    """</span>
-    <span class="n">ctrl_io</span><span class="o">.</span><span class="n">dt_out</span> <span class="o">*=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scale_myr2sec</span> <span class="o">*</span> <span class="mi">1</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">time</span></div>
+    <span class="n">ctrl_io</span><span class="o">.</span><span class="n">dt_out</span> <span class="o">*=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scale_myr2sec</span> <span class="o">*</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">time</span></div>
 
 </pre></div>
 

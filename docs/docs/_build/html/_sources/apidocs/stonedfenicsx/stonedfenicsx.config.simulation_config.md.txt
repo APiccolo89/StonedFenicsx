@@ -4,6 +4,7 @@
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.config.simulation_config
+:parser: napoleon_parser
 :allowtitles:
 ```
 
@@ -17,6 +18,7 @@
 
 * - {py:obj}`configure_simulation <stonedfenicsx.config.simulation_config.configure_simulation>`
   - ```{autodoc2-docstring} stonedfenicsx.config.simulation_config.configure_simulation
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -27,5 +29,6 @@
 :canonical: stonedfenicsx.config.simulation_config.configure_simulation
 
 ```{autodoc2-docstring} stonedfenicsx.config.simulation_config.configure_simulation
+:parser: napoleon_parser
 ```
 ````

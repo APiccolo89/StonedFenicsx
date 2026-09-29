@@ -4,6 +4,7 @@
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solution_routine
+:parser: napoleon_parser
 :allowtitles:
 ```
 
@@ -17,30 +18,37 @@
 
 * - {py:obj}`outerloop_operation_initial_guess <stonedfenicsx.solver_module.solution_routine.outerloop_operation_initial_guess>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.solution_routine.outerloop_operation_initial_guess
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`diffusion_initial_guess <stonedfenicsx.solver_module.solution_routine.diffusion_initial_guess>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.solution_routine.diffusion_initial_guess
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`initialise_the_simulation <stonedfenicsx.solver_module.solution_routine.initialise_the_simulation>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.solution_routine.initialise_the_simulation
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`outerloop_operation <stonedfenicsx.solver_module.solution_routine.outerloop_operation>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.solution_routine.outerloop_operation
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`initial_guess_simulation <stonedfenicsx.solver_module.solution_routine.initial_guess_simulation>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.solution_routine.initial_guess_simulation
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`time_loop <stonedfenicsx.solver_module.solution_routine.time_loop>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.solution_routine.time_loop
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`solution_routine <stonedfenicsx.solver_module.solution_routine.solution_routine>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.solution_routine.solution_routine
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -51,6 +59,7 @@
 :canonical: stonedfenicsx.solver_module.solution_routine.outerloop_operation_initial_guess
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solution_routine.outerloop_operation_initial_guess
+:parser: napoleon_parser
 ```
 ````
 
@@ -58,6 +67,7 @@
 :canonical: stonedfenicsx.solver_module.solution_routine.diffusion_initial_guess
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solution_routine.diffusion_initial_guess
+:parser: napoleon_parser
 ```
 ````
 
@@ -65,6 +75,7 @@
 :canonical: stonedfenicsx.solver_module.solution_routine.initialise_the_simulation
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solution_routine.initialise_the_simulation
+:parser: napoleon_parser
 ```
 ````
 
@@ -72,6 +83,7 @@
 :canonical: stonedfenicsx.solver_module.solution_routine.outerloop_operation
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solution_routine.outerloop_operation
+:parser: napoleon_parser
 ```
 ````
 
@@ -79,6 +91,7 @@
 :canonical: stonedfenicsx.solver_module.solution_routine.initial_guess_simulation
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solution_routine.initial_guess_simulation
+:parser: napoleon_parser
 ```
 ````
 
@@ -86,6 +99,7 @@
 :canonical: stonedfenicsx.solver_module.solution_routine.time_loop
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solution_routine.time_loop
+:parser: napoleon_parser
 ```
 ````
 
@@ -93,5 +107,6 @@
 :canonical: stonedfenicsx.solver_module.solution_routine.solution_routine
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solution_routine.solution_routine
+:parser: napoleon_parser
 ```
 ````

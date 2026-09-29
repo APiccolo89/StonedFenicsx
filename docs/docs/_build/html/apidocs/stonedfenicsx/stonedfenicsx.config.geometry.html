@@ -221,30 +221,30 @@ or one of its subdomains (e.g., wedge, subducting plate, overriding plate).</p>
 <p>It provides the necessary information to transfer data between the global mesh
 and extracted submeshes, ensuring consistent handling of markers, facets,
 material phases, and boundary conditions.</p>
-<p class="rubric" id="id2">Attributes</p>
-<p>hierarchy : str
-Mesh hierarchy level:
-- <code class="docutils literal notranslate"><span class="pre">&quot;parent&quot;</span></code> for the global mesh
-- <code class="docutils literal notranslate"><span class="pre">&quot;child&quot;</span></code> for a submesh</p>
-<p>cell_par : NDArray[np.int32] | None
-Parent cell relationships mapping submesh cells to the global mesh cells.
-Only defined if the domain is a submesh.</p>
-<p>node_par : NDArray[np.int32] | None
-Parent node relationships mapping submesh nodes to the global mesh nodes.
-Only defined if the domain is a submesh.</p>
-<p>facets : dolfinx.mesh.MeshTags | None
-Tagged facet markers representing boundary features
-(e.g., trench, free surface, inflow/outflow).</p>
-<p>Tagcells : dolfinx.mesh.MeshTags | None
-Tagged cell markers representing physical regions/material domains.</p>
-<p>bc_dict : dict
-Dictionary mapping boundary condition names to integer tags.</p>
-<p>solPh : dolfinx.fem.FunctionSpace | None
-Function space used to define material property fields or phase functions.</p>
-<p>phase : dolfinx.fem.Function | None
-Material phase indicator function defined on the domain.</p>
-<p class="rubric" id="id3">Notes</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">Domain</span></code> class is a lightweight container for all domain-specific mesh data.
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hierarchy</strong> (<em>str</em>) – <p>Mesh hierarchy level:</p>
+<ul>
+<li><p><cite>”parent”</cite> for the global mesh</p></li>
+<li><p><cite>”child”</cite> for a submesh</p></li>
+</ul>
+</p></li>
+<li><p><strong>cell_par</strong> (<em>NDArray</em><em>[</em><em>np.int32</em><em>] </em><em>| </em><em>None</em>) – Parent cell relationships mapping submesh cells to the global mesh cells.
+Only defined if the domain is a submesh.</p></li>
+<li><p><strong>node_par</strong> (<em>NDArray</em><em>[</em><em>np.int32</em><em>] </em><em>| </em><em>None</em>) – Parent node relationships mapping submesh nodes to the global mesh nodes.
+Only defined if the domain is a submesh.</p></li>
+<li><p><strong>facets</strong> (<em>dolfinx.mesh.MeshTags</em><em> | </em><em>None</em>) – Tagged facet markers representing boundary features
+(e.g., trench, free surface, inflow/outflow).</p></li>
+<li><p><strong>Tagcells</strong> (<em>dolfinx.mesh.MeshTags</em><em> | </em><em>None</em>) – Tagged cell markers representing physical regions/material domains.</p></li>
+<li><p><strong>bc_dict</strong> (<em>dict</em>) – Dictionary mapping boundary condition names to integer tags.</p></li>
+<li><p><strong>solPh</strong> (<em>dolfinx.fem.FunctionSpace</em><em> | </em><em>None</em>) – Function space used to define material property fields or phase functions.</p></li>
+<li><p><strong>phase</strong> (<em>dolfinx.fem.Function</em><em> | </em><em>None</em>) – Material phase indicator function defined on the domain.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The <cite>Domain</cite> class is a lightweight container for all domain-specific mesh data.
 It allows safe communication of field variables, markers, and boundary tags
 between the global mesh and its corresponding subdomains.</p>
 <dl class="py attribute">
@@ -495,10 +495,9 @@ Lengths in [km]; angles in [degrees]; lc dimensionless.
 <dd><p>Check the integrity of the input, and if it respect
 the requirements
 Convert the main bending angle into radians for computation.
-Raises:
-ValueError: Check if the lower crust fraction is a float between 0-1
-ValueError: Check if the sub_type is something that is reasonable
-ValueError: Check if the benchmark mode has the required flags activated</p>
+:raises ValueError: Check if the lower crust fraction is a float between 0-1
+:raises ValueError: Check if the sub_type is something that is reasonable
+:raises ValueError: Check if the benchmark mode has the required flags activated</p>
 </dd></dl>
 
 </dd></dl>
@@ -511,27 +510,22 @@ ValueError: Check if the benchmark mode has the required flags activated</p>
 the simulation. It includes the geometric input parameters, the global domain,
 its associated subdomains, and the finite element definitions required for the
 numerical discretization of pressure, temperature, and velocity.</p>
-<p class="rubric" id="id4">Attributes</p>
-<p>g_input : Geom_input
-Geometric input parameters defining the model setup.</p>
-<p>domainG : Domain
-Global computational domain (full mesh).</p>
-<p>domainA : Domain
-Subduction zone domain (submesh extracted from the global mesh).</p>
-<p>domainB : Domain
-Wedge domain (submesh extracted from the global mesh).</p>
-<p>domainC : Domain
-Overriding plate domain (submesh extracted from the global mesh).</p>
-<p>rank : int
-MPI rank of the current process.</p>
-<p>size : int
-Total number of MPI processes.</p>
-<p>element_p : ufl.FiniteElement
-Finite element definition for the pressure field.</p>
-<p>element_PT : ufl.FiniteElement
-Finite element definition for the temperature field.</p>
-<p>element_V : ufl.FiniteElement
-Finite element definition for the velocity field.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>g_input</strong> (<em>Geom_input</em>) – Geometric input parameters defining the model setup.</p></li>
+<li><p><strong>domainG</strong> (<a class="reference internal" href="#stonedfenicsx.config.geometry.Domain" title="stonedfenicsx.config.geometry.Domain"><em>Domain</em></a>) – Global computational domain (full mesh).</p></li>
+<li><p><strong>domainA</strong> (<a class="reference internal" href="#stonedfenicsx.config.geometry.Domain" title="stonedfenicsx.config.geometry.Domain"><em>Domain</em></a>) – Subduction zone domain (submesh extracted from the global mesh).</p></li>
+<li><p><strong>domainB</strong> (<a class="reference internal" href="#stonedfenicsx.config.geometry.Domain" title="stonedfenicsx.config.geometry.Domain"><em>Domain</em></a>) – Wedge domain (submesh extracted from the global mesh).</p></li>
+<li><p><strong>domainC</strong> (<a class="reference internal" href="#stonedfenicsx.config.geometry.Domain" title="stonedfenicsx.config.geometry.Domain"><em>Domain</em></a>) – Overriding plate domain (submesh extracted from the global mesh).</p></li>
+<li><p><strong>rank</strong> (<em>int</em>) – MPI rank of the current process.</p></li>
+<li><p><strong>size</strong> (<em>int</em>) – Total number of MPI processes.</p></li>
+<li><p><strong>element_p</strong> (<em>ufl.FiniteElement</em>) – Finite element definition for the pressure field.</p></li>
+<li><p><strong>element_PT</strong> (<em>ufl.FiniteElement</em>) – Finite element definition for the temperature field.</p></li>
+<li><p><strong>element_V</strong> (<em>ufl.FiniteElement</em>) – Finite element definition for the velocity field.</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="stonedfenicsx.config.geometry.Mesh.g_input">
 <span class="sig-name descname"><span class="pre">g_input</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span><a class="headerlink" href="#stonedfenicsx.config.geometry.Mesh.g_input" title="Link to this definition">¶</a></dt>

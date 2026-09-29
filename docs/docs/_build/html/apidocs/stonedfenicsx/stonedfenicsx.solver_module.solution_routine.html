@@ -192,8 +192,8 @@
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.solution_routine.outerloop_operation_initial_guess">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.solver_module.solution_routine.</span></span><span class="sig-name descname"><span class="pre">outerloop_operation_initial_guess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctrl_sim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.SimulationControls" title="stonedfenicsx.config.numerical_control.SimulationControls"><span class="pre">stonedfenicsx.config.numerical_control.SimulationControls</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><span class="pre">stonedfenicsx.config.scal.Scal</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">eg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Global_thermal" title="stonedfenicsx.solver_module.problems_solution.Global_thermal"><span class="pre">stonedfenicsx.solver_module.problems_solution.Global_thermal</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">lg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Global_pressure" title="stonedfenicsx.solver_module.problems_solution.Global_pressure"><span class="pre">stonedfenicsx.solver_module.problems_solution.Global_pressure</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">we</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Wedge" title="stonedfenicsx.solver_module.problems_solution.Wedge"><span class="pre">stonedfenicsx.solver_module.problems_solution.Wedge</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Slab" title="stonedfenicsx.solver_module.problems_solution.Slab"><span class="pre">stonedfenicsx.solver_module.problems_solution.Slab</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution"><span class="pre">stonedfenicsx.solver_module.problems_solution.Solution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><span class="pre">stonedfenicsx.config.phase_db.PhaseDataBase</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">outit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.solver_module.solver_utilities.html#stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL" title="stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL"><span class="pre">stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/solution_routine.html#outerloop_operation_initial_guess"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.solution_routine.outerloop_operation_initial_guess" title="Link to this definition">¶</a></dt>
 <dd><p>Execute one complete Picard outer-loop sweep over all coupled sub-problems.</p>
-<p>At each outer iteration the sub-problems are solved in the following order:</p>
-<ol class="arabic simple">
+<dl class="simple">
+<dt>At each outer iteration the sub-problems are solved in the following order:</dt><dd><ol class="arabic simple">
 <li><p>Global lithostatic pressure  (lg) – skipped after it_outer=0 if linear.</p></li>
 <li><p>Temperature and pressure interpolated from global to wedge/slab sub-meshes.</p></li>
 <li><p>Slab Stokes                  (sl) – solved only at the first outer iteration
@@ -204,22 +204,33 @@ of each timestep, or when the kinematic BC changes.</p></li>
 <li><p>Outer-loop residual computed; loop exits when below ctrl_sim.ctrl.tol
 or ctrl_sim.ctrl.it_max iterations are reached.</p></li>
 </ol>
+</dd>
+</dl>
 <p>If all three sub-problems are linear the maximum number of outer iterations
 is capped at 2 (one solve + one residual check).</p>
-<p>Args:
-ctrl_sim (SimulationControls): Simulation controls (tolerances, max
-iterations, solver types, boundary-condition parameters).
-sc (Scal): Non-dimensionalisation scaling object.
-eg (Global_thermal): Global thermal energy problem.
-lg (Global_pressure): Global lithostatic pressure problem.
-we (Wedge): Mantle-wedge Stokes problem.
-sl (Slab): Subducting-plate Stokes problem.
-sol (Solution): Current solution container; updated in-place and returned.
-pdb (PhaseDataBase): Material-property database.
-ts (int, optional): Current timestep index. Defaults to 0.</p>
-<p>Returns:
-Solution: Updated solution container after the outer Picard loop has
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctrl_sim</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.SimulationControls" title="stonedfenicsx.config.numerical_control.SimulationControls"><em>SimulationControls</em></a>) – Simulation controls (tolerances, max
+iterations, solver types, boundary-condition parameters).</p></li>
+<li><p><strong>sc</strong> (<a class="reference internal" href="stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><em>Scal</em></a>) – Non-dimensionalisation scaling object.</p></li>
+<li><p><strong>eg</strong> (<a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Global_thermal" title="stonedfenicsx.solver_module.problems_solution.Global_thermal"><em>Global_thermal</em></a>) – Global thermal energy problem.</p></li>
+<li><p><strong>lg</strong> (<a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Global_pressure" title="stonedfenicsx.solver_module.problems_solution.Global_pressure"><em>Global_pressure</em></a>) – Global lithostatic pressure problem.</p></li>
+<li><p><strong>we</strong> (<a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Wedge" title="stonedfenicsx.solver_module.problems_solution.Wedge"><em>Wedge</em></a>) – Mantle-wedge Stokes problem.</p></li>
+<li><p><strong>sl</strong> (<a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Slab" title="stonedfenicsx.solver_module.problems_solution.Slab"><em>Slab</em></a>) – Subducting-plate Stokes problem.</p></li>
+<li><p><strong>sol</strong> (<a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution"><em>Solution</em></a>) – Current solution container; updated in-place and returned.</p></li>
+<li><p><strong>pdb</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – Material-property database.</p></li>
+<li><p><strong>ts</strong> (<em>int</em><em>, </em><em>optional</em>) – Current timestep index. Defaults to 0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Updated solution container after the outer Picard loop has
 converged (or exhausted the iteration budget).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution">Solution</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -238,28 +249,39 @@ will hold the evolving solution fields.  The initial temperature field is
 computed from the 1-D thermal boundary condition and stored in both
 sol.T_O (old) and sol.T_N (new) so the first Picard iteration starts
 from a physically meaningful guess.</p>
-<p>Args:
-ctrl_sim (SimulationControls): Container of all numerical, I/O, thermal
-and kinematic boundary-condition controls.
-pdb (PhaseDataBase): Material-property database for all phases.
-mesh (Mesh): Mesh object holding the global mesh, all sub-meshes,
-finite-element definitions, and geometric metadata.</p>
-<p>Returns:
-tuple[Solution, Global_thermal, Global_pressure, Wedge, Slab]:
-sol – pre-allocated solution container with initial temperature.
-eg  – global thermal energy problem.
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctrl_sim</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.SimulationControls" title="stonedfenicsx.config.numerical_control.SimulationControls"><em>SimulationControls</em></a>) – Container of all numerical, I/O, thermal
+and kinematic boundary-condition controls.</p></li>
+<li><p><strong>pdb</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – Material-property database for all phases.</p></li>
+<li><p><strong>mesh</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.Mesh" title="stonedfenicsx.config.geometry.Mesh"><em>Mesh</em></a>) – Mesh object holding the global mesh, all sub-meshes,
+finite-element definitions, and geometric metadata.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>sol – pre-allocated solution container with initial temperature.</dt><dd><p>eg  – global thermal energy problem.
 lg  – global lithostatic pressure problem.
 sl  – subducting-plate (slab) Stokes problem.
-we  – mantle-wedge Stokes problem.
-object created: solution, energy, lithostatic pressure, slab, wedge</p>
+we  – mantle-wedge Stokes problem.</p>
+</dd>
+</dl>
+<p>object created: solution, energy, lithostatic pressure, slab, wedge</p>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[<a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution">Solution</a>, <a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Global_thermal" title="stonedfenicsx.solver_module.problems_solution.Global_thermal">Global_thermal</a>, <a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Global_pressure" title="stonedfenicsx.solver_module.problems_solution.Global_pressure">Global_pressure</a>, <a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Wedge" title="stonedfenicsx.solver_module.problems_solution.Wedge">Wedge</a>, <a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Slab" title="stonedfenicsx.solver_module.problems_solution.Slab">Slab</a>]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.solution_routine.outerloop_operation">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.solver_module.solution_routine.</span></span><span class="sig-name descname"><span class="pre">outerloop_operation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctrl_sim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.SimulationControls" title="stonedfenicsx.config.numerical_control.SimulationControls"><span class="pre">stonedfenicsx.config.numerical_control.SimulationControls</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><span class="pre">stonedfenicsx.config.scal.Scal</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">eg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Global_thermal" title="stonedfenicsx.solver_module.problems_solution.Global_thermal"><span class="pre">stonedfenicsx.solver_module.problems_solution.Global_thermal</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">lg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Global_pressure" title="stonedfenicsx.solver_module.problems_solution.Global_pressure"><span class="pre">stonedfenicsx.solver_module.problems_solution.Global_pressure</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">we</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Wedge" title="stonedfenicsx.solver_module.problems_solution.Wedge"><span class="pre">stonedfenicsx.solver_module.problems_solution.Wedge</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Slab" title="stonedfenicsx.solver_module.problems_solution.Slab"><span class="pre">stonedfenicsx.solver_module.problems_solution.Slab</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution"><span class="pre">stonedfenicsx.solver_module.problems_solution.Solution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><span class="pre">stonedfenicsx.config.phase_db.PhaseDataBase</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">outit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.solver_module.solver_utilities.html#stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL" title="stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL"><span class="pre">stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/solution_routine.html#outerloop_operation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.solution_routine.outerloop_operation" title="Link to this definition">¶</a></dt>
 <dd><p>Execute one complete Picard outer-loop sweep over all coupled sub-problems.</p>
-<p>At each outer iteration the sub-problems are solved in the following order:</p>
-<ol class="arabic simple">
+<dl class="simple">
+<dt>At each outer iteration the sub-problems are solved in the following order:</dt><dd><ol class="arabic simple">
 <li><p>Global lithostatic pressure  (lg) – skipped after it_outer=0 if linear.</p></li>
 <li><p>Temperature and pressure interpolated from global to wedge/slab sub-meshes.</p></li>
 <li><p>Slab Stokes                  (sl) – solved only at the first outer iteration
@@ -270,22 +292,33 @@ of each timestep, or when the kinematic BC changes.</p></li>
 <li><p>Outer-loop residual computed; loop exits when below ctrl_sim.ctrl.tol
 or ctrl_sim.ctrl.it_max iterations are reached.</p></li>
 </ol>
+</dd>
+</dl>
 <p>If all three sub-problems are linear the maximum number of outer iterations
 is capped at 2 (one solve + one residual check).</p>
-<p>Args:
-ctrl_sim (SimulationControls): Simulation controls (tolerances, max
-iterations, solver types, boundary-condition parameters).
-sc (Scal): Non-dimensionalisation scaling object.
-eg (Global_thermal): Global thermal energy problem.
-lg (Global_pressure): Global lithostatic pressure problem.
-we (Wedge): Mantle-wedge Stokes problem.
-sl (Slab): Subducting-plate Stokes problem.
-sol (Solution): Current solution container; updated in-place and returned.
-pdb (PhaseDataBase): Material-property database.
-ts (int, optional): Current timestep index. Defaults to 0.</p>
-<p>Returns:
-Solution: Updated solution container after the outer Picard loop has
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctrl_sim</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.SimulationControls" title="stonedfenicsx.config.numerical_control.SimulationControls"><em>SimulationControls</em></a>) – Simulation controls (tolerances, max
+iterations, solver types, boundary-condition parameters).</p></li>
+<li><p><strong>sc</strong> (<a class="reference internal" href="stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><em>Scal</em></a>) – Non-dimensionalisation scaling object.</p></li>
+<li><p><strong>eg</strong> (<a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Global_thermal" title="stonedfenicsx.solver_module.problems_solution.Global_thermal"><em>Global_thermal</em></a>) – Global thermal energy problem.</p></li>
+<li><p><strong>lg</strong> (<a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Global_pressure" title="stonedfenicsx.solver_module.problems_solution.Global_pressure"><em>Global_pressure</em></a>) – Global lithostatic pressure problem.</p></li>
+<li><p><strong>we</strong> (<a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Wedge" title="stonedfenicsx.solver_module.problems_solution.Wedge"><em>Wedge</em></a>) – Mantle-wedge Stokes problem.</p></li>
+<li><p><strong>sl</strong> (<a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Slab" title="stonedfenicsx.solver_module.problems_solution.Slab"><em>Slab</em></a>) – Subducting-plate Stokes problem.</p></li>
+<li><p><strong>sol</strong> (<a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution"><em>Solution</em></a>) – Current solution container; updated in-place and returned.</p></li>
+<li><p><strong>pdb</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – Material-property database.</p></li>
+<li><p><strong>ts</strong> (<em>int</em><em>, </em><em>optional</em>) – Current timestep index. Defaults to 0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Updated solution container after the outer Picard loop has
 converged (or exhausted the iteration budget).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution">Solution</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -300,7 +333,8 @@ converged (or exhausted the iteration budget).</p>
 <dd><p>Drive the time-stepping loop and write output at the requested intervals.</p>
 <p>Instantiates the OUTPUT object once before entering the loop.  At every
 timestep:</p>
-<ul class="simple">
+<blockquote>
+<div><ul class="simple">
 <li><p>Advances time-dependent boundary conditions (slab age, slab velocity)
 when ctrl_sim.ctrl_tbc.constant == 0 or ctrl_sim.ctrl_ky.constant == 0.</p></li>
 <li><p>Calls outerloop_operation to converge the coupled Picard system.</p></li>
@@ -309,26 +343,33 @@ steady-state solve.</p></li>
 <li><p>Optionally runs the van Keken (2008) benchmark diagnostics.</p></li>
 <li><p>Advances the physical time by ctrl_sim.ctrl.dt and rolls T_N → T_O.</p></li>
 </ul>
+</div></blockquote>
 <p>For steady-state mode (ctrl_sim.ctrl.steady_state == 1) the loop executes
 exactly once: the time variable is immediately set to time_max after the
 solve so the while condition is not re-entered.</p>
 <p>At the end of the loop all PETSc solver objects are explicitly destroyed to
 free GPU/CPU memory before the Python garbage collector runs.</p>
-<p>Args:
-ctrl_sim (SimulationControls): Simulation controls including time
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctrl_sim</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.SimulationControls" title="stonedfenicsx.config.numerical_control.SimulationControls"><em>SimulationControls</em></a>) – Simulation controls including time
 stepping (dt, time_max, steady_state), output frequency, and
-boundary-condition update flags.
-eg (Global_thermal): Global thermal energy problem (owns the XDMF
-domain and the cached thermal material table passed to OUTPUT).
-lg (Global_pressure): Global lithostatic pressure problem.
-we (Wedge): Mantle-wedge Stokes problem.
-sl (Slab): Subducting-plate Stokes problem.
-sol (Solution): Solution container carrying all field functions.
-pdb (PhaseDataBase): Material-property database (forwarded to
-outerloop_operation and OUTPUT).
-sc (Scal): Non-dimensionalisation scaling object.</p>
-<p>Returns:
-None</p>
+boundary-condition update flags.</p></li>
+<li><p><strong>eg</strong> (<a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Global_thermal" title="stonedfenicsx.solver_module.problems_solution.Global_thermal"><em>Global_thermal</em></a>) – Global thermal energy problem (owns the XDMF
+domain and the cached thermal material table passed to OUTPUT).</p></li>
+<li><p><strong>lg</strong> (<a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Global_pressure" title="stonedfenicsx.solver_module.problems_solution.Global_pressure"><em>Global_pressure</em></a>) – Global lithostatic pressure problem.</p></li>
+<li><p><strong>we</strong> (<a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Wedge" title="stonedfenicsx.solver_module.problems_solution.Wedge"><em>Wedge</em></a>) – Mantle-wedge Stokes problem.</p></li>
+<li><p><strong>sl</strong> (<a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Slab" title="stonedfenicsx.solver_module.problems_solution.Slab"><em>Slab</em></a>) – Subducting-plate Stokes problem.</p></li>
+<li><p><strong>sol</strong> (<a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution"><em>Solution</em></a>) – Solution container carrying all field functions.</p></li>
+<li><p><strong>pdb</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – Material-property database (forwarded to
+outerloop_operation and OUTPUT).</p></li>
+<li><p><strong>sc</strong> (<a class="reference internal" href="stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><em>Scal</em></a>) – Non-dimensionalisation scaling object.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -337,25 +378,33 @@ None</p>
 <dd><p>Top-level solver entry point: initialise and run the full simulation.</p>
 <p>Thin orchestration function that sequences the two main phases of the
 simulation:</p>
-<ol class="arabic simple">
+<blockquote>
+<div><ol class="arabic simple">
 <li><p>initialise_the_simulation – allocates all FEM problem objects and
 the solution container.</p></li>
 <li><p>time_loop – drives time stepping (or the single steady-state solve),
 Picard outer iteration, and output.</p></li>
 </ol>
+</div></blockquote>
 <p>This is the function called by stoned_fenicsx() after the configuration
 and mesh generation are complete.</p>
-<p>Args:
-ctrl_sim (SimulationControls): Container of all numerical, I/O,
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctrl_sim</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.SimulationControls" title="stonedfenicsx.config.numerical_control.SimulationControls"><em>SimulationControls</em></a>) – Container of all numerical, I/O,
 thermal-BC and kinematic-BC controls.  All parameters are already
-non-dimensionalised by the time this function is called.
-pdb (PhaseDataBase): Non-dimensionalised material-property database.
-mesh (Mesh): Mesh object holding the global and sub-domain meshes,
-element definitions, and geometric metadata.
-sc (Scal): Non-dimensionalisation scaling object used for output
-rescaling and time conversion.</p>
-<p>Returns:
-None</p>
+non-dimensionalised by the time this function is called.</p></li>
+<li><p><strong>pdb</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – Non-dimensionalised material-property database.</p></li>
+<li><p><strong>mesh</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.Mesh" title="stonedfenicsx.config.geometry.Mesh"><em>Mesh</em></a>) – Mesh object holding the global and sub-domain meshes,
+element definitions, and geometric metadata.</p></li>
+<li><p><strong>sc</strong> (<a class="reference internal" href="stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><em>Scal</em></a>) – Non-dimensionalisation scaling object used for output
+rescaling and time conversion.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

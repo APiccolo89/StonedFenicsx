@@ -166,9 +166,13 @@
 <td></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.solver_module.solver.ScalarSolver" title="stonedfenicsx.solver_module.solver.ScalarSolver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ScalarSolver</span></code></a></p></td>
-<td><p class="rubric" id="class-that-store-all-the-information-for-scalar-like-problems-temperature-and-lithostatic-pressure-potentially-darcy-like-are-similar-problem-they-diffuse-and-advect-a-scalar">class that store all the information for scalar like problems. Temperature and lithostatic pressure (potentially darcy like) are similar problem
-they diffuse and advect a scalar.</p>
-</td>
+<td><p>class that store all the information for scalar like problems. Temperature and lithostatic pressure (potentially darcy like) are similar problem
+they diffuse and advect a scalar.
+—
+So -&gt; Solver are more or less the same, I can store a few things and update as a function of the needs.
+—
+Solve function require the problem P -&gt; and a decision between linear and non linear -&gt; form are handled by p class, so I do not give a fuck in this class
+for now all the parameter will be default.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.solver_module.solver.SolverStokes" title="stonedfenicsx.solver_module.solver.SolverStokes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SolverStokes</span></code></a></p></td>
 <td></td>
@@ -193,24 +197,31 @@ they diffuse and advect a scalar.</p>
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.solver.ScalarSolver">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">stonedfenicsx.solver_module.solver.</span></span><span class="sig-name descname"><span class="pre">ScalarSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bcs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">COMM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direct</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/solver.html#ScalarSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.solver.ScalarSolver" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#stonedfenicsx.solver_module.solver.Solvers" title="stonedfenicsx.solver_module.solver.Solvers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">stonedfenicsx.solver_module.solver.Solvers</span></code></a></p>
-<p class="rubric" id="id1">class that store all the information for scalar like problems. Temperature and lithostatic pressure (potentially darcy like) are similar problem
-they diffuse and advect a scalar.</p>
-<p class="rubric" id="id2">So -&gt; Solver are more or less the same, I can store a few things and update as a function of the needs.</p>
-<p>Solve function require the problem P -&gt; and a decision between linear and non linear -&gt; form are handled by p class, so I do not give a fuck in this class
+<p>class that store all the information for scalar like problems. Temperature and lithostatic pressure (potentially darcy like) are similar problem
+they diffuse and advect a scalar.
+—
+So -&gt; Solver are more or less the same, I can store a few things and update as a function of the needs.
+—
+Solve function require the problem P -&gt; and a decision between linear and non linear -&gt; form are handled by p class, so I do not give a fuck in this class
 for now all the parameter will be default.</p>
 <p class="rubric">Initialization</p>
 <p>Create the PETSc matrix/vector/KSP for a scalar (temperature or lithostatic pressure) problem.</p>
-<p>Allocates the system matrix <code class="docutils literal notranslate"><span class="pre">A</span></code> (with the sparsity of <code class="docutils literal notranslate"><span class="pre">a</span></code>) and RHS
-vector <code class="docutils literal notranslate"><span class="pre">b</span></code>, creates the KSP, and configures either an iterative
+<p>Allocates the system matrix <cite>A</cite> (with the sparsity of <cite>a</cite>) and RHS
+vector <cite>b</cite>, creates the KSP, and configures either an iterative
 (FGMRES + hypre) or direct (LU via MUMPS) solver.</p>
-<p>Args:
-a (dolfinx.fem.Form | ufl.Form): Bilinear form defining the matrix sparsity/operator.
-L (dolfinx.fem.Form | ufl.Form): Linear form defining the RHS vector.
-bcs (list): Dirichlet boundary conditions (unused directly here,
-kept for interface parity with callers).
-COMM (mpi4py.MPI.Comm): MPI communicator for the KSP.
-direct (int, optional): 0 for the iterative (fgmres/hypre)
-solver, non-zero for the direct (LU/mumps) solver. Defaults to 0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>dolfinx.fem.Form</em><em> | </em><em>ufl.Form</em>) – Bilinear form defining the matrix sparsity/operator.</p></li>
+<li><p><strong>L</strong> (<em>dolfinx.fem.Form</em><em> | </em><em>ufl.Form</em>) – Linear form defining the RHS vector.</p></li>
+<li><p><strong>bcs</strong> (<em>list</em>) – Dirichlet boundary conditions (unused directly here,
+kept for interface parity with callers).</p></li>
+<li><p><strong>COMM</strong> (<em>mpi4py.MPI.Comm</em>) – MPI communicator for the KSP.</p></li>
+<li><p><strong>direct</strong> (<em>int</em><em>, </em><em>optional</em>) – 0 for the iterative (fgmres/hypre)
+solver, non-zero for the direct (LU/mumps) solver. Defaults to 0.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py class">
@@ -219,106 +230,128 @@ solver, non-zero for the direct (LU/mumps) solver. Defaults to 0.</p>
 <dd><p>Bases: <a class="reference internal" href="#stonedfenicsx.solver_module.solver.Solvers" title="stonedfenicsx.solver_module.solver.Solvers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">stonedfenicsx.solver_module.solver.Solvers</span></code></a></p>
 <p class="rubric">Initialization</p>
 <p>Create the block PETSc solver for a Stokes (velocity-pressure) problem.</p>
-<p>Dispatches to <code class="docutils literal notranslate"><span class="pre">set_direct_solver</span></code> or <code class="docutils literal notranslate"><span class="pre">set_iterative_solver</span></code> based on
-<code class="docutils literal notranslate"><span class="pre">ctrl.stokes_solver_type</span></code> (always direct for the slab domain, whose
+<p>Dispatches to <cite>set_direct_solver</cite> or <cite>set_iterative_solver</cite> based on
+<cite>ctrl.stokes_solver_type</cite> (always direct for the slab domain, whose
 internal-wall boundary condition over-constrains the problem).</p>
-<p>Args:
-a (dolfinx.fem.Form): Compiled block system form (momentum + continuity).
-a_p (dolfinx.fem.Form): Compiled preconditioner (pressure mass) block form.
-L (dolfinx.fem.Form): Compiled block RHS form.
-COMM (mpi4py.MPI.Comm): MPI communicator for the KSP.
-nl (int): Nonlinear-solve flag, forwarded to the solver setup (unused directly here).
-bcs (list): Dirichlet boundary conditions.
-F0 (dolfinx.fem.FunctionSpace): Collapsed velocity subspace (used
-for computing the velocity/pressure dof offset).
-F1 (dolfinx.fem.FunctionSpace): Collapsed pressure subspace.
-ctrl (NumericalControls): Numerical controls; <code class="docutils literal notranslate"><span class="pre">stokes_solver_type</span></code>
-selects direct (1) vs. iterative (0).
-J (optional): Unused; kept for interface parity. Defaults to None.
-r (optional): Unused; kept for interface parity. Defaults to None.
-it (int, optional): Outer iteration index, forwarded to the solver setup. Defaults to 0.
-ts (int, optional): Timestep index, forwarded to the solver setup. Defaults to 0.
-slab (int, optional): 1 forces the direct solver (slab domain). Defaults to 0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>dolfinx.fem.Form</em>) – Compiled block system form (momentum + continuity).</p></li>
+<li><p><strong>a_p</strong> (<em>dolfinx.fem.Form</em>) – Compiled preconditioner (pressure mass) block form.</p></li>
+<li><p><strong>L</strong> (<em>dolfinx.fem.Form</em>) – Compiled block RHS form.</p></li>
+<li><p><strong>COMM</strong> (<em>mpi4py.MPI.Comm</em>) – MPI communicator for the KSP.</p></li>
+<li><p><strong>nl</strong> (<em>int</em>) – Nonlinear-solve flag, forwarded to the solver setup (unused directly here).</p></li>
+<li><p><strong>bcs</strong> (<em>list</em>) – Dirichlet boundary conditions.</p></li>
+<li><p><strong>F0</strong> (<em>dolfinx.fem.FunctionSpace</em>) – Collapsed velocity subspace (used
+for computing the velocity/pressure dof offset).</p></li>
+<li><p><strong>F1</strong> (<em>dolfinx.fem.FunctionSpace</em>) – Collapsed pressure subspace.</p></li>
+<li><p><strong>ctrl</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.NumericalControls" title="stonedfenicsx.config.numerical_control.NumericalControls"><em>NumericalControls</em></a>) – Numerical controls; <cite>stokes_solver_type</cite>
+selects direct (1) vs. iterative (0).</p></li>
+<li><p><strong>J</strong> (<em>optional</em>) – Unused; kept for interface parity. Defaults to None.</p></li>
+<li><p><strong>r</strong> (<em>optional</em>) – Unused; kept for interface parity. Defaults to None.</p></li>
+<li><p><strong>it</strong> (<em>int</em><em>, </em><em>optional</em>) – Outer iteration index, forwarded to the solver setup. Defaults to 0.</p></li>
+<li><p><strong>ts</strong> (<em>int</em><em>, </em><em>optional</em>) – Timestep index, forwarded to the solver setup. Defaults to 0.</p></li>
+<li><p><strong>slab</strong> (<em>int</em><em>, </em><em>optional</em>) – 1 forces the direct solver (slab domain). Defaults to 0.</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.solver.SolverStokes.set_direct_solver">
 <span class="sig-name descname"><span class="pre">set_direct_solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a_p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">COMM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bcs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctrl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">J</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">it</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/solver.html#SolverStokes.set_direct_solver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.solver.SolverStokes.set_direct_solver" title="Link to this definition">¶</a></dt>
 <dd><p>Configure a direct (LU/MUMPS) block solver for the Stokes system.</p>
-<p>On the first solve (<code class="docutils literal notranslate"><span class="pre">it</span> <span class="pre">==</span> <span class="pre">0</span> <span class="pre">and</span> <span class="pre">ts</span> <span class="pre">==</span> <span class="pre">0</span></code>) builds the block
-operators/preconditioner and creates a <code class="docutils literal notranslate"><span class="pre">preonly</span></code> KSP with an LU/MUMPS
+<p>On the first solve (<cite>it == 0 and ts == 0</cite>) builds the block
+operators/preconditioner and creates a <cite>preonly</cite> KSP with an LU/MUMPS
 preconditioner; on subsequent calls just reassembles the block
-operators in place via <code class="docutils literal notranslate"><span class="pre">update_block_operator</span></code>.</p>
-<p>Args:
-a (dolfinx.fem.Form): Compiled block system form.
-a_p (dolfinx.fem.Form): Compiled preconditioner block form.
-L (dolfinx.fem.Form): Compiled block RHS form.
-COMM (mpi4py.MPI.Comm): MPI communicator for the KSP.
-nl (int): Unused; kept for interface parity.
-bcs (list): Dirichlet boundary conditions.
-F0 (dolfinx.fem.FunctionSpace): Collapsed velocity subspace.
-F1 (dolfinx.fem.FunctionSpace): Collapsed pressure subspace.
-ctrl (NumericalControls): Numerical controls (unused directly here).
-J (optional): Unused; kept for interface parity. Defaults to None.
-r (optional): Unused; kept for interface parity. Defaults to None.
-it (int, optional): Outer iteration index. Defaults to 0.
-ts (int, optional): Timestep index. Defaults to 0.</p>
+operators in place via <cite>update_block_operator</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>dolfinx.fem.Form</em>) – Compiled block system form.</p></li>
+<li><p><strong>a_p</strong> (<em>dolfinx.fem.Form</em>) – Compiled preconditioner block form.</p></li>
+<li><p><strong>L</strong> (<em>dolfinx.fem.Form</em>) – Compiled block RHS form.</p></li>
+<li><p><strong>COMM</strong> (<em>mpi4py.MPI.Comm</em>) – MPI communicator for the KSP.</p></li>
+<li><p><strong>nl</strong> (<em>int</em>) – Unused; kept for interface parity.</p></li>
+<li><p><strong>bcs</strong> (<em>list</em>) – Dirichlet boundary conditions.</p></li>
+<li><p><strong>F0</strong> (<em>dolfinx.fem.FunctionSpace</em>) – Collapsed velocity subspace.</p></li>
+<li><p><strong>F1</strong> (<em>dolfinx.fem.FunctionSpace</em>) – Collapsed pressure subspace.</p></li>
+<li><p><strong>ctrl</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.NumericalControls" title="stonedfenicsx.config.numerical_control.NumericalControls"><em>NumericalControls</em></a>) – Numerical controls (unused directly here).</p></li>
+<li><p><strong>J</strong> (<em>optional</em>) – Unused; kept for interface parity. Defaults to None.</p></li>
+<li><p><strong>r</strong> (<em>optional</em>) – Unused; kept for interface parity. Defaults to None.</p></li>
+<li><p><strong>it</strong> (<em>int</em><em>, </em><em>optional</em>) – Outer iteration index. Defaults to 0.</p></li>
+<li><p><strong>ts</strong> (<em>int</em><em>, </em><em>optional</em>) – Timestep index. Defaults to 0.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.solver.SolverStokes.set_iterative_solver">
 <span class="sig-name descname"><span class="pre">set_iterative_solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a_p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">COMM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bcs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctrl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">J</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">it</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/solver.html#SolverStokes.set_iterative_solver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.solver.SolverStokes.set_iterative_solver" title="Link to this definition">¶</a></dt>
 <dd><p>Configure an iterative (FGMRES + fieldsplit) block solver for the Stokes system.</p>
-<p>On the first solve (<code class="docutils literal notranslate"><span class="pre">it</span> <span class="pre">==</span> <span class="pre">0</span> <span class="pre">or</span> <span class="pre">ts</span> <span class="pre">==</span> <span class="pre">0</span></code>) builds the block operators/
+<p>On the first solve (<cite>it == 0 or ts == 0</cite>) builds the block operators/
 preconditioner, computes the velocity/pressure PETSc index sets
-(<code class="docutils literal notranslate"><span class="pre">is_u</span></code>/<code class="docutils literal notranslate"><span class="pre">is_p</span></code>) for field-split, and creates an FGMRES KSP with a
+(<cite>is_u</cite>/<cite>is_p</cite>) for field-split, and creates an FGMRES KSP with a
 multiplicative fieldsplit preconditioner (hypre on each velocity and
 pressure sub-block). On subsequent calls just reassembles the block
-operators in place via <code class="docutils literal notranslate"><span class="pre">update_block_operator</span></code>.</p>
-<p>Args:
-a (dolfinx.fem.Form): Compiled block system form.
-a_p (dolfinx.fem.Form): Compiled preconditioner block form.
-L (dolfinx.fem.Form): Compiled block RHS form.
-COMM (mpi4py.MPI.Comm): MPI communicator for the KSP.
-nl (int): Unused; kept for interface parity.
-bcs (list): Dirichlet boundary conditions.
-F0 (dolfinx.fem.FunctionSpace): Collapsed velocity subspace.
-F1 (dolfinx.fem.FunctionSpace): Collapsed pressure subspace.
-ctrl (NumericalControls): Numerical controls; <code class="docutils literal notranslate"><span class="pre">iterative_solver_tol</span></code>
-sets the KSP relative tolerance.
-J (optional): Unused; kept for interface parity. Defaults to None.
-r (optional): Unused; kept for interface parity. Defaults to None.
-it (int, optional): Outer iteration index. Defaults to 0.
-ts (int, optional): Timestep index. Defaults to 0.</p>
+operators in place via <cite>update_block_operator</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>dolfinx.fem.Form</em>) – Compiled block system form.</p></li>
+<li><p><strong>a_p</strong> (<em>dolfinx.fem.Form</em>) – Compiled preconditioner block form.</p></li>
+<li><p><strong>L</strong> (<em>dolfinx.fem.Form</em>) – Compiled block RHS form.</p></li>
+<li><p><strong>COMM</strong> (<em>mpi4py.MPI.Comm</em>) – MPI communicator for the KSP.</p></li>
+<li><p><strong>nl</strong> (<em>int</em>) – Unused; kept for interface parity.</p></li>
+<li><p><strong>bcs</strong> (<em>list</em>) – Dirichlet boundary conditions.</p></li>
+<li><p><strong>F0</strong> (<em>dolfinx.fem.FunctionSpace</em>) – Collapsed velocity subspace.</p></li>
+<li><p><strong>F1</strong> (<em>dolfinx.fem.FunctionSpace</em>) – Collapsed pressure subspace.</p></li>
+<li><p><strong>ctrl</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.NumericalControls" title="stonedfenicsx.config.numerical_control.NumericalControls"><em>NumericalControls</em></a>) – Numerical controls; <cite>iterative_solver_tol</cite>
+sets the KSP relative tolerance.</p></li>
+<li><p><strong>J</strong> (<em>optional</em>) – Unused; kept for interface parity. Defaults to None.</p></li>
+<li><p><strong>r</strong> (<em>optional</em>) – Unused; kept for interface parity. Defaults to None.</p></li>
+<li><p><strong>it</strong> (<em>int</em><em>, </em><em>optional</em>) – Outer iteration index. Defaults to 0.</p></li>
+<li><p><strong>ts</strong> (<em>int</em><em>, </em><em>optional</em>) – Timestep index. Defaults to 0.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.solver.SolverStokes.set_block_operator">
 <span class="sig-name descname"><span class="pre">set_block_operator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a_p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bcs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/solver.html#SolverStokes.set_block_operator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.solver.SolverStokes.set_block_operator" title="Link to this definition">¶</a></dt>
 <dd><p>Assemble the block system matrix, preconditioner matrix, RHS vector and pressure nullspace.</p>
-<p>Builds <code class="docutils literal notranslate"><span class="pre">self.A</span></code>/<code class="docutils literal notranslate"><span class="pre">self.P</span></code>/<code class="docutils literal notranslate"><span class="pre">self.b</span></code> from scratch via
-<code class="docutils literal notranslate"><span class="pre">assemble_matrix_block</span></code>/<code class="docutils literal notranslate"><span class="pre">assemble_vector_block</span></code>, then constructs the
+<p>Builds <cite>self.A</cite>/<cite>self.P</cite>/<cite>self.b</cite> from scratch via
+<cite>assemble_matrix_block</cite>/<cite>assemble_vector_block</cite>, then constructs the
 constant-pressure nullspace vector (zero on velocity dofs, uniform
 on pressure dofs, normalised) used for pure Neumann/free-slip
 pressure setups.</p>
-<p>Args:
-a (dolfinx.fem.Form): Compiled block system form.
-a_p (dolfinx.fem.Form): Compiled preconditioner block form.
-bcs (list): Dirichlet boundary conditions.
-L (dolfinx.fem.Form): Compiled block RHS form.
-F0 (dolfinx.fem.FunctionSpace): Collapsed velocity subspace (used
-to size the velocity block of the nullspace vector).
-F1 (dolfinx.fem.FunctionSpace): Collapsed pressure subspace (used
-to size the pressure block of the nullspace vector).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>dolfinx.fem.Form</em>) – Compiled block system form.</p></li>
+<li><p><strong>a_p</strong> (<em>dolfinx.fem.Form</em>) – Compiled preconditioner block form.</p></li>
+<li><p><strong>bcs</strong> (<em>list</em>) – Dirichlet boundary conditions.</p></li>
+<li><p><strong>L</strong> (<em>dolfinx.fem.Form</em>) – Compiled block RHS form.</p></li>
+<li><p><strong>F0</strong> (<em>dolfinx.fem.FunctionSpace</em>) – Collapsed velocity subspace (used
+to size the velocity block of the nullspace vector).</p></li>
+<li><p><strong>F1</strong> (<em>dolfinx.fem.FunctionSpace</em>) – Collapsed pressure subspace (used
+to size the pressure block of the nullspace vector).</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.solver.SolverStokes.update_block_operator">
 <span class="sig-name descname"><span class="pre">update_block_operator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a_p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bcs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/solver.html#SolverStokes.update_block_operator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.solver.SolverStokes.update_block_operator" title="Link to this definition">¶</a></dt>
 <dd><p>Reassemble cached PETSc operators/vectors in-place.</p>
-<p>Assumes:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>Assumes:</dt><dd><ul class="simple">
 <li><p>self.A, self.P, self.b were created once and match the block layout of (a, a_p, L)</p></li>
 <li><p>FunctionSpaces / dofmaps used by a, a_p, L, and bcs are NOT recreated each timestep</p></li>
 </ul>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>

@@ -4,6 +4,7 @@
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution
+:parser: napoleon_parser
 :allowtitles:
 ```
 
@@ -17,14 +18,17 @@
 
 * - {py:obj}`CACHED_FEM_FORM <stonedfenicsx.solver_module.problems_solution.CACHED_FEM_FORM>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.CACHED_FEM_FORM
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`Problem <stonedfenicsx.solver_module.problems_solution.Problem>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`Solution <stonedfenicsx.solver_module.problems_solution.Solution>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Solution
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`Global_thermal <stonedfenicsx.solver_module.problems_solution.Global_thermal>`
@@ -37,6 +41,7 @@
   -
 * - {py:obj}`Slab <stonedfenicsx.solver_module.problems_solution.Slab>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Slab
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -49,6 +54,7 @@
 
 * - {py:obj}`debug_boundary_condition <stonedfenicsx.solver_module.problems_solution.debug_boundary_condition>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.debug_boundary_condition
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -59,6 +65,7 @@
 :canonical: stonedfenicsx.solver_module.problems_solution.debug_boundary_condition
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.debug_boundary_condition
+:parser: napoleon_parser
 ```
 ````
 
@@ -66,6 +73,7 @@
 :canonical: stonedfenicsx.solver_module.problems_solution.CACHED_FEM_FORM
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.CACHED_FEM_FORM
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} a
@@ -75,6 +83,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.CACHED_FEM_FORM.a
+:parser: napoleon_parser
 ```
 
 ````
@@ -86,6 +95,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.CACHED_FEM_FORM.L
+:parser: napoleon_parser
 ```
 
 ````
@@ -97,6 +107,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.CACHED_FEM_FORM.other_form
+:parser: napoleon_parser
 ```
 
 ````
@@ -107,12 +118,14 @@
 :canonical: stonedfenicsx.solver_module.problems_solution.Problem
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem
+:parser: napoleon_parser
 ```
 
 ```{rubric} Initialization
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.__init__
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} name
@@ -122,6 +135,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.name
+:parser: napoleon_parser
 ```
 
 ````
@@ -133,6 +147,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.mixed
+:parser: napoleon_parser
 ```
 
 ````
@@ -144,6 +159,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.domain
+:parser: napoleon_parser
 ```
 
 ````
@@ -155,6 +171,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.ctrl_sim
+:parser: napoleon_parser
 ```
 
 ````
@@ -166,6 +183,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.g_input
+:parser: napoleon_parser
 ```
 
 ````
@@ -177,6 +195,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.pdb
+:parser: napoleon_parser
 ```
 
 ````
@@ -188,6 +207,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.cached_mat
+:parser: napoleon_parser
 ```
 
 ````
@@ -199,6 +219,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.FS
+:parser: napoleon_parser
 ```
 
 ````
@@ -210,6 +231,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.F0
+:parser: napoleon_parser
 ```
 
 ````
@@ -221,6 +243,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.F1
+:parser: napoleon_parser
 ```
 
 ````
@@ -232,6 +255,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.trial0
+:parser: napoleon_parser
 ```
 
 ````
@@ -243,6 +267,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.trial1
+:parser: napoleon_parser
 ```
 
 ````
@@ -254,6 +279,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.test0
+:parser: napoleon_parser
 ```
 
 ````
@@ -265,6 +291,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.test1
+:parser: napoleon_parser
 ```
 
 ````
@@ -276,6 +303,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.typology
+:parser: napoleon_parser
 ```
 
 ````
@@ -287,6 +315,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.dofs
+:parser: napoleon_parser
 ```
 
 ````
@@ -298,6 +327,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.bc
+:parser: napoleon_parser
 ```
 
 ````
@@ -309,6 +339,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.ds
+:parser: napoleon_parser
 ```
 
 ````
@@ -320,6 +351,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.dx
+:parser: napoleon_parser
 ```
 
 ````
@@ -331,6 +363,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.solv
+:parser: napoleon_parser
 ```
 
 ````
@@ -342,6 +375,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.cached_form
+:parser: napoleon_parser
 ```
 
 ````
@@ -350,6 +384,7 @@
 :canonical: stonedfenicsx.solver_module.problems_solution.Problem.create_cached_material
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Problem.create_cached_material
+:parser: napoleon_parser
 ```
 
 ````
@@ -360,18 +395,21 @@
 :canonical: stonedfenicsx.solver_module.problems_solution.Solution
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Solution
+:parser: napoleon_parser
 ```
 
 ```{rubric} Initialization
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Solution.__init__
+:parser: napoleon_parser
 ```
 
 ````{py:method} create_function(PG: stonedfenicsx.solver_module.problems_solution.Problem, PS: stonedfenicsx.solver_module.problems_solution.Problem, PW: stonedfenicsx.solver_module.problems_solution.Problem, elements: list) -> None
 :canonical: stonedfenicsx.solver_module.problems_solution.Solution.create_function
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Solution.create_function
+:parser: napoleon_parser
 ```
 
 ````
@@ -387,6 +425,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Global_thermal.set_linear_picard_TD
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Global_thermal.set_linear_picard_TD
+:parser: napoleon_parser
 ```
 
 ````
@@ -395,6 +434,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Global_thermal.set_linear_picard_SS
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Global_thermal.set_linear_picard_SS
+:parser: napoleon_parser
 ```
 
 ````
@@ -403,6 +443,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Global_thermal.set_form_residual_SS
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Global_thermal.set_form_residual_SS
+:parser: napoleon_parser
 ```
 
 ````
@@ -411,6 +452,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Global_thermal.set_form_residual_TD
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Global_thermal.set_form_residual_TD
+:parser: napoleon_parser
 ```
 
 ````
@@ -419,6 +461,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Global_thermal.initialise_form
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Global_thermal.initialise_form
+:parser: napoleon_parser
 ```
 
 ````
@@ -428,6 +471,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :staticmethod:
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Global_thermal.interpolate_1d_vector_boundary
+:parser: napoleon_parser
 ```
 
 ````
@@ -436,6 +480,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Global_thermal.create_bc_temp
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Global_thermal.create_bc_temp
+:parser: napoleon_parser
 ```
 
 ````
@@ -444,6 +489,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Global_thermal.compute_shear_heating
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Global_thermal.compute_shear_heating
+:parser: napoleon_parser
 ```
 
 ````
@@ -452,6 +498,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Global_thermal.compute_friction_shear_expression
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Global_thermal.compute_friction_shear_expression
+:parser: napoleon_parser
 ```
 
 ````
@@ -460,6 +507,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Global_thermal.compute_energy_source
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Global_thermal.compute_energy_source
+:parser: napoleon_parser
 ```
 
 ````
@@ -468,6 +516,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Global_thermal.compute_residual
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Global_thermal.compute_residual
+:parser: napoleon_parser
 ```
 
 ````
@@ -476,6 +525,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Global_thermal.compute_dt_update_dt
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Global_thermal.compute_dt_update_dt
+:parser: napoleon_parser
 ```
 
 ````
@@ -484,6 +534,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Global_thermal.Solve_the_Problem
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Global_thermal.Solve_the_Problem
+:parser: napoleon_parser
 ```
 
 ````
@@ -492,6 +543,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Global_thermal.compute_shear_heating_visualisation
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Global_thermal.compute_shear_heating_visualisation
+:parser: napoleon_parser
 ```
 
 ````
@@ -500,6 +552,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Global_thermal.solve_the_linear
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Global_thermal.solve_the_linear
+:parser: napoleon_parser
 ```
 
 ````
@@ -508,6 +561,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Global_thermal.initial_temperature_field
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Global_thermal.initial_temperature_field
+:parser: napoleon_parser
 ```
 
 ````
@@ -523,6 +577,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Global_pressure.set_problem_bc
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Global_pressure.set_problem_bc
+:parser: napoleon_parser
 ```
 
 ````
@@ -531,6 +586,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Global_pressure.set_linear_picard
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Global_pressure.set_linear_picard
+:parser: napoleon_parser
 ```
 
 ````
@@ -539,6 +595,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Global_pressure.Solve_the_Problem
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Global_pressure.Solve_the_Problem
+:parser: napoleon_parser
 ```
 
 ````
@@ -547,6 +604,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Global_pressure.solve_the_linear
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Global_pressure.solve_the_linear
+:parser: napoleon_parser
 ```
 
 ````
@@ -562,6 +620,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Stokes_Problem.fem_stokes_form
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Stokes_Problem.fem_stokes_form
+:parser: napoleon_parser
 ```
 
 ````
@@ -570,6 +629,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Stokes_Problem.initialise_fem_form
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Stokes_Problem.initialise_fem_form
+:parser: napoleon_parser
 ```
 
 ````
@@ -578,6 +638,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Stokes_Problem.compute_residuum_stokes
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Stokes_Problem.compute_residuum_stokes
+:parser: napoleon_parser
 ```
 
 ````
@@ -586,6 +647,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Stokes_Problem.set_linear_picard
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Stokes_Problem.set_linear_picard
+:parser: napoleon_parser
 ```
 
 ````
@@ -594,6 +656,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Stokes_Problem.compute_moving_wall
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Stokes_Problem.compute_moving_wall
+:parser: napoleon_parser
 ```
 
 ````
@@ -602,6 +665,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Stokes_Problem.solve_linear_picard
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Stokes_Problem.solve_linear_picard
+:parser: napoleon_parser
 ```
 
 ````
@@ -610,6 +674,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Stokes_Problem.Solve_the_Problem
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Stokes_Problem.Solve_the_Problem
+:parser: napoleon_parser
 ```
 
 ````
@@ -625,6 +690,7 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Stokes_Problem`
 :canonical: stonedfenicsx.solver_module.problems_solution.Wedge.setdirichlecht
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Wedge.setdirichlecht
+:parser: napoleon_parser
 ```
 
 ````
@@ -637,26 +703,30 @@ Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Stokes_Problem`
 Bases: {py:obj}`stonedfenicsx.solver_module.problems_solution.Stokes_Problem`
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Slab
+:parser: napoleon_parser
 ```
 
 ```{rubric} Initialization
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Slab.__init__
+:parser: napoleon_parser
 ```
 
 ````{py:method} setdirichlecht(Vsubs=None, it_outer: int = 0, ts: int = 0) -> list
 :canonical: stonedfenicsx.solver_module.problems_solution.Slab.setdirichlecht
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Slab.setdirichlecht
+:parser: napoleon_parser
 ```
 
 ````
 
-````{py:method} compute_nitsche_FS(sol: stonedfenicsx.solver_module.problems_solution.Solution, dS: ufl.measure.Measure, a1: ufl.form.Form, a2: ufl.form.Form, a3: ufl.form.Form, gamma: float, it: int = 0) -> tuple([ufl.form.Form, ufl.form.Form, ufl.form.Form])
+````{py:method} compute_nitsche_FS(sol: stonedfenicsx.solver_module.problems_solution.Solution, dS: ufl.measure.Measure, a1: ufl.form.Form, a2: ufl.form.Form, a3: ufl.form.Form, gamma: float, it: int = 0) -> tuple[ufl.form.Form, ufl.form.Form, ufl.form.Form]
 :canonical: stonedfenicsx.solver_module.problems_solution.Slab.compute_nitsche_FS
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.problems_solution.Slab.compute_nitsche_FS
+:parser: napoleon_parser
 ```
 
 ````

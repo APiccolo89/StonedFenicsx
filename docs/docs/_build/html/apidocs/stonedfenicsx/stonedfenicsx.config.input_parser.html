@@ -182,9 +182,6 @@ other script for configure ensemble of numerical experiments.</p></td>
 <tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.config.input_parser.filling_the_phase_data_base" title="stonedfenicsx.config.input_parser.filling_the_phase_data_base"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filling_the_phase_data_base</span></code></a></p></td>
 <td><p>Function that fills the temporary class of the material properties</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.config.input_parser.test_function" title="stonedfenicsx.config.input_parser.test_function"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_function</span></code></a></p></td>
-<td><p>Test function for debugging the configuration routines.</p></td>
-</tr>
 </tbody>
 </table>
 </section>
@@ -239,17 +236,27 @@ other script for configure ensemble of numerical experiments.</p>
 <dt class="sig sig-object py" id="stonedfenicsx.config.input_parser.parse_input">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.input_parser.</span></span><span class="sig-name descname"><span class="pre">parse_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#stonedfenicsx.config.input_parser.Input" title="stonedfenicsx.config.input_parser.Input"><span class="pre">stonedfenicsx.config.input_parser.Input</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhInput" title="stonedfenicsx.config.phase_db.PhInput"><span class="pre">stonedfenicsx.config.phase_db.PhInput</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/input_parser.html#parse_input"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.input_parser.parse_input" title="Link to this definition">¶</a></dt>
 <dd><p>Read and parse a YAML input file.</p>
-<p class="rubric" id="id1">Parameters</p>
-<p>path : str
-Path to the main input file.</p>
-<p class="rubric" id="id2">Returns</p>
-<p>Input
-Temporary container holding numerical and physical parameters.
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – Path to the main input file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>A tuple containing:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Input: Temporary container holding numerical and physical parameters.
 The returned object can be modified programmatically before
-starting the computation.</p>
-<p>Ph_input
-Temporary container storing material property definitions.</p>
-<p class="rubric" id="id3">Notes</p>
+starting the computation.</p></li>
+<li><p>Ph_input: Temporary container storing material property definitions.</p></li>
+</ul>
+</div></blockquote>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
 <p>The YAML input file can be used directly as a standalone model
 configuration, or as a template for generating ensembles of models
 through external Python scripts. The typical workflow is to define
@@ -261,17 +268,20 @@ programmatically.</p>
 <dt class="sig sig-object py" id="stonedfenicsx.config.input_parser.filling_the_phase_data_base">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.input_parser.</span></span><span class="sig-name descname"><span class="pre">filling_the_phase_data_base</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">materialproperties</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shheating</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhInput" title="stonedfenicsx.config.phase_db.PhInput"><span class="pre">stonedfenicsx.config.phase_db.PhInput</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhInput" title="stonedfenicsx.config.phase_db.PhInput"><span class="pre">stonedfenicsx.config.phase_db.PhInput</span></a></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/input_parser.html#filling_the_phase_data_base"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.input_parser.filling_the_phase_data_base" title="Link to this definition">¶</a></dt>
 <dd><p>Function that fills the temporary class of the material properties</p>
-<p>Args:
-materialproperties (dict): Material database coming from input.yaml
-phase_input (PhInput): Phase database</p>
-<p>Returns:
-phase_input: Phase database</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="stonedfenicsx.config.input_parser.test_function">
-<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.input_parser.</span></span><span class="sig-name descname"><span class="pre">test_function</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/config/input_parser.html#test_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.input_parser.test_function" title="Link to this definition">¶</a></dt>
-<dd><p>Test function for debugging the configuration routines.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>materialproperties</strong> (<em>dict</em>) – Material database coming from input.yaml</p></li>
+<li><p><strong>phase_input</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhInput" title="stonedfenicsx.config.phase_db.PhInput"><em>PhInput</em></a>) – Phase database</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Phase database</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>phase_input</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -308,7 +318,6 @@ phase_input: Phase database</p>
 </li>
 <li><a class="reference internal" href="#stonedfenicsx.config.input_parser.parse_input"><code class="docutils literal notranslate"><span class="pre">parse_input()</span></code></a></li>
 <li><a class="reference internal" href="#stonedfenicsx.config.input_parser.filling_the_phase_data_base"><code class="docutils literal notranslate"><span class="pre">filling_the_phase_data_base()</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.input_parser.test_function"><code class="docutils literal notranslate"><span class="pre">test_function()</span></code></a></li>
 </ul>
 </li>
 </ul>

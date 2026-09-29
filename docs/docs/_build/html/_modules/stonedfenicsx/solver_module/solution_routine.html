@@ -140,9 +140,7 @@
           <div class="body" role="main">
             
   <h1>Source code for stonedfenicsx.solver_module.solution_routine</h1><div class="highlight"><pre>
-<span></span>
-
-<span class="c1"># ---</span>
+<span></span><span class="c1"># ---</span>
 <span class="c1"># --- mpi4py/petsc4py needed for the permanent per-timestep PETSc garbage</span>
 <span class="c1"># cleanup below (see time_loop).</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mpi4py</span><span class="w"> </span><span class="kn">import</span> <span class="n">MPI</span>
@@ -168,18 +166,21 @@
 <span class="c1"># ---</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">interpolate_from_sub_to_main</span><span class="p">,</span> <span class="n">print_ph</span><span class="p">,</span> <span class="n">timing</span>
 
+
 <div class="viewcode-block" id="outerloop_operation_initial_guess">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solution_routine.html#stonedfenicsx.solver_module.solution_routine.outerloop_operation_initial_guess">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">outerloop_operation_initial_guess</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="p">:</span><span class="n">SimulationControls</span><span class="p">,</span>
-                        <span class="n">sc</span><span class="p">:</span><span class="n">Scal</span><span class="p">,</span>
-                        <span class="n">eg</span><span class="p">:</span><span class="n">Global_thermal</span><span class="p">,</span>
-                        <span class="n">lg</span><span class="p">:</span><span class="n">Global_pressure</span><span class="p">,</span>
-                        <span class="n">we</span><span class="p">:</span><span class="n">Wedge</span><span class="p">,</span>
-                        <span class="n">sl</span><span class="p">:</span><span class="n">Slab</span><span class="p">,</span>
-                        <span class="n">sol</span><span class="p">:</span><span class="n">Solution</span>
-                        <span class="p">,</span><span class="n">pdb</span><span class="p">:</span><span class="n">PhaseDataBase</span>
-                        <span class="p">,</span><span class="n">outit</span><span class="p">:</span><span class="n">OUTERITERATION_SOL_VAL</span>
-                        <span class="p">,</span><span class="n">ts</span><span class="p">:</span><span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">outerloop_operation_initial_guess</span><span class="p">(</span>
+    <span class="n">ctrl_sim</span><span class="p">:</span> <span class="n">SimulationControls</span><span class="p">,</span>
+    <span class="n">sc</span><span class="p">:</span> <span class="n">Scal</span><span class="p">,</span>
+    <span class="n">eg</span><span class="p">:</span> <span class="n">Global_thermal</span><span class="p">,</span>
+    <span class="n">lg</span><span class="p">:</span> <span class="n">Global_pressure</span><span class="p">,</span>
+    <span class="n">we</span><span class="p">:</span> <span class="n">Wedge</span><span class="p">,</span>
+    <span class="n">sl</span><span class="p">:</span> <span class="n">Slab</span><span class="p">,</span>
+    <span class="n">sol</span><span class="p">:</span> <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span><span class="p">,</span>
+    <span class="n">outit</span><span class="p">:</span> <span class="n">OUTERITERATION_SOL_VAL</span><span class="p">,</span>
+    <span class="n">ts</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Execute one complete Picard outer-loop sweep over all coupled sub-problems.</span>
 
 <span class="sd">    At each outer iteration the sub-problems are solved in the following order:</span>
@@ -213,110 +214,102 @@
 <span class="sd">        converged (or exhausted the iteration budget).</span>
 <span class="sd">    """</span>
     <span class="c1"># Initialise the it outer and residual outer</span>
-    <span class="n">it_outer</span> <span class="o">=</span> <span class="mi">0</span> 
-    <span class="k">if</span> <span class="n">eg</span><span class="o">.</span><span class="n">typology</span> <span class="o">==</span> <span class="s1">'Linear'</span><span class="p">:</span>
+    <span class="n">it_outer</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">eg</span><span class="o">.</span><span class="n">typology</span> <span class="o">==</span> <span class="s2">"Linear"</span><span class="p">:</span>
         <span class="n">max_it</span> <span class="o">=</span> <span class="mi">1</span>
-    <span class="k">else</span><span class="p">:</span> 
+    <span class="k">else</span><span class="p">:</span>
         <span class="n">max_it</span> <span class="o">=</span> <span class="mi">3</span>
-    
-    <span class="k">while</span> <span class="n">it_outer</span> <span class="o">&lt;</span> <span class="n">max_it</span> <span class="ow">and</span> <span class="n">outit</span><span class="o">.</span><span class="n">res</span> <span class="o">&gt;</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">tol</span><span class="p">:</span> 
-        
-        <span class="n">print_ph</span><span class="p">(</span><span class="sa">f</span><span class="s1">'--  --- Outer iteration </span><span class="si">{</span><span class="n">it_outer</span><span class="si">:</span><span class="s1">d</span><span class="si">}</span><span class="s1"> for the thermal diffusion initial guess  --  ---'</span><span class="p">)</span>
-        
-        <span class="n">time_A_outer</span> <span class="o">=</span> <span class="n">timing</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="c1"># Copy the old solution of the outer loop for computing the residual of the equations. </span>
-        
-        <span class="k">if</span> <span class="n">it_outer</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  
-            <span class="n">lg</span><span class="o">.</span><span class="n">Solve_the_Problem</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span>
-                                       <span class="n">it_outer</span>
-                                       <span class="p">,</span><span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">)</span>
 
-    
-        <span class="n">outit</span><span class="o">.</span><span class="n">ene_res_gl</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">outit</span><span class="o">.</span><span class="n">ene_res_gl</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">eg</span><span class="o">.</span><span class="n">Solve_the_Problem</span><span class="p">(</span><span class="n">sol</span>
-                            <span class="p">,</span><span class="n">it_outer</span> <span class="o">=</span> <span class="n">it_outer</span>
-                            <span class="p">,</span><span class="n">ts</span> <span class="o">=</span> <span class="n">ts</span><span class="p">)</span>                      
-        
-        <span class="n">outit</span><span class="o">.</span><span class="n">compute_residuum_outer_initial_guess_diffusion</span><span class="p">(</span><span class="n">sol</span><span class="o">=</span><span class="n">sol</span>
-                                     <span class="p">,</span><span class="n">it_outer</span><span class="o">=</span><span class="n">it_outer</span>
-                                     <span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span>
-                                     <span class="p">,</span><span class="n">tA</span><span class="o">=</span><span class="n">time_A_outer</span>
-                                     <span class="p">,</span><span class="n">ts</span><span class="o">=</span><span class="n">ts</span>
-                                     <span class="p">,</span><span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span>
-                                    <span class="p">)</span>
-        <span class="n">print_ph</span><span class="p">(</span><span class="s1">''</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">it_outer</span> <span class="o">&lt;</span> <span class="n">max_it</span> <span class="ow">and</span> <span class="n">outit</span><span class="o">.</span><span class="n">res</span> <span class="o">&gt;</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">tol</span><span class="p">:</span>
+        <span class="n">print_ph</span><span class="p">(</span><span class="sa">f</span><span class="s2">"--  --- Outer iteration </span><span class="si">{</span><span class="n">it_outer</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2"> for the thermal diffusion initial guess  --  ---"</span><span class="p">)</span>
+
+        <span class="n">time_A_outer</span> <span class="o">=</span> <span class="n">timing</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="c1"># Copy the old solution of the outer loop for computing the residual of the equations.</span>
+
+        <span class="k">if</span> <span class="n">it_outer</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">lg</span><span class="o">.</span><span class="n">Solve_the_Problem</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="n">it_outer</span><span class="p">,</span> <span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">)</span>
+
+        <span class="n">outit</span><span class="o">.</span><span class="n">ene_res_gl</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">outit</span><span class="o">.</span><span class="n">ene_res_gl</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">eg</span><span class="o">.</span><span class="n">Solve_the_Problem</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="n">it_outer</span><span class="o">=</span><span class="n">it_outer</span><span class="p">,</span> <span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">)</span>
+
+        <span class="n">outit</span><span class="o">.</span><span class="n">compute_residuum_outer_initial_guess_diffusion</span><span class="p">(</span>
+            <span class="n">sol</span><span class="o">=</span><span class="n">sol</span><span class="p">,</span> <span class="n">it_outer</span><span class="o">=</span><span class="n">it_outer</span><span class="p">,</span> <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">,</span> <span class="n">tA</span><span class="o">=</span><span class="n">time_A_outer</span><span class="p">,</span> <span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">,</span> <span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span>
+        <span class="p">)</span>
+        <span class="n">print_ph</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">it_outer</span> <span class="o">&gt;</span> <span class="n">max_it</span><span class="p">:</span>
-            <span class="n">print_ph</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Warning: Outer loop did not converge after </span><span class="si">{</span><span class="n">max_it</span><span class="si">:</span><span class="s1">d</span><span class="si">}</span><span class="s1"> iterations. Residual = </span><span class="si">{</span><span class="n">outit</span><span class="o">.</span><span class="n">res</span><span class="si">:</span><span class="s1">.3e</span><span class="si">}</span><span class="s1">!!!!'</span><span class="p">)</span>
+            <span class="n">print_ph</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Warning: Outer loop did not converge after </span><span class="si">{</span><span class="n">max_it</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2"> iterations. Residual = </span><span class="si">{</span><span class="n">outit</span><span class="o">.</span><span class="n">res</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">!!!!"</span>
+            <span class="p">)</span>
         <span class="n">it_outer</span> <span class="o">=</span> <span class="n">it_outer</span> <span class="o">+</span> <span class="mi">1</span>
-        
-    
+
     <span class="c1"># reset outit res:</span>
-    <span class="n">outit</span><span class="o">.</span><span class="n">res</span> <span class="o">=</span> <span class="mf">1.0</span> </div>
+    <span class="n">outit</span><span class="o">.</span><span class="n">res</span> <span class="o">=</span> <span class="mf">1.0</span></div>
 
 
 
 <div class="viewcode-block" id="diffusion_initial_guess">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solution_routine.html#stonedfenicsx.solver_module.solution_routine.diffusion_initial_guess">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">diffusion_initial_guess</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="p">:</span><span class="n">SimulationControls</span>
-              <span class="p">,</span><span class="n">eg</span> <span class="p">:</span> <span class="n">Global_thermal</span>
-              <span class="p">,</span><span class="n">lg</span> <span class="p">:</span> <span class="n">Global_pressure</span>
-              <span class="p">,</span><span class="n">we</span> <span class="p">:</span> <span class="n">Wedge</span>
-              <span class="p">,</span><span class="n">sl</span> <span class="p">:</span> <span class="n">Slab</span>
-              <span class="p">,</span><span class="n">sol</span> <span class="p">:</span> <span class="n">Solution</span>
-              <span class="p">,</span><span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span>
-              <span class="p">,</span><span class="n">sc</span><span class="p">:</span> <span class="n">Scal</span>
-             <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">outit_td</span> <span class="o">=</span> <span class="n">OUTERITERATION_SOL_VAL</span><span class="p">(</span><span class="n">sol</span><span class="o">=</span><span class="n">sol</span><span class="p">,</span><span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="p">,</span><span class="n">ctrl_io</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_io</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">diffusion_initial_guess</span><span class="p">(</span>
+    <span class="n">ctrl_sim</span><span class="p">:</span> <span class="n">SimulationControls</span><span class="p">,</span>
+    <span class="n">eg</span><span class="p">:</span> <span class="n">Global_thermal</span><span class="p">,</span>
+    <span class="n">lg</span><span class="p">:</span> <span class="n">Global_pressure</span><span class="p">,</span>
+    <span class="n">we</span><span class="p">:</span> <span class="n">Wedge</span><span class="p">,</span>
+    <span class="n">sl</span><span class="p">:</span> <span class="n">Slab</span><span class="p">,</span>
+    <span class="n">sol</span><span class="p">:</span> <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span><span class="p">,</span>
+    <span class="n">sc</span><span class="p">:</span> <span class="n">Scal</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">outit_td</span> <span class="o">=</span> <span class="n">OUTERITERATION_SOL_VAL</span><span class="p">(</span><span class="n">sol</span><span class="o">=</span><span class="n">sol</span><span class="p">,</span> <span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="p">,</span> <span class="n">ctrl_io</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_io</span><span class="p">)</span>
     <span class="n">t</span> <span class="o">=</span> <span class="mf">0.0</span>
     <span class="n">ts</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">while</span> <span class="n">t</span><span class="o">&lt;</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">time_ini_guess</span><span class="p">:</span>
+    <span class="k">while</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">time_ini_guess</span><span class="p">:</span>
         <span class="n">time_A</span> <span class="o">=</span> <span class="n">timing</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
-            <span class="n">print_ph</span><span class="p">(</span><span class="s1">'||--------------------- || ---------------------||'</span><span class="p">)</span>
-            <span class="n">print_ph</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Time = </span><span class="si">{</span><span class="n">t</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">time</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">scale_myr2sec</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1"> Myr, timestep = </span><span class="si">{</span><span class="n">ts</span><span class="si">:</span><span class="s1">d</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
-            <span class="n">print_ph</span><span class="p">(</span><span class="s1">'||--------------------- || ---------------------||'</span><span class="p">)</span>
-            
+        <span class="k">if</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">print_ph</span><span class="p">(</span><span class="s2">"||--------------------- || ---------------------||"</span><span class="p">)</span>
+            <span class="n">print_ph</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Time = </span><span class="si">{</span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sc</span><span class="o">.</span><span class="n">time</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">sc</span><span class="o">.</span><span class="n">scale_myr2sec</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> Myr, timestep = </span><span class="si">{</span><span class="n">ts</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">print_ph</span><span class="p">(</span><span class="s2">"||--------------------- || ---------------------||"</span><span class="p">)</span>
+
         <span class="c1"># Prepare variable</span>
-        <span class="n">outerloop_operation_initial_guess</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span>
-                                  <span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span>
-                                  <span class="p">,</span><span class="n">eg</span><span class="o">=</span><span class="n">eg</span>
-                                  <span class="p">,</span><span class="n">lg</span><span class="o">=</span><span class="n">lg</span>
-                                  <span class="p">,</span><span class="n">we</span><span class="o">=</span><span class="n">we</span>
-                                  <span class="p">,</span><span class="n">sl</span><span class="o">=</span><span class="n">sl</span>
-                                  <span class="p">,</span><span class="n">sol</span><span class="o">=</span><span class="n">sol</span>
-                                  <span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
-                                  <span class="p">,</span><span class="n">outit</span><span class="o">=</span><span class="n">outit_td</span>
-                                  <span class="p">,</span><span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">)</span>
+        <span class="n">outerloop_operation_initial_guess</span><span class="p">(</span>
+            <span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">,</span>
+            <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">,</span>
+            <span class="n">eg</span><span class="o">=</span><span class="n">eg</span><span class="p">,</span>
+            <span class="n">lg</span><span class="o">=</span><span class="n">lg</span><span class="p">,</span>
+            <span class="n">we</span><span class="o">=</span><span class="n">we</span><span class="p">,</span>
+            <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span>
+            <span class="n">sol</span><span class="o">=</span><span class="n">sol</span><span class="p">,</span>
+            <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span>
+            <span class="n">outit</span><span class="o">=</span><span class="n">outit_td</span><span class="p">,</span>
+            <span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="c1"># --- Save the output if the timestep is a multiple of the output timestep, or if the time is a multiple of the output time, or if the steady state is reached.</span>
-        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="o">+</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">dt</span>
-            
-    
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span> <span class="o">+</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">dt</span>
+
         <span class="n">sol</span><span class="o">.</span><span class="n">T_O</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">sol</span><span class="o">.</span><span class="n">T_N</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span>
         <span class="n">sol</span><span class="o">.</span><span class="n">T_O</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">scatter_forward</span><span class="p">()</span>
-        
-        <span class="n">time_B</span> <span class="o">=</span> <span class="n">timing</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="n">print_ph</span><span class="p">(</span><span class="sa">f</span><span class="s1">'---------------------Timestep </span><span class="si">{</span><span class="n">ts</span><span class="si">}</span><span class="s1">  took </span><span class="si">{</span><span class="n">time_B</span><span class="o">-</span><span class="n">time_A</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1"> ---------------------'</span><span class="p">)</span>
 
-        <span class="c1"># I remove a few comments and just highlight the refenrece of this: </span>
-        <span class="c1"># Long Story short: I have been having a few problems related to the petsc version </span>
-        <span class="c1"># I have been tracking the memory with the sys monitor manually and after found the issue </span>
+        <span class="n">time_B</span> <span class="o">=</span> <span class="n">timing</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">print_ph</span><span class="p">(</span><span class="sa">f</span><span class="s2">"---------------------Timestep </span><span class="si">{</span><span class="n">ts</span><span class="si">}</span><span class="s2">  took </span><span class="si">{</span><span class="n">time_B</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">time_A</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> ---------------------"</span><span class="p">)</span>
+
+        <span class="c1"># I remove a few comments and just highlight the refenrece of this:</span>
+        <span class="c1"># Long Story short: I have been having a few problems related to the petsc version</span>
+        <span class="c1"># I have been tracking the memory with the sys monitor manually and after found the issue</span>
         <span class="c1"># I just called garbage_cleanup</span>
-        <span class="c1"># Ref: https://gitlab.com/petsc/petsc/-/work_items/1309 </span>
+        <span class="c1"># Ref: https://gitlab.com/petsc/petsc/-/work_items/1309</span>
         <span class="c1"># Ref2 : https://fenicsproject.discourse.group/t/memory-management-with-petsc4py/18199/2</span>
         <span class="n">PETSc</span><span class="o">.</span><span class="n">garbage_cleanup</span><span class="p">(</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">)</span>
 
         <span class="n">ts</span> <span class="o">=</span> <span class="n">ts</span> <span class="o">+</span> <span class="mi">1</span>
 
-    <span class="n">print_ph</span><span class="p">(</span><span class="s1">'Thermal diffusion initial guess finished. The show must go on... '</span><span class="p">)</span></div>
+    <span class="n">print_ph</span><span class="p">(</span><span class="s2">"Thermal diffusion initial guess finished. The show must go on... "</span><span class="p">)</span></div>
 
 
 
 <span class="c1"># ---</span>
 <div class="viewcode-block" id="initialise_the_simulation">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solution_routine.html#stonedfenicsx.solver_module.solution_routine.initialise_the_simulation">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">initialise_the_simulation</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="p">:</span><span class="n">SimulationControls</span> <span class="o">=</span> <span class="kc">None</span>
-                              <span class="p">,</span><span class="n">pdb</span><span class="p">:</span><span class="n">PhaseDataBase</span> <span class="o">=</span> <span class="kc">None</span>
-                              <span class="p">,</span><span class="n">mesh</span><span class="p">:</span><span class="n">Mesh</span> <span class="o">=</span> <span class="kc">None</span>
-                              <span class="p">)</span><span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Solution</span><span class="p">,</span><span class="n">Global_thermal</span><span class="p">,</span><span class="n">Global_pressure</span><span class="p">,</span><span class="n">Wedge</span><span class="p">,</span><span class="n">Slab</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">initialise_the_simulation</span><span class="p">(</span>
+    <span class="n">ctrl_sim</span><span class="p">:</span> <span class="n">SimulationControls</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">mesh</span><span class="p">:</span> <span class="n">Mesh</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Solution</span><span class="p">,</span> <span class="n">Global_thermal</span><span class="p">,</span> <span class="n">Global_pressure</span><span class="p">,</span> <span class="n">Wedge</span><span class="p">,</span> <span class="n">Slab</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Instantiate all FEM problem objects and allocate the solution container.</span>
 
 <span class="sd">    Constructs one problem object per physical sub-problem (global thermal,</span>
@@ -343,51 +336,79 @@
 <span class="sd">            we  -- mantle-wedge Stokes problem.</span>
 <span class="sd">        object created: solution, energy, lithostatic pressure, slab, wedge</span>
 <span class="sd">    """</span>
-    <span class="n">element_p</span>           <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">element_p</span><span class="c1">#basix.ufl.element("Lagrange","triangle", 1) </span>
-    
-    <span class="n">element_PT</span>          <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">element_pt</span><span class="c1">#basix.ufl.element("Lagrange","triangle",2)</span>
-    
-    <span class="n">element_V</span>           <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">element_v</span><span class="c1">#basix.ufl.element("Lagrange","triangle",2,shape=(2,))</span>
-          
+    <span class="n">element_p</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">element_p</span>  <span class="c1"># basix.ufl.element("Lagrange","triangle", 1)</span>
+
+    <span class="n">element_PT</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">element_pt</span>  <span class="c1"># basix.ufl.element("Lagrange","triangle",2)</span>
+
+    <span class="n">element_V</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">element_v</span>  <span class="c1"># basix.ufl.element("Lagrange","triangle",2,shape=(2,))</span>
+
     <span class="c1"># Define Problem</span>
     <span class="c1"># Global energy</span>
-    <span class="n">energy_global</span> <span class="o">=</span> <span class="n">Global_thermal</span> <span class="p">(</span><span class="n">mesh</span> <span class="o">=</span> <span class="n">mesh</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'energy'</span><span class="p">,</span><span class="s1">'global_domain'</span><span class="p">]</span>  <span class="p">,</span> <span class="n">elements</span> <span class="o">=</span> <span class="p">(</span><span class="n">element_PT</span><span class="p">,),</span> <span class="n">pdb</span> <span class="o">=</span> <span class="n">pdb</span><span class="p">,</span> <span class="n">ctrl_sim</span> <span class="o">=</span> <span class="n">ctrl_sim</span><span class="p">)</span>
+    <span class="n">energy_global</span> <span class="o">=</span> <span class="n">Global_thermal</span><span class="p">(</span>
+        <span class="n">mesh</span><span class="o">=</span><span class="n">mesh</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="p">[</span><span class="s2">"energy"</span><span class="p">,</span> <span class="s2">"global_domain"</span><span class="p">],</span>
+        <span class="n">elements</span><span class="o">=</span><span class="p">(</span><span class="n">element_PT</span><span class="p">,),</span>
+        <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span>
+        <span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">energy_global</span><span class="o">.</span><span class="n">create_cached_material</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># Global lithostatic pressure</span>
-    <span class="n">lithostatic_pressure_global</span> <span class="o">=</span> <span class="n">Global_pressure</span><span class="p">(</span><span class="n">mesh</span> <span class="o">=</span> <span class="n">mesh</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'pressure'</span><span class="p">,</span><span class="s1">'global_domain'</span><span class="p">],</span> <span class="n">elements</span> <span class="o">=</span> <span class="p">(</span><span class="n">element_PT</span><span class="p">,),</span> <span class="n">pdb</span> <span class="o">=</span> <span class="n">pdb</span><span class="p">,</span> <span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span> <span class="p">)</span> 
+    <span class="n">lithostatic_pressure_global</span> <span class="o">=</span> <span class="n">Global_pressure</span><span class="p">(</span>
+        <span class="n">mesh</span><span class="o">=</span><span class="n">mesh</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="p">[</span><span class="s2">"pressure"</span><span class="p">,</span> <span class="s2">"global_domain"</span><span class="p">],</span>
+        <span class="n">elements</span><span class="o">=</span><span class="p">(</span><span class="n">element_PT</span><span class="p">,),</span>
+        <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span>
+        <span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">lithostatic_pressure_global</span><span class="o">.</span><span class="n">create_cached_material</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># Wedge stokes problem</span>
-    <span class="n">wedge</span> <span class="o">=</span> <span class="n">Wedge</span><span class="p">(</span><span class="n">mesh</span> <span class="o">=</span><span class="n">mesh</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'stokes'</span><span class="p">,</span><span class="s1">'wedge_domain'</span>  <span class="p">],</span> <span class="n">elements</span> <span class="o">=</span> <span class="p">(</span><span class="n">element_V</span><span class="p">,</span><span class="n">element_p</span><span class="p">,</span><span class="n">element_PT</span><span class="p">),</span> <span class="n">pdb</span> <span class="o">=</span> <span class="n">pdb</span><span class="p">,</span><span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">)</span>
+    <span class="n">wedge</span> <span class="o">=</span> <span class="n">Wedge</span><span class="p">(</span>
+        <span class="n">mesh</span><span class="o">=</span><span class="n">mesh</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="p">[</span><span class="s2">"stokes"</span><span class="p">,</span> <span class="s2">"wedge_domain"</span><span class="p">],</span>
+        <span class="n">elements</span><span class="o">=</span><span class="p">(</span><span class="n">element_V</span><span class="p">,</span> <span class="n">element_p</span><span class="p">,</span> <span class="n">element_PT</span><span class="p">),</span>
+        <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span>
+        <span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">wedge</span><span class="o">.</span><span class="n">create_cached_material</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
     <span class="c1"># Slab stokes problem</span>
-    <span class="n">slab</span> <span class="o">=</span> <span class="n">Slab</span><span class="p">(</span><span class="n">mesh</span> <span class="o">=</span> <span class="n">mesh</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'stokes'</span><span class="p">,</span><span class="s1">'subduction_plate_domain'</span><span class="p">],</span> <span class="n">elements</span> <span class="o">=</span> <span class="p">(</span><span class="n">element_V</span><span class="p">,</span><span class="n">element_p</span><span class="p">,</span><span class="n">element_PT</span><span class="p">),</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span><span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">)</span>
+    <span class="n">slab</span> <span class="o">=</span> <span class="n">Slab</span><span class="p">(</span>
+        <span class="n">mesh</span><span class="o">=</span><span class="n">mesh</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="p">[</span><span class="s2">"stokes"</span><span class="p">,</span> <span class="s2">"subduction_plate_domain"</span><span class="p">],</span>
+        <span class="n">elements</span><span class="o">=</span><span class="p">(</span><span class="n">element_V</span><span class="p">,</span> <span class="n">element_p</span><span class="p">,</span> <span class="n">element_PT</span><span class="p">),</span>
+        <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span>
+        <span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">slab</span><span class="o">.</span><span class="n">create_cached_material</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
 
-    <span class="c1"># Define Solution </span>
+    <span class="c1"># Define Solution</span>
     <span class="c1"># Create instance of solution.</span>
     <span class="n">sol</span> <span class="o">=</span> <span class="n">Solution</span><span class="p">()</span>
-    <span class="c1"># Allocate the function that handles. </span>
-    <span class="n">sol</span><span class="o">.</span><span class="n">create_function</span><span class="p">(</span><span class="n">lithostatic_pressure_global</span><span class="p">,</span><span class="n">slab</span><span class="p">,</span><span class="n">wedge</span><span class="p">,[</span><span class="n">element_V</span><span class="p">,</span><span class="n">element_p</span><span class="p">])</span>
+    <span class="c1"># Allocate the function that handles.</span>
+    <span class="n">sol</span><span class="o">.</span><span class="n">create_function</span><span class="p">(</span><span class="n">lithostatic_pressure_global</span><span class="p">,</span> <span class="n">slab</span><span class="p">,</span> <span class="n">wedge</span><span class="p">,</span> <span class="p">[</span><span class="n">element_V</span><span class="p">,</span> <span class="n">element_p</span><span class="p">])</span>
     <span class="c1"># Allocate the material properties.</span>
-    <span class="c1"># Generate the initial guess for the temperature. </span>
+    <span class="c1"># Generate the initial guess for the temperature.</span>
     <span class="n">sol</span><span class="o">.</span><span class="n">T_O</span> <span class="o">=</span> <span class="n">energy_global</span><span class="o">.</span><span class="n">initial_temperature_field</span><span class="p">()</span>
     <span class="n">sol</span><span class="o">.</span><span class="n">T_N</span> <span class="o">=</span> <span class="n">sol</span><span class="o">.</span><span class="n">T_O</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
-    <span class="k">return</span> <span class="n">sol</span><span class="p">,</span> <span class="n">energy_global</span><span class="p">,</span><span class="n">lithostatic_pressure_global</span><span class="p">,</span><span class="n">slab</span><span class="p">,</span><span class="n">wedge</span></div>
+    <span class="k">return</span> <span class="n">sol</span><span class="p">,</span> <span class="n">energy_global</span><span class="p">,</span> <span class="n">lithostatic_pressure_global</span><span class="p">,</span> <span class="n">slab</span><span class="p">,</span> <span class="n">wedge</span></div>
 
-<span class="c1">#---------------------------------------------------------------------------------------------------</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------------------------------</span>
 <div class="viewcode-block" id="outerloop_operation">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solution_routine.html#stonedfenicsx.solver_module.solution_routine.outerloop_operation">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">outerloop_operation</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="p">:</span><span class="n">SimulationControls</span><span class="p">,</span>
-                        <span class="n">sc</span><span class="p">:</span><span class="n">Scal</span><span class="p">,</span>
-                        <span class="n">eg</span><span class="p">:</span><span class="n">Global_thermal</span><span class="p">,</span>
-                        <span class="n">lg</span><span class="p">:</span><span class="n">Global_pressure</span><span class="p">,</span>
-                        <span class="n">we</span><span class="p">:</span><span class="n">Wedge</span><span class="p">,</span>
-                        <span class="n">sl</span><span class="p">:</span><span class="n">Slab</span><span class="p">,</span>
-                        <span class="n">sol</span><span class="p">:</span><span class="n">Solution</span>
-                        <span class="p">,</span><span class="n">pdb</span><span class="p">:</span><span class="n">PhaseDataBase</span>
-                        <span class="p">,</span><span class="n">outit</span><span class="p">:</span><span class="n">OUTERITERATION_SOL_VAL</span>
-                        <span class="p">,</span><span class="n">ts</span><span class="p">:</span><span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">outerloop_operation</span><span class="p">(</span>
+    <span class="n">ctrl_sim</span><span class="p">:</span> <span class="n">SimulationControls</span><span class="p">,</span>
+    <span class="n">sc</span><span class="p">:</span> <span class="n">Scal</span><span class="p">,</span>
+    <span class="n">eg</span><span class="p">:</span> <span class="n">Global_thermal</span><span class="p">,</span>
+    <span class="n">lg</span><span class="p">:</span> <span class="n">Global_pressure</span><span class="p">,</span>
+    <span class="n">we</span><span class="p">:</span> <span class="n">Wedge</span><span class="p">,</span>
+    <span class="n">sl</span><span class="p">:</span> <span class="n">Slab</span><span class="p">,</span>
+    <span class="n">sol</span><span class="p">:</span> <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span><span class="p">,</span>
+    <span class="n">outit</span><span class="p">:</span> <span class="n">OUTERITERATION_SOL_VAL</span><span class="p">,</span>
+    <span class="n">ts</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Execute one complete Picard outer-loop sweep over all coupled sub-problems.</span>
 
 <span class="sd">    At each outer iteration the sub-problems are solved in the following order:</span>
@@ -421,170 +442,138 @@
 <span class="sd">        converged (or exhausted the iteration budget).</span>
 <span class="sd">    """</span>
     <span class="c1"># Initialise the it outer and residual outer</span>
-    <span class="n">it_outer</span> <span class="o">=</span> <span class="mi">0</span> 
-    
-    <span class="k">if</span> <span class="p">(</span><span class="n">lg</span><span class="o">.</span><span class="n">typology</span> <span class="o">==</span> <span class="s1">'LinearProblem'</span> <span class="ow">and</span> <span class="n">eg</span><span class="o">.</span><span class="n">typology</span> <span class="o">==</span> <span class="s1">'LinearProblem'</span> <span class="ow">and</span> <span class="n">we</span><span class="o">.</span><span class="n">typology</span> <span class="o">==</span> <span class="s1">'LinearProblem'</span><span class="p">):</span>
-        <span class="n">max_it</span> <span class="o">=</span> <span class="mi">2</span>
-    <span class="k">elif</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">initial_guess</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
-        <span class="n">max_it</span> <span class="o">=</span> <span class="mi">5</span>
-    <span class="k">else</span><span class="p">:</span> 
-        <span class="n">max_it</span> <span class="o">=</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">it_max</span> 
-    <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+    <span class="n">it_outer</span> <span class="o">=</span> <span class="mi">0</span>
 
-    <span class="k">while</span> <span class="n">it_outer</span> <span class="o">&lt;</span> <span class="n">max_it</span> <span class="ow">and</span> <span class="n">outit</span><span class="o">.</span><span class="n">res</span> <span class="o">&gt;</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">tol</span><span class="p">:</span> 
-        
-        <span class="n">print_ph</span><span class="p">(</span><span class="sa">f</span><span class="s1">'--  --- Outer iteration </span><span class="si">{</span><span class="n">it_outer</span><span class="si">:</span><span class="s1">d</span><span class="si">}</span><span class="s1"> for the coupled problem  --  ---'</span><span class="p">)</span>
-        
+    <span class="k">if</span> <span class="n">lg</span><span class="o">.</span><span class="n">typology</span> <span class="o">==</span> <span class="s2">"LinearProblem"</span> <span class="ow">and</span> <span class="n">eg</span><span class="o">.</span><span class="n">typology</span> <span class="o">==</span> <span class="s2">"LinearProblem"</span> <span class="ow">and</span> <span class="n">we</span><span class="o">.</span><span class="n">typology</span> <span class="o">==</span> <span class="s2">"LinearProblem"</span><span class="p">:</span>
+        <span class="n">max_it</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="k">elif</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">initial_guess</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">max_it</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">max_it</span> <span class="o">=</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">it_max</span>
+
+    <span class="k">while</span> <span class="n">it_outer</span> <span class="o">&lt;</span> <span class="n">max_it</span> <span class="ow">and</span> <span class="n">outit</span><span class="o">.</span><span class="n">res</span> <span class="o">&gt;</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">tol</span><span class="p">:</span>
+        <span class="n">print_ph</span><span class="p">(</span><span class="sa">f</span><span class="s2">"--  --- Outer iteration </span><span class="si">{</span><span class="n">it_outer</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2"> for the coupled problem  --  ---"</span><span class="p">)</span>
+
         <span class="n">time_A_outer</span> <span class="o">=</span> <span class="n">timing</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="c1"># Copy the old solution of the outer loop for computing the residual of the equations. </span>
-        
-        <span class="k">if</span> <span class="n">it_outer</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  
-            <span class="n">lg</span><span class="o">.</span><span class="n">Solve_the_Problem</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span>
-                                       <span class="n">it_outer</span>
-                                       <span class="p">,</span><span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">)</span>
+        <span class="c1"># Copy the old solution of the outer loop for computing the residual of the equations.</span>
+
+        <span class="k">if</span> <span class="n">it_outer</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">lg</span><span class="o">.</span><span class="n">Solve_the_Problem</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="n">it_outer</span><span class="p">,</span> <span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">)</span>
 
         <span class="c1"># Interpolate from global to wedge/slab</span>
-        <span class="k">if</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">initial_guess</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span> 
-            <span class="k">if</span> <span class="n">ts</span><span class="o">==</span><span class="mi">0</span> <span class="ow">and</span> <span class="n">it_outer</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> 
-                <span class="n">print_ph</span><span class="p">(</span><span class="s1">'                 Time dep. state solution energy:-&gt; solved before the velocity'</span><span class="p">)</span>
-                
-            <span class="n">outit</span><span class="o">.</span><span class="n">ene_res_gl</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">outit</span><span class="o">.</span><span class="n">ene_res_gl</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">eg</span><span class="o">.</span><span class="n">Solve_the_Problem</span><span class="p">(</span><span class="n">sol</span>
-                            <span class="p">,</span><span class="n">it_outer</span> <span class="o">=</span> <span class="n">it_outer</span>
-                            <span class="p">,</span><span class="n">ts</span> <span class="o">=</span> <span class="n">ts</span><span class="p">)</span>                      
-        
-        
-        <span class="n">interpolate_from_sub_to_main</span><span class="p">(</span><span class="n">sol</span><span class="o">.</span><span class="n">t_owedge</span>
-                                     <span class="p">,</span><span class="n">sol</span><span class="o">.</span><span class="n">T_N</span>
-                                     <span class="p">,</span><span class="n">we</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">cell_par</span>
-                                     <span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">initial_guess</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ts</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">it_outer</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">print_ph</span><span class="p">(</span><span class="s2">"                 Time dep. state solution energy:-&gt; solved before the velocity"</span><span class="p">)</span>
 
-        <span class="n">interpolate_from_sub_to_main</span><span class="p">(</span><span class="n">sol</span><span class="o">.</span><span class="n">p_lwedge</span>
-                                     <span class="p">,</span><span class="n">sol</span><span class="o">.</span><span class="n">PL</span>
-                                     <span class="p">,</span><span class="n">we</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">cell_par</span>
-                                     <span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">outit</span><span class="o">.</span><span class="n">ene_res_gl</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">outit</span><span class="o">.</span><span class="n">ene_res_gl</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">eg</span><span class="o">.</span><span class="n">Solve_the_Problem</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="n">it_outer</span><span class="o">=</span><span class="n">it_outer</span><span class="p">,</span> <span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="p">(</span><span class="n">ts</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">it_outer</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">it_outer</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_ky</span><span class="o">.</span><span class="n">constant</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span> 
-            <span class="p">(</span><span class="n">outit</span><span class="o">.</span><span class="n">mom_res_slab</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-             <span class="p">,</span><span class="n">outit</span><span class="o">.</span><span class="n">mom_res_slab</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-             <span class="p">,</span><span class="n">outit</span><span class="o">.</span><span class="n">div_res_slab</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-             <span class="p">,</span><span class="n">outit</span><span class="o">.</span><span class="n">div_res_slab</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">Solve_the_Problem</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span>
-                                   <span class="n">it_outer</span> <span class="o">=</span> <span class="n">it_outer</span><span class="p">,</span>
-                                   <span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">)</span>
+        <span class="n">interpolate_from_sub_to_main</span><span class="p">(</span><span class="n">sol</span><span class="o">.</span><span class="n">t_owedge</span><span class="p">,</span> <span class="n">sol</span><span class="o">.</span><span class="n">T_N</span><span class="p">,</span> <span class="n">we</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">cell_par</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="p">(</span><span class="n">we</span><span class="o">.</span><span class="n">typology</span> <span class="o">==</span> <span class="s1">'NonlinearProblem'</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">we</span><span class="o">.</span><span class="n">typology</span> <span class="o">==</span> <span class="s1">'NonlinearProblemT'</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">it_outer</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>  
-             <span class="p">(</span><span class="n">outit</span><span class="o">.</span><span class="n">mom_res_wedge</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-             <span class="p">,</span><span class="n">outit</span><span class="o">.</span><span class="n">mom_res_wedge</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-             <span class="p">,</span><span class="n">outit</span><span class="o">.</span><span class="n">div_res_wedge</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-             <span class="p">,</span><span class="n">outit</span><span class="o">.</span><span class="n">div_res_wedge</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">=</span><span class="n">we</span><span class="o">.</span><span class="n">Solve_the_Problem</span><span class="p">(</span><span class="n">sol</span><span class="o">=</span><span class="n">sol</span>
-                                <span class="p">,</span><span class="n">it_outer</span> <span class="o">=</span> <span class="n">it_outer</span>
-                                <span class="p">,</span><span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">)</span>
+        <span class="n">interpolate_from_sub_to_main</span><span class="p">(</span><span class="n">sol</span><span class="o">.</span><span class="n">p_lwedge</span><span class="p">,</span> <span class="n">sol</span><span class="o">.</span><span class="n">PL</span><span class="p">,</span> <span class="n">we</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">cell_par</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">ts</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">it_outer</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">it_outer</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_ky</span><span class="o">.</span><span class="n">constant</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="p">(</span>
+                <span class="n">outit</span><span class="o">.</span><span class="n">mom_res_slab</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">outit</span><span class="o">.</span><span class="n">mom_res_slab</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">outit</span><span class="o">.</span><span class="n">div_res_slab</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">outit</span><span class="o">.</span><span class="n">div_res_slab</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="p">)</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">Solve_the_Problem</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="n">it_outer</span><span class="o">=</span><span class="n">it_outer</span><span class="p">,</span> <span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">we</span><span class="o">.</span><span class="n">typology</span> <span class="o">==</span> <span class="s2">"NonlinearProblem"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">we</span><span class="o">.</span><span class="n">typology</span> <span class="o">==</span> <span class="s2">"NonlinearProblemT"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">it_outer</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="p">(</span>
+                <span class="n">outit</span><span class="o">.</span><span class="n">mom_res_wedge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">outit</span><span class="o">.</span><span class="n">mom_res_wedge</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">outit</span><span class="o">.</span><span class="n">div_res_wedge</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">outit</span><span class="o">.</span><span class="n">div_res_wedge</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="p">)</span> <span class="o">=</span> <span class="n">we</span><span class="o">.</span><span class="n">Solve_the_Problem</span><span class="p">(</span><span class="n">sol</span><span class="o">=</span><span class="n">sol</span><span class="p">,</span> <span class="n">it_outer</span><span class="o">=</span><span class="n">it_outer</span><span class="p">,</span> <span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">)</span>
 
         <span class="c1"># Interpolate from wedge/slab to global</span>
-        <span class="n">interpolate_from_sub_to_main</span><span class="p">(</span><span class="n">sol</span><span class="o">.</span><span class="n">u_global</span>
-                                      <span class="p">,</span><span class="n">sol</span><span class="o">.</span><span class="n">u_wedge</span>
-                                      <span class="p">,</span><span class="n">we</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">cell_par</span><span class="p">)</span>
-        
-        <span class="n">interpolate_from_sub_to_main</span><span class="p">(</span><span class="n">sol</span><span class="o">.</span><span class="n">u_global</span>
-                                      <span class="p">,</span><span class="n">sol</span><span class="o">.</span><span class="n">u_slab</span>
-                                      <span class="p">,</span> <span class="n">sl</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">cell_par</span><span class="p">)</span>
-    
-        <span class="n">interpolate_from_sub_to_main</span><span class="p">(</span><span class="n">sol</span><span class="o">.</span><span class="n">p_global</span>
-                                      <span class="p">,</span><span class="n">sol</span><span class="o">.</span><span class="n">p_wedge</span>
-                                      <span class="p">,</span><span class="n">we</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">cell_par</span><span class="p">)</span>
-    
-        <span class="n">interpolate_from_sub_to_main</span><span class="p">(</span><span class="n">sol</span><span class="o">.</span><span class="n">p_global</span>
-                                    <span class="p">,</span><span class="n">sol</span><span class="o">.</span><span class="n">p_slab</span>
-                                    <span class="p">,</span><span class="n">sl</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">cell_par</span><span class="p">)</span>
-        <span class="c1"># Interpolate from global to wedge/slab</span>
-        <span class="k">if</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">initial_guess</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> 
-            <span class="k">if</span> <span class="n">ts</span><span class="o">==</span><span class="mi">0</span> <span class="ow">and</span> <span class="n">it_outer</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> 
-                <span class="n">print_ph</span><span class="p">(</span><span class="s1">'                 Steady state solution energy:-&gt; solved after the velocity'</span><span class="p">)</span>
-                
-            <span class="n">outit</span><span class="o">.</span><span class="n">ene_res_gl</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">outit</span><span class="o">.</span><span class="n">ene_res_gl</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">eg</span><span class="o">.</span><span class="n">Solve_the_Problem</span><span class="p">(</span><span class="n">sol</span>
-                            <span class="p">,</span><span class="n">it_outer</span> <span class="o">=</span> <span class="n">it_outer</span>
-                            <span class="p">,</span><span class="n">ts</span> <span class="o">=</span> <span class="n">ts</span><span class="p">)</span>                
-        <span class="c1"># Compute residuum </span>
-        <span class="n">outit</span><span class="o">.</span><span class="n">compute_residuum_outer</span><span class="p">(</span><span class="n">sol</span><span class="o">=</span><span class="n">sol</span>
-                                     <span class="p">,</span><span class="n">it_outer</span><span class="o">=</span><span class="n">it_outer</span>
-                                     <span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span>
-                                     <span class="p">,</span><span class="n">tA</span><span class="o">=</span><span class="n">time_A_outer</span>
-                                     <span class="p">,</span><span class="n">ts</span><span class="o">=</span><span class="n">ts</span>
-                                     <span class="p">,</span><span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span>
-                                    <span class="p">)</span>
-        <span class="n">print_ph</span><span class="p">(</span><span class="s1">''</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">it_outer</span> <span class="o">&gt;</span> <span class="n">max_it</span><span class="p">:</span>
-            <span class="n">print_ph</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Warning: Outer loop did not converge after </span><span class="si">{</span><span class="n">max_it</span><span class="si">:</span><span class="s1">d</span><span class="si">}</span><span class="s1"> iterations. Residual = </span><span class="si">{</span><span class="n">outit</span><span class="o">.</span><span class="n">res</span><span class="si">:</span><span class="s1">.3e</span><span class="si">}</span><span class="s1">!!!!'</span><span class="p">)</span>
-        
-        
-        <span class="n">it_outer</span> <span class="o">=</span> <span class="n">it_outer</span> <span class="o">+</span> <span class="mi">1</span>
-    
-    <span class="c1"># reset outit res:</span>
-    <span class="n">outit</span><span class="o">.</span><span class="n">res</span> <span class="o">=</span> <span class="mf">1.0</span> </div>
+        <span class="n">interpolate_from_sub_to_main</span><span class="p">(</span><span class="n">sol</span><span class="o">.</span><span class="n">u_global</span><span class="p">,</span> <span class="n">sol</span><span class="o">.</span><span class="n">u_wedge</span><span class="p">,</span> <span class="n">we</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">cell_par</span><span class="p">)</span>
 
-        
+        <span class="n">interpolate_from_sub_to_main</span><span class="p">(</span><span class="n">sol</span><span class="o">.</span><span class="n">u_global</span><span class="p">,</span> <span class="n">sol</span><span class="o">.</span><span class="n">u_slab</span><span class="p">,</span> <span class="n">sl</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">cell_par</span><span class="p">)</span>
+
+        <span class="n">interpolate_from_sub_to_main</span><span class="p">(</span><span class="n">sol</span><span class="o">.</span><span class="n">p_global</span><span class="p">,</span> <span class="n">sol</span><span class="o">.</span><span class="n">p_wedge</span><span class="p">,</span> <span class="n">we</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">cell_par</span><span class="p">)</span>
+
+        <span class="n">interpolate_from_sub_to_main</span><span class="p">(</span><span class="n">sol</span><span class="o">.</span><span class="n">p_global</span><span class="p">,</span> <span class="n">sol</span><span class="o">.</span><span class="n">p_slab</span><span class="p">,</span> <span class="n">sl</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">cell_par</span><span class="p">)</span>
+        <span class="c1"># Interpolate from global to wedge/slab</span>
+        <span class="k">if</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">initial_guess</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ts</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">it_outer</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">print_ph</span><span class="p">(</span><span class="s2">"                 Steady state solution energy:-&gt; solved after the velocity"</span><span class="p">)</span>
+
+            <span class="n">outit</span><span class="o">.</span><span class="n">ene_res_gl</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">outit</span><span class="o">.</span><span class="n">ene_res_gl</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">eg</span><span class="o">.</span><span class="n">Solve_the_Problem</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="n">it_outer</span><span class="o">=</span><span class="n">it_outer</span><span class="p">,</span> <span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">)</span>
+        <span class="c1"># Compute residuum</span>
+        <span class="n">outit</span><span class="o">.</span><span class="n">compute_residuum_outer</span><span class="p">(</span><span class="n">sol</span><span class="o">=</span><span class="n">sol</span><span class="p">,</span> <span class="n">it_outer</span><span class="o">=</span><span class="n">it_outer</span><span class="p">,</span> <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">,</span> <span class="n">tA</span><span class="o">=</span><span class="n">time_A_outer</span><span class="p">,</span> <span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">,</span> <span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">)</span>
+        <span class="n">print_ph</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">it_outer</span> <span class="o">&gt;</span> <span class="n">max_it</span><span class="p">:</span>
+            <span class="n">print_ph</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Warning: Outer loop did not converge after </span><span class="si">{</span><span class="n">max_it</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2"> iterations. Residual = </span><span class="si">{</span><span class="n">outit</span><span class="o">.</span><span class="n">res</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">!!!!"</span>
+            <span class="p">)</span>
+
+        <span class="n">it_outer</span> <span class="o">=</span> <span class="n">it_outer</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="c1"># reset outit res:</span>
+    <span class="n">outit</span><span class="o">.</span><span class="n">res</span> <span class="o">=</span> <span class="mf">1.0</span></div>
+
+
+
 <div class="viewcode-block" id="initial_guess_simulation">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solution_routine.html#stonedfenicsx.solver_module.solution_routine.initial_guess_simulation">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">initial_guess_simulation</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="p">:</span><span class="n">SimulationControls</span>
-                             <span class="p">,</span><span class="n">sc</span><span class="p">:</span><span class="n">Scal</span>
-                             <span class="p">,</span><span class="n">eg</span><span class="p">:</span><span class="n">Global_thermal</span>
-                             <span class="p">,</span><span class="n">lg</span><span class="p">:</span><span class="n">Global_pressure</span>
-                             <span class="p">,</span><span class="n">we</span><span class="p">:</span><span class="n">Wedge</span>
-                             <span class="p">,</span><span class="n">sl</span><span class="p">:</span><span class="n">Slab</span> 
-                            <span class="p">,</span><span class="n">sol</span><span class="p">:</span><span class="n">Solution</span>
-                            <span class="p">,</span><span class="n">pdb</span><span class="p">:</span><span class="n">PhaseDataBase</span>
-                            <span class="p">,</span><span class="n">outit</span><span class="p">:</span><span class="n">OUTERITERATION_SOL_VAL</span>
-                            <span class="p">,</span><span class="n">ts</span><span class="p">:</span><span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Compute the initial guess for the first Picard iteration of the simulation.</span>
-<span class="sd">    """</span>
-    <span class="n">ts</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1">#  fake ts </span>
+<span class="k">def</span><span class="w"> </span><span class="nf">initial_guess_simulation</span><span class="p">(</span>
+    <span class="n">ctrl_sim</span><span class="p">:</span> <span class="n">SimulationControls</span><span class="p">,</span>
+    <span class="n">sc</span><span class="p">:</span> <span class="n">Scal</span><span class="p">,</span>
+    <span class="n">eg</span><span class="p">:</span> <span class="n">Global_thermal</span><span class="p">,</span>
+    <span class="n">lg</span><span class="p">:</span> <span class="n">Global_pressure</span><span class="p">,</span>
+    <span class="n">we</span><span class="p">:</span> <span class="n">Wedge</span><span class="p">,</span>
+    <span class="n">sl</span><span class="p">:</span> <span class="n">Slab</span><span class="p">,</span>
+    <span class="n">sol</span><span class="p">:</span> <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span><span class="p">,</span>
+    <span class="n">outit</span><span class="p">:</span> <span class="n">OUTERITERATION_SOL_VAL</span><span class="p">,</span>
+    <span class="n">ts</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Compute the initial guess for the first Picard iteration of the simulation."""</span>
+    <span class="n">ts</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1">#  fake ts</span>
     <span class="n">time_A</span> <span class="o">=</span> <span class="n">timing</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">initial_guess</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span>
+    <span class="k">if</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">initial_guess</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span>
     <span class="k">if</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">initial_guess</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">print_ph</span><span class="p">(</span><span class="s1">'  STEADY STATE  !!! Initial guess of the simulation !!!'</span><span class="p">)</span>
-        <span class="n">outerloop_operation</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span>
-                                      <span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span>
-                                      <span class="p">,</span><span class="n">eg</span><span class="o">=</span><span class="n">eg</span>
-                                      <span class="p">,</span><span class="n">lg</span><span class="o">=</span><span class="n">lg</span>
-                                     <span class="p">,</span><span class="n">we</span><span class="o">=</span><span class="n">we</span>
-                                      <span class="p">,</span><span class="n">sl</span><span class="o">=</span><span class="n">sl</span>
-                                      <span class="p">,</span><span class="n">sol</span><span class="o">=</span><span class="n">sol</span>
-                                      <span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
-                                      <span class="p">,</span><span class="n">outit</span><span class="o">=</span><span class="n">outit</span>
-                                      <span class="p">,</span><span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">initial_guess</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span> 
-        <span class="n">diffusion_initial_guess</span><span class="p">(</span><span class="n">ctrl_sim</span> <span class="o">=</span> <span class="n">ctrl_sim</span>
-              <span class="p">,</span><span class="n">eg</span> <span class="o">=</span> <span class="n">eg</span>
-              <span class="p">,</span><span class="n">lg</span> <span class="o">=</span> <span class="n">lg</span>
-              <span class="p">,</span><span class="n">we</span> <span class="o">=</span> <span class="n">we</span>
-              <span class="p">,</span><span class="n">sl</span> <span class="o">=</span> <span class="n">sl</span>
-              <span class="p">,</span><span class="n">sol</span> <span class="o">=</span> <span class="n">sol</span>
-              <span class="p">,</span><span class="n">pdb</span> <span class="o">=</span>  <span class="n">pdb</span>
-              <span class="p">,</span><span class="n">sc</span> <span class="o">=</span> <span class="n">sc</span>
-             <span class="p">)</span>
-        
-        
-        
-    <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">initial_guess</span> <span class="o">=</span> <span class="mi">0</span> 
+        <span class="n">print_ph</span><span class="p">(</span><span class="s2">"  STEADY STATE  !!! Initial guess of the simulation !!!"</span><span class="p">)</span>
+        <span class="n">outerloop_operation</span><span class="p">(</span>
+            <span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">,</span>
+            <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">,</span>
+            <span class="n">eg</span><span class="o">=</span><span class="n">eg</span><span class="p">,</span>
+            <span class="n">lg</span><span class="o">=</span><span class="n">lg</span><span class="p">,</span>
+            <span class="n">we</span><span class="o">=</span><span class="n">we</span><span class="p">,</span>
+            <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span>
+            <span class="n">sol</span><span class="o">=</span><span class="n">sol</span><span class="p">,</span>
+            <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span>
+            <span class="n">outit</span><span class="o">=</span><span class="n">outit</span><span class="p">,</span>
+            <span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">initial_guess</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">diffusion_initial_guess</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">,</span> <span class="n">eg</span><span class="o">=</span><span class="n">eg</span><span class="p">,</span> <span class="n">lg</span><span class="o">=</span><span class="n">lg</span><span class="p">,</span> <span class="n">we</span><span class="o">=</span><span class="n">we</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">sol</span><span class="o">=</span><span class="n">sol</span><span class="p">,</span> <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span> <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">)</span>
+
+    <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">initial_guess</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">sol</span><span class="o">.</span><span class="n">T_O</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">sol</span><span class="o">.</span><span class="n">T_N</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span>
     <span class="n">sol</span><span class="o">.</span><span class="n">T_O</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">scatter_forward</span><span class="p">()</span>
     <span class="n">time_B</span> <span class="o">=</span> <span class="n">timing</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-    <span class="n">print_ph</span><span class="p">(</span><span class="sa">f</span><span class="s1">'              !!! Initial guess of the simulation took </span><span class="si">{</span><span class="n">time_B</span><span class="o">-</span><span class="n">time_A</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1"> seconds !!!'</span><span class="p">)</span></div>
+    <span class="n">print_ph</span><span class="p">(</span><span class="sa">f</span><span class="s2">"              !!! Initial guess of the simulation took </span><span class="si">{</span><span class="n">time_B</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">time_A</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds !!!"</span><span class="p">)</span></div>
 
 
 
-<span class="c1">#---------------------------------------------------------------------------------------------------</span>
-<span class="c1"># Def time_loop </span>
+<span class="c1"># ---------------------------------------------------------------------------------------------------</span>
+<span class="c1"># Def time_loop</span>
 <div class="viewcode-block" id="time_loop">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solution_routine.html#stonedfenicsx.solver_module.solution_routine.time_loop">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">time_loop</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="p">:</span><span class="n">SimulationControls</span>
-              <span class="p">,</span><span class="n">eg</span> <span class="p">:</span> <span class="n">Global_thermal</span>
-              <span class="p">,</span><span class="n">lg</span> <span class="p">:</span> <span class="n">Global_pressure</span>
-              <span class="p">,</span><span class="n">we</span> <span class="p">:</span> <span class="n">Wedge</span>
-              <span class="p">,</span><span class="n">sl</span> <span class="p">:</span> <span class="n">Slab</span>
-              <span class="p">,</span><span class="n">sol</span> <span class="p">:</span> <span class="n">Solution</span>
-              <span class="p">,</span><span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span>
-              <span class="p">,</span><span class="n">sc</span><span class="p">:</span> <span class="n">Scal</span>
-             <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">time_loop</span><span class="p">(</span>
+    <span class="n">ctrl_sim</span><span class="p">:</span> <span class="n">SimulationControls</span><span class="p">,</span>
+    <span class="n">eg</span><span class="p">:</span> <span class="n">Global_thermal</span><span class="p">,</span>
+    <span class="n">lg</span><span class="p">:</span> <span class="n">Global_pressure</span><span class="p">,</span>
+    <span class="n">we</span><span class="p">:</span> <span class="n">Wedge</span><span class="p">,</span>
+    <span class="n">sl</span><span class="p">:</span> <span class="n">Slab</span><span class="p">,</span>
+    <span class="n">sol</span><span class="p">:</span> <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span><span class="p">,</span>
+    <span class="n">sc</span><span class="p">:</span> <span class="n">Scal</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Drive the time-stepping loop and write output at the requested intervals.</span>
 
 <span class="sd">    Instantiates the OUTPUT object once before entering the loop.  At every</span>
@@ -622,119 +611,136 @@
 <span class="sd">        None</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">print_ph</span><span class="p">(</span><span class="s1">' --------------------- Steady State Solution   --------------------- '</span><span class="p">)</span>
+        <span class="n">print_ph</span><span class="p">(</span><span class="s2">" --------------------- Steady State Solution   --------------------- "</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">print_ph</span><span class="p">(</span><span class="s1">'---------------------- Time Dependent Solution --------------------- '</span><span class="p">)</span>
+        <span class="n">print_ph</span><span class="p">(</span><span class="s2">"---------------------- Time Dependent Solution --------------------- "</span><span class="p">)</span>
 
-    <span class="n">flag_output</span> <span class="o">=</span> <span class="kc">False</span>     
-    <span class="n">tbs</span> <span class="o">=</span> <span class="mf">0.0</span>     
-    <span class="n">t</span>  <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">flag_output</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">tbs</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="mf">0.0</span>
     <span class="n">ts</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">output_class</span>  <span class="o">=</span> <span class="n">OUTPUT</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="n">eg</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span><span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span><span class="n">cach_mat_thermal</span><span class="o">=</span><span class="n">eg</span><span class="o">.</span><span class="n">cached_mat</span><span class="p">,</span><span class="n">comm</span><span class="o">=</span><span class="n">eg</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">comm</span><span class="p">)</span>
-    <span class="n">outit</span> <span class="o">=</span> <span class="n">OUTERITERATION_SOL_VAL</span><span class="p">(</span><span class="n">sol</span><span class="o">=</span><span class="n">sol</span><span class="p">,</span><span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="p">,</span><span class="n">ctrl_io</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_io</span><span class="p">)</span>
+    <span class="n">output_class</span> <span class="o">=</span> <span class="n">OUTPUT</span><span class="p">(</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">eg</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span>
+        <span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">,</span>
+        <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">,</span>
+        <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span>
+        <span class="n">cach_mat_thermal</span><span class="o">=</span><span class="n">eg</span><span class="o">.</span><span class="n">cached_mat</span><span class="p">,</span>
+        <span class="n">comm</span><span class="o">=</span><span class="n">eg</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">comm</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">outit</span> <span class="o">=</span> <span class="n">OUTERITERATION_SOL_VAL</span><span class="p">(</span><span class="n">sol</span><span class="o">=</span><span class="n">sol</span><span class="p">,</span> <span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="p">,</span> <span class="n">ctrl_io</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_io</span><span class="p">)</span>
 
-    <span class="c1"># Initial guess for the outer loop: -&gt; linear problem with constant viscosity, no shear heating. </span>
-    <span class="k">if</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
-        <span class="n">initial_guess_simulation</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span>
-                                  <span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span>
-                                  <span class="p">,</span><span class="n">eg</span><span class="o">=</span><span class="n">eg</span>
-                                  <span class="p">,</span><span class="n">lg</span><span class="o">=</span><span class="n">lg</span>
-                                  <span class="p">,</span><span class="n">we</span><span class="o">=</span><span class="n">we</span>
-                                  <span class="p">,</span><span class="n">sl</span><span class="o">=</span><span class="n">sl</span>
-                                  <span class="p">,</span><span class="n">sol</span><span class="o">=</span><span class="n">sol</span>
-                                  <span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
-                                  <span class="p">,</span><span class="n">outit</span><span class="o">=</span><span class="n">outit</span><span class="p">)</span>
-    
+    <span class="c1"># Initial guess for the outer loop: -&gt; linear problem with constant viscosity, no shear heating.</span>
+    <span class="k">if</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">initial_guess_simulation</span><span class="p">(</span>
+            <span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">,</span>
+            <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">,</span>
+            <span class="n">eg</span><span class="o">=</span><span class="n">eg</span><span class="p">,</span>
+            <span class="n">lg</span><span class="o">=</span><span class="n">lg</span><span class="p">,</span>
+            <span class="n">we</span><span class="o">=</span><span class="n">we</span><span class="p">,</span>
+            <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span>
+            <span class="n">sol</span><span class="o">=</span><span class="n">sol</span><span class="p">,</span>
+            <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span>
+            <span class="n">outit</span><span class="o">=</span><span class="n">outit</span><span class="p">,</span>
+        <span class="p">)</span>
 
-    <span class="c1"># --- </span>
-    <span class="k">while</span> <span class="n">t</span><span class="o">&lt;</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">time_max</span><span class="p">:</span>
+    <span class="c1"># ---</span>
+    <span class="k">while</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">time_max</span><span class="p">:</span>
         <span class="n">time_A</span> <span class="o">=</span> <span class="n">timing</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
-            <span class="n">print_ph</span><span class="p">(</span><span class="s1">'||--------------------- || ---------------------||'</span><span class="p">)</span>
-            <span class="n">print_ph</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Time = </span><span class="si">{</span><span class="n">t</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">time</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">scale_myr2sec</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1"> Myr, timestep = </span><span class="si">{</span><span class="n">ts</span><span class="si">:</span><span class="s1">d</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
-            <span class="n">print_ph</span><span class="p">(</span><span class="s1">'||--------------------- || ---------------------||'</span><span class="p">)</span>
-            
+        <span class="k">if</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">print_ph</span><span class="p">(</span><span class="s2">"||--------------------- || ---------------------||"</span><span class="p">)</span>
+            <span class="n">print_ph</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Time = </span><span class="si">{</span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sc</span><span class="o">.</span><span class="n">time</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">sc</span><span class="o">.</span><span class="n">scale_myr2sec</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> Myr, timestep = </span><span class="si">{</span><span class="n">ts</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">print_ph</span><span class="p">(</span><span class="s2">"||--------------------- || ---------------------||"</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">constant</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> 
+        <span class="k">if</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">constant</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">update_vel_age</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
             <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">update_1d_vector_left</span><span class="p">()</span>
 
-            
-        <span class="k">if</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_ky</span><span class="o">.</span><span class="n">constant</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> 
+        <span class="k">if</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_ky</span><span class="o">.</span><span class="n">constant</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_ky</span><span class="o">.</span><span class="n">update_vel_age</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
 
         <span class="c1"># Prepare variable</span>
-        <span class="n">outerloop_operation</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span>
-                                  <span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span>
-                                  <span class="p">,</span><span class="n">eg</span><span class="o">=</span><span class="n">eg</span>
-                                  <span class="p">,</span><span class="n">lg</span><span class="o">=</span><span class="n">lg</span>
-                                  <span class="p">,</span><span class="n">we</span><span class="o">=</span><span class="n">we</span>
-                                  <span class="p">,</span><span class="n">sl</span><span class="o">=</span><span class="n">sl</span>
-                                  <span class="p">,</span><span class="n">sol</span><span class="o">=</span><span class="n">sol</span>
-                                  <span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
-                                  <span class="p">,</span><span class="n">outit</span><span class="o">=</span><span class="n">outit</span>
-                                  <span class="p">,</span><span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">)</span>
+        <span class="n">outerloop_operation</span><span class="p">(</span>
+            <span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">,</span>
+            <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">,</span>
+            <span class="n">eg</span><span class="o">=</span><span class="n">eg</span><span class="p">,</span>
+            <span class="n">lg</span><span class="o">=</span><span class="n">lg</span><span class="p">,</span>
+            <span class="n">we</span><span class="o">=</span><span class="n">we</span><span class="p">,</span>
+            <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span>
+            <span class="n">sol</span><span class="o">=</span><span class="n">sol</span><span class="p">,</span>
+            <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span>
+            <span class="n">outit</span><span class="o">=</span><span class="n">outit</span><span class="p">,</span>
+            <span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="c1"># --- Save the output if the timestep is a multiple of the output timestep, or if the time is a multiple of the output time, or if the steady state is reached.</span>
-        <span class="n">flag_output</span> <span class="o">=</span> <span class="n">timestep_output</span><span class="p">(</span><span class="n">ctrlio</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_io</span><span class="p">,</span><span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">,</span><span class="n">t</span><span class="o">=</span><span class="n">t</span><span class="p">,</span><span class="n">time_previous</span><span class="o">=</span><span class="n">tbs</span><span class="p">,</span><span class="n">flag_save</span><span class="o">=</span><span class="n">flag_output</span><span class="p">)</span>
+        <span class="n">flag_output</span> <span class="o">=</span> <span class="n">timestep_output</span><span class="p">(</span>
+            <span class="n">ctrlio</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_io</span><span class="p">,</span>
+            <span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">,</span>
+            <span class="n">t</span><span class="o">=</span><span class="n">t</span><span class="p">,</span>
+            <span class="n">time_previous</span><span class="o">=</span><span class="n">tbs</span><span class="p">,</span>
+            <span class="n">flag_save</span><span class="o">=</span><span class="n">flag_output</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">flag_output</span><span class="p">:</span>
-            <span class="n">print_ph</span><span class="p">(</span><span class="s1">'OUTPUT...'</span><span class="p">)</span>
-            <span class="n">eg</span><span class="o">.</span><span class="n">compute_shear_heating_visualisation</span><span class="p">(</span><span class="n">sol</span><span class="o">=</span><span class="n">sol</span><span class="p">,</span><span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">,</span><span class="n">it_outer</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-            <span class="n">output_class</span><span class="o">.</span><span class="n">print_output</span><span class="p">(</span><span class="n">sol</span><span class="o">=</span><span class="n">sol</span><span class="p">,</span><span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">,</span><span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">,</span><span class="n">it_outer</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">time</span><span class="o">=</span><span class="n">t</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">time</span><span class="o">/</span><span class="n">sc</span><span class="o">.</span><span class="n">scale_myr2sec</span><span class="p">)</span>
-            <span class="n">print_ph</span><span class="p">(</span><span class="s1">'finished'</span><span class="p">)</span>
-            <span class="n">tbs</span> <span class="o">=</span> <span class="n">t</span> 
+            <span class="n">print_ph</span><span class="p">(</span><span class="s2">"OUTPUT..."</span><span class="p">)</span>
+            <span class="n">eg</span><span class="o">.</span><span class="n">compute_shear_heating_visualisation</span><span class="p">(</span><span class="n">sol</span><span class="o">=</span><span class="n">sol</span><span class="p">,</span> <span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">,</span> <span class="n">it_outer</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">output_class</span><span class="o">.</span><span class="n">print_output</span><span class="p">(</span>
+                <span class="n">sol</span><span class="o">=</span><span class="n">sol</span><span class="p">,</span>
+                <span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">,</span>
+                <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">,</span>
+                <span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">,</span>
+                <span class="n">it_outer</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                <span class="n">time</span><span class="o">=</span><span class="n">t</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">time</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">scale_myr2sec</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">print_ph</span><span class="p">(</span><span class="s2">"finished"</span><span class="p">)</span>
+            <span class="n">tbs</span> <span class="o">=</span> <span class="n">t</span>
             <span class="n">flag_output</span> <span class="o">=</span> <span class="kc">False</span>
 
-        <span class="k">if</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> 
-            <span class="n">print_ph</span><span class="p">(</span><span class="s1">'---------------------End Steady State solution, printing the benchmarks'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">print_ph</span><span class="p">(</span><span class="s2">"---------------------End Steady State solution, printing the benchmarks"</span><span class="p">)</span>
             <span class="n">t</span> <span class="o">=</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">time_max</span>
-            <span class="k">if</span> <span class="n">eg</span><span class="o">.</span><span class="n">g_input</span><span class="o">.</span><span class="n">van_keken</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> 
+            <span class="k">if</span> <span class="n">eg</span><span class="o">.</span><span class="n">g_input</span><span class="o">.</span><span class="n">van_keken</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.output</span><span class="w"> </span><span class="kn">import</span> <span class="n">_benchmark_van_keken</span>
-                <span class="n">_benchmark_van_keken</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_io</span><span class="p">,</span><span class="n">sc</span><span class="p">)</span>
 
-        
-            
-        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="o">+</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">dt</span>
-            
-    
+                <span class="n">_benchmark_van_keken</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_io</span><span class="p">,</span> <span class="n">sc</span><span class="p">)</span>
+
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span> <span class="o">+</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">dt</span>
+
         <span class="n">sol</span><span class="o">.</span><span class="n">T_O</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">sol</span><span class="o">.</span><span class="n">T_N</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[:]</span>
         <span class="n">sol</span><span class="o">.</span><span class="n">T_O</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">scatter_forward</span><span class="p">()</span>
-        
+
         <span class="n">time_B</span> <span class="o">=</span> <span class="n">timing</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="n">print_ph</span><span class="p">(</span><span class="sa">f</span><span class="s1">'---------------------Timestep </span><span class="si">{</span><span class="n">ts</span><span class="si">}</span><span class="s1">  took </span><span class="si">{</span><span class="n">time_B</span><span class="o">-</span><span class="n">time_A</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1"> ---------------------'</span><span class="p">)</span>
-        <span class="c1"># I remove a few comments and just highlight the refenrece of this: </span>
-        <span class="c1"># Long Story short: I have been having a few problems related to the petsc version </span>
-        <span class="c1"># I have been tracking the memory with the sys monitor manually and after found the issue </span>
+        <span class="n">print_ph</span><span class="p">(</span><span class="sa">f</span><span class="s2">"---------------------Timestep </span><span class="si">{</span><span class="n">ts</span><span class="si">}</span><span class="s2">  took </span><span class="si">{</span><span class="n">time_B</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">time_A</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> ---------------------"</span><span class="p">)</span>
+        <span class="c1"># I remove a few comments and just highlight the refenrece of this:</span>
+        <span class="c1"># Long Story short: I have been having a few problems related to the petsc version</span>
+        <span class="c1"># I have been tracking the memory with the sys monitor manually and after found the issue</span>
         <span class="c1"># I just called garbage_cleanup</span>
-        <span class="c1"># Ref: https://gitlab.com/petsc/petsc/-/work_items/1309 </span>
+        <span class="c1"># Ref: https://gitlab.com/petsc/petsc/-/work_items/1309</span>
         <span class="c1"># Ref2 : https://fenicsproject.discourse.group/t/memory-management-with-petsc4py/18199/2</span>
         <span class="n">PETSc</span><span class="o">.</span><span class="n">garbage_cleanup</span><span class="p">(</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">)</span>
 
         <span class="n">ts</span> <span class="o">=</span> <span class="n">ts</span> <span class="o">+</span> <span class="mi">1</span>
 
-    <span class="n">print_ph</span><span class="p">(</span><span class="s1">'---------------------Destroy Petsc Object and finish the simulation---------------------'</span><span class="p">)</span>
-    
+    <span class="n">print_ph</span><span class="p">(</span><span class="s2">"---------------------Destroy Petsc Object and finish the simulation---------------------"</span><span class="p">)</span>
+
     <span class="n">eg</span><span class="o">.</span><span class="n">solv</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
     <span class="n">lg</span><span class="o">.</span><span class="n">solv</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
     <span class="n">sl</span><span class="o">.</span><span class="n">solv</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
     <span class="n">we</span><span class="o">.</span><span class="n">solv</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
-    
-    <span class="n">print_ph</span><span class="p">(</span><span class="s1">''</span><span class="p">)</span>
-    <span class="n">print_ph</span><span class="p">(</span><span class="s1">''</span><span class="p">)</span>    
-    <span class="n">print_ph</span><span class="p">(</span><span class="s1">'You will hear of wars and rumors of wars, but see to it that you are not alarmed. Such things must happen, but the end is still to come:'</span><span class="p">)</span>
-    <span class="n">print_ph</span><span class="p">(</span><span class="s1">'Ex Falso sequitor quodlibet.'</span><span class="p">)</span>
-    <span class="n">print_ph</span><span class="p">(</span><span class="s1">''</span><span class="p">)</span>
-    <span class="n">print_ph</span><span class="p">(</span><span class="s1">''</span><span class="p">)</span></div>
+
+    <span class="n">print_ph</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+    <span class="n">print_ph</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+    <span class="n">print_ph</span><span class="p">(</span>
+        <span class="s2">"You will hear of wars and rumors of wars, but see to it that you are not alarmed. Such things must happen, but the end is still to come:"</span>
+    <span class="p">)</span>
+    <span class="n">print_ph</span><span class="p">(</span><span class="s2">"Ex Falso sequitor quodlibet."</span><span class="p">)</span>
+    <span class="n">print_ph</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+    <span class="n">print_ph</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span></div>
 
 
 
-<span class="c1">#------------------------------------------------------------------------------------------------------------</span>
+<span class="c1"># ------------------------------------------------------------------------------------------------------------</span>
 <div class="viewcode-block" id="solution_routine">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solution_routine.html#stonedfenicsx.solver_module.solution_routine.solution_routine">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">solution_routine</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="p">:</span><span class="n">SimulationControls</span>
-                     <span class="p">,</span><span class="n">pdb</span><span class="p">:</span><span class="n">PhaseDataBase</span>
-                     <span class="p">,</span><span class="n">mesh</span><span class="p">:</span><span class="n">Mesh</span>
-                     <span class="p">,</span><span class="n">sc</span><span class="p">:</span><span class="n">Scal</span>
-                    <span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">solution_routine</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="p">:</span> <span class="n">SimulationControls</span><span class="p">,</span> <span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span><span class="p">,</span> <span class="n">mesh</span><span class="p">:</span> <span class="n">Mesh</span><span class="p">,</span> <span class="n">sc</span><span class="p">:</span> <span class="n">Scal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Top-level solver entry point: initialise and run the full simulation.</span>
 
 <span class="sd">    Thin orchestration function that sequences the two main phases of the</span>
@@ -762,22 +768,17 @@
 <span class="sd">    """</span>
 
     <span class="c1"># Initialise</span>
-    <span class="n">sol</span><span class="p">,</span><span class="n">eg</span><span class="p">,</span><span class="n">lg</span><span class="p">,</span><span class="n">sl</span><span class="p">,</span><span class="n">we</span> <span class="o">=</span> <span class="n">initialise_the_simulation</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span><span class="n">mesh</span><span class="o">=</span><span class="n">mesh</span><span class="p">)</span>                <span class="c1"># Scaling </span>
-    
-    <span class="c1"># Time Loop </span>
-    
-    <span class="n">time_loop</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span>
-              <span class="p">,</span><span class="n">eg</span> <span class="o">=</span> <span class="n">eg</span>
-              <span class="p">,</span><span class="n">lg</span> <span class="o">=</span> <span class="n">lg</span>
-              <span class="p">,</span><span class="n">we</span> <span class="o">=</span> <span class="n">we</span>
-              <span class="p">,</span><span class="n">sl</span> <span class="o">=</span> <span class="n">sl</span> 
-              <span class="p">,</span><span class="n">sol</span> <span class="o">=</span> <span class="n">sol</span> 
-              <span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
-              <span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="mi">0</span> </div>
+    <span class="n">sol</span><span class="p">,</span> <span class="n">eg</span><span class="p">,</span> <span class="n">lg</span><span class="p">,</span> <span class="n">sl</span><span class="p">,</span> <span class="n">we</span> <span class="o">=</span> <span class="n">initialise_the_simulation</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">,</span> <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span> <span class="n">mesh</span><span class="o">=</span><span class="n">mesh</span><span class="p">)</span>  <span class="c1"># Scaling</span>
 
-<span class="c1">#--------------------------------------------------------------------------------------------</span>
+    <span class="c1"># Time Loop</span>
+
+    <span class="n">time_loop</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">,</span> <span class="n">eg</span><span class="o">=</span><span class="n">eg</span><span class="p">,</span> <span class="n">lg</span><span class="o">=</span><span class="n">lg</span><span class="p">,</span> <span class="n">we</span><span class="o">=</span><span class="n">we</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">sol</span><span class="o">=</span><span class="n">sol</span><span class="p">,</span> <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span> <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="mi">0</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------------------------</span>
 </pre></div>
 
             <div class="clearer"></div>

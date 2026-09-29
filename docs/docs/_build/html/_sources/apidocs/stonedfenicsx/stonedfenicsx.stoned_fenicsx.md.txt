@@ -4,6 +4,7 @@
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.stoned_fenicsx
+:parser: napoleon_parser
 :allowtitles:
 ```
 
@@ -17,18 +18,17 @@
 
 * - {py:obj}`git_info <stonedfenicsx.stoned_fenicsx.git_info>`
   - ```{autodoc2-docstring} stonedfenicsx.stoned_fenicsx.git_info
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`print_information_code <stonedfenicsx.stoned_fenicsx.print_information_code>`
   - ```{autodoc2-docstring} stonedfenicsx.stoned_fenicsx.print_information_code
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`stoned_fenicsx <stonedfenicsx.stoned_fenicsx.stoned_fenicsx>`
   - ```{autodoc2-docstring} stonedfenicsx.stoned_fenicsx.stoned_fenicsx
-    :summary:
-    ```
-* - {py:obj}`test_function <stonedfenicsx.stoned_fenicsx.test_function>`
-  - ```{autodoc2-docstring} stonedfenicsx.stoned_fenicsx.test_function
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -41,14 +41,17 @@
 
 * - {py:obj}`_VERSION_ <stonedfenicsx.stoned_fenicsx._VERSION_>`
   - ```{autodoc2-docstring} stonedfenicsx.stoned_fenicsx._VERSION_
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`_DATE_ <stonedfenicsx.stoned_fenicsx._DATE_>`
   - ```{autodoc2-docstring} stonedfenicsx.stoned_fenicsx._DATE_
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`_AUTHORS_ <stonedfenicsx.stoned_fenicsx._AUTHORS_>`
   - ```{autodoc2-docstring} stonedfenicsx.stoned_fenicsx._AUTHORS_
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -61,6 +64,7 @@
    '0.0.1'
 
 ```{autodoc2-docstring} stonedfenicsx.stoned_fenicsx._VERSION_
+:parser: napoleon_parser
 ```
 
 ````
@@ -71,6 +75,7 @@
    '26/08/2026'
 
 ```{autodoc2-docstring} stonedfenicsx.stoned_fenicsx._DATE_
+:parser: napoleon_parser
 ```
 
 ````
@@ -81,6 +86,7 @@
    'Andrea Piccolo, Timothy Craig'
 
 ```{autodoc2-docstring} stonedfenicsx.stoned_fenicsx._AUTHORS_
+:parser: napoleon_parser
 ```
 
 ````
@@ -89,6 +95,7 @@
 :canonical: stonedfenicsx.stoned_fenicsx.git_info
 
 ```{autodoc2-docstring} stonedfenicsx.stoned_fenicsx.git_info
+:parser: napoleon_parser
 ```
 ````
 
@@ -96,6 +103,7 @@
 :canonical: stonedfenicsx.stoned_fenicsx.print_information_code
 
 ```{autodoc2-docstring} stonedfenicsx.stoned_fenicsx.print_information_code
+:parser: napoleon_parser
 ```
 ````
 
@@ -103,12 +111,6 @@
 :canonical: stonedfenicsx.stoned_fenicsx.stoned_fenicsx
 
 ```{autodoc2-docstring} stonedfenicsx.stoned_fenicsx.stoned_fenicsx
-```
-````
-
-````{py:function} test_function()
-:canonical: stonedfenicsx.stoned_fenicsx.test_function
-
-```{autodoc2-docstring} stonedfenicsx.stoned_fenicsx.test_function
+:parser: napoleon_parser
 ```
 ````

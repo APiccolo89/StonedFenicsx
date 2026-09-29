@@ -141,22 +141,15 @@ def create_mesh(
     This function generates the computational geometry using Gmsh, builds the
     corresponding `.msh` file, and imports it into dolfinx as a finite element mesh.
 
-    Parameters
-    ----------
-    ioctrl : IOControls
-        I/O controller handling file paths and output directories.
-    sc : Scal
-        Scaling object storing nondimensionalisation parameters.
-    g_input : GeomInput
-        Geometrical input defining the domain and mesh construction.
-    ctrl : NumericalControls
-        Numerical controls determining the problem setup.
+    Args:
+        ioctrl (IOControls): I/O controller handling file paths and output directories.
+        sc (Scal): Scaling object storing nondimensionalisation parameters.
+        g_input (GeomInput): Geometrical input defining the domain and mesh construction.
+        ctrl (NumericalControls): Numerical controls determining the problem setup.
 
-    Returns
-    -------
-    Mesh
-        Mesh wrapper object containing the global mesh, extracted subdomains,
-        and associated boundary/cell tags.
+    Returns:
+        Mesh: Mesh wrapper object containing the global mesh, extracted subdomains,
+            and associated boundary/cell tags.
     """
 
     # Collect the rank and comm
@@ -187,20 +180,14 @@ def create_gmesh(ioctrl: IOControls, g_input: GeomInput):
     extending the horizontal size by an additional 60 km from the intersection
     between the slab top surface and the maximum depth of the model.
 
-    Parameters
-    ----------
-    ctrl : NumericalControls
-        Numerical controls defining the simulation type.
-    ctrlio : IOControls
-        I/O controller storing input/output directories.
-    g_input : GeomInput
-        Geometrical input parameters used to construct the domain.
+    Args:
+        ctrl (NumericalControls): Numerical controls defining the simulation type.
+        ctrlio (IOControls): I/O controller storing input/output directories.
+        g_input (GeomInput): Geometrical input parameters used to construct the domain.
 
-    Returns
-    -------
-    GeomInput
-        Updated geometrical input object containing the computed slab angles and
-        modified domain extent.
+    Returns:
+        GeomInput: Updated geometrical input object containing the computed slab angles and
+            modified domain extent.
     """
 
     min_x = g_input.x[0]  # The beginning of the model is the trench of the slab
@@ -268,21 +255,14 @@ def create_domain_subduction_plate(
     """
     Create the subducting-plate loop in the Gmsh model.
 
-    Parameters
-    ----------
-    mesh_model : gmsh.model
-        Gmsh model object containing the geometry/mesh entities.
-    CP : Class_Points
-        Container of points defining the global mesh (coordinates, point IDs, target resolution).
-    LP : Class_Line
-        Container of lines defining the global mesh (line IDs and point connectivity).
-    g_input : GeomInput
-        Geometry input parameters.
+    Args:
+        mesh_model (gmsh.model): Gmsh model object containing the geometry/mesh entities.
+        CP (Class_Points): Container of points defining the global mesh (coordinates, point IDs, target resolution).
+        LP (Class_Line): Container of lines defining the global mesh (line IDs and point connectivity).
+        g_input (GeomInput): Geometry input parameters.
 
-    Returns
-    -------
-    gmsh.model
-        The updated Gmsh model with the sub-domain loop entities added.
+    Returns:
+        gmsh.model: The updated Gmsh model with the sub-domain loop entities added.
     """
 
     if g_input.ocr != 0.0:
@@ -337,21 +317,14 @@ def create_domain_wedge(mesh_model, CP, LC, g_input):
     """
     Create the Wedge loop in the Gmsh model.
 
-    Parameters
-    ----------
-    mesh_model : gmsh.model
-        Gmsh model object containing the geometry/mesh entities.
-    CP : Class_Points
-        Container of points defining the global mesh (coordinates, point IDs, target resolution).
-    LP : Class_Line
-        Container of lines defining the global mesh (line IDs and point connectivity).
-    g_input : GeomInput
-        Geometry input parameters.
+    Args:
+        mesh_model (gmsh.model): Gmsh model object containing the geometry/mesh entities.
+        CP (Class_Points): Container of points defining the global mesh (coordinates, point IDs, target resolution).
+        LP (Class_Line): Container of lines defining the global mesh (line IDs and point connectivity).
+        g_input (GeomInput): Geometry input parameters.
 
-    Returns
-    -------
-    gmsh.model
-        The updated Gmsh model with the sub-domain loop entities added.
+    Returns:
+        gmsh.model: The updated Gmsh model with the sub-domain loop entities added.
     """
 
     index = find_line_index(LC.lines_S, CP.coord_sub, g_input.ns_depth)
@@ -371,21 +344,14 @@ def create_domain_crust(mesh_model, CP, LC, g_input):
     """
     Create the Overriding plate loop in the Gmsh model.
 
-    Parameters
-    ----------
-    mesh_model : gmsh.model
-        Gmsh model object containing the geometry/mesh entities.
-    CP : Class_Points
-        Container of points defining the global mesh (coordinates, point IDs, target resolution).
-    LP : Class_Line
-        Container of lines defining the global mesh (line IDs and point connectivity).
-    g_input : GeomInput
-        Geometry input parameters.
+    Args:
+        mesh_model (gmsh.model): Gmsh model object containing the geometry/mesh entities.
+        CP (Class_Points): Container of points defining the global mesh (coordinates, point IDs, target resolution).
+        LP (Class_Line): Container of lines defining the global mesh (line IDs and point connectivity).
+        g_input (GeomInput): Geometry input parameters.
 
-    Returns
-    -------
-    gmsh.model
-        The updated Gmsh model with the sub-domain loop entities added.
+    Returns:
+        gmsh.model: The updated Gmsh model with the sub-domain loop entities added.
     """
 
     if g_input.cr != 0:
@@ -473,21 +439,14 @@ def create_physical_line(
 ) -> gmsh.model:
     """Create the physical line using the lines.
 
-    Parameters
-    ----------
-    mesh_model : gmsh.model
-        Gmsh model object containing the geometry/mesh entities.
-    CP : Class_Points
-        Container of points defining the global mesh (coordinates, point IDs, target resolution).
-    LP : Class_Line
-        Container of lines defining the global mesh (line IDs and point connectivity).
-    g_input : GeomInput
-        Geometry input parameters.
+    Args:
+        mesh_model (gmsh.model): Gmsh model object containing the geometry/mesh entities.
+        CP (Class_Points): Container of points defining the global mesh (coordinates, point IDs, target resolution).
+        LP (Class_Line): Container of lines defining the global mesh (line IDs and point connectivity).
+        g_input (GeomInput): Geometry input parameters.
 
-    Returns
-    -------
-    gmsh.model
-        The updated Gmsh model with the physical line loop entities added.
+    Returns:
+        gmsh.model: The updated Gmsh model with the physical line loop entities added.
     """
 
     mesh_model.geo.synchronize()  # synchronize before adding physical groups {thanks chatgpt}
@@ -576,29 +535,19 @@ def create_gmsh(
     """
     Create a Gmsh model from the slab and crust geometry.
 
-    Parameters
-    ----------
-    sx : np.ndarray
-        x-coordinates of the top surface of the subducting plate.
-    sy : np.ndarray
-        y-coordinates of the top surface of the subducting plate.
-    bsx : np.ndarray
-        x-coordinates of the bottom surface of the subducting plate.
-    bsy : np.ndarray
-        y-coordinates of the bottom surface of the subducting plate.
-    oc_cx : np.ndarray
-        x-coordinates of the oceanic crust Moho.
-    oc_cy : np.ndarray
-        y-coordinates of the oceanic crust Moho.
-    g_input : GeomInput
-        Object containing the geometrical input parameters used to construct the model.
+    Args:
+        sx (np.ndarray): x-coordinates of the top surface of the subducting plate.
+        sy (np.ndarray): y-coordinates of the top surface of the subducting plate.
+        bsx (np.ndarray): x-coordinates of the bottom surface of the subducting plate.
+        bsy (np.ndarray): y-coordinates of the bottom surface of the subducting plate.
+        oc_cx (np.ndarray): x-coordinates of the oceanic crust Moho.
+        oc_cy (np.ndarray): y-coordinates of the oceanic crust Moho.
+        g_input (GeomInput): Object containing the geometrical input parameters used to construct the model.
 
-    Returns
-    -------
-    object
-        The generated Gmsh model handle (`gmsh.model`), containing the geometry
-        definition (points, curves, surfaces) and the associated physical groups
-        (mesh tags).
+    Returns:
+        object: The generated Gmsh model handle (`gmsh.model`), containing the geometry
+            definition (points, curves, surfaces) and the associated physical groups
+            (mesh tags).
     """
 
     # -> USE GMSH FUNCTION
@@ -677,17 +626,14 @@ def create_mesh_fenicsx(
     mesh: meshio._mesh.Mesh, cell_type: str, prune_z: bool = False
 ) -> dolfinx.mesh.Mesh:
     """Convert gmsh into meshio object
-    Parameters
-    -----------
-        mesh : meshio._mesh.Mesh
-            meshio object that contains the .msh model
-        cell_type: str
-                element type to process {triangle} or {line}
-        prune_z : Bool
-            flag to remove the z coordinate from the mesh model
-    Returns
-    -----------
-        _type_: _description_
+
+    Args:
+        mesh (meshio._mesh.Mesh): meshio object that contains the .msh model
+        cell_type (str): element type to process {triangle} or {line}
+        prune_z (bool): flag to remove the z coordinate from the mesh model
+
+    Returns:
+        meshio.Mesh: meshio mesh restricted to the requested cell type.
     """
 
     # From the tutorials of dolfinx
@@ -736,27 +682,19 @@ def extract_facet_boundary(
 
     For the slab subdomain boundary, you may need to combine S(1) and S(2).
 
-    Parameters
-    ----------
-    mesh : dolfinx.mesh.Mesh
-        The global mesh.
-    mfacet_tag : dolfinx.mesh.meshtags.MeshTags
-        Facet MeshTags on the global mesh (dimension = tdim - 1).
-    submesh : dolfinx.mesh.Mesh
-        The subdomain mesh.
-    sm_vertex_maps : np.ndarray | list[int]
-        Mapping from submesh vertices to parent (global) mesh vertices.
-    boundary : Sequence[int]
-        List of global boundary marker IDs to be combined for this submesh boundary.
-    m_id : int
-        Marker ID to assign to the extracted facets on the submesh.
+    Args:
+        mesh (dolfinx.mesh.Mesh): The global mesh.
+        mfacet_tag (dolfinx.mesh.meshtags.MeshTags): Facet MeshTags on the global mesh (dimension = tdim - 1).
+        submesh (dolfinx.mesh.Mesh): The subdomain mesh.
+        sm_vertex_maps (np.ndarray | list[int]): Mapping from submesh vertices to parent (global) mesh vertices.
+        boundary (Sequence[int]): List of global boundary marker IDs to be combined for this submesh boundary.
+        m_id (int): Marker ID to assign to the extracted facets on the submesh.
 
-    Returns
-    -------
-    chosen_facets : np.ndarray
-        Indices of submesh facets that belong to the extracted (internal/external) boundary.
-    values : np.ndarray
-        Array of shape (len(chosen_facets),) filled with `m_id`.
+    Returns:
+        tuple: A tuple containing:
+
+            - chosen_facets (np.ndarray): Indices of submesh facets that belong to the extracted (internal/external) boundary.
+            - values (np.ndarray): Array of shape (len(chosen_facets),) filled with `m_id`.
     """
 
     # Extract facet from the parent mesh. Boundary -> list of marker of the boundary [i.e., {5,6}].
@@ -834,25 +772,16 @@ def create_subdomain(
 ) -> Domain:
     """Create the subdomain from the global mesh, and interpolate the phases from the global mesh to the local mesh
 
-    Parameters
-    ----------
-        mesh : dolfinx.mesh.Mesh
-            global mesh information
-        mesh_tag : dolfinx.mesh.MeshTags
-            the mesh tag of the surface {i.e., phase}
-        facet_tag : dolfinx.mesh.MeshTags
-            the mesh tag of the linear feature (e.g., subducting top surface)
-        phase_set :list
-            the cell marker that constitute the subdomain
-        name : str
-            the name of the subdomain
-        phase : dolfinx.fem.function.Function
-            function that stores the information of the phase.
+    Args:
+        mesh (dolfinx.mesh.Mesh): global mesh information
+        mesh_tag (dolfinx.mesh.MeshTags): the mesh tag of the surface {i.e., phase}
+        facet_tag (dolfinx.mesh.MeshTags): the mesh tag of the linear feature (e.g., subducting top surface)
+        phase_set (list): the cell marker that constitute the subdomain
+        name (str): the name of the subdomain
+        phase (dolfinx.fem.function.Function): function that stores the information of the phase.
 
-    Returns
-    ----------
-        domain : Domain
-              Class that contains the information of the subdomain.
+    Returns:
+        Domain: Class that contains the information of the subdomain.
     """
 
     from dolfinx.mesh import meshtags
@@ -867,21 +796,19 @@ def create_subdomain(
     ) -> dolfinx.mesh.MeshTags:
         """From the list of facets of the global mesh, generate the mesh tag of the subdomain
 
-        Parameters
-        ----------
+        Args:
             mesh (dolfinx.mesh.Mesh): Global mesh object storing the information of the main mesh
             facet_tag (dolfinx.mesh.MeshTags): The facet tags object from the global mesh
             submesh (dolfinx.mesh.Mesh): Submesh object
             vertex_maps (numpy.ndarray): The maps of the vertex of the mesh tag
             specs (list): a 2D list containing [facet_tag_id_global_mesh,newIDsubmesh]
 
-        Returns
-        ----------
-            FT: (dolfinx.mesh.MeshTags): the mesh tag object of the subdomain
+        Returns:
+            dolfinx.mesh.MeshTags: the mesh tag object of the subdomain
 
-        Source of portion of the code, and general explanation
-        https://fenicsproject.discourse.group/t/how-to-define-bcs-on-boundaries-of-submeshes-of-a-parent-mesh/5470/3
-
+        Note:
+            Source of portion of the code, and general explanation:
+            https://fenicsproject.discourse.group/t/how-to-define-bcs-on-boundaries-of-submeshes-of-a-parent-mesh/5470/3
         """
 
         # preparing the lists
@@ -1005,21 +932,17 @@ def read_mesh(ioctrl: IOControls, redo_mesh: bool) -> tuple[
     dolfinx.mesh.Mesh, dolfinx.mesh.MeshTags, dolfinx.mesh.MeshTags
 ]:
     """read the .msh file, and convert into a dolfinx mesh object and extract mesh tags from .msh
-    Parameter
-    ----------
-        ioctrl : IOControls
-            Input/Output controls object, stores the information of the path of the .msh file
-        sc     : Scal
-            Scal object containing the scaling parameters
 
-    Returns
-    ----------
-        mesh : dolfinx.mesh.Mesh
-            dolfinx mesh
-        cell_markers: dolfinx.mesh.MeshTags
-            cell markers (i.e., physical surface tags)
-        facet_markers : dolfinx.mesh.MeshTags
-            facet markers (i.e., physical line tags )
+    Args:
+        ioctrl (IOControls): Input/Output controls object, stores the information of the path of the .msh file
+        sc (Scal): Scal object containing the scaling parameters
+
+    Returns:
+        tuple: A tuple containing:
+
+            - mesh (dolfinx.mesh.Mesh): dolfinx mesh
+            - cell_markers (dolfinx.mesh.MeshTags): cell markers (i.e., physical surface tags)
+            - facet_markers (dolfinx.mesh.MeshTags): facet markers (i.e., physical line tags )
 
     """
 
@@ -1052,26 +975,17 @@ def create_mesh_object(ioctrl: IOControls, g_input: GeomInput) -> Mesh:
     (phases) from the global mesh. The phase function defined on the global mesh is
     then interpolated or transferred onto the subdomain mesh.
 
-    Parameters
-    ----------
-    mesh : dolfinx.mesh.Mesh
-        The global computational mesh.
-    mesh_tag : dolfinx.mesh.meshtags.MeshTags
-        Cell tags of the global mesh, typically used to identify material phases.
-    facet_tag : dolfinx.mesh.meshtags.MeshTags
-        Facet tags of the global mesh, defining boundary features (e.g. slab top surface).
-    phase_set : list[int]
-        List of cell marker IDs that define the subdomain to extract.
-    name : str
-        Name of the subdomain (used for identification and debugging).
-    phase : dolfinx.fem.Function
-        Cell-wise (or DG) function storing phase/material information on the global mesh.
+    Args:
+        mesh (dolfinx.mesh.Mesh): The global computational mesh.
+        mesh_tag (dolfinx.mesh.meshtags.MeshTags): Cell tags of the global mesh, typically used to identify material phases.
+        facet_tag (dolfinx.mesh.meshtags.MeshTags): Facet tags of the global mesh, defining boundary features (e.g. slab top surface).
+        phase_set (list[int]): List of cell marker IDs that define the subdomain to extract.
+        name (str): Name of the subdomain (used for identification and debugging).
+        phase (dolfinx.fem.Function): Cell-wise (or DG) function storing phase/material information on the global mesh.
 
-    Returns
-    -------
-    Domain
-        A `Domain` object containing the submesh, associated tags, and interpolated
-        phase information.
+    Returns:
+        Domain: A `Domain` object containing the submesh, associated tags, and interpolated
+            phase information.
     """
 
     # from stonedfenicsx.scal import dimensionless_ginput

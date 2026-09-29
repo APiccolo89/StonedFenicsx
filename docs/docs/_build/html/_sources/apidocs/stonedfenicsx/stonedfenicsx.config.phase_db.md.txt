@@ -4,6 +4,7 @@
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db
+:parser: napoleon_parser
 :allowtitles:
 ```
 
@@ -17,34 +18,37 @@
 
 * - {py:obj}`Phase <stonedfenicsx.config.phase_db.Phase>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`PhInput <stonedfenicsx.config.phase_db.PhInput>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.PhInput
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`PhaseDataBase <stonedfenicsx.config.phase_db.PhaseDataBase>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.PhaseDataBase
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`RheologicalFlowLaw <stonedfenicsx.config.phase_db.RheologicalFlowLaw>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.RheologicalFlowLaw
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`CpBufDB <stonedfenicsx.config.phase_db.CpBufDB>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.CpBufDB
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`LatticeDiffusivity <stonedfenicsx.config.phase_db.LatticeDiffusivity>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.LatticeDiffusivity
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`ThermalExpansivity <stonedfenicsx.config.phase_db.ThermalExpansivity>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.ThermalExpansivity
-    :summary:
-    ```
-* - {py:obj}`Profile_Slab <stonedfenicsx.config.phase_db.Profile_Slab>`
-  - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Profile_Slab
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -57,98 +61,67 @@
 
 * - {py:obj}`generate_phase <stonedfenicsx.config.phase_db.generate_phase>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.generate_phase
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`generate_phase_database <stonedfenicsx.config.phase_db.generate_phase_database>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.generate_phase_database
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`fill_up_weakzone_data <stonedfenicsx.config.phase_db.fill_up_weakzone_data>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.fill_up_weakzone_data
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`check_data_base <stonedfenicsx.config.phase_db.check_data_base>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.check_data_base
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`read_rheology <stonedfenicsx.config.phase_db.read_rheology>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.read_rheology
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`read_the_file_cp <stonedfenicsx.config.phase_db.read_the_file_cp>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.read_the_file_cp
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`read_capacity <stonedfenicsx.config.phase_db.read_capacity>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.read_capacity
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`read_diffusivity <stonedfenicsx.config.phase_db.read_diffusivity>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.read_diffusivity
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`read_expansivity <stonedfenicsx.config.phase_db.read_expansivity>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.read_expansivity
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`heat_conductivity <stonedfenicsx.config.phase_db.heat_conductivity>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.heat_conductivity
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`density <stonedfenicsx.config.phase_db.density>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.density
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`heat_capacity <stonedfenicsx.config.phase_db.heat_capacity>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.heat_capacity
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`compute_thermal_properties <stonedfenicsx.config.phase_db.compute_thermal_properties>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.compute_thermal_properties
-    :summary:
-    ```
-* - {py:obj}`compute_effective_stress <stonedfenicsx.config.phase_db.compute_effective_stress>`
-  - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.compute_effective_stress
-    :summary:
-    ```
-* - {py:obj}`effective_stress <stonedfenicsx.config.phase_db.effective_stress>`
-  - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.effective_stress
-    :summary:
-    ```
-* - {py:obj}`compute_tau_fr <stonedfenicsx.config.phase_db.compute_tau_fr>`
-  - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.compute_tau_fr
-    :summary:
-    ```
-* - {py:obj}`convert_velocity_strain_rate <stonedfenicsx.config.phase_db.convert_velocity_strain_rate>`
-  - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.convert_velocity_strain_rate
-    :summary:
-    ```
-* - {py:obj}`test_phase_pdb <stonedfenicsx.config.phase_db.test_phase_pdb>`
-  - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.test_phase_pdb
-    :summary:
-    ```
-* - {py:obj}`compute_effective_stress_rheological <stonedfenicsx.config.phase_db.compute_effective_stress_rheological>`
-  - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.compute_effective_stress_rheological
-    :summary:
-    ```
-* - {py:obj}`compute_bn <stonedfenicsx.config.phase_db.compute_bn>`
-  - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.compute_bn
-    :summary:
-    ```
-* - {py:obj}`compute_stress <stonedfenicsx.config.phase_db.compute_stress>`
-  - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.compute_stress
-    :summary:
-    ```
-* - {py:obj}`convert_velocity <stonedfenicsx.config.phase_db.convert_velocity>`
-  - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.convert_velocity
-    :summary:
-    ```
-* - {py:obj}`convert_age <stonedfenicsx.config.phase_db.convert_age>`
-  - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.convert_age
-    :summary:
-    ```
-* - {py:obj}`shear_heating_slab_interface <stonedfenicsx.config.phase_db.shear_heating_slab_interface>`
-  - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.shear_heating_slab_interface
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -161,34 +134,42 @@
 
 * - {py:obj}`_F_CODE <stonedfenicsx.config.phase_db._F_CODE>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db._F_CODE
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`_WATER_CODE <stonedfenicsx.config.phase_db._WATER_CODE>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db._WATER_CODE
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`_PATH_DATA_BASE_ <stonedfenicsx.config.phase_db._PATH_DATA_BASE_>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db._PATH_DATA_BASE_
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`_GAS_CONSTANT_ <stonedfenicsx.config.phase_db._GAS_CONSTANT_>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db._GAS_CONSTANT_
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`_P_REF_ <stonedfenicsx.config.phase_db._P_REF_>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db._P_REF_
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`_T_REF_ <stonedfenicsx.config.phase_db._T_REF_>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db._T_REF_
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`_ETA_DEF_ <stonedfenicsx.config.phase_db._ETA_DEF_>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db._ETA_DEF_
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`spec_phase <stonedfenicsx.config.phase_db.spec_phase>`
   - ```{autodoc2-docstring} stonedfenicsx.config.phase_db.spec_phase
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -201,6 +182,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db._F_CODE
+:parser: napoleon_parser
 ```
 
 ````
@@ -211,6 +193,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db._WATER_CODE
+:parser: napoleon_parser
 ```
 
 ````
@@ -221,6 +204,7 @@
    'Path(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db._PATH_DATA_BASE_
+:parser: napoleon_parser
 ```
 
 ````
@@ -231,6 +215,7 @@
    8.3145
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db._GAS_CONSTANT_
+:parser: napoleon_parser
 ```
 
 ````
@@ -241,6 +226,7 @@
    'float64(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db._P_REF_
+:parser: napoleon_parser
 ```
 
 ````
@@ -251,6 +237,7 @@
    'float64(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db._T_REF_
+:parser: napoleon_parser
 ```
 
 ````
@@ -261,6 +248,7 @@
    'float64(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db._ETA_DEF_
+:parser: napoleon_parser
 ```
 
 ````
@@ -269,6 +257,7 @@
 :canonical: stonedfenicsx.config.phase_db.Phase
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} name_phase
@@ -278,6 +267,7 @@
    'Undefined Phase'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.name_phase
+:parser: napoleon_parser
 ```
 
 ````
@@ -289,6 +279,7 @@
    0
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.id_ph
+:parser: napoleon_parser
 ```
 
 ````
@@ -300,6 +291,7 @@
    'Constant'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.name_diffusion
+:parser: napoleon_parser
 ```
 
 ````
@@ -311,6 +303,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.e_dif
+:parser: napoleon_parser
 ```
 
 ````
@@ -322,6 +315,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.v_dif
+:parser: napoleon_parser
 ```
 
 ````
@@ -333,6 +327,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.b_dif
+:parser: napoleon_parser
 ```
 
 ````
@@ -344,6 +339,7 @@
    'Constant'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.name_dislocation
+:parser: napoleon_parser
 ```
 
 ````
@@ -355,6 +351,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.n
+:parser: napoleon_parser
 ```
 
 ````
@@ -366,6 +363,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.e_dis
+:parser: napoleon_parser
 ```
 
 ````
@@ -377,6 +375,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.v_dis
+:parser: napoleon_parser
 ```
 
 ````
@@ -388,6 +387,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.b_dis
+:parser: napoleon_parser
 ```
 
 ````
@@ -399,6 +399,7 @@
    1e+20
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.eta
+:parser: napoleon_parser
 ```
 
 ````
@@ -410,6 +411,7 @@
    1250.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.cp
+:parser: napoleon_parser
 ```
 
 ````
@@ -421,6 +423,7 @@
    3.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.k
+:parser: napoleon_parser
 ```
 
 ````
@@ -432,6 +435,7 @@
    3300.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.rho0
+:parser: napoleon_parser
 ```
 
 ````
@@ -443,6 +447,7 @@
    'Constant'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.name_capacity
+:parser: napoleon_parser
 ```
 
 ````
@@ -454,6 +459,7 @@
    'Constant'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.name_conductivity
+:parser: napoleon_parser
 ```
 
 ````
@@ -465,6 +471,7 @@
    'Constant'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.name_alpha
+:parser: napoleon_parser
 ```
 
 ````
@@ -476,6 +483,7 @@
    'Constant'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.name_density
+:parser: napoleon_parser
 ```
 
 ````
@@ -487,6 +495,7 @@
    3e-05
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.alpha0
+:parser: napoleon_parser
 ```
 
 ````
@@ -498,6 +507,7 @@
    0.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.radiogenic_heat
+:parser: napoleon_parser
 ```
 
 ````
@@ -509,6 +519,7 @@
    0.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.Phase.radiative_conductivity
+:parser: napoleon_parser
 ```
 
 ````
@@ -519,6 +530,7 @@
 :canonical: stonedfenicsx.config.phase_db.PhInput
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.PhInput
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} shear_heating_disl_law
@@ -528,6 +540,7 @@
    'WetQuartzite'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.PhInput.shear_heating_disl_law
+:parser: napoleon_parser
 ```
 
 ````
@@ -539,6 +552,7 @@
    0.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.PhInput.shear_heating_disl_tau_min
+:parser: napoleon_parser
 ```
 
 ````
@@ -550,6 +564,7 @@
    0.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.PhInput.shear_heating_disl_phi
+:parser: napoleon_parser
 ```
 
 ````
@@ -561,6 +576,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.PhInput.subducting_plate_mantle
+:parser: napoleon_parser
 ```
 
 ````
@@ -572,6 +588,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.PhInput.oceanic_crust
+:parser: napoleon_parser
 ```
 
 ````
@@ -583,6 +600,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.PhInput.wedge_mantle
+:parser: napoleon_parser
 ```
 
 ````
@@ -594,6 +612,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.PhInput.overriding_mantle
+:parser: napoleon_parser
 ```
 
 ````
@@ -605,6 +624,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.PhInput.overriding_upper_crust
+:parser: napoleon_parser
 ```
 
 ````
@@ -616,6 +636,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.PhInput.overriding_lower_crust
+:parser: napoleon_parser
 ```
 
 ````
@@ -628,6 +649,7 @@
    [('e_dif',), ('v_dif',), ('b_dif',), ('e_dis',), ('v_dis',), ('b_dis',), ('n',), ('eta',), ('option_...
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.spec_phase
+:parser: napoleon_parser
 ```
 
 ````
@@ -636,12 +658,14 @@
 :canonical: stonedfenicsx.config.phase_db.PhaseDataBase
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.PhaseDataBase
+:parser: napoleon_parser
 ```
 
 ```{rubric} Initialization
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.PhaseDataBase.__init__
+:parser: napoleon_parser
 ```
 
 ````
@@ -650,6 +674,7 @@
 :canonical: stonedfenicsx.config.phase_db.generate_phase
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.generate_phase
+:parser: napoleon_parser
 ```
 ````
 
@@ -657,6 +682,7 @@
 :canonical: stonedfenicsx.config.phase_db.generate_phase_database
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.generate_phase_database
+:parser: napoleon_parser
 ```
 ````
 
@@ -664,6 +690,7 @@
 :canonical: stonedfenicsx.config.phase_db.fill_up_weakzone_data
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.fill_up_weakzone_data
+:parser: napoleon_parser
 ```
 ````
 
@@ -671,6 +698,7 @@
 :canonical: stonedfenicsx.config.phase_db.RheologicalFlowLaw
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.RheologicalFlowLaw
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} e
@@ -680,6 +708,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.RheologicalFlowLaw.e
+:parser: napoleon_parser
 ```
 
 ````
@@ -691,6 +720,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.RheologicalFlowLaw.v
+:parser: napoleon_parser
 ```
 
 ````
@@ -702,6 +732,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.RheologicalFlowLaw.n
+:parser: napoleon_parser
 ```
 
 ````
@@ -713,6 +744,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.RheologicalFlowLaw.m
+:parser: napoleon_parser
 ```
 
 ````
@@ -724,6 +756,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.RheologicalFlowLaw.d
+:parser: napoleon_parser
 ```
 
 ````
@@ -735,6 +768,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.RheologicalFlowLaw.b
+:parser: napoleon_parser
 ```
 
 ````
@@ -746,6 +780,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.RheologicalFlowLaw.b_si
+:parser: napoleon_parser
 ```
 
 ````
@@ -757,6 +792,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.RheologicalFlowLaw.b_or
+:parser: napoleon_parser
 ```
 
 ````
@@ -768,6 +804,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.RheologicalFlowLaw.f
+:parser: napoleon_parser
 ```
 
 ````
@@ -779,6 +816,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.RheologicalFlowLaw.mpa
+:parser: napoleon_parser
 ```
 
 ````
@@ -790,6 +828,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.RheologicalFlowLaw.ah2o
+:parser: napoleon_parser
 ```
 
 ````
@@ -801,6 +840,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.RheologicalFlowLaw.bh2o
+:parser: napoleon_parser
 ```
 
 ````
@@ -812,6 +852,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.RheologicalFlowLaw.eh2o
+:parser: napoleon_parser
 ```
 
 ````
@@ -823,6 +864,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.RheologicalFlowLaw.vh2o
+:parser: napoleon_parser
 ```
 
 ````
@@ -834,6 +876,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.RheologicalFlowLaw.r
+:parser: napoleon_parser
 ```
 
 ````
@@ -845,6 +888,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.RheologicalFlowLaw.water_correction
+:parser: napoleon_parser
 ```
 
 ````
@@ -856,6 +900,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.RheologicalFlowLaw.water_cor
+:parser: napoleon_parser
 ```
 
 ````
@@ -867,6 +912,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.RheologicalFlowLaw.ref
+:parser: napoleon_parser
 ```
 
 ````
@@ -875,6 +921,7 @@
 :canonical: stonedfenicsx.config.phase_db.RheologicalFlowLaw.apply_correction
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.RheologicalFlowLaw.apply_correction
+:parser: napoleon_parser
 ```
 
 ````
@@ -885,6 +932,7 @@
 :canonical: stonedfenicsx.config.phase_db.check_data_base
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.check_data_base
+:parser: napoleon_parser
 ```
 ````
 
@@ -892,6 +940,7 @@
 :canonical: stonedfenicsx.config.phase_db.read_rheology
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.read_rheology
+:parser: napoleon_parser
 ```
 ````
 
@@ -899,6 +948,7 @@
 :canonical: stonedfenicsx.config.phase_db.CpBufDB
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.CpBufDB
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} c0
@@ -908,6 +958,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.CpBufDB.c0
+:parser: napoleon_parser
 ```
 
 ````
@@ -919,6 +970,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.CpBufDB.c1
+:parser: napoleon_parser
 ```
 
 ````
@@ -930,6 +982,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.CpBufDB.c2
+:parser: napoleon_parser
 ```
 
 ````
@@ -941,6 +994,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.CpBufDB.c3
+:parser: napoleon_parser
 ```
 
 ````
@@ -952,6 +1006,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.CpBufDB.c4
+:parser: napoleon_parser
 ```
 
 ````
@@ -963,6 +1018,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.CpBufDB.c5
+:parser: napoleon_parser
 ```
 
 ````
@@ -973,6 +1029,7 @@
 :canonical: stonedfenicsx.config.phase_db.read_the_file_cp
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.read_the_file_cp
+:parser: napoleon_parser
 ```
 ````
 
@@ -980,6 +1037,7 @@
 :canonical: stonedfenicsx.config.phase_db.read_capacity
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.read_capacity
+:parser: napoleon_parser
 ```
 ````
 
@@ -987,6 +1045,7 @@
 :canonical: stonedfenicsx.config.phase_db.LatticeDiffusivity
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.LatticeDiffusivity
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} a
@@ -996,6 +1055,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.LatticeDiffusivity.a
+:parser: napoleon_parser
 ```
 
 ````
@@ -1007,6 +1067,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.LatticeDiffusivity.b
+:parser: napoleon_parser
 ```
 
 ````
@@ -1018,6 +1079,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.LatticeDiffusivity.c
+:parser: napoleon_parser
 ```
 
 ````
@@ -1029,6 +1091,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.LatticeDiffusivity.d
+:parser: napoleon_parser
 ```
 
 ````
@@ -1040,6 +1103,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.LatticeDiffusivity.e
+:parser: napoleon_parser
 ```
 
 ````
@@ -1051,6 +1115,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.LatticeDiffusivity.f
+:parser: napoleon_parser
 ```
 
 ````
@@ -1062,6 +1127,7 @@
    0.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.LatticeDiffusivity.g
+:parser: napoleon_parser
 ```
 
 ````
@@ -1072,6 +1138,7 @@
 :canonical: stonedfenicsx.config.phase_db.read_diffusivity
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.read_diffusivity
+:parser: napoleon_parser
 ```
 ````
 
@@ -1079,6 +1146,7 @@
 :canonical: stonedfenicsx.config.phase_db.ThermalExpansivity
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.ThermalExpansivity
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} alpha0
@@ -1088,6 +1156,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.ThermalExpansivity.alpha0
+:parser: napoleon_parser
 ```
 
 ````
@@ -1099,6 +1168,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.ThermalExpansivity.alpha1
+:parser: napoleon_parser
 ```
 
 ````
@@ -1110,6 +1180,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.ThermalExpansivity.alpha2
+:parser: napoleon_parser
 ```
 
 ````
@@ -1120,6 +1191,7 @@
 :canonical: stonedfenicsx.config.phase_db.read_expansivity
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.read_expansivity
+:parser: napoleon_parser
 ```
 ````
 
@@ -1127,6 +1199,7 @@
 :canonical: stonedfenicsx.config.phase_db.heat_conductivity
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.heat_conductivity
+:parser: napoleon_parser
 ```
 ````
 
@@ -1134,6 +1207,7 @@
 :canonical: stonedfenicsx.config.phase_db.density
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.density
+:parser: napoleon_parser
 ```
 ````
 
@@ -1141,6 +1215,7 @@
 :canonical: stonedfenicsx.config.phase_db.heat_capacity
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.heat_capacity
+:parser: napoleon_parser
 ```
 ````
 
@@ -1148,223 +1223,6 @@
 :canonical: stonedfenicsx.config.phase_db.compute_thermal_properties
 
 ```{autodoc2-docstring} stonedfenicsx.config.phase_db.compute_thermal_properties
-```
-````
-
-````{py:function} compute_effective_stress(eps: float, eta: float) -> float
-:canonical: stonedfenicsx.config.phase_db.compute_effective_stress
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.compute_effective_stress
-```
-````
-
-````{py:function} effective_stress(tau_fr: numpy.typing.NDArray[numpy.float64], tau_v: numpy.typing.NDArray[numpy.float64]) -> numpy.typing.NDArray[numpy.float64]
-:canonical: stonedfenicsx.config.phase_db.effective_stress
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.effective_stress
-```
-````
-
-````{py:function} compute_tau_fr(pres: numpy.typing.NDArray[numpy.float64], phi: float) -> numpy.typing.NDArray[numpy.float64]
-:canonical: stonedfenicsx.config.phase_db.compute_tau_fr
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.compute_tau_fr
-```
-````
-
-````{py:function} convert_velocity_strain_rate(wz: float, velocity: numpy.typing.NDArray[numpy.float64]) -> numpy.typing.NDArray[numpy.float64]
-:canonical: stonedfenicsx.config.phase_db.convert_velocity_strain_rate
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.convert_velocity_strain_rate
-```
-````
-
-````{py:function} test_phase_pdb()
-:canonical: stonedfenicsx.config.phase_db.test_phase_pdb
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.test_phase_pdb
-```
-````
-
-````{py:function} compute_effective_stress_rheological(A: stonedfenicsx.config.phase_db.RheologicalFlowLaw, eps: float, pres: numpy.typing.NDArray[numpy.float64], temp: numpy.typing.NDArray[numpy.float64]) -> numpy.typing.NDArray[numpy.float64]
-:canonical: stonedfenicsx.config.phase_db.compute_effective_stress_rheological
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.compute_effective_stress_rheological
-```
-````
-
-````{py:function} compute_bn(eps_ref: float, tau_ref: float, n) -> float
-:canonical: stonedfenicsx.config.phase_db.compute_bn
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.compute_bn
-```
-````
-
-````{py:function} compute_stress(eps: numpy.typing.NDArray[numpy.float64], bn: float, n: float) -> numpy.typing.NDArray[numpy.float64]
-:canonical: stonedfenicsx.config.phase_db.compute_stress
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.compute_stress
-```
-````
-
-`````{py:class} Profile_Slab
-:canonical: stonedfenicsx.config.phase_db.Profile_Slab
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.Profile_Slab
-```
-
-````{py:attribute} z
-:canonical: stonedfenicsx.config.phase_db.Profile_Slab.z
-:type: dataclasses.InitVar[numpy.typing.NDArray[numpy.float32]]
-:value: >
-   None
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.Profile_Slab.z
-```
-
-````
-
-````{py:attribute} a
-:canonical: stonedfenicsx.config.phase_db.Profile_Slab.a
-:type: numpy.float32
-:value: >
-   None
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.Profile_Slab.a
-```
-
-````
-
-````{py:attribute} k
-:canonical: stonedfenicsx.config.phase_db.Profile_Slab.k
-:type: float
-:value: >
-   3.1
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.Profile_Slab.k
-```
-
-````
-
-````{py:attribute} Tp
-:canonical: stonedfenicsx.config.phase_db.Profile_Slab.Tp
-:type: float
-:value: >
-   None
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.Profile_Slab.Tp
-```
-
-````
-
-````{py:attribute} kappa
-:canonical: stonedfenicsx.config.phase_db.Profile_Slab.kappa
-:type: float
-:value: >
-   1e-07
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.Profile_Slab.kappa
-```
-
-````
-
-````{py:attribute} crd
-:canonical: stonedfenicsx.config.phase_db.Profile_Slab.crd
-:type: numpy.typing.NDArray[numpy.float32]
-:value: >
-   'field(...)'
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.Profile_Slab.crd
-```
-
-````
-
-````{py:attribute} temp_slab
-:canonical: stonedfenicsx.config.phase_db.Profile_Slab.temp_slab
-:type: numpy.typing.NDArray[numpy.float32]
-:value: >
-   'field(...)'
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.Profile_Slab.temp_slab
-```
-
-````
-
-````{py:attribute} dip
-:canonical: stonedfenicsx.config.phase_db.Profile_Slab.dip
-:type: numpy.typing.NDArray[numpy.float32]
-:value: >
-   'field(...)'
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.Profile_Slab.dip
-```
-
-````
-
-````{py:attribute} length
-:canonical: stonedfenicsx.config.phase_db.Profile_Slab.length
-:type: numpy.typing.NDArray[numpy.float32]
-:value: >
-   'field(...)'
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.Profile_Slab.length
-```
-
-````
-
-````{py:method} __post_init__(z: numpy.typing.NDArray[numpy.float32]) -> None
-:canonical: stonedfenicsx.config.phase_db.Profile_Slab.__post_init__
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.Profile_Slab.__post_init__
-```
-
-````
-
-````{py:method} cumulative_distance(x: numpy.typing.NDArray[numpy.float32], z: numpy.typing.NDArray[numpy.float32]) -> tuple[numpy.typing.NDArray[numpy.float32], numpy.typing.NDArray[numpy.float32], numpy.typing.NDArray[numpy.float32]]
-:canonical: stonedfenicsx.config.phase_db.Profile_Slab.cumulative_distance
-:staticmethod:
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.Profile_Slab.cumulative_distance
-```
-
-````
-
-````{py:method} compute_dip(x: numpy.typing.NDArray[numpy.float32], z: numpy.typing.NDArray[numpy.float32]) -> numpy.typing.NDArray[numpy.float32]
-:canonical: stonedfenicsx.config.phase_db.Profile_Slab.compute_dip
-:staticmethod:
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.Profile_Slab.compute_dip
-```
-
-````
-
-````{py:method} compute_slab_surface_temperature(gamma: float, vel: float, age: float, bq: float) -> None
-:canonical: stonedfenicsx.config.phase_db.Profile_Slab.compute_slab_surface_temperature
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.Profile_Slab.compute_slab_surface_temperature
-```
-
-````
-
-`````
-
-````{py:function} convert_velocity(vel: numpy.typing.NDArray[numpy.float64]) -> numpy.typing.NDArray[numpy.float64]
-:canonical: stonedfenicsx.config.phase_db.convert_velocity
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.convert_velocity
-```
-````
-
-````{py:function} convert_age(age: float) -> float
-:canonical: stonedfenicsx.config.phase_db.convert_age
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.convert_age
-```
-````
-
-````{py:function} shear_heating_slab_interface()
-:canonical: stonedfenicsx.config.phase_db.shear_heating_slab_interface
-
-```{autodoc2-docstring} stonedfenicsx.config.phase_db.shear_heating_slab_interface
+:parser: napoleon_parser
 ```
 ````

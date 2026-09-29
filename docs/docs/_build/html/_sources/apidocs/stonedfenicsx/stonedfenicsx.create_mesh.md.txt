@@ -4,6 +4,7 @@
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh
+:parser: napoleon_parser
 :allowtitles:
 ```
 

@@ -158,26 +158,36 @@
 <span id="stonedfenicsx-config-thermal-boundary-bc-set"></span><h1><a class="reference internal" href="#module-stonedfenicsx.config.thermal_boundary_bc_set" title="stonedfenicsx.config.thermal_boundary_bc_set"><code class="xref py py-mod docutils literal notranslate"><span class="pre">stonedfenicsx.config.thermal_boundary_bc_set</span></code></a><a class="headerlink" href="#module-stonedfenicsx.config.thermal_boundary_bc_set" title="Link to this heading">¶</a></h1>
 <p>This module is adapted from FieldStone (Van Zelst et al., 2023). It has been refactored to match the current code structure
 and extended to handle temperature-dependent material properties via a fixed-point (Picard) iteration.</p>
-<p>Context (from reviewer feedback in Van Zelst et al., revision):
-“Eqns 13–16 define the solution procedure for a linear problem (i.e., when ρ, Cp and k are not functions of T).
-You stated earlier you incorporate the nonlinear parameters into this 1D model and use them as boundary conditions.
-Please correct the description of the method used to obtain the 1D temperature profile for the non-linear case.”
-‘’ https://egusphere.copernicus.org/preprints/2022/egusphere-2022-768/egusphere-2022-768-AR1.pdf’’</p>
-<p>Non-linear solution procedure:
-When ρ(T,P), Cp(T) and/or k(T,P) depend on temperature (and possibly pressure), the 1D temperature profile is obtained
-through a fixed-point iteration at each time step. In practice:
-1) initialize material properties from the previous time step (or an initial guess);
-2) solve the Crank–Nicolson discretization for T using the current material properties;
-3) update material properties from the new temperature estimate;
-4) repeat steps (2)–(3) until convergence.</p>
-<p>Time stepping and stability:
-With temperature-dependent coefficients, the Crank–Nicolson scheme is no longer unconditionally stable for arbitrarily
+<dl class="simple">
+<dt>Context (from reviewer feedback in Van Zelst et al., revision):</dt><dd><dl class="simple">
+<dt>“Eqns 13–16 define the solution procedure for a linear problem (i.e., when ρ, Cp and k are not functions of T).</dt><dd><p>You stated earlier you incorporate the nonlinear parameters into this 1D model and use them as boundary conditions.
+Please correct the description of the method used to obtain the 1D temperature profile for the non-linear case.”</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>‘’ <a class="reference external" href="https://egusphere.copernicus.org/preprints/2022/egusphere-2022-768/egusphere-2022-768-AR1.pdf">https://egusphere.copernicus.org/preprints/2022/egusphere-2022-768/egusphere-2022-768-AR1.pdf</a>’’</p>
+<dl>
+<dt>Non-linear solution procedure:</dt><dd><p>When ρ(T,P), Cp(T) and/or k(T,P) depend on temperature (and possibly pressure), the 1D temperature profile is obtained
+through a fixed-point iteration at each time step. In practice:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>initialize material properties from the previous time step (or an initial guess);</p></li>
+<li><p>solve the Crank–Nicolson discretization for T using the current material properties;</p></li>
+<li><p>update material properties from the new temperature estimate;</p></li>
+<li><p>repeat steps (2)–(3) until convergence.</p></li>
+</ol>
+</div></blockquote>
+</dd>
+<dt>Time stepping and stability:</dt><dd><p>With temperature-dependent coefficients, the Crank–Nicolson scheme is no longer unconditionally stable for arbitrarily
 large time steps. Stability is ensured by using sufficiently small time steps. For the parameter ranges targeted here,
 the fixed-point iteration typically converges in 2–3 iterations per time step, and becomes robust after the first step.</p>
-<p>Convergence criterion:
-Convergence is monitored using the relative change in temperature between successive iterations at the same time step,
+</dd>
+<dt>Convergence criterion:</dt><dd><p>Convergence is monitored using the relative change in temperature between successive iterations at the same time step,
 which is a commonly used stopping criterion in kinematic thermal models. The best alternative is computing the effective
 energy conservation residuum, but the amount of work required, is not exactly paying off in accuracy.</p>
+</dd>
+</dl>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
 <section id="functions">
@@ -193,13 +203,7 @@ energy conservation residuum, but the amount of work required, is not exactly pa
 <tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.config.thermal_boundary_bc_set.compute_cp_k_rho" title="stonedfenicsx.config.thermal_boundary_bc_set.compute_cp_k_rho"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_cp_k_rho</span></code></a></p></td>
 <td><p>Compute the thermal material properties
 Function that compute all the three material properties that are required for solving the energy equation.
-Input:
-ph : phase vector
-pdb : Material phase structure
-temp  : temperature vector
-pres   : pressure vector
-Returns:
-cp,rho,k =&gt; vector containing density, heat capacity, and conductivities that are computed using pressure and temperature vector</p></td>
+Input:</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.config.thermal_boundary_bc_set.build_coefficient_matrix" title="stonedfenicsx.config.thermal_boundary_bc_set.build_coefficient_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_coefficient_matrix</span></code></a></p></td>
 <td><p>Assemble the Crank-Nicolson finite-difference system for one predictor or corrector step.</p></td>
@@ -253,10 +257,15 @@ cp,rho,k =&gt; vector containing density, heat capacity, and conductivities that
 <dt class="sig sig-object py" id="stonedfenicsx.config.thermal_boundary_bc_set.save_data_set">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.thermal_boundary_bc_set.</span></span><span class="sig-name descname"><span class="pre">save_data_set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">h5py.File</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/thermal_boundary_bc_set.html#save_data_set"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.thermal_boundary_bc_set.save_data_set" title="Link to this definition">¶</a></dt>
 <dd><p>Write a dataset to an open HDF5 file, overwriting if it already exists.</p>
-<p>Args:
-f (h5py.File): Open HDF5 file handle (must be writable).
-buf (any): Data to write — any type accepted by h5py.create_dataset.
-name (str): Full HDF5 path for the dataset (e.g. ‘left_bc/temp_save’).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>f</strong> (<em>h5py.File</em>) – Open HDF5 file handle (must be writable).</p></li>
+<li><p><strong>buf</strong> (<em>any</em>) – Data to write — any type accepted by h5py.create_dataset.</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – Full HDF5 path for the dataset (e.g. ‘left_bc/temp_save’).</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -265,32 +274,35 @@ name (str): Full HDF5 path for the dataset (e.g. ‘left_bc/temp_save’).</p>
 <dd><p>Compute a 1D lithostatic pressure profile with pressure-dependent properties.</p>
 <p>The lithostatic pressure is obtained by vertically integrating the weight of the
 overburden:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>dP/dz = rho(P, T, phase) * g_z
-</pre></div>
-</div>
+<blockquote>
+<div><p>dP/dz = rho(P, T, phase) * g_z</p>
+</div></blockquote>
 <p>Because density (and possibly other properties) may depend on pressure, the
 profile is computed with a fixed-point (Picard) nonlinear iteration: starting
 from an initial pressure guess, evaluate rho(P, T), integrate to update P(z),
 and repeat until convergence. The relative tollerance is hardcoded to be 1e-6</p>
-<p class="rubric" id="id1">Parameters</p>
-<p>nz : int
-Number of grid points in the vertical direction.
-ph : NDArray[np.int32]
-Phase identifier array along the 1D column (length <code class="docutils literal notranslate"><span class="pre">nz</span></code>). Used to select
-material laws/properties from <code class="docutils literal notranslate"><span class="pre">pdb</span></code>.
-g : float
-Vertical component of gravitational acceleration (m/s^2). Use sign
-consistently with your z-axis convention.
-T : NDArray[np.float64]
-Temperature profile along the column (K), length <code class="docutils literal notranslate"><span class="pre">nz</span></code>.
-pdb : object
-Material database/dataset providing density and other thermodynamic/elastic
-properties as functions of phase, temperature and pressure.</p>
 <p>NB: all parameters are already in dimensionless (scaled) units when called from the solver.</p>
-<p class="rubric" id="id2">Returns</p>
-<p>lit_p : NDArray[np.float64]
-Lithostatic pressure profile (Pa), length <code class="docutils literal notranslate"><span class="pre">nz</span></code>.</p>
-<p class="rubric" id="id3">Notes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nz</strong> (<em>int</em>) – Number of grid points in the vertical direction.</p></li>
+<li><p><strong>ph</strong> (<em>NDArray</em><em>[</em><em>np.int32</em><em>]</em>) – Phase identifier array along the 1D column (length <code class="docutils literal notranslate"><span class="pre">nz</span></code>). Used to select
+material laws/properties from <code class="docutils literal notranslate"><span class="pre">pdb</span></code>.</p></li>
+<li><p><strong>g</strong> (<em>float</em>) – Vertical component of gravitational acceleration (m/s^2). Use sign
+consistently with your z-axis convention.</p></li>
+<li><p><strong>T</strong> (<em>NDArray</em><em>[</em><em>np.float64</em><em>]</em>) – Temperature profile along the column (K), length <code class="docutils literal notranslate"><span class="pre">nz</span></code>.</p></li>
+<li><p><strong>pdb</strong> (<em>object</em>) – Material database/dataset providing density and other thermodynamic/elastic
+properties as functions of phase, temperature and pressure.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Lithostatic pressure profile (Pa), length <code class="docutils literal notranslate"><span class="pre">nz</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>NDArray[np.float64]</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
 <ul class="simple">
 <li><p>The boundary condition is typically <code class="docutils literal notranslate"><span class="pre">P(z_surface)</span> <span class="pre">=</span> <span class="pre">0</span></code> (or atmospheric),
 and pressure increases downward.</p></li>
@@ -305,13 +317,18 @@ e.g. <code class="docutils literal notranslate"><span class="pre">max(|P_new</sp
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.thermal_boundary_bc_set.</span></span><span class="sig-name descname"><span class="pre">compute_cp_k_rho</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.int32</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><span class="pre">stonedfenicsx.config.phase_db.PhaseDataBase</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pres</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/thermal_boundary_bc_set.html#compute_cp_k_rho"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.thermal_boundary_bc_set.compute_cp_k_rho" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the thermal material properties
 Function that compute all the three material properties that are required for solving the energy equation.
-Input:
-ph : phase vector
+Input:</p>
+<blockquote>
+<div><p>ph : phase vector
 pdb : Material phase structure
 temp  : temperature vector
-pres   : pressure vector
-Returns:
-cp,rho,k =&gt; vector containing density, heat capacity, and conductivities that are computed using pressure and temperature vector</p>
+pres   : pressure vector</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>cp,rho,k =&gt; vector containing density, heat capacity, and conductivities that are computed using pressure and temperature vector</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -326,24 +343,32 @@ of guess and predicted temperatures (corrector, step=1).</p>
 Interior nodes follow the standard CN discretization including a mass-matrix
 correction term (b_vct) that accounts for the change in ρCp between time levels,
 and a radiogenic heat source term.</p>
-<p>Args:
-pdb (PhaseDataBase): Phase material database (jitclass).
-ph (NDArray[np.int32]): Phase index per node, shape (nz,). 0-based.
-temp_old (NDArray[np.float64]): Temperature at the previous time level, shape (nz,).
-temp_guess (NDArray[np.float64]): Current Picard iterate (best guess for T^{n+1}), shape (nz,).
-temp_pr (NDArray[np.float64]): Predictor temperature (output of step=0 solve), shape (nz,).
-Only used when step=1.
-step (int): 0 for predictor pass, 1 for corrector pass.
-lit_p (NDArray[np.float64]): Lithostatic pressure profile, shape (nz,).
-temp_min (float): Dirichlet temperature at the top boundary (node 0).
-temp_max (float): Dirichlet temperature at the bottom boundary (node nz-1).
-nz (int): Number of grid nodes.
-dt (float): Time step (dimensionless).
-dz_m (float): Uniform node spacing (dimensionless).</p>
-<p>Returns:
-tuple[NDArray[np.float64], NDArray[np.float64]]:
-mass_matrix — tridiagonal system matrix, shape (nz, nz).
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pdb</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – Phase material database (jitclass).</p></li>
+<li><p><strong>ph</strong> (<em>NDArray</em><em>[</em><em>np.int32</em><em>]</em>) – Phase index per node, shape (nz,). 0-based.</p></li>
+<li><p><strong>temp_old</strong> (<em>NDArray</em><em>[</em><em>np.float64</em><em>]</em>) – Temperature at the previous time level, shape (nz,).</p></li>
+<li><p><strong>temp_guess</strong> (<em>NDArray</em><em>[</em><em>np.float64</em><em>]</em>) – Current Picard iterate (best guess for T^{n+1}), shape (nz,).</p></li>
+<li><p><strong>temp_pr</strong> (<em>NDArray</em><em>[</em><em>np.float64</em><em>]</em>) – Predictor temperature (output of step=0 solve), shape (nz,).
+Only used when step=1.</p></li>
+<li><p><strong>step</strong> (<em>int</em>) – 0 for predictor pass, 1 for corrector pass.</p></li>
+<li><p><strong>lit_p</strong> (<em>NDArray</em><em>[</em><em>np.float64</em><em>]</em>) – Lithostatic pressure profile, shape (nz,).</p></li>
+<li><p><strong>temp_min</strong> (<em>float</em>) – Dirichlet temperature at the top boundary (node 0).</p></li>
+<li><p><strong>temp_max</strong> (<em>float</em>) – Dirichlet temperature at the bottom boundary (node nz-1).</p></li>
+<li><p><strong>nz</strong> (<em>int</em>) – Number of grid nodes.</p></li>
+<li><p><strong>dt</strong> (<em>float</em>) – Time step (dimensionless).</p></li>
+<li><p><strong>dz_m</strong> (<em>float</em>) – Uniform node spacing (dimensionless).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>mass_matrix — tridiagonal system matrix, shape (nz, nz).
 d_vct       — right-hand side vector, shape (nz,).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[NDArray[np.float64], NDArray[np.float64]]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -356,12 +381,21 @@ boundary it contains upper crust, optionally lower crust, lithospheric
 mantle, and asthenospheric wedge, in order of increasing depth.</p>
 <p>The returned indices are 0-based (i.e. dict_surf values minus 1) to match
 the PhaseDataBase array indexing convention.</p>
-<p>Args:
-g_input (GeomInput): Geometric input parameters (depths in dimensionless units).
-z (NDArray[np.float64]): Depth coordinate vector, shape (nz,), increasing downward.
-left_right (bool): True → left (subducting) boundary; False → right (overriding) boundary.</p>
-<p>Returns:
-NDArray[np.int32]: Phase index per node, shape (nz,), 0-based.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>g_input</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><em>GeomInput</em></a>) – Geometric input parameters (depths in dimensionless units).</p></li>
+<li><p><strong>z</strong> (<em>NDArray</em><em>[</em><em>np.float64</em><em>]</em>) – Depth coordinate vector, shape (nz,), increasing downward.</p></li>
+<li><p><strong>left_right</strong> (<em>bool</em>) – True → left (subducting) boundary; False → right (overriding) boundary.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Phase index per node, shape (nz,), 0-based.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>NDArray[np.int32]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -370,18 +404,27 @@ NDArray[np.int32]: Phase index per node, shape (nz,), 0-based.</p>
 <dd><p>Compute the left boundary temperature using the half-space cooling analytical solution.</p>
 <p>Used for the Van Keken benchmark suite where constant material properties allow
 the exact erf solution:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>T(z, t) = T_top + (T_max - T_top) * erf( z / (2 * sqrt(κ * t)) )
-</pre></div>
-</div>
+<blockquote>
+<div><p>T(z, t) = T_top + (T_max - T_top) * erf( z / (2 * sqrt(κ * t)) )</p>
+</div></blockquote>
 <p>where κ = k / (ρ Cp) is the thermal diffusivity computed from the fixed benchmark
 values stored in ctrl_tbc (not from the phase database).</p>
 <p>Writes the result directly into ctrl_tbc.temperature_1d and ctrl_tbc.z.</p>
-<p>Args:
-ctrl_tbc (CtrlTemperatureBC): Thermal BC control object. Must have scalar k, rho, cp,
-slab_age, temp_top, temp_max set (benchmark values).
-z (NDArray[np.float64]): Depth coordinate vector, shape (nz,), positive downward.</p>
-<p>Returns:
-CtrlTemperatureBC: Updated ctrl_tbc with temperature_1d and z filled.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctrl_tbc</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.CtrlTemperatureBC" title="stonedfenicsx.config.numerical_control.CtrlTemperatureBC"><em>CtrlTemperatureBC</em></a>) – Thermal BC control object. Must have scalar k, rho, cp,
+slab_age, temp_top, temp_max set (benchmark values).</p></li>
+<li><p><strong>z</strong> (<em>NDArray</em><em>[</em><em>np.float64</em><em>]</em>) – Depth coordinate vector, shape (nz,), positive downward.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Updated ctrl_tbc with temperature_1d and z filled.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.CtrlTemperatureBC" title="stonedfenicsx.config.numerical_control.CtrlTemperatureBC">CtrlTemperatureBC</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -392,14 +435,22 @@ CtrlTemperatureBC: Updated ctrl_tbc with temperature_1d and z filled.</p>
 ctrl_tbc.dz, so that np.diff(z).mean() == ctrl_tbc.dz exactly.
 For the right boundary the grid spans [0, g_input.lab_d] (lithosphere-
 asthenosphere boundary depth) with nz nodes.</p>
-<p>Args:
-ctrl_tbc (CtrlTemperatureBC): Thermal BC control (provides nz, dz).
-g_input (GeomInput): Geometric input (provides lab_d for right BC).
-left_right (bool): True → left (subducting) boundary; False → right (overriding).</p>
-<p>Returns:
-tuple[NDArray[np.int32], NDArray[np.float64]]:
-ph — 0-based phase index per node, shape (nz,).
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctrl_tbc</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.CtrlTemperatureBC" title="stonedfenicsx.config.numerical_control.CtrlTemperatureBC"><em>CtrlTemperatureBC</em></a>) – Thermal BC control (provides nz, dz).</p></li>
+<li><p><strong>g_input</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><em>GeomInput</em></a>) – Geometric input (provides lab_d for right BC).</p></li>
+<li><p><strong>left_right</strong> (<em>bool</em>) – True → left (subducting) boundary; False → right (overriding).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>ph — 0-based phase index per node, shape (nz,).
 z  — depth coordinate vector, shape (nz,), positive downward.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[NDArray[np.int32], NDArray[np.float64]]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -414,31 +465,43 @@ change in temperature falls below 1e-6 or 10 iterations are reached.</p>
 or a linear geotherm from temp_top to temp_max over lab_d (continental right BC).</p>
 <p>The loop runs while t[time-1] &lt; end_time AND time &lt; nt, where
 end_time = ctrl_tbc.end_time (left) or ctrl_tbc.right_age * 1.01 (right).</p>
-<p>Args:
-ctrl_tbc (CtrlTemperatureBC): Thermal BC control (nz, nt, dt, dz, temp_max,
-temp_top, end_time, right_age, right_boundary).
-g_input (GeomInput): Geometric input (lab_d for right BC initial condition).
-pdb (PhaseDataBase): Phase material database (jitclass).
-z (NDArray[np.float64]): Depth coordinate vector, shape (nz,).
-ph (NDArray[np.int32]): Phase index per node, shape (nz,). 0-based.
-g (float): Gravitational acceleration (dimensionless scaled).
-left_right (bool): True → left (subducting) boundary; False → right (overriding).</p>
-<p>Raises:
-ValueError: If a NaN is detected in the Picard residual.</p>
-<p>Returns:
-tuple[NDArray[np.float64], NDArray[np.float64]]:
-t           — time vector, shape (nt,). Entries beyond the last completed
-step remain zero.
-temperature — temperature field, shape (nt, nz). Row 0 is the initial
-condition; rows beyond the last step are zero.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctrl_tbc</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.CtrlTemperatureBC" title="stonedfenicsx.config.numerical_control.CtrlTemperatureBC"><em>CtrlTemperatureBC</em></a>) – Thermal BC control (nz, nt, dt, dz, temp_max,
+temp_top, end_time, right_age, right_boundary).</p></li>
+<li><p><strong>g_input</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><em>GeomInput</em></a>) – Geometric input (lab_d for right BC initial condition).</p></li>
+<li><p><strong>pdb</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – Phase material database (jitclass).</p></li>
+<li><p><strong>z</strong> (<em>NDArray</em><em>[</em><em>np.float64</em><em>]</em>) – Depth coordinate vector, shape (nz,).</p></li>
+<li><p><strong>ph</strong> (<em>NDArray</em><em>[</em><em>np.int32</em><em>]</em>) – Phase index per node, shape (nz,). 0-based.</p></li>
+<li><p><strong>g</strong> (<em>float</em>) – Gravitational acceleration (dimensionless scaled).</p></li>
+<li><p><strong>left_right</strong> (<em>bool</em>) – True → left (subducting) boundary; False → right (overriding).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If a NaN is detected in the Picard residual.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>t           — time vector, shape (nt,). Entries beyond the last completed</dt><dd><p>step remain zero.</p>
+</dd>
+<dt>temperature — temperature field, shape (nt, nz). Row 0 is the initial</dt><dd><p>condition; rows beyond the last step are zero.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[NDArray[np.float64], NDArray[np.float64]]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.config.thermal_boundary_bc_set.compute_thermal_boundary">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.thermal_boundary_bc_set.</span></span><span class="sig-name descname"><span class="pre">compute_thermal_boundary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctrl_tbc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.CtrlTemperatureBC" title="stonedfenicsx.config.numerical_control.CtrlTemperatureBC"><span class="pre">stonedfenicsx.config.numerical_control.CtrlTemperatureBC</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.NumericalControls" title="stonedfenicsx.config.numerical_control.NumericalControls"><span class="pre">stonedfenicsx.config.numerical_control.NumericalControls</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ioctrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls" title="stonedfenicsx.config.numerical_control.IOControls"><span class="pre">stonedfenicsx.config.numerical_control.IOControls</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><span class="pre">stonedfenicsx.config.scal.Scal</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><span class="pre">stonedfenicsx.config.phase_db.PhaseDataBase</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">g_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">left_right</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/thermal_boundary_bc_set.html#compute_thermal_boundary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.thermal_boundary_bc_set.compute_thermal_boundary" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the 1D thermal boundary condition and optionally cache the result to HDF5.</p>
-<p>Orchestrates the full boundary computation:</p>
-<ol class="arabic simple">
+<dl class="simple">
+<dt>Orchestrates the full boundary computation:</dt><dd><ol class="arabic simple">
 <li><p>Build the depth grid and phase array (initialise_geometry_1d).</p></li>
 <li><p>If van_keken benchmark mode and left BC: use the analytical erf solution.</p></li>
 <li><p>Otherwise: run the Crank-Nicolson + Picard time-stepping solver.</p></li>
@@ -446,26 +509,33 @@ condition; rows beyond the last step are zero.</p>
 <li><p>If save_data=True and MPI rank==0 and no race condition: write the full
 time-temperature history and material property arrays to the HDF5 cache.</p></li>
 </ol>
-<p>The HDF5 groups are ‘left_bc’ and ‘right_bc’. Within each group:</p>
-<ul class="simple">
+</dd>
+<dt>The HDF5 groups are ‘left_bc’ and ‘right_bc’. Within each group:</dt><dd><ul class="simple">
 <li><p>temp_save, time_2d          : 2D fields for post-processing (physical units)</p></li>
 <li><p>phases                       : unique phase ids present in the column</p></li>
-<li><p>phase_properties_<i>/…     : per-phase thermal coefficient arrays</p></li>
+<li><p>phase_properties_&lt;i&gt;/…     : per-phase thermal coefficient arrays</p></li>
 <li><p>data_2_load/temperature_1d   : profile at target age (left BC)</p></li>
 <li><p>data_2_load/temp_1d_right    : profile at target age (right BC)</p></li>
 <li><p>data_2_load/temperature      : full time-temperature array (scaled)</p></li>
 <li><p>data_2_load/time_v           : time vector (scaled)</p></li>
 <li><p>data_2_load/z                : depth vector (scaled)</p></li>
 </ul>
-<p>Args:
-ctrl_tbc (CtrlTemperatureBC): Thermal BC control (already scaled).
-ctrl (NumericalControls): Numerical controls (provides g).
-ioctrl (IOControls): I/O controls (provides cache path).
-sc (Scal): Scaling object (used for unit conversion when saving).
-pdb (PhaseDataBase): Phase material database (jitclass, already scaled).
-g_input (GeomInput): Geometric input (already scaled).
-save_data (bool): Whether to write the result to the HDF5 cache.
-left_right (bool): True → left (subducting) boundary; False → right (overriding).</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctrl_tbc</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.CtrlTemperatureBC" title="stonedfenicsx.config.numerical_control.CtrlTemperatureBC"><em>CtrlTemperatureBC</em></a>) – Thermal BC control (already scaled).</p></li>
+<li><p><strong>ctrl</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.NumericalControls" title="stonedfenicsx.config.numerical_control.NumericalControls"><em>NumericalControls</em></a>) – Numerical controls (provides g).</p></li>
+<li><p><strong>ioctrl</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls" title="stonedfenicsx.config.numerical_control.IOControls"><em>IOControls</em></a>) – I/O controls (provides cache path).</p></li>
+<li><p><strong>sc</strong> (<a class="reference internal" href="stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><em>Scal</em></a>) – Scaling object (used for unit conversion when saving).</p></li>
+<li><p><strong>pdb</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – Phase material database (jitclass, already scaled).</p></li>
+<li><p><strong>g_input</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><em>GeomInput</em></a>) – Geometric input (already scaled).</p></li>
+<li><p><strong>save_data</strong> (<em>bool</em>) – Whether to write the result to the HDF5 cache.</p></li>
+<li><p><strong>left_right</strong> (<em>bool</em>) – True → left (subducting) boundary; False → right (overriding).</p></li>
+</ul>
+</dd>
+</dl>
 <p>Modifies ctrl_tbc in place: sets temperature_1d / temp_1d_right and z / z_right.</p>
 </dd></dl>
 
@@ -477,14 +547,19 @@ left_right (bool): True → left (subducting) boundary; False → right (overrid
 the result to the HDF5 cache. Otherwise attempts to load from the existing cache
 via read_temporary_file (which itself falls back to recomputation if the file is
 absent or the stored material properties do not match).</p>
-<p>Args:
-ctrl_tbc (CtrlTemperatureBC): Thermal BC control (already scaled).
-ctrl (NumericalControls): Numerical controls.
-ioctrl (IOControls): I/O controls (cache path).
-sc (Scal): Scaling object.
-pdb (PhaseDataBase): Phase material database (jitclass, already scaled).
-g_input (GeomInput): Geometric input (already scaled).
-left_right (bool): True → left (subducting) boundary; False → right (overriding).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctrl_tbc</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.CtrlTemperatureBC" title="stonedfenicsx.config.numerical_control.CtrlTemperatureBC"><em>CtrlTemperatureBC</em></a>) – Thermal BC control (already scaled).</p></li>
+<li><p><strong>ctrl</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.NumericalControls" title="stonedfenicsx.config.numerical_control.NumericalControls"><em>NumericalControls</em></a>) – Numerical controls.</p></li>
+<li><p><strong>ioctrl</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls" title="stonedfenicsx.config.numerical_control.IOControls"><em>IOControls</em></a>) – I/O controls (cache path).</p></li>
+<li><p><strong>sc</strong> (<a class="reference internal" href="stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><em>Scal</em></a>) – Scaling object.</p></li>
+<li><p><strong>pdb</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – Phase material database (jitclass, already scaled).</p></li>
+<li><p><strong>g_input</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><em>GeomInput</em></a>) – Geometric input (already scaled).</p></li>
+<li><p><strong>left_right</strong> (<em>bool</em>) – True → left (subducting) boundary; False → right (overriding).</p></li>
+</ul>
+</dd>
+</dl>
 <p>Modifies ctrl_tbc in place: sets temperature_1d / temp_1d_right and z / z_right.</p>
 </dd></dl>
 
@@ -495,13 +570,18 @@ left_right (bool): True → left (subducting) boundary; False → right (overrid
 <p>Public entry point for the thermal boundary setup. Calls configure_thermal_bc
 twice — first for the left (subducting slab) boundary, then for the right
 (overriding plate) boundary — each of which either recomputes or loads from cache.</p>
-<p>Args:
-ctrl_tbc (CtrlTemperatureBC): Thermal BC control (already scaled).
-ctrl (NumericalControls): Numerical controls.
-ioctrl (IOControls): I/O controls (cache path).
-sc (Scal): Scaling object.
-pdb (PhaseDataBase): Phase material database (jitclass, already scaled).
-g_input (GeomInput): Geometric input (already scaled).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctrl_tbc</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.CtrlTemperatureBC" title="stonedfenicsx.config.numerical_control.CtrlTemperatureBC"><em>CtrlTemperatureBC</em></a>) – Thermal BC control (already scaled).</p></li>
+<li><p><strong>ctrl</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.NumericalControls" title="stonedfenicsx.config.numerical_control.NumericalControls"><em>NumericalControls</em></a>) – Numerical controls.</p></li>
+<li><p><strong>ioctrl</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls" title="stonedfenicsx.config.numerical_control.IOControls"><em>IOControls</em></a>) – I/O controls (cache path).</p></li>
+<li><p><strong>sc</strong> (<a class="reference internal" href="stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><em>Scal</em></a>) – Scaling object.</p></li>
+<li><p><strong>pdb</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – Phase material database (jitclass, already scaled).</p></li>
+<li><p><strong>g_input</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><em>GeomInput</em></a>) – Geometric input (already scaled).</p></li>
+</ul>
+</dd>
+</dl>
 <p>Modifies ctrl_tbc in place: temperature_1d (left) and temp_1d_right (right).</p>
 </dd></dl>
 

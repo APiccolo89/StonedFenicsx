@@ -162,43 +162,39 @@
 <h3>Functions<a class="headerlink" href="#functions" title="Link to this heading">¶</a></h3>
 <table class="autosummary longtable docutils align-left">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.utils.check_race_condition" title="stonedfenicsx.utils.check_race_condition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_race_condition</span></code></a></p></td>
-<td><p>Check whether the temporary  cache file is held open by another process.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.utils.timing_function" title="stonedfenicsx.utils.timing_function"><code class="xref py py-obj docutils literal notranslate"><span class="pre">timing_function</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.utils.timing_function" title="stonedfenicsx.utils.timing_function"><code class="xref py py-obj docutils literal notranslate"><span class="pre">timing_function</span></code></a></p></td>
 <td><p>Extract the execution time of the function.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.utils.time_the_time" title="stonedfenicsx.utils.time_the_time"><code class="xref py py-obj docutils literal notranslate"><span class="pre">time_the_time</span></code></a></p></td>
-<td><p><em>summary</em></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.utils.time_the_time" title="stonedfenicsx.utils.time_the_time"><code class="xref py py-obj docutils literal notranslate"><span class="pre">time_the_time</span></code></a></p></td>
+<td><p>_summary_</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.utils.print_ph" title="stonedfenicsx.utils.print_ph"><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_ph</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.utils.print_ph" title="stonedfenicsx.utils.print_ph"><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_ph</span></code></a></p></td>
 <td><p>function to print information. Print information only in one processor.
-Args:
-string (str): string to print</p></td>
+:param string: string to print
+:type string: str</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.utils.interpolate_from_sub_to_main" title="stonedfenicsx.utils.interpolate_from_sub_to_main"><code class="xref py py-obj docutils literal notranslate"><span class="pre">interpolate_from_sub_to_main</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.utils.interpolate_from_sub_to_main" title="stonedfenicsx.utils.interpolate_from_sub_to_main"><code class="xref py py-obj docutils literal notranslate"><span class="pre">interpolate_from_sub_to_main</span></code></a></p></td>
 <td><p>Interpolate the solution from the subdomain to the main domain.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.utils.gather_vector" title="stonedfenicsx.utils.gather_vector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gather_vector</span></code></a></p></td>
-<td><p><em>summary</em></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.utils.gather_vector" title="stonedfenicsx.utils.gather_vector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gather_vector</span></code></a></p></td>
+<td><p>Fenicsx-tools, gather the vector from all the processor</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.utils.gather_coordinates" title="stonedfenicsx.utils.gather_coordinates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gather_coordinates</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.utils.gather_coordinates" title="stonedfenicsx.utils.gather_coordinates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gather_coordinates</span></code></a></p></td>
 <td><p>Gather DOF coordinates for a dolfinx FunctionSpace V to rank 0.
 Returns an (ndofs_global, gdim) array on rank 0, else None.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.utils.compute_strain_rate" title="stonedfenicsx.utils.compute_strain_rate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_strain_rate</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.utils.compute_strain_rate" title="stonedfenicsx.utils.compute_strain_rate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_strain_rate</span></code></a></p></td>
 <td><p>Compute strain rate from the velocity field u.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.utils.compute_eii" title="stonedfenicsx.utils.compute_eii"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_eii</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.utils.compute_eii" title="stonedfenicsx.utils.compute_eii"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_eii</span></code></a></p></td>
 <td><p>Compute the second invariant of the strain rate from the strain rate field.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.utils.evaluate_material_property" title="stonedfenicsx.utils.evaluate_material_property"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate_material_property</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.utils.evaluate_material_property" title="stonedfenicsx.utils.evaluate_material_property"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate_material_property</span></code></a></p></td>
 <td><p>Transform an ufl expression into a function
-Args:
-expression (ufl.Expression): ufl expression
-function_space (dolfinx.fem.FunctionSpace): the function space
-Returns:
-target_function: The final function</p></td>
+:param expression: ufl expression
+:type expression: ufl.Expression
+:param function_space: the function space
+:type function_space: dolfinx.fem.FunctionSpace</p></td>
 </tr>
 </tbody>
 </table>
@@ -222,67 +218,80 @@ target_function: The final function</p></td>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="stonedfenicsx.utils.check_race_condition">
-<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.utils.</span></span><span class="sig-name descname"><span class="pre">check_race_condition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ioctrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls" title="stonedfenicsx.config.numerical_control.IOControls"><span class="pre">stonedfenicsx.config.numerical_control.IOControls</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/utils.html#check_race_condition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.utils.check_race_condition" title="Link to this definition">¶</a></dt>
-<dd><p>Check whether the temporary  cache file is held open by another process.</p>
-<p>Iterates over all running processes via psutil. Returns True if any process
-has the cache file open, False otherwise. Processes that have died or are
-inaccessible between iteration and inspection are silently skipped.</p>
-<p>Args:
-ioctrl (IOControls): I/O control object providing path_cached_information.</p>
-<p>Returns:
-bool: True if the file is currently open by another process, False if safe to write.</p>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.utils.timing_function">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.utils.</span></span><span class="sig-name descname"><span class="pre">timing_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fun</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Callable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">collections.abc.Callable</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/utils.html#timing_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.utils.timing_function" title="Link to this definition">¶</a></dt>
 <dd><p>Extract the execution time of the function.</p>
-<p>Args:
-fun (Callable): The function for which the time of execution needs to be evaluated</p>
-<p>Returns:
-(callable): the output of the given <strong>fun</strong>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fun</strong> (<em>Callable</em>) – The function for which the time of execution needs to be evaluated</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the output of the given <strong>fun</strong>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>(callable)</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.utils.time_the_time">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.utils.</span></span><span class="sig-name descname"><span class="pre">time_the_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delta_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/utils.html#time_the_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.utils.time_the_time" title="Link to this definition">¶</a></dt>
-<dd><p><em>summary</em></p>
-<p>Args:
-delta_time (float): delta time -&gt; time of execution</p>
-<p>Returns:
-global_dt(float): the effective time accross all the processors.</p>
+<dd><p>_summary_</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>delta_time</strong> (<em>float</em>) – delta time -&gt; time of execution</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the effective time accross all the processors.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>global_dt(float)</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.utils.print_ph">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.utils.</span></span><span class="sig-name descname"><span class="pre">print_ph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/utils.html#print_ph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.utils.print_ph" title="Link to this definition">¶</a></dt>
 <dd><p>function to print information. Print information only in one processor.
-Args:
-string (str): string to print</p>
-<p>Returns:
-int:</p>
+:param string: string to print
+:type string: str</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.utils.interpolate_from_sub_to_main">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.utils.</span></span><span class="sig-name descname"><span class="pre">interpolate_from_sub_to_main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">u_dest</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cells</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent2child</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/utils.html#interpolate_from_sub_to_main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.utils.interpolate_from_sub_to_main" title="Link to this definition">¶</a></dt>
 <dd><p>Interpolate the solution from the subdomain to the main domain.</p>
-<p>Parameters:
-u_slab (Function): The solution in the subdomain.
-u_global (Function): The solution in the main domain.
-M (Mesh): The mesh of the main domain.
-V (FunctionSpace): The function space of the main domain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>u_slab</strong> (<em>Function</em>) – The solution in the subdomain.</p></li>
+<li><p><strong>u_global</strong> (<em>Function</em>) – The solution in the main domain.</p></li>
+<li><p><strong>M</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.Mesh" title="stonedfenicsx.config.geometry.Mesh"><em>Mesh</em></a>) – The mesh of the main domain.</p></li>
+<li><p><strong>V</strong> (<em>FunctionSpace</em>) – The function space of the main domain.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.utils.gather_vector">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.utils.</span></span><span class="sig-name descname"><span class="pre">gather_vector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/utils.html#gather_vector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.utils.gather_vector" title="Link to this definition">¶</a></dt>
-<dd><p><em>summary</em></p>
-<p>Args:
-v (function): vector/function space to syncronise from local to global</p>
-<p>Returns:
-<em>type</em>:</p>
+<dd><p>Fenicsx-tools, gather the vector from all the processor</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> (<em>function</em>) – vector/function space to syncronise from local to global</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>_type_</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -296,31 +305,52 @@ Returns an (ndofs_global, gdim) array on rank 0, else None.</p>
 <dt class="sig sig-object py" id="stonedfenicsx.utils.compute_strain_rate">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.utils.</span></span><span class="sig-name descname"><span class="pre">compute_strain_rate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">u</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/utils.html#compute_strain_rate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.utils.compute_strain_rate" title="Link to this definition">¶</a></dt>
 <dd><p>Compute strain rate from the velocity field u.</p>
-<p>Args:
-u (function): velocity field
-Returns:
-e (function): strain rate field</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>u</strong> (<em>function</em>) – velocity field</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>strain rate field</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.RheologicalFlowLaw.e" title="stonedfenicsx.config.phase_db.RheologicalFlowLaw.e">e</a> (function)</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.utils.compute_eii">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.utils.</span></span><span class="sig-name descname"><span class="pre">compute_eii</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">e</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/utils.html#compute_eii"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.utils.compute_eii" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the second invariant of the strain rate from the strain rate field.</p>
-<p>Args:
-e (function): strain rate field</p>
-<p>Returns:
-e_ii (function): second invariant of the deviatoric strain rate</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>e</strong> (<em>function</em>) – strain rate field</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>second invariant of the deviatoric strain rate</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>e_ii (function)</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.utils.evaluate_material_property">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.utils.</span></span><span class="sig-name descname"><span class="pre">evaluate_material_property</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expression</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Expression</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_space</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.FunctionSpace</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dolfinx.fem.Function</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/utils.html#evaluate_material_property"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.utils.evaluate_material_property" title="Link to this definition">¶</a></dt>
 <dd><p>Transform an ufl expression into a function
-Args:
-expression (ufl.Expression): ufl expression
-function_space (dolfinx.fem.FunctionSpace): the function space
-Returns:
-target_function: The final function</p>
+:param expression: ufl expression
+:type expression: ufl.Expression
+:param function_space: the function space
+:type function_space: dolfinx.fem.FunctionSpace</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The final function</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>target_function</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -347,7 +377,6 @@ target_function: The final function</p>
 <li><a class="reference internal" href="#data">Data</a></li>
 <li><a class="reference internal" href="#api">API</a><ul>
 <li><a class="reference internal" href="#stonedfenicsx.utils._DEBUG_"><code class="docutils literal notranslate"><span class="pre">_DEBUG_</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.utils.check_race_condition"><code class="docutils literal notranslate"><span class="pre">check_race_condition()</span></code></a></li>
 <li><a class="reference internal" href="#stonedfenicsx.utils.timing_function"><code class="docutils literal notranslate"><span class="pre">timing_function()</span></code></a></li>
 <li><a class="reference internal" href="#stonedfenicsx.utils.time_the_time"><code class="docutils literal notranslate"><span class="pre">time_the_time()</span></code></a></li>
 <li><a class="reference internal" href="#stonedfenicsx.utils.print_ph"><code class="docutils literal notranslate"><span class="pre">print_ph()</span></code></a></li>

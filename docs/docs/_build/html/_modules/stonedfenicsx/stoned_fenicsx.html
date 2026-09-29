@@ -240,66 +240,6 @@
     
     <span class="n">solution_routine</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span><span class="n">mesh</span><span class="o">=</span><span class="n">mesh</span><span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">)</span></div>
 
-
-
-
-<span class="c1"># ---------------------------------------------------------------------------#</span>
-
-
-<div class="viewcode-block" id="test_function">
-<a class="viewcode-back" href="../../apidocs/stonedfenicsx/stonedfenicsx.stoned_fenicsx.html#stonedfenicsx.stoned_fenicsx.test_function">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">test_function</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">"""Test function to check the functionality of the main function.</span>
-<span class="sd">    It creates a mock input and phase input, then calls the main function.</span>
-<span class="sd">    """</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.input_parser</span><span class="w"> </span><span class="kn">import</span>  <span class="n">parse_input</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.config_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">dict_shear_modes</span>
-    <span class="c1"># Create a mock input</span>
-        <span class="c1"># Find the main folder of the package</span>
-    <span class="n">pkg_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
-    <span class="c1"># Select the appropriate path for the input file</span>
-    <span class="n">input_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">pkg_root</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s2">"input.yaml"</span><span class="p">)</span>
-    <span class="c1"># parse the input file</span>
-    <span class="n">input_data</span><span class="p">,</span> <span class="n">ph_in</span> <span class="o">=</span> <span class="n">parse_input</span><span class="p">(</span><span class="n">input_file</span><span class="p">)</span>
-    <span class="c1"># Set the path of the tests</span>
-    <span class="n">path_save</span> <span class="o">=</span> <span class="n">pkg_root</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="s2">"Results"</span>
-    <span class="n">test_name</span> <span class="o">=</span> <span class="s2">"Mock_test"</span>
-    <span class="n">input_data</span><span class="o">.</span><span class="n">ctrl_io</span><span class="o">.</span><span class="n">test_name</span> <span class="o">=</span> <span class="n">test_name</span>
-    <span class="n">input_data</span><span class="o">.</span><span class="n">ctrl_io</span><span class="o">.</span><span class="n">path_save</span> <span class="o">=</span> <span class="n">path_save</span>
-    <span class="n">input_data</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">slab_age</span> <span class="o">=</span> <span class="mf">100.0</span>
-    <span class="c1">#</span>
-    <span class="n">ph_in</span><span class="o">.</span><span class="n">oceanic_crust</span><span class="o">.</span><span class="n">name_alpha</span> <span class="o">=</span> <span class="s2">"Oceanic_crust"</span>
-    <span class="n">ph_in</span><span class="o">.</span><span class="n">oceanic_crust</span><span class="o">.</span><span class="n">name_capacity</span> <span class="o">=</span> <span class="s2">"Oceanic_crust"</span>
-    <span class="n">ph_in</span><span class="o">.</span><span class="n">oceanic_crust</span><span class="o">.</span><span class="n">radiative_conductivity</span> <span class="o">=</span> <span class="mi">1</span>
-    <span class="n">ph_in</span><span class="o">.</span><span class="n">oceanic_crust</span><span class="o">.</span><span class="n">rho0</span> <span class="o">=</span> <span class="mi">3300</span>
-    <span class="n">ph_in</span><span class="o">.</span><span class="n">oceanic_crust</span><span class="o">.</span><span class="n">name_conductivity</span> <span class="o">=</span> <span class="s2">"Crust_Richards_2018"</span>
-    <span class="n">ph_in</span><span class="o">.</span><span class="n">oceanic_crust</span><span class="o">.</span><span class="n">name_density</span> <span class="o">=</span> <span class="s2">"PT"</span>
-    <span class="c1">#ph_in.oceanic_crust.radiogenic_heat = 0.25e-6</span>
-
-    <span class="n">ph_in</span><span class="o">.</span><span class="n">subducting_plate_mantle</span><span class="o">.</span><span class="n">name_capacity</span> <span class="o">=</span> <span class="s2">"Mantle_Bernard_Ar_199x_FO_FA"</span>
-    <span class="n">ph_in</span><span class="o">.</span><span class="n">subducting_plate_mantle</span><span class="o">.</span><span class="n">name_conductivity</span> <span class="o">=</span> <span class="s2">"Mantle_Richards_2018"</span>
-    <span class="n">ph_in</span><span class="o">.</span><span class="n">subducting_plate_mantle</span><span class="o">.</span><span class="n">name_alpha</span> <span class="o">=</span> <span class="s2">"Mantle"</span>
-    <span class="n">ph_in</span><span class="o">.</span><span class="n">subducting_plate_mantle</span><span class="o">.</span><span class="n">rho0</span> <span class="o">=</span> <span class="mi">3300</span>
-    <span class="n">ph_in</span><span class="o">.</span><span class="n">subducting_plate_mantle</span><span class="o">.</span><span class="n">name_density</span> <span class="o">=</span> <span class="s2">"PT"</span>
-
-    <span class="n">ph_in</span><span class="o">.</span><span class="n">wedge_mantle</span><span class="o">.</span><span class="n">name_capacity</span> <span class="o">=</span> <span class="s2">"Mantle_Bernard_Ar_199x_FO_FA"</span>
-    <span class="n">ph_in</span><span class="o">.</span><span class="n">wedge_mantle</span><span class="o">.</span><span class="n">name_conductivity</span> <span class="o">=</span> <span class="s2">"Mantle_Richards_2018"</span>
-    <span class="n">ph_in</span><span class="o">.</span><span class="n">wedge_mantle</span><span class="o">.</span><span class="n">name_alpha</span> <span class="o">=</span> <span class="s2">"Mantle"</span>
-    <span class="n">ph_in</span><span class="o">.</span><span class="n">wedge_mantle</span><span class="o">.</span><span class="n">rho0</span> <span class="o">=</span> <span class="mi">3300</span>
-    <span class="n">ph_in</span><span class="o">.</span><span class="n">wedge_mantle</span><span class="o">.</span><span class="n">name_density</span> <span class="o">=</span> <span class="s2">"PT"</span>
-    <span class="n">ph_in</span><span class="o">.</span><span class="n">wedge_mantle</span><span class="o">.</span><span class="n">name_dislocation</span> <span class="o">=</span> <span class="s2">"VK_Dislocation_creep"</span>
-    <span class="n">ph_in</span><span class="o">.</span><span class="n">wedge_mantle</span><span class="o">.</span><span class="n">name_diffusion</span> <span class="o">=</span> <span class="s2">"VK_Diffusion_creep"</span>
-    
-    <span class="c1">#ph_in.overriding_lower_crust.radiogenic_heat = 0.5e-6</span>
-    <span class="c1">#ph_in.overriding_upper_crust.radiogenic_heat = 1.0e-6</span>
-    
-    <span class="n">input_data</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">model_shear</span> <span class="o">=</span> <span class="n">dict_shear_modes</span><span class="p">[</span><span class="s2">"SelfConsistent"</span><span class="p">]</span>
-    
-    <span class="n">stoned_fenicsx</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span><span class="n">ph_in</span><span class="p">)</span></div>
-
-    
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
-    <span class="n">test_function</span><span class="p">()</span>
 </pre></div>
 
             <div class="clearer"></div>

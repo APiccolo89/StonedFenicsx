@@ -26,211 +26,270 @@ The code is organized to always require the definition of an *input_file.yml*. T
 
 The units of measure in the input code are always: **Myr**, **km**, **cm/yr**, **deg** and **degC** for time, length, velocity, angles and temperatures respectively; the only exception is for the *scaling* options; in this case, the unit of measure are **m**, **Pa**, **Pa s** and **deg C** The conversions in SI units and the relative scaling are performed internally during the configuration step of the simulation. 
 
-## Input File 
-The input file is divided into 8 subsections: 
+
+### Input File
+
+The input file is divided into 8 subsections:
 
 - **NumericalControls**: the parameters that control the behaviour of the simulation.
-- **ShearHeating**: the set of parameters that controls the internal boundary heat source (the parametrised shear heating along the seismogenetic zone of the subduction plate).
-- **InputOutputControl**: the set of parameters that controls where to save the output files, and under which condition to release a timestep. 
-- **scaling**: the set of SI units used to scale the parameters of the simulation. 
+
+- **ShearHeating**: the set of parameters that control the internal boundary heat source (the parametrised shear heating along the seismogenetic zone of the subduction plate). 
+
+- **InputOutputControl**: the set of parameters that control where to save the output files, and under which conditions to write a timestep.
+
+- **scaling**: the set of SI units used to scale the parameters of the simulation.
+
 - **thermal_boundary_condition**: the thermal boundary condition configuration parameters.
-- **kinematic_boundary_condition**: the kinematic boundary condition configuration parameters. 
+
+- **kinematic_boundary_condition**: the kinematic boundary condition configuration parameters.
+
 - **Material_properties**: the material property input parameters.
-- **geometry**: the geometrical configuration parameters. 
 
-### Numerical Controls 
+- **geometry**: the geometric configuration parameters.
+
+#### Numerical Controls
+
+```yaml
+it_max: 30 # Maximum number of iterations
+tol: 5e-5 # Tolerance of the problem
+relax: 0.9 # Relax factor to update the solution
+g: 9.81 # Module of the gravitational acceleration 
+eta_max: 1.0e26 # Maximum viscosity of the system 
+time_max: 2.0  # Maximum time of the simulation [SI = Myr]
+steady_state: 1 # Steady state flag: 0 -> time-dependent 1-> steady-state simulation 
+decoupling_ctrl: 0 # Flag that activates the decoupling depth 
+model_shear: "NoShear" # [Constant,SelfConsistent,NoShear] # Flag that activates shear heating
+dt: 0.015 # Initial guess for the timestep [SI = Myr]
+stokes_solver_type : "Direct" # Flag that controls if the solver is direct or iterative for the Stokes problem 
+energy_solver_type : "Direct" # Flag that controls if the solver is direct or iterative for the Energy problem
+pressure_dependency: 1 # Flag that activates the pressure-dependency of the material properties (e.g. conductivity, density, thermal expansion)
+iterative_solver_tol : 1e-9 # Relative tolerance of iterative solver
+CFL : 0.8 # Courant Criteria correction factor
+initial_guess : 'Thermal_Diffusion'  # Initial guess flag
+time_ini_guess : 0.3
+tol_dtemp : 5e-2 # maximum thermla difference to declare convergence [K]
 ```
-    it_max: 30 # Maximum number of iterations
-    tol: 5e-5 # Tolerance of the problem
-    relax: 0.9 # Relax factor to update the solution
-    g: 9.81 # Module of the gravitational acceleration 
-    eta_max: 1.0e26 # Maximum viscosity of the system 
-    time_max: 2.0  # Maximum time of the simulation [SI = Myr]
-    steady_state: 1 # Steady state flag: 0 -> time-dependent 1-> steady-state simulation 
-    decoupling_ctrl: 0 # Flag that activates the decoupling depth 
-    model_shear: "NoShear" # [Constant,SelfConsistent,NoShear] # Flag that activates shear heating
-    dt: 0.015 # Initial guess for the timestep [SI = Myr]
-    stokes_solver_type : "Direct" # Flag that controls if the solver is direct or iterative for the Stokes problem  ['Iterative' for iterative solver]
-    energy_solver_type : "Direct" # Flag that controls if the solver is direct or iterative for the Energy problem
-    pressure_dependency: 1 # Flag that activates the pressure-dependency of the material properties (e.g. conductivity, density, thermal expansion)
-    iterative_solver_tol : 1e-9 # Relative tolerance of iterative solver
-    CFL : 0.8 # Courant Criteria correction factor
-    initial_guess : 0  # Initial guess flag
-```
-**Note**: 
+>[!NOTE]
+> Plan: introduce a flag to switch the criteria for convergence: residual of the conservation equation/L1-dT. 
 
-- The iterative solver is still a work in progress; it must be revisited to make it usable. 
+> [!WARNING]
+> The iterative solver is still a work in progress; it must be revisited to make it usable.
 
-- **model_shear**: activate the shear heating boundary conditions. However, *SelfConsistent* and *Constant* require that *decoupling_ctrl* is 1
+- **model_shear**: activates the shear-heating boundary conditions. However, *SelfConsistent* and *Constant* require that *decoupling_ctrl* is 1
+
   - *NoShear*: The shear heating is not active
-  - *SelfConsistent*: It requires that a dislocation creep law in the ShearHeating section is defined, together with a friction angle. 
-  - *Constant*: It requires the definition of a minimum stress, through which the shear heating is computed. 
-- CFL: it corrects the Courant criteria timestep. **remember** Crank-Nicolson is not unconditionally stable with non-linearities. 
-- **initial_guess**: This flag is automatically deactivated in case of steady-state simulations. The flag controls if a linear steady-state simulation is run prior the time-dependent case.
 
-### ShearHeating
-```
-    shear_heating_disl_phi: 5.0 # Friction angle [deg]
-    shear_heating_disl_tau_min: 0.0 # Constant stress 
-    shear_heating_disl_law: "Wet_Quartzite_2001_Dislocation_creep" # dislocation law for the shear heating
-```
-**Note**
+  - *SelfConsistent*: It requires that a dislocation creep law in the ShearHeating section is defined, together with a friction angle.
 
-- The dislocation creep laws available are: 
-  - Wet_Plagioclase_Dislocation_creep {cite}`rybacki2004deformation`
-  - Hirareth_Serpentinite_Dislocation_creep {cite}`hilairet2007high`
-  - Wet_Quartzite_2001_Dislocation_creep {cite}`hirth2001evaluation`
-  - Glaucophane_2025_Dislocation_creep {cite}`hufford2026blueschist`
+  - *Constant*: It requires the definition of a minimum stress, through which the shear heating is computed.
 
-### InputOutputControl
-```
-    test_name: "Output" # Name of the test
-    path_test: "../Results" # Main folder
-    ts_time : "step" # Flag that controls if the simulation is releasing an output as a function of a fixed amount of timesteps or as a function of a time interval
-    ts_out : 20  # The amount of timesteps required to print an output 
-    dt_out : 0.5 # Time interval required to print a timestep result. 
-```
-To run the numerical code, the user has to specify the test name, the path of the folder in which the output is stored. *StonedFEniCSx* automatically creates the parent folder, and the relative test folder. The code creates a **Cached_information** folder in which to store the mesh data, the thermal boundary condition data. The user can decide to always compute the mesh information and the thermal boundary conditions. Especially, whenever the user needs to systematically change the geometry, or the thermal parameters. 
+- CFL: it corrects the Courant-criterion timestep. **remember** Crank-Nicolson is not unconditionally stable with non-linearities.
 
-### scaling
-```
-    length: 600e3 # Scaling of the length
-    stress: 1.0e9 # Stress/Pressure scale
-    eta: 1.0e21 # Viscosity scale 
-    temp: 1333.0 # Temperature scale
-```
-All the derivative scalings are automatically computed after the configuration of the simulation. For example, time is computed using the stress scale and the viscosity scale. The dimensions must be given in **m**, **Pa**, **Pa s** and **deg C**. 
+- initial_guess: This flag is automatically deactivated in case of steady-state simulations. The flag controls if a linear steady-state simulation is run prior to the time-dependent case.
+  - `Thermal_Diffusion`: Run a thermal solver without advection for a given amount of time `time_ini_guess`
+  - `Steady_State`: Run a linear steady-state simulation before introducing the timedependent solver. 
+  - `None`: No initial guess. 
 
-### thermal_boundary_condition
-```
-    temp_max: 1300.0 # Maximum temperature (mantle temperature) [SI = deg C]
-    temp_top: 0.0 # Surface temperature [SI = deg C]
-    constant: 1  # Flag that controls if the age remains constant during the time-dependent solution
-    interval_val : [50.0,30] # Interval of values [SI = Myr]
-    interval_time: [20,40] # Interval of times in which the change is occuring [SI = Myr]
-    nz: 108 # Numerical parameter to compute the right and left side thermal boundary conditions
-    end_time: 180.0 # the time in which the half-space cooling model is computed
-    dt: 0.005 # the timestep [SI = Myr]
-    slab_age: 50.0 # Age of the slab [SI = Myr]
-    right_boundary : 'Continental'  # Oceanic  # Type of boundary condition
-    right_age: 50.0  # Age of the right boundary condition
-    recalculate : 1 # Option to compute on the fly the boundary -> useful if user wants to change thermal properties. 
+#### ShearHeating
 
-```
-The left and right boundary conditions are computed using a finite difference scheme with Crank-Nicolson. In the case of the left boundary condition, the code computes from 0 to *end_time* a half space cooling model, and then selects the appropriate thermal profile as a function of the *slab_age*. In case of the right boundary condition the user must choose whether or not the boundary represents a continental margin or oceanic plate. In the case of *Oceanic*, the code will compute the same 2D array of thermal profiles; otherwise, in the case of *Continental*, it computes an initial linear geotherm as a function of the geometrical input. Then, it will run a thermal diffusion to reach a quasi-steady state. This is particularly useful when radiogenic heating is active. 
-The *recalculate* option forces the computation of the boundary condition at each realization. If it is not active, the code will read the small h5 database saved in the *Cached_information* folder. 
+```yaml
 
-### kinematic_boundary_condition
+shear_heating_disl_phi: 5.0 # Friction angle [deg]
+shear_heating_disl_tau_min: 0.0 # Constant stress 
+shear_heating_disl_law: "Wet_Quartzite_2001_Dislocation_creep" # dislocation law for the shear heating
 ```
-    v_s : [5.0,0.0] # Initial vector for the velocity of the slab [SI=cm/yr]
-    constant : 1  # Flag that signals that the velocity of subduction does not change over time
-    interval_val : [5.0,1.0] # interval of velocities [SI=cm/yr]
-    interval_time : [20,40] # interval of time when the velocity change occurs
-```
-**Note**: Both in the case of kinematic and thermal boundary condition, the variation of velocity and age over time is linear. Curently these feature have not been tested. 
 
 
-### Material properties
+- The available dislocation creep laws are:
+
+  - Wet_Plagioclase_Dislocation_creep 
+
+  - Hirareth_Serpentinite_Dislocation_creep 
+
+  - Wet_Quartzite_2001_Dislocation_creep 
+
+  - Glaucophane_2025_Dislocation_creep 
+
+#### InputOutputControl
+
+```yaml
+test_name: "Output" # Name of the test
+path_test: "../Results" # Main folder
+ts_time : "step" # Flag that controls if the simulation is releasing an output as a function of a fixed amount of timesteps or as a function of a time interval
+ts_out : 20  # The amount of timesteps required to print an output 
+dt_out : 0.5 # Time interval required to print a timestep result. 
 ```
-  wedge_mantle: 
-      name_diffusion : 'Constant' # Name of diffusion creep law
-      name_dislocation : 'Constant' # Name of dislocation creep law
-      name_alpha : 'Constant' # Name of the thermal expansivity law
-      name_density : 'Constant' # Name of the density law
-      name_capacity: 'Constant' # Name of the capacity law
-      name_conductivity: 'Constant' # Name of the conductivity law
-      eta : 1.0e20  # Viscosity of the phase [SI = Pas]
-      rho0 : 3300.0  # Reference density of the phase
-      k : 3.0 # Constant conductivity [SI = W/m/K]
-      cp : 1250 # Constant Heat capacity [SI = J/kg/K]
-      alpha0 : 3e-5 # Constant thermal expansivity [SI = 1/K]
-      b_dif : null # Pre-exponential factor of the diffusion creep [SI = Pa^(-1)s^(-1)]
-      b_dis : null #Pre-exponential factor of the dislocation creep [SI = Pa^(-n)s^(-1)]
-      e_dif : null #Activation energy of the diffusion creep [SI = J/mol]
-      e_dis : null #Activation energy of the dislocation creep [SI = J/mol]
-      v_dis : null #Activation volume of the dislocation creep [SI = m^3/Pa]
-      v_dif : null #Activation volume of the diffusion creep [SI = m^3/Pa]
-      n : null # Stress exponent dislocation creep
-      radiative_conductivity : 0  # radiative conductivity flag: 0 means that the radiative conductivity for the specific phase is not considered, 1: means that the radiative conductivity is considered for the specific case. 
-      radiogenic_heat : 0.0  # radiogenic heat production [SI = W/m^3]
+
+To run the numerical code, the user has to specify the test name and the path of the folder in which the output is stored. *StonedFEniCSx* automatically creates the parent folder, and the relative test folder. 
+
+
+#### scaling
+
+```yaml
+length: 600e3 # Scaling of the length
+stress: 1.0e9 # Stress/Pressure scale
+eta: 1.0e21 # Viscosity scale 
+temp: 1333.0 # Temperature scale
+```
+
+All the derived scalings are automatically computed after the configuration of the simulation. For example, time is computed using the stress scale and the viscosity scale. The dimensions must be given in **m**, **Pa**, **Pa s** and **deg C**.
+
+#### thermal_boundary_condition
+
+```yaml
+temp_max: 1300.0 # Maximum temperature (mantle temperature) [SI = deg C]
+temp_top: 0.0 # Surface temperature [SI = deg C]
+constant: 1  # Flag that controls if the age remains constant during the time-dependent solution
+interval_val : [50.0,30] # Interval of values [SI = Myr]
+interval_time: [20,40] # Interval of times in which the change is occurring [SI = Myr]
+nz: 108 # Numerical parameter to compute the right and left side thermal boundary conditions
+end_time: 180.0 # the time in which the half-space cooling model is computed
+dt: 0.005 # the timestep [SI = Myr]
+slab_age: 50.0 # Age of the slab [SI = Myr]
+right_boundary : 'Continental'  # Oceanic  # Type of boundary condition
+right_age: 50.0  # Age of the right boundary condition
+recalculate : 1 # Option to compute on the fly the boundary -> useful if user wants to change thermal properties. 
+```
+
+The left and right boundary conditions are computed using a finite difference scheme with Crank-Nicolson. For the left boundary condition, the code computes from 0 to *end_time* a half-space cooling model, and then selects the appropriate thermal profile as a function of the *slab_age*. For the right boundary condition the user must choose whether the boundary represents a continental margin or an oceanic plate. In the case of *Oceanic*, the code will compute the same 2D array of thermal profiles; otherwise, in the case of *Continental*, the code computes an initial linear geotherm as a function of the geometrical input. Then, it will run a thermal diffusion to reach a quasi-steady state. This is particularly useful when radiogenic heating is active.
+
+#### kinematic_boundary_condition
+
+```yaml
+v_s : [5.0,0.0] # Initial vector for the velocity of the slab [SI=cm/yr]
+constant : 1  # Flag that signals that the velocity of subduction does not change over time
+interval_val : [5.0,1.0] # interval of velocities [SI=cm/yr]
+interval_time : [20,40] # interval of time when the velocity change occurs
 
 ```
-The snipet above is an example. The names of the phases stored in the Material_Properties are fixed and bounded to the specific problem. Many phases feature constant viscosity, and the only freedom of the user is deciding the rheology of the **wedge_mantle** and the thermal properties of the other phases. This is a design choice, as the configuration module can be adapted to deal with multiphase problems. 
-The user can change the value of diffusion creep and dislocation creep rheologies. However, these value must be given in the unit of measure listed in the input file. Moreover, the user should remember that the pre-exponential factor of dislocation depends on *n*, the stress exponent, so, changing the stress-exponent should be done with extra-care for the dimensional consistency. 
+>[!NOTE]
+> For both the kinematic and thermal boundary conditions, the variation of velocity and age over time is linear. Currently, these featuress have not been tested.
 
-**Diffusion creep laws available**: 
 
-- Hirth_dry_Diffusion_creep: {cite}`hirth2003rheology`
-- VK_Diffusion_creep: {cite}`van2008community`
-- Hirth_wet_Diffusion_creep: {cite}`hirth2003rheology`
-- Constant: it is a flag that tells the code to not use the diffusion creep rheologies in the calculation
+
+#### Material properties
+
+```yaml
+wedge_mantle:
+  name_diffusion : 'Constant' # Name of diffusion creep law
+  name_dislocation : 'Constant' # Name of dislocation creep law
+  name_alpha : 'Constant' # Name of the thermal expansivity law
+  name_density : 'Constant' # Name of the density law
+  name_capacity: 'Constant' # Name of the capacity law
+  name_conductivity: 'Constant' # Name of the conductivity law
+  eta : 1.0e20  # Viscosity of the phase [SI = Pas]
+  rho0 : 3300.0  # Reference density of the phase
+  k : 3.0 # Constant conductivity [SI = W/m/K]
+  cp : 1250 # Constant Heat capacity [SI = J/kg/K]
+  alpha0 : 3e-5 # Constant thermal expansivity [SI = 1/K]
+  b_dif : null # Pre-exponential factor of the diffusion creep [SI = Pa^(-1)s^(-1)]
+  b_dis : null #Pre-exponential factor of the dislocation creep [SI = Pa^(-n)s^(-1)]
+  e_dif : null #Activation energy of the diffusion creep [SI = J/mol]
+  e_dis : null #Activation energy of the dislocation creep [SI = J/mol]
+  v_dis : null #Activation volume of the dislocation creep [SI = m^3/Pa]
+  v_dif : null #Activation volume of the diffusion creep [SI = m^3/Pa]
+  n : null # Stress exponent dislocation creep
+  radiative_conductivity : 0  # radiative conductivity flag: 0 means that the radiative conductivity for the specific phase is not considered, 1: means that the radiative conductivity is considered for the specific case. 
+  radiogenic_heat : 0.0  # radiogenic heat production [SI = W/m^3]
+
+```
+
+The snippet above is an example. The names of the phases stored in the Material_Properties are fixed and bounded to the specific problem. Many phases feature constant viscosity, and the only freedom of the user is deciding the rheology of the **wedge_mantle** and the thermal properties of the other phases. This is a design choice, as the configuration module can be adapted to deal with multiphase problems.
+
+The user can change the value of diffusion creep and dislocation creep rheologies. However, these values must be given in the units of measure listed in the input file. Moreover, the user should remember that the pre-exponential factor of dislocation depends on *n*, the stress exponent, so, changing the stress exponent should be done with extra care for the dimensional consistency.
+
+**Diffusion creep laws available**:
+
+- Hirth_dry_Diffusion_creep
+
+- VK_Diffusion_creep
+
+- Hirth_wet_Diffusion_creep
+
+- Constant: it is a flag that tells the code not to use the diffusion creep rheologies in the calculation
 
 **Dislocation creep laws available**:
 
-- Hirth_dry_Dislocation_creep: {cite}`hirth2003rheology`
-- VK_Dislocation_creep: {cite}`van2008community`
-- Hirth_wet_Dislocation_creep: {cite}`hirth2003rheology`
-- Constant: it is a flag that indicates to use the dislocation creep rheology
+- Hirth_dry_Dislocation_creep
 
-**Note** if both dislocation and diffusion creep are constant, the code automatically assumes that the model is linear. Thus, it will use  either the default viscosity or the viscosity in the phase.
+- VK_Dislocation_creep
 
-**Conductivity laws available**: 
+- Hirth_wet_Dislocation_creep
 
-- Mantle_Richards_2018: {cite}`richards2020structure`
-- Crust_Richards_2018: {cite}`richards2020structure`
-- Constant: flag that tells the code to use the constant conductivity *k* of the phase. 
+- Constant: it is a flag that indicates the use of the dislocation creep rheology
 
-**Heat capacity laws available**: 
+> [!IMPORTANT]
+> if both dislocation and diffusion creep are constant, the code automatically assumes that the model is linear. Thus, it will use either the default viscosity or the viscosity in the phase.
 
-- Mantle_Bernard_1988_FO: {cite}`berman1988internally`
-- Mantle_Bernard_1988_FA: {cite}`berman1988internally`
-- Mantle_Bernard_Ar_199x_FO: {cite}`berman1996optimized`
-- Mantle_Bernard_Ar_199x_FA: {cite}`berman1996optimized`
-- Mantle_Bernard_1988_FO_FA: {cite}`berman1988internally`
-- Mantle_Bernard_Ar_199x_FO_FA: {cite}`berman1996optimized`
-- Oceanic_crust:  {cite}`richards2020structure`
-- Constant: flag that tells the code to use the constant conductivity *cp* of the phase. 
-**Note**: _FO, _FA, FO_FA are flags that indicate which mixture of olivine to use. FO means fosterite, FA means fayalite. FO_FA implies that a mixture of 0.9 FO and 0.1 FA is used for computing the heat capacity.
-Thermal expansivity laws available: 
+**Conductivity laws available**:
 
-- Mantle: {cite}`richards2020structure`
-- Oceanic_crust: {cite}`richards2020structure`
+- Mantle_Richards_2018
+- Crust_Richards_2018
+- Constant: flag that tells the code to use the constant conductivity *k* of the phase.
+
+**Heat capacity laws available**:
+
+- Mantle_Bernard_1988_FO
+
+- Mantle_Bernard_1988_FA
+
+- Mantle_Bernard_Ar_199x_FO
+
+- Mantle_Bernard_Ar_199x_FA
+
+- Mantle_Bernard_1988_FO_FA
+
+- Mantle_Bernard_Ar_199x_FO_FA
+
+- Oceanic_crust
+
+- Constant: flag that tells the code to use the constant conductivity *cp* of the phase.
+
+> [!NOTE]
+> _FO, _FA, FO_FA are flags that indicate which mixture of olivine to use. FO means forsterite, FA means fayalite. FO_FA implies that a mixture of 0.9 FO and 0.1 FA is used for computing the heat capacity.
+
+**Thermal expansivity laws available**:
+
+- Mantle: :cite:p:`richards2020structure`
+- Oceanic_crust: :cite:p:`richards2020structure`
 - Constant: flag that tells the code to use the constant conductivity *alpha* of the phase.
 
-**Density laws available**: 
+**Density laws available**:
 
-- PT : pressure and temperature is active (pressure if the pressure dependency is active)
+- PT : pressure and temperature are active (pressure if the pressure dependency is active)
 - Constant: flag that tells the code to use only the reference density *rho0*
 
-### geometry 
-```
-    x: [0.0, 660.0] # Coordinate of X
-    y: [-600.0, 0.0] # Coordinate of Y
-    van_keken: False # Activate the geometry of Van Keken benchmark
-    sub_constant_flag : False # Tells the code to have a slab with a constant bending angle
-    slab_tk: 130.0 # Slab Thickness 
-    cr: 30.0 # Overriding Crust {if lc==0.0 -> only overriding upper crust}
-    ocr: 7.0 # Oceanic crust of the subducting plate 
-    lc: 0.3 # lower to upper continental crust ratio
-    resolution_normal: 3.0 # resolution far from the singularity point
-    resolution_refine: 1.5 # resolution around the slab surface and singularity point
-    ns_depth: 50.0 # depth of the no-slip condition 
-    lab_d: 100.0 # depth of lithosphere-astenosphere boundary (necessary to compute the continental geotherm)
-    decoupling: 80.0 # depth of decoupling
-    transition: 10.0 # transition zone thickness (between fully coupled and uncoupled wedge flow regime)
-    wz_tk: 0.5 # thickness of the virtual shear zone for computing the shear heating 
-    sub_lb: 300.0 # total cumulative length in which the bending angle is evolving (necessary for the CustomRibe)
-    sub_dl: 10.0 # length of segment to compute the slab surface
-    sub_theta0: 5.0 # initial bending angle 
-    sub_theta_max: 45.0 # final bending angle 
-    sub_trench: 0.0 # position of the trench
-    sub_parabolic_a: 8e-4 # [km^-1] -> curvature of the parabolic slab (necessary for the CustomParabolic)
-    slab_type: "CustomParabolic" # [CustomParabolic,CustomRibe,FromFile] 
-    sub_path: "Not Defined" # Required for the real geometry of the subducting plate
-```
-**Note**: CustomParabolic is still under debugging, so, it must not be used. 
+#### geometry
 
+```yaml
+x: [0.0, 660.0] # Coordinate of X
+y: [-600.0, 0.0] # Coordinate of Y
+van_keken: False # Activate the geometry of Van Keken benchmark
+sub_constant_flag : False # Tells the code to have a slab with a constant bending angle
+slab_tk: 130.0 # Slab Thickness 
+cr: 30.0 # Overriding Crust {if lc==0.0 -> only overriding upper crust}
+ocr: 7.0 # Oceanic crust of the subducting plate 
+lc: 0.3 # lower to upper continental crust ratio
+resolution_normal: 3.0 # resolution far from the singularity point
+resolution_refine: 1.5 # resolution around the slab surface and singularity point
+ns_depth: 50.0 # depth of the no-slip condition 
+lab_d: 100.0 # depth of lithosphere-astenosphere boundary (necessary to compute the continental geotherm)
+decoupling: 80.0 # depth of decoupling
+transition: 10.0 # transition zone thickness (between fully coupled and uncoupled wedge flow regime)
+wz_tk: 0.5 # thickness of the virtual shear zone for computing the shear heating 
+sub_lb: 300.0 # total cumulative length in which the bending angle is evolving (necessary for the CustomRibe)
+sub_dl: 10.0 # length of segment to compute the slab surface
+sub_theta0: 5.0 # initial bending angle 
+sub_theta_max: 45.0 # final bending angle 
+sub_trench: 0.0 # position of the trench
+sub_parabolic_a: 8e-4 # [km^-1] -> curvature of the parabolic slab (necessary for the CustomParabolic)
+slab_type: "CustomParabolic" # [CustomParabolic,CustomRibe,FromFile] 
+sub_path: "Not Defined" # Required for the real geometry of the subducting plate
 
+```
+
+> [!CAUTION]
+> CustomParabolic is still under debugging, so, it must not be used.
 
 ## Usage
 In the following section, a small example script is provided (see also the tests folder, with the benchmark examples) : 

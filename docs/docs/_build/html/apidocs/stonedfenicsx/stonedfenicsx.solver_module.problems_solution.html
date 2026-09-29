@@ -210,11 +210,16 @@ for all FEM problems in the framework.</p></td>
 single global min/max, alongside the local values on rank 0. Useful for
 sanity-checking a boundary condition (constant, ndarray, or interpolated
 Function) while debugging.</p>
-<p>Args:
-bc (dolfinx.fem.DirichletBC): Boundary condition to inspect. <code class="docutils literal notranslate"><span class="pre">bc.g</span></code>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bc</strong> (<em>dolfinx.fem.DirichletBC</em>) – Boundary condition to inspect. <code class="docutils literal notranslate"><span class="pre">bc.g</span></code>
 may be a Function (vector-valued values are reduced via norm) or
-a Constant/ndarray.
-name (str): Label used in the printed diagnostic line.</p>
+a Constant/ndarray.</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – Label used in the printed diagnostic line.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py class">
@@ -250,64 +255,45 @@ conditions, integration measures, and solver interface required to
 assemble and solve a finite-element problem. Concrete problem classes
 (e.g., thermal, Stokes, slab, wedge) should inherit from this class and
 specialize the relevant fields.</p>
-<p>Attributes:
-name (list[str]):
-Identifiers of the problem and associated computational domains
-(e.g., [“global”], [“wedge”], [“slab”]).</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>mixed (bool):
-    Whether the problem is mixed (multiple coupled function spaces),
-    such as the Stokes problem with velocity and pressure.
-
-FS (dolfinx.fem.FunctionSpace):
-    Primary function space of the problem.
-
-F0 (dolfinx.fem.FunctionSpace | None):
-    First subspace of a mixed formulation, if present.
-
-F1 (dolfinx.fem.FunctionSpace | None):
-    Second subspace of a mixed formulation, if present.
-
-trial0 (ufl.Argument | None):
-    Trial function associated with `F0` or the primary space.
-
-trial1 (ufl.Argument | None):
-    Trial function associated with `F1` in mixed problems.
-
-test0 (ufl.Argument | None):
-    Test function associated with `F0` or the primary space.
-
-test1 (ufl.Argument | None):
-    Test function associated with `F1` in mixed problems.
-
-typology (str | None):
-    Problem type descriptor (e.g., "linear", "nonlinear").
-
-dofs (np.ndarray | None):
-    Degrees of freedom constrained by boundary conditions.
-
-bc (list):
-    Collection of Dirichlet boundary conditions applied to the problem.
-
-ds (ufl.Measure):
-    Boundary integration measure (surface/edge integrals).
-
-dx (ufl.Measure):
-    Domain integration measure (volume/area integrals).
-
-solv (Solvers):
-    Solver interface or container defining the numerical solution
-    strategy for the problem.
-</pre></div>
-</div>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – Identifiers of the problem and associated computational domains
+(e.g., [“global”], [“wedge”], [“slab”]).</p></li>
+<li><p><strong>mixed</strong> (<em>bool</em>) – Whether the problem is mixed (multiple coupled function spaces),
+such as the Stokes problem with velocity and pressure.</p></li>
+<li><p><strong>FS</strong> (<em>dolfinx.fem.FunctionSpace</em>) – Primary function space of the problem.</p></li>
+<li><p><strong>F0</strong> (<em>dolfinx.fem.FunctionSpace</em><em> | </em><em>None</em>) – First subspace of a mixed formulation, if present.</p></li>
+<li><p><strong>F1</strong> (<em>dolfinx.fem.FunctionSpace</em><em> | </em><em>None</em>) – Second subspace of a mixed formulation, if present.</p></li>
+<li><p><strong>trial0</strong> (<em>ufl.Argument</em><em> | </em><em>None</em>) – Trial function associated with <cite>F0</cite> or the primary space.</p></li>
+<li><p><strong>trial1</strong> (<em>ufl.Argument</em><em> | </em><em>None</em>) – Trial function associated with <cite>F1</cite> in mixed problems.</p></li>
+<li><p><strong>test0</strong> (<em>ufl.Argument</em><em> | </em><em>None</em>) – Test function associated with <cite>F0</cite> or the primary space.</p></li>
+<li><p><strong>test1</strong> (<em>ufl.Argument</em><em> | </em><em>None</em>) – Test function associated with <cite>F1</cite> in mixed problems.</p></li>
+<li><p><strong>typology</strong> (<em>str</em><em> | </em><em>None</em>) – Problem type descriptor (e.g., “linear”, “nonlinear”).</p></li>
+<li><p><strong>dofs</strong> (<em>np.ndarray</em><em> | </em><em>None</em>) – Degrees of freedom constrained by boundary conditions.</p></li>
+<li><p><strong>bc</strong> (<em>list</em>) – Collection of Dirichlet boundary conditions applied to the problem.</p></li>
+<li><p><strong>ds</strong> (<em>ufl.Measure</em>) – Boundary integration measure (surface/edge integrals).</p></li>
+<li><p><strong>dx</strong> (<em>ufl.Measure</em>) – Domain integration measure (volume/area integrals).</p></li>
+<li><p><strong>solv</strong> (<a class="reference internal" href="stonedfenicsx.solver_module.solver.html#stonedfenicsx.solver_module.solver.Solvers" title="stonedfenicsx.solver_module.solver.Solvers"><em>Solvers</em></a>) – Solver interface or container defining the numerical solution
+strategy for the problem.</p></li>
+</ul>
+</dd>
+</dl>
 <p class="rubric">Initialization</p>
 <p>Initialize the problem</p>
-<p>Args:
-M (Mesh): Mesh object storing the computational domains of the experiment
-elements (tuple): Finite elements that describe the main computational problem.
-Note: Certain problems require storing additional element and function space.
-name (list): Identifiers of the problem and associated domains.</p>
-<p>Raises:
-NameError: If the user changes the name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.Mesh" title="stonedfenicsx.config.geometry.Mesh"><em>Mesh</em></a>) – Mesh object storing the computational domains of the experiment</p></li>
+<li><p><strong>elements</strong> (<em>tuple</em>) – Finite elements that describe the main computational problem.
+Note: Certain problems require storing additional element and function space.</p></li>
+<li><p><strong>name</strong> (<em>list</em>) – Identifiers of the problem and associated domains.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>NameError</strong> – If the user changes the name.</p>
+</dd>
+</dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.problems_solution.Problem.name">
 <span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span></span><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Problem.name" title="Link to this definition">¶</a></dt>
@@ -439,8 +425,11 @@ NameError: If the user changes the name.</p>
 <span class="sig-name descname"><span class="pre">create_cached_material</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scalar</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Problem.create_cached_material"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Problem.create_cached_material" title="Link to this definition">¶</a></dt>
 <dd><p>Create the cached material for each class -&gt; slightly an overkill for the pressure problem,
 I know.</p>
-<p>Args:
-scalar (bool): flag rheological or thermal material property</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>scalar</strong> (<em>bool</em>) – flag rheological or thermal material property</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -452,20 +441,29 @@ scalar (bool): flag rheological or thermal material property</p>
 <p>Declare (without allocating) every field and residual/history array
 carried by a simulation state.</p>
 <p>This constructor only type-annotates the attributes; the actual
-<code class="docutils literal notranslate"><span class="pre">dolfinx.fem.Function</span></code> objects and history arrays are allocated later
-by <code class="docutils literal notranslate"><span class="pre">create_function</span></code>, once the function spaces of the global,
+<cite>dolfinx.fem.Function</cite> objects and history arrays are allocated later
+by <cite>create_function</cite>, once the function spaces of the global,
 wedge and slab problems are known.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.problems_solution.Solution.create_function">
 <span class="sig-name descname"><span class="pre">create_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">PG</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.solver_module.problems_solution.Problem" title="stonedfenicsx.solver_module.problems_solution.Problem"><span class="pre">stonedfenicsx.solver_module.problems_solution.Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">PS</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.solver_module.problems_solution.Problem" title="stonedfenicsx.solver_module.problems_solution.Problem"><span class="pre">stonedfenicsx.solver_module.problems_solution.Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">PW</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.solver_module.problems_solution.Problem" title="stonedfenicsx.solver_module.problems_solution.Problem"><span class="pre">stonedfenicsx.solver_module.problems_solution.Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">elements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Solution.create_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Solution.create_function" title="Link to this definition">¶</a></dt>
 <dd><p>Create the ‘fem.Function’ for storing the solution of each of the problem</p>
-<p>Args:
-PG Problem(Global_thermal|Global_lithostatic): Global problem (either Thermal or lithostatic)
-PS Problem(Slab): Subducting plate problem
-PW Problem(Wedge): Wedge problem
-elements list: Elements for each of the problem (i.e. -&gt; vectorial or scalar)</p>
-<p>Returns:
-Solution: Updated solution class with cached function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Problem</strong> (<em>PW</em>) – Global problem (either Thermal or lithostatic)</p></li>
+<li><p><strong>Problem</strong> – Subducting plate problem</p></li>
+<li><p><strong>Problem</strong> – Wedge problem</p></li>
+<li><p><strong>list</strong> (<em>elements</em>) – Elements for each of the problem (i.e. -&gt; vectorial or scalar)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Updated solution class with cached function.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution">Solution</a></p>
+</dd>
+</dl>
 <p>Notes: Creating a more general Solution class and create specific istance for any given problem</p>
 </dd></dl>
 
@@ -479,29 +477,38 @@ Solution: Updated solution class with cached function.</p>
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.problems_solution.Global_thermal.set_linear_picard_TD">
 <span class="sig-name descname"><span class="pre">set_linear_picard_TD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_O</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_global</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">it_outer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">it_inner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">dolfinx.fem.Form</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dolfinx.fem.Form</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Global_thermal.set_linear_picard_TD"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Global_thermal.set_linear_picard_TD" title="Link to this definition">¶</a></dt>
 <dd><p>Set up the bilinear/linear Crank-Nicolson forms for the time-dependent energy equation.</p>
-<p>Builds the “new” (implicit) bilinear form <code class="docutils literal notranslate"><span class="pre">a</span></code> from the current
+<p>Builds the “new” (implicit) bilinear form <cite>a</cite> from the current
 Picard-iterate coefficients every call, and the “old” (explicit)
-linear form <code class="docutils literal notranslate"><span class="pre">L</span></code> only on the first inner iteration (<code class="docutils literal notranslate"><span class="pre">it_inner</span> <span class="pre">==</span> <span class="pre">0</span></code>)
+linear form <cite>L</cite> only on the first inner iteration (<cite>it_inner == 0</cite>)
 of a timestep, since it depends solely on the previous timestep’s
-temperature <code class="docutils literal notranslate"><span class="pre">T_O</span></code>. Source terms (radiogenic + shear heating, the
-latter only once <code class="docutils literal notranslate"><span class="pre">it_inner</span> <span class="pre">!=</span> <span class="pre">0</span></code>, i.e. once <code class="docutils literal notranslate"><span class="pre">shear_heating</span></code> has been
+temperature <cite>T_O</cite>. Source terms (radiogenic + shear heating, the
+latter only once <cite>it_inner != 0</cite>, i.e. once <cite>shear_heating</cite> has been
 computed for this outer iteration) are assumed constant across the
 timestep.</p>
-<p>Args:
-p (dolfinx.fem.Function, optional): Lithostatic pressure field. Defaults to None.
-T_k (dolfinx.fem.Function, optional): Current Picard-iterate temperature. Defaults to None.
-T_O (dolfinx.fem.Function, optional): Temperature at the previous timestep. Defaults to None.
-u_global (dolfinx.fem.Function, optional): Global velocity field. Defaults to None.
-it_outer (int, optional): Outer (nonlinear) iteration index. Defaults to 0.
-it_inner (int, optional): Inner (Picard) iteration index; controls
-whether the shear-heating source is included and whether <code class="docutils literal notranslate"><span class="pre">L</span></code>
-is rebuilt. Defaults to 0.
-ts (int, optional): Timestep index. Defaults to 0.</p>
-<p>Returns:
-tuple[dolfinx.fem.Form, dolfinx.fem.Form | None]: Compiled
-bilinear form <code class="docutils literal notranslate"><span class="pre">a</span></code>, and the linear form <code class="docutils literal notranslate"><span class="pre">L</span></code> (or <code class="docutils literal notranslate"><span class="pre">None</span></code> if
-<code class="docutils literal notranslate"><span class="pre">it_inner</span> <span class="pre">!=</span> <span class="pre">0</span></code>, in which case the previously assembled <code class="docutils literal notranslate"><span class="pre">L</span></code>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>dolfinx.fem.Function</em><em>, </em><em>optional</em>) – Lithostatic pressure field. Defaults to None.</p></li>
+<li><p><strong>T_k</strong> (<em>dolfinx.fem.Function</em><em>, </em><em>optional</em>) – Current Picard-iterate temperature. Defaults to None.</p></li>
+<li><p><strong>T_O</strong> (<em>dolfinx.fem.Function</em><em>, </em><em>optional</em>) – Temperature at the previous timestep. Defaults to None.</p></li>
+<li><p><strong>u_global</strong> (<em>dolfinx.fem.Function</em><em>, </em><em>optional</em>) – Global velocity field. Defaults to None.</p></li>
+<li><p><strong>it_outer</strong> (<em>int</em><em>, </em><em>optional</em>) – Outer (nonlinear) iteration index. Defaults to 0.</p></li>
+<li><p><strong>it_inner</strong> (<em>int</em><em>, </em><em>optional</em>) – Inner (Picard) iteration index; controls
+whether the shear-heating source is included and whether <cite>L</cite>
+is rebuilt. Defaults to 0.</p></li>
+<li><p><strong>ts</strong> (<em>int</em><em>, </em><em>optional</em>) – Timestep index. Defaults to 0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Compiled
+bilinear form <cite>a</cite>, and the linear form <cite>L</cite> (or <cite>None</cite> if
+<cite>it_inner != 0</cite>, in which case the previously assembled <cite>L</cite>
 should be reused).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[dolfinx.fem.Form, dolfinx.fem.Form | None]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -510,35 +517,53 @@ should be reused).</p>
 <dd><p>Set up fem form for Steady state solution.
 Compute the coefficient from the current iteration temperature, form the bilinear form.
 if iteration &gt; 0 not form the Linear one.</p>
-<p>Args:
-p (dolfinx.fem.Function, optional): Lithostatic pressure function . Defaults to None.
-T_k (dolfinx.fem.Function, optional): Current iteration/guess temperature. Defaults to None.
-T_O (dolfinx.fem.Function, optional): Old temperature. Defaults to None.
-u_global (dolfinx.fem.Function, optional): Global velocity. Defaults to None.
-D (Domain, optional): Domain . Defaults to None.
-FG (Functions_material_properties_global, optional):Cached material properties. Defaults to None.
-ctrl (NumericalControls, optional): Numerical controls. Defaults to None.
-it (int, optional): outer iteration. Defaults to 0.</p>
-<p>Returns:
-tuple[dolfinx.fem.Form,dolfinx.fem.Form]: <em>description</em></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>dolfinx.fem.Function</em><em>, </em><em>optional</em>) – Lithostatic pressure function . Defaults to None.</p></li>
+<li><p><strong>T_k</strong> (<em>dolfinx.fem.Function</em><em>, </em><em>optional</em>) – Current iteration/guess temperature. Defaults to None.</p></li>
+<li><p><strong>T_O</strong> (<em>dolfinx.fem.Function</em><em>, </em><em>optional</em>) – Old temperature. Defaults to None.</p></li>
+<li><p><strong>u_global</strong> (<em>dolfinx.fem.Function</em><em>, </em><em>optional</em>) – Global velocity. Defaults to None.</p></li>
+<li><p><strong>D</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.Domain" title="stonedfenicsx.config.geometry.Domain"><em>Domain</em></a><em>, </em><em>optional</em>) – Domain . Defaults to None.</p></li>
+<li><p><strong>FG</strong> (<em>Functions_material_properties_global</em><em>, </em><em>optional</em>) – Cached material properties. Defaults to None.</p></li>
+<li><p><strong>ctrl</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.NumericalControls" title="stonedfenicsx.config.numerical_control.NumericalControls"><em>NumericalControls</em></a><em>, </em><em>optional</em>) – Numerical controls. Defaults to None.</p></li>
+<li><p><strong>it</strong> (<em>int</em><em>, </em><em>optional</em>) – outer iteration. Defaults to 0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>_description_</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[dolfinx.fem.Form,dolfinx.fem.Form]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.problems_solution.Global_thermal.set_form_residual_SS">
 <span class="sig-name descname"><span class="pre">set_form_residual_SS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.function.Function</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.function.Function</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_O</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.function.Function</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_global</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.function.Function</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">it_inner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Form</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Global_thermal.set_form_residual_SS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Global_thermal.set_form_residual_SS" title="Link to this definition">¶</a></dt>
 <dd><p>Build the steady-state residual form of the energy equation (diffusion + SUPG-stabilised advection - sources).</p>
-<p>Args:
-p (dolfinx.fem.Function, optional): Lithostatic pressure field.
-T (dolfinx.fem.Function, optional): Current temperature field.
-T_O (dolfinx.fem.Function, optional): Old temperature (unused in
-steady state; kept for interface parity with the TD variant).
-u_global (dolfinx.fem.Function, optional): Global velocity field.
-it_inner (int, optional): Inner (Picard) iteration index. Defaults to 0.
-dt (float, optional): Unused in steady state; kept for interface parity.</p>
-<p>Returns:
-dolfinx.fem.Form: Compiled residual form (diffusion + advection +
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>dolfinx.fem.Function</em><em>, </em><em>optional</em>) – Lithostatic pressure field.</p></li>
+<li><p><strong>T</strong> (<em>dolfinx.fem.Function</em><em>, </em><em>optional</em>) – Current temperature field.</p></li>
+<li><p><strong>T_O</strong> (<em>dolfinx.fem.Function</em><em>, </em><em>optional</em>) – Old temperature (unused in
+steady state; kept for interface parity with the TD variant).</p></li>
+<li><p><strong>u_global</strong> (<em>dolfinx.fem.Function</em><em>, </em><em>optional</em>) – Global velocity field.</p></li>
+<li><p><strong>it_inner</strong> (<em>int</em><em>, </em><em>optional</em>) – Inner (Picard) iteration index. Defaults to 0.</p></li>
+<li><p><strong>dt</strong> (<em>float</em><em>, </em><em>optional</em>) – Unused in steady state; kept for interface parity.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Compiled residual form (diffusion + advection +
 SUPG stabilisation - source, including shear heating if
-<code class="docutils literal notranslate"><span class="pre">model_shear</span> <span class="pre">&gt;</span> <span class="pre">0</span></code>).</p>
+<cite>model_shear &gt; 0</cite>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dolfinx.fem.Form</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -546,19 +571,28 @@ SUPG stabilisation - source, including shear heating if
 <span class="sig-name descname"><span class="pre">set_form_residual_TD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.function.Function</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.function.Function</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_O</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.function.Function</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_global</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.function.Function</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">it_inner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Form</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Global_thermal.set_form_residual_TD"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Global_thermal.set_form_residual_TD" title="Link to this definition">¶</a></dt>
 <dd><p>Assemble the time-dependent (Crank-Nicolson) energy residual and return its L2 norm.</p>
 <p>Builds the new/old diffusion, advection and mass terms (mirroring
-<code class="docutils literal notranslate"><span class="pre">set_linear_picard_TD</span></code>) directly as a residual form <code class="docutils literal notranslate"><span class="pre">R</span> <span class="pre">=</span> <span class="pre">new</span> <span class="pre">+</span> <span class="pre">old</span></code>,
+<cite>set_linear_picard_TD</cite>) directly as a residual form <cite>R = new + old</cite>,
 assembles it, zeroes the entries at Dirichlet dofs, and reduces to a
 global L2 norm.</p>
-<p>Args:
-p (dolfinx.fem.Function, optional): Lithostatic pressure field.
-T (dolfinx.fem.Function, optional): Current (new) temperature field.
-T_O (dolfinx.fem.Function, optional): Old (previous timestep) temperature field.
-u_global (dolfinx.fem.Function, optional): Global velocity field.
-it_inner (int, optional): Inner (Picard) iteration index. Defaults to 0.
-dt (float, optional): Timestep size. Defaults to 0.0.</p>
-<p>Returns:
-float: L2 norm of the assembled residual vector, with Dirichlet
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>dolfinx.fem.Function</em><em>, </em><em>optional</em>) – Lithostatic pressure field.</p></li>
+<li><p><strong>T</strong> (<em>dolfinx.fem.Function</em><em>, </em><em>optional</em>) – Current (new) temperature field.</p></li>
+<li><p><strong>T_O</strong> (<em>dolfinx.fem.Function</em><em>, </em><em>optional</em>) – Old (previous timestep) temperature field.</p></li>
+<li><p><strong>u_global</strong> (<em>dolfinx.fem.Function</em><em>, </em><em>optional</em>) – Global velocity field.</p></li>
+<li><p><strong>it_inner</strong> (<em>int</em><em>, </em><em>optional</em>) – Inner (Picard) iteration index. Defaults to 0.</p></li>
+<li><p><strong>dt</strong> (<em>float</em><em>, </em><em>optional</em>) – Timestep size. Defaults to 0.0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>L2 norm of the assembled residual vector, with Dirichlet
 dofs excluded.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -566,41 +600,61 @@ dofs excluded.</p>
 <span class="sig-name descname"><span class="pre">initialise_form</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution"><span class="pre">stonedfenicsx.solver_module.problems_solution.Solution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">it_outer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Global_thermal.initialise_form"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Global_thermal.initialise_form" title="Link to this definition">¶</a></dt>
 <dd><p>Call the routine for setting up the form, and caching it during the first iteration
 and first</p>
-<p>Args:
-sol (Solution): <em>description</em>
-it_outer (int): <em>description</em>
-ts (int): <em>description</em></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sol</strong> (<a class="reference internal" href="#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution"><em>Solution</em></a>) – _description_</p></li>
+<li><p><strong>it_outer</strong> (<em>int</em>) – _description_</p></li>
+<li><p><strong>ts</strong> (<em>int</em>) – _description_</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.problems_solution.Global_thermal.interpolate_1d_vector_boundary">
 <span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">interpolate_1d_vector_boundary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function_space</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temp_vec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dofs_intp</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Global_thermal.interpolate_1d_vector_boundary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Global_thermal.interpolate_1d_vector_boundary" title="Link to this definition">¶</a></dt>
 <dd><p>Nearest-neighbour interpolate a 1D depth profile onto a boundary Function.</p>
-<p>Args:
-function_space (dolfinx.fem.FunctionSpace): Function space of
-the returned boundary Function (e.g. the temperature space).
-z (np.ndarray): 1D array of depth coordinates of the profile
-to interpolate from.
-temp_vec (np.ndarray): Values of the profile at each <code class="docutils literal notranslate"><span class="pre">z</span></code>.
-dofs_intp (np.ndarray): Dof coordinate array (shape (ndofs, gdim));
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>function_space</strong> (<em>dolfinx.fem.FunctionSpace</em>) – Function space of
+the returned boundary Function (e.g. the temperature space).</p></li>
+<li><p><strong>z</strong> (<em>np.ndarray</em>) – 1D array of depth coordinates of the profile
+to interpolate from.</p></li>
+<li><p><strong>temp_vec</strong> (<em>np.ndarray</em>) – Values of the profile at each <cite>z</cite>.</p></li>
+<li><p><strong>dofs_intp</strong> (<em>np.ndarray</em>) – Dof coordinate array (shape (ndofs, gdim));
 only the second column (depth) is used to look up nearest
-<code class="docutils literal notranslate"><span class="pre">z</span></code>/<code class="docutils literal notranslate"><span class="pre">temp_vec</span></code> pairs.</p>
-<p>Returns:
-dolfinx.fem.Function: Function on <code class="docutils literal notranslate"><span class="pre">function_space</span></code> whose dof
+<cite>z</cite>/<cite>temp_vec</cite> pairs.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Function on <cite>function_space</cite> whose dof
 values are the nearest-neighbour interpolated profile,
 scatter-forwarded for MPI consistency.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dolfinx.fem.Function</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.problems_solution.Global_thermal.create_bc_temp">
 <span class="sig-name descname"><span class="pre">create_bc_temp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">u_global</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">it_outer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Global_thermal.create_bc_temp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Global_thermal.create_bc_temp" title="Link to this definition">¶</a></dt>
 <dd><p>Create the boundary condition</p>
-<p>Args:
-u_global (dolfinx.fem.Function): velocity field global
-it_outer (int): outer iteration
-ts (int, optional): <em>description</em>. timestep</p>
-<p>Returns:
-list of boundary conditions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>u_global</strong> (<em>dolfinx.fem.Function</em>) – velocity field global</p></li>
+<li><p><strong>it_outer</strong> (<em>int</em>) – outer iteration</p></li>
+<li><p><strong>ts</strong> (<em>int</em><em>, </em><em>optional</em>) – _description_. timestep</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>list of boundary conditions</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -614,22 +668,31 @@ the interface frictional heating.
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.problems_solution.Global_thermal.compute_friction_shear_expression">
 <span class="sig-name descname"><span class="pre">compute_friction_shear_expression</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.function.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">P</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.function.Function</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Global_thermal.compute_friction_shear_expression"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Global_thermal.compute_friction_shear_expression" title="Link to this definition">¶</a></dt>
-<dd><p><em>summary</em></p>
-<p>Args:
-pdb (PhaseDataBase): <em>description</em>
-T (dolfinx.fem.function.Function): <em>description</em>
-P (dolfinx.fem.function.Function): <em>description</em></p>
-<p>Returns:
-<em>type</em>: <em>description</em></p>
+<dd><p>_summary_</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pdb</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – _description_</p></li>
+<li><p><strong>T</strong> (<em>dolfinx.fem.function.Function</em>) – _description_</p></li>
+<li><p><strong>P</strong> (<em>dolfinx.fem.function.Function</em>) – _description_</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>_description_</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>_type_</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.problems_solution.Global_thermal.compute_energy_source">
 <span class="sig-name descname"><span class="pre">compute_energy_source</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Global_thermal.compute_energy_source"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Global_thermal.compute_energy_source" title="Link to this definition">¶</a></dt>
 <dd><p>Compute and cache the radiogenic heat production source term.</p>
-<p>Evaluates the per-phase radiogenic heating (via <code class="docutils literal notranslate"><span class="pre">compute_radiogenic</span></code>)
+<p>Evaluates the per-phase radiogenic heating (via <cite>compute_radiogenic</cite>)
 into a scratch Function and copies the result into
-<code class="docutils literal notranslate"><span class="pre">self.energy_source</span></code>. Called once per timestep (at <code class="docutils literal notranslate"><span class="pre">it_outer</span> <span class="pre">==</span> <span class="pre">0</span></code>)
+<cite>self.energy_source</cite>. Called once per timestep (at <cite>it_outer == 0</cite>)
 since radiogenic heating does not depend on the solution.</p>
 </dd></dl>
 
@@ -637,13 +700,19 @@ since radiogenic heating does not depend on the solution.</p>
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.problems_solution.Global_thermal.compute_residual">
 <span class="sig-name descname"><span class="pre">compute_residual</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Global_thermal.compute_residual"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Global_thermal.compute_residual" title="Link to this definition">¶</a></dt>
 <dd><p>Assemble the cached temperature residual form and return its L2 norm.</p>
-<p>Assembles <code class="docutils literal notranslate"><span class="pre">self.cached_form.other_form['res_temp']</span></code> (built once in
-<code class="docutils literal notranslate"><span class="pre">initialise_form</span></code>), zeroes the entries at constrained (Dirichlet)
+<p>Assembles <cite>self.cached_form.other_form[‘res_temp’]</cite> (built once in
+<cite>initialise_form</cite>), zeroes the entries at constrained (Dirichlet)
 dofs, and reduces to a global L2 norm used for outer-loop convergence
 monitoring.</p>
-<p>Returns:
-float: L2 norm of the temperature residual vector, with
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>L2 norm of the temperature residual vector, with
 Dirichlet dofs excluded.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -658,14 +727,19 @@ Dirichlet dofs excluded.</p>
 <p>Selects the steady-state or time-dependent form/residual builders,
 (re)computes the radiogenic source at the start of a timestep,
 rebuilds the boundary conditions, assembles/solves the cached linear
-system into <code class="docutils literal notranslate"><span class="pre">self.temp_k</span></code>, copies the result into <code class="docutils literal notranslate"><span class="pre">sol.T_N</span></code>, reports
-the residual, and finally projects <code class="docutils literal notranslate"><span class="pre">self.shear_heating</span></code> (if active)
-into <code class="docutils literal notranslate"><span class="pre">sol.shear_heating</span></code> for diagnostics/output.</p>
-<p>Args:
-sol (Solution): Solution container; reads <code class="docutils literal notranslate"><span class="pre">u_global</span></code>, writes <code class="docutils literal notranslate"><span class="pre">T_N</span></code>
-and <code class="docutils literal notranslate"><span class="pre">shear_heating</span></code>.
-it_outer (int, optional): Outer (nonlinear) iteration index. Defaults to 0.
-ts (int, optional): Timestep index. Defaults to 0.</p>
+system into <cite>self.temp_k</cite>, copies the result into <cite>sol.T_N</cite>, reports
+the residual, and finally projects <cite>self.shear_heating</cite> (if active)
+into <cite>sol.shear_heating</cite> for diagnostics/output.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sol</strong> (<a class="reference internal" href="#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution"><em>Solution</em></a>) – Solution container; reads <cite>u_global</cite>, writes <cite>T_N</cite>
+and <cite>shear_heating</cite>.</p></li>
+<li><p><strong>it_outer</strong> (<em>int</em><em>, </em><em>optional</em>) – Outer (nonlinear) iteration index. Defaults to 0.</p></li>
+<li><p><strong>ts</strong> (<em>int</em><em>, </em><em>optional</em>) – Timestep index. Defaults to 0.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -680,20 +754,25 @@ does not perform any operations.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.problems_solution.Global_thermal.solve_the_linear">
 <span class="sig-name descname"><span class="pre">solve_the_linear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution"><span class="pre">stonedfenicsx.solver_module.problems_solution.Solution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fen_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">isPicard</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Global_thermal.solve_the_linear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Global_thermal.solve_the_linear" title="Link to this definition">¶</a></dt>
-<dd><p>Assemble and solve the scalar linear system <code class="docutils literal notranslate"><span class="pre">a</span> <span class="pre">x</span> <span class="pre">=</span> <span class="pre">L</span></code> into <code class="docutils literal notranslate"><span class="pre">fen_function</span></code>.</p>
+<dd><p>Assemble and solve the scalar linear system <cite>a x = L</cite> into <cite>fen_function</cite>.</p>
 <p>Zeroes and reassembles the system matrix, assembles the RHS vector,
 applies lifting for the Dirichlet boundary conditions, and solves via
-the cached <code class="docutils literal notranslate"><span class="pre">ScalarSolver</span></code> KSP, writing the result directly into
-<code class="docutils literal notranslate"><span class="pre">fen_function</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">self.temp_k</span></code>).</p>
-<p>Args:
-sol (Solution): Solution container (unused directly here, kept
-for interface parity with other <code class="docutils literal notranslate"><span class="pre">solve_the_linear</span></code> variants).
-a (dolfinx.fem.Form): Compiled bilinear form.
-L (dolfinx.fem.Form): Compiled linear form.
-fen_function (dolfinx.fem.Function): Function the solution is
-written into.
-isPicard (int, optional): Unused; kept for interface parity. Defaults to 0.
-ts (int, optional): Unused; kept for interface parity. Defaults to 0.</p>
+the cached <cite>ScalarSolver</cite> KSP, writing the result directly into
+<cite>fen_function</cite> (e.g. <cite>self.temp_k</cite>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sol</strong> (<a class="reference internal" href="#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution"><em>Solution</em></a>) – Solution container (unused directly here, kept
+for interface parity with other <cite>solve_the_linear</cite> variants).</p></li>
+<li><p><strong>a</strong> (<em>dolfinx.fem.Form</em>) – Compiled bilinear form.</p></li>
+<li><p><strong>L</strong> (<em>dolfinx.fem.Form</em>) – Compiled linear form.</p></li>
+<li><p><strong>fen_function</strong> (<em>dolfinx.fem.Function</em>) – Function the solution is
+written into.</p></li>
+<li><p><strong>isPicard</strong> (<em>int</em><em>, </em><em>optional</em>) – Unused; kept for interface parity. Defaults to 0.</p></li>
+<li><p><strong>ts</strong> (<em>int</em><em>, </em><em>optional</em>) – Unused; kept for interface parity. Defaults to 0.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -701,14 +780,20 @@ ts (int, optional): Unused; kept for interface parity. Defaults to 0.</p>
 <span class="sig-name descname"><span class="pre">initial_temperature_field</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dolfinx.fem.Function</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Global_thermal.initial_temperature_field"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Global_thermal.initial_temperature_field" title="Link to this definition">¶</a></dt>
 <dd><p>Build the initial temperature field from 1D depth profiles.</p>
 <p>Interpolates two 1D nearest-neighbour temperature-vs-depth profiles
-(the background geotherm <code class="docutils literal notranslate"><span class="pre">ctrl_tbc.z</span></code>/<code class="docutils literal notranslate"><span class="pre">temperature_1d</span></code>, and the
-lithosphere-side profile <code class="docutils literal notranslate"><span class="pre">ctrl_tbc.z_right</span></code>/<code class="docutils literal notranslate"><span class="pre">temp_1d_right</span></code>), then
+(the background geotherm <cite>ctrl_tbc.z</cite>/<cite>temperature_1d</cite>, and the
+lithosphere-side profile <cite>ctrl_tbc.z_right</cite>/<cite>temp_1d_right</cite>), then
 selects between them per-dof using the phase id: phases in
 {2, 3, 4, 5} (crust/lithosphere/slab phases) take the lithosphere
-profile (clamped to <code class="docutils literal notranslate"><span class="pre">temp_max</span></code> below the LAB depth <code class="docutils literal notranslate"><span class="pre">lab_d</span></code>), all
+profile (clamped to <cite>temp_max</cite> below the LAB depth <cite>lab_d</cite>), all
 other phases take the background profile.</p>
-<p>Returns:
-dolfinx.fem.Function: Initial temperature field on <code class="docutils literal notranslate"><span class="pre">self.FS</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Initial temperature field on <cite>self.FS</cite>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dolfinx.fem.Function</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -723,60 +808,85 @@ dolfinx.fem.Function: Initial temperature field on <code class="docutils literal
 <dd><p>Build the Dirichlet boundary condition for the lithostatic pressure problem.</p>
 <p>Pins the pressure to zero at the top surface of the domain (the
 reference for the hydrostatic/lithostatic integration).</p>
-<p>Returns:
-list[dolfinx.fem.DirichletBC]: Single-element list with the
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Single-element list with the
 P = 0 boundary condition at the ‘Top’ facet tag.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[dolfinx.fem.DirichletBC]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.problems_solution.Global_pressure.set_linear_picard">
 <span class="sig-name descname"><span class="pre">set_linear_picard</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">it</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Global_pressure.set_linear_picard"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Global_pressure.set_linear_picard" title="Link to this definition">¶</a></dt>
 <dd><p>Set up and cache the bilinear/linear forms of the lithostatic pressure problem.</p>
-<p>Built only once (<code class="docutils literal notranslate"><span class="pre">self.cached_form.a</span> <span class="pre">is</span> <span class="pre">None</span></code>): a Poisson-type
-bilinear form for <code class="docutils literal notranslate"><span class="pre">grad(P)</span></code> and a linear form driven by the
+<p>Built only once (<cite>self.cached_form.a is None</cite>): a Poisson-type
+bilinear form for <cite>grad(P)</cite> and a linear form driven by the
 (density-weighted) gravity body force. Density is evaluated from the
-current <code class="docutils literal notranslate"><span class="pre">p_k</span></code>/<code class="docutils literal notranslate"><span class="pre">T</span></code> at the time of the first call and is not
+current <cite>p_k</cite>/<cite>T</cite> at the time of the first call and is not
 recomputed afterwards, since the cached form still holds a live UFL
-reference to <code class="docutils literal notranslate"><span class="pre">T</span></code>/<code class="docutils literal notranslate"><span class="pre">p_k</span></code> and is simply reassembled with their current
+reference to <cite>T</cite>/<cite>p_k</cite> and is simply reassembled with their current
 values on subsequent calls.</p>
-<p>Args:
-p_k (dolfinx.fem.Function): Current pressure iterate (used to
-evaluate density where it depends on pressure).
-T (dolfinx.fem.Function): Temperature field (used to evaluate density).
-it (int, optional): Outer iteration index; the bilinear form <code class="docutils literal notranslate"><span class="pre">a</span></code>
-is only (re)built on <code class="docutils literal notranslate"><span class="pre">it</span> <span class="pre">==</span> <span class="pre">0</span></code>. Defaults to 0.</p>
-<p>Returns:
-tuple[dolfinx.fem.Form, dolfinx.fem.Form]: Cached bilinear form
-<code class="docutils literal notranslate"><span class="pre">a</span></code> and linear form <code class="docutils literal notranslate"><span class="pre">L</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p_k</strong> (<em>dolfinx.fem.Function</em>) – Current pressure iterate (used to
+evaluate density where it depends on pressure).</p></li>
+<li><p><strong>T</strong> (<em>dolfinx.fem.Function</em>) – Temperature field (used to evaluate density).</p></li>
+<li><p><strong>it</strong> (<em>int</em><em>, </em><em>optional</em>) – Outer iteration index; the bilinear form <cite>a</cite>
+is only (re)built on <cite>it == 0</cite>. Defaults to 0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Cached bilinear form
+<cite>a</cite> and linear form <cite>L</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[dolfinx.fem.Form, dolfinx.fem.Form]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.problems_solution.Global_pressure.Solve_the_Problem">
 <span class="sig-name descname"><span class="pre">Solve_the_Problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution"><span class="pre">stonedfenicsx.solver_module.problems_solution.Solution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">it_outer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Global_pressure.Solve_the_Problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Global_pressure.Solve_the_Problem" title="Link to this definition">¶</a></dt>
 <dd><p>Drive one solve of the global lithostatic pressure problem.</p>
-<p>Builds/reuses the cached linear system, creates the <code class="docutils literal notranslate"><span class="pre">ScalarSolver</span></code> on
-the very first solve, then assembles and solves it into <code class="docutils literal notranslate"><span class="pre">sol.PL</span></code>.</p>
-<p>Args:
-sol (Solution): Solution container; reads <code class="docutils literal notranslate"><span class="pre">PL</span></code>/<code class="docutils literal notranslate"><span class="pre">T_N</span></code>, writes <code class="docutils literal notranslate"><span class="pre">PL</span></code>.
-it_outer (int, optional): Outer iteration index. Defaults to 0.
-ts (int, optional): Timestep index. Defaults to 0.</p>
+<p>Builds/reuses the cached linear system, creates the <cite>ScalarSolver</cite> on
+the very first solve, then assembles and solves it into <cite>sol.PL</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sol</strong> (<a class="reference internal" href="#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution"><em>Solution</em></a>) – Solution container; reads <cite>PL</cite>/<cite>T_N</cite>, writes <cite>PL</cite>.</p></li>
+<li><p><strong>it_outer</strong> (<em>int</em><em>, </em><em>optional</em>) – Outer iteration index. Defaults to 0.</p></li>
+<li><p><strong>ts</strong> (<em>int</em><em>, </em><em>optional</em>) – Timestep index. Defaults to 0.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.problems_solution.Global_pressure.solve_the_linear">
 <span class="sig-name descname"><span class="pre">solve_the_linear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_fen</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">isPicard</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">it</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Global_pressure.solve_the_linear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Global_pressure.solve_the_linear" title="Link to this definition">¶</a></dt>
-<dd><p>Assemble and solve the lithostatic pressure linear system <code class="docutils literal notranslate"><span class="pre">a</span> <span class="pre">x</span> <span class="pre">=</span> <span class="pre">L</span></code> into <code class="docutils literal notranslate"><span class="pre">function_fen</span></code>.</p>
-<p>The matrix is only reassembled on <code class="docutils literal notranslate"><span class="pre">it</span> <span class="pre">==</span> <span class="pre">0</span> <span class="pre">or</span> <span class="pre">ts</span> <span class="pre">==</span> <span class="pre">0</span></code> (density does
+<dd><p>Assemble and solve the lithostatic pressure linear system <cite>a x = L</cite> into <cite>function_fen</cite>.</p>
+<p>The matrix is only reassembled on <cite>it == 0 or ts == 0</cite> (density does
 not change within an outer/time loop once frozen); the RHS is always
 reassembled since it carries the density-dependent body force.</p>
-<p>Args:
-a (dolfinx.fem.Form): Compiled bilinear form.
-L (dolfinx.fem.Form): Compiled linear form.
-function_fen (dolfinx.fem.Function): Function the solution is
-written into (typically <code class="docutils literal notranslate"><span class="pre">sol.PL</span></code>).
-isPicard (int, optional): Unused; kept for interface parity. Defaults to 0.
-it (int, optional): Outer iteration index, controls matrix reassembly. Defaults to 0.
-ts (int, optional): Timestep index, controls matrix reassembly. Defaults to 0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>dolfinx.fem.Form</em>) – Compiled bilinear form.</p></li>
+<li><p><strong>L</strong> (<em>dolfinx.fem.Form</em>) – Compiled linear form.</p></li>
+<li><p><strong>function_fen</strong> (<em>dolfinx.fem.Function</em>) – Function the solution is
+written into (typically <cite>sol.PL</cite>).</p></li>
+<li><p><strong>isPicard</strong> (<em>int</em><em>, </em><em>optional</em>) – Unused; kept for interface parity. Defaults to 0.</p></li>
+<li><p><strong>it</strong> (<em>int</em><em>, </em><em>optional</em>) – Outer iteration index, controls matrix reassembly. Defaults to 0.</p></li>
+<li><p><strong>ts</strong> (<em>int</em><em>, </em><em>optional</em>) – Timestep index, controls matrix reassembly. Defaults to 0.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -789,37 +899,54 @@ ts (int, optional): Timestep index, controls matrix reassembly. Defaults to 0.</
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.problems_solution.Stokes_Problem.fem_stokes_form">
 <span class="sig-name descname"><span class="pre">fem_stokes_form</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a_p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Stokes_Problem.fem_stokes_form"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Stokes_Problem.fem_stokes_form" title="Link to this definition">¶</a></dt>
 <dd><p>Assemble the momentum/continuity blocks into compiled block forms.</p>
-<p>Args:
-a1 (ufl.Form): Momentum (viscous) block.
-a2 (ufl.Form): Pressure-gradient block (test = velocity).
-a3 (ufl.Form): Divergence block (test = pressure).
-a_p (ufl.Form): Pressure mass form used for Schur-complement preconditioning.</p>
-<p>Returns:
-tuple[dolfinx.fem.Form, dolfinx.fem.Form]: Compiled 2x2 block
-system form <code class="docutils literal notranslate"><span class="pre">[[a1,</span> <span class="pre">a2],</span> <span class="pre">[a3,</span> <span class="pre">None]]</span></code>, and the preconditioner
-block form <code class="docutils literal notranslate"><span class="pre">[[a1,</span> <span class="pre">a2],</span> <span class="pre">[a3,</span> <span class="pre">a_p]]</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a1</strong> (<em>ufl.Form</em>) – Momentum (viscous) block.</p></li>
+<li><p><strong>a2</strong> (<em>ufl.Form</em>) – Pressure-gradient block (test = velocity).</p></li>
+<li><p><strong>a3</strong> (<em>ufl.Form</em>) – Divergence block (test = pressure).</p></li>
+<li><p><strong>a_p</strong> (<em>ufl.Form</em>) – Pressure mass form used for Schur-complement preconditioning.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Compiled 2x2 block
+system form <cite>[[a1, a2], [a3, None]]</cite>, and the preconditioner
+block form <cite>[[a1, a2], [a3, a_p]]</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[dolfinx.fem.Form, dolfinx.fem.Form]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.problems_solution.Stokes_Problem.initialise_fem_form">
 <span class="sig-name descname"><span class="pre">initialise_fem_form</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution"><span class="pre">stonedfenicsx.solver_module.problems_solution.Solution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">it_outer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Stokes_Problem.initialise_fem_form"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Stokes_Problem.initialise_fem_form" title="Link to this definition">¶</a></dt>
 <dd><p>Build and cache the Stokes system forms (momentum, continuity, preconditioner, residual forms).</p>
-<p>On the first call (<code class="docutils literal notranslate"><span class="pre">self.cached_form.a</span> <span class="pre">is</span> <span class="pre">None</span></code>) selects the
+<p>On the first call (<cite>self.cached_form.a is None</cite>) selects the
 domain-specific fields (slab vs. wedge), builds the Picard forms via
-<code class="docutils literal notranslate"><span class="pre">set_linear_picard</span></code>, adds the Nitsche free-slip terms for the
+<cite>set_linear_picard</cite>, adds the Nitsche free-slip terms for the
 subducting plate’s bottom boundary, caches the residual forms
-(<code class="docutils literal notranslate"><span class="pre">rmom</span></code>, <code class="docutils literal notranslate"><span class="pre">rdiv</span></code>) used by <code class="docutils literal notranslate"><span class="pre">compute_residuum_stokes</span></code>, and compiles the
+(<cite>rmom</cite>, <cite>rdiv</cite>) used by <cite>compute_residuum_stokes</cite>, and compiles the
 block system/preconditioner. On subsequent calls simply returns the
 cached forms.</p>
-<p>Args:
-sol (Solution): Solution container providing velocity/pressure/
-temperature/lithostatic-pressure fields for the current domain.
-it_outer (int): Outer iteration index, forwarded to <code class="docutils literal notranslate"><span class="pre">set_linear_picard</span></code>.
-ts (int): Timestep index, forwarded to <code class="docutils literal notranslate"><span class="pre">set_linear_picard</span></code>.</p>
-<p>Returns:
-tuple[dolfinx.fem.Form, dolfinx.fem.Form, dolfinx.fem.Form]:
-Compiled block system form <code class="docutils literal notranslate"><span class="pre">a</span></code>, preconditioner block form <code class="docutils literal notranslate"><span class="pre">ap0</span></code>,
-and RHS form <code class="docutils literal notranslate"><span class="pre">L</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sol</strong> (<a class="reference internal" href="#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution"><em>Solution</em></a>) – Solution container providing velocity/pressure/
+temperature/lithostatic-pressure fields for the current domain.</p></li>
+<li><p><strong>it_outer</strong> (<em>int</em>) – Outer iteration index, forwarded to <cite>set_linear_picard</cite>.</p></li>
+<li><p><strong>ts</strong> (<em>int</em>) – Timestep index, forwarded to <cite>set_linear_picard</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Compiled block system form <cite>a</cite>, preconditioner block form <cite>ap0</cite>,
+and RHS form <cite>L</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[dolfinx.fem.Form, dolfinx.fem.Form, dolfinx.fem.Form]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -829,32 +956,43 @@ and RHS form <code class="docutils literal notranslate"><span class="pre">L</spa
 <p>Zeroes the momentum residual entries at Dirichlet dofs before
 reducing to an L2 norm (the divergence residual has no such dofs to
 exclude).</p>
-<p>Returns:
-tuple[float, float]: L2 norms of the momentum residual (<code class="docutils literal notranslate"><span class="pre">rmom</span></code>)
-and the continuity/divergence residual (<code class="docutils literal notranslate"><span class="pre">rdiv</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>L2 norms of the momentum residual (<cite>rmom</cite>)
+and the continuity/divergence residual (<cite>rdiv</cite>).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[float, float]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.problems_solution.Stokes_Problem.set_linear_picard">
 <span class="sig-name descname"><span class="pre">set_linear_picard</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.function.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.function.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pres_l</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.function.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a_p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">it</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slab</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">dolfinx.fem.Form</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dolfinx.fem.Form</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dolfinx.fem.Form</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dolfinx.fem.Form</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dolfinx.fem.Form</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Stokes_Problem.set_linear_picard"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Stokes_Problem.set_linear_picard" title="Link to this definition">¶</a></dt>
 <dd><p>Function that set linear form (both for picard iteration and linear problem solution)
-Args:
-u : dolfinx.fem.function.Function -&gt; Velocity field, used for computing the viscosity
-T : dolfinx.fem.function.Function -&gt; Temperature field, used for computing the viscosity
-PL : dolfinx.fem.function.Function -&gt; Lithostatic pressure field, used for computing the viscosity
-D : Domain -&gt; Domain object, used for extracting the mesh and the boundary conditions
-FR : Functions_material_rheology -&gt; Object containing the rheological functions, used for computing the viscosity
-ctrl : NumericalControls -&gt; Object containing the numerical controls, used for controlling the decoupling of the boundary condition
-sc : Scal -&gt; Object containing the scaling of the problem, used for computing the viscosity
-a_p : dolfinx.fem.Form -&gt; Pressure mass form, used for preconditioning the pressure Schur complement.
-it : int -&gt; Picard iteration number, used for controlling the decoupling of the boundary condition
-ts : int -&gt; Time step number, used for controlling the decoupling of the boundary
-Returns:
-a1 : dolfinx.fem.Form -&gt; Linear form for the momentum equation
+:param u: dolfinx.fem.function.Function -&gt; Velocity field, used for computing the viscosity
+:param T: dolfinx.fem.function.Function -&gt; Temperature field, used for computing the viscosity
+:param PL: dolfinx.fem.function.Function -&gt; Lithostatic pressure field, used for computing the viscosity
+:param D: Domain -&gt; Domain object, used for extracting the mesh and the boundary conditions
+:param FR: Functions_material_rheology -&gt; Object containing the rheological functions, used for computing the viscosity
+:param ctrl: NumericalControls -&gt; Object containing the numerical controls, used for controlling the decoupling of the boundary condition
+:param sc: Scal -&gt; Object containing the scaling of the problem, used for computing the viscosity
+:param a_p: dolfinx.fem.Form -&gt; Pressure mass form, used for preconditioning the pressure Schur complement.
+:param it: int -&gt; Picard iteration number, used for controlling the decoupling of the boundary condition
+:param ts: int -&gt; Time step number, used for controlling the decoupling of the boundary</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dolfinx.fem.Form -&gt; Linear form for the momentum equation
 a2 : dolfinx.fem.Form -&gt; Linear form for the pressure equation (divergence of the test function)
 a3 : dolfinx.fem.Form -&gt; Linear form for the continuity equation (divergence of the trial function)
 L : dolfinx.fem.Form -&gt; Linear form for the right hand side of the momentum equation
 a_p0 : dolfinx.fem.Form -&gt; Linear form for the pressure mass matrix, used for preconditioning the pressure Schur complement.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>a1</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -864,53 +1002,68 @@ a_p0 : dolfinx.fem.Form -&gt; Linear form for the pressure mass matrix, used for
 The function is computed once at the beginning of the simulation and cached for the entire simulation.
 The function is computed by solving a simple linear problem with a projection of the velocity on the slab as a source term.
 The velocity field of the moving wall is then used as a Dirichlet boundary condition for the velocity field on the slab domain.</p>
-<p>Args:
-D (Domain): Domain object, used for extracting the mesh and the boundary conditions
-ctrl (NumericalControls): NumericalControls object, used for controlling the decoupling of the boundary condition
-facet (str): the string that defines the facet on which the moving wall is applied.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>D</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.Domain" title="stonedfenicsx.config.geometry.Domain"><em>Domain</em></a>) – Domain object, used for extracting the mesh and the boundary conditions</p></li>
+<li><p><strong>ctrl</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.NumericalControls" title="stonedfenicsx.config.numerical_control.NumericalControls"><em>NumericalControls</em></a>) – NumericalControls object, used for controlling the decoupling of the boundary condition</p></li>
+<li><p><strong>facet</strong> (<em>str</em>) – the string that defines the facet on which the moving wall is applied.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.problems_solution.Stokes_Problem.solve_linear_picard">
 <span class="sig-name descname"><span class="pre">solve_linear_picard</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a_p0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">it_outer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">it_inner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slab</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Stokes_Problem.solve_linear_picard"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Stokes_Problem.solve_linear_picard" title="Link to this definition">¶</a></dt>
 <dd><p>Assemble/solve the Stokes block system and scatter the result into velocity and pressure.</p>
-<p>Creates the <code class="docutils literal notranslate"><span class="pre">SolverStokes</span></code> (block KSP + preconditioner) on the very
+<p>Creates the <cite>SolverStokes</cite> (block KSP + preconditioner) on the very
 first solve, otherwise updates its block operator in place. Solves
 the coupled velocity-pressure system as a single monolithic vector
-<code class="docutils literal notranslate"><span class="pre">x</span></code> and splits it back into <code class="docutils literal notranslate"><span class="pre">u</span></code>/<code class="docutils literal notranslate"><span class="pre">p</span></code> using the velocity/pressure dof
+<cite>x</cite> and splits it back into <cite>u</cite>/<cite>p</cite> using the velocity/pressure dof
 offset stored on the solver.</p>
-<p>Args:
-a (dolfinx.fem.Form): Compiled block system form.
-a_p0 (dolfinx.fem.Form): Compiled preconditioner block form.
-L (dolfinx.fem.Form): Compiled RHS form.
-u (dolfinx.fem.Function): Velocity Function the solution is written into.
-p (dolfinx.fem.Function): Pressure Function the solution is written into.
-it_outer (int, optional): Outer iteration index; used to decide
-whether to (re)build the solver. Defaults to 0.
-ts (int, optional): Timestep index; used to decide whether to
-(re)build the solver. Defaults to 0.
-it_inner (int, optional): Inner iteration index; used to decide
-whether to (re)build the solver. Defaults to 0.
-slab (int, optional): Flag forwarded to <code class="docutils literal notranslate"><span class="pre">SolverStokes</span></code> selecting
-slab- vs. wedge-specific solver options. Defaults to 0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>dolfinx.fem.Form</em>) – Compiled block system form.</p></li>
+<li><p><strong>a_p0</strong> (<em>dolfinx.fem.Form</em>) – Compiled preconditioner block form.</p></li>
+<li><p><strong>L</strong> (<em>dolfinx.fem.Form</em>) – Compiled RHS form.</p></li>
+<li><p><strong>u</strong> (<em>dolfinx.fem.Function</em>) – Velocity Function the solution is written into.</p></li>
+<li><p><strong>p</strong> (<em>dolfinx.fem.Function</em>) – Pressure Function the solution is written into.</p></li>
+<li><p><strong>it_outer</strong> (<em>int</em><em>, </em><em>optional</em>) – Outer iteration index; used to decide
+whether to (re)build the solver. Defaults to 0.</p></li>
+<li><p><strong>ts</strong> (<em>int</em><em>, </em><em>optional</em>) – Timestep index; used to decide whether to
+(re)build the solver. Defaults to 0.</p></li>
+<li><p><strong>it_inner</strong> (<em>int</em><em>, </em><em>optional</em>) – Inner iteration index; used to decide
+whether to (re)build the solver. Defaults to 0.</p></li>
+<li><p><strong>slab</strong> (<em>int</em><em>, </em><em>optional</em>) – Flag forwarded to <cite>SolverStokes</cite> selecting
+slab- vs. wedge-specific solver options. Defaults to 0.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.problems_solution.Stokes_Problem.Solve_the_Problem">
 <span class="sig-name descname"><span class="pre">Solve_the_Problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution"><span class="pre">stonedfenicsx.solver_module.problems_solution.Solution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">it_outer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Stokes_Problem.Solve_the_Problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Stokes_Problem.Solve_the_Problem" title="Link to this definition">¶</a></dt>
 <dd><p>Function that solve the stokes problem for the wedge domain.
-Args:
-S : Solution -&gt; Object containing the solution of the problem, used for storing the solution of the stokes problem
-ctrl : NumericalControls -&gt; Object containing the numerical controls, used for controlling the decoupling of the boundary condition and the type of problem to solve
-FGW : Functions_material_rheology -&gt; Object containing the rheological functions, used for computing the viscosity
-D : Domain -&gt; Domain object, used for extracting the mesh and the boundary conditions
-g : dolfinx.fem.function.Function -&gt; Gravity vector, used for computing the right hand side of the momentum equation
-sc : Scal -&gt; Object containing the scaling of the problem, used for computing the viscosity
-g_input : Geom_input -&gt; Object containing the geometric input, used for computing the decoupling function for the boundary condition
-it : int -&gt; Outer iteration number
-ts : int -&gt; Time step number
-Returns:
-S : Solution -&gt; Object containing the solution of the problem, used for storing the solution of</p>
+:param S: Solution -&gt; Object containing the solution of the problem, used for storing the solution of the stokes problem
+:param ctrl: NumericalControls -&gt; Object containing the numerical controls, used for controlling the decoupling of the boundary condition and the type of problem to solve
+:param FGW: Functions_material_rheology -&gt; Object containing the rheological functions, used for computing the viscosity
+:param D: Domain -&gt; Domain object, used for extracting the mesh and the boundary conditions
+:param g: dolfinx.fem.function.Function -&gt; Gravity vector, used for computing the right hand side of the momentum equation
+:param sc: Scal -&gt; Object containing the scaling of the problem, used for computing the viscosity
+:param g_input: Geom_input -&gt; Object containing the geometric input, used for computing the decoupling function for the boundary condition
+:param it: int -&gt; Outer iteration number
+:param ts: int -&gt; Time step number</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Solution -&gt; Object containing the solution of the problem, used for storing the solution of</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>S</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -923,22 +1076,31 @@ S : Solution -&gt; Object containing the solution of the problem, used for stori
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.problems_solution.Wedge.setdirichlecht">
 <span class="sig-name descname"><span class="pre">setdirichlecht</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">V</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.FunctionSpace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">it_outer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Wedge.setdirichlecht"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Wedge.setdirichlecht" title="Link to this definition">¶</a></dt>
 <dd><p>Build the wedge domain’s Dirichlet boundary conditions (no-slip overriding plate, kinematic slab wall).</p>
-<p>On the first call (<code class="docutils literal notranslate"><span class="pre">it_outer</span> <span class="pre">==</span> <span class="pre">0</span> <span class="pre">and</span> <span class="pre">ts</span> <span class="pre">==</span> <span class="pre">0</span></code>): locates and caches
+<p>On the first call (<cite>it_outer == 0 and ts == 0</cite>): locates and caches
 the no-slip dofs on the overriding-plate boundary, computes the
 moving-wall reference (unit) velocity field along the slab interface
-via <code class="docutils literal notranslate"><span class="pre">compute_moving_wall</span></code>, and — if <code class="docutils literal notranslate"><span class="pre">decoupling_ctrl</span> <span class="pre">==</span> <span class="pre">1</span></code> — scales
-it by <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">-</span> <span class="pre">decoupling_function</span></code> so the imposed wall velocity tapers
+via <cite>compute_moving_wall</cite>, and — if <cite>decoupling_ctrl == 1</cite> — scales
+it by <cite>1 - decoupling_function</cite> so the imposed wall velocity tapers
 off with depth as slab/wedge decoupling increases. On every call:
 rescales the cached reference field by the current slab velocity
-<code class="docutils literal notranslate"><span class="pre">v_s[0]</span></code> and rebuilds the slab-boundary Dirichlet BC from it.</p>
-<p>Args:
-V (dolfinx.fem.FunctionSpace): Collapsed velocity subspace.
-it_outer (int, optional): Outer iteration index. Defaults to 0.
-ts (int, optional): Timestep index. Defaults to 0.</p>
-<p>Returns:
-list[dolfinx.fem.DirichletBC]: <code class="docutils literal notranslate"><span class="pre">[bc_slab,</span> <span class="pre">bc_overriding]</span></code> — the
+<cite>v_s[0]</cite> and rebuilds the slab-boundary Dirichlet BC from it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>V</strong> (<em>dolfinx.fem.FunctionSpace</em>) – Collapsed velocity subspace.</p></li>
+<li><p><strong>it_outer</strong> (<em>int</em><em>, </em><em>optional</em>) – Outer iteration index. Defaults to 0.</p></li>
+<li><p><strong>ts</strong> (<em>int</em><em>, </em><em>optional</em>) – Timestep index. Defaults to 0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><cite>[bc_slab, bc_overriding]</cite> — the
 kinematic slab-wall condition and the no-slip overriding-plate
 condition.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[dolfinx.fem.DirichletBC]</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -948,45 +1110,58 @@ condition.</p>
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">stonedfenicsx.solver_module.problems_solution.</span></span><span class="sig-name descname"><span class="pre">Slab</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.Mesh" title="stonedfenicsx.config.geometry.Mesh"><span class="pre">stonedfenicsx.config.geometry.Mesh</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">elements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctrl_sim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.SimulationControls" title="stonedfenicsx.config.numerical_control.SimulationControls"><span class="pre">stonedfenicsx.config.numerical_control.SimulationControls</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><span class="pre">stonedfenicsx.config.phase_db.PhaseDataBase</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Slab"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Slab" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#stonedfenicsx.solver_module.problems_solution.Stokes_Problem" title="stonedfenicsx.solver_module.problems_solution.Stokes_Problem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">stonedfenicsx.solver_module.problems_solution.Stokes_Problem</span></code></a></p>
 <p>Slab problem class.</p>
-<p>Args:
-Stokes_Problemesh: type of solver (i.e., scalar problem, stokes problem)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>Stokes_Problemesh</strong> – type of solver (i.e., scalar problem, stokes problem)</p>
+</dd>
+</dl>
 <p>Class that inherits from the Stokes problem class, with the specificities of the slab problem.</p>
-<p>The slab domain is solved only once in the following cases:</p>
-<ul class="simple">
-<li><p>Steady state thermal solution.</p></li>
-<li><p>Age of the incoming slab is changed.
-If the velocity of the slab is changing with time, slab is solved each timestep.</p></li>
-</ul>
+<p>The slab domain is solved only once in the following cases:
+- Steady state thermal solution.
+- Age of the incoming slab is changed.
+If the velocity of the slab is changing with time, slab is solved each timestep.</p>
 <p>The rheology of the slab is linear. The rheology is linear because the internal wall boundary condition
 over-constrains the velocity field.</p>
-<p>The class solves the velocity field, in the subducting_plate sub-domain.</p>
-<ul class="simple">
-<li><p>The top surface of the slab is an internal wall boundary boundary condition imposed as a Dirichlet boundary condition.</p></li>
-<li><p>The bottom surface of the slab is a free slip boundary condition imposed via Nitsche method.</p></li>
-<li><p>Inflow-Outflow left and bottom boundaries feature a do-nothing bouundary conditions.</p></li>
-</ul>
+<p>The class solves the velocity field, in the subducting_plate sub-domain.
+- The top surface of the slab is an internal wall boundary boundary condition imposed as a Dirichlet boundary condition.
+- The bottom surface of the slab is a free slip boundary condition imposed via Nitsche method.
+- Inflow-Outflow left and bottom boundaries feature a do-nothing bouundary conditions.</p>
 <p class="rubric">Initialization</p>
 <p>Slab (subducting plate) problem constructor.</p>
-<p>Thin wrapper around <code class="docutils literal notranslate"><span class="pre">Stokes_Problem.__init__</span></code>; the slab-specific
+<p>Thin wrapper around <cite>Stokes_Problem.__init__</cite>; the slab-specific
 setup (kinematic top-boundary condition, Nitsche free-slip bottom
-condition) is deferred to <code class="docutils literal notranslate"><span class="pre">setdirichlecht</span></code>/<code class="docutils literal notranslate"><span class="pre">compute_nitsche_FS</span></code>.</p>
-<p>Args:
-mesh (Mesh): Mesh object storing the computational domains.
-elements (list): Elements tuple for the Stokes/temperature-pressure spaces.
-name (list): Identifiers of the problem and associated domain.
-ctrl_sim (SimulationControls): Simulation control parameters.
-pdb (PhaseDataBase): Phase/material database.</p>
+condition) is deferred to <cite>setdirichlecht</cite>/<cite>compute_nitsche_FS</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.Mesh" title="stonedfenicsx.config.geometry.Mesh"><em>Mesh</em></a>) – Mesh object storing the computational domains.</p></li>
+<li><p><strong>elements</strong> (<em>list</em>) – Elements tuple for the Stokes/temperature-pressure spaces.</p></li>
+<li><p><strong>name</strong> (<em>list</em>) – Identifiers of the problem and associated domain.</p></li>
+<li><p><strong>ctrl_sim</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.SimulationControls" title="stonedfenicsx.config.numerical_control.SimulationControls"><em>SimulationControls</em></a>) – Simulation control parameters.</p></li>
+<li><p><strong>pdb</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – Phase/material database.</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.problems_solution.Slab.setdirichlecht">
 <span class="sig-name descname"><span class="pre">setdirichlecht</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Vsubs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">it_outer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Slab.setdirichlecht"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Slab.setdirichlecht" title="Link to this definition">¶</a></dt>
 <dd><p>Set Dirichlet boundary condition (Subducting plate domain)</p>
-<p>Args:
-ctrl (NumericalControls): Numerical control structure containing the main information of the simulation
-D (Domain): Subdomain meshes and boundary information
-it (int, optional): iteration of the outer loop. Defaults to 0.
-ts (int, optional): timestep. Defaults to 0.</p>
-<p>Returns:
-list of DirichletBC: List of Dirichlet boundary conditions to be applied on the slab domain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctrl</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.NumericalControls" title="stonedfenicsx.config.numerical_control.NumericalControls"><em>NumericalControls</em></a>) – Numerical control structure containing the main information of the simulation</p></li>
+<li><p><strong>D</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.Domain" title="stonedfenicsx.config.geometry.Domain"><em>Domain</em></a>) – Subdomain meshes and boundary information</p></li>
+<li><p><strong>it</strong> (<em>int</em><em>, </em><em>optional</em>) – iteration of the outer loop. Defaults to 0.</p></li>
+<li><p><strong>ts</strong> (<em>int</em><em>, </em><em>optional</em>) – timestep. Defaults to 0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of Dirichlet boundary conditions to be applied on the slab domain.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of DirichletBC</p>
+</dd>
+</dl>
 <p>[Explanation]: During the first timestep and first outer iteration the component of the unit vector of the velocity along the slab is computed
 redundantly in the entire function space. Then if the velocity of the slab is changing over time, the dirchlecht boundary condition
 is updated by scaling the pre-computed unit vector of the velocity along the slab with the current velocity of the slab.</p>
@@ -994,19 +1169,36 @@ is updated by scaling the pre-computed unit vector of the velocity along the sla
 
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.problems_solution.Slab.compute_nitsche_FS">
-<span class="sig-name descname"><span class="pre">compute_nitsche_FS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution"><span class="pre">stonedfenicsx.solver_module.problems_solution.Solution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">dS</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ufl.measure.Measure</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ufl.form.Form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ufl.form.Form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a3</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ufl.form.Form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">it</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Slab.compute_nitsche_FS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Slab.compute_nitsche_FS" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">compute_nitsche_FS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution"><span class="pre">stonedfenicsx.solver_module.problems_solution.Solution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">dS</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ufl.measure.Measure</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ufl.form.Form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ufl.form.Form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a3</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ufl.form.Form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">it</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ufl.form.Form</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ufl.form.Form</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ufl.form.Form</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/problems_solution.html#Slab.compute_nitsche_FS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.problems_solution.Slab.compute_nitsche_FS" title="Link to this definition">¶</a></dt>
 <dd><p>Update the fem form to integrate the weak formulation of free slip boundary condition
-Args:
-D (Domain): Domain object containing the mesh and the boundary information.
-S (Solution): Solution object containing the current solution fields.
-dS (ufl.measure.Measure): Measure for integrating over the boundary facets.
-a1, a2, a3 (ufl.expression): Current forms of the linear system to be updated with the Nitsche terms.
-FGS (Functions_material_properties_global): Object containing the global material properties functions.
-gamma (float): Penalty parameter for the Nitsche method.
-sc (Scaling): Scaling object for non-dimensionalization.
-it (int, optional): Current iteration number for Picard iteration. Defaults to 0.
-Returns:
-tuple: Updated forms (a1, a2, a3) with the Nitsche free slip boundary condition integrated.</p>
+:param D: Domain object containing the mesh and the boundary information.
+:type D: Domain
+:param S: Solution object containing the current solution fields.
+:type S: Solution
+:param dS: Measure for integrating over the boundary facets.
+:type dS: ufl.measure.Measure
+:param a1: Current forms of the linear system to be updated with the Nitsche terms.
+:type a1: ufl.expression
+:param a2: Current forms of the linear system to be updated with the Nitsche terms.
+:type a2: ufl.expression
+:param a3: Current forms of the linear system to be updated with the Nitsche terms.
+:type a3: ufl.expression
+:param FGS: Object containing the global material properties functions.
+:type FGS: Functions_material_properties_global
+:param gamma: Penalty parameter for the Nitsche method.
+:type gamma: float
+:param sc: Scaling object for non-dimensionalization.
+:type sc: Scaling
+:param it: Current iteration number for Picard iteration. Defaults to 0.
+:type it: int, optional</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Updated forms (a1, a2, a3) with the Nitsche free slip boundary condition integrated.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>

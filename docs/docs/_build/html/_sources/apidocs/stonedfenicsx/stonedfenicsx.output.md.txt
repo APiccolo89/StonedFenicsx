@@ -4,6 +4,7 @@
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.output
+:parser: napoleon_parser
 :allowtitles:
 ```
 
@@ -17,6 +18,7 @@
 
 * - {py:obj}`OUTPUT <stonedfenicsx.output.OUTPUT>`
   - ```{autodoc2-docstring} stonedfenicsx.output.OUTPUT
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -29,6 +31,7 @@
 
 * - {py:obj}`_benchmark_van_keken <stonedfenicsx.output._benchmark_van_keken>`
   - ```{autodoc2-docstring} stonedfenicsx.output._benchmark_van_keken
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -39,18 +42,21 @@
 :canonical: stonedfenicsx.output.OUTPUT
 
 ```{autodoc2-docstring} stonedfenicsx.output.OUTPUT
+:parser: napoleon_parser
 ```
 
 ```{rubric} Initialization
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.output.OUTPUT.__init__
+:parser: napoleon_parser
 ```
 
 ````{py:method} print_output(ctrl_sim: stonedfenicsx.config.numerical_control.SimulationControls, sol: stonedfenicsx.solver_module.problems_solution.Solution, sc: stonedfenicsx.config.scal.Scal, it_outer: int = 0, time: float = 0.0, ts: int = 0, debug: int = 0) -> None
 :canonical: stonedfenicsx.output.OUTPUT.print_output
 
 ```{autodoc2-docstring} stonedfenicsx.output.OUTPUT.print_output
+:parser: napoleon_parser
 ```
 
 ````
@@ -59,6 +65,7 @@
 :canonical: stonedfenicsx.output.OUTPUT.close
 
 ```{autodoc2-docstring} stonedfenicsx.output.OUTPUT.close
+:parser: napoleon_parser
 ```
 
 ````
@@ -69,5 +76,6 @@
 :canonical: stonedfenicsx.output._benchmark_van_keken
 
 ```{autodoc2-docstring} stonedfenicsx.output._benchmark_van_keken
+:parser: napoleon_parser
 ```
 ````

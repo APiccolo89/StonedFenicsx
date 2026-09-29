@@ -169,7 +169,7 @@
 <td></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.read_slab_surface.curve_fitting" title="stonedfenicsx.create_mesh.read_slab_surface.curve_fitting"><code class="xref py py-obj docutils literal notranslate"><span class="pre">curve_fitting</span></code></a></p></td>
-<td><p><em>summary</em></p></td>
+<td><p>_summary_</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.read_slab_surface.compute_bending_angle_length" title="stonedfenicsx.create_mesh.read_slab_surface.compute_bending_angle_length"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_bending_angle_length</span></code></a></p></td>
 <td><p>From the given subduction surface compute the bending angle and the total length
@@ -196,9 +196,15 @@ of the slab</p></td>
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.create_mesh.read_slab_surface.curve_fitting">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.read_slab_surface.</span></span><span class="sig-name descname"><span class="pre">curve_fitting</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/read_slab_surface.html#curve_fitting"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.read_slab_surface.curve_fitting" title="Link to this definition">¶</a></dt>
-<dd><p><em>summary</em></p>
-<p>Returns:
-<em>type</em>: <em>description</em></p>
+<dd><p>_summary_</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>_description_</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>_type_</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -206,12 +212,21 @@ of the slab</p></td>
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.read_slab_surface.</span></span><span class="sig-name descname"><span class="pre">compute_bending_angle_length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/read_slab_surface.html#compute_bending_angle_length"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.read_slab_surface.compute_bending_angle_length" title="Link to this definition">¶</a></dt>
 <dd><p>From the given subduction surface compute the bending angle and the total length
 of the slab</p>
-<p>Args:
-x (NDArray[float]): coordinate x of the top surface of the slab
-z (NDArray[float]): coordinate z of the top surface of the slab</p>
-<p>Returns:
-theta: bending angle of the top surface of the slab
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>NDArray</em><em>[</em><em>float</em><em>]</em>) – coordinate x of the top surface of the slab</p></li>
+<li><p><strong>z</strong> (<em>NDArray</em><em>[</em><em>float</em><em>]</em>) – coordinate z of the top surface of the slab</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>bending angle of the top surface of the slab
 ell : total length of the surface of the slab.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>theta</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">

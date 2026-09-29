@@ -42,103 +42,71 @@ class Phase:
     """
     Phase: container for rheological and thermal material parameters.
 
-    ------------------
-    Rheology (viscosity)
-    ------------------
-    name_diffusion : str
-        Diffusion creep flow law name.
-        Options include (non-exhaustive):
-          - 'Constant'                : constant viscosity
-          - 'Hirth_Dry_Olivine_diff'  : Hirth & Kohlstedt (2003), dry olivine
-          - 'Van_Keken_diff'          : Van Keken et al. (2008) style diffusion
-          - 'Hirth_Wet_Olivine_diff'  : Hirth & Kohlstedt (2003), wet olivine
+    Attributes:
+        name_diffusion (str): Diffusion creep flow law name.
+            Options include (non-exhaustive):
 
-    e_dif : float
-        Activation energy for diffusion creep [J/mol].
-    v_dif : float
-        Activation volume for diffusion creep [m³/mol].
-    b_dif : float
-        Pre-exponential factor for diffusion creep [1/Pa/s].
+              - 'Constant'                : constant viscosity
+              - 'Hirth_Dry_Olivine_diff'  : Hirth & Kohlstedt (2003), dry olivine
+              - 'Van_Keken_diff'          : Van Keken et al. (2008) style diffusion
+              - 'Hirth_Wet_Olivine_diff'  : Hirth & Kohlstedt (2003), wet olivine
+        e_dif (float): Activation energy for diffusion creep [J/mol].
+        v_dif (float): Activation volume for diffusion creep [m³/mol].
+        b_dif (float): Pre-exponential factor for diffusion creep [1/Pa/s].
+        name_dislocation (str): Dislocation creep flow law name.
+            Options include:
 
-    name_dislocation : str
-        Dislocation creep flow law name.
-        Options include:
-          - 'Constant'
-          - 'Hirth_Dry_Olivine_disl'
-          - 'Van_Keken_disl'
-          - 'Hirth_Wet_Olivine_disl'
+              - 'Constant'
+              - 'Hirth_Dry_Olivine_disl'
+              - 'Van_Keken_disl'
+              - 'Hirth_Wet_Olivine_disl'
+        n (float): Stress exponent. **NB**: if you change this, Bdis must be updated consistently.
+        e_dis (float): Activation energy for dislocation creep [J/mol].
+        v_dis (float): Activation volume for dislocation creep [m³/mol].
+        b_dis (float): Pre-exponential factor for dislocation creep [1/Pa^n/s].
+        eta (float): Constant viscosity [Pa·s] (used if rheology is 'Constant').
+        Cp (float): constant heat capacity [J/kg/K].
+        k (float): constant thermal conductivity [W/m/K].
+        rho0 (float): Reference / constant density [kg/m³].
+        name_capacity (str): Heat capacity law.
+            Options:
 
-    n : float
-        Stress exponent. **NB**: if you change this, Bdis must be updated consistently.
-    e_dis : float
-        Activation energy for dislocation creep [J/mol].
-    v_dis : float
-        Activation volume for dislocation creep [m³/mol].
-    b_dis : float
-        Pre-exponential factor for dislocation creep [1/Pa^n/s].
+              - 'Constant'
+              - 'Berman_Forsterite'
+              - 'Berman_Fayalite'
+              - 'Berman_Aranovich_Forsterite'
+              - 'Berman_Aranovich_Fayalite'
+              - 'Berman_Fo_Fa_01'
+              - 'Bermann_Aranovich_Fo_Fa_0_1'
+              - 'Oceanic_Crust'
+              - 'ContinentalCrust' (not implemented / to be removed).
+        name_density (str): Density law.
+            Options:
 
-    eta : float
-        Constant viscosity [Pa·s] (used if rheology is 'Constant').
+              - 'Constant' : ρ = ρ0.
+              - 'PT'       : ρ(P,T) with constant bulk modulus K₀ ≈ 130e9 Pa and
+                             thermal expansivity consistent with `name_alpha`.
+        name_alpha (str): Thermal expansivity law (α).
+            Options:
 
-    ------------------
-    Thermal properties
-    ------------------
-    Cp : float
-        constant heat capacity [J/kg/K].
-    k : float
-        constant thermal conductivity [W/m/K].
-    rho0 : float
-        Reference / constant density [kg/m³].
+              - 'Constant'      : α = 3e-5 K⁻¹.
+              - 'Mantle'        : olivine / mantle α (e.g., Groose & Afonso 2013;
+                                  Richardson et al. 2020).
+              - 'Oceanic_Crust' : basaltic crustal α.
+        name_conductivity (str): Thermal conductivity law (k).
+            Options:
 
-    name_capacity : str
-        Heat capacity law.
-        Options:
-          - 'Constant'
-          - 'Berman_Forsterite'
-          - 'Berman_Fayalite'
-          - 'Berman_Aranovich_Forsterite'
-          - 'Berman_Aranovich_Fayalite'
-          - 'Berman_Fo_Fa_01'
-          - 'Bermann_Aranovich_Fo_Fa_0_1'
-          - 'Oceanic_Crust'
-          - 'ContinentalCrust' (not implemented / to be removed).
+              - 'Constant'
+              - 'Mantle'
+              - 'Oceanic_Crust'
+        radiogenic_heat (float): Radiogenic heat production [W/m³] (or [Pa/s] if used as source in σ units).
+        radiative_conductivity (float): Activation flag for radiogenic heating / radiative conductivity
+            (0.0 = off, 1.0 = on, or a more general scaling factor).
 
-    name_density : str
-        Density law.
-        Options:
-          - 'Constant' : ρ = ρ0.
-          - 'PT'       : ρ(P,T) with constant bulk modulus K₀ ≈ 130e9 Pa and
-                         thermal expansivity consistent with `name_alpha`.
-
-    name_alpha : str
-        Thermal expansivity law (α).
-        Options:
-          - 'Constant'      : α = 3e-5 K⁻¹.
-          - 'Mantle'        : olivine / mantle α (e.g., Groose & Afonso 2013;
-                              Richardson et al. 2020).
-          - 'Oceanic_Crust' : basaltic crustal α.
-
-    name_conductivity : str
-        Thermal conductivity law (k).
-        Options:
-          - 'Constant'
-          - 'Mantle'
-          - 'Oceanic_Crust'
-
-    ------------------
-    Internal heating
-    ------------------
-    radiogenic_heat: float
-        Radiogenic heat production [W/m³] (or [Pa/s] if used as source in σ units).
-    radiative_conductivity: float
-        Activation flag for radiogenic heating / radiative conductivity
-        (0.0 = off, 1.0 = on, or a more general scaling factor).
-
-    Notes
-    -----
-    This class is intended as a flexible container for building a PhaseDataBase.
-    For your current kinematic slab work it may be somewhat overkill, but it
-    should be reusable for other problems.
+    Notes:
+        This class is intended as a flexible container for building a PhaseDataBase.
+        For your current kinematic slab work it may be somewhat overkill, but it
+        should be reusable for other problems.
     """
 
     name_phase: str = "Undefined Phase"

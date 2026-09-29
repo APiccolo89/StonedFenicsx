@@ -320,31 +320,39 @@ the current and previous outer iterations.  The combined residual is the
 Euclidean norm of the four individual residuals.  Physical-unit ranges
 (min, max, RMS) are rescaled for printing.</p>
 <p>Appends per-timestep diagnostics (min/max T, min/max v, RMS, outer
-residual, timestep index) to the history arrays stored in <code class="docutils literal notranslate"><span class="pre">sol</span></code>.</p>
+residual, timestep index) to the history arrays stored in <cite>sol</cite>.</p>
 <p>Raises ValueError if the combined residual is non-finite, which signals
 a diverged or ill-conditioned solve.</p>
-<p>Args:
-sol (Solution): Current solution container (fields read, history
-arrays appended in-place).
-T (dolfinx.fem.Function): Temperature at the start of this outer
-iteration (snapshot copy made by <code class="docutils literal notranslate"><span class="pre">outerloop_operation</span></code>).
-PL (dolfinx.fem.Function): Lithostatic pressure at the start of this
-outer iteration.
-u (dolfinx.fem.Function): Velocity at the start of this outer
-iteration.
-p (dolfinx.fem.Function): Dynamic pressure at the start of this outer
-iteration.
-it_outer (int): Current outer-loop iteration index (for printing).
-sc (Scal): Non-dimensionalisation scaling object for unit rescaling.
-tA (float): Wall-clock time (from <code class="docutils literal notranslate"><span class="pre">timing.time()</span></code>) at the start of
-the outer iteration, used to report elapsed time.
-ts (int): Current timestep index.
-ctrl_sim (SimulationControls): Simulation controls; used to check
-whether temperature has exceeded the prescribed maximum.</p>
-<p>Returns:
-tuple[float, Solution]:
-res_total – combined outer-loop residual (dimensionless).
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sol</strong> (<a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution"><em>Solution</em></a>) – Current solution container (fields read, history
+arrays appended in-place).</p></li>
+<li><p><strong>T</strong> (<em>dolfinx.fem.Function</em>) – Temperature at the start of this outer
+iteration (snapshot copy made by <cite>outerloop_operation</cite>).</p></li>
+<li><p><strong>PL</strong> (<em>dolfinx.fem.Function</em>) – Lithostatic pressure at the start of this
+outer iteration.</p></li>
+<li><p><strong>u</strong> (<em>dolfinx.fem.Function</em>) – Velocity at the start of this outer
+iteration.</p></li>
+<li><p><strong>p</strong> (<em>dolfinx.fem.Function</em>) – Dynamic pressure at the start of this outer
+iteration.</p></li>
+<li><p><strong>it_outer</strong> (<em>int</em>) – Current outer-loop iteration index (for printing).</p></li>
+<li><p><strong>sc</strong> (<a class="reference internal" href="stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><em>Scal</em></a>) – Non-dimensionalisation scaling object for unit rescaling.</p></li>
+<li><p><strong>tA</strong> (<em>float</em>) – Wall-clock time (from <cite>timing.time()</cite>) at the start of
+the outer iteration, used to report elapsed time.</p></li>
+<li><p><strong>ts</strong> (<em>int</em>) – Current timestep index.</p></li>
+<li><p><strong>ctrl_sim</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.SimulationControls" title="stonedfenicsx.config.numerical_control.SimulationControls"><em>SimulationControls</em></a>) – Simulation controls; used to check
+whether temperature has exceeded the prescribed maximum.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>res_total – combined outer-loop residual (dimensionless).
 sol       – solution container with updated history arrays.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[float, <a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution">Solution</a>]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -357,31 +365,39 @@ the current and previous outer iterations.  The combined residual is the
 Euclidean norm of the four individual residuals.  Physical-unit ranges
 (min, max, RMS) are rescaled for printing.</p>
 <p>Appends per-timestep diagnostics (min/max T, min/max v, RMS, outer
-residual, timestep index) to the history arrays stored in <code class="docutils literal notranslate"><span class="pre">sol</span></code>.</p>
+residual, timestep index) to the history arrays stored in <cite>sol</cite>.</p>
 <p>Raises ValueError if the combined residual is non-finite, which signals
 a diverged or ill-conditioned solve.</p>
-<p>Args:
-sol (Solution): Current solution container (fields read, history
-arrays appended in-place).
-T (dolfinx.fem.Function): Temperature at the start of this outer
-iteration (snapshot copy made by <code class="docutils literal notranslate"><span class="pre">outerloop_operation</span></code>).
-PL (dolfinx.fem.Function): Lithostatic pressure at the start of this
-outer iteration.
-u (dolfinx.fem.Function): Velocity at the start of this outer
-iteration.
-p (dolfinx.fem.Function): Dynamic pressure at the start of this outer
-iteration.
-it_outer (int): Current outer-loop iteration index (for printing).
-sc (Scal): Non-dimensionalisation scaling object for unit rescaling.
-tA (float): Wall-clock time (from <code class="docutils literal notranslate"><span class="pre">timing.time()</span></code>) at the start of
-the outer iteration, used to report elapsed time.
-ts (int): Current timestep index.
-ctrl_sim (SimulationControls): Simulation controls; used to check
-whether temperature has exceeded the prescribed maximum.</p>
-<p>Returns:
-tuple[float, Solution]:
-res_total – combined outer-loop residual (dimensionless).
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sol</strong> (<a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution"><em>Solution</em></a>) – Current solution container (fields read, history
+arrays appended in-place).</p></li>
+<li><p><strong>T</strong> (<em>dolfinx.fem.Function</em>) – Temperature at the start of this outer
+iteration (snapshot copy made by <cite>outerloop_operation</cite>).</p></li>
+<li><p><strong>PL</strong> (<em>dolfinx.fem.Function</em>) – Lithostatic pressure at the start of this
+outer iteration.</p></li>
+<li><p><strong>u</strong> (<em>dolfinx.fem.Function</em>) – Velocity at the start of this outer
+iteration.</p></li>
+<li><p><strong>p</strong> (<em>dolfinx.fem.Function</em>) – Dynamic pressure at the start of this outer
+iteration.</p></li>
+<li><p><strong>it_outer</strong> (<em>int</em>) – Current outer-loop iteration index (for printing).</p></li>
+<li><p><strong>sc</strong> (<a class="reference internal" href="stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><em>Scal</em></a>) – Non-dimensionalisation scaling object for unit rescaling.</p></li>
+<li><p><strong>tA</strong> (<em>float</em>) – Wall-clock time (from <cite>timing.time()</cite>) at the start of
+the outer iteration, used to report elapsed time.</p></li>
+<li><p><strong>ts</strong> (<em>int</em>) – Current timestep index.</p></li>
+<li><p><strong>ctrl_sim</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.SimulationControls" title="stonedfenicsx.config.numerical_control.SimulationControls"><em>SimulationControls</em></a>) – Simulation controls; used to check
+whether temperature has exceeded the prescribed maximum.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>res_total – combined outer-loop residual (dimensionless).
 sol       – solution container with updated history arrays.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[float, <a class="reference internal" href="stonedfenicsx.solver_module.problems_solution.html#stonedfenicsx.solver_module.problems_solution.Solution" title="stonedfenicsx.solver_module.problems_solution.Solution">Solution</a>]</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -390,16 +406,27 @@ sol       – solution container with updated history arrays.</p>
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.solver_utilities.compute_residuum">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.solver_module.solver_utilities.</span></span><span class="sig-name descname"><span class="pre">compute_residuum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/solver_utilities.html#compute_residuum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.solver_utilities.compute_residuum" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the normalised PETSc-vector residual between two solution fields.</p>
-<p>Uses PETSc NORM_2 on the underlying PETSc vectors to evaluate:
-res = ||a - b||_2 / ||a + b||_2
-which is a relative change norm immune to absolute scaling of the fields.
+<dl class="simple">
+<dt>Uses PETSc NORM_2 on the underlying PETSc vectors to evaluate:</dt><dd><p>res = ||a - b||_2 / ||a + b||_2</p>
+</dd>
+</dl>
+<p>which is a relative change norm immune to absolute scaling of the fields.
 The norms are computed inside PETSc and are already MPI-global.</p>
-<p>Args:
-a (dolfinx.fem.Function): Current (new) solution field.
-b (dolfinx.fem.Function): Previous (old) solution field; must live on
-the same function space as <code class="docutils literal notranslate"><span class="pre">a</span></code>.</p>
-<p>Returns:
-float: Dimensionless relative residual in [0, inf).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>dolfinx.fem.Function</em>) – Current (new) solution field.</p></li>
+<li><p><strong>b</strong> (<em>dolfinx.fem.Function</em>) – Previous (old) solution field; must live on
+the same function space as <cite>a</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dimensionless relative residual in [0, inf).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -411,13 +438,22 @@ excluded) before the MPI allreduce, preventing double-counting on shared
 nodes.  For vector fields (vel=True) the magnitude is formed from the x
 and y sub-components before computing min/max.  The RMS is the
 volume-normalised L2 norm: ||a||_L2 / sqrt(volume).</p>
-<p>Args:
-a (dolfinx.fem.function.Function): Scalar or 2-D vector fem.Function.
-vel (bool, optional): If True, treat <code class="docutils literal notranslate"><span class="pre">a</span></code> as a 2-D velocity vector and
-compute the pointwise speed magnitude. Defaults to False.</p>
-<p>Returns:
-NDArray[np.float64]: Shape-(3,) array [global_min, global_max, RMS],
-all in the non-dimensionalised units of <code class="docutils literal notranslate"><span class="pre">a</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>dolfinx.fem.function.Function</em>) – Scalar or 2-D vector fem.Function.</p></li>
+<li><p><strong>vel</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, treat <cite>a</cite> as a 2-D velocity vector and
+compute the pointwise speed magnitude. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Shape-(3,) array [global_min, global_max, RMS],
+all in the non-dimensionalised units of <cite>a</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>NDArray[np.float64]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -425,41 +461,61 @@ all in the non-dimensionalised units of <code class="docutils literal notranslat
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.solver_module.solver_utilities.</span></span><span class="sig-name descname"><span class="pre">update_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sk1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.function.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sk0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.function.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/solver_utilities.html#update_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.solver_utilities.update_solution" title="Link to this definition">¶</a></dt>
 <dd><p>Apply under-relaxation to a solution field.</p>
 <p>Blends the new iterate sk1 with the old iterate sk0 using relaxation
-factor <code class="docutils literal notranslate"><span class="pre">tol</span></code>:
-sk0 ← tol * sk1 + (1 - tol) * sk0</p>
+factor <cite>tol</cite>:</p>
+<blockquote>
+<div><p>sk0 ← tol * sk1 + (1 - tol) * sk0</p>
+</div></blockquote>
 <p>A value of tol=1 accepts the new iterate fully; tol&lt;1 damps oscillations
 in slowly-converging or marginally-stable Picard problems.  The result is
 written back into sk0 in-place so no new allocation occurs.</p>
-<p>Args:
-sk1 (dolfinx.fem.function.Function): Solution from the current
-inner-loop iteration.
-sk0 (dolfinx.fem.function.Function): Solution from the previous
-inner-loop iteration; overwritten with the relaxed value.
-tol (float): Relaxation factor in (0, 1].</p>
-<p>Returns:
-dolfinx.fem.function.Function: The updated <code class="docutils literal notranslate"><span class="pre">sk0</span></code> (same object).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sk1</strong> (<em>dolfinx.fem.function.Function</em>) – Solution from the current
+inner-loop iteration.</p></li>
+<li><p><strong>sk0</strong> (<em>dolfinx.fem.function.Function</em>) – Solution from the previous
+inner-loop iteration; overwritten with the relaxed value.</p></li>
+<li><p><strong>tol</strong> (<em>float</em>) – Relaxation factor in (0, 1].</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The updated <cite>sk0</cite> (same object).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dolfinx.fem.function.Function</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.solver_utilities.decoupling_function">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.solver_module.solver_utilities.</span></span><span class="sig-name descname"><span class="pre">decoupling_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fun</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">g_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dolfinx.fem.Function</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/solver_utilities.html#decoupling_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.solver_utilities.decoupling_function" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the slab–wedge decoupling weight field from depth coordinates.</p>
-<p>Fills <code class="docutils literal notranslate"><span class="pre">fun</span></code> with a smooth tanh ramp that transitions from 1 (fully
+<p>Fills <cite>fun</cite> with a smooth tanh ramp that transitions from 1 (fully
 coupled, above the decoupling depth) to 0 (fully decoupled, below it).
-The transition width is one quarter of <code class="docutils literal notranslate"><span class="pre">g_input.transition</span></code>.  The result
-is normalised by <code class="docutils literal notranslate"><span class="pre">g_input.decoupling</span></code> so the function is dimensionless
+The transition width is one quarter of <cite>g_input.transition</cite>.  The result
+is normalised by <cite>g_input.decoupling</cite> so the function is dimensionless
 and correct whether coordinates are physical or non-dimensionalised.</p>
-<p>Args:
-z (np.ndarray): Depth coordinate array at every DOF, in the same
-unit as the mesh (non-dimensionalised in normal use).
-fun (dolfinx.fem.Function): Pre-allocated scalar Function on the
-sub-mesh where the weight is needed; modified in-place.
-g_input (GeomInput): Geometric input holding decoupling depth
-(<code class="docutils literal notranslate"><span class="pre">decoupling</span></code>), total lithosphere depth (<code class="docutils literal notranslate"><span class="pre">ns_depth</span></code>), and the
-transition half-width (<code class="docutils literal notranslate"><span class="pre">transition</span></code>).</p>
-<p>Returns:
-dolfinx.fem.Function: The same <code class="docutils literal notranslate"><span class="pre">fun</span></code> object, updated with the
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>z</strong> (<em>np.ndarray</em>) – Depth coordinate array at every DOF, in the same
+unit as the mesh (non-dimensionalised in normal use).</p></li>
+<li><p><strong>fun</strong> (<em>dolfinx.fem.Function</em>) – Pre-allocated scalar Function on the
+sub-mesh where the weight is needed; modified in-place.</p></li>
+<li><p><strong>g_input</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><em>GeomInput</em></a>) – Geometric input holding decoupling depth
+(<cite>decoupling</cite>), total lithosphere depth (<cite>ns_depth</cite>), and the
+transition half-width (<cite>transition</cite>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The same <cite>fun</cite> object, updated with the
 decoupling weight and scatter-forwarded for MPI consistency.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dolfinx.fem.Function</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -469,22 +525,34 @@ decoupling weight and scatter-forwarded for MPI consistency.</p>
 <p>Assembles the local contribution of (f, f) on each MPI rank and reduces
 across all ranks before taking the square root, so the result is correct
 in parallel.</p>
-<p>Args:
-f (dolfinx.fem.Function): Scalar or vector fem.Function defined on
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>f</strong> (<em>dolfinx.fem.Function</em>) – Scalar or vector fem.Function defined on
 a dolfinx mesh.</p>
-<p>Returns:
-float: ||f||_L2 = sqrt( integral f·f dx ) over the full (parallel) mesh.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>||f||_L2 = sqrt( integral f·f dx ) over the full (parallel) mesh.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.solver_module.solver_utilities.timestep_output">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.solver_module.solver_utilities.</span></span><span class="sig-name descname"><span class="pre">timestep_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctrlio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls" title="stonedfenicsx.config.numerical_control.IOControls"><span class="pre">stonedfenicsx.config.numerical_control.IOControls</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_previous</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flag_save</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/solver_module/solver_utilities.html#timestep_output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.solver_module.solver_utilities.timestep_output" title="Link to this definition">¶</a></dt>
 <dd><p>Write output files for the current timestep.</p>
-<p>Args:
-ctrlio (IOControls): I/O control settings, including output frequency and file paths.
-ts (int): Current timestep index.
-t (float): Current simulation time.
-flag_save (bool): Flag indicating whether to save the output files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctrlio</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls" title="stonedfenicsx.config.numerical_control.IOControls"><em>IOControls</em></a>) – I/O control settings, including output frequency and file paths.</p></li>
+<li><p><strong>ts</strong> (<em>int</em>) – Current timestep index.</p></li>
+<li><p><strong>t</strong> (<em>float</em>) – Current simulation time.</p></li>
+<li><p><strong>flag_save</strong> (<em>bool</em>) – Flag indicating whether to save the output files.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

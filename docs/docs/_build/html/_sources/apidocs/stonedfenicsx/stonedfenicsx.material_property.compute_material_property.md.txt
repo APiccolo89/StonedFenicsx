@@ -4,6 +4,7 @@
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property
+:parser: napoleon_parser
 :allowtitles:
 ```
 
@@ -17,14 +18,17 @@
 
 * - {py:obj}`MATERIALS <stonedfenicsx.material_property.compute_material_property.MATERIALS>`
   - ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.MATERIALS
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`THERMALCACHED <stonedfenicsx.material_property.compute_material_property.THERMALCACHED>`
   - ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`RHEOLOGYCACHED <stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED>`
   - ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -37,30 +41,37 @@
 
 * - {py:obj}`heat_conductivity_FX <stonedfenicsx.material_property.compute_material_property.heat_conductivity_FX>`
   - ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.heat_conductivity_FX
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`heat_capacity_FX <stonedfenicsx.material_property.compute_material_property.heat_capacity_FX>`
   - ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.heat_capacity_FX
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`compute_radiogenic <stonedfenicsx.material_property.compute_material_property.compute_radiogenic>`
   - ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.compute_radiogenic
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`density_FX <stonedfenicsx.material_property.compute_material_property.density_FX>`
   - ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.density_FX
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`alpha_FX <stonedfenicsx.material_property.compute_material_property.alpha_FX>`
   - ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.alpha_FX
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`compute_viscosity_FX <stonedfenicsx.material_property.compute_material_property.compute_viscosity_FX>`
   - ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.compute_viscosity_FX
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`compute_plastic_strain <stonedfenicsx.material_property.compute_material_property.compute_plastic_strain>`
   - ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.compute_plastic_strain
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -71,6 +82,7 @@
 :canonical: stonedfenicsx.material_property.compute_material_property.MATERIALS
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.MATERIALS
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} pdb
@@ -80,6 +92,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.MATERIALS.pdb
+:parser: napoleon_parser
 ```
 
 ````
@@ -91,6 +104,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.MATERIALS.phase
+:parser: napoleon_parser
 ```
 
 ````
@@ -103,6 +117,7 @@
 Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERIALS`
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} k0
@@ -112,6 +127,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.k0
+:parser: napoleon_parser
 ```
 
 ````
@@ -123,6 +139,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.rg_cached
+:parser: napoleon_parser
 ```
 
 ````
@@ -134,6 +151,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.k_a
+:parser: napoleon_parser
 ```
 
 ````
@@ -145,6 +163,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.k_b
+:parser: napoleon_parser
 ```
 
 ````
@@ -156,6 +175,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.k_c
+:parser: napoleon_parser
 ```
 
 ````
@@ -167,6 +187,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.k_d
+:parser: napoleon_parser
 ```
 
 ````
@@ -178,6 +199,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.k_e
+:parser: napoleon_parser
 ```
 
 ````
@@ -189,6 +211,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.k_f
+:parser: napoleon_parser
 ```
 
 ````
@@ -200,6 +223,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.c0
+:parser: napoleon_parser
 ```
 
 ````
@@ -211,6 +235,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.c1
+:parser: napoleon_parser
 ```
 
 ````
@@ -222,6 +247,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.c2
+:parser: napoleon_parser
 ```
 
 ````
@@ -233,6 +259,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.c3
+:parser: napoleon_parser
 ```
 
 ````
@@ -244,6 +271,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.c4
+:parser: napoleon_parser
 ```
 
 ````
@@ -255,6 +283,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.c5
+:parser: napoleon_parser
 ```
 
 ````
@@ -266,6 +295,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.rho0
+:parser: napoleon_parser
 ```
 
 ````
@@ -277,6 +307,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.alpha0
+:parser: napoleon_parser
 ```
 
 ````
@@ -288,6 +319,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.alpha1
+:parser: napoleon_parser
 ```
 
 ````
@@ -299,6 +331,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.alpha2
+:parser: napoleon_parser
 ```
 
 ````
@@ -310,6 +343,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.kb
+:parser: napoleon_parser
 ```
 
 ````
@@ -321,6 +355,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.option_rho
+:parser: napoleon_parser
 ```
 
 ````
@@ -332,6 +367,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.radiogenic
+:parser: napoleon_parser
 ```
 
 ````
@@ -343,6 +379,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    0.0
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.temp_ref
+:parser: napoleon_parser
 ```
 
 ````
@@ -354,6 +391,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    8.3145
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.gas_constant
+:parser: napoleon_parser
 ```
 
 ````
@@ -365,6 +403,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    0.0
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.a_rad
+:parser: napoleon_parser
 ```
 
 ````
@@ -376,6 +415,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    0.0
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.b_rad
+:parser: napoleon_parser
 ```
 
 ````
@@ -387,6 +427,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    0.0
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.temp_a
+:parser: napoleon_parser
 ```
 
 ````
@@ -398,6 +439,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    0.0
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.x_a
+:parser: napoleon_parser
 ```
 
 ````
@@ -409,6 +451,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    0.0
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.temp_b
+:parser: napoleon_parser
 ```
 
 ````
@@ -420,6 +463,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    0.0
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.x_b
+:parser: napoleon_parser
 ```
 
 ````
@@ -428,6 +472,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
 :canonical: stonedfenicsx.material_property.compute_material_property.THERMALCACHED.__post_init__
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.THERMALCACHED.__post_init__
+:parser: napoleon_parser
 ```
 
 ````
@@ -440,6 +485,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
 Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERIALS`
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} b_dif
@@ -449,6 +495,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED.b_dif
+:parser: napoleon_parser
 ```
 
 ````
@@ -460,6 +507,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED.b_dis
+:parser: napoleon_parser
 ```
 
 ````
@@ -471,6 +519,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED.n
+:parser: napoleon_parser
 ```
 
 ````
@@ -482,6 +531,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED.e_dif
+:parser: napoleon_parser
 ```
 
 ````
@@ -493,6 +543,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED.e_dis
+:parser: napoleon_parser
 ```
 
 ````
@@ -504,6 +555,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED.v_dif
+:parser: napoleon_parser
 ```
 
 ````
@@ -515,6 +567,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED.v_dis
+:parser: napoleon_parser
 ```
 
 ````
@@ -526,6 +579,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED.eta
+:parser: napoleon_parser
 ```
 
 ````
@@ -537,6 +591,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED.eta_def
+:parser: napoleon_parser
 ```
 
 ````
@@ -548,6 +603,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED.option_eta
+:parser: napoleon_parser
 ```
 
 ````
@@ -559,6 +615,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED.eta_max
+:parser: napoleon_parser
 ```
 
 ````
@@ -570,6 +627,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
    None
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED.gas_constant
+:parser: napoleon_parser
 ```
 
 ````
@@ -578,6 +636,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
 :canonical: stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED.__post_init__
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED.__post_init__
+:parser: napoleon_parser
 ```
 
 ````
@@ -588,6 +647,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
 :canonical: stonedfenicsx.material_property.compute_material_property.heat_conductivity_FX
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.heat_conductivity_FX
+:parser: napoleon_parser
 ```
 ````
 
@@ -595,6 +655,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
 :canonical: stonedfenicsx.material_property.compute_material_property.heat_capacity_FX
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.heat_capacity_FX
+:parser: napoleon_parser
 ```
 ````
 
@@ -602,6 +663,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
 :canonical: stonedfenicsx.material_property.compute_material_property.compute_radiogenic
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.compute_radiogenic
+:parser: napoleon_parser
 ```
 ````
 
@@ -609,6 +671,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
 :canonical: stonedfenicsx.material_property.compute_material_property.density_FX
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.density_FX
+:parser: napoleon_parser
 ```
 ````
 
@@ -616,6 +679,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
 :canonical: stonedfenicsx.material_property.compute_material_property.alpha_FX
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.alpha_FX
+:parser: napoleon_parser
 ```
 ````
 
@@ -623,6 +687,7 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
 :canonical: stonedfenicsx.material_property.compute_material_property.compute_viscosity_FX
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.compute_viscosity_FX
+:parser: napoleon_parser
 ```
 ````
 
@@ -630,5 +695,6 @@ Bases: {py:obj}`stonedfenicsx.material_property.compute_material_property.MATERI
 :canonical: stonedfenicsx.material_property.compute_material_property.compute_plastic_strain
 
 ```{autodoc2-docstring} stonedfenicsx.material_property.compute_material_property.compute_plastic_strain
+:parser: napoleon_parser
 ```
 ````

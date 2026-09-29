@@ -177,11 +177,20 @@ It takes the information from the input and generate the mesh.</p></td>
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.simulation_config.</span></span><span class="sig-name descname"><span class="pre">configure_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ph_in</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">stonedfenicsx.config.input_parser.PhInput</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.input_parser.html#stonedfenicsx.config.input_parser.Input" title="stonedfenicsx.config.input_parser.Input"><span class="pre">stonedfenicsx.config.input_parser.Input</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.SimulationControls" title="stonedfenicsx.config.numerical_control.SimulationControls"><span class="pre">stonedfenicsx.config.numerical_control.SimulationControls</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><span class="pre">stonedfenicsx.config.phase_db.PhaseDataBase</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.Mesh" title="stonedfenicsx.config.geometry.Mesh"><span class="pre">stonedfenicsx.config.geometry.Mesh</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><span class="pre">stonedfenicsx.config.scal.Scal</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/simulation_config.html#configure_simulation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.simulation_config.configure_simulation" title="Link to this definition">¶</a></dt>
 <dd><p>Function that configure the numerical simulation and scale the property accordingly.
 It takes the information from the input and generate the mesh.</p>
-<p>Args:
-ph_in (PhInput): phase input [pre-processed or from the input]
-inp (Input): input class storing the information of the simulation</p>
-<p>Returns:
-tuple[SimulationControls,PhaseDaataBase,Mesh,Scal]: computational classes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ph_in</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhInput" title="stonedfenicsx.config.phase_db.PhInput"><em>PhInput</em></a>) – phase input [pre-processed or from the input]</p></li>
+<li><p><strong>inp</strong> (<a class="reference internal" href="stonedfenicsx.config.input_parser.html#stonedfenicsx.config.input_parser.Input" title="stonedfenicsx.config.input_parser.Input"><em>Input</em></a>) – input class storing the information of the simulation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>computational classes</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.SimulationControls" title="stonedfenicsx.config.numerical_control.SimulationControls">SimulationControls</a>,PhaseDaataBase,<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.Mesh" title="stonedfenicsx.config.geometry.Mesh">Mesh</a>,<a class="reference internal" href="stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal">Scal</a>]</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

@@ -99,36 +99,27 @@ def _compute_lithostatic_pressure(
     from an initial pressure guess, evaluate rho(P, T), integrate to update P(z),
     and repeat until convergence. The relative tollerance is hardcoded to be 1e-6
 
-    Parameters
-    ----------
-    nz : int
-        Number of grid points in the vertical direction.
-    ph : NDArray[np.int32]
-        Phase identifier array along the 1D column (length ``nz``). Used to select
-        material laws/properties from ``pdb``.
-    g : float
-        Vertical component of gravitational acceleration (m/s^2). Use sign
-        consistently with your z-axis convention.
-    T : NDArray[np.float64]
-        Temperature profile along the column (K), length ``nz``.
-    pdb : object
-        Material database/dataset providing density and other thermodynamic/elastic
-        properties as functions of phase, temperature and pressure.
-
     NB: all parameters are already in dimensionless (scaled) units when called from the solver.
 
-    Returns
-    -------
-    lit_p : NDArray[np.float64]
-        Lithostatic pressure profile (Pa), length ``nz``.
+    Args:
+        nz (int): Number of grid points in the vertical direction.
+        ph (NDArray[np.int32]): Phase identifier array along the 1D column (length ``nz``). Used to select
+            material laws/properties from ``pdb``.
+        g (float): Vertical component of gravitational acceleration (m/s^2). Use sign
+            consistently with your z-axis convention.
+        T (NDArray[np.float64]): Temperature profile along the column (K), length ``nz``.
+        pdb (object): Material database/dataset providing density and other thermodynamic/elastic
+            properties as functions of phase, temperature and pressure.
 
-    Notes
-    -----
-    - The boundary condition is typically ``P(z_surface) = 0`` (or atmospheric),
-      and pressure increases downward.
-    - Convergence is usually checked with a norm on successive pressure iterates,
-      e.g. ``max(|P_new - P_old|) / max(P_new, eps)``.
-    - If ``rho`` depends strongly on pressure, under-relaxation may be required.
+    Returns:
+        NDArray[np.float64]: Lithostatic pressure profile (Pa), length ``nz``.
+
+    Notes:
+        - The boundary condition is typically ``P(z_surface) = 0`` (or atmospheric),
+          and pressure increases downward.
+        - Convergence is usually checked with a norm on successive pressure iterates,
+          e.g. ``max(|P_new - P_old|) / max(P_new, eps)``.
+        - If ``rho`` depends strongly on pressure, under-relaxation may be required.
 
     """
 

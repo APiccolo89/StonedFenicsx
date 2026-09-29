@@ -4,6 +4,7 @@
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.read_slab_surface
+:parser: napoleon_parser
 :allowtitles:
 ```
 
@@ -17,22 +18,27 @@
 
 * - {py:obj}`apply_Savitzky_Golay <stonedfenicsx.create_mesh.read_slab_surface.apply_Savitzky_Golay>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.read_slab_surface.apply_Savitzky_Golay
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`function_bending_data <stonedfenicsx.create_mesh.read_slab_surface.function_bending_data>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.read_slab_surface.function_bending_data
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`curve_fitting <stonedfenicsx.create_mesh.read_slab_surface.curve_fitting>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.read_slab_surface.curve_fitting
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`compute_bending_angle_length <stonedfenicsx.create_mesh.read_slab_surface.compute_bending_angle_length>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.read_slab_surface.compute_bending_angle_length
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`read_file_slab <stonedfenicsx.create_mesh.read_slab_surface.read_file_slab>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.read_slab_surface.read_file_slab
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -43,6 +49,7 @@
 :canonical: stonedfenicsx.create_mesh.read_slab_surface.apply_Savitzky_Golay
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.read_slab_surface.apply_Savitzky_Golay
+:parser: napoleon_parser
 ```
 ````
 
@@ -50,6 +57,7 @@
 :canonical: stonedfenicsx.create_mesh.read_slab_surface.function_bending_data
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.read_slab_surface.function_bending_data
+:parser: napoleon_parser
 ```
 ````
 
@@ -57,6 +65,7 @@
 :canonical: stonedfenicsx.create_mesh.read_slab_surface.curve_fitting
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.read_slab_surface.curve_fitting
+:parser: napoleon_parser
 ```
 ````
 
@@ -64,6 +73,7 @@
 :canonical: stonedfenicsx.create_mesh.read_slab_surface.compute_bending_angle_length
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.read_slab_surface.compute_bending_angle_length
+:parser: napoleon_parser
 ```
 ````
 
@@ -71,5 +81,6 @@
 :canonical: stonedfenicsx.create_mesh.read_slab_surface.read_file_slab
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.read_slab_surface.read_file_slab
+:parser: napoleon_parser
 ```
 ````

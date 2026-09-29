@@ -4,6 +4,7 @@
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal
+:parser: napoleon_parser
 :allowtitles:
 ```
 
@@ -17,6 +18,7 @@
 
 * - {py:obj}`Scal <stonedfenicsx.config.scal.Scal>`
   - ```{autodoc2-docstring} stonedfenicsx.config.scal.Scal
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -29,34 +31,42 @@
 
 * - {py:obj}`scaling_simulation_physical <stonedfenicsx.config.scal.scaling_simulation_physical>`
   - ```{autodoc2-docstring} stonedfenicsx.config.scal.scaling_simulation_physical
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`scaling_material_properties <stonedfenicsx.config.scal.scaling_material_properties>`
   - ```{autodoc2-docstring} stonedfenicsx.config.scal.scaling_material_properties
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`scale_parameters <stonedfenicsx.config.scal.scale_parameters>`
   - ```{autodoc2-docstring} stonedfenicsx.config.scal.scale_parameters
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`scaling_control_parameters <stonedfenicsx.config.scal.scaling_control_parameters>`
   - ```{autodoc2-docstring} stonedfenicsx.config.scal.scaling_control_parameters
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`scaling_mesh <stonedfenicsx.config.scal.scaling_mesh>`
   - ```{autodoc2-docstring} stonedfenicsx.config.scal.scaling_mesh
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`dimensionless_ginput <stonedfenicsx.config.scal.dimensionless_ginput>`
   - ```{autodoc2-docstring} stonedfenicsx.config.scal.dimensionless_ginput
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`scale_kinematic_bc <stonedfenicsx.config.scal.scale_kinematic_bc>`
   - ```{autodoc2-docstring} stonedfenicsx.config.scal.scale_kinematic_bc
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`scaling_io_controls <stonedfenicsx.config.scal.scaling_io_controls>`
   - ```{autodoc2-docstring} stonedfenicsx.config.scal.scaling_io_controls
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -69,10 +79,12 @@
 
 * - {py:obj}`_KELVIN_ <stonedfenicsx.config.scal._KELVIN_>`
   - ```{autodoc2-docstring} stonedfenicsx.config.scal._KELVIN_
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`_KM_2_M_ <stonedfenicsx.config.scal._KM_2_M_>`
   - ```{autodoc2-docstring} stonedfenicsx.config.scal._KM_2_M_
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -85,6 +97,7 @@
    273.15
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal._KELVIN_
+:parser: napoleon_parser
 ```
 
 ````
@@ -95,6 +108,7 @@
    1000
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal._KM_2_M_
+:parser: napoleon_parser
 ```
 
 ````
@@ -103,6 +117,7 @@
 :canonical: stonedfenicsx.config.scal.Scal
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.Scal
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} length
@@ -112,6 +127,7 @@
    1
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.Scal.length
+:parser: napoleon_parser
 ```
 
 ````
@@ -123,6 +139,7 @@
    1000
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.Scal.temp
+:parser: napoleon_parser
 ```
 
 ````
@@ -134,6 +151,7 @@
    1e+24
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.Scal.eta
+:parser: napoleon_parser
 ```
 
 ````
@@ -145,6 +163,7 @@
    1000000000.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.Scal.stress
+:parser: napoleon_parser
 ```
 
 ````
@@ -156,6 +175,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.Scal.time
+:parser: napoleon_parser
 ```
 
 ````
@@ -167,6 +187,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.Scal.mass
+:parser: napoleon_parser
 ```
 
 ````
@@ -178,6 +199,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.Scal.ac
+:parser: napoleon_parser
 ```
 
 ````
@@ -189,6 +211,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.Scal.rho
+:parser: napoleon_parser
 ```
 
 ````
@@ -200,6 +223,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.Scal.force
+:parser: napoleon_parser
 ```
 
 ````
@@ -211,6 +235,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.Scal.energy
+:parser: napoleon_parser
 ```
 
 ````
@@ -222,6 +247,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.Scal.watt
+:parser: napoleon_parser
 ```
 
 ````
@@ -233,6 +259,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.Scal.strain_rate
+:parser: napoleon_parser
 ```
 
 ````
@@ -244,6 +271,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.Scal.k
+:parser: napoleon_parser
 ```
 
 ````
@@ -255,6 +283,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.Scal.cp
+:parser: napoleon_parser
 ```
 
 ````
@@ -266,6 +295,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.Scal.scale_vel
+:parser: napoleon_parser
 ```
 
 ````
@@ -277,6 +307,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.Scal.scale_myr2sec
+:parser: napoleon_parser
 ```
 
 ````
@@ -285,6 +316,7 @@
 :canonical: stonedfenicsx.config.scal.Scal.compute_the_derivative_scal
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.Scal.compute_the_derivative_scal
+:parser: napoleon_parser
 ```
 
 ````
@@ -295,6 +327,7 @@
 :canonical: stonedfenicsx.config.scal.scaling_simulation_physical
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.scaling_simulation_physical
+:parser: napoleon_parser
 ```
 ````
 
@@ -302,6 +335,7 @@
 :canonical: stonedfenicsx.config.scal.scaling_material_properties
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.scaling_material_properties
+:parser: napoleon_parser
 ```
 ````
 
@@ -309,6 +343,7 @@
 :canonical: stonedfenicsx.config.scal.scale_parameters
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.scale_parameters
+:parser: napoleon_parser
 ```
 ````
 
@@ -316,6 +351,7 @@
 :canonical: stonedfenicsx.config.scal.scaling_control_parameters
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.scaling_control_parameters
+:parser: napoleon_parser
 ```
 ````
 
@@ -323,6 +359,7 @@
 :canonical: stonedfenicsx.config.scal.scaling_mesh
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.scaling_mesh
+:parser: napoleon_parser
 ```
 ````
 
@@ -330,6 +367,7 @@
 :canonical: stonedfenicsx.config.scal.dimensionless_ginput
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.dimensionless_ginput
+:parser: napoleon_parser
 ```
 ````
 
@@ -337,6 +375,7 @@
 :canonical: stonedfenicsx.config.scal.scale_kinematic_bc
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.scale_kinematic_bc
+:parser: napoleon_parser
 ```
 ````
 
@@ -344,5 +383,6 @@
 :canonical: stonedfenicsx.config.scal.scaling_io_controls
 
 ```{autodoc2-docstring} stonedfenicsx.config.scal.scaling_io_controls
+:parser: napoleon_parser
 ```
 ````

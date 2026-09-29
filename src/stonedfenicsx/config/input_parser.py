@@ -38,28 +38,23 @@ def parse_input(path: str) -> tuple[Input, PhInput]:
     """
     Read and parse a YAML input file.
 
-    Parameters
-    ----------
-    path : str
-        Path to the main input file.
+    Args:
+        path (str): Path to the main input file.
 
-    Returns
-    -------
-    Input
-        Temporary container holding numerical and physical parameters.
-        The returned object can be modified programmatically before
-        starting the computation.
+    Returns:
+        tuple: A tuple containing:
 
-    Ph_input
-        Temporary container storing material property definitions.
+            - Input: Temporary container holding numerical and physical parameters.
+              The returned object can be modified programmatically before
+              starting the computation.
+            - Ph_input: Temporary container storing material property definitions.
 
-    Notes
-    -----
-    The YAML input file can be used directly as a standalone model
-    configuration, or as a template for generating ensembles of models
-    through external Python scripts. The typical workflow is to define
-    a base scenario in YAML and then modify selected parameters
-    programmatically.
+    Notes:
+        The YAML input file can be used directly as a standalone model
+        configuration, or as a template for generating ensembles of models
+        through external Python scripts. The typical workflow is to define
+        a base scenario in YAML and then modify selected parameters
+        programmatically.
     """
     # import yamlv
     import yaml

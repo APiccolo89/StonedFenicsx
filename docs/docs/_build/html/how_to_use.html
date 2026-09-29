@@ -167,217 +167,241 @@
 <p>The input file is divided into 8 subsections:</p>
 <ul class="simple">
 <li><p><strong>NumericalControls</strong>: the parameters that control the behaviour of the simulation.</p></li>
-<li><p><strong>ShearHeating</strong>: the set of parameters that controls the internal boundary heat source (the parametrised shear heating along the seismogenetic zone of the subduction plate).</p></li>
-<li><p><strong>InputOutputControl</strong>: the set of parameters that controls where to save the output files, and under which condition to release a timestep.</p></li>
+<li><p><strong>ShearHeating</strong>: the set of parameters that control the internal boundary heat source (the parametrised shear heating along the seismogenetic zone of the subduction plate).</p></li>
+<li><p><strong>InputOutputControl</strong>: the set of parameters that control where to save the output files, and under which conditions to write a timestep.</p></li>
 <li><p><strong>scaling</strong>: the set of SI units used to scale the parameters of the simulation.</p></li>
 <li><p><strong>thermal_boundary_condition</strong>: the thermal boundary condition configuration parameters.</p></li>
 <li><p><strong>kinematic_boundary_condition</strong>: the kinematic boundary condition configuration parameters.</p></li>
 <li><p><strong>Material_properties</strong>: the material property input parameters.</p></li>
-<li><p><strong>geometry</strong>: the geometrical configuration parameters.</p></li>
+<li><p><strong>geometry</strong>: the geometric configuration parameters.</p></li>
 </ul>
 <section id="numerical-controls">
 <h3>Numerical Controls<a class="headerlink" href="#numerical-controls" title="Link to this heading">¶</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">it_max</span><span class="p">:</span> <span class="mi">30</span> <span class="c1"># Maximum number of iterations</span>
-    <span class="n">tol</span><span class="p">:</span> <span class="mf">5e-5</span> <span class="c1"># Tolerance of the problem</span>
-    <span class="n">relax</span><span class="p">:</span> <span class="mf">0.9</span> <span class="c1"># Relax factor to update the solution</span>
-    <span class="n">g</span><span class="p">:</span> <span class="mf">9.81</span> <span class="c1"># Module of the gravitational acceleration </span>
-    <span class="n">eta_max</span><span class="p">:</span> <span class="mf">1.0e26</span> <span class="c1"># Maximum viscosity of the system </span>
-    <span class="n">time_max</span><span class="p">:</span> <span class="mf">2.0</span>  <span class="c1"># Maximum time of the simulation [SI = Myr]</span>
-    <span class="n">steady_state</span><span class="p">:</span> <span class="mi">1</span> <span class="c1"># Steady state flag: 0 -&gt; time-dependent 1-&gt; steady-state simulation </span>
-    <span class="n">decoupling_ctrl</span><span class="p">:</span> <span class="mi">0</span> <span class="c1"># Flag that activates the decoupling depth </span>
-    <span class="n">model_shear</span><span class="p">:</span> <span class="s2">"NoShear"</span> <span class="c1"># [Constant,SelfConsistent,NoShear] # Flag that activates shear heating</span>
-    <span class="n">dt</span><span class="p">:</span> <span class="mf">0.015</span> <span class="c1"># Initial guess for the timestep [SI = Myr]</span>
-    <span class="n">stokes_solver_type</span> <span class="p">:</span> <span class="s2">"Direct"</span> <span class="c1"># Flag that controls if the solver is direct or iterative for the Stokes problem  ['Iterative' for iterative solver]</span>
-    <span class="n">energy_solver_type</span> <span class="p">:</span> <span class="s2">"Direct"</span> <span class="c1"># Flag that controls if the solver is direct or iterative for the Energy problem</span>
-    <span class="n">pressure_dependency</span><span class="p">:</span> <span class="mi">1</span> <span class="c1"># Flag that activates the pressure-dependency of the material properties (e.g. conductivity, density, thermal expansion)</span>
-    <span class="n">iterative_solver_tol</span> <span class="p">:</span> <span class="mf">1e-9</span> <span class="c1"># Relative tolerance of iterative solver</span>
-    <span class="n">CFL</span> <span class="p">:</span> <span class="mf">0.8</span> <span class="c1"># Courant Criteria correction factor</span>
-    <span class="n">initial_guess</span> <span class="p">:</span> <span class="mi">0</span>  <span class="c1"># Initial guess flag</span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">it_max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span><span class="w"> </span><span class="c1"># Maximum number of iterations</span>
+<span class="nt">tol</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5e-5</span><span class="w"> </span><span class="c1"># Tolerance of the problem</span>
+<span class="nt">relax</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.9</span><span class="w"> </span><span class="c1"># Relax factor to update the solution</span>
+<span class="nt">g</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">9.81</span><span class="w"> </span><span class="c1"># Module of the gravitational acceleration </span>
+<span class="nt">eta_max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e26</span><span class="w"> </span><span class="c1"># Maximum viscosity of the system </span>
+<span class="nt">time_max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.0</span><span class="w">  </span><span class="c1"># Maximum time of the simulation [SI = Myr]</span>
+<span class="nt">steady_state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w"> </span><span class="c1"># Steady state flag: 0 -&gt; time-dependent 1-&gt; steady-state simulation </span>
+<span class="nt">decoupling_ctrl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"> </span><span class="c1"># Flag that activates the decoupling depth </span>
+<span class="nt">model_shear</span><span class="p">:</span><span class="w"> </span><span class="s">"NoShear"</span><span class="w"> </span><span class="c1"># [Constant,SelfConsistent,NoShear] # Flag that activates shear heating</span>
+<span class="nt">dt</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.015</span><span class="w"> </span><span class="c1"># Initial guess for the timestep [SI = Myr]</span>
+<span class="nt">stokes_solver_type </span><span class="p">:</span><span class="w"> </span><span class="s">"Direct"</span><span class="w"> </span><span class="c1"># Flag that controls if the solver is direct or iterative for the Stokes problem </span>
+<span class="nt">energy_solver_type </span><span class="p">:</span><span class="w"> </span><span class="s">"Direct"</span><span class="w"> </span><span class="c1"># Flag that controls if the solver is direct or iterative for the Energy problem</span>
+<span class="nt">pressure_dependency</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w"> </span><span class="c1"># Flag that activates the pressure-dependency of the material properties (e.g. conductivity, density, thermal expansion)</span>
+<span class="nt">iterative_solver_tol </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1e-9</span><span class="w"> </span><span class="c1"># Relative tolerance of iterative solver</span>
+<span class="nt">CFL </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.8</span><span class="w"> </span><span class="c1"># Courant Criteria correction factor</span>
+<span class="nt">initial_guess </span><span class="p">:</span><span class="w"> </span><span class="s">'Thermal_Diffusion'</span><span class="w">  </span><span class="c1"># Initial guess flag</span>
+<span class="nt">time_ini_guess </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.3</span>
+<span class="nt">tol_dtemp </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5e-2</span><span class="w"> </span><span class="c1"># maximum thermla difference to declare convergence [K]</span>
 </pre></div>
 </div>
-<p><strong>Note</strong>:</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Plan: introduce a flag to switch the criteria for convergence: residual of the conservation equation/L1-dT.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The iterative solver is still a work in progress; it must be revisited to make it usable.</p>
+</div>
 <ul class="simple">
-<li><p>The iterative solver is still a work in progress; it must be revisited to make it usable.</p></li>
-<li><p><strong>model_shear</strong>: activate the shear heating boundary conditions. However, <em>SelfConsistent</em> and <em>Constant</em> require that <em>decoupling_ctrl</em> is 1</p>
+<li><p><strong>model_shear</strong>: activates the shear-heating boundary conditions. However, <em>SelfConsistent</em> and <em>Constant</em> require that <em>decoupling_ctrl</em> is 1</p>
 <ul>
 <li><p><em>NoShear</em>: The shear heating is not active</p></li>
 <li><p><em>SelfConsistent</em>: It requires that a dislocation creep law in the ShearHeating section is defined, together with a friction angle.</p></li>
 <li><p><em>Constant</em>: It requires the definition of a minimum stress, through which the shear heating is computed.</p></li>
 </ul>
 </li>
-<li><p>CFL: it corrects the Courant criteria timestep. <strong>remember</strong> Crank-Nicolson is not unconditionally stable with non-linearities.</p></li>
-<li><p><strong>initial_guess</strong>: This flag is automatically deactivated in case of steady-state simulations. The flag controls if a linear steady-state simulation is run prior the time-dependent case.</p></li>
+<li><p>CFL: it corrects the Courant-criterion timestep. <strong>remember</strong> Crank-Nicolson is not unconditionally stable with non-linearities.</p></li>
+<li><p>initial_guess: This flag is automatically deactivated in case of steady-state simulations. The flag controls if a linear steady-state simulation is run prior to the time-dependent case.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">Thermal_Diffusion</span></code>: Run a thermal solver without advection for a given amount of time <code class="docutils literal notranslate"><span class="pre">time_ini_guess</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Steady_State</span></code>: Run a linear steady-state simulation before introducing the timedependent solver.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">None</span></code>: No initial guess.</p></li>
+</ul>
+</li>
 </ul>
 </section>
 <section id="shearheating">
 <h3>ShearHeating<a class="headerlink" href="#shearheating" title="Link to this heading">¶</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">shear_heating_disl_phi</span><span class="p">:</span> <span class="mf">5.0</span> <span class="c1"># Friction angle [deg]</span>
-    <span class="n">shear_heating_disl_tau_min</span><span class="p">:</span> <span class="mf">0.0</span> <span class="c1"># Constant stress </span>
-    <span class="n">shear_heating_disl_law</span><span class="p">:</span> <span class="s2">"Wet_Quartzite_2001_Dislocation_creep"</span> <span class="c1"># dislocation law for the shear heating</span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">shear_heating_disl_phi</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5.0</span><span class="w"> </span><span class="c1"># Friction angle [deg]</span>
+<span class="nt">shear_heating_disl_tau_min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span><span class="w"> </span><span class="c1"># Constant stress </span>
+<span class="nt">shear_heating_disl_law</span><span class="p">:</span><span class="w"> </span><span class="s">"Wet_Quartzite_2001_Dislocation_creep"</span><span class="w"> </span><span class="c1"># dislocation law for the shear heating</span>
 </pre></div>
 </div>
-<p><strong>Note</strong></p>
 <ul class="simple">
-<li><p>The dislocation creep laws available are:</p>
+<li><p>The available dislocation creep laws are:</p>
 <ul>
-<li><p>Wet_Plagioclase_Dislocation_creep <span class="bibtex-citation" id="id1">[<a class="reference internal" href="reference.html#id24" title="Erik Rybacki and Georg Dresen. Deformation mechanism maps for feldspar rocks. Tectonophysics, 382(3-4):173–187, 2004.">RD04</a>]</span></p></li>
-<li><p>Hirareth_Serpentinite_Dislocation_creep <span class="bibtex-citation" id="id2">[<a class="reference internal" href="reference.html#id26" title="Nadege Hilairet, Bruno Reynard, Yanbin Wang, Isabelle Daniel, Sebastien Merkel, Norimasa Nishiyama, and Sylvain Petitgirard. High-pressure creep of serpentine, interseismic deformation, and initiation of subduction. Science, 318(5858):1910–1913, 2007.">HRW+07</a>]</span></p></li>
-<li><p>Wet_Quartzite_2001_Dislocation_creep <span class="bibtex-citation" id="id3">[<a class="reference internal" href="reference.html#id27" title="Greg Hirth, Christian Teyssier, and James W Dunlap. An evaluation of quartzite flow laws based on comparisons between experimentally and naturally deformed rocks. International Journal of Earth Sciences, 90(1):77–87, 2001.">HTD01</a>]</span></p></li>
-<li><p>Glaucophane_2025_Dislocation_creep <span class="bibtex-citation" id="id4">[<a class="reference internal" href="reference.html#id25" title="Lonnie J Hufford, Leif Tokle, Whitney M Behr, Luiz FG Morales, and Claudio Madonna. Blueschist dislocation creep and glide in subduction systems: constraints from glaucophane experiments. Journal of Geophysical Research: Solid Earth, 131(3):e2025JB033622, 2026.">HTB+26</a>]</span></p></li>
+<li><p>Wet_Plagioclase_Dislocation_creep</p></li>
+<li><p>Hirareth_Serpentinite_Dislocation_creep</p></li>
+<li><p>Wet_Quartzite_2001_Dislocation_creep</p></li>
+<li><p>Glaucophane_2025_Dislocation_creep</p></li>
 </ul>
 </li>
 </ul>
 </section>
 <section id="inputoutputcontrol">
 <h3>InputOutputControl<a class="headerlink" href="#inputoutputcontrol" title="Link to this heading">¶</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">test_name</span><span class="p">:</span> <span class="s2">"Output"</span> <span class="c1"># Name of the test</span>
-    <span class="n">path_test</span><span class="p">:</span> <span class="s2">"../Results"</span> <span class="c1"># Main folder</span>
-    <span class="n">ts_time</span> <span class="p">:</span> <span class="s2">"step"</span> <span class="c1"># Flag that controls if the simulation is releasing an output as a function of a fixed amount of timesteps or as a function of a time interval</span>
-    <span class="n">ts_out</span> <span class="p">:</span> <span class="mi">20</span>  <span class="c1"># The amount of timesteps required to print an output </span>
-    <span class="n">dt_out</span> <span class="p">:</span> <span class="mf">0.5</span> <span class="c1"># Time interval required to print a timestep result. </span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">test_name</span><span class="p">:</span><span class="w"> </span><span class="s">"Output"</span><span class="w"> </span><span class="c1"># Name of the test</span>
+<span class="nt">path_test</span><span class="p">:</span><span class="w"> </span><span class="s">"../Results"</span><span class="w"> </span><span class="c1"># Main folder</span>
+<span class="nt">ts_time </span><span class="p">:</span><span class="w"> </span><span class="s">"step"</span><span class="w"> </span><span class="c1"># Flag that controls if the simulation is releasing an output as a function of a fixed amount of timesteps or as a function of a time interval</span>
+<span class="nt">ts_out </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span><span class="w">  </span><span class="c1"># The amount of timesteps required to print an output </span>
+<span class="nt">dt_out </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span><span class="w"> </span><span class="c1"># Time interval required to print a timestep result. </span>
 </pre></div>
 </div>
-<p>To run the numerical code, the user has to specify the test name, the path of the folder in which the output is stored. <em>StonedFEniCSx</em> automatically creates the parent folder, and the relative test folder. The code creates a <strong>Cached_information</strong> folder in which to store the mesh data, the thermal boundary condition data. The user can decide to always compute the mesh information and the thermal boundary conditions. Especially, whenever the user needs to systematically change the geometry, or the thermal parameters.</p>
+<p>To run the numerical code, the user has to specify the test name and the path of the folder in which the output is stored. <em>StonedFEniCSx</em> automatically creates the parent folder, and the relative test folder.</p>
 </section>
 <section id="scaling">
 <h3>scaling<a class="headerlink" href="#scaling" title="Link to this heading">¶</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">length</span><span class="p">:</span> <span class="mf">600e3</span> <span class="c1"># Scaling of the length</span>
-    <span class="n">stress</span><span class="p">:</span> <span class="mf">1.0e9</span> <span class="c1"># Stress/Pressure scale</span>
-    <span class="n">eta</span><span class="p">:</span> <span class="mf">1.0e21</span> <span class="c1"># Viscosity scale </span>
-    <span class="n">temp</span><span class="p">:</span> <span class="mf">1333.0</span> <span class="c1"># Temperature scale</span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">length</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">600e3</span><span class="w"> </span><span class="c1"># Scaling of the length</span>
+<span class="nt">stress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e9</span><span class="w"> </span><span class="c1"># Stress/Pressure scale</span>
+<span class="nt">eta</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e21</span><span class="w"> </span><span class="c1"># Viscosity scale </span>
+<span class="nt">temp</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1333.0</span><span class="w"> </span><span class="c1"># Temperature scale</span>
 </pre></div>
 </div>
-<p>All the derivative scalings are automatically computed after the configuration of the simulation. For example, time is computed using the stress scale and the viscosity scale. The dimensions must be given in <strong>m</strong>, <strong>Pa</strong>, <strong>Pa s</strong> and <strong>deg C</strong>.</p>
+<p>All the derived scalings are automatically computed after the configuration of the simulation. For example, time is computed using the stress scale and the viscosity scale. The dimensions must be given in <strong>m</strong>, <strong>Pa</strong>, <strong>Pa s</strong> and <strong>deg C</strong>.</p>
 </section>
 <section id="thermal-boundary-condition">
 <h3>thermal_boundary_condition<a class="headerlink" href="#thermal-boundary-condition" title="Link to this heading">¶</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">temp_max</span><span class="p">:</span> <span class="mf">1300.0</span> <span class="c1"># Maximum temperature (mantle temperature) [SI = deg C]</span>
-    <span class="n">temp_top</span><span class="p">:</span> <span class="mf">0.0</span> <span class="c1"># Surface temperature [SI = deg C]</span>
-    <span class="n">constant</span><span class="p">:</span> <span class="mi">1</span>  <span class="c1"># Flag that controls if the age remains constant during the time-dependent solution</span>
-    <span class="n">interval_val</span> <span class="p">:</span> <span class="p">[</span><span class="mf">50.0</span><span class="p">,</span><span class="mi">30</span><span class="p">]</span> <span class="c1"># Interval of values [SI = Myr]</span>
-    <span class="n">interval_time</span><span class="p">:</span> <span class="p">[</span><span class="mi">20</span><span class="p">,</span><span class="mi">40</span><span class="p">]</span> <span class="c1"># Interval of times in which the change is occuring [SI = Myr]</span>
-    <span class="n">nz</span><span class="p">:</span> <span class="mi">108</span> <span class="c1"># Numerical parameter to compute the right and left side thermal boundary conditions</span>
-    <span class="n">end_time</span><span class="p">:</span> <span class="mf">180.0</span> <span class="c1"># the time in which the half-space cooling model is computed</span>
-    <span class="n">dt</span><span class="p">:</span> <span class="mf">0.005</span> <span class="c1"># the timestep [SI = Myr]</span>
-    <span class="n">slab_age</span><span class="p">:</span> <span class="mf">50.0</span> <span class="c1"># Age of the slab [SI = Myr]</span>
-    <span class="n">right_boundary</span> <span class="p">:</span> <span class="s1">'Continental'</span>  <span class="c1"># Oceanic  # Type of boundary condition</span>
-    <span class="n">right_age</span><span class="p">:</span> <span class="mf">50.0</span>  <span class="c1"># Age of the right boundary condition</span>
-    <span class="n">recalculate</span> <span class="p">:</span> <span class="mi">1</span> <span class="c1"># Option to compute on the fly the boundary -&gt; useful if user wants to change thermal properties. </span>
-
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">temp_max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1300.0</span><span class="w"> </span><span class="c1"># Maximum temperature (mantle temperature) [SI = deg C]</span>
+<span class="nt">temp_top</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span><span class="w"> </span><span class="c1"># Surface temperature [SI = deg C]</span>
+<span class="nt">constant</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w">  </span><span class="c1"># Flag that controls if the age remains constant during the time-dependent solution</span>
+<span class="nt">interval_val </span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">50.0</span><span class="p p-Indicator">,</span><span class="nv">30</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># Interval of values [SI = Myr]</span>
+<span class="nt">interval_time</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">20</span><span class="p p-Indicator">,</span><span class="nv">40</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># Interval of times in which the change is occurring [SI = Myr]</span>
+<span class="nt">nz</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">108</span><span class="w"> </span><span class="c1"># Numerical parameter to compute the right and left side thermal boundary conditions</span>
+<span class="nt">end_time</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">180.0</span><span class="w"> </span><span class="c1"># the time in which the half-space cooling model is computed</span>
+<span class="nt">dt</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.005</span><span class="w"> </span><span class="c1"># the timestep [SI = Myr]</span>
+<span class="nt">slab_age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50.0</span><span class="w"> </span><span class="c1"># Age of the slab [SI = Myr]</span>
+<span class="nt">right_boundary </span><span class="p">:</span><span class="w"> </span><span class="s">'Continental'</span><span class="w">  </span><span class="c1"># Oceanic  # Type of boundary condition</span>
+<span class="nt">right_age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50.0</span><span class="w">  </span><span class="c1"># Age of the right boundary condition</span>
+<span class="nt">recalculate </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w"> </span><span class="c1"># Option to compute on the fly the boundary -&gt; useful if user wants to change thermal properties. </span>
 </pre></div>
 </div>
-<p>The left and right boundary conditions are computed using a finite difference scheme with Crank-Nicolson. In the case of the left boundary condition, the code computes from 0 to <em>end_time</em> a half space cooling model, and then selects the appropriate thermal profile as a function of the <em>slab_age</em>. In case of the right boundary condition the user must choose whether or not the boundary represents a continental margin or oceanic plate. In the case of <em>Oceanic</em>, the code will compute the same 2D array of thermal profiles; otherwise, in the case of <em>Continental</em>, it computes an initial linear geotherm as a function of the geometrical input. Then, it will run a thermal diffusion to reach a quasi-steady state. This is particularly useful when radiogenic heating is active.
-The <em>recalculate</em> option forces the computation of the boundary condition at each realization. If it is not active, the code will read the small h5 database saved in the <em>Cached_information</em> folder.</p>
+<p>The left and right boundary conditions are computed using a finite difference scheme with Crank-Nicolson. For the left boundary condition, the code computes from 0 to <em>end_time</em> a half-space cooling model, and then selects the appropriate thermal profile as a function of the <em>slab_age</em>. For the right boundary condition the user must choose whether the boundary represents a continental margin or an oceanic plate. In the case of <em>Oceanic</em>, the code will compute the same 2D array of thermal profiles; otherwise, in the case of <em>Continental</em>, the code computes an initial linear geotherm as a function of the geometrical input. Then, it will run a thermal diffusion to reach a quasi-steady state. This is particularly useful when radiogenic heating is active.</p>
 </section>
 <section id="kinematic-boundary-condition">
 <h3>kinematic_boundary_condition<a class="headerlink" href="#kinematic-boundary-condition" title="Link to this heading">¶</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">v_s</span> <span class="p">:</span> <span class="p">[</span><span class="mf">5.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">]</span> <span class="c1"># Initial vector for the velocity of the slab [SI=cm/yr]</span>
-    <span class="n">constant</span> <span class="p">:</span> <span class="mi">1</span>  <span class="c1"># Flag that signals that the velocity of subduction does not change over time</span>
-    <span class="n">interval_val</span> <span class="p">:</span> <span class="p">[</span><span class="mf">5.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">]</span> <span class="c1"># interval of velocities [SI=cm/yr]</span>
-    <span class="n">interval_time</span> <span class="p">:</span> <span class="p">[</span><span class="mi">20</span><span class="p">,</span><span class="mi">40</span><span class="p">]</span> <span class="c1"># interval of time when the velocity change occurs</span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">v_s </span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">5.0</span><span class="p p-Indicator">,</span><span class="nv">0.0</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># Initial vector for the velocity of the slab [SI=cm/yr]</span>
+<span class="nt">constant </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w">  </span><span class="c1"># Flag that signals that the velocity of subduction does not change over time</span>
+<span class="nt">interval_val </span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">5.0</span><span class="p p-Indicator">,</span><span class="nv">1.0</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># interval of velocities [SI=cm/yr]</span>
+<span class="nt">interval_time </span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">20</span><span class="p p-Indicator">,</span><span class="nv">40</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># interval of time when the velocity change occurs</span>
 </pre></div>
 </div>
-<p><strong>Note</strong>: Both in the case of kinematic and thermal boundary condition, the variation of velocity and age over time is linear. Curently these feature have not been tested.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For both the kinematic and thermal boundary conditions, the variation of velocity and age over time is linear. Currently, these featuress have not been tested.</p>
+</div>
 </section>
 <section id="material-properties">
 <h3>Material properties<a class="headerlink" href="#material-properties" title="Link to this heading">¶</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>  <span class="n">wedge_mantle</span><span class="p">:</span> 
-      <span class="n">name_diffusion</span> <span class="p">:</span> <span class="s1">'Constant'</span> <span class="c1"># Name of diffusion creep law</span>
-      <span class="n">name_dislocation</span> <span class="p">:</span> <span class="s1">'Constant'</span> <span class="c1"># Name of dislocation creep law</span>
-      <span class="n">name_alpha</span> <span class="p">:</span> <span class="s1">'Constant'</span> <span class="c1"># Name of the thermal expansivity law</span>
-      <span class="n">name_density</span> <span class="p">:</span> <span class="s1">'Constant'</span> <span class="c1"># Name of the density law</span>
-      <span class="n">name_capacity</span><span class="p">:</span> <span class="s1">'Constant'</span> <span class="c1"># Name of the capacity law</span>
-      <span class="n">name_conductivity</span><span class="p">:</span> <span class="s1">'Constant'</span> <span class="c1"># Name of the conductivity law</span>
-      <span class="n">eta</span> <span class="p">:</span> <span class="mf">1.0e20</span>  <span class="c1"># Viscosity of the phase [SI = Pas]</span>
-      <span class="n">rho0</span> <span class="p">:</span> <span class="mf">3300.0</span>  <span class="c1"># Reference density of the phase</span>
-      <span class="n">k</span> <span class="p">:</span> <span class="mf">3.0</span> <span class="c1"># Constant conductivity [SI = W/m/K]</span>
-      <span class="n">cp</span> <span class="p">:</span> <span class="mi">1250</span> <span class="c1"># Constant Heat capacity [SI = J/kg/K]</span>
-      <span class="n">alpha0</span> <span class="p">:</span> <span class="mf">3e-5</span> <span class="c1"># Constant thermal expansivity [SI = 1/K]</span>
-      <span class="n">b_dif</span> <span class="p">:</span> <span class="n">null</span> <span class="c1"># Pre-exponential factor of the diffusion creep [SI = Pa^(-1)s^(-1)]</span>
-      <span class="n">b_dis</span> <span class="p">:</span> <span class="n">null</span> <span class="c1">#Pre-exponential factor of the dislocation creep [SI = Pa^(-n)s^(-1)]</span>
-      <span class="n">e_dif</span> <span class="p">:</span> <span class="n">null</span> <span class="c1">#Activation energy of the diffusion creep [SI = J/mol]</span>
-      <span class="n">e_dis</span> <span class="p">:</span> <span class="n">null</span> <span class="c1">#Activation energy of the dislocation creep [SI = J/mol]</span>
-      <span class="n">v_dis</span> <span class="p">:</span> <span class="n">null</span> <span class="c1">#Activation volume of the dislocation creep [SI = m^3/Pa]</span>
-      <span class="n">v_dif</span> <span class="p">:</span> <span class="n">null</span> <span class="c1">#Activation volume of the diffusion creep [SI = m^3/Pa]</span>
-      <span class="n">n</span> <span class="p">:</span> <span class="n">null</span> <span class="c1"># Stress exponent dislocation creep</span>
-      <span class="n">radiative_conductivity</span> <span class="p">:</span> <span class="mi">0</span>  <span class="c1"># radiative conductivity flag: 0 means that the radiative conductivity for the specific phase is not considered, 1: means that the radiative conductivity is considered for the specific case. </span>
-      <span class="n">radiogenic_heat</span> <span class="p">:</span> <span class="mf">0.0</span>  <span class="c1"># radiogenic heat production [SI = W/m^3]</span>
-
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">wedge_mantle</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name_diffusion </span><span class="p">:</span><span class="w"> </span><span class="s">'Constant'</span><span class="w"> </span><span class="c1"># Name of diffusion creep law</span>
+<span class="w">  </span><span class="nt">name_dislocation </span><span class="p">:</span><span class="w"> </span><span class="s">'Constant'</span><span class="w"> </span><span class="c1"># Name of dislocation creep law</span>
+<span class="w">  </span><span class="nt">name_alpha </span><span class="p">:</span><span class="w"> </span><span class="s">'Constant'</span><span class="w"> </span><span class="c1"># Name of the thermal expansivity law</span>
+<span class="w">  </span><span class="nt">name_density </span><span class="p">:</span><span class="w"> </span><span class="s">'Constant'</span><span class="w"> </span><span class="c1"># Name of the density law</span>
+<span class="w">  </span><span class="nt">name_capacity</span><span class="p">:</span><span class="w"> </span><span class="s">'Constant'</span><span class="w"> </span><span class="c1"># Name of the capacity law</span>
+<span class="w">  </span><span class="nt">name_conductivity</span><span class="p">:</span><span class="w"> </span><span class="s">'Constant'</span><span class="w"> </span><span class="c1"># Name of the conductivity law</span>
+<span class="w">  </span><span class="nt">eta </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e20</span><span class="w">  </span><span class="c1"># Viscosity of the phase [SI = Pas]</span>
+<span class="w">  </span><span class="nt">rho0 </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3300.0</span><span class="w">  </span><span class="c1"># Reference density of the phase</span>
+<span class="w">  </span><span class="nt">k </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3.0</span><span class="w"> </span><span class="c1"># Constant conductivity [SI = W/m/K]</span>
+<span class="w">  </span><span class="nt">cp </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1250</span><span class="w"> </span><span class="c1"># Constant Heat capacity [SI = J/kg/K]</span>
+<span class="w">  </span><span class="nt">alpha0 </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3e-5</span><span class="w"> </span><span class="c1"># Constant thermal expansivity [SI = 1/K]</span>
+<span class="w">  </span><span class="nt">b_dif </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w"> </span><span class="c1"># Pre-exponential factor of the diffusion creep [SI = Pa^(-1)s^(-1)]</span>
+<span class="w">  </span><span class="nt">b_dis </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w"> </span><span class="c1">#Pre-exponential factor of the dislocation creep [SI = Pa^(-n)s^(-1)]</span>
+<span class="w">  </span><span class="nt">e_dif </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w"> </span><span class="c1">#Activation energy of the diffusion creep [SI = J/mol]</span>
+<span class="w">  </span><span class="nt">e_dis </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w"> </span><span class="c1">#Activation energy of the dislocation creep [SI = J/mol]</span>
+<span class="w">  </span><span class="nt">v_dis </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w"> </span><span class="c1">#Activation volume of the dislocation creep [SI = m^3/Pa]</span>
+<span class="w">  </span><span class="nt">v_dif </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w"> </span><span class="c1">#Activation volume of the diffusion creep [SI = m^3/Pa]</span>
+<span class="w">  </span><span class="nt">n </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w"> </span><span class="c1"># Stress exponent dislocation creep</span>
+<span class="w">  </span><span class="nt">radiative_conductivity </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">  </span><span class="c1"># radiative conductivity flag: 0 means that the radiative conductivity for the specific phase is not considered, 1: means that the radiative conductivity is considered for the specific case. </span>
+<span class="w">  </span><span class="nt">radiogenic_heat </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span><span class="w">  </span><span class="c1"># radiogenic heat production [SI = W/m^3]</span>
 </pre></div>
 </div>
-<p>The snipet above is an example. The names of the phases stored in the Material_Properties are fixed and bounded to the specific problem. Many phases feature constant viscosity, and the only freedom of the user is deciding the rheology of the <strong>wedge_mantle</strong> and the thermal properties of the other phases. This is a design choice, as the configuration module can be adapted to deal with multiphase problems.
-The user can change the value of diffusion creep and dislocation creep rheologies. However, these value must be given in the unit of measure listed in the input file. Moreover, the user should remember that the pre-exponential factor of dislocation depends on <em>n</em>, the stress exponent, so, changing the stress-exponent should be done with extra-care for the dimensional consistency.</p>
+<p>The snippet above is an example. The names of the phases stored in the Material_Properties are fixed and bounded to the specific problem. Many phases feature constant viscosity, and the only freedom of the user is deciding the rheology of the <strong>wedge_mantle</strong> and the thermal properties of the other phases. This is a design choice, as the configuration module can be adapted to deal with multiphase problems.</p>
+<p>The user can change the value of diffusion creep and dislocation creep rheologies. However, these values must be given in the units of measure listed in the input file. Moreover, the user should remember that the pre-exponential factor of dislocation depends on <em>n</em>, the stress exponent, so, changing the stress exponent should be done with extra care for the dimensional consistency.</p>
 <p><strong>Diffusion creep laws available</strong>:</p>
 <ul class="simple">
-<li><p>Hirth_dry_Diffusion_creep: <span class="bibtex-citation" id="id5">[<a class="reference internal" href="reference.html#id30" title="Greg Hirth and D Kohlstedf. Rheology of the upper mantle and the mantle wedge: a view from the experimentalists. Geophysical monograph-american geophysical union, 138:83–106, 2003.">HK03</a>]</span></p></li>
-<li><p>VK_Diffusion_creep: <span class="bibtex-citation" id="id6">[<a class="reference internal" href="reference.html#id12" title="Peter E van Keken, Claire Currie, Scott D King, Mark D Behn, Amandine Cagnioncle, Jiangheng He, Richard F Katz, Shu-Chuan Lin, E Marc Parmentier, Marc Spiegelman, and others. A community benchmark for subduction zone modeling. Physics of the Earth and Planetary Interiors, 171(1-4):187–197, 2008.">vKCK+08</a>]</span></p></li>
-<li><p>Hirth_wet_Diffusion_creep: <span class="bibtex-citation" id="id7">[<a class="reference internal" href="reference.html#id30" title="Greg Hirth and D Kohlstedf. Rheology of the upper mantle and the mantle wedge: a view from the experimentalists. Geophysical monograph-american geophysical union, 138:83–106, 2003.">HK03</a>]</span></p></li>
-<li><p>Constant: it is a flag that tells the code to not use the diffusion creep rheologies in the calculation</p></li>
+<li><p>Hirth_dry_Diffusion_creep</p></li>
+<li><p>VK_Diffusion_creep</p></li>
+<li><p>Hirth_wet_Diffusion_creep</p></li>
+<li><p>Constant: it is a flag that tells the code not to use the diffusion creep rheologies in the calculation</p></li>
 </ul>
 <p><strong>Dislocation creep laws available</strong>:</p>
 <ul class="simple">
-<li><p>Hirth_dry_Dislocation_creep: <span class="bibtex-citation" id="id8">[<a class="reference internal" href="reference.html#id30" title="Greg Hirth and D Kohlstedf. Rheology of the upper mantle and the mantle wedge: a view from the experimentalists. Geophysical monograph-american geophysical union, 138:83–106, 2003.">HK03</a>]</span></p></li>
-<li><p>VK_Dislocation_creep: <span class="bibtex-citation" id="id9">[<a class="reference internal" href="reference.html#id12" title="Peter E van Keken, Claire Currie, Scott D King, Mark D Behn, Amandine Cagnioncle, Jiangheng He, Richard F Katz, Shu-Chuan Lin, E Marc Parmentier, Marc Spiegelman, and others. A community benchmark for subduction zone modeling. Physics of the Earth and Planetary Interiors, 171(1-4):187–197, 2008.">vKCK+08</a>]</span></p></li>
-<li><p>Hirth_wet_Dislocation_creep: <span class="bibtex-citation" id="id10">[<a class="reference internal" href="reference.html#id30" title="Greg Hirth and D Kohlstedf. Rheology of the upper mantle and the mantle wedge: a view from the experimentalists. Geophysical monograph-american geophysical union, 138:83–106, 2003.">HK03</a>]</span></p></li>
-<li><p>Constant: it is a flag that indicates to use the dislocation creep rheology</p></li>
+<li><p>Hirth_dry_Dislocation_creep</p></li>
+<li><p>VK_Dislocation_creep</p></li>
+<li><p>Hirth_wet_Dislocation_creep</p></li>
+<li><p>Constant: it is a flag that indicates the use of the dislocation creep rheology</p></li>
 </ul>
-<p><strong>Note</strong> if both dislocation and diffusion creep are constant, the code automatically assumes that the model is linear. Thus, it will use  either the default viscosity or the viscosity in the phase.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>if both dislocation and diffusion creep are constant, the code automatically assumes that the model is linear. Thus, it will use either the default viscosity or the viscosity in the phase.</p>
+</div>
 <p><strong>Conductivity laws available</strong>:</p>
 <ul class="simple">
-<li><p>Mantle_Richards_2018: <span class="bibtex-citation" id="id11">[<a class="reference internal" href="reference.html#id8" title="Fred Richards, Mark Hoggard, Alistair Crosby, Siavash Ghelichkhan, and Nicky White. Structure and dynamics of the oceanic lithosphere-asthenosphere system. Physics of the Earth and Planetary Interiors, 309:106559, 2020.">RHC+20</a>]</span></p></li>
-<li><p>Crust_Richards_2018: <span class="bibtex-citation" id="id12">[<a class="reference internal" href="reference.html#id8" title="Fred Richards, Mark Hoggard, Alistair Crosby, Siavash Ghelichkhan, and Nicky White. Structure and dynamics of the oceanic lithosphere-asthenosphere system. Physics of the Earth and Planetary Interiors, 309:106559, 2020.">RHC+20</a>]</span></p></li>
+<li><p>Mantle_Richards_2018</p></li>
+<li><p>Crust_Richards_2018</p></li>
 <li><p>Constant: flag that tells the code to use the constant conductivity <em>k</em> of the phase.</p></li>
 </ul>
 <p><strong>Heat capacity laws available</strong>:</p>
 <ul class="simple">
-<li><p>Mantle_Bernard_1988_FO: <span class="bibtex-citation" id="id13">[<a class="reference internal" href="reference.html#id29" title="Robert G Berman. Internally-consistent thermodynamic data for minerals in the system na2o-k2o-cao-mgo-feo-fe2o3-al2o3-sio2-tio2-h2o-co2. Journal of petrology, 29(2):445–522, 1988.">Ber88</a>]</span></p></li>
-<li><p>Mantle_Bernard_1988_FA: <span class="bibtex-citation" id="id14">[<a class="reference internal" href="reference.html#id29" title="Robert G Berman. Internally-consistent thermodynamic data for minerals in the system na2o-k2o-cao-mgo-feo-fe2o3-al2o3-sio2-tio2-h2o-co2. Journal of petrology, 29(2):445–522, 1988.">Ber88</a>]</span></p></li>
-<li><p>Mantle_Bernard_Ar_199x_FO: <span class="bibtex-citation" id="id15">[<a class="reference internal" href="reference.html#id28" title="RG Berman and L Ya Aranovich. Optimized standard state and solution properties of minerals: i. model calibration for olivine, orthopyroxene, cordierite, garnet, and ilmenite in the system feo-mgo-cao-al2o3-tio2-sio2. Contributions to Mineralogy and Petrology, 126(1):1–24, 1996.">BA96</a>]</span></p></li>
-<li><p>Mantle_Bernard_Ar_199x_FA: <span class="bibtex-citation" id="id16">[<a class="reference internal" href="reference.html#id28" title="RG Berman and L Ya Aranovich. Optimized standard state and solution properties of minerals: i. model calibration for olivine, orthopyroxene, cordierite, garnet, and ilmenite in the system feo-mgo-cao-al2o3-tio2-sio2. Contributions to Mineralogy and Petrology, 126(1):1–24, 1996.">BA96</a>]</span></p></li>
-<li><p>Mantle_Bernard_1988_FO_FA: <span class="bibtex-citation" id="id17">[<a class="reference internal" href="reference.html#id29" title="Robert G Berman. Internally-consistent thermodynamic data for minerals in the system na2o-k2o-cao-mgo-feo-fe2o3-al2o3-sio2-tio2-h2o-co2. Journal of petrology, 29(2):445–522, 1988.">Ber88</a>]</span></p></li>
-<li><p>Mantle_Bernard_Ar_199x_FO_FA: <span class="bibtex-citation" id="id18">[<a class="reference internal" href="reference.html#id28" title="RG Berman and L Ya Aranovich. Optimized standard state and solution properties of minerals: i. model calibration for olivine, orthopyroxene, cordierite, garnet, and ilmenite in the system feo-mgo-cao-al2o3-tio2-sio2. Contributions to Mineralogy and Petrology, 126(1):1–24, 1996.">BA96</a>]</span></p></li>
-<li><p>Oceanic_crust:  <span class="bibtex-citation" id="id19">[<a class="reference internal" href="reference.html#id8" title="Fred Richards, Mark Hoggard, Alistair Crosby, Siavash Ghelichkhan, and Nicky White. Structure and dynamics of the oceanic lithosphere-asthenosphere system. Physics of the Earth and Planetary Interiors, 309:106559, 2020.">RHC+20</a>]</span></p></li>
-<li><p>Constant: flag that tells the code to use the constant conductivity <em>cp</em> of the phase.
-<strong>Note</strong>: _FO, _FA, FO_FA are flags that indicate which mixture of olivine to use. FO means fosterite, FA means fayalite. FO_FA implies that a mixture of 0.9 FO and 0.1 FA is used for computing the heat capacity.
-Thermal expansivity laws available:</p></li>
-<li><p>Mantle: <span class="bibtex-citation" id="id20">[<a class="reference internal" href="reference.html#id8" title="Fred Richards, Mark Hoggard, Alistair Crosby, Siavash Ghelichkhan, and Nicky White. Structure and dynamics of the oceanic lithosphere-asthenosphere system. Physics of the Earth and Planetary Interiors, 309:106559, 2020.">RHC+20</a>]</span></p></li>
-<li><p>Oceanic_crust: <span class="bibtex-citation" id="id21">[<a class="reference internal" href="reference.html#id8" title="Fred Richards, Mark Hoggard, Alistair Crosby, Siavash Ghelichkhan, and Nicky White. Structure and dynamics of the oceanic lithosphere-asthenosphere system. Physics of the Earth and Planetary Interiors, 309:106559, 2020.">RHC+20</a>]</span></p></li>
+<li><p>Mantle_Bernard_1988_FO</p></li>
+<li><p>Mantle_Bernard_1988_FA</p></li>
+<li><p>Mantle_Bernard_Ar_199x_FO</p></li>
+<li><p>Mantle_Bernard_Ar_199x_FA</p></li>
+<li><p>Mantle_Bernard_1988_FO_FA</p></li>
+<li><p>Mantle_Bernard_Ar_199x_FO_FA</p></li>
+<li><p>Oceanic_crust</p></li>
+<li><p>Constant: flag that tells the code to use the constant conductivity <em>cp</em> of the phase.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>_FO, _FA, FO_FA are flags that indicate which mixture of olivine to use. FO means forsterite, FA means fayalite. FO_FA implies that a mixture of 0.9 FO and 0.1 FA is used for computing the heat capacity.</p>
+</div>
+<p><strong>Thermal expansivity laws available</strong>:</p>
+<ul class="simple">
+<li><p>Mantle: :cite:p:<code class="docutils literal notranslate"><span class="pre">richards2020structure</span></code></p></li>
+<li><p>Oceanic_crust: :cite:p:<code class="docutils literal notranslate"><span class="pre">richards2020structure</span></code></p></li>
 <li><p>Constant: flag that tells the code to use the constant conductivity <em>alpha</em> of the phase.</p></li>
 </ul>
 <p><strong>Density laws available</strong>:</p>
 <ul class="simple">
-<li><p>PT : pressure and temperature is active (pressure if the pressure dependency is active)</p></li>
+<li><p>PT : pressure and temperature are active (pressure if the pressure dependency is active)</p></li>
 <li><p>Constant: flag that tells the code to use only the reference density <em>rho0</em></p></li>
 </ul>
 </section>
 <section id="geometry">
 <h3>geometry<a class="headerlink" href="#geometry" title="Link to this heading">¶</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">x</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">660.0</span><span class="p">]</span> <span class="c1"># Coordinate of X</span>
-    <span class="n">y</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mf">600.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span> <span class="c1"># Coordinate of Y</span>
-    <span class="n">van_keken</span><span class="p">:</span> <span class="kc">False</span> <span class="c1"># Activate the geometry of Van Keken benchmark</span>
-    <span class="n">sub_constant_flag</span> <span class="p">:</span> <span class="kc">False</span> <span class="c1"># Tells the code to have a slab with a constant bending angle</span>
-    <span class="n">slab_tk</span><span class="p">:</span> <span class="mf">130.0</span> <span class="c1"># Slab Thickness </span>
-    <span class="n">cr</span><span class="p">:</span> <span class="mf">30.0</span> <span class="c1"># Overriding Crust {if lc==0.0 -&gt; only overriding upper crust}</span>
-    <span class="n">ocr</span><span class="p">:</span> <span class="mf">7.0</span> <span class="c1"># Oceanic crust of the subducting plate </span>
-    <span class="n">lc</span><span class="p">:</span> <span class="mf">0.3</span> <span class="c1"># lower to upper continental crust ratio</span>
-    <span class="n">resolution_normal</span><span class="p">:</span> <span class="mf">3.0</span> <span class="c1"># resolution far from the singularity point</span>
-    <span class="n">resolution_refine</span><span class="p">:</span> <span class="mf">1.5</span> <span class="c1"># resolution around the slab surface and singularity point</span>
-    <span class="n">ns_depth</span><span class="p">:</span> <span class="mf">50.0</span> <span class="c1"># depth of the no-slip condition </span>
-    <span class="n">lab_d</span><span class="p">:</span> <span class="mf">100.0</span> <span class="c1"># depth of lithosphere-astenosphere boundary (necessary to compute the continental geotherm)</span>
-    <span class="n">decoupling</span><span class="p">:</span> <span class="mf">80.0</span> <span class="c1"># depth of decoupling</span>
-    <span class="n">transition</span><span class="p">:</span> <span class="mf">10.0</span> <span class="c1"># transition zone thickness (between fully coupled and uncoupled wedge flow regime)</span>
-    <span class="n">wz_tk</span><span class="p">:</span> <span class="mf">0.5</span> <span class="c1"># thickness of the virtual shear zone for computing the shear heating </span>
-    <span class="n">sub_lb</span><span class="p">:</span> <span class="mf">300.0</span> <span class="c1"># total cumulative length in which the bending angle is evolving (necessary for the CustomRibe)</span>
-    <span class="n">sub_dl</span><span class="p">:</span> <span class="mf">10.0</span> <span class="c1"># length of segment to compute the slab surface</span>
-    <span class="n">sub_theta0</span><span class="p">:</span> <span class="mf">5.0</span> <span class="c1"># initial bending angle </span>
-    <span class="n">sub_theta_max</span><span class="p">:</span> <span class="mf">45.0</span> <span class="c1"># final bending angle </span>
-    <span class="n">sub_trench</span><span class="p">:</span> <span class="mf">0.0</span> <span class="c1"># position of the trench</span>
-    <span class="n">sub_parabolic_a</span><span class="p">:</span> <span class="mf">8e-4</span> <span class="c1"># [km^-1] -&gt; curvature of the parabolic slab (necessary for the CustomParabolic)</span>
-    <span class="n">slab_type</span><span class="p">:</span> <span class="s2">"CustomParabolic"</span> <span class="c1"># [CustomParabolic,CustomRibe,FromFile] </span>
-    <span class="n">sub_path</span><span class="p">:</span> <span class="s2">"Not Defined"</span> <span class="c1"># Required for the real geometry of the subducting plate</span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">x</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">660.0</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># Coordinate of X</span>
+<span class="nt">y</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">-600.0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.0</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># Coordinate of Y</span>
+<span class="nt">van_keken</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span><span class="w"> </span><span class="c1"># Activate the geometry of Van Keken benchmark</span>
+<span class="nt">sub_constant_flag </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span><span class="w"> </span><span class="c1"># Tells the code to have a slab with a constant bending angle</span>
+<span class="nt">slab_tk</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">130.0</span><span class="w"> </span><span class="c1"># Slab Thickness </span>
+<span class="nt">cr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30.0</span><span class="w"> </span><span class="c1"># Overriding Crust {if lc==0.0 -&gt; only overriding upper crust}</span>
+<span class="nt">ocr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7.0</span><span class="w"> </span><span class="c1"># Oceanic crust of the subducting plate </span>
+<span class="nt">lc</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.3</span><span class="w"> </span><span class="c1"># lower to upper continental crust ratio</span>
+<span class="nt">resolution_normal</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3.0</span><span class="w"> </span><span class="c1"># resolution far from the singularity point</span>
+<span class="nt">resolution_refine</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.5</span><span class="w"> </span><span class="c1"># resolution around the slab surface and singularity point</span>
+<span class="nt">ns_depth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50.0</span><span class="w"> </span><span class="c1"># depth of the no-slip condition </span>
+<span class="nt">lab_d</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100.0</span><span class="w"> </span><span class="c1"># depth of lithosphere-astenosphere boundary (necessary to compute the continental geotherm)</span>
+<span class="nt">decoupling</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80.0</span><span class="w"> </span><span class="c1"># depth of decoupling</span>
+<span class="nt">transition</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0</span><span class="w"> </span><span class="c1"># transition zone thickness (between fully coupled and uncoupled wedge flow regime)</span>
+<span class="nt">wz_tk</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span><span class="w"> </span><span class="c1"># thickness of the virtual shear zone for computing the shear heating </span>
+<span class="nt">sub_lb</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300.0</span><span class="w"> </span><span class="c1"># total cumulative length in which the bending angle is evolving (necessary for the CustomRibe)</span>
+<span class="nt">sub_dl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0</span><span class="w"> </span><span class="c1"># length of segment to compute the slab surface</span>
+<span class="nt">sub_theta0</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5.0</span><span class="w"> </span><span class="c1"># initial bending angle </span>
+<span class="nt">sub_theta_max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">45.0</span><span class="w"> </span><span class="c1"># final bending angle </span>
+<span class="nt">sub_trench</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span><span class="w"> </span><span class="c1"># position of the trench</span>
+<span class="nt">sub_parabolic_a</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8e-4</span><span class="w"> </span><span class="c1"># [km^-1] -&gt; curvature of the parabolic slab (necessary for the CustomParabolic)</span>
+<span class="nt">slab_type</span><span class="p">:</span><span class="w"> </span><span class="s">"CustomParabolic"</span><span class="w"> </span><span class="c1"># [CustomParabolic,CustomRibe,FromFile] </span>
+<span class="nt">sub_path</span><span class="p">:</span><span class="w"> </span><span class="s">"Not</span><span class="nv"> </span><span class="s">Defined"</span><span class="w"> </span><span class="c1"># Required for the real geometry of the subducting plate</span>
 </pre></div>
 </div>
-<p><strong>Note</strong>: CustomParabolic is still under debugging, so, it must not be used.</p>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>CustomParabolic is still under debugging, so, it must not be used.</p>
+</div>
 </section>
 </section>
 <section id="usage">

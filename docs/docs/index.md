@@ -14,13 +14,14 @@ The code is underdevelopment and the documentation will be modified in the follo
 The package is organised in six modules: 
 ```
 Stonedfenics/
-├── config/                  — configure the simulations
-├── create_mesh/             — creates the mesh via gmsh and meshio
-├── material_properties/     — computes material properties
-├── solver_module/           — solution routines
-├── stoned_fenicsx.py        — top-level entry point
-├── output.py                — handles output printing
-└── utils.py                 — general-purpose functions (timing, print_ph, ...)
+    ├──src/
+            ├── config/                  — configure the simulations
+            ├── create_mesh/             — creates the mesh via gmsh and meshio
+            ├── material_properties/     — computes material properties
+            ├── solver_module/           — solution routines
+            ├── stoned_fenicsx.py        — top-level entry point
+            ├── output.py                — handles output printing
+            └── utils.py                 — general-purpose functions (timing, print_ph, ...)
 ```
 The intended workflow is to use the configuration module to configure the simulation and then use the top-level function **stonedfenicsx** to run the simulation. The code has a specific purpose: the production of subduction kinematic model. However, the code has been designed to be adapted for other problems, especially the routines that configure the simulation and handle the material properties. 
 

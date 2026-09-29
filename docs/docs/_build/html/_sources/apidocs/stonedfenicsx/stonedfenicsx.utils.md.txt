@@ -4,6 +4,7 @@
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.utils
+:parser: napoleon_parser
 :allowtitles:
 ```
 
@@ -15,44 +16,49 @@
 :class: autosummary longtable
 :align: left
 
-* - {py:obj}`check_race_condition <stonedfenicsx.utils.check_race_condition>`
-  - ```{autodoc2-docstring} stonedfenicsx.utils.check_race_condition
-    :summary:
-    ```
 * - {py:obj}`timing_function <stonedfenicsx.utils.timing_function>`
   - ```{autodoc2-docstring} stonedfenicsx.utils.timing_function
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`time_the_time <stonedfenicsx.utils.time_the_time>`
   - ```{autodoc2-docstring} stonedfenicsx.utils.time_the_time
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`print_ph <stonedfenicsx.utils.print_ph>`
   - ```{autodoc2-docstring} stonedfenicsx.utils.print_ph
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`interpolate_from_sub_to_main <stonedfenicsx.utils.interpolate_from_sub_to_main>`
   - ```{autodoc2-docstring} stonedfenicsx.utils.interpolate_from_sub_to_main
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`gather_vector <stonedfenicsx.utils.gather_vector>`
   - ```{autodoc2-docstring} stonedfenicsx.utils.gather_vector
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`gather_coordinates <stonedfenicsx.utils.gather_coordinates>`
   - ```{autodoc2-docstring} stonedfenicsx.utils.gather_coordinates
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`compute_strain_rate <stonedfenicsx.utils.compute_strain_rate>`
   - ```{autodoc2-docstring} stonedfenicsx.utils.compute_strain_rate
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`compute_eii <stonedfenicsx.utils.compute_eii>`
   - ```{autodoc2-docstring} stonedfenicsx.utils.compute_eii
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`evaluate_material_property <stonedfenicsx.utils.evaluate_material_property>`
   - ```{autodoc2-docstring} stonedfenicsx.utils.evaluate_material_property
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -65,6 +71,7 @@
 
 * - {py:obj}`_DEBUG_ <stonedfenicsx.utils._DEBUG_>`
   - ```{autodoc2-docstring} stonedfenicsx.utils._DEBUG_
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -77,21 +84,16 @@
    False
 
 ```{autodoc2-docstring} stonedfenicsx.utils._DEBUG_
+:parser: napoleon_parser
 ```
 
-````
-
-````{py:function} check_race_condition(ioctrl: stonedfenicsx.config.numerical_control.IOControls, file: str) -> bool
-:canonical: stonedfenicsx.utils.check_race_condition
-
-```{autodoc2-docstring} stonedfenicsx.utils.check_race_condition
-```
 ````
 
 ````{py:function} timing_function(fun: collections.abc.Callable) -> collections.abc.Callable
 :canonical: stonedfenicsx.utils.timing_function
 
 ```{autodoc2-docstring} stonedfenicsx.utils.timing_function
+:parser: napoleon_parser
 ```
 ````
 
@@ -99,6 +101,7 @@
 :canonical: stonedfenicsx.utils.time_the_time
 
 ```{autodoc2-docstring} stonedfenicsx.utils.time_the_time
+:parser: napoleon_parser
 ```
 ````
 
@@ -106,6 +109,7 @@
 :canonical: stonedfenicsx.utils.print_ph
 
 ```{autodoc2-docstring} stonedfenicsx.utils.print_ph
+:parser: napoleon_parser
 ```
 ````
 
@@ -113,6 +117,7 @@
 :canonical: stonedfenicsx.utils.interpolate_from_sub_to_main
 
 ```{autodoc2-docstring} stonedfenicsx.utils.interpolate_from_sub_to_main
+:parser: napoleon_parser
 ```
 ````
 
@@ -120,6 +125,7 @@
 :canonical: stonedfenicsx.utils.gather_vector
 
 ```{autodoc2-docstring} stonedfenicsx.utils.gather_vector
+:parser: napoleon_parser
 ```
 ````
 
@@ -127,6 +133,7 @@
 :canonical: stonedfenicsx.utils.gather_coordinates
 
 ```{autodoc2-docstring} stonedfenicsx.utils.gather_coordinates
+:parser: napoleon_parser
 ```
 ````
 
@@ -134,6 +141,7 @@
 :canonical: stonedfenicsx.utils.compute_strain_rate
 
 ```{autodoc2-docstring} stonedfenicsx.utils.compute_strain_rate
+:parser: napoleon_parser
 ```
 ````
 
@@ -141,6 +149,7 @@
 :canonical: stonedfenicsx.utils.compute_eii
 
 ```{autodoc2-docstring} stonedfenicsx.utils.compute_eii
+:parser: napoleon_parser
 ```
 ````
 
@@ -148,5 +157,6 @@
 :canonical: stonedfenicsx.utils.evaluate_material_property
 
 ```{autodoc2-docstring} stonedfenicsx.utils.evaluate_material_property
+:parser: napoleon_parser
 ```
 ````

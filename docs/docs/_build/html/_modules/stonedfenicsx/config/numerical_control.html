@@ -155,93 +155,107 @@
 <span class="n">dict_shear_modes</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"NoShear"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"SelfConsistent"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"Constant"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
 <span class="n">dict_solver_type</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"Direct"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="s2">"Iterative"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">0</span><span class="p">)}</span>
 <span class="n">dict_output_type</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"step"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"time"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
-<span class="n">dict_initial_guess</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"None"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span> <span class="s2">"Steady_State"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="s2">"Thermal_Diffusion"</span><span class="p">:</span><span class="mi">2</span><span class="p">}</span>
+<span class="n">dict_initial_guess</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"None"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"Steady_State"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"Thermal_Diffusion"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
+
 
 <div class="viewcode-block" id="NumericalControls">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.NumericalControls">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">NumericalControls</span><span class="p">:</span><span class="c1">#ctrl </span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NumericalControls</span><span class="p">:</span>  <span class="c1"># ctrl</span>
 <span class="w">    </span><span class="sd">"""Numerical controls: class that stores the numerical control required for the simulation.</span>
-<span class="sd">    main name: (ctrl) instance.  </span>
-<span class="sd">    </span>
+<span class="sd">    main name: (ctrl) instance.</span>
+
 <span class="sd">    """</span>
+
     <span class="n">it_max</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span>
     <span class="n">it_inner_max</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
     <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span>
-    <span class="n">tol_dtemp</span> <span class="p">:</span><span class="nb">float</span> <span class="o">=</span> <span class="mf">5e-2</span>
+    <span class="n">tol_dtemp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5e-2</span>
     <span class="n">relax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
-    <span class="n">g</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">9.81</span>                <span class="c1"># gravity [m/s^2]</span>
-    <span class="n">time_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">30.0</span>         <span class="c1"># [Myr]</span>
-    <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">500.0</span>              <span class="c1"># [yr]</span>
+    <span class="n">g</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">9.81</span>  <span class="c1"># gravity [m/s^2]</span>
+    <span class="n">time_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">30.0</span>  <span class="c1"># [Myr]</span>
+    <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">500.0</span>  <span class="c1"># [yr]</span>
     <span class="n">steady_state</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
-    <span class="n">decoupling_ctrl</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># 1 decoupled, 0 coupled</span>
-    <span class="n">model_shear</span><span class="p">:</span> <span class="nb">str</span><span class="o">|</span><span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>           <span class="c1"># 1 linear, 0 nonlinear</span>
-    <span class="n">adiabatic_heating</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>     <span class="c1"># REMOVE (?)</span>
-    <span class="n">stokes_solver_type</span><span class="p">:</span> <span class="nb">str</span><span class="o">|</span><span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
-    <span class="n">energy_solver_type</span><span class="p">:</span> <span class="nb">str</span><span class="o">|</span><span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">decoupling_ctrl</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># 1 decoupled, 0 coupled</span>
+    <span class="n">model_shear</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># 1 linear, 0 nonlinear</span>
+    <span class="n">adiabatic_heating</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># REMOVE (?)</span>
+    <span class="n">stokes_solver_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">energy_solver_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">iterative_solver_tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-7</span>
-    <span class="n">eta_max</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e26</span>
+    <span class="n">eta_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e26</span>
     <span class="n">pressure_dependency</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
-    <span class="n">time_ini_guess</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span>
-    <span class="n">initial_guess</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"None"</span> <span class="c1"># Initial guess -&gt; set to 0 after the first outer iteration </span>
+    <span class="n">time_ini_guess</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span>
+    <span class="n">initial_guess</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"None"</span>  <span class="c1"># Initial guess -&gt; set to 0 after the first outer iteration</span>
     <span class="n">CFL</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.8</span>
-    
+
 <div class="viewcode-block" id="NumericalControls.update_initial_guess">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.NumericalControls.update_initial_guess">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">update_initial_guess</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        
-        <span class="k">try</span><span class="p">:</span> 
+
+        <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">initial_guess</span> <span class="o">=</span> <span class="n">dict_initial_guess</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_guess</span><span class="p">]</span>
-        <span class="k">except</span><span class="p">:</span> 
-            <span class="n">print_ph</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_guess</span><span class="si">}</span><span class="s1"> is not a valid option'</span><span class="p">)</span>
-            <span class="n">print_ph</span><span class="p">(</span><span class="s1">'The valid options are:'</span><span class="p">)</span>
-            <span class="n">print_ph</span><span class="p">(</span><span class="s1">'.     1. None: do not have an initial guess'</span><span class="p">)</span>
-            <span class="n">print_ph</span><span class="p">(</span><span class="s1">'.     2. Steady_State: perform a linear steady state solution'</span><span class="p">)</span>
-            <span class="n">print_ph</span><span class="p">(</span><span class="sa">f</span><span class="s1">'.     3. Thermal_Diffusion: perform a thermal diffusion for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">time_ini_guess</span><span class="si">}</span><span class="s1"> Myr'</span><span class="p">)</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'Wrong Initial guess option'</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">print_ph</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_guess</span><span class="si">}</span><span class="s2"> is not a valid option"</span><span class="p">)</span>
+            <span class="n">print_ph</span><span class="p">(</span><span class="s2">"The valid options are:"</span><span class="p">)</span>
+            <span class="n">print_ph</span><span class="p">(</span><span class="s2">".     1. None: do not have an initial guess"</span><span class="p">)</span>
+            <span class="n">print_ph</span><span class="p">(</span><span class="s2">".     2. Steady_State: perform a linear steady state solution"</span><span class="p">)</span>
+            <span class="n">print_ph</span><span class="p">(</span><span class="sa">f</span><span class="s2">".     3. Thermal_Diffusion: perform a thermal diffusion for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">time_ini_guess</span><span class="si">}</span><span class="s2"> Myr"</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="s2">"Wrong Initial guess option"</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_guess</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">steady_state</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> 
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">'Initial guess is incompatible with steady state solution. Steady state controls has priority'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_guess</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">steady_state</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">"Initial guess is incompatible with steady state solution. Steady state controls has priority"</span>
+            <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">initial_guess</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="n">print_ph</span><span class="p">(</span><span class="s1">'Initial guess has been deactivated!!!!'</span><span class="p">)</span></div>
+            <span class="n">print_ph</span><span class="p">(</span><span class="s2">"Initial guess has been deactivated!!!!"</span><span class="p">)</span></div>
 
-          
+
 <div class="viewcode-block" id="NumericalControls.convert_string">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.NumericalControls.convert_string">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">convert_string</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">energy_solver_type</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dict_solver_type</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Solver type is wrong: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">energy_solver_type</span><span class="si">}</span><span class="s1"> is not valid. The options must be either Direct or Iterative'</span> <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Solver type is wrong: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">energy_solver_type</span><span class="si">}</span><span class="s2"> is not valid. The options must be either Direct or Iterative"</span>
+            <span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stokes_solver_type</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dict_solver_type</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Solver type is wrong: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stokes_solver_type</span><span class="si">}</span><span class="s1"> is not valid. The options must be either Direct or Iterative'</span> <span class="p">)</span> 
-        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_shear</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dict_shear_modes</span><span class="p">:</span>   
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Shear Heating mode; is wrong: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_shear</span><span class="si">}</span><span class="s1"> is not valid. The options must be either NoShear, SelfConsistent, Constant'</span> <span class="p">)</span> 
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Solver type is wrong: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stokes_solver_type</span><span class="si">}</span><span class="s2"> is not valid. The options must be either Direct or Iterative"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_shear</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dict_shear_modes</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Shear Heating mode; is wrong: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_shear</span><span class="si">}</span><span class="s2"> is not valid. The options must be either NoShear, SelfConsistent, Constant"</span>
+            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">energy_solver_type</span> <span class="o">=</span> <span class="n">dict_solver_type</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">energy_solver_type</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stokes_solver_type</span> <span class="o">=</span> <span class="n">dict_solver_type</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">stokes_solver_type</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model_shear</span> <span class="o">=</span> <span class="n">dict_shear_modes</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model_shear</span><span class="p">]</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">decoupling_ctrl</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_shear</span> <span class="o">!=</span><span class="mi">0</span><span class="p">:</span> 
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'Decoupling control must be active if the shear heating flag is either Constant or SelfConsistent'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">decoupling_ctrl</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_shear</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"Decoupling control must be active if the shear heating flag is either Constant or SelfConsistent"</span>
+            <span class="p">)</span>
 
-        
-        <span class="n">print_ph</span><span class="p">(</span><span class="s1">'Controls updated'</span><span class="p">)</span></div>
+        <span class="n">print_ph</span><span class="p">(</span><span class="s2">"Controls updated"</span><span class="p">)</span></div>
 </div>
+
+
 
 <span class="c1"># --- #</span>
 <div class="viewcode-block" id="IOControls">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">IOControls</span><span class="p">:</span> <span class="c1"># ctrlio</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IOControls</span><span class="p">:</span>  <span class="c1"># ctrlio</span>
 <span class="w">    </span><span class="sd">"""IOControls: Input and output controls.</span>
 <span class="sd">    Data class that stores the information of the outputs (simulation's results and temporary file)</span>
 <span class="sd">    instance name: ctrlio</span>
 <span class="sd">    """</span>
-    <span class="n">test_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span><span class="s2">""</span>
-    <span class="n">path_save</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span><span class="s2">""</span>
+
+    <span class="n">test_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">path_save</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">sname</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"MockTest"</span>
     <span class="n">ts_out</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
     <span class="n">dt_out</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span>
-    <span class="n">ts_time</span><span class="p">:</span> <span class="nb">str</span><span class="o">|</span><span class="nb">int</span> <span class="o">=</span> <span class="s1">'step'</span> <span class="c1"># the value is converted into an integer after the initialisation of the class</span>
+    <span class="n">ts_time</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">=</span> <span class="s2">"step"</span>  <span class="c1"># the value is converted into an integer after the initialisation of the class</span>
     <span class="n">path_test</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="n">path_cached_information</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s1">'Cached_information'</span><span class="p">)</span>
+    <span class="n">path_cached_information</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"Cached_information"</span><span class="p">)</span>
 
 <div class="viewcode-block" id="IOControls.generate_io">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls.generate_io">[docs]</a>
@@ -253,24 +267,27 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">path_test</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path_save</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">path_cached_information</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path_save</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_cached_information</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">path_test</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">path_cached_information</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path_cached_information</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">"Directory created:"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_test</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ts_time</span> <span class="o">=</span> <span class="n">dict_output_type</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_time</span><span class="p">]</span> <span class="c1"># convert the string into an integer flag for the output type</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ts_time</span> <span class="o">=</span> <span class="n">dict_output_type</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ts_time</span><span class="p">]</span>  <span class="c1"># convert the string into an integer flag for the output type</span></div>
 </div>
+
+
 
 <span class="c1"># --- #</span>
 <div class="viewcode-block" id="CTRLBC">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.CTRLBC">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CTRLBC</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""General class for the controls associated to the boundary condition</span>
-<span class="sd">    """</span>
+<span class="w">    </span><span class="sd">"""General class for the controls associated to the boundary condition"""</span>
+
     <span class="n">constant</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
-    <span class="n">interval_val</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span>  <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]))</span> <span class="c1">#[age/velocity][Myr|cm/yr]</span>
-    <span class="n">interval_time</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]))</span> <span class="c1"># [Myr]</span>
+    <span class="n">interval_val</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]))</span>  <span class="c1"># [age/velocity][Myr|cm/yr]</span>
+    <span class="n">interval_time</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]))</span>  <span class="c1"># [Myr]</span>
+
 <div class="viewcode-block" id="CTRLBC.check_time_variation">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.CTRLBC.check_time_variation">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">check_time_variation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">:</span><span class="n">NumericalControls</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_time_variation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">:</span> <span class="n">NumericalControls</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Raise errors in case there are inconsistent option activated</span>
 
 <span class="sd">        Args:</span>
@@ -281,59 +298,58 @@
 <span class="sd">            is not consistent with steady state mode of the simulation</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">constant</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"Time-dependent BCs cannot be used in steady-state mode"</span>
-        <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Time-dependent BCs cannot be used in steady-state mode"</span><span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interval_time</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval_time</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"dt of the interval of time is equal to 0.0. Change the value."</span>
-        <span class="p">)</span></div>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"dt of the interval of time is equal to 0.0. Change the value."</span><span class="p">)</span></div>
 
-             
+
 <div class="viewcode-block" id="CTRLBC.update_vel_age">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.CTRLBC.update_vel_age">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">update_vel_age</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span><span class="nb">float</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">float</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_vel_age</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""update the current velocity and age</span>
 <span class="sd">        Args:</span>
 <span class="sd">            t (float): current time of the simulation</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            age/velocity update.</span>
-<span class="sd">        </span>
-<span class="sd">        Usage: </span>
+
+<span class="sd">        Usage:</span>
 <span class="sd">        ctrl_kin.vel = ctrl_kin.update_vel_age(t)-&gt; direct update, it is better to not introduce</span>
-<span class="sd">        if-else statement. </span>
+<span class="sd">        if-else statement.</span>
 
 <span class="sd">        """</span>
-        <span class="n">dt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval_time</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">interval_time</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">dp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval_val</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">interval_val</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval_val</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="p">(</span><span class="n">dp</span><span class="o">/</span><span class="n">dt</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">t</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">interval_time</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval_time</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval_time</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">dp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval_val</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval_val</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval_val</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">dp</span> <span class="o">/</span> <span class="n">dt</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval_time</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="n">val</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interval_val</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">val</span><span class="p">)</span> <span class="k">if</span> <span class="n">dp</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interval_val</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">val</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">val</span></div>
 </div>
+
+
 
 <span class="c1"># --- #</span>
 <div class="viewcode-block" id="CtrlTemperatureBC">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.CtrlTemperatureBC">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">CtrlTemperatureBC</span><span class="p">(</span><span class="n">CTRLBC</span><span class="p">):</span> <span class="c1"># ctrltbc </span>
-<span class="w">    </span><span class="sd">"""Parameters for the 1D thermal boundary condition </span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CtrlTemperatureBC</span><span class="p">(</span><span class="n">CTRLBC</span><span class="p">):</span>  <span class="c1"># ctrltbc</span>
+<span class="w">    </span><span class="sd">"""Parameters for the 1D thermal boundary condition</span>
 <span class="sd">    main instance name:ctrltbc</span>
 <span class="sd">    """</span>
-    <span class="n">temp_top</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>          <span class="c1"># surface temperature [°C]</span>
-    <span class="n">temp_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1300.0</span>       <span class="c1"># mantle temperature [°C]</span>
-    <span class="n">nz</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span>                  <span class="c1"># number of vertical cells</span>
-    <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5e-3</span>               <span class="c1"># [Myr]</span>
+
+    <span class="n">temp_top</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># surface temperature [°C]</span>
+    <span class="n">temp_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1300.0</span>  <span class="c1"># mantle temperature [°C]</span>
+    <span class="n">nz</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span>  <span class="c1"># number of vertical cells</span>
+    <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5e-3</span>  <span class="c1"># [Myr]</span>
     <span class="n">slab_age</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">50.0</span>
     <span class="n">recalculate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="c1"># Fixed value for reproducing the benchmarks </span>
+    <span class="c1"># Fixed value for reproducing the benchmarks</span>
     <span class="n">k</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">3.1</span>
     <span class="n">rho</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">3300.0</span>
     <span class="n">cp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1250.0</span>
     <span class="n">dz</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="n">end_time</span><span class="p">:</span><span class="nb">float</span> <span class="o">=</span> <span class="mi">180</span>
-    <span class="n">nt</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span> 
-    <span class="n">right_boundary</span> <span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'Continental'</span>
-    <span class="n">right_age</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">30.0</span> <span class="c1"># Useful in case the right boundary condition is a oceanic lithosphere. </span>
+    <span class="n">end_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">180</span>
+    <span class="n">nt</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">right_boundary</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Continental"</span>
+    <span class="n">right_age</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">30.0</span>  <span class="c1"># Useful in case the right boundary condition is a oceanic lithosphere.</span>
     <span class="n">z</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">z_right</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">temp_1d_right</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -344,27 +360,27 @@
 
 <div class="viewcode-block" id="CtrlTemperatureBC.update_thermal_bc">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.CtrlTemperatureBC.update_thermal_bc">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">update_thermal_bc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span><span class="p">,</span><span class="n">ctrl</span><span class="p">:</span><span class="n">NumericalControls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_thermal_bc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g_input</span><span class="p">:</span> <span class="n">GeomInput</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">:</span> <span class="n">NumericalControls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""_summary_</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            g_input (GeomInput): geometrical information</span>
 
 <span class="sd">        Raises:</span>
-<span class="sd">            ValueError: if dt is an absurd number, raise an error. Despite Crank-Nicolson is unconditionally stable, </span>
-<span class="sd">            this condition is not necessarely holding up with non-linear thermal properties. </span>
+<span class="sd">            ValueError: if dt is an absurd number, raise an error. Despite Crank-Nicolson is unconditionally stable,</span>
+<span class="sd">            this condition is not necessarely holding up with non-linear thermal properties.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span> <span class="o">&gt;</span> <span class="mf">0.1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"dt must be in Myr; this timestep blows up the system."</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">check_time_variation</span><span class="p">(</span><span class="n">ctrl</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">slab_age</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval_val</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">constant</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'The input initial age must be the same of the first entry of the interval of values'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">slab_age</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval_val</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">constant</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"The input initial age must be the same of the first entry of the interval of values"</span><span class="p">)</span>
 
         <span class="c1"># Prepare the main vector for computing the right and left boundary condition</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dz</span> <span class="o">=</span> <span class="n">g_input</span><span class="o">.</span><span class="n">slab_tk</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">nz</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nz</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">z_right</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nz</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nt</span>  <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">end_time</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nt</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">end_time</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">temp_1d_right</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nz</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">temperature_1d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nz</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">temperature_2d_field</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nt</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nz</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
@@ -375,27 +391,27 @@
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.CtrlTemperatureBC.update_1d_vector_left">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">update_1d_vector_left</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">current_age_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">t_res_vec</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">slab_age</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">temperature_1d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">temperature_2d_field</span><span class="p">[</span><span class="n">current_age_index</span><span class="p">,:]</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">temperature_1d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">temperature_2d_field</span><span class="p">[</span><span class="n">current_age_index</span><span class="p">,</span> <span class="p">:]</span></div>
 </div>
 
-        
+
 
 <span class="c1"># --- #</span>
 <div class="viewcode-block" id="CtrlKy">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.CtrlKy">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CtrlKy</span><span class="p">(</span><span class="n">CTRLBC</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Control for the kinematic boundary condition </span>
+<span class="w">    </span><span class="sd">"""Control for the kinematic boundary condition</span>
 <span class="sd">    Args:</span>
 <span class="sd">        CTRLBC (_type_): The superclass</span>
-<span class="sd">    main instance name: ctrlky  </span>
+<span class="sd">    main instance name: ctrlky</span>
 <span class="sd">    """</span>
-    <span class="n">v_s</span><span class="p">:</span>  <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
-        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-    <span class="p">)</span>
+
+    <span class="n">v_s</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">))</span>
+
 <div class="viewcode-block" id="CtrlKy.check_kinematic_bc">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.CtrlKy.check_kinematic_bc">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">check_kinematic_bc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">ctrl</span><span class="p">:</span><span class="n">NumericalControls</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_kinematic_bc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">:</span> <span class="n">NumericalControls</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""internal checks of the boundary condition</span>
 
 <span class="sd">        Args:</span>
@@ -406,9 +422,10 @@
 <span class="sd">            The input initial velocity must be the same of the first entry of the interval of values</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">check_time_variation</span><span class="p">(</span><span class="n">ctrl</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">v_s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval_val</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">constant</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'The input initial velocity must be the same of the first entry of the interval of values'</span><span class="p">)</span></div>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">v_s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval_val</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">ctrl</span><span class="o">.</span><span class="n">steady_state</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">constant</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"The input initial velocity must be the same of the first entry of the interval of values"</span><span class="p">)</span></div>
 </div>
+
 
 
 <div class="viewcode-block" id="SimulationControls">
@@ -417,36 +434,34 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">SimulationControls</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Container of simulation controls:</span>
 <span class="sd">    ctrl: Numerical controls</span>
-<span class="sd">    ioctrl: I/O controls </span>
+<span class="sd">    ioctrl: I/O controls</span>
 <span class="sd">    ctrl_tbc: Thermal Boudary condition controls</span>
 <span class="sd">    ctrl_ky: Kinematic boundary condition controls</span>
-<span class="sd">    # name: ctrlsm </span>
+<span class="sd">    # name: ctrlsm</span>
 <span class="sd">    """</span>
+
     <span class="n">g_input</span><span class="p">:</span> <span class="n">InitVar</span><span class="p">[</span><span class="n">GeomInput</span><span class="p">]</span>
     <span class="n">ctrl</span><span class="p">:</span> <span class="n">NumericalControls</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">NumericalControls</span><span class="p">)</span>
-    <span class="n">ctrl_io</span><span class="p">:</span> <span class="n">IOControls</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">IOControls</span><span class="p">)</span> 
+    <span class="n">ctrl_io</span><span class="p">:</span> <span class="n">IOControls</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">IOControls</span><span class="p">)</span>
     <span class="n">ctrl_tbc</span><span class="p">:</span> <span class="n">CtrlTemperatureBC</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">CtrlTemperatureBC</span><span class="p">)</span>
     <span class="n">ctrl_ky</span><span class="p">:</span> <span class="n">CtrlKy</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">CtrlKy</span><span class="p">)</span>
     <span class="n">_scaled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
 <div class="viewcode-block" id="SimulationControls.__post_init__">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.SimulationControls.__post_init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g_input</span><span class="p">:</span> <span class="n">GeomInput</span><span class="p">):</span>
         <span class="c1"># check consistency</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">decoupling_ctrl</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="p">((</span><span class="n">g_input</span><span class="o">.</span><span class="n">decoupling</span> <span class="o">==</span> <span class="n">g_input</span><span class="o">.</span><span class="n">ns_depth</span><span class="p">)</span> <span class="ow">or</span> <span class="n">g_input</span><span class="o">.</span><span class="n">decoupling</span> <span class="o">==</span><span class="mi">0</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">Warning</span><span class="p">(</span><span class="sa">f</span><span class="s1">'geometric_input **decoupling** is </span><span class="si">{</span><span class="n">g_input</span><span class="o">.</span><span class="n">decoupling</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">g_input</span><span class="o">.</span><span class="n">decoupling</span> <span class="o">==</span> <span class="n">g_input</span><span class="o">.</span><span class="n">ns_depth</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">Warning</span><span class="p">(</span><span class="s1">'**ns_depth** cannot be the same of **decoupling**'</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">g_input</span><span class="o">.</span><span class="n">decoupling</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span> 
-                <span class="k">raise</span> <span class="ne">Warning</span><span class="p">(</span><span class="s1">'**decoupling** is equal to 0.0. decoupling must be a no-zero value and decoupling must be higher than ns_depth'</span><span class="p">)</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'geometric input **decoupling** has a problem'</span> <span class="p">)</span></div>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctrl</span><span class="o">.</span><span class="n">decoupling_ctrl</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="p">((</span><span class="n">g_input</span><span class="o">.</span><span class="n">decoupling</span> <span class="o">==</span> <span class="n">g_input</span><span class="o">.</span><span class="n">ns_depth</span><span class="p">)</span> <span class="ow">or</span> <span class="n">g_input</span><span class="o">.</span><span class="n">decoupling</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"geometric_input **decoupling** is </span><span class="si">{</span><span class="n">g_input</span><span class="o">.</span><span class="n">decoupling</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">decoupling</span> <span class="o">==</span> <span class="n">g_input</span><span class="o">.</span><span class="n">ns_depth</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Warning</span><span class="p">(</span><span class="s2">"**ns_depth** cannot be the same of **decoupling**"</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">g_input</span><span class="o">.</span><span class="n">decoupling</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Warning</span><span class="p">(</span>
+                    <span class="s2">"**decoupling** is equal to 0.0. decoupling must be a no-zero value and decoupling must be higher than ns_depth"</span>
+                <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"geometric input **decoupling** has a problem"</span><span class="p">)</span></div>
 </div>
 
-
-        
-        
-        
-        
-        
 </pre></div>
 
             <div class="clearer"></div>

@@ -336,16 +336,18 @@ it derives the other scaling for the other SI units.</p>
 <span class="sig-name descname"><span class="pre">compute_the_derivative_scal</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/config/scal.html#Scal.compute_the_derivative_scal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.scal.Scal.compute_the_derivative_scal" title="Link to this definition">¶</a></dt>
 <dd><p>Derive all secondary scaling units from the four primary ones.</p>
 <p>Called once during configuration after the primary scales (length,
-temp, eta, stress) have been set.  Fills every <code class="docutils literal notranslate"><span class="pre">field(init=False)</span></code>
+temp, eta, stress) have been set.  Fills every <cite>field(init=False)</cite>
 attribute according to standard dimensional analysis:</p>
-<ul class="simple">
+<blockquote>
+<div><ul class="simple">
 <li><p>time   = eta / stress           [s]</p></li>
 <li><p>mass   = stress * L^2 * t^2 / L [kg]</p></li>
 <li><p>rho    = mass / L^3             [kg/m^3]</p></li>
 <li><p>k      = watt / (L * T)         [W/(m·K)]</p></li>
-<li><p>cp     = energy / (T * mass)    [J/(kg·K)]
-etc.</p></li>
+<li><p>cp     = energy / (T * mass)    [J/(kg·K)]</p></li>
 </ul>
+<p>etc.</p>
+</div></blockquote>
 </dd></dl>
 
 </dd></dl>
@@ -357,80 +359,109 @@ etc.</p></li>
 <p>Dispatches to the five individual scaling functions in the correct
 dependency order so that all SI values are converted to dimensionless
 form before the FEM problem objects are constructed.  Must be called
-exactly once, after <code class="docutils literal notranslate"><span class="pre">Scal.compute_the_derivative_scal()</span></code> and before
-<code class="docutils literal notranslate"><span class="pre">initialise_the_simulation</span></code>.</p>
-<p>Args:
-ctrl_sim (SimulationControls): All simulation controls; fields are
-overwritten with their dimensionless equivalents.
-pdb (PhaseDataBase): Material-property database; fields are
-overwritten with their dimensionless equivalents.
-mesh (Mesh): Mesh object; geometry coordinates and geometric input
-are overwritten with their dimensionless equivalents.
-sc (Scal): Fully initialised scaling object (primary + derived scales).</p>
+exactly once, after <cite>Scal.compute_the_derivative_scal()</cite> and before
+<cite>initialise_the_simulation</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctrl_sim</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.SimulationControls" title="stonedfenicsx.config.numerical_control.SimulationControls"><em>SimulationControls</em></a>) – All simulation controls; fields are
+overwritten with their dimensionless equivalents.</p></li>
+<li><p><strong>pdb</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – Material-property database; fields are
+overwritten with their dimensionless equivalents.</p></li>
+<li><p><strong>mesh</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.Mesh" title="stonedfenicsx.config.geometry.Mesh"><em>Mesh</em></a>) – Mesh object; geometry coordinates and geometric input
+are overwritten with their dimensionless equivalents.</p></li>
+<li><p><strong>sc</strong> (<a class="reference internal" href="#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><em>Scal</em></a>) – Fully initialised scaling object (primary + derived scales).</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.config.scal.scaling_material_properties">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.scal.</span></span><span class="sig-name descname"><span class="pre">scaling_material_properties</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><span class="pre">stonedfenicsx.config.phase_db.PhaseDataBase</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><span class="pre">stonedfenicsx.config.scal.Scal</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><span class="pre">stonedfenicsx.config.phase_db.PhaseDataBase</span></a></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/scal.html#scaling_material_properties"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.scal.scaling_material_properties" title="Link to this definition">¶</a></dt>
 <dd><p>Non-dimensionalise all material-property parameters in the phase database.</p>
-<p>Divides every parameter in <code class="docutils literal notranslate"><span class="pre">pdb</span></code> by its composite SI scaling factor
-derived from <code class="docutils literal notranslate"><span class="pre">sc</span></code>.  Covers: reference temperature and pressure, viscosity
+<p>Divides every parameter in <cite>pdb</cite> by its composite SI scaling factor
+derived from <cite>sc</cite>.  Covers: reference temperature and pressure, viscosity
 bounds, thermal conductivity coefficients (a, b, c, d, e series and
 pressure correction k_f), heat-capacity polynomial coefficients
 (c0–c5), thermal expansivity (alpha0–alpha2), density (rho0, kb),
 radiogenic heat production, and dislocation/diffusion creep prefactors
 (b_dis, b_dif, bdis_wz).</p>
-<p>Args:
-pdb (PhaseDataBase): Material-property database; all fields overwritten
-in-place with dimensionless values.
-sc (Scal): Fully initialised scaling object.</p>
-<p>Returns:
-PhaseDataBase: The same <code class="docutils literal notranslate"><span class="pre">pdb</span></code> object with all fields scaled.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pdb</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – Material-property database; all fields overwritten
+in-place with dimensionless values.</p></li>
+<li><p><strong>sc</strong> (<a class="reference internal" href="#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><em>Scal</em></a>) – Fully initialised scaling object.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The same <cite>pdb</cite> object with all fields scaled.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase">PhaseDataBase</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.config.scal.scale_parameters">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.scal.</span></span><span class="sig-name descname"><span class="pre">scale_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctrl_tbc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.CtrlTemperatureBC" title="stonedfenicsx.config.numerical_control.CtrlTemperatureBC"><span class="pre">stonedfenicsx.config.numerical_control.CtrlTemperatureBC</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><span class="pre">stonedfenicsx.config.scal.Scal</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/scal.html#scale_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.scal.scale_parameters" title="Link to this definition">¶</a></dt>
 <dd><p>Non-dimensionalise all thermal boundary-condition parameters.</p>
-<p>Converts temperatures from Celsius to Kelvin then divides by <code class="docutils literal notranslate"><span class="pre">sc.temp</span></code>.
+<p>Converts temperatures from Celsius to Kelvin then divides by <cite>sc.temp</cite>.
 Converts all time quantities (end_time, dt, slab_age, interval_time,
 interval_val, right_age) from Myr to seconds then to dimensionless time
-using the viscous time scale <code class="docutils literal notranslate"><span class="pre">sc.time</span></code>.  Converts the depth discretisation
-step <code class="docutils literal notranslate"><span class="pre">dz</span></code> from km to metres then to dimensionless length.  Scales
+using the viscous time scale <cite>sc.time</cite>.  Converts the depth discretisation
+step <cite>dz</cite> from km to metres then to dimensionless length.  Scales
 conductivity, heat capacity, and density by their respective composite
 scales.</p>
-<p>Args:
-ctrl_tbc (CtrlTemperatureBC): Thermal boundary-condition controls;
-all fields overwritten in-place with dimensionless values.
-sc (Scal): Fully initialised scaling object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctrl_tbc</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.CtrlTemperatureBC" title="stonedfenicsx.config.numerical_control.CtrlTemperatureBC"><em>CtrlTemperatureBC</em></a>) – Thermal boundary-condition controls;
+all fields overwritten in-place with dimensionless values.</p></li>
+<li><p><strong>sc</strong> (<a class="reference internal" href="#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><em>Scal</em></a>) – Fully initialised scaling object.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.config.scal.scaling_control_parameters">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.scal.</span></span><span class="sig-name descname"><span class="pre">scaling_control_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.NumericalControls" title="stonedfenicsx.config.numerical_control.NumericalControls"><span class="pre">stonedfenicsx.config.numerical_control.NumericalControls</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><span class="pre">stonedfenicsx.config.scal.Scal</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/scal.html#scaling_control_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.scal.scaling_control_parameters" title="Link to this definition">¶</a></dt>
 <dd><p>Non-dimensionalise numerical solver controls.</p>
-<p>Scales gravity <code class="docutils literal notranslate"><span class="pre">g</span></code> by the characteristic acceleration (length/time^2),
-and converts <code class="docutils literal notranslate"><span class="pre">time_max</span></code> and <code class="docutils literal notranslate"><span class="pre">dt</span></code> from Myr to the dimensionless viscous
+<p>Scales gravity <cite>g</cite> by the characteristic acceleration (length/time^2),
+and converts <cite>time_max</cite> and <cite>dt</cite> from Myr to the dimensionless viscous
 time unit.</p>
-<p>Args:
-ctrl (NumericalControls): Numerical controls dataclass; <code class="docutils literal notranslate"><span class="pre">g</span></code>,
-<code class="docutils literal notranslate"><span class="pre">time_max</span></code>, and <code class="docutils literal notranslate"><span class="pre">dt</span></code> are overwritten in-place.
-sc (Scal): Fully initialised scaling object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctrl</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.NumericalControls" title="stonedfenicsx.config.numerical_control.NumericalControls"><em>NumericalControls</em></a>) – Numerical controls dataclass; <cite>g</cite>,
+<cite>time_max</cite>, and <cite>dt</cite> are overwritten in-place.</p></li>
+<li><p><strong>sc</strong> (<a class="reference internal" href="#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><em>Scal</em></a>) – Fully initialised scaling object.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.config.scal.scaling_mesh">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.scal.</span></span><span class="sig-name descname"><span class="pre">scaling_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.Mesh" title="stonedfenicsx.config.geometry.Mesh"><span class="pre">stonedfenicsx.config.geometry.Mesh</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><span class="pre">stonedfenicsx.config.scal.Scal</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/scal.html#scaling_mesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.scal.scaling_mesh" title="Link to this definition">¶</a></dt>
 <dd><p>Non-dimensionalise mesh geometry and geometric input parameters.</p>
-<p>Divides all mesh node coordinates (in metres) by <code class="docutils literal notranslate"><span class="pre">sc.length</span> <span class="pre">/</span> <span class="pre">1000</span></code> for
+<p>Divides all mesh node coordinates (in metres) by <cite>sc.length / 1000</cite> for
 the four sub-domains (global, crust, subduction plate, wedge), converting
 them from kilometres to dimensionless units.  Then calls
-<code class="docutils literal notranslate"><span class="pre">dimensionless_ginput</span></code> to scale the scalar geometric parameters stored in
-<code class="docutils literal notranslate"><span class="pre">mesh.g_input</span></code>.</p>
-<p>Args:
-mesh (Mesh): Mesh object whose sub-domain geometry arrays and
-<code class="docutils literal notranslate"><span class="pre">g_input</span></code> are overwritten in-place.
-sc (Scal): Fully initialised scaling object.</p>
+<cite>dimensionless_ginput</cite> to scale the scalar geometric parameters stored in
+<cite>mesh.g_input</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.Mesh" title="stonedfenicsx.config.geometry.Mesh"><em>Mesh</em></a>) – Mesh object whose sub-domain geometry arrays and
+<cite>g_input</cite> are overwritten in-place.</p></li>
+<li><p><strong>sc</strong> (<a class="reference internal" href="#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><em>Scal</em></a>) – Fully initialised scaling object.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -439,37 +470,52 @@ sc (Scal): Fully initialised scaling object.</p>
 <dd><p>Non-dimensionalise all scalar geometric parameters in GeomInput.</p>
 <p>Divides every length parameter (grid extents, layer thicknesses, weak zone
 thickness, decoupling depth, mesh resolution targets, LAB depth, slab
-thickness) by <code class="docutils literal notranslate"><span class="pre">sc.length</span> <span class="pre">/</span> <span class="pre">1000</span></code> to convert from kilometres to the
+thickness) by <cite>sc.length / 1000</cite> to convert from kilometres to the
 dimensionless length unit.</p>
-<p>Args:
-g_input (GeomInput): Geometric input dataclass; all length fields
-are overwritten in-place.
-sc (Scal): Fully initialised scaling object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>g_input</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><em>GeomInput</em></a>) – Geometric input dataclass; all length fields
+are overwritten in-place.</p></li>
+<li><p><strong>sc</strong> (<a class="reference internal" href="#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><em>Scal</em></a>) – Fully initialised scaling object.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.config.scal.scale_kinematic_bc">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.scal.</span></span><span class="sig-name descname"><span class="pre">scale_kinematic_bc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctrl_ky</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.CtrlKy" title="stonedfenicsx.config.numerical_control.CtrlKy"><span class="pre">stonedfenicsx.config.numerical_control.CtrlKy</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><span class="pre">stonedfenicsx.config.scal.Scal</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/scal.html#scale_kinematic_bc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.scal.scale_kinematic_bc" title="Link to this definition">¶</a></dt>
 <dd><p>Non-dimensionalise kinematic boundary-condition parameters.</p>
-<p>Converts the slab surface velocity <code class="docutils literal notranslate"><span class="pre">v_s</span></code> from cm/yr to m/s using
-<code class="docutils literal notranslate"><span class="pre">sc.scale_vel</span></code>, then to the dimensionless velocity unit (length/time).
-Converts the time-series interval array <code class="docutils literal notranslate"><span class="pre">interval_val</span></code> from Myr to the
+<p>Converts the slab surface velocity <cite>v_s</cite> from cm/yr to m/s using
+<cite>sc.scale_vel</cite>, then to the dimensionless velocity unit (length/time).
+Converts the time-series interval array <cite>interval_val</cite> from Myr to the
 dimensionless time unit.</p>
-<p>Args:
-ctrl_ky (CtrlKy): Kinematic boundary-condition controls; <code class="docutils literal notranslate"><span class="pre">v_s</span></code> and
-<code class="docutils literal notranslate"><span class="pre">interval_val</span></code> are overwritten in-place.
-sc (Scal): Fully initialised scaling object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctrl_ky</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.CtrlKy" title="stonedfenicsx.config.numerical_control.CtrlKy"><em>CtrlKy</em></a>) – Kinematic boundary-condition controls; <cite>v_s</cite> and
+<cite>interval_val</cite> are overwritten in-place.</p></li>
+<li><p><strong>sc</strong> (<a class="reference internal" href="#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><em>Scal</em></a>) – Fully initialised scaling object.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.config.scal.scaling_io_controls">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.scal.</span></span><span class="sig-name descname"><span class="pre">scaling_io_controls</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctrl_io</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls" title="stonedfenicsx.config.numerical_control.IOControls"><span class="pre">stonedfenicsx.config.numerical_control.IOControls</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><span class="pre">stonedfenicsx.config.scal.Scal</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/scal.html#scaling_io_controls"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.scal.scaling_io_controls" title="Link to this definition">¶</a></dt>
 <dd><p>Non-dimensionalise input/output control parameters.</p>
-<p>Converts the time-series interval array <code class="docutils literal notranslate"><span class="pre">interval_val</span></code> from Myr to the
+<p>Converts the time-series interval array <cite>interval_val</cite> from Myr to the
 dimensionless time unit.</p>
-<p>Args:
-ctrl_io (IOControls): Input/output controls; <code class="docutils literal notranslate"><span class="pre">interval_val</span></code> is overwritten in-place.
-sc (Scal): Fully initialised scaling object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctrl_io</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls" title="stonedfenicsx.config.numerical_control.IOControls"><em>IOControls</em></a>) – Input/output controls; <cite>interval_val</cite> is overwritten in-place.</p></li>
+<li><p><strong>sc</strong> (<a class="reference internal" href="#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><em>Scal</em></a>) – Fully initialised scaling object.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

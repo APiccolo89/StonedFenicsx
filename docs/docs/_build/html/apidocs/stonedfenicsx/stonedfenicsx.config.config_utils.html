@@ -217,31 +217,54 @@ The dictionaries at the top of the file, convert the string into this flag syste
 Certain value are naturally interpreted as a string (e.g., eta_max = 1e26). These variable
 are not transformed, as an other function would handle the effective conversion
 to the float number.</p>
-<p>Args:
-k (str): key of the block
-v (str): value</p>
-<p>Returns:
-v(int|float|str): transformed value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>k</strong> (<em>str</em>) – key of the block</p></li>
+<li><p><strong>v</strong> (<em>str</em>) – value</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>transformed value.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.RheologicalFlowLaw.v" title="stonedfenicsx.config.phase_db.RheologicalFlowLaw.v">v</a>(int|float|str)</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.config.config_utils.update_ip_file">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.config_utils.</span></span><span class="sig-name descname"><span class="pre">update_ip_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/config_utils.html#update_ip_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.config_utils.update_ip_file" title="Link to this definition">¶</a></dt>
 <dd><p>Populate a dataclass instance from a YAML block dict.</p>
-<p>Args:
-obj (object): Target dataclass instance (e.g., NumericalControls).
-block (dict): Dictionary from the YAML file mapping field names to values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>object</em>) – Target dataclass instance (e.g., NumericalControls).</p></li>
+<li><p><strong>block</strong> (<em>dict</em>) – Dictionary from the YAML file mapping field names to values.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.config.config_utils.cast_type">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.config_utils.</span></span><span class="sig-name descname"><span class="pre">cast_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">any</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/config_utils.html#cast_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.config_utils.cast_type" title="Link to this definition">¶</a></dt>
 <dd><p>Ensure that the typing of input is the same of the target class</p>
-<p>Args:
-v (any): value of the class member
-tp (any): type of the class member</p>
-<p>Returns:
-v: converted value</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>v</strong> (<em>any</em>) – value of the class member</p></li>
+<li><p><strong>tp</strong> (<em>any</em>) – type of the class member</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>converted value</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.RheologicalFlowLaw.v" title="stonedfenicsx.config.phase_db.RheologicalFlowLaw.v">v</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

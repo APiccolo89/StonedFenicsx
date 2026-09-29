@@ -4,6 +4,7 @@
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control
+:parser: napoleon_parser
 :allowtitles:
 ```
 
@@ -17,26 +18,32 @@
 
 * - {py:obj}`NumericalControls <stonedfenicsx.config.numerical_control.NumericalControls>`
   - ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`IOControls <stonedfenicsx.config.numerical_control.IOControls>`
   - ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.IOControls
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`CTRLBC <stonedfenicsx.config.numerical_control.CTRLBC>`
   - ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CTRLBC
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`CtrlTemperatureBC <stonedfenicsx.config.numerical_control.CtrlTemperatureBC>`
   - ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`CtrlKy <stonedfenicsx.config.numerical_control.CtrlKy>`
   - ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlKy
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`SimulationControls <stonedfenicsx.config.numerical_control.SimulationControls>`
   - ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.SimulationControls
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -49,18 +56,22 @@
 
 * - {py:obj}`dict_shear_modes <stonedfenicsx.config.numerical_control.dict_shear_modes>`
   - ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.dict_shear_modes
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`dict_solver_type <stonedfenicsx.config.numerical_control.dict_solver_type>`
   - ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.dict_solver_type
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`dict_output_type <stonedfenicsx.config.numerical_control.dict_output_type>`
   - ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.dict_output_type
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`dict_initial_guess <stonedfenicsx.config.numerical_control.dict_initial_guess>`
   - ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.dict_initial_guess
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -73,6 +84,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.dict_shear_modes
+:parser: napoleon_parser
 ```
 
 ````
@@ -83,6 +95,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.dict_solver_type
+:parser: napoleon_parser
 ```
 
 ````
@@ -93,6 +106,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.dict_output_type
+:parser: napoleon_parser
 ```
 
 ````
@@ -103,6 +117,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.dict_initial_guess
+:parser: napoleon_parser
 ```
 
 ````
@@ -111,6 +126,7 @@
 :canonical: stonedfenicsx.config.numerical_control.NumericalControls
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} it_max
@@ -120,6 +136,7 @@
    20
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.it_max
+:parser: napoleon_parser
 ```
 
 ````
@@ -131,6 +148,7 @@
    10
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.it_inner_max
+:parser: napoleon_parser
 ```
 
 ````
@@ -142,6 +160,7 @@
    0.0001
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.tol
+:parser: napoleon_parser
 ```
 
 ````
@@ -153,6 +172,7 @@
    0.05
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.tol_dtemp
+:parser: napoleon_parser
 ```
 
 ````
@@ -164,6 +184,7 @@
    1.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.relax
+:parser: napoleon_parser
 ```
 
 ````
@@ -175,6 +196,7 @@
    9.81
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.g
+:parser: napoleon_parser
 ```
 
 ````
@@ -186,6 +208,7 @@
    30.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.time_max
+:parser: napoleon_parser
 ```
 
 ````
@@ -197,6 +220,7 @@
    500.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.dt
+:parser: napoleon_parser
 ```
 
 ````
@@ -208,6 +232,7 @@
    1
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.steady_state
+:parser: napoleon_parser
 ```
 
 ````
@@ -219,6 +244,7 @@
    1
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.decoupling_ctrl
+:parser: napoleon_parser
 ```
 
 ````
@@ -230,6 +256,7 @@
    1
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.model_shear
+:parser: napoleon_parser
 ```
 
 ````
@@ -241,6 +268,7 @@
    1
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.adiabatic_heating
+:parser: napoleon_parser
 ```
 
 ````
@@ -252,6 +280,7 @@
    1
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.stokes_solver_type
+:parser: napoleon_parser
 ```
 
 ````
@@ -263,6 +292,7 @@
    1
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.energy_solver_type
+:parser: napoleon_parser
 ```
 
 ````
@@ -274,6 +304,7 @@
    1e-07
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.iterative_solver_tol
+:parser: napoleon_parser
 ```
 
 ````
@@ -285,6 +316,7 @@
    1e+26
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.eta_max
+:parser: napoleon_parser
 ```
 
 ````
@@ -296,6 +328,7 @@
    1
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.pressure_dependency
+:parser: napoleon_parser
 ```
 
 ````
@@ -307,6 +340,7 @@
    0.3
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.time_ini_guess
+:parser: napoleon_parser
 ```
 
 ````
@@ -318,6 +352,7 @@
    'None'
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.initial_guess
+:parser: napoleon_parser
 ```
 
 ````
@@ -329,6 +364,7 @@
    0.8
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.CFL
+:parser: napoleon_parser
 ```
 
 ````
@@ -337,6 +373,7 @@
 :canonical: stonedfenicsx.config.numerical_control.NumericalControls.update_initial_guess
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.update_initial_guess
+:parser: napoleon_parser
 ```
 
 ````
@@ -345,6 +382,7 @@
 :canonical: stonedfenicsx.config.numerical_control.NumericalControls.convert_string
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.NumericalControls.convert_string
+:parser: napoleon_parser
 ```
 
 ````
@@ -355,6 +393,7 @@
 :canonical: stonedfenicsx.config.numerical_control.IOControls
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.IOControls
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} test_name
@@ -363,6 +402,7 @@
 :value: <Multiline-String>
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.IOControls.test_name
+:parser: napoleon_parser
 ```
 
 ````
@@ -373,6 +413,7 @@
 :value: <Multiline-String>
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.IOControls.path_save
+:parser: napoleon_parser
 ```
 
 ````
@@ -384,6 +425,7 @@
    'MockTest'
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.IOControls.sname
+:parser: napoleon_parser
 ```
 
 ````
@@ -395,6 +437,7 @@
    10
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.IOControls.ts_out
+:parser: napoleon_parser
 ```
 
 ````
@@ -406,6 +449,7 @@
    1
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.IOControls.dt_out
+:parser: napoleon_parser
 ```
 
 ````
@@ -417,6 +461,7 @@
    'step'
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.IOControls.ts_time
+:parser: napoleon_parser
 ```
 
 ````
@@ -428,6 +473,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.IOControls.path_test
+:parser: napoleon_parser
 ```
 
 ````
@@ -439,6 +485,7 @@
    'Path(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.IOControls.path_cached_information
+:parser: napoleon_parser
 ```
 
 ````
@@ -447,6 +494,7 @@
 :canonical: stonedfenicsx.config.numerical_control.IOControls.generate_io
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.IOControls.generate_io
+:parser: napoleon_parser
 ```
 
 ````
@@ -457,6 +505,7 @@
 :canonical: stonedfenicsx.config.numerical_control.CTRLBC
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CTRLBC
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} constant
@@ -466,6 +515,7 @@
    1
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CTRLBC.constant
+:parser: napoleon_parser
 ```
 
 ````
@@ -477,6 +527,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CTRLBC.interval_val
+:parser: napoleon_parser
 ```
 
 ````
@@ -488,6 +539,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CTRLBC.interval_time
+:parser: napoleon_parser
 ```
 
 ````
@@ -496,6 +548,7 @@
 :canonical: stonedfenicsx.config.numerical_control.CTRLBC.check_time_variation
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CTRLBC.check_time_variation
+:parser: napoleon_parser
 ```
 
 ````
@@ -504,6 +557,7 @@
 :canonical: stonedfenicsx.config.numerical_control.CTRLBC.update_vel_age
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CTRLBC.update_vel_age
+:parser: napoleon_parser
 ```
 
 ````
@@ -516,6 +570,7 @@
 Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} temp_top
@@ -525,6 +580,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    0.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.temp_top
+:parser: napoleon_parser
 ```
 
 ````
@@ -536,6 +592,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    1300.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.temp_max
+:parser: napoleon_parser
 ```
 
 ````
@@ -547,6 +604,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    200
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.nz
+:parser: napoleon_parser
 ```
 
 ````
@@ -558,6 +616,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    0.005
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.dt
+:parser: napoleon_parser
 ```
 
 ````
@@ -569,6 +628,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    50.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.slab_age
+:parser: napoleon_parser
 ```
 
 ````
@@ -580,6 +640,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    0
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.recalculate
+:parser: napoleon_parser
 ```
 
 ````
@@ -591,6 +652,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    3.1
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.k
+:parser: napoleon_parser
 ```
 
 ````
@@ -602,6 +664,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    3300.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.rho
+:parser: napoleon_parser
 ```
 
 ````
@@ -613,6 +676,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    1250.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.cp
+:parser: napoleon_parser
 ```
 
 ````
@@ -624,6 +688,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.dz
+:parser: napoleon_parser
 ```
 
 ````
@@ -635,6 +700,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    180
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.end_time
+:parser: napoleon_parser
 ```
 
 ````
@@ -646,6 +712,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    1
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.nt
+:parser: napoleon_parser
 ```
 
 ````
@@ -657,6 +724,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    'Continental'
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.right_boundary
+:parser: napoleon_parser
 ```
 
 ````
@@ -668,6 +736,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    30.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.right_age
+:parser: napoleon_parser
 ```
 
 ````
@@ -679,6 +748,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.z
+:parser: napoleon_parser
 ```
 
 ````
@@ -690,6 +760,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.z_right
+:parser: napoleon_parser
 ```
 
 ````
@@ -701,6 +772,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.temp_1d_right
+:parser: napoleon_parser
 ```
 
 ````
@@ -712,6 +784,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.temperature_1d
+:parser: napoleon_parser
 ```
 
 ````
@@ -723,6 +796,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.temperature_2d_field
+:parser: napoleon_parser
 ```
 
 ````
@@ -734,6 +808,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.t_res_vec
+:parser: napoleon_parser
 ```
 
 ````
@@ -745,6 +820,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    1
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.self_consistent_flag
+:parser: napoleon_parser
 ```
 
 ````
@@ -753,6 +829,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
 :canonical: stonedfenicsx.config.numerical_control.CtrlTemperatureBC.update_thermal_bc
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.update_thermal_bc
+:parser: napoleon_parser
 ```
 
 ````
@@ -761,6 +838,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
 :canonical: stonedfenicsx.config.numerical_control.CtrlTemperatureBC.update_1d_vector_left
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlTemperatureBC.update_1d_vector_left
+:parser: napoleon_parser
 ```
 
 ````
@@ -773,6 +851,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
 Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlKy
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} v_s
@@ -782,6 +861,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlKy.v_s
+:parser: napoleon_parser
 ```
 
 ````
@@ -790,6 +870,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
 :canonical: stonedfenicsx.config.numerical_control.CtrlKy.check_kinematic_bc
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.CtrlKy.check_kinematic_bc
+:parser: napoleon_parser
 ```
 
 ````
@@ -800,6 +881,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
 :canonical: stonedfenicsx.config.numerical_control.SimulationControls
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.SimulationControls
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} g_input
@@ -809,6 +891,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.SimulationControls.g_input
+:parser: napoleon_parser
 ```
 
 ````
@@ -820,6 +903,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.SimulationControls.ctrl
+:parser: napoleon_parser
 ```
 
 ````
@@ -831,6 +915,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.SimulationControls.ctrl_io
+:parser: napoleon_parser
 ```
 
 ````
@@ -842,6 +927,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.SimulationControls.ctrl_tbc
+:parser: napoleon_parser
 ```
 
 ````
@@ -853,6 +939,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.SimulationControls.ctrl_ky
+:parser: napoleon_parser
 ```
 
 ````
@@ -864,6 +951,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.SimulationControls._scaled
+:parser: napoleon_parser
 ```
 
 ````
@@ -872,6 +960,7 @@ Bases: {py:obj}`stonedfenicsx.config.numerical_control.CTRLBC`
 :canonical: stonedfenicsx.config.numerical_control.SimulationControls.__post_init__
 
 ```{autodoc2-docstring} stonedfenicsx.config.numerical_control.SimulationControls.__post_init__
+:parser: napoleon_parser
 ```
 
 ````

@@ -4,6 +4,7 @@
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities
+:parser: napoleon_parser
 :allowtitles:
 ```
 
@@ -17,6 +18,7 @@
 
 * - {py:obj}`OUTERITERATION_SOL_VAL <stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -29,26 +31,32 @@
 
 * - {py:obj}`compute_residuum <stonedfenicsx.solver_module.solver_utilities.compute_residuum>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.compute_residuum
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`min_max_array <stonedfenicsx.solver_module.solver_utilities.min_max_array>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.min_max_array
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`update_solution <stonedfenicsx.solver_module.solver_utilities.update_solution>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.update_solution
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`decoupling_function <stonedfenicsx.solver_module.solver_utilities.decoupling_function>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.decoupling_function
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`L2_norm_calculation <stonedfenicsx.solver_module.solver_utilities.L2_norm_calculation>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.L2_norm_calculation
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`timestep_output <stonedfenicsx.solver_module.solver_utilities.timestep_output>`
   - ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.timestep_output
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -59,6 +67,7 @@
 :canonical: stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} sol
@@ -68,6 +77,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.sol
+:parser: napoleon_parser
 ```
 
 ````
@@ -79,6 +89,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.ctrl
+:parser: napoleon_parser
 ```
 
 ````
@@ -90,6 +101,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.ctrl_io
+:parser: napoleon_parser
 ```
 
 ````
@@ -101,6 +113,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.T
+:parser: napoleon_parser
 ```
 
 ````
@@ -112,6 +125,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.PL
+:parser: napoleon_parser
 ```
 
 ````
@@ -123,6 +137,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.u
+:parser: napoleon_parser
 ```
 
 ````
@@ -134,6 +149,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.p
+:parser: napoleon_parser
 ```
 
 ````
@@ -145,6 +161,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.mom_res_wedge
+:parser: napoleon_parser
 ```
 
 ````
@@ -156,6 +173,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.mom_res_slab
+:parser: napoleon_parser
 ```
 
 ````
@@ -167,6 +185,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.div_res_slab
+:parser: napoleon_parser
 ```
 
 ````
@@ -178,6 +197,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.div_res_wedge
+:parser: napoleon_parser
 ```
 
 ````
@@ -189,6 +209,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.ene_res_gl
+:parser: napoleon_parser
 ```
 
 ````
@@ -200,6 +221,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.combined_residual_0
+:parser: napoleon_parser
 ```
 
 ````
@@ -211,6 +233,7 @@
    1.0
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.res
+:parser: napoleon_parser
 ```
 
 ````
@@ -222,6 +245,7 @@
    0.0
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.old_t_max
+:parser: napoleon_parser
 ```
 
 ````
@@ -233,6 +257,7 @@
    0.0
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.old_t_min
+:parser: napoleon_parser
 ```
 
 ````
@@ -241,6 +266,7 @@
 :canonical: stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.__post_init__
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.__post_init__
+:parser: napoleon_parser
 ```
 
 ````
@@ -249,6 +275,7 @@
 :canonical: stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.update_iteration
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.update_iteration
+:parser: napoleon_parser
 ```
 
 ````
@@ -257,6 +284,7 @@
 :canonical: stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.check_convergence
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.check_convergence
+:parser: napoleon_parser
 ```
 
 ````
@@ -265,6 +293,7 @@
 :canonical: stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.compute_residuum_outer
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.compute_residuum_outer
+:parser: napoleon_parser
 ```
 
 ````
@@ -273,6 +302,7 @@
 :canonical: stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.compute_residuum_outer_initial_guess_diffusion
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.OUTERITERATION_SOL_VAL.compute_residuum_outer_initial_guess_diffusion
+:parser: napoleon_parser
 ```
 
 ````
@@ -283,6 +313,7 @@
 :canonical: stonedfenicsx.solver_module.solver_utilities.compute_residuum
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.compute_residuum
+:parser: napoleon_parser
 ```
 ````
 
@@ -290,6 +321,7 @@
 :canonical: stonedfenicsx.solver_module.solver_utilities.min_max_array
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.min_max_array
+:parser: napoleon_parser
 ```
 ````
 
@@ -297,6 +329,7 @@
 :canonical: stonedfenicsx.solver_module.solver_utilities.update_solution
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.update_solution
+:parser: napoleon_parser
 ```
 ````
 
@@ -304,6 +337,7 @@
 :canonical: stonedfenicsx.solver_module.solver_utilities.decoupling_function
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.decoupling_function
+:parser: napoleon_parser
 ```
 ````
 
@@ -311,6 +345,7 @@
 :canonical: stonedfenicsx.solver_module.solver_utilities.L2_norm_calculation
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.L2_norm_calculation
+:parser: napoleon_parser
 ```
 ````
 
@@ -318,5 +353,6 @@
 :canonical: stonedfenicsx.solver_module.solver_utilities.timestep_output
 
 ```{autodoc2-docstring} stonedfenicsx.solver_module.solver_utilities.timestep_output
+:parser: napoleon_parser
 ```
 ````

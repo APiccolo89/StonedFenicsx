@@ -184,9 +184,6 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.ThermalExpansivity" title="stonedfenicsx.config.phase_db.ThermalExpansivity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ThermalExpansivity</span></code></a></p></td>
 <td></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.Profile_Slab" title="stonedfenicsx.config.phase_db.Profile_Slab"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Profile_Slab</span></code></a></p></td>
-<td></td>
-</tr>
 </tbody>
 </table>
 </section>
@@ -196,45 +193,67 @@
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.generate_phase" title="stonedfenicsx.config.phase_db.generate_phase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_phase</span></code></a></p></td>
 <td><p>Generate a phase with the specified properties and add it to the phase database.
-Args:
-pdb (PhaseDataBase): The phase database to which the new phase will be added.
-id_ph (int): The <strong>id_phentifier</strong> for the new phase.
-name_diffusion (str): The name of the diffusion creep rheology to use.
-e_dif (float): Activation energy for diffusion creep [J/mol].
-v_dif (float): Activation volume for diffusion creep [m^3/mol].
-b_dif (float): Pre-exponential factor for diffusion creep [Pa^-1 s^-1].
-name_dislocation (str): The name of the dislocation creep rheology to use.
-n (float): Stress exponent for dislocation creep.
-e_dis (float): Activation energy for dislocation creep [J/mol].
-v_dis (float): Activation volume for dislocation creep [m^3/mol].
-B_dis (float): Pre-exponential factor for dislocation creep [Pa^-n s^-1].
-Cp (float): Heat capacity [J/kg/K].
-k (float): Thermal conductivity [W/m/K].
-rho0 (float): Reference density [kg/m^3]. It is a mandatory parameters in any case.
-eta (float): Constant viscosity [Pa s].
-name_capacity (str): The name of the heat capacity model to use.
-name_conductivity (str): The name of the thermal conductivity model to use.
-name_alpha (str): The name of the thermal expansivity model to use.
-name_density (str): The name of the density model to use.
-radio (float): Radiogenic heat production [W/kg].
-radio_flag (float): Flag for radiative conductivity production calculation.
-Returns:
-PhaseDataBase: The updated phase database with the new phase added.</p></td>
+:param pdb: The phase database to which the new phase will be added.
+:type pdb: PhaseDataBase
+:param id_ph: The <strong>id_phentifier</strong> for the new phase.
+:type id_ph: int
+:param name_diffusion: The name of the diffusion creep rheology to use.
+:type name_diffusion: str
+:param e_dif: Activation energy for diffusion creep [J/mol].
+:type e_dif: float
+:param v_dif: Activation volume for diffusion creep [m^3/mol].
+:type v_dif: float
+:param b_dif: Pre-exponential factor for diffusion creep [Pa^-1 s^-1].
+:type b_dif: float
+:param name_dislocation: The name of the dislocation creep rheology to use.
+:type name_dislocation: str
+:param n: Stress exponent for dislocation creep.
+:type n: float
+:param e_dis: Activation energy for dislocation creep [J/mol].
+:type e_dis: float
+:param v_dis: Activation volume for dislocation creep [m^3/mol].
+:type v_dis: float
+:param B_dis: Pre-exponential factor for dislocation creep [Pa^-n s^-1].
+:type B_dis: float
+:param Cp: Heat capacity [J/kg/K].
+:type Cp: float
+:param k: Thermal conductivity [W/m/K].
+:type k: float
+:param rho0: Reference density [kg/m^3]. It is a mandatory parameters in any case.
+:type rho0: float
+:param eta: Constant viscosity [Pa s].
+:type eta: float
+:param name_capacity: The name of the heat capacity model to use.
+:type name_capacity: str
+:param name_conductivity: The name of the thermal conductivity model to use.
+:type name_conductivity: str
+:param name_alpha: The name of the thermal expansivity model to use.
+:type name_alpha: str
+:param name_density: The name of the density model to use.
+:type name_density: str
+:param radio: Radiogenic heat production [W/kg].
+:type radio: float
+:param radio_flag: Flag for radiative conductivity production calculation.
+:type radio_flag: float</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.generate_phase_database" title="stonedfenicsx.config.phase_db.generate_phase_database"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_phase_database</span></code></a></p></td>
-<td><p><em>summary</em></p></td>
+<td><p>_summary_</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.fill_up_weakzone_data" title="stonedfenicsx.config.phase_db.fill_up_weakzone_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fill_up_weakzone_data</span></code></a></p></td>
 <td><p>Function that updates the data of the shear zone that mimick the subduction interface.
-Args:
-ch (float, optional): Cohesion. Defaults to 10e6.
-phi (float, optional): Friction angle. Defaults to np.radians(5).
-eta_wz (float, optional): Viscosity. Defaults to 1e20.
-dislocation_creep (str, optional): Dislocation creep law. Defaults to ‘Constant’.
-pdb (PhaseDataBase, optional): Phase Defaults to None.</p></td>
+:param ch: Cohesion. Defaults to 10e6.
+:type ch: float, optional
+:param phi: Friction angle. Defaults to np.radians(5).
+:type phi: float, optional
+:param eta_wz: Viscosity. Defaults to 1e20.
+:type eta_wz: float, optional
+:param dislocation_creep: Dislocation creep law. Defaults to ‘Constant’.
+:type dislocation_creep: str, optional
+:param pdb: Phase Defaults to None.
+:type pdb: PhaseDataBase, optional</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.check_data_base" title="stonedfenicsx.config.phase_db.check_data_base"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_data_base</span></code></a></p></td>
-<td><p><em>summary</em></p></td>
+<td><p>_summary_</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.read_rheology" title="stonedfenicsx.config.phase_db.read_rheology"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_rheology</span></code></a></p></td>
 <td><p>Read rheology</p></td>
@@ -253,15 +272,18 @@ pdb (PhaseDataBase, optional): Phase Defaults to None.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.heat_conductivity" title="stonedfenicsx.config.phase_db.heat_conductivity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">heat_conductivity</span></code></a></p></td>
 <td><p>Compute the heat conductivity for a given Pressure and Temperature
-Args:
-pdb (PhaseDataBase): Phase Data Base containing the material properties as numpy arrays, indexed by phase ID
-T (NDArray[np.float64] | np.float64): Temperature field as a numpy array
-p (NDArray[np.float64] | np.float64): Pressure field as a numpy array
-rho (NDArray[np.float64] | np.float64): Density field as a numpy array
-Cp (NDArray[np.float64] | np.float64): Heat capacity field as a numpy array
-ph (int): phase ID for which to compute the conductivity, used to index the material properties from the PhaseDataBase
-Returns:
-NDArray[np.float64]: array containing the heat conductivity</p></td>
+:param pdb: Phase Data Base containing the material properties as numpy arrays, indexed by phase ID
+:type pdb: PhaseDataBase
+:param T: Temperature field as a numpy array
+:type T: NDArray[np.float64] | np.float64
+:param p: Pressure field as a numpy array
+:type p: NDArray[np.float64] | np.float64
+:param rho: Density field as a numpy array
+:type rho: NDArray[np.float64] | np.float64
+:param Cp: Heat capacity field as a numpy array
+:type Cp: NDArray[np.float64] | np.float64
+:param ph: phase ID for which to compute the conductivity, used to index the material properties from the PhaseDataBase
+:type ph: int</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.density" title="stonedfenicsx.config.phase_db.density"><code class="xref py py-obj docutils literal notranslate"><span class="pre">density</span></code></a></p></td>
 <td><p>Compute the density for a given Pressure and Temperature, used for oceanic plate thermal boundary condition.</p></td>
@@ -270,42 +292,7 @@ NDArray[np.float64]: array containing the heat conductivity</p></td>
 <td><p>Compute heat capacity</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.compute_thermal_properties" title="stonedfenicsx.config.phase_db.compute_thermal_properties"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_thermal_properties</span></code></a></p></td>
-<td><p><em>summary</em></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.compute_effective_stress" title="stonedfenicsx.config.phase_db.compute_effective_stress"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_effective_stress</span></code></a></p></td>
-<td><p>Function to compute the effective stress using the reference viscosity and actual strain rate
-eps: strain rate
-eta: reference viscosity</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.effective_stress" title="stonedfenicsx.config.phase_db.effective_stress"><code class="xref py py-obj docutils literal notranslate"><span class="pre">effective_stress</span></code></a></p></td>
-<td><p><em>summary</em></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.compute_tau_fr" title="stonedfenicsx.config.phase_db.compute_tau_fr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_tau_fr</span></code></a></p></td>
-<td><p><em>summary</em></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.convert_velocity_strain_rate" title="stonedfenicsx.config.phase_db.convert_velocity_strain_rate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_velocity_strain_rate</span></code></a></p></td>
-<td><p><em>summary</em></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.test_phase_pdb" title="stonedfenicsx.config.phase_db.test_phase_pdb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_phase_pdb</span></code></a></p></td>
-<td></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.compute_effective_stress_rheological" title="stonedfenicsx.config.phase_db.compute_effective_stress_rheological"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_effective_stress_rheological</span></code></a></p></td>
-<td></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.compute_bn" title="stonedfenicsx.config.phase_db.compute_bn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_bn</span></code></a></p></td>
-<td></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.compute_stress" title="stonedfenicsx.config.phase_db.compute_stress"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_stress</span></code></a></p></td>
-<td></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.convert_velocity" title="stonedfenicsx.config.phase_db.convert_velocity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_velocity</span></code></a></p></td>
-<td></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.convert_age" title="stonedfenicsx.config.phase_db.convert_age"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_age</span></code></a></p></td>
-<td></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.shear_heating_slab_interface" title="stonedfenicsx.config.phase_db.shear_heating_slab_interface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">shear_heating_slab_interface</span></code></a></p></td>
-<td></td>
+<td><p>_summary_</p></td>
 </tr>
 </tbody>
 </table>
@@ -389,85 +376,102 @@ eta: reference viscosity</p></td>
 <dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.Phase">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">Phase</span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#Phase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.Phase" title="Link to this definition">¶</a></dt>
 <dd><p>Phase: container for rheological and thermal material parameters.</p>
-<hr class="docutils" />
-<p class="rubric" id="id1">Rheology (viscosity)</p>
-<p>name_diffusion : str
-Diffusion creep flow law name.
-Options include (non-exhaustive):
-- ‘Constant’                : constant viscosity
-- ‘Hirth_Dry_Olivine_diff’  : Hirth &amp; Kohlstedt (2003), dry olivine
-- ‘Van_Keken_diff’          : Van Keken et al. (2008) style diffusion
-- ‘Hirth_Wet_Olivine_diff’  : Hirth &amp; Kohlstedt (2003), wet olivine</p>
-<p>e_dif : float
-Activation energy for diffusion creep [J/mol].
-v_dif : float
-Activation volume for diffusion creep [m³/mol].
-b_dif : float
-Pre-exponential factor for diffusion creep [1/Pa/s].</p>
-<p>name_dislocation : str
-Dislocation creep flow law name.
-Options include:
-- ‘Constant’
-- ‘Hirth_Dry_Olivine_disl’
-- ‘Van_Keken_disl’
-- ‘Hirth_Wet_Olivine_disl’</p>
-<p>n : float
-Stress exponent. <strong>NB</strong>: if you change this, Bdis must be updated consistently.
-e_dis : float
-Activation energy for dislocation creep [J/mol].
-v_dis : float
-Activation volume for dislocation creep [m³/mol].
-b_dis : float
-Pre-exponential factor for dislocation creep [1/Pa^n/s].</p>
-<p>eta : float
-Constant viscosity [Pa·s] (used if rheology is ‘Constant’).</p>
-<hr class="docutils" />
-<p class="rubric" id="id2">Thermal properties</p>
-<p>Cp : float
-constant heat capacity [J/kg/K].
-k : float
-constant thermal conductivity [W/m/K].
-rho0 : float
-Reference / constant density [kg/m³].</p>
-<p>name_capacity : str
-Heat capacity law.
-Options:
-- ‘Constant’
-- ‘Berman_Forsterite’
-- ‘Berman_Fayalite’
-- ‘Berman_Aranovich_Forsterite’
-- ‘Berman_Aranovich_Fayalite’
-- ‘Berman_Fo_Fa_01’
-- ‘Bermann_Aranovich_Fo_Fa_0_1’
-- ‘Oceanic_Crust’
-- ‘ContinentalCrust’ (not implemented / to be removed).</p>
-<p>name_density : str
-Density law.
-Options:
-- ‘Constant’ : ρ = ρ0.
-- ‘PT’       : ρ(P,T) with constant bulk modulus K₀ ≈ 130e9 Pa and
-thermal expansivity consistent with <code class="docutils literal notranslate"><span class="pre">name_alpha</span></code>.</p>
-<p>name_alpha : str
-Thermal expansivity law (α).
-Options:
-- ‘Constant’      : α = 3e-5 K⁻¹.
-- ‘Mantle’        : olivine / mantle α (e.g., Groose &amp; Afonso 2013;
-Richardson et al. 2020).
-- ‘Oceanic_Crust’ : basaltic crustal α.</p>
-<p>name_conductivity : str
-Thermal conductivity law (k).
-Options:
-- ‘Constant’
-- ‘Mantle’
-- ‘Oceanic_Crust’</p>
-<hr class="docutils" />
-<p class="rubric" id="id3">Internal heating</p>
-<p>radiogenic_heat: float
-Radiogenic heat production [W/m³] (or [Pa/s] if used as source in σ units).
-radiative_conductivity: float
-Activation flag for radiogenic heating / radiative conductivity
-(0.0 = off, 1.0 = on, or a more general scaling factor).</p>
-<p class="rubric" id="id4">Notes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name_diffusion</strong> (<em>str</em>) – <p>Diffusion creep flow law name.
+Options include (non-exhaustive):</p>
+<blockquote>
+<div><ul>
+<li><p>’Constant’                : constant viscosity</p></li>
+<li><p>’Hirth_Dry_Olivine_diff’  : Hirth &amp; Kohlstedt (2003), dry olivine</p></li>
+<li><p>’Van_Keken_diff’          : Van Keken et al. (2008) style diffusion</p></li>
+<li><p>’Hirth_Wet_Olivine_diff’  : Hirth &amp; Kohlstedt (2003), wet olivine</p></li>
+</ul>
+</div></blockquote>
+</p></li>
+<li><p><strong>e_dif</strong> (<em>float</em>) – Activation energy for diffusion creep [J/mol].</p></li>
+<li><p><strong>v_dif</strong> (<em>float</em>) – Activation volume for diffusion creep [m³/mol].</p></li>
+<li><p><strong>b_dif</strong> (<em>float</em>) – Pre-exponential factor for diffusion creep [1/Pa/s].</p></li>
+<li><p><strong>name_dislocation</strong> (<em>str</em>) – <p>Dislocation creep flow law name.
+Options include:</p>
+<blockquote>
+<div><ul>
+<li><p>’Constant’</p></li>
+<li><p>’Hirth_Dry_Olivine_disl’</p></li>
+<li><p>’Van_Keken_disl’</p></li>
+<li><p>’Hirth_Wet_Olivine_disl’</p></li>
+</ul>
+</div></blockquote>
+</p></li>
+<li><p><strong>n</strong> (<em>float</em>) – Stress exponent. <strong>NB</strong>: if you change this, Bdis must be updated consistently.</p></li>
+<li><p><strong>e_dis</strong> (<em>float</em>) – Activation energy for dislocation creep [J/mol].</p></li>
+<li><p><strong>v_dis</strong> (<em>float</em>) – Activation volume for dislocation creep [m³/mol].</p></li>
+<li><p><strong>b_dis</strong> (<em>float</em>) – Pre-exponential factor for dislocation creep [1/Pa^n/s].</p></li>
+<li><p><strong>eta</strong> (<em>float</em>) – Constant viscosity [Pa·s] (used if rheology is ‘Constant’).</p></li>
+<li><p><strong>Cp</strong> (<em>float</em>) – constant heat capacity [J/kg/K].</p></li>
+<li><p><strong>k</strong> (<em>float</em>) – constant thermal conductivity [W/m/K].</p></li>
+<li><p><strong>rho0</strong> (<em>float</em>) – Reference / constant density [kg/m³].</p></li>
+<li><p><strong>name_capacity</strong> (<em>str</em>) – <p>Heat capacity law.
+Options:</p>
+<blockquote>
+<div><ul>
+<li><p>’Constant’</p></li>
+<li><p>’Berman_Forsterite’</p></li>
+<li><p>’Berman_Fayalite’</p></li>
+<li><p>’Berman_Aranovich_Forsterite’</p></li>
+<li><p>’Berman_Aranovich_Fayalite’</p></li>
+<li><p>’Berman_Fo_Fa_01’</p></li>
+<li><p>’Bermann_Aranovich_Fo_Fa_0_1’</p></li>
+<li><p>’Oceanic_Crust’</p></li>
+<li><p>’ContinentalCrust’ (not implemented / to be removed).</p></li>
+</ul>
+</div></blockquote>
+</p></li>
+<li><p><strong>name_density</strong> (<em>str</em>) – <p>Density law.
+Options:</p>
+<blockquote>
+<div><ul>
+<li><p>’Constant’ : ρ = ρ0.</p></li>
+<li><dl class="simple">
+<dt>’PT’<span class="classifier">ρ(P,T) with constant bulk modulus K₀ ≈ 130e9 Pa and</span></dt><dd><p>thermal expansivity consistent with <cite>name_alpha</cite>.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+</p></li>
+<li><p><strong>name_alpha</strong> (<em>str</em>) – <p>Thermal expansivity law (α).
+Options:</p>
+<blockquote>
+<div><ul>
+<li><p>’Constant’      : α = 3e-5 K⁻¹.</p></li>
+<li><dl class="simple">
+<dt>’Mantle’<span class="classifier">olivine / mantle α (e.g., Groose &amp; Afonso 2013;</span></dt><dd><p>Richardson et al. 2020).</p>
+</dd>
+</dl>
+</li>
+<li><p>’Oceanic_Crust’ : basaltic crustal α.</p></li>
+</ul>
+</div></blockquote>
+</p></li>
+<li><p><strong>name_conductivity</strong> (<em>str</em>) – <p>Thermal conductivity law (k).
+Options:</p>
+<blockquote>
+<div><ul>
+<li><p>’Constant’</p></li>
+<li><p>’Mantle’</p></li>
+<li><p>’Oceanic_Crust’</p></li>
+</ul>
+</div></blockquote>
+</p></li>
+<li><p><strong>radiogenic_heat</strong> (<em>float</em>) – Radiogenic heat production [W/m³] (or [Pa/s] if used as source in σ units).</p></li>
+<li><p><strong>radiative_conductivity</strong> (<em>float</em>) – Activation flag for radiogenic heating / radiative conductivity
+(0.0 = off, 1.0 = on, or a more general scaling factor).</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
 <p>This class is intended as a flexible container for building a PhaseDataBase.
 For your current kinematic slab work it may be somewhat overkill, but it
 should be reusable for other problems.</p>
@@ -676,43 +680,75 @@ should be reusable for other problems.</p>
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">PhaseDataBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">number_phases</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#PhaseDataBase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.PhaseDataBase" title="Link to this definition">¶</a></dt>
 <dd><p>Phase database:</p>
 <p class="rubric">Initialization</p>
-<p><em>summary</em></p>
-<p>Args:
-number_phases (int): number of phases
-eta_max (float): maximum viscosity
-d (float, optional): grain size for the radiative conductivity. Defaults to 0.5.</p>
-<p>Raises:
-ValueError: If the number of phases exceed 7, throw an error.</p>
+<p>_summary_</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>number_phases</strong> (<em>int</em>) – number of phases</p></li>
+<li><p><strong>eta_max</strong> (<em>float</em>) – maximum viscosity</p></li>
+<li><p><strong>d</strong> (<em>float</em><em>, </em><em>optional</em>) – grain size for the radiative conductivity. Defaults to 0.5.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the number of phases exceed 7, throw an error.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.generate_phase">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">generate_phase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><span class="pre">stonedfenicsx.config.phase_db.PhaseDataBase</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_ph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_diffusion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Constant'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_dif</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_dif</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_dif</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_dislocation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Constant'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_dis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_dis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_dis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1250</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e+20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_capacity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Constant'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_conductivity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Constant'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Constant'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_density</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'PT'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radiogenic_heat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radiative_conductivity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pressure_dependency</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><span class="pre">stonedfenicsx.config.phase_db.PhaseDataBase</span></a></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#generate_phase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.generate_phase" title="Link to this definition">¶</a></dt>
 <dd><p>Generate a phase with the specified properties and add it to the phase database.
-Args:
-pdb (PhaseDataBase): The phase database to which the new phase will be added.
-id_ph (int): The <strong>id_phentifier</strong> for the new phase.
-name_diffusion (str): The name of the diffusion creep rheology to use.
-e_dif (float): Activation energy for diffusion creep [J/mol].
-v_dif (float): Activation volume for diffusion creep [m^3/mol].
-b_dif (float): Pre-exponential factor for diffusion creep [Pa^-1 s^-1].
-name_dislocation (str): The name of the dislocation creep rheology to use.
-n (float): Stress exponent for dislocation creep.
-e_dis (float): Activation energy for dislocation creep [J/mol].
-v_dis (float): Activation volume for dislocation creep [m^3/mol].
-B_dis (float): Pre-exponential factor for dislocation creep [Pa^-n s^-1].
-Cp (float): Heat capacity [J/kg/K].
-k (float): Thermal conductivity [W/m/K].
-rho0 (float): Reference density [kg/m^3]. It is a mandatory parameters in any case.
-eta (float): Constant viscosity [Pa s].
-name_capacity (str): The name of the heat capacity model to use.
-name_conductivity (str): The name of the thermal conductivity model to use.
-name_alpha (str): The name of the thermal expansivity model to use.
-name_density (str): The name of the density model to use.
-radio (float): Radiogenic heat production [W/kg].
-radio_flag (float): Flag for radiative conductivity production calculation.
-Returns:
-PhaseDataBase: The updated phase database with the new phase added.</p>
+:param pdb: The phase database to which the new phase will be added.
+:type pdb: PhaseDataBase
+:param id_ph: The <strong>id_phentifier</strong> for the new phase.
+:type id_ph: int
+:param name_diffusion: The name of the diffusion creep rheology to use.
+:type name_diffusion: str
+:param e_dif: Activation energy for diffusion creep [J/mol].
+:type e_dif: float
+:param v_dif: Activation volume for diffusion creep [m^3/mol].
+:type v_dif: float
+:param b_dif: Pre-exponential factor for diffusion creep [Pa^-1 s^-1].
+:type b_dif: float
+:param name_dislocation: The name of the dislocation creep rheology to use.
+:type name_dislocation: str
+:param n: Stress exponent for dislocation creep.
+:type n: float
+:param e_dis: Activation energy for dislocation creep [J/mol].
+:type e_dis: float
+:param v_dis: Activation volume for dislocation creep [m^3/mol].
+:type v_dis: float
+:param B_dis: Pre-exponential factor for dislocation creep [Pa^-n s^-1].
+:type B_dis: float
+:param Cp: Heat capacity [J/kg/K].
+:type Cp: float
+:param k: Thermal conductivity [W/m/K].
+:type k: float
+:param rho0: Reference density [kg/m^3]. It is a mandatory parameters in any case.
+:type rho0: float
+:param eta: Constant viscosity [Pa s].
+:type eta: float
+:param name_capacity: The name of the heat capacity model to use.
+:type name_capacity: str
+:param name_conductivity: The name of the thermal conductivity model to use.
+:type name_conductivity: str
+:param name_alpha: The name of the thermal expansivity model to use.
+:type name_alpha: str
+:param name_density: The name of the density model to use.
+:type name_density: str
+:param radio: Radiogenic heat production [W/kg].
+:type radio: float
+:param radio_flag: Flag for radiative conductivity production calculation.
+:type radio_flag: float</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The updated phase database with the new phase added.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase">PhaseDataBase</a></p>
+</dd>
+</dl>
 <p>PhaseDataBase is a class that contains the properties of the different phases.
 Few parameters are constanst common to all the phases (e.g. eta_max,T_ref)
 The other parameters are vector of 1xnumber_phases, where number_phases is the number of phases that we want to consid_pher in the model.</p>
@@ -721,29 +757,48 @@ The other parameters are vector of 1xnumber_phases, where number_phases is the n
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.generate_phase_database">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">generate_phase_database</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pressure_dependency</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.config.phase_db.PhInput" title="stonedfenicsx.config.phase_db.PhInput"><span class="pre">stonedfenicsx.config.phase_db.PhInput</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">scal_temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scal_press</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><span class="pre">stonedfenicsx.config.phase_db.PhaseDataBase</span></a></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#generate_phase_database"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.generate_phase_database" title="Link to this definition">¶</a></dt>
-<dd><p><em>summary</em></p>
-<p>Args:
-pressure_dependency (int): deactivate the pressure dependency
-eta_max (float): maximum viscosity
-phin (PhInput): data class containing the information of the input phases
-scal_temp (float): temperature scaling factor
-scal_press (float): pressure scaling factor</p>
-<p>Returns:
-PhaseDataBase: data class that contains the information of the phases.</p>
+<dd><p>_summary_</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pressure_dependency</strong> (<em>int</em>) – deactivate the pressure dependency</p></li>
+<li><p><strong>eta_max</strong> (<em>float</em>) – maximum viscosity</p></li>
+<li><p><strong>phin</strong> (<a class="reference internal" href="#stonedfenicsx.config.phase_db.PhInput" title="stonedfenicsx.config.phase_db.PhInput"><em>PhInput</em></a>) – data class containing the information of the input phases</p></li>
+<li><p><strong>scal_temp</strong> (<em>float</em>) – temperature scaling factor</p></li>
+<li><p><strong>scal_press</strong> (<em>float</em>) – pressure scaling factor</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>data class that contains the information of the phases.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase">PhaseDataBase</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.fill_up_weakzone_data">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">fill_up_weakzone_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tau_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10000000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">np.radians(5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta_wz</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e+20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dislocation_creep</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Constant'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><span class="pre">stonedfenicsx.config.phase_db.PhaseDataBase</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><span class="pre">stonedfenicsx.config.phase_db.PhaseDataBase</span></a></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#fill_up_weakzone_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.fill_up_weakzone_data" title="Link to this definition">¶</a></dt>
 <dd><p>Function that updates the data of the shear zone that mimick the subduction interface.
-Args:
-ch (float, optional): Cohesion. Defaults to 10e6.
-phi (float, optional): Friction angle. Defaults to np.radians(5).
-eta_wz (float, optional): Viscosity. Defaults to 1e20.
-dislocation_creep (str, optional): Dislocation creep law. Defaults to ‘Constant’.
-pdb (PhaseDataBase, optional): Phase Defaults to None.</p>
-<p>Returns:
-PhaseDataBase: updated phasedatabase</p>
+:param ch: Cohesion. Defaults to 10e6.
+:type ch: float, optional
+:param phi: Friction angle. Defaults to np.radians(5).
+:type phi: float, optional
+:param eta_wz: Viscosity. Defaults to 1e20.
+:type eta_wz: float, optional
+:param dislocation_creep: Dislocation creep law. Defaults to ‘Constant’.
+:type dislocation_creep: str, optional
+:param pdb: Phase Defaults to None.
+:type pdb: PhaseDataBase, optional</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>updated phasedatabase</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase">PhaseDataBase</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py class">
@@ -869,28 +924,50 @@ from any unit of measure, convert the pre-exponential factor to Pa^{-n}s^{-1}</p
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.check_data_base">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">check_data_base</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">property_m</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#check_data_base"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.check_data_base" title="Link to this definition">¶</a></dt>
-<dd><p><em>summary</em></p>
-<p>Args:
-tag (str): <em>description</em>
-property_m (str): <em>description</em></p>
-<p>Raises:
-ValueError: <em>description</em></p>
-<p>Returns:
-str: <em>description</em></p>
+<dd><p>_summary_</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tag</strong> (<em>str</em>) – _description_</p></li>
+<li><p><strong>property_m</strong> (<em>str</em>) – _description_</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – _description_</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>_description_</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.read_rheology">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">read_rheology</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dis_dif</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="m"><span class="pre">0</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#stonedfenicsx.config.phase_db.RheologicalFlowLaw" title="stonedfenicsx.config.phase_db.RheologicalFlowLaw"><span class="pre">stonedfenicsx.config.phase_db.RheologicalFlowLaw</span></a></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#read_rheology"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.read_rheology" title="Link to this definition">¶</a></dt>
 <dd><p>Read rheology</p>
-<p>Args:
-tag (str): the name of the rheology from the input file
-type (0): flag indicating if the rheology is diffusion or dislocation</p>
-<p>Raises:
-ValueError:f’{tag} is not a rheology flow law.’) -&gt; The name used in the input
-file or in the pre-processing script is wrong.</p>
-<p>Returns:
-Rheological_flow_law: class containing all the rheological data for a given rheology.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tag</strong> (<em>str</em>) – the name of the rheology from the input file</p></li>
+<li><p><strong>type</strong> (<em>0</em>) – flag indicating if the rheology is diffusion or dislocation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – f’{tag} is not a rheology flow law.’) -&gt; The name used in the input</p></li>
+<li><p><strong>file</strong><strong> or </strong><strong>in the pre-processing script is wrong.</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>class containing all the rheological data for a given rheology.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Rheological_flow_law</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py class">
@@ -939,21 +1016,37 @@ Rheological_flow_law: class containing all the rheological data for a given rheo
 <dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.read_the_file_cp">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">read_the_file_cp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d_cp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#read_the_file_cp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.read_the_file_cp" title="Link to this definition">¶</a></dt>
 <dd><p>read the empirical parameter of heat capacity</p>
-<p>Args:
-d_cp (dict): heat capacity block
-i (int): parameter of heat capacity</p>
-<p>Returns:
-float: the actual value</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>d_cp</strong> (<em>dict</em>) – heat capacity block</p></li>
+<li><p><strong>i</strong> (<em>int</em>) – parameter of heat capacity</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the actual value</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.read_capacity">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">read_capacity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#stonedfenicsx.config.phase_db.CpBufDB" title="stonedfenicsx.config.phase_db.CpBufDB"><span class="pre">stonedfenicsx.config.phase_db.CpBufDB</span></a></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#read_capacity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.read_capacity" title="Link to this definition">¶</a></dt>
 <dd><p>Read the internal heat capacity database</p>
-<p>Args:
-name (str): name of the heat capacity from the input</p>
-<p>Returns:
-CpBufDB: temporary data class for storing the information</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – name of the heat capacity from the input</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>temporary data class for storing the information</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.CpBufDB" title="stonedfenicsx.config.phase_db.CpBufDB">CpBufDB</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py class">
@@ -1008,10 +1101,17 @@ CpBufDB: temporary data class for storing the information</p>
 <dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.read_diffusivity">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">read_diffusivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#stonedfenicsx.config.phase_db.LatticeDiffusivity" title="stonedfenicsx.config.phase_db.LatticeDiffusivity"><span class="pre">stonedfenicsx.config.phase_db.LatticeDiffusivity</span></a></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#read_diffusivity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.read_diffusivity" title="Link to this definition">¶</a></dt>
 <dd><p>Function that reads the data from the diffusivity</p>
-<p>Args:
-tag (str): <em>description</em></p>
-<p>Returns:
-LatticeDiffusivity: <em>description</em></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tag</strong> (<em>str</em>) – _description_</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>_description_</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#stonedfenicsx.config.phase_db.LatticeDiffusivity" title="stonedfenicsx.config.phase_db.LatticeDiffusivity">LatticeDiffusivity</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py class">
@@ -1046,15 +1146,26 @@ LatticeDiffusivity: <em>description</em></p>
 <dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.heat_conductivity">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">heat_conductivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><span class="pre">stonedfenicsx.config.phase_db.PhaseDataBase</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.float64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pres</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.float64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.float64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.float64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#heat_conductivity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.heat_conductivity" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the heat conductivity for a given Pressure and Temperature
-Args:
-pdb (PhaseDataBase): Phase Data Base containing the material properties as numpy arrays, indexed by phase ID
-T (NDArray[np.float64] | np.float64): Temperature field as a numpy array
-p (NDArray[np.float64] | np.float64): Pressure field as a numpy array
-rho (NDArray[np.float64] | np.float64): Density field as a numpy array
-Cp (NDArray[np.float64] | np.float64): Heat capacity field as a numpy array
-ph (int): phase ID for which to compute the conductivity, used to index the material properties from the PhaseDataBase
-Returns:
-NDArray[np.float64]: array containing the heat conductivity</p>
+:param pdb: Phase Data Base containing the material properties as numpy arrays, indexed by phase ID
+:type pdb: PhaseDataBase
+:param T: Temperature field as a numpy array
+:type T: NDArray[np.float64] | np.float64
+:param p: Pressure field as a numpy array
+:type p: NDArray[np.float64] | np.float64
+:param rho: Density field as a numpy array
+:type rho: NDArray[np.float64] | np.float64
+:param Cp: Heat capacity field as a numpy array
+:type Cp: NDArray[np.float64] | np.float64
+:param ph: phase ID for which to compute the conductivity, used to index the material properties from the PhaseDataBase
+:type ph: int</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array containing the heat conductivity</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>NDArray[np.float64]</p>
+</dd>
+</dl>
 <p>Function to compute the heat conductivity for a given Pressure and Temperature, used for the post-processing of the thermal properties.
 It is used for computing the initial conductivity field for the oceanic plate thermal boundary condition.</p>
 </dd></dl>
@@ -1063,200 +1174,67 @@ It is used for computing the initial conductivity field for the oceanic plate th
 <dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.density">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">density</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><span class="pre">stonedfenicsx.config.phase_db.PhaseDataBase</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.float64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pres</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.float64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#density"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.density" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the density for a given Pressure and Temperature, used for oceanic plate thermal boundary condition.</p>
-<p>Args:
-pdb (PhaseDataBase): Phase Data Base containing the material properties as numpy arrays, indexed by phase ID
-T (NDArray[np.float64] | np.float64): Temperature field as a numpy array
-p (NDArray[np.float64] | np.float64): Pressure field as a numpy array
-ph (int): phase ID for which to compute the density, used to index the material properties from the PhaseDataBase
-Returns:
-NDArray[np.float64]: array containing the density<br />
-Function to compute the density for a given Pressure and Temperature.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pdb</strong> (<a class="reference internal" href="#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – Phase Data Base containing the material properties as numpy arrays, indexed by phase ID</p></li>
+<li><p><strong>T</strong> (<em>NDArray</em><em>[</em><em>np.float64</em><em>] </em><em>| </em><em>np.float64</em>) – Temperature field as a numpy array</p></li>
+<li><p><strong>p</strong> (<em>NDArray</em><em>[</em><em>np.float64</em><em>] </em><em>| </em><em>np.float64</em>) – Pressure field as a numpy array</p></li>
+<li><p><strong>ph</strong> (<em>int</em>) – phase ID for which to compute the density, used to index the material properties from the PhaseDataBase</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>array containing the density</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>NDArray[np.float64]</p>
+</dd>
+</dl>
+<p>Function to compute the density for a given Pressure and Temperature.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.heat_capacity">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">heat_capacity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><span class="pre">stonedfenicsx.config.phase_db.PhaseDataBase</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.float64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.float64</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#heat_capacity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.heat_capacity" title="Link to this definition">¶</a></dt>
 <dd><p>Compute heat capacity</p>
-<p>Args:
-pdb (PhaseDataBase): Phase Data Base containing the material properties as numpy arrays, indexed by phase ID
-T (NDArray[np.float64] | np.float64): Temperature field as a numpy array
-ph (int): phase ID for which to compute the heat capacity, used to index the material properties from the PhaseDataBase</p>
-<p>Returns:
-NDArray[np.float64] | np.float64: array containing the heat capacity</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pdb</strong> (<a class="reference internal" href="#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – Phase Data Base containing the material properties as numpy arrays, indexed by phase ID</p></li>
+<li><p><strong>T</strong> (<em>NDArray</em><em>[</em><em>np.float64</em><em>] </em><em>| </em><em>np.float64</em>) – Temperature field as a numpy array</p></li>
+<li><p><strong>ph</strong> (<em>int</em>) – phase ID for which to compute the heat capacity, used to index the material properties from the PhaseDataBase</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>array containing the heat capacity</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>NDArray[np.float64] | np.float64</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.compute_thermal_properties">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">compute_thermal_properties</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><span class="pre">stonedfenicsx.config.phase_db.PhaseDataBase</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.float64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pres</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.float64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.float64</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.float64</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#compute_thermal_properties"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.compute_thermal_properties" title="Link to this definition">¶</a></dt>
-<dd><p><em>summary</em></p>
-<p>Args:
-pdb (PhaseDataBase): <em>description</em>
-temp (NDArray[np.float64] | np.float64): <em>description</em>
-pres (NDArray[np.float64] | np.float64): <em>description</em>
-ph (int): <em>description</em></p>
-<p>Returns:
-tuple[NDArray[np.float64]|np.float64,NDArray[np.float64]|np.float64,NDArray[np.float64]|np.float64]: <em>description</em></p>
+<dd><p>_summary_</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pdb</strong> (<a class="reference internal" href="#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – _description_</p></li>
+<li><p><strong>temp</strong> (<em>NDArray</em><em>[</em><em>np.float64</em><em>] </em><em>| </em><em>np.float64</em>) – _description_</p></li>
+<li><p><strong>pres</strong> (<em>NDArray</em><em>[</em><em>np.float64</em><em>] </em><em>| </em><em>np.float64</em>) – _description_</p></li>
+<li><p><strong>ph</strong> (<em>int</em>) – _description_</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>_description_</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[NDArray[np.float64]|np.float64,NDArray[np.float64]|np.float64,NDArray[np.float64]|np.float64]</p>
+</dd>
+</dl>
 </dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.compute_effective_stress">
-<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">compute_effective_stress</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#compute_effective_stress"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.compute_effective_stress" title="Link to this definition">¶</a></dt>
-<dd><p>Function to compute the effective stress using the reference viscosity and actual strain rate
-eps: strain rate
-eta: reference viscosity</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.effective_stress">
-<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">effective_stress</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tau_fr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau_v</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#effective_stress"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.effective_stress" title="Link to this definition">¶</a></dt>
-<dd><p><em>summary</em></p>
-<p>Args:
-tau_fr (NDArray[np.float64]): array containing the frictional stress
-tau_v (NDArray[np.float64]): viscous stresses</p>
-<p>Returns:
-NDArray[np.float64]: effective stress</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.compute_tau_fr">
-<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">compute_tau_fr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pres</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#compute_tau_fr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.compute_tau_fr" title="Link to this definition">¶</a></dt>
-<dd><p><em>summary</em></p>
-<p>Args:
-pres (NDArray[np.float64]): lithostatic pressure
-phi (float): friction angle</p>
-<p>Returns:
-NDArray[np.float64]: failure shear stress</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.convert_velocity_strain_rate">
-<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">convert_velocity_strain_rate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wz</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#convert_velocity_strain_rate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.convert_velocity_strain_rate" title="Link to this definition">¶</a></dt>
-<dd><p><em>summary</em></p>
-<p>Args:
-wz (float): thickness of the weak zone
-velocity (NDArray[np.float64]): velocity of convergence</p>
-<p>Returns:
-strain rate: array with strain rate</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.test_phase_pdb">
-<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">test_phase_pdb</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#test_phase_pdb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.test_phase_pdb" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.compute_effective_stress_rheological">
-<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">compute_effective_stress_rheological</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.config.phase_db.RheologicalFlowLaw" title="stonedfenicsx.config.phase_db.RheologicalFlowLaw"><span class="pre">stonedfenicsx.config.phase_db.RheologicalFlowLaw</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pres</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#compute_effective_stress_rheological"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.compute_effective_stress_rheological" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.compute_bn">
-<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">compute_bn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eps_ref</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau_ref</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#compute_bn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.compute_bn" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.compute_stress">
-<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">compute_stress</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#compute_stress"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.compute_stress" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.Profile_Slab">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">Profile_Slab</span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#Profile_Slab"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.Profile_Slab" title="Link to this definition">¶</a></dt>
-<dd><dl class="py attribute">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.Profile_Slab.z">
-<span class="sig-name descname"><span class="pre">z</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dataclasses.InitVar</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#stonedfenicsx.config.phase_db.Profile_Slab.z" title="Link to this definition">¶</a></dt>
-<dd><p>None</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.Profile_Slab.a">
-<span class="sig-name descname"><span class="pre">a</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">numpy.float32</span></span><a class="headerlink" href="#stonedfenicsx.config.phase_db.Profile_Slab.a" title="Link to this definition">¶</a></dt>
-<dd><p>None</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.Profile_Slab.k">
-<span class="sig-name descname"><span class="pre">k</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#stonedfenicsx.config.phase_db.Profile_Slab.k" title="Link to this definition">¶</a></dt>
-<dd><p>3.1</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.Profile_Slab.Tp">
-<span class="sig-name descname"><span class="pre">Tp</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#stonedfenicsx.config.phase_db.Profile_Slab.Tp" title="Link to this definition">¶</a></dt>
-<dd><p>None</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.Profile_Slab.kappa">
-<span class="sig-name descname"><span class="pre">kappa</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#stonedfenicsx.config.phase_db.Profile_Slab.kappa" title="Link to this definition">¶</a></dt>
-<dd><p>1e-07</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.Profile_Slab.crd">
-<span class="sig-name descname"><span class="pre">crd</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#stonedfenicsx.config.phase_db.Profile_Slab.crd" title="Link to this definition">¶</a></dt>
-<dd><p>‘field(…)’</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.Profile_Slab.temp_slab">
-<span class="sig-name descname"><span class="pre">temp_slab</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#stonedfenicsx.config.phase_db.Profile_Slab.temp_slab" title="Link to this definition">¶</a></dt>
-<dd><p>‘field(…)’</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.Profile_Slab.dip">
-<span class="sig-name descname"><span class="pre">dip</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#stonedfenicsx.config.phase_db.Profile_Slab.dip" title="Link to this definition">¶</a></dt>
-<dd><p>‘field(…)’</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.Profile_Slab.length">
-<span class="sig-name descname"><span class="pre">length</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#stonedfenicsx.config.phase_db.Profile_Slab.length" title="Link to this definition">¶</a></dt>
-<dd><p>‘field(…)’</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.Profile_Slab.__post_init__">
-<span class="sig-name descname"><span class="pre">__post_init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#Profile_Slab.__post_init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.Profile_Slab.__post_init__" title="Link to this definition">¶</a></dt>
-<dd><p>post init routine: generate the quadratic surface
-of the slab using a vector (1,n) and the curvature of
-the parabula.</p>
-<p>Args:
-z (NDArray[np.float32]): z coordinates</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.Profile_Slab.cumulative_distance">
-<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">cumulative_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#Profile_Slab.cumulative_distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.Profile_Slab.cumulative_distance" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.Profile_Slab.compute_dip">
-<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">compute_dip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#Profile_Slab.compute_dip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.Profile_Slab.compute_dip" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.Profile_Slab.compute_slab_surface_temperature">
-<span class="sig-name descname"><span class="pre">compute_slab_surface_temperature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">age</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#Profile_Slab.compute_slab_surface_temperature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.Profile_Slab.compute_slab_surface_temperature" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.convert_velocity">
-<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">convert_velocity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#convert_velocity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.convert_velocity" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.convert_age">
-<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">convert_age</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">age</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#convert_age"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.convert_age" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="stonedfenicsx.config.phase_db.shear_heating_slab_interface">
-<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.phase_db.</span></span><span class="sig-name descname"><span class="pre">shear_heating_slab_interface</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/config/phase_db.html#shear_heating_slab_interface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.phase_db.shear_heating_slab_interface" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 
 </section>
 </section>
@@ -1388,33 +1366,6 @@ z (NDArray[np.float32]): z coordinates</p>
 <li><a class="reference internal" href="#stonedfenicsx.config.phase_db.density"><code class="docutils literal notranslate"><span class="pre">density()</span></code></a></li>
 <li><a class="reference internal" href="#stonedfenicsx.config.phase_db.heat_capacity"><code class="docutils literal notranslate"><span class="pre">heat_capacity()</span></code></a></li>
 <li><a class="reference internal" href="#stonedfenicsx.config.phase_db.compute_thermal_properties"><code class="docutils literal notranslate"><span class="pre">compute_thermal_properties()</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.compute_effective_stress"><code class="docutils literal notranslate"><span class="pre">compute_effective_stress()</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.effective_stress"><code class="docutils literal notranslate"><span class="pre">effective_stress()</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.compute_tau_fr"><code class="docutils literal notranslate"><span class="pre">compute_tau_fr()</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.convert_velocity_strain_rate"><code class="docutils literal notranslate"><span class="pre">convert_velocity_strain_rate()</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.test_phase_pdb"><code class="docutils literal notranslate"><span class="pre">test_phase_pdb()</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.compute_effective_stress_rheological"><code class="docutils literal notranslate"><span class="pre">compute_effective_stress_rheological()</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.compute_bn"><code class="docutils literal notranslate"><span class="pre">compute_bn()</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.compute_stress"><code class="docutils literal notranslate"><span class="pre">compute_stress()</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.Profile_Slab"><code class="docutils literal notranslate"><span class="pre">Profile_Slab</span></code></a><ul>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.Profile_Slab.z"><code class="docutils literal notranslate"><span class="pre">Profile_Slab.z</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.Profile_Slab.a"><code class="docutils literal notranslate"><span class="pre">Profile_Slab.a</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.Profile_Slab.k"><code class="docutils literal notranslate"><span class="pre">Profile_Slab.k</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.Profile_Slab.Tp"><code class="docutils literal notranslate"><span class="pre">Profile_Slab.Tp</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.Profile_Slab.kappa"><code class="docutils literal notranslate"><span class="pre">Profile_Slab.kappa</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.Profile_Slab.crd"><code class="docutils literal notranslate"><span class="pre">Profile_Slab.crd</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.Profile_Slab.temp_slab"><code class="docutils literal notranslate"><span class="pre">Profile_Slab.temp_slab</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.Profile_Slab.dip"><code class="docutils literal notranslate"><span class="pre">Profile_Slab.dip</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.Profile_Slab.length"><code class="docutils literal notranslate"><span class="pre">Profile_Slab.length</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.Profile_Slab.__post_init__"><code class="docutils literal notranslate"><span class="pre">Profile_Slab.__post_init__()</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.Profile_Slab.cumulative_distance"><code class="docutils literal notranslate"><span class="pre">Profile_Slab.cumulative_distance()</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.Profile_Slab.compute_dip"><code class="docutils literal notranslate"><span class="pre">Profile_Slab.compute_dip()</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.Profile_Slab.compute_slab_surface_temperature"><code class="docutils literal notranslate"><span class="pre">Profile_Slab.compute_slab_surface_temperature()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.convert_velocity"><code class="docutils literal notranslate"><span class="pre">convert_velocity()</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.convert_age"><code class="docutils literal notranslate"><span class="pre">convert_age()</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.config.phase_db.shear_heating_slab_interface"><code class="docutils literal notranslate"><span class="pre">shear_heating_slab_interface()</span></code></a></li>
 </ul>
 </li>
 </ul>

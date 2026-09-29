@@ -142,7 +142,6 @@
   <h1>Source code for stonedfenicsx.solver_module.solver</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dolfinx</span><span class="w"> </span><span class="kn">import</span> <span class="n">fem</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dolfinx.fem.petsc</span><span class="w"> </span><span class="kn">import</span> <span class="n">assemble_matrix_block</span><span class="p">,</span> <span class="n">assemble_vector_block</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">mpi4py</span><span class="w"> </span><span class="kn">import</span> <span class="n">MPI</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">petsc4py</span><span class="w"> </span><span class="kn">import</span> <span class="n">PETSc</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.utils</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
@@ -152,9 +151,10 @@
 <span class="sd">on the preconditioner that I set up for the stokes for the given problem. </span>
 <span class="sd">"""</span>
 
+
 <div class="viewcode-block" id="Solvers">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solver.html#stonedfenicsx.solver_module.solver.Solvers">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">Solvers</span><span class="p">():</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Solvers</span><span class="p">:</span>
 <div class="viewcode-block" id="Solvers.destroy">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solver.html#stonedfenicsx.solver_module.solver.Solvers.destroy">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">destroy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -162,40 +162,46 @@
         <span class="c1"># Destroy in roughly reverse order of dependency.</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span>
             <span class="c1"># KSPs first (they reference operators/PC)</span>
-            <span class="s2">"ksp_u"</span><span class="p">,</span> <span class="s2">"ksp_p"</span><span class="p">,</span> <span class="s2">"ksp"</span><span class="p">,</span>
+            <span class="s2">"ksp_u"</span><span class="p">,</span>
+            <span class="s2">"ksp_p"</span><span class="p">,</span>
+            <span class="s2">"ksp"</span><span class="p">,</span>
             <span class="c1"># Index sets</span>
-            <span class="s2">"is_u"</span><span class="p">,</span> <span class="s2">"is_p"</span><span class="p">,</span>
+            <span class="s2">"is_u"</span><span class="p">,</span>
+            <span class="s2">"is_p"</span><span class="p">,</span>
             <span class="c1"># Nullspace + vector</span>
-            <span class="s2">"nsp"</span><span class="p">,</span> <span class="s2">"null_vec"</span><span class="p">,</span>
+            <span class="s2">"nsp"</span><span class="p">,</span>
+            <span class="s2">"null_vec"</span><span class="p">,</span>
             <span class="c1"># Matrices / vectors</span>
-            <span class="s2">"A"</span><span class="p">,</span> <span class="s2">"P"</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">,</span>
+            <span class="s2">"A"</span><span class="p">,</span>
+            <span class="s2">"P"</span><span class="p">,</span>
+            <span class="s2">"b"</span><span class="p">,</span>
+            <span class="s2">"x"</span><span class="p">,</span>
         <span class="p">):</span>
             <span class="n">obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">continue</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">obj</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
-            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="c1"># Some PETSc wrappers may already be destroyed; ignore safely.</span>
-                <span class="k">pass</span>
-            <span class="k">finally</span><span class="p">:</span>
-                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+
+            <span class="n">obj</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
+
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
 </div>
+
 
 
 <div class="viewcode-block" id="ScalarSolver">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solver.html#stonedfenicsx.solver_module.solver.ScalarSolver">[docs]</a>
-<span class="k">class</span><span class="w">  </span><span class="nc">ScalarSolver</span><span class="p">(</span><span class="n">Solvers</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ScalarSolver</span><span class="p">(</span><span class="n">Solvers</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    class that store all the information for scalar like problems. Temperature and lithostatic pressure (potentially darcy like) are similar problem </span>
-<span class="sd">    they diffuse and advect a scalar. </span>
-<span class="sd">    --- </span>
-<span class="sd">    So -&gt; Solver are more or less the same, I can store a few things and update as a function of the needs. </span>
-<span class="sd">    --- </span>
-<span class="sd">    Solve function require the problem P -&gt; and a decision between linear and non linear -&gt; form are handled by p class, so I do not give a fuck in this class </span>
-<span class="sd">    for now all the parameter will be default. </span>
+<span class="sd">    class that store all the information for scalar like problems. Temperature and lithostatic pressure (potentially darcy like) are similar problem</span>
+<span class="sd">    they diffuse and advect a scalar.</span>
+<span class="sd">    ---</span>
+<span class="sd">    So -&gt; Solver are more or less the same, I can store a few things and update as a function of the needs.</span>
+<span class="sd">    ---</span>
+<span class="sd">    Solve function require the problem P -&gt; and a decision between linear and non linear -&gt; form are handled by p class, so I do not give a fuck in this class</span>
+<span class="sd">    for now all the parameter will be default.</span>
 <span class="sd">    """</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">a</span> <span class="p">,</span><span class="n">L</span><span class="p">,</span> <span class="n">bcs</span> <span class="p">,</span><span class="n">COMM</span><span class="p">,</span><span class="n">direct</span> <span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">bcs</span><span class="p">,</span> <span class="n">COMM</span><span class="p">,</span> <span class="n">direct</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Create the PETSc matrix/vector/KSP for a scalar (temperature or lithostatic pressure) problem.</span>
 
 <span class="sd">        Allocates the system matrix `A` (with the sparsity of `a`) and RHS</span>
@@ -211,31 +217,28 @@
 <span class="sd">            direct (int, optional): 0 for the iterative (fgmres/hypre)</span>
 <span class="sd">                solver, non-zero for the direct (LU/mumps) solver. Defaults to 0.</span>
 <span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">petsc</span><span class="o">.</span><span class="n">create_matrix</span><span class="p">(</span><span class="n">fem</span><span class="o">.</span><span class="n">form</span><span class="p">(</span><span class="n">a</span><span class="p">))</span> <span class="c1"># Store the sparsisity</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">petsc</span><span class="o">.</span><span class="n">create_vector</span><span class="p">(</span><span class="n">fem</span><span class="o">.</span><span class="n">form</span><span class="p">(</span><span class="n">L</span><span class="p">))</span> <span class="c1"># Store the vector</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span> <span class="o">=</span> <span class="n">PETSc</span><span class="o">.</span><span class="n">KSP</span><span class="p">()</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">COMM</span><span class="p">)</span>           <span class="c1"># Create the ksp object </span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">setOperators</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">)</span>                <span class="c1"># Set Operator</span>
-        <span class="n">direct_solver</span> <span class="o">=</span> <span class="n">direct</span> 
-        <span class="k">if</span> <span class="n">direct_solver</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> 
-        
+        <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">petsc</span><span class="o">.</span><span class="n">create_matrix</span><span class="p">(</span><span class="n">fem</span><span class="o">.</span><span class="n">form</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>  <span class="c1"># Store the sparsisity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">petsc</span><span class="o">.</span><span class="n">create_vector</span><span class="p">(</span><span class="n">fem</span><span class="o">.</span><span class="n">form</span><span class="p">(</span><span class="n">L</span><span class="p">))</span>  <span class="c1"># Store the vector</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span> <span class="o">=</span> <span class="n">PETSc</span><span class="o">.</span><span class="n">KSP</span><span class="p">()</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">COMM</span><span class="p">)</span>  <span class="c1"># Create the ksp object</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">setOperators</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">)</span>  <span class="c1"># Set Operator</span>
+        <span class="n">direct_solver</span> <span class="o">=</span> <span class="n">direct</span>
+        <span class="k">if</span> <span class="n">direct_solver</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s2">"fgmres"</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">setTolerances</span><span class="p">(</span><span class="n">rtol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span> <span class="n">max_it</span><span class="o">=</span><span class="mi">2000</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">pc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">getPC</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">pc</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s2">"hypre"</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span> 
+        <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s2">"preonly"</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">pc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">getPC</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">pc</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s2">"lu"</span><span class="p">)</span>       
-            <span class="bp">self</span><span class="o">.</span><span class="n">pc</span><span class="o">.</span><span class="n">setFactorSolverType</span><span class="p">(</span><span class="s1">'mumps'</span><span class="p">)</span>     </div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pc</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s2">"lu"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pc</span><span class="o">.</span><span class="n">setFactorSolverType</span><span class="p">(</span><span class="s2">"mumps"</span><span class="p">)</span></div>
 
 
-    
+
 <div class="viewcode-block" id="SolverStokes">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solver.html#stonedfenicsx.solver_module.solver.SolverStokes">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">SolverStokes</span><span class="p">(</span><span class="n">Solvers</span><span class="p">):</span> 
-
-    
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">a_p</span> <span class="p">,</span><span class="n">L</span> <span class="p">,</span><span class="n">COMM</span><span class="p">,</span> <span class="n">nl</span><span class="p">,</span><span class="n">bcs</span> <span class="p">,</span><span class="n">F0</span><span class="p">,</span><span class="n">F1</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">,</span><span class="n">J</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span><span class="n">it</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">ts</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span><span class="n">slab</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SolverStokes</span><span class="p">(</span><span class="n">Solvers</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">a_p</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">COMM</span><span class="p">,</span> <span class="n">nl</span><span class="p">,</span> <span class="n">bcs</span><span class="p">,</span> <span class="n">F0</span><span class="p">,</span> <span class="n">F1</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">,</span> <span class="n">J</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">it</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ts</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">slab</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Create the block PETSc solver for a Stokes (velocity-pressure) problem.</span>
 
 <span class="sd">        Dispatches to `set_direct_solver` or `set_iterative_solver` based on</span>
@@ -265,27 +268,14 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">direct_solver</span> <span class="o">=</span> <span class="n">ctrl</span><span class="o">.</span><span class="n">stokes_solver_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">=</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map</span><span class="o">.</span><span class="n">size_local</span> <span class="o">*</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map_bs</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct_solver</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> 
-            <span class="bp">self</span><span class="o">.</span><span class="n">set_direct_solver</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">a_p</span> <span class="p">,</span><span class="n">L</span> <span class="p">,</span><span class="n">COMM</span><span class="p">,</span> <span class="n">nl</span><span class="p">,</span><span class="n">bcs</span> <span class="p">,</span><span class="n">F0</span><span class="p">,</span><span class="n">F1</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">,</span><span class="n">J</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span><span class="n">it</span><span class="o">=</span><span class="n">it</span><span class="p">,</span> <span class="n">ts</span> <span class="o">=</span> <span class="n">ts</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct_solver</span> <span class="o">==</span><span class="mi">0</span><span class="p">:</span> 
-            <span class="bp">self</span><span class="o">.</span><span class="n">set_iterative_solver</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">a_p</span> <span class="p">,</span><span class="n">L</span> <span class="p">,</span><span class="n">COMM</span><span class="p">,</span> <span class="n">nl</span><span class="p">,</span><span class="n">bcs</span> <span class="p">,</span><span class="n">F0</span><span class="p">,</span><span class="n">F1</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">,</span><span class="n">J</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span><span class="n">it</span> <span class="o">=</span> <span class="n">it</span><span class="p">,</span> <span class="n">ts</span> <span class="o">=</span> <span class="n">ts</span><span class="p">)</span>    
-    
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct_solver</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_direct_solver</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">a_p</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">COMM</span><span class="p">,</span> <span class="n">nl</span><span class="p">,</span> <span class="n">bcs</span><span class="p">,</span> <span class="n">F0</span><span class="p">,</span> <span class="n">F1</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">,</span> <span class="n">J</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">it</span><span class="o">=</span><span class="n">it</span><span class="p">,</span> <span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct_solver</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_iterative_solver</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">a_p</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">COMM</span><span class="p">,</span> <span class="n">nl</span><span class="p">,</span> <span class="n">bcs</span><span class="p">,</span> <span class="n">F0</span><span class="p">,</span> <span class="n">F1</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">,</span> <span class="n">J</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">it</span><span class="o">=</span><span class="n">it</span><span class="p">,</span> <span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">)</span>
+
 <div class="viewcode-block" id="SolverStokes.set_direct_solver">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solver.html#stonedfenicsx.solver_module.solver.SolverStokes.set_direct_solver">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">set_direct_solver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-                          <span class="n">a</span><span class="p">,</span>
-                          <span class="n">a_p</span><span class="p">,</span>
-                          <span class="n">L</span><span class="p">,</span>
-                          <span class="n">COMM</span><span class="p">,</span> 
-                          <span class="n">nl</span><span class="p">,</span>
-                          <span class="n">bcs</span><span class="p">,</span>
-                          <span class="n">F0</span><span class="p">,</span>
-                          <span class="n">F1</span><span class="p">,</span> 
-                          <span class="n">ctrl</span><span class="p">,</span>
-                          <span class="n">J</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
-                          <span class="n">r</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                          <span class="n">it</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-                          <span class="n">ts</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_direct_solver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">a_p</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">COMM</span><span class="p">,</span> <span class="n">nl</span><span class="p">,</span> <span class="n">bcs</span><span class="p">,</span> <span class="n">F0</span><span class="p">,</span> <span class="n">F1</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">,</span> <span class="n">J</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">it</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ts</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Configure a direct (LU/MUMPS) block solver for the Stokes system.</span>
 
 <span class="sd">        On the first solve (`it == 0 and ts == 0`) builds the block</span>
@@ -322,17 +312,15 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">pc</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s2">"lu"</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">pc</span><span class="o">.</span><span class="n">setFactorSolverType</span><span class="p">(</span><span class="s2">"mumps"</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">pc</span><span class="o">.</span><span class="n">setFactorSetUpSolverType</span><span class="p">()</span>
-            <span class="c1">#self.pc.getFactorMatrix().setMumpsIcntl(icntl=24, ival=1)</span>
-            <span class="c1">#self.pc.getFactorMatrix().setMumpsIcntl(icntl=25, ival=0)</span>
-        <span class="k">else</span><span class="p">:</span> 
-            <span class="bp">self</span><span class="o">.</span><span class="n">update_block_operator</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">a_p</span><span class="p">,</span><span class="n">bcs</span><span class="p">,</span><span class="n">L</span><span class="p">,</span><span class="n">F0</span><span class="p">,</span><span class="n">F1</span><span class="p">)</span></div>
+            <span class="c1"># self.pc.getFactorMatrix().setMumpsIcntl(icntl=24, ival=1)</span>
+            <span class="c1"># self.pc.getFactorMatrix().setMumpsIcntl(icntl=25, ival=0)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_block_operator</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">a_p</span><span class="p">,</span> <span class="n">bcs</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">F0</span><span class="p">,</span> <span class="n">F1</span><span class="p">)</span></div>
 
-            
 
-    
 <div class="viewcode-block" id="SolverStokes.set_iterative_solver">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solver.html#stonedfenicsx.solver_module.solver.SolverStokes.set_iterative_solver">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">set_iterative_solver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">a_p</span> <span class="p">,</span><span class="n">L</span> <span class="p">,</span><span class="n">COMM</span><span class="p">,</span> <span class="n">nl</span><span class="p">,</span><span class="n">bcs</span> <span class="p">,</span><span class="n">F0</span><span class="p">,</span><span class="n">F1</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">,</span><span class="n">J</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span><span class="n">it</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">ts</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_iterative_solver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">a_p</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">COMM</span><span class="p">,</span> <span class="n">nl</span><span class="p">,</span> <span class="n">bcs</span><span class="p">,</span> <span class="n">F0</span><span class="p">,</span> <span class="n">F1</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">,</span> <span class="n">J</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">it</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ts</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Configure an iterative (FGMRES + fieldsplit) block solver for the Stokes system.</span>
 
 <span class="sd">        On the first solve (`it == 0 or ts == 0`) builds the block operators/</span>
@@ -358,44 +346,44 @@
 <span class="sd">            it (int, optional): Outer iteration index. Defaults to 0.</span>
 <span class="sd">            ts (int, optional): Timestep index. Defaults to 0.</span>
 <span class="sd">        """</span>
-        <span class="c1">#Return block operators and block RHS vector for the Stokes problem'</span>
+        <span class="c1"># Return block operators and block RHS vector for the Stokes problem'</span>
         <span class="c1"># nullspace vector [0_u; 1_p] locally</span>
         <span class="k">if</span> <span class="n">it</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">ts</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="c1"># Create the block operator and the pre-conditioner</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">set_block_operator</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">a_p</span><span class="p">,</span><span class="n">bcs</span><span class="p">,</span><span class="n">L</span><span class="p">,</span><span class="n">F0</span><span class="p">,</span><span class="n">F1</span><span class="p">)</span>
-            
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_block_operator</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">a_p</span><span class="p">,</span> <span class="n">bcs</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">F0</span><span class="p">,</span> <span class="n">F1</span><span class="p">)</span>
+
             <span class="c1"># Map the dofs [Find the dofs that belongs to P, and the one that belongs to u]</span>
             <span class="n">V_map</span> <span class="o">=</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map</span>
             <span class="n">Q_map</span> <span class="o">=</span> <span class="n">F1</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map</span>
-        
-            <span class="c1"># Rhs = [vu,vp]-&gt; where do they start </span>
+
+            <span class="c1"># Rhs = [vu,vp]-&gt; where do they start</span>
             <span class="c1"># -&gt; more over divided into the processors, so must find the layout for every processor</span>
-            <span class="n">offset_u</span> <span class="o">=</span> <span class="n">V_map</span><span class="o">.</span><span class="n">local_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map_bs</span> <span class="o">+</span> \
-                   <span class="n">Q_map</span><span class="o">.</span><span class="n">local_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">offset_u</span> <span class="o">=</span> <span class="n">V_map</span><span class="o">.</span><span class="n">local_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map_bs</span> <span class="o">+</span> <span class="n">Q_map</span><span class="o">.</span><span class="n">local_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">offset_p</span> <span class="o">=</span> <span class="n">offset_u</span> <span class="o">+</span> <span class="n">V_map</span><span class="o">.</span><span class="n">size_local</span> <span class="o">*</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map_bs</span>
-            <span class="c1"># Petsc black magic to create the index array for recognising what node is u or p </span>
-            <span class="n">is_u</span> <span class="o">=</span> <span class="n">PETSc</span><span class="o">.</span><span class="n">IS</span><span class="p">()</span><span class="o">.</span><span class="n">createStride</span><span class="p">(</span><span class="n">V_map</span><span class="o">.</span><span class="n">size_local</span> <span class="o">*</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map_bs</span><span class="p">,</span> <span class="n">offset_u</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span>
-            <span class="n">comm</span><span class="o">=</span><span class="n">PETSc</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">)</span>
-            <span class="n">is_p</span> <span class="o">=</span> <span class="n">PETSc</span><span class="o">.</span><span class="n">IS</span><span class="p">()</span><span class="o">.</span><span class="n">createStride</span><span class="p">(</span>
-            <span class="n">Q_map</span><span class="o">.</span><span class="n">size_local</span><span class="p">,</span> <span class="n">offset_p</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="n">PETSc</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">)</span>
-            
+            <span class="c1"># Petsc black magic to create the index array for recognising what node is u or p</span>
+            <span class="n">is_u</span> <span class="o">=</span> <span class="n">PETSc</span><span class="o">.</span><span class="n">IS</span><span class="p">()</span><span class="o">.</span><span class="n">createStride</span><span class="p">(</span>
+                <span class="n">V_map</span><span class="o">.</span><span class="n">size_local</span> <span class="o">*</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map_bs</span><span class="p">,</span>
+                <span class="n">offset_u</span><span class="p">,</span>
+                <span class="mi">1</span><span class="p">,</span>
+                <span class="n">comm</span><span class="o">=</span><span class="n">PETSc</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">is_p</span> <span class="o">=</span> <span class="n">PETSc</span><span class="o">.</span><span class="n">IS</span><span class="p">()</span><span class="o">.</span><span class="n">createStride</span><span class="p">(</span><span class="n">Q_map</span><span class="o">.</span><span class="n">size_local</span><span class="p">,</span> <span class="n">offset_p</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="n">PETSc</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">)</span>
+
             <span class="c1"># Save the information</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">offset_u</span> <span class="o">=</span> <span class="n">V_map</span><span class="o">.</span><span class="n">local_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map_bs</span> <span class="o">+</span> \
-                   <span class="n">Q_map</span><span class="o">.</span><span class="n">local_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">offset_u</span> <span class="o">=</span> <span class="n">V_map</span><span class="o">.</span><span class="n">local_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map_bs</span> <span class="o">+</span> <span class="n">Q_map</span><span class="o">.</span><span class="n">local_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">offset_p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset_u</span> <span class="o">+</span> <span class="n">V_map</span><span class="o">.</span><span class="n">size_local</span> <span class="o">*</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map_bs</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">is_u</span> <span class="o">=</span> <span class="n">is_u</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">is_p</span> <span class="o">=</span> <span class="n">is_p</span>
-            
+
             <span class="c1"># Create the KSP object</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span> <span class="o">=</span> <span class="n">PETSc</span><span class="o">.</span><span class="n">KSP</span><span class="p">()</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">COMM</span><span class="p">)</span>
-            <span class="c1"># Set the operator </span>
+            <span class="c1"># Set the operator</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">setOperators</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">)</span>
             <span class="c1"># Set the tollerance of krylov solver</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">setTolerances</span><span class="p">(</span><span class="n">rtol</span><span class="o">=</span><span class="n">ctrl</span><span class="o">.</span><span class="n">iterative_solver_tol</span><span class="p">)</span>
-            <span class="c1"># Set the type fgmres (global minimum residual) -&gt; Iterative solver, solve an approximate inversion of A-&gt; and the residual is the </span>
+            <span class="c1"># Set the type fgmres (global minimum residual) -&gt; Iterative solver, solve an approximate inversion of A-&gt; and the residual is the</span>
             <span class="c1"># the way to quantify how much the iterative solver is converged to real solution</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s2">"fgmres"</span><span class="p">)</span>
-            <span class="c1"># </span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">getPC</span><span class="p">()</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s2">"fieldsplit"</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">getPC</span><span class="p">()</span><span class="o">.</span><span class="n">setFieldSplitType</span><span class="p">(</span><span class="n">PETSc</span><span class="o">.</span><span class="n">PC</span><span class="o">.</span><span class="n">CompositeType</span><span class="o">.</span><span class="n">MULTIPLICATIVE</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">getPC</span><span class="p">()</span><span class="o">.</span><span class="n">setFieldSplitIS</span><span class="p">((</span><span class="s2">"u"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_u</span><span class="p">),</span> <span class="p">(</span><span class="s2">"p"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_p</span><span class="p">))</span>
@@ -408,6 +396,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">ksp_p</span><span class="o">.</span><span class="n">getPC</span><span class="p">()</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s2">"hypre"</span><span class="p">)</span>
 
             <span class="n">monitor_n_digits</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">max_it</span><span class="p">)))</span>
+
             <span class="k">def</span><span class="w"> </span><span class="nf">monitor</span><span class="p">(</span><span class="n">ksp</span><span class="p">,</span> <span class="n">it</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
 <span class="w">                </span><span class="sd">"""Print the KSP iteration count and residual (PETSc KSP monitor callback).</span>
 
@@ -416,9 +405,9 @@
 <span class="sd">                    it (int): Current iteration number.</span>
 <span class="sd">                    r (float): Current (preconditioned) residual norm.</span>
 <span class="sd">                """</span>
-                <span class="n">PETSc</span><span class="o">.</span><span class="n">Sys</span><span class="o">.</span><span class="n">Print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="w">         </span><span class="n">it</span><span class="si">:</span><span class="s2"> </span><span class="si">{</span><span class="n">monitor_n_digits</span><span class="si">}</span><span class="s2">d</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">r</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="n">PETSc</span><span class="o">.</span><span class="n">Sys</span><span class="o">.</span><span class="n">Print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">it</span><span class="si">:</span><span class="s2"> </span><span class="si">{</span><span class="n">monitor_n_digits</span><span class="si">}</span><span class="s2">d</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">r</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-            <span class="c1">#self.ksp.setMonitor(monitor)</span>
+            <span class="c1"># self.ksp.setMonitor(monitor)</span>
 
             <span class="c1"># The matrix A combined the vector velocity and scalar pressure</span>
             <span class="c1"># parts, hence has a block size of 1. Unlike the MatNest case, GAMG</span>
@@ -430,12 +419,12 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">Pu</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ksp_u</span><span class="o">.</span><span class="n">getPC</span><span class="p">()</span><span class="o">.</span><span class="n">getOperators</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">Pu</span><span class="o">.</span><span class="n">setBlockSize</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">update_block_operator</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">a_p</span><span class="p">,</span><span class="n">bcs</span><span class="p">,</span><span class="n">L</span><span class="p">,</span><span class="n">F0</span><span class="p">,</span><span class="n">F1</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_block_operator</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">a_p</span><span class="p">,</span> <span class="n">bcs</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">F0</span><span class="p">,</span> <span class="n">F1</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SolverStokes.set_block_operator">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solver.html#stonedfenicsx.solver_module.solver.SolverStokes.set_block_operator">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">set_block_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">a_p</span><span class="p">,</span><span class="n">bcs</span><span class="p">,</span><span class="n">L</span><span class="p">,</span><span class="n">F0</span><span class="p">,</span><span class="n">F1</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_block_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">a_p</span><span class="p">,</span> <span class="n">bcs</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">F0</span><span class="p">,</span> <span class="n">F1</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Assemble the block system matrix, preconditioner matrix, RHS vector and pressure nullspace.</span>
 
 <span class="sd">        Builds `self.A`/`self.P`/`self.b` from scratch via</span>
@@ -454,13 +443,14 @@
 <span class="sd">            F1 (dolfinx.fem.FunctionSpace): Collapsed pressure subspace (used</span>
 <span class="sd">                to size the pressure block of the nullspace vector).</span>
 <span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">=</span> <span class="n">assemble_matrix_block</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">bcs</span><span class="o">=</span><span class="n">bcs</span><span class="p">)</span>   <span class="p">;</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="o">.</span><span class="n">assemble</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">=</span> <span class="n">assemble_matrix_block</span><span class="p">(</span><span class="n">a_p</span><span class="p">,</span> <span class="n">bcs</span><span class="o">=</span><span class="n">bcs</span><span class="p">)</span> <span class="p">;</span> <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="o">.</span><span class="n">assemble</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">assemble_vector_block</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">bcs</span><span class="o">=</span><span class="n">bcs</span><span class="p">);</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="o">.</span><span class="n">assemble</span><span class="p">()</span>
-        
-        
-        <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="o">.</span><span class="n">ghostUpdate</span><span class="p">(</span><span class="n">addv</span><span class="o">=</span><span class="n">PETSc</span><span class="o">.</span><span class="n">InsertMode</span><span class="o">.</span><span class="n">ADD_VALUES</span><span class="p">,</span>
-                   <span class="n">mode</span><span class="o">=</span><span class="n">PETSc</span><span class="o">.</span><span class="n">ScatterMode</span><span class="o">.</span><span class="n">FORWARD</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">=</span> <span class="n">assemble_matrix_block</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">bcs</span><span class="o">=</span><span class="n">bcs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="o">.</span><span class="n">assemble</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">=</span> <span class="n">assemble_matrix_block</span><span class="p">(</span><span class="n">a_p</span><span class="p">,</span> <span class="n">bcs</span><span class="o">=</span><span class="n">bcs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="o">.</span><span class="n">assemble</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">assemble_vector_block</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">bcs</span><span class="o">=</span><span class="n">bcs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="o">.</span><span class="n">assemble</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="o">.</span><span class="n">ghostUpdate</span><span class="p">(</span><span class="n">addv</span><span class="o">=</span><span class="n">PETSc</span><span class="o">.</span><span class="n">InsertMode</span><span class="o">.</span><span class="n">ADD_VALUES</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">PETSc</span><span class="o">.</span><span class="n">ScatterMode</span><span class="o">.</span><span class="n">FORWARD</span><span class="p">)</span>
 
         <span class="c1"># Solution vector, allocated once and reused by solve_linear_picard</span>
         <span class="c1"># every outer iteration instead of calling createVecLeft() per call.</span>
@@ -468,17 +458,16 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">null_vec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="o">.</span><span class="n">createVecLeft</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nloc_u</span> <span class="o">=</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map</span><span class="o">.</span><span class="n">size_local</span> <span class="o">*</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map_bs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nloc_p</span> <span class="o">=</span> <span class="n">F1</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map</span><span class="o">.</span><span class="n">size_local</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">null_vec</span><span class="o">.</span><span class="n">array</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">nloc_u</span><span class="p">]</span>  <span class="o">=</span> <span class="mf">0.0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">null_vec</span><span class="o">.</span><span class="n">array</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">nloc_u</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">nloc_u</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">nloc_p</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">null_vec</span><span class="o">.</span><span class="n">array</span><span class="p">[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">nloc_u</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">null_vec</span><span class="o">.</span><span class="n">array</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">nloc_u</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">nloc_u</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">nloc_p</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">null_vec</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nsp</span> <span class="o">=</span> <span class="n">PETSc</span><span class="o">.</span><span class="n">NullSpace</span><span class="p">()</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">vectors</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">null_vec</span><span class="p">])</span></div>
 
-        <span class="c1">#self.A.setNullSpace(self.nsp)</span>
-
+        <span class="c1"># self.A.setNullSpace(self.nsp)</span>
 
 <div class="viewcode-block" id="SolverStokes.update_block_operator">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solver.html#stonedfenicsx.solver_module.solver.SolverStokes.update_block_operator">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">update_block_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">a_p</span><span class="p">,</span><span class="n">bcs</span><span class="p">,</span><span class="n">L</span><span class="p">,</span><span class="n">F0</span><span class="p">,</span><span class="n">F1</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_block_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">a_p</span><span class="p">,</span> <span class="n">bcs</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">F0</span><span class="p">,</span> <span class="n">F1</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Reassemble cached PETSc operators/vectors in-place.</span>
 
@@ -506,19 +495,17 @@
         <span class="c1"># -------------------------</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="o">.</span><span class="n">localForm</span><span class="p">()</span> <span class="k">as</span> <span class="n">b_u_local</span><span class="p">:</span>
             <span class="n">b_u_local</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
-        
-        <span class="n">dolfinx</span><span class="o">.</span><span class="n">fem</span><span class="o">.</span><span class="n">petsc</span><span class="o">.</span><span class="n">assemble_vector_block</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span><span class="n">bcs</span><span class="o">=</span><span class="n">bcs</span><span class="p">)</span>
-                
+
+        <span class="n">dolfinx</span><span class="o">.</span><span class="n">fem</span><span class="o">.</span><span class="n">petsc</span><span class="o">.</span><span class="n">assemble_vector_block</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">bcs</span><span class="o">=</span><span class="n">bcs</span><span class="p">)</span>
 
         <span class="c1"># -------------------------</span>
         <span class="c1"># KSP operators</span>
         <span class="c1"># -------------------------</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct_solver</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="c1"># Nullspace (e.g., pressure) — set once if possible, but safe here too</span>
-            <span class="c1">#if getattr(self, "nsp", None) is not None:</span>
+            <span class="c1"># if getattr(self, "nsp", None) is not None:</span>
             <span class="c1">#    self.A.setNullSpace(self.nsp)</span>
-                <span class="c1">#self.nsp.remove(self.b)</span>
+            <span class="c1"># self.nsp.remove(self.b)</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">setOperators</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">)</span>
 

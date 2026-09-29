@@ -142,10 +142,9 @@
   <h1>Source code for stonedfenicsx.config.simulation_config</h1><div class="highlight"><pre>
 <span></span><span class="sd">"""Modules"""</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.geometry</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mesh</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.input_parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">Input</span><span class="p">,</span> <span class="n">PhInput</span><span class="p">,</span> <span class="n">parse_input</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.input_parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">Input</span><span class="p">,</span> <span class="n">PhInput</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.numerical_control</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationControls</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.phase_db</span><span class="w"> </span><span class="kn">import</span> <span class="n">PhaseDataBase</span><span class="p">,</span> <span class="n">generate_phase_database</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.scal</span><span class="w"> </span><span class="kn">import</span> <span class="n">Scal</span><span class="p">,</span> <span class="n">scaling_simulation_physical</span>
@@ -157,9 +156,7 @@
 <div class="viewcode-block" id="configure_simulation">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.simulation_config.html#stonedfenicsx.config.simulation_config.configure_simulation">[docs]</a>
 <span class="nd">@timing_function</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">configure_simulation</span><span class="p">(</span>
-    <span class="n">ph_in</span><span class="p">:</span> <span class="n">PhInput</span><span class="p">,</span> <span class="n">inp</span><span class="p">:</span> <span class="n">Input</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SimulationControls</span><span class="p">,</span><span class="n">PhaseDataBase</span><span class="p">,</span><span class="n">Mesh</span><span class="p">,</span> <span class="n">Scal</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">configure_simulation</span><span class="p">(</span><span class="n">ph_in</span><span class="p">:</span> <span class="n">PhInput</span><span class="p">,</span> <span class="n">inp</span><span class="p">:</span> <span class="n">Input</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SimulationControls</span><span class="p">,</span> <span class="n">PhaseDataBase</span><span class="p">,</span> <span class="n">Mesh</span><span class="p">,</span> <span class="n">Scal</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Function that configure the numerical simulation and scale the property accordingly.</span>
 <span class="sd">    It takes the information from the input and generate the mesh.</span>
 
@@ -188,33 +185,31 @@
     <span class="c1"># update the input/output</span>
     <span class="n">ctrl_io</span><span class="o">.</span><span class="n">generate_io</span><span class="p">()</span>
     <span class="c1"># Create the mesh</span>
-    <span class="n">mesh</span> <span class="o">=</span> <span class="n">create_mesh</span><span class="p">(</span><span class="n">ioctrl</span><span class="o">=</span><span class="n">ctrl_io</span><span class="p">,</span><span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span><span class="p">,</span><span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl</span><span class="p">)</span>
+    <span class="n">mesh</span> <span class="o">=</span> <span class="n">create_mesh</span><span class="p">(</span><span class="n">ioctrl</span><span class="o">=</span><span class="n">ctrl_io</span><span class="p">,</span> <span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span><span class="p">,</span> <span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl</span><span class="p">)</span>
     <span class="c1"># Generate the phase data base</span>
     <span class="n">pdb</span> <span class="o">=</span> <span class="n">generate_phase_database</span><span class="p">(</span>
-        <span class="n">pressure_dependency</span><span class="o">=</span><span class="n">ctrl</span><span class="o">.</span><span class="n">pressure_dependency</span><span class="p">,</span> <span class="n">eta_max</span><span class="o">=</span><span class="n">ctrl</span><span class="o">.</span><span class="n">eta_max</span><span class="p">,</span> <span class="n">phin</span><span class="o">=</span><span class="n">ph_in</span>
-    <span class="p">,</span><span class="n">scal_temp</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="p">,</span> <span class="n">scal_press</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">stress</span><span class="p">)</span>
+        <span class="n">pressure_dependency</span><span class="o">=</span><span class="n">ctrl</span><span class="o">.</span><span class="n">pressure_dependency</span><span class="p">,</span>
+        <span class="n">eta_max</span><span class="o">=</span><span class="n">ctrl</span><span class="o">.</span><span class="n">eta_max</span><span class="p">,</span>
+        <span class="n">phin</span><span class="o">=</span><span class="n">ph_in</span><span class="p">,</span>
+        <span class="n">scal_temp</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="p">,</span>
+        <span class="n">scal_press</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">stress</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="c1"># Merge the controls into simulation controls</span>
-    <span class="n">ctrl_sim</span> <span class="o">=</span> <span class="n">SimulationControls</span><span class="p">(</span> <span class="n">ctrl</span> <span class="o">=</span> <span class="n">ctrl</span>
-                                  <span class="p">,</span><span class="n">ctrl_ky</span> <span class="o">=</span> <span class="n">ctrl_ky</span>
-                                  <span class="p">,</span><span class="n">ctrl_tbc</span> <span class="o">=</span> <span class="n">ctrl_tbc</span>
-                                  <span class="p">,</span><span class="n">ctrl_io</span> <span class="o">=</span> <span class="n">ctrl_io</span>
-                                  <span class="p">,</span><span class="n">g_input</span> <span class="o">=</span> <span class="n">g_input</span><span class="p">)</span>
-    
-    
-    
-   
-    
+    <span class="n">ctrl_sim</span> <span class="o">=</span> <span class="n">SimulationControls</span><span class="p">(</span><span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl</span><span class="p">,</span> <span class="n">ctrl_ky</span><span class="o">=</span><span class="n">ctrl_ky</span><span class="p">,</span> <span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_tbc</span><span class="p">,</span> <span class="n">ctrl_io</span><span class="o">=</span><span class="n">ctrl_io</span><span class="p">,</span> <span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span><span class="p">)</span>
+
     <span class="c1"># Scale the simulation parameters</span>
-    <span class="n">scaling_simulation_physical</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span><span class="n">mesh</span><span class="o">=</span><span class="n">mesh</span><span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">)</span>
+    <span class="n">scaling_simulation_physical</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="p">,</span> <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span> <span class="n">mesh</span><span class="o">=</span><span class="n">mesh</span><span class="p">,</span> <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">)</span>
 
     <span class="c1"># Generate the right boundary and left boundary thermal boundary condition</span>
-    <span class="n">configure_boundary_condition</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span>
-                                                          <span class="p">,</span><span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span>
-                                                          <span class="p">,</span><span class="n">ioctrl</span> <span class="o">=</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_io</span>
-                                                          <span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span>
-                                                          <span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
-                                                          <span class="p">,</span><span class="n">g_input</span><span class="o">=</span><span class="n">mesh</span><span class="o">.</span><span class="n">g_input</span><span class="p">)</span>
+    <span class="n">configure_boundary_condition</span><span class="p">(</span>
+        <span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="p">,</span>
+        <span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl</span><span class="p">,</span>
+        <span class="n">ioctrl</span><span class="o">=</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_io</span><span class="p">,</span>
+        <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">,</span>
+        <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span>
+        <span class="n">g_input</span><span class="o">=</span><span class="n">mesh</span><span class="o">.</span><span class="n">g_input</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="c1"># print the information</span>
 
     <span class="c1"># release the new pre-processed class</span>

@@ -141,8 +141,8 @@
             
   <h1>Source code for stonedfenicsx.config.input_parser</h1><div class="highlight"><pre>
 <span></span><span class="sd">"""Modules"""</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.config_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">update_ip_file</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.geometry</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeomInput</span>
@@ -167,43 +167,41 @@
 <span class="sd">    other script for configure ensemble of numerical experiments.</span>
 
 <span class="sd">    """</span>
+
     <span class="n">ctrl</span><span class="p">:</span> <span class="n">NumericalControls</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">NumericalControls</span><span class="p">)</span>
-    <span class="n">ctrl_io</span><span class="p">:</span> <span class="n">IOControls</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span> <span class="o">=</span> <span class="n">IOControls</span><span class="p">)</span>
-    <span class="n">ctrl_tbc</span><span class="p">:</span> <span class="n">CtrlTemperatureBC</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span> <span class="o">=</span> <span class="n">CtrlTemperatureBC</span><span class="p">)</span>
+    <span class="n">ctrl_io</span><span class="p">:</span> <span class="n">IOControls</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">IOControls</span><span class="p">)</span>
+    <span class="n">ctrl_tbc</span><span class="p">:</span> <span class="n">CtrlTemperatureBC</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">CtrlTemperatureBC</span><span class="p">)</span>
     <span class="n">ctrl_ky</span><span class="p">:</span> <span class="n">CtrlKy</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">CtrlKy</span><span class="p">)</span>
     <span class="n">g_input</span><span class="p">:</span> <span class="n">GeomInput</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">GeomInput</span><span class="p">)</span>
     <span class="n">sc</span><span class="p">:</span> <span class="n">Scal</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Scal</span><span class="p">)</span></div>
+
+
 
 <span class="c1"># -----------------------------------------------------------------------------------</span>
 <div class="viewcode-block" id="parse_input">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.input_parser.html#stonedfenicsx.config.input_parser.parse_input">[docs]</a>
 <span class="nd">@timing_function</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_input</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span><span class="n">PhInput</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_input</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="n">PhInput</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Read and parse a YAML input file.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    path : str</span>
-<span class="sd">        Path to the main input file.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        path (str): Path to the main input file.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    Input</span>
-<span class="sd">        Temporary container holding numerical and physical parameters.</span>
-<span class="sd">        The returned object can be modified programmatically before</span>
-<span class="sd">        starting the computation.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: A tuple containing:</span>
 
-<span class="sd">    Ph_input</span>
-<span class="sd">        Temporary container storing material property definitions.</span>
+<span class="sd">            - Input: Temporary container holding numerical and physical parameters.</span>
+<span class="sd">              The returned object can be modified programmatically before</span>
+<span class="sd">              starting the computation.</span>
+<span class="sd">            - Ph_input: Temporary container storing material property definitions.</span>
 
-<span class="sd">    Notes</span>
-<span class="sd">    -----</span>
-<span class="sd">    The YAML input file can be used directly as a standalone model</span>
-<span class="sd">    configuration, or as a template for generating ensembles of models</span>
-<span class="sd">    through external Python scripts. The typical workflow is to define</span>
-<span class="sd">    a base scenario in YAML and then modify selected parameters</span>
-<span class="sd">    programmatically.</span>
+<span class="sd">    Notes:</span>
+<span class="sd">        The YAML input file can be used directly as a standalone model</span>
+<span class="sd">        configuration, or as a template for generating ensembles of models</span>
+<span class="sd">        through external Python scripts. The typical workflow is to define</span>
+<span class="sd">        a base scenario in YAML and then modify selected parameters</span>
+<span class="sd">        programmatically.</span>
 <span class="sd">    """</span>
     <span class="c1"># import yamlv</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
@@ -214,10 +212,8 @@
         <span class="c1"># Import numerical controls [basically structured data like numpy]</span>
         <span class="n">nc</span> <span class="o">=</span> <span class="n">input_file</span><span class="p">[</span><span class="s2">"Input"</span><span class="p">][</span><span class="s2">"NumericalControls"</span><span class="p">]</span>  <span class="c1"># Numerical controls</span>
         <span class="n">iocr</span> <span class="o">=</span> <span class="n">input_file</span><span class="p">[</span><span class="s2">"Input"</span><span class="p">][</span><span class="s2">"InputOutputControl"</span><span class="p">]</span>  <span class="c1"># Input Controls</span>
-        <span class="n">lhs</span> <span class="o">=</span> <span class="n">input_file</span><span class="p">[</span><span class="s2">"Input"</span><span class="p">][</span>
-            <span class="s2">"thermal_boundary_condition"</span>
-        <span class="p">]</span>  <span class="c1"># left boundary condition</span>
-        <span class="n">ky</span> <span class="o">=</span> <span class="n">input_file</span><span class="p">[</span><span class="s2">"Input"</span><span class="p">][</span><span class="s1">'kinematic_boundary_condition'</span><span class="p">]</span>
+        <span class="n">lhs</span> <span class="o">=</span> <span class="n">input_file</span><span class="p">[</span><span class="s2">"Input"</span><span class="p">][</span><span class="s2">"thermal_boundary_condition"</span><span class="p">]</span>  <span class="c1"># left boundary condition</span>
+        <span class="n">ky</span> <span class="o">=</span> <span class="n">input_file</span><span class="p">[</span><span class="s2">"Input"</span><span class="p">][</span><span class="s2">"kinematic_boundary_condition"</span><span class="p">]</span>
         <span class="n">geom</span> <span class="o">=</span> <span class="n">input_file</span><span class="p">[</span><span class="s2">"Input"</span><span class="p">][</span><span class="s2">"geometry"</span><span class="p">]</span>  <span class="c1"># Geometry</span>
         <span class="n">mp</span> <span class="o">=</span> <span class="n">input_file</span><span class="p">[</span><span class="s2">"Input"</span><span class="p">][</span><span class="s2">"Material_properties"</span><span class="p">]</span>  <span class="c1"># Material property</span>
         <span class="n">scal</span> <span class="o">=</span> <span class="n">input_file</span><span class="p">[</span><span class="s2">"Input"</span><span class="p">][</span><span class="s2">"scaling"</span><span class="p">]</span>  <span class="c1"># Scaling</span>
@@ -240,22 +236,26 @@
     <span class="n">update_ip_file</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="p">,</span> <span class="n">lhs</span><span class="p">)</span>
     <span class="n">update_ip_file</span><span class="p">(</span><span class="n">ctrl_ky</span><span class="p">,</span> <span class="n">ky</span><span class="p">)</span>
 
-    <span class="n">input_obj</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl</span><span class="p">,</span><span class="n">ctrl_io</span> <span class="o">=</span> <span class="n">ctrl_io</span><span class="p">,</span><span class="n">ctrl_ky</span><span class="o">=</span><span class="n">ctrl_ky</span><span class="p">,</span><span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_tbc</span><span class="p">,</span><span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span><span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">)</span>
+    <span class="n">input_obj</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span>
+        <span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl</span><span class="p">,</span>
+        <span class="n">ctrl_io</span><span class="o">=</span><span class="n">ctrl_io</span><span class="p">,</span>
+        <span class="n">ctrl_ky</span><span class="o">=</span><span class="n">ctrl_ky</span><span class="p">,</span>
+        <span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_tbc</span><span class="p">,</span>
+        <span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span><span class="p">,</span>
+        <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="n">ph_input</span> <span class="o">=</span> <span class="n">PhInput</span><span class="p">()</span>
 
-    <span class="n">ph_input</span> <span class="o">=</span> <span class="n">filling_the_phase_data_base</span><span class="p">(</span>
-        <span class="n">materialproperties</span><span class="o">=</span><span class="n">mp</span><span class="p">,</span> <span class="n">shheating</span><span class="o">=</span><span class="n">sheating</span><span class="p">,</span> <span class="n">phase_input</span><span class="o">=</span><span class="n">ph_input</span>
-    <span class="p">)</span>
+    <span class="n">ph_input</span> <span class="o">=</span> <span class="n">filling_the_phase_data_base</span><span class="p">(</span><span class="n">materialproperties</span><span class="o">=</span><span class="n">mp</span><span class="p">,</span> <span class="n">shheating</span><span class="o">=</span><span class="n">sheating</span><span class="p">,</span> <span class="n">phase_input</span><span class="o">=</span><span class="n">ph_input</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">input_obj</span><span class="p">,</span> <span class="n">ph_input</span></div>
+
 
 
 <span class="c1"># -----------------------------------------------------------------------------------------</span>
 <div class="viewcode-block" id="filling_the_phase_data_base">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.input_parser.html#stonedfenicsx.config.input_parser.filling_the_phase_data_base">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">filling_the_phase_data_base</span><span class="p">(</span>
-    <span class="n">materialproperties</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">shheating</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">phase_input</span><span class="p">:</span> <span class="n">PhInput</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PhInput</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">filling_the_phase_data_base</span><span class="p">(</span><span class="n">materialproperties</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">shheating</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">phase_input</span><span class="p">:</span> <span class="n">PhInput</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PhInput</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Function that fills the temporary class of the material properties</span>
 
 <span class="sd">    Args:</span>
@@ -280,11 +280,8 @@
     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">materialproperties</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">buf</span> <span class="o">=</span> <span class="n">Phase</span><span class="p">()</span>  <span class="c1"># Prepare a Phase class to fill up with the new properties</span>
         <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">vv</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>  <span class="c1"># Loop over the properties of the class phase</span>
-
             <span class="k">if</span> <span class="n">vv</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">vv</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="mf">0.0</span> <span class="k">if</span> <span class="n">j</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"radiogenic_heat"</span><span class="p">,</span> <span class="s2">"radiative_conductivity"</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
-                <span class="p">)</span>
+                <span class="n">vv</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="n">j</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"radiogenic_heat"</span><span class="p">,</span> <span class="s2">"radiative_conductivity"</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
 
             <span class="nb">setattr</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">vv</span><span class="p">)</span>
         <span class="n">buf</span><span class="o">.</span><span class="n">name_phase</span> <span class="o">=</span> <span class="n">k</span>
@@ -293,25 +290,6 @@
     <span class="k">return</span> <span class="n">phase_input</span></div>
 
 
-<div class="viewcode-block" id="test_function">
-<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.input_parser.html#stonedfenicsx.config.input_parser.test_function">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">test_function</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">"""Test function for debugging the configuration routines. </span>
-<span class="sd">    """</span>
-    <span class="c1"># Find the main folder of the package</span>
-    <span class="n">pkg_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
-    <span class="c1"># Select the appropriate path for the input file</span>
-    <span class="n">input_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">pkg_root</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="s2">"input.yaml"</span><span class="p">)</span>
-    <span class="c1"># parse the input file</span>
-    <span class="n">input_data</span><span class="p">,</span> <span class="n">ph_in</span> <span class="o">=</span> <span class="n">parse_input</span><span class="p">(</span><span class="n">input_file</span><span class="p">)</span>
-    <span class="c1"># Destroy the input data </span>
-    <span class="k">del</span> <span class="n">input_data</span>
-    <span class="k">del</span> <span class="n">ph_in</span></div>
-
-
-<span class="c1"># Building the unit test for the configuration of the numerical simulation routine.</span>
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
-    <span class="n">test_function</span><span class="p">()</span>
 </pre></div>
 
             <div class="clearer"></div>

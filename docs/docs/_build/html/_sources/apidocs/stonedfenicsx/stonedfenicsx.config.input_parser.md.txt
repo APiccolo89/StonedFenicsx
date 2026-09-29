@@ -4,6 +4,7 @@
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.config.input_parser
+:parser: napoleon_parser
 :allowtitles:
 ```
 
@@ -17,6 +18,7 @@
 
 * - {py:obj}`Input <stonedfenicsx.config.input_parser.Input>`
   - ```{autodoc2-docstring} stonedfenicsx.config.input_parser.Input
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -29,14 +31,12 @@
 
 * - {py:obj}`parse_input <stonedfenicsx.config.input_parser.parse_input>`
   - ```{autodoc2-docstring} stonedfenicsx.config.input_parser.parse_input
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`filling_the_phase_data_base <stonedfenicsx.config.input_parser.filling_the_phase_data_base>`
   - ```{autodoc2-docstring} stonedfenicsx.config.input_parser.filling_the_phase_data_base
-    :summary:
-    ```
-* - {py:obj}`test_function <stonedfenicsx.config.input_parser.test_function>`
-  - ```{autodoc2-docstring} stonedfenicsx.config.input_parser.test_function
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -47,6 +47,7 @@
 :canonical: stonedfenicsx.config.input_parser.Input
 
 ```{autodoc2-docstring} stonedfenicsx.config.input_parser.Input
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} ctrl
@@ -56,6 +57,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.input_parser.Input.ctrl
+:parser: napoleon_parser
 ```
 
 ````
@@ -67,6 +69,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.input_parser.Input.ctrl_io
+:parser: napoleon_parser
 ```
 
 ````
@@ -78,6 +81,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.input_parser.Input.ctrl_tbc
+:parser: napoleon_parser
 ```
 
 ````
@@ -89,6 +93,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.input_parser.Input.ctrl_ky
+:parser: napoleon_parser
 ```
 
 ````
@@ -100,6 +105,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.input_parser.Input.g_input
+:parser: napoleon_parser
 ```
 
 ````
@@ -111,6 +117,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.input_parser.Input.sc
+:parser: napoleon_parser
 ```
 
 ````
@@ -121,6 +128,7 @@
 :canonical: stonedfenicsx.config.input_parser.parse_input
 
 ```{autodoc2-docstring} stonedfenicsx.config.input_parser.parse_input
+:parser: napoleon_parser
 ```
 ````
 
@@ -128,12 +136,6 @@
 :canonical: stonedfenicsx.config.input_parser.filling_the_phase_data_base
 
 ```{autodoc2-docstring} stonedfenicsx.config.input_parser.filling_the_phase_data_base
-```
-````
-
-````{py:function} test_function()
-:canonical: stonedfenicsx.config.input_parser.test_function
-
-```{autodoc2-docstring} stonedfenicsx.config.input_parser.test_function
+:parser: napoleon_parser
 ```
 ````

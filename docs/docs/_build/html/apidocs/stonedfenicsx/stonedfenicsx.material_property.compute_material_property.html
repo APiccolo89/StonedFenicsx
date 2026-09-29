@@ -217,16 +217,21 @@ Tref, R, A, B, T_A, x_A, T_B, x_B: parameters for the radiative conductivity</p>
 <dt class="sig sig-object py" id="stonedfenicsx.material_property.compute_material_property.MATERIALS">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">stonedfenicsx.material_property.compute_material_property.</span></span><span class="sig-name descname"><span class="pre">MATERIALS</span></span><a class="reference internal" href="../../_modules/stonedfenicsx/material_property/compute_material_property.html#MATERIALS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.material_property.compute_material_property.MATERIALS" title="Link to this definition">¶</a></dt>
 <dd><p>Abstract base for cached material-property dataclasses.</p>
-<p>Defines the two InitVar arguments consumed by <code class="docutils literal notranslate"><span class="pre">__post_init__</span></code> in every
-subclass.  <code class="docutils literal notranslate"><span class="pre">pdb</span></code> carries the per-phase parameter arrays and <code class="docutils literal notranslate"><span class="pre">phase</span></code>
+<p>Defines the two InitVar arguments consumed by <cite>__post_init__</cite> in every
+subclass.  <cite>pdb</cite> carries the per-phase parameter arrays and <cite>phase</cite>
 carries the DG0 phase-ID field on the target sub-mesh.  Neither is
 stored as an instance attribute after construction; they are used only to
 populate the concrete fem.Function fields defined in each subclass.</p>
-<p>Args:
-pdb (PhaseDataBase): Material-property database with parameter arrays
-indexed by integer phase ID.
-phase (fem.Function): DG0 Function whose <code class="docutils literal notranslate"><span class="pre">.x.array[:]</span></code> holds the
-integer phase ID for every cell in the sub-mesh.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pdb</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – Material-property database with parameter arrays
+indexed by integer phase ID.</p></li>
+<li><p><strong>phase</strong> (<em>fem.Function</em>) – DG0 Function whose <cite>.x.array[:]</cite> holds the
+integer phase ID for every cell in the sub-mesh.</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="stonedfenicsx.material_property.compute_material_property.MATERIALS.pdb">
 <span class="sig-name descname"><span class="pre">pdb</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dataclasses.InitVar</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><span class="pre">stonedfenicsx.config.phase_db.PhaseDataBase</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#stonedfenicsx.material_property.compute_material_property.MATERIALS.pdb" title="Link to this definition">¶</a></dt>
@@ -433,18 +438,23 @@ Tref, R, A, B, T_A, x_A, T_B, x_B: parameters for the radiative conductivity</p>
 <dt class="sig sig-object py" id="stonedfenicsx.material_property.compute_material_property.THERMALCACHED.__post_init__">
 <span class="sig-name descname"><span class="pre">__post_init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><span class="pre">stonedfenicsx.config.phase_db.PhaseDataBase</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/material_property/compute_material_property.html#THERMALCACHED.__post_init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.material_property.compute_material_property.THERMALCACHED.__post_init__" title="Link to this definition">¶</a></dt>
 <dd><p>Allocate and fill all thermal material-property fem.Functions.</p>
-<p>Uses the integer phase-ID array from <code class="docutils literal notranslate"><span class="pre">phase.x.array</span></code> to index into
-the per-phase parameter arrays in <code class="docutils literal notranslate"><span class="pre">pdb</span></code>, broadcasting a scalar per
+<p>Uses the integer phase-ID array from <cite>phase.x.array</cite> to index into
+the per-phase parameter arrays in <cite>pdb</cite>, broadcasting a scalar per
 element into a DG0 fem.Function defined on the same function space as
-<code class="docutils literal notranslate"><span class="pre">phase</span></code>.  All functions are filled once and treated as static
+<cite>phase</cite>.  All functions are filled once and treated as static
 throughout the simulation (properties are not advected with the flow).</p>
 <p>Scalar parameters that are mesh-independent (reference temperature,
 gas constant, radiative conductivity coefficients) are stored as plain
 Python floats rather than fem.Functions.</p>
-<p>Args:
-pdb (PhaseDataBase): Material-property database; all arrays are
-already non-dimensionalised before this call.
-phase (fem.Function): DG0 phase-ID field on the target sub-mesh.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pdb</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – Material-property database; all arrays are
+already non-dimensionalised before this call.</p></li>
+<li><p><strong>phase</strong> (<em>fem.Function</em>) – DG0 phase-ID field on the target sub-mesh.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -532,19 +542,24 @@ is separated rg_cachedom the main material properties dataclass for this reason.
 <dt class="sig sig-object py" id="stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED.__post_init__">
 <span class="sig-name descname"><span class="pre">__post_init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><span class="pre">stonedfenicsx.config.phase_db.PhaseDataBase</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/material_property/compute_material_property.html#RHEOLOGYCACHED.__post_init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED.__post_init__" title="Link to this definition">¶</a></dt>
 <dd><p>Allocate and fill all rheological material-property fem.Functions.</p>
-<p>Mirrors the pattern of THERMALCACHED.<strong>post_init</strong>: indexes <code class="docutils literal notranslate"><span class="pre">pdb</span></code>
+<p>Mirrors the pattern of THERMALCACHED.__post_init__: indexes <cite>pdb</cite>
 arrays by integer phase ID and writes the result into newly allocated
-DG0 fem.Functions on the same function space as <code class="docutils literal notranslate"><span class="pre">phase</span></code>.  Creep
+DG0 fem.Functions on the same function space as <cite>phase</cite>.  Creep
 prefactors (b_dif, b_dis), stress exponent (n), activation energies
 (e_dif, e_dis), and activation volumes (v_dif, v_dis) are stored as
 Functions so they enter the UFL viscosity expression symbolically.
 Scalar upper bounds (eta_max, eta_def) and gas constant are kept as
 Python floats.</p>
-<p>Args:
-pdb (PhaseDataBase): Material-property database; all arrays are
-already non-dimensionalised before this call.
-phase (fem.Function): DG0 phase-ID field on the Stokes sub-mesh
-(wedge or slab).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pdb</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – Material-property database; all arrays are
+already non-dimensionalised before this call.</p></li>
+<li><p><strong>phase</strong> (<em>fem.Function</em>) – DG0 phase-ID field on the Stokes sub-mesh
+(wedge or slab).</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -553,44 +568,70 @@ phase (fem.Function): DG0 phase-ID field on the Stokes sub-mesh
 <dt class="sig sig-object py" id="stonedfenicsx.material_property.compute_material_property.heat_conductivity_FX">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.material_property.compute_material_property.</span></span><span class="sig-name descname"><span class="pre">heat_conductivity_FX</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scal_cached</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.material_property.compute_material_property.THERMALCACHED" title="stonedfenicsx.material_property.compute_material_property.THERMALCACHED"><span class="pre">stonedfenicsx.material_property.compute_material_property.THERMALCACHED</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Cp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Expression</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Expression</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dolfinx.fem.Expression</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/material_property/compute_material_property.html#heat_conductivity_FX"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.material_property.compute_material_property.heat_conductivity_FX" title="Link to this definition">¶</a></dt>
 <dd><p>Build the UFL expression for thermal conductivity as a function of T and P.</p>
-<p>Implements the composite conductivity law:
-k = k0 + (k_lat(T) * exp(k_f * P) * Cp * rho  +  k_rad(T) * flag_rad)</p>
-<p>where:
-k_lat(T) = k_a + k_b * exp(-(T - T_ref)/k_c) + k_d * exp(-(T - T_ref)/k_e)
-k_rad(T) = a_rad * exp(-(T - T_a)^2 / (2 x_a^2))
-+ b_rad * exp(-(T - T_b)^2 / (2 x_b^2))</p>
-<p>For phases with a constant conductivity, <code class="docutils literal notranslate"><span class="pre">k0</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> and the lattice/radiative
+<dl>
+<dt>Implements the composite conductivity law:</dt><dd><p>k = k0 + (k_lat(T) * exp(k_f * P) * Cp * rho  +  k_rad(T) * flag_rad)</p>
+</dd>
+<dt>where:</dt><dd><p>k_lat(T) = k_a + k_b * exp(-(T - T_ref)/k_c) + k_d * exp(-(T - T_ref)/k_e)
+k_rad(T) = a_rad * exp(-(T - T_a)^2 / (2 x_a^2))</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>b_rad * exp(-(T - T_b)^2 / (2 x_b^2))</p></li>
+</ul>
+</div></blockquote>
+</dd>
+</dl>
+<p>For phases with a constant conductivity, <cite>k0 &gt; 0</cite> and the lattice/radiative
 terms are zero (their coefficients are 0 in the database).  For mantle
-phases, <code class="docutils literal notranslate"><span class="pre">k0</span> <span class="pre">=</span> <span class="pre">0</span></code> and the T- and P-dependent terms are active.</p>
-<p>Args:
-scal_cached (THERMALCACHED): Cached DG0 fem.Functions for all
-conductivity coefficients.
-T (fem.Function): Temperature field (dimensionless) — typically the
-Picard-frozen <code class="docutils literal notranslate"><span class="pre">T_k</span></code> or the UFL trial function.
-p (fem.Function): Lithostatic pressure field (dimensionless).
-Cp (fem.Expression): UFL heat-capacity expression from <code class="docutils literal notranslate"><span class="pre">heat_capacity_FX</span></code>;
-passed in to avoid recomputing it inside this function.
-rho (fem.Expression): UFL density expression from <code class="docutils literal notranslate"><span class="pre">density_FX</span></code>.</p>
-<p>Returns:
-fem.Expression: UFL expression for k, to be used directly in the
+phases, <cite>k0 = 0</cite> and the T- and P-dependent terms are active.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scal_cached</strong> (<a class="reference internal" href="#stonedfenicsx.material_property.compute_material_property.THERMALCACHED" title="stonedfenicsx.material_property.compute_material_property.THERMALCACHED"><em>THERMALCACHED</em></a>) – Cached DG0 fem.Functions for all
+conductivity coefficients.</p></li>
+<li><p><strong>T</strong> (<em>fem.Function</em>) – Temperature field (dimensionless) — typically the
+Picard-frozen <cite>T_k</cite> or the UFL trial function.</p></li>
+<li><p><strong>p</strong> (<em>fem.Function</em>) – Lithostatic pressure field (dimensionless).</p></li>
+<li><p><strong>Cp</strong> (<em>fem.Expression</em>) – UFL heat-capacity expression from <cite>heat_capacity_FX</cite>;
+passed in to avoid recomputing it inside this function.</p></li>
+<li><p><strong>rho</strong> (<em>fem.Expression</em>) – UFL density expression from <cite>density_FX</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>UFL expression for k, to be used directly in the
 bilinear form of the energy equation.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>fem.Expression</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.material_property.compute_material_property.heat_capacity_FX">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.material_property.compute_material_property.</span></span><span class="sig-name descname"><span class="pre">heat_capacity_FX</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scal_cached</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.material_property.compute_material_property.THERMALCACHED" title="stonedfenicsx.material_property.compute_material_property.THERMALCACHED"><span class="pre">stonedfenicsx.material_property.compute_material_property.THERMALCACHED</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dolfinx.fem.Expression</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/material_property/compute_material_property.html#heat_capacity_FX"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.material_property.compute_material_property.heat_capacity_FX" title="Link to this definition">¶</a></dt>
 <dd><p>Build the UFL expression for heat capacity as a polynomial in T.</p>
-<p>Implements the Berman (1988) polynomial:
-Cp = c0 + c1 * T^(-0.5) + c2 * T^(-2) + c3 * T^(-3) + c4 * T + c5 * T^2</p>
-<p>For phases with a constant heat capacity only <code class="docutils literal notranslate"><span class="pre">c0</span></code> is non-zero; all other
+<dl class="simple">
+<dt>Implements the Berman (1988) polynomial:</dt><dd><p>Cp = c0 + c1 * T^(-0.5) + c2 * T^(-2) + c3 * T^(-3) + c4 * T + c5 * T^2</p>
+</dd>
+</dl>
+<p>For phases with a constant heat capacity only <cite>c0</cite> is non-zero; all other
 coefficients are set to 0 in the database.</p>
-<p>Args:
-scal_cached (THERMALCACHED): Cached DG0 fem.Functions for the heat-
-capacity polynomial coefficients c0–c5.
-T (fem.Function): Temperature field (dimensionless).</p>
-<p>Returns:
-fem.Expression: UFL expression for Cp, to be used in the energy
-bilinear form and passed to <code class="docutils literal notranslate"><span class="pre">heat_conductivity_FX</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scal_cached</strong> (<a class="reference internal" href="#stonedfenicsx.material_property.compute_material_property.THERMALCACHED" title="stonedfenicsx.material_property.compute_material_property.THERMALCACHED"><em>THERMALCACHED</em></a>) – Cached DG0 fem.Functions for the heat-
+capacity polynomial coefficients c0–c5.</p></li>
+<li><p><strong>T</strong> (<em>fem.Function</em>) – Temperature field (dimensionless).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>UFL expression for Cp, to be used in the energy
+bilinear form and passed to <cite>heat_conductivity_FX</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>fem.Expression</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -598,15 +639,24 @@ bilinear form and passed to <code class="docutils literal notranslate"><span cla
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.material_property.compute_material_property.</span></span><span class="sig-name descname"><span class="pre">compute_radiogenic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scal_cached</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.material_property.compute_material_property.THERMALCACHED" title="stonedfenicsx.material_property.compute_material_property.THERMALCACHED"><span class="pre">stonedfenicsx.material_property.compute_material_property.THERMALCACHED</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">hs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dolfinx.fem.Function</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/material_property/compute_material_property.html#compute_radiogenic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.material_property.compute_material_property.compute_radiogenic" title="Link to this definition">¶</a></dt>
 <dd><p>Interpolate the cached radiogenic heating field into a pre-allocated Function.</p>
 <p>Copies the per-element radiogenic heat production (already stored as a
-DG0 fem.Function in <code class="docutils literal notranslate"><span class="pre">scal_cached.radiogenic</span></code>) into <code class="docutils literal notranslate"><span class="pre">hs</span></code> by direct
+DG0 fem.Function in <cite>scal_cached.radiogenic</cite>) into <cite>hs</cite> by direct
 interpolation, avoiding a new allocation.</p>
-<p>Args:
-scal_cached (THERMALCACHED): Thermal cache holding <code class="docutils literal notranslate"><span class="pre">radiogenic</span></code> as a
-DG0 fem.Function of non-dimensionalised heat production [W/m^3].
-hs (fem.Function): Pre-allocated target Function on the same function
-space; overwritten in-place.</p>
-<p>Returns:
-fem.Function: The updated <code class="docutils literal notranslate"><span class="pre">hs</span></code> object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scal_cached</strong> (<a class="reference internal" href="#stonedfenicsx.material_property.compute_material_property.THERMALCACHED" title="stonedfenicsx.material_property.compute_material_property.THERMALCACHED"><em>THERMALCACHED</em></a>) – Thermal cache holding <cite>radiogenic</cite> as a
+DG0 fem.Function of non-dimensionalised heat production [W/m^3].</p></li>
+<li><p><strong>hs</strong> (<em>fem.Function</em>) – Pre-allocated target Function on the same function
+space; overwritten in-place.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The updated <cite>hs</cite> object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>fem.Function</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -614,41 +664,69 @@ fem.Function: The updated <code class="docutils literal notranslate"><span class
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.material_property.compute_material_property.</span></span><span class="sig-name descname"><span class="pre">density_FX</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scal_cached</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.material_property.compute_material_property.THERMALCACHED" title="stonedfenicsx.material_property.compute_material_property.THERMALCACHED"><span class="pre">stonedfenicsx.material_property.compute_material_property.THERMALCACHED</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dolfinx.fem.Expression</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/material_property/compute_material_property.html#density_FX"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.material_property.compute_material_property.density_FX" title="Link to this definition">¶</a></dt>
 <dd><p>Build the UFL expression for density as a function of T and P.</p>
 <p>Selects one of three density formulations per element via UFL conditional
-branching on <code class="docutils literal notranslate"><span class="pre">scal_cached.option_rho</span></code>:
-0 – constant:          rho = rho0
+branching on <cite>scal_cached.option_rho</cite>:</p>
+<blockquote>
+<div><p>0 – constant:          rho = rho0
 1 – T-dependent:       rho = rho0 * (1 - alpha_int(T, P))
 2 – T- and P-dependent: rho = rho0 * (1 - alpha_int) * exp(P / kb)</p>
-<p>where the integrated thermal expansivity term is:
-alpha_int = exp(-P * alpha2) * (alpha0 * (T - T_ref)
-+ (alpha1/2) * (T^2 - T_ref^2))</p>
-<p>Args:
-scal_cached (THERMALCACHED): Cached DG0 fem.Functions for rho0,
+</div></blockquote>
+<dl class="simple">
+<dt>where the integrated thermal expansivity term is:</dt><dd><dl class="simple">
+<dt>alpha_int = exp(-P * alpha2) * (alpha0 * (T - T_ref)</dt><dd><ul class="simple">
+<li><p>(alpha1/2) * (T^2 - T_ref^2))</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scal_cached</strong> (<a class="reference internal" href="#stonedfenicsx.material_property.compute_material_property.THERMALCACHED" title="stonedfenicsx.material_property.compute_material_property.THERMALCACHED"><em>THERMALCACHED</em></a>) – Cached DG0 fem.Functions for rho0,
 alpha0, alpha1, alpha2, kb, option_rho, and the reference
-temperature temp_ref.
-T (fem.Function): Temperature field (dimensionless).
-p (fem.Function): Lithostatic pressure field (dimensionless).</p>
-<p>Returns:
-fem.Expression: UFL expression for density, to be inserted into the
+temperature temp_ref.</p></li>
+<li><p><strong>T</strong> (<em>fem.Function</em>) – Temperature field (dimensionless).</p></li>
+<li><p><strong>p</strong> (<em>fem.Function</em>) – Lithostatic pressure field (dimensionless).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>UFL expression for density, to be inserted into the
 energy and Stokes bilinear forms.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>fem.Expression</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.material_property.compute_material_property.alpha_FX">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.material_property.compute_material_property.</span></span><span class="sig-name descname"><span class="pre">alpha_FX</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scal_cached</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.material_property.compute_material_property.THERMALCACHED" title="stonedfenicsx.material_property.compute_material_property.THERMALCACHED"><span class="pre">stonedfenicsx.material_property.compute_material_property.THERMALCACHED</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dolfinx.fem.Expression</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/material_property/compute_material_property.html#alpha_FX"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.material_property.compute_material_property.alpha_FX" title="Link to this definition">¶</a></dt>
 <dd><p>Build the UFL expression for thermal expansivity as a function of T and P.</p>
-<p>Implements the linearised Birch-Murnaghan expansivity:
-alpha(T, P) = exp(-P * alpha2) * (alpha0 + alpha1 * (T - T_ref))</p>
+<dl class="simple">
+<dt>Implements the linearised Birch-Murnaghan expansivity:</dt><dd><p>alpha(T, P) = exp(-P * alpha2) * (alpha0 + alpha1 * (T - T_ref))</p>
+</dd>
+</dl>
 <p>The pressure factor exp(-P * alpha2) accounts for compressional
 suppression of thermal expansion.  For constant-alpha phases only alpha0
 is non-zero.</p>
-<p>Args:
-scal_cached (THERMALCACHED): Cached DG0 fem.Functions for alpha0,
-alpha1, alpha2, and the reference temperature temp_ref.
-T (fem.Function): Temperature field (dimensionless).
-p (fem.Function): Lithostatic pressure field (dimensionless).</p>
-<p>Returns:
-fem.Expression: UFL expression for alpha, suitable for use in the
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scal_cached</strong> (<a class="reference internal" href="#stonedfenicsx.material_property.compute_material_property.THERMALCACHED" title="stonedfenicsx.material_property.compute_material_property.THERMALCACHED"><em>THERMALCACHED</em></a>) – Cached DG0 fem.Functions for alpha0,
+alpha1, alpha2, and the reference temperature temp_ref.</p></li>
+<li><p><strong>T</strong> (<em>fem.Function</em>) – Temperature field (dimensionless).</p></li>
+<li><p><strong>p</strong> (<em>fem.Function</em>) – Lithostatic pressure field (dimensionless).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>UFL expression for alpha, suitable for use in the
 buoyancy term of the Stokes momentum equation.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>fem.Expression</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -657,30 +735,45 @@ buoyancy term of the Stokes momentum equation.</p>
 <dd><p>Build the UFL expression for effective viscosity from strain rate, T, and P.</p>
 <p>Computes a composite diffusion + dislocation creep viscosity with a
 maximum-viscosity cutoff, selecting the formulation per element via UFL
-conditionals on <code class="docutils literal notranslate"><span class="pre">rg_cached.option_eta</span></code>:
-0 – constant:          eta = rg_cached.eta
+conditionals on <cite>rg_cached.option_eta</cite>:</p>
+<blockquote>
+<div><p>0 – constant:          eta = rg_cached.eta
 1 – diffusion only:    eta = harmonic(eta_df, eta_max)
 2 – composite:         eta = harmonic(eta_df, eta_ds, eta_max)</p>
+</div></blockquote>
 <p>The creep flow factors (in SI, re-dimensionalised internally via
-pdb.temp_scal and pdb.pres_scal) are:
-C_df = b_dif * exp(-(E_dif + P * V_dif) / (R * T))
+pdb.temp_scal and pdb.pres_scal) are:</p>
+<blockquote>
+<div><p>C_df = b_dif * exp(-(E_dif + P * V_dif) / (R * T))
 C_ds = b_dis * exp(-(E_dis + P * V_dis) / (R * T))</p>
-<p>The dislocation viscosity is:
-eta_ds = 0.5 * C_ds^(-1/n) * e_II^((1-n)/n)</p>
+</div></blockquote>
+<dl class="simple">
+<dt>The dislocation viscosity is:</dt><dd><p>eta_ds = 0.5 * C_ds^(-1/n) * e_II^((1-n)/n)</p>
+</dd>
+</dl>
 <p>where e_II = sqrt(0.5 * e:e + epsilon) is the second invariant of the
 strain-rate tensor.</p>
-<p>Args:
-e (fem.Expression): Full strain-rate tensor UFL expression
-(not the invariant); the invariant is computed internally.
-temp_in (fem.Function): Temperature field (dimensionless).
-pres_in (fem.Function): Pressure field (dimensionless).
-pdb (PhaseDataBase): Database carrying <code class="docutils literal notranslate"><span class="pre">temp_scal</span></code>, <code class="docutils literal notranslate"><span class="pre">pres_scal</span></code>, and
-<code class="docutils literal notranslate"><span class="pre">gas_constant</span></code> needed to re-dimensionalise the Arrhenius exponent.
-rg_cached (RHEOLOGYCACHED): Cached DG0 fem.Functions for all creep
-parameters and the <code class="docutils literal notranslate"><span class="pre">option_eta</span></code> selector.</p>
-<p>Returns:
-fem.Expression: UFL expression for eta, to be inserted into the Stokes
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>e</strong> (<em>fem.Expression</em>) – Full strain-rate tensor UFL expression
+(not the invariant); the invariant is computed internally.</p></li>
+<li><p><strong>temp_in</strong> (<em>fem.Function</em>) – Temperature field (dimensionless).</p></li>
+<li><p><strong>pres_in</strong> (<em>fem.Function</em>) – Pressure field (dimensionless).</p></li>
+<li><p><strong>pdb</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – Database carrying <cite>temp_scal</cite>, <cite>pres_scal</cite>, and
+<cite>gas_constant</cite> needed to re-dimensionalise the Arrhenius exponent.</p></li>
+<li><p><strong>rg_cached</strong> (<a class="reference internal" href="#stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED" title="stonedfenicsx.material_property.compute_material_property.RHEOLOGYCACHED"><em>RHEOLOGYCACHED</em></a>) – Cached DG0 fem.Functions for all creep
+parameters and the <cite>option_eta</cite> selector.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>UFL expression for eta, to be inserted into the Stokes
 bilinear form.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>fem.Expression</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -694,36 +787,47 @@ are made to avoid modifying the solver fields) because activation energies
 are stored in SI (J/mol) and cannot be non-dimensionalised consistently
 with a mol-based gas constant.</p>
 <p>Optionally applies a water-fugacity correction to the creep prefactor
-when <code class="docutils literal notranslate"><span class="pre">pdb.water_cor</span> <span class="pre">==</span> <span class="pre">2</span></code>:
-C_ds *= (f_H2O(P,T) / f_H2O(P_ref, T_ref))^r_wz</p>
-<p>The effective stress is regularised via a smooth tanh cap:
-tau_eff = tau_vis * tanh(tau_lim / tau_vis)</p>
-<p>where <code class="docutils literal notranslate"><span class="pre">tau_lim</span> <span class="pre">=</span> <span class="pre">P</span> <span class="pre">*</span> <span class="pre">sin(phi)</span></code> is the Drucker-Prager yield stress.</p>
-<p>Args:
-e_ii (fem.Expression): Second invariant of the strain-rate tensor
-(already computed, e.g. from <code class="docutils literal notranslate"><span class="pre">compute_strain_rate</span></code>).
-temp_in (fem.Function): Temperature field (dimensionless); copied and
-re-dimensionalised internally.
-pres_in (fem.Function): Pressure field (dimensionless); copied and
-re-dimensionalised internally.
-pdb (PhaseDataBase): Database with weak-zone rheology parameters
+when <cite>pdb.water_cor == 2</cite>:</p>
+<blockquote>
+<div><p>C_ds <a href="#id1"><span class="problematic" id="id2">*</span></a>= (f_H2O(P,T) / f_H2O(P_ref, T_ref))^r_wz</p>
+</div></blockquote>
+<dl class="simple">
+<dt>The effective stress is regularised via a smooth tanh cap:</dt><dd><p>tau_eff = tau_vis * tanh(tau_lim / tau_vis)</p>
+</dd>
+</dl>
+<p>where <cite>tau_lim = P * sin(phi)</cite> is the Drucker-Prager yield stress.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>e_ii</strong> (<em>fem.Expression</em>) – Second invariant of the strain-rate tensor
+(already computed, e.g. from <cite>compute_strain_rate</cite>).</p></li>
+<li><p><strong>temp_in</strong> (<em>fem.Function</em>) – Temperature field (dimensionless); copied and
+re-dimensionalised internally.</p></li>
+<li><p><strong>pres_in</strong> (<em>fem.Function</em>) – Pressure field (dimensionless); copied and
+re-dimensionalised internally.</p></li>
+<li><p><strong>pdb</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhaseDataBase" title="stonedfenicsx.config.phase_db.PhaseDataBase"><em>PhaseDataBase</em></a>) – Database with weak-zone rheology parameters
 (bdis_wz, n_wz, edis_wz, vdis_wz, eh2o_wz, vh2o_wz, r_wz, phi)
-and scaling factors (temp_scal, pres_scal, gas_constant).</p>
-<p>Args:
-e_ii (fem.Expression): Second invariant of the strain-rate tensor
-(already computed, e.g. from <code class="docutils literal notranslate"><span class="pre">compute_strain_rate</span></code>).
-temp_in (fem.Function): Temperature field (dimensionless); copied and
-re-dimensionalised internally.
-pres_in (fem.Function): Pressure field (dimensionless); copied and
-re-dimensionalised internally.
-pdb (PhaseDataBase): Database with weak-zone rheology parameters
+and scaling factors (temp_scal, pres_scal, gas_constant).</p></li>
+<li><p><strong>e_ii</strong> – Second invariant of the strain-rate tensor
+(already computed, e.g. from <cite>compute_strain_rate</cite>).</p></li>
+<li><p><strong>temp_in</strong> – Temperature field (dimensionless); copied and
+re-dimensionalised internally.</p></li>
+<li><p><strong>pres_in</strong> – Pressure field (dimensionless); copied and
+re-dimensionalised internally.</p></li>
+<li><p><strong>pdb</strong> – Database with weak-zone rheology parameters
 (bdis_wz, n_wz, edis_wz, vdis_wz, eh2o_wz, vh2o_wz, r_wz, phi)
-and scaling factors (temp_scal, pres_scal, gas_constant).</p>
-<p>Returns:
-tuple[fem.Expression, fem.Expression, fem.Expression]:
-tau_eff  – regularised effective stress (UFL expression).
+and scaling factors (temp_scal, pres_scal, gas_constant).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tau_eff  – regularised effective stress (UFL expression).
 tau_vis  – viscous stress before plastic cap (UFL expression).
 tau_lim  – Drucker-Prager yield stress (UFL expression).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[fem.Expression, fem.Expression, fem.Expression]</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

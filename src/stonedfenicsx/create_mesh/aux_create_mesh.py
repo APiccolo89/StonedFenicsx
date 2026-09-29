@@ -61,28 +61,18 @@ class Class_Points:
         physical points that will later be connected into physical lines for the Gmsh
         model.
 
-        Parameters
-        ----------
-        sx : np.ndarray
-            x-coordinates of the top surface of the subducting plate.
-        sy : np.ndarray
-            y-coordinates of the top surface of the subducting plate.
-        bx : np.ndarray
-            x-coordinates of the bottom surface of the subducting plate.
-        by : np.ndarray
-            y-coordinates of the bottom surface of the subducting plate.
-        oc_cx : np.ndarray | None
-            x-coordinates of the oceanic Moho. Can be `None`/empty if the crust is not defined.
-        oc_cy : np.ndarray | None
-            y-coordinates of the oceanic Moho. Can be `None`/empty if the crust is not defined.
-        g_input : GeomInput
-            Object containing all input geometric information.
+        Args:
+            sx (np.ndarray): x-coordinates of the top surface of the subducting plate.
+            sy (np.ndarray): y-coordinates of the top surface of the subducting plate.
+            bx (np.ndarray): x-coordinates of the bottom surface of the subducting plate.
+            by (np.ndarray): y-coordinates of the bottom surface of the subducting plate.
+            oc_cx (np.ndarray | None): x-coordinates of the oceanic Moho. Can be `None`/empty if the crust is not defined.
+            oc_cy (np.ndarray | None): y-coordinates of the oceanic Moho. Can be `None`/empty if the crust is not defined.
+            g_input (GeomInput): Object containing all input geometric information.
 
-        Returns
-        -------
-        mesh_model : gmsh.model
-            Updated Gmsh model containing the generated points.
-        -> update the class points with new members
+        Returns:
+            gmsh.model: Updated Gmsh model containing the generated points. The point
+                containers of this class are updated with the new members.
         """
 
         # Function CREATE POINTS
@@ -199,30 +189,25 @@ class Class_Line:
         to each line so they can be referenced later (e.g., for boundary markers and
         physical groups).
 
-        Parameters
-        ----------
-        mesh_model : gmsh.model
-            Gmsh model object to be updated.
-        CP : Class_Points
-            Container storing the physical point tags and their coordinates.
-        g_input : GeomInput
-            Object containing the geometric input parameters controlling which lines
-            are created and how they are connected.
+        Args:
+            mesh_model (gmsh.model): Gmsh model object to be updated.
+            CP (Class_Points): Container storing the physical point tags and their coordinates.
+            g_input (GeomInput): Object containing the geometric input parameters controlling which lines
+                are created and how they are connected.
 
-        Returns
-        -------
-        mesh_model : gmsh.model
-            Updated Gmsh model containing the generated lines.
-        LP : Class_Line
-            Updated line container holding the created line IDs/tags and connectivity
-            (e.g., mapping line -> endpoint point tags).
+        Returns:
+            tuple: A tuple containing:
 
-        Notes
-        -----
-        The returned line container is used to:
-        - build surfaces from line loops,
-        - define physical groups for boundaries/regions,
-        - and maintain consistent bookkeeping between geometry objects.
+                - mesh_model (gmsh.model): Updated Gmsh model containing the generated lines.
+                - LP (Class_Line): Updated line container holding the created line IDs/tags and connectivity
+                  (e.g., mapping line -> endpoint point tags).
+
+        Notes:
+            The returned line container is used to:
+
+            - build surfaces from line loops,
+            - define physical groups for boundaries/regions,
+            - and maintain consistent bookkeeping between geometry objects.
         """
 
         # Top Boundary
@@ -389,20 +374,14 @@ def create_loop(l_list: list, mesh_model: gmsh.model, tag: int) -> gmsh.model:
     and creates a Gmsh curve loop with the specified tag. The resulting loop can
     then be used to define plane surfaces and physical groups.
 
-    Parameters
-    ----------
-    l_list : list[int]
-        Ordered list of line IDs defining the loop boundary. Lines must be
-        contiguous and oriented consistently to form a closed loop.
-    mesh_model : gmsh.model
-        Gmsh model object to be updated.
-    tag : int
-        Tag/ID assigned to the created curve loop.
+    Args:
+        l_list (list[int]): Ordered list of line IDs defining the loop boundary. Lines must be
+            contiguous and oriented consistently to form a closed loop.
+        mesh_model (gmsh.model): Gmsh model object to be updated.
+        tag (int): Tag/ID assigned to the created curve loop.
 
-    Returns
-    -------
-    mesh_model : gmsh.model
-        Updated Gmsh model containing the newly created curve loop.
+    Returns:
+        gmsh.model: Updated Gmsh model containing the newly created curve loop.
     """
 
     a = []
@@ -430,25 +409,18 @@ def find_line_index(Lin_ar: ndarray, point: ndarray, d: float) -> int:
     coordinate is equal to d, stop the loop, and release the index of the
     global line database.
 
-    Parameters
-    ----------
-    Lin_ar : ndarray[np.int64]
-        Global line database.
-    point : ndarray[np.int64]
-        Global database of the points
-    d : float
-        coordinate-y to find the relative point
+    Args:
+        Lin_ar (ndarray[np.int64]): Global line database.
+        point (ndarray[np.int64]): Global database of the points
+        d (float): coordinate-y to find the relative point
 
-    Returns
-    -------
-    index : int | list[int]
-        Line ID(s) (or indices in `Lin_ar`) of the line(s) to which the given point
-        belongs.
+    Returns:
+        int | list[int]: Line ID(s) (or indices in `Lin_ar`) of the line(s) to which the given point
+            belongs.
 
-    Notes
-    -----
-    A point may belong to multiple lines (e.g., at junctions or corners). In such
-    cases, returning a list of IDs is recommended.
+    Notes:
+        A point may belong to multiple lines (e.g., at junctions or corners). In such
+        cases, returning a list of IDs is recommended.
     """
 
     for i in range(len(Lin_ar[0, :]) - 1):
@@ -501,17 +473,15 @@ def find_slab_surface(g_input: GeomInput) -> tuple[ndarray[float], ndarray[float
     At each step we compute the local bending angle at the current and next arc-length
     positions, average them, and use that mean angle to advance to the next point.
 
-    Angle convention
-    ----------------
-    theta is measured with respect to the positive horizontal x-axis.
+    Angle convention: theta is measured with respect to the positive horizontal x-axis::
 
-             theta
-    x-axis  -------\\------
-                    \\ theta
-                     \\/
+                 theta
+        x-axis  -------\\------
+                        \\ theta
+                         \\/
 
-    Algorithm (summary)
-    -------------------
+    Algorithm (summary):
+
     1. Initialise `top_slab` with the trench point.
     2. Initialise the arc-length `lgh = 0.0` (distance measured along the slab surface).
     3. While the current point is above the model bottom boundary (`y > ymin`):
@@ -521,19 +491,16 @@ def find_slab_surface(g_input: GeomInput) -> tuple[ndarray[float], ndarray[float
        d. Use `theta_mean` to advance one step and append the new point to `top_slab`.
        e. Update `lgh = lghn`.
 
-    Returns
-    -------
-    top_slab : (n_segment, 2) ndarray
-        Coordinates (x, y) of the slab top surface polyline.
-    theta_mean : float
-        Mean bending angle used for the last segment (or an average over segments,
-        depending on your implementation).
+    Returns:
+        tuple: A tuple containing:
 
-    Raises
-    ------
-    ValueError
-        If the selected slab-surface method is not implemented (only "custom" is
-        currently supported).
+            - top_slab ((n_segment, 2) ndarray): Coordinates (x, y) of the slab top surface polyline.
+            - theta_mean (float): Mean bending angle used for the last segment (or an average over segments,
+              depending on your implementation).
+
+    Raises:
+        ValueError: If the selected slab-surface method is not implemented (only "custom" is
+            currently supported).
     """
 
     if g_input.slab_type in ("CustomRibe", "CustomParabolic"):
@@ -691,30 +658,22 @@ def function_create_subducting_plate_geometry(
     geometry object may be updated (e.g., derived quantities, validated parameters,
     or cached geometry).
 
-    Parameters
-    ----------
-    g_input : GeomInput
-        Object containing all input geometric parameters required to construct the
-        slab and associated interfaces.
+    Args:
+        g_input (GeomInput): Object containing all input geometric parameters required to construct the
+            slab and associated interfaces.
 
-    Returns
-    -------
-    ax : np.ndarray
-        x-coordinates of the slab top surface.
-    ay : np.ndarray
-        y-coordinates of the slab top surface.
-    bx : np.ndarray
-        x-coordinates of the slab bottom surface.
-    by : np.ndarray
-        y-coordinates of the slab bottom surface.
-    ox : np.ndarray | None
-        x-coordinates of the oceanic Moho. Can be `None`/empty if the crust is not
-        defined or not requested.
-    oy : np.ndarray | None
-        y-coordinates of the oceanic Moho. Can be `None`/empty if the crust is not
-        defined or not requested.
-    g_input : GeomInput
-        Updated geometry input object (may include derived or validated fields).
+    Returns:
+        tuple: A tuple containing:
+
+            - ax (np.ndarray): x-coordinates of the slab top surface.
+            - ay (np.ndarray): y-coordinates of the slab top surface.
+            - bx (np.ndarray): x-coordinates of the slab bottom surface.
+            - by (np.ndarray): y-coordinates of the slab bottom surface.
+            - ox (np.ndarray | None): x-coordinates of the oceanic Moho. Can be `None`/empty if the crust is not
+              defined or not requested.
+            - oy (np.ndarray | None): y-coordinates of the oceanic Moho. Can be `None`/empty if the crust is not
+              defined or not requested.
+            - g_input (GeomInput): Updated geometry input object (may include derived or validated fields).
     """
 
     # Prepare the slab surface. Slab surface can be derived from real data, or just created ad hoc by the slab routines
@@ -768,29 +727,22 @@ def generate_parallel_layer_subducting_plate(
     crust thickness or slab thickness), representing an internal layer boundary
     within the subducting plate.
 
-    Parameters
-    ----------
-    sx : ndarray[np.float64]
-        x-coordinates of the slab top surface.
-    sy : ndarray[np.float64]
-        y-coordinates of the slab top surface.
-    th : float
-        Local slab bending angle associated with the surface points (degrees or
-        radians depending on the implementation; must be consistent with the
-        trigonometric functions used).
-    lt : float
-        Layer thickness used to offset the surface (e.g., oceanic crust thickness
-        or slab thickness) (SI units: [m]).
-    constant_theta: bool
-        Tells whether or not the subduction plate is a constant slope slab (i.e.,
-        VanKeken Benchmark)
+    Args:
+        sx (ndarray[np.float64]): x-coordinates of the slab top surface.
+        sy (ndarray[np.float64]): y-coordinates of the slab top surface.
+        th (float): Local slab bending angle associated with the surface points (degrees or
+            radians depending on the implementation; must be consistent with the
+            trigonometric functions used).
+        lt (float): Layer thickness used to offset the surface (e.g., oceanic crust thickness
+            or slab thickness) (SI units: [m]).
+        constant_theta (bool): Tells whether or not the subduction plate is a constant slope slab (i.e.,
+            VanKeken Benchmark)
 
-    Returns
-    -------
-    cx : ndarray[np.float64]
-        x-coordinates of the layer-defining surface.
-    cy : ndarray[np.float64]
-        y-coordinates of the layer-defining surface.
+    Returns:
+        tuple: A tuple containing:
+
+            - cx (ndarray[np.float64]): x-coordinates of the layer-defining surface.
+            - cy (ndarray[np.float64]): y-coordinates of the layer-defining surface.
     """
 
     cx = np.zeros([np.amax(sx.shape), 1])
@@ -929,38 +881,29 @@ def _create_points(
     points, while explicitly tracking the assigned tags so they can be referenced
     consistently later when building lines/surfaces.
 
-    Parameters
-    ----------
-    mesh : gmsh.model
-        the mesh model
-    x : float | np.ndarray
-        x-coordinate(s) of the point(s) [m]. Can be a scalar or an array.
-    y : float | np.ndarray
-        y-coordinate(s) of the point(s) [m]. Can be a scalar or an array.
-    res : float
-        Target mesh size (characteristic length) assigned to the point(s).
-    tag_pr : int
-        Previous/starting tag used to track point IDs across calls. Since Gmsh
-        can assign tags internally, this value is used to keep bookkeeping
-        consistent.
+    Args:
+        mesh (gmsh.model): the mesh model
+        x (float | np.ndarray): x-coordinate(s) of the point(s) [m]. Can be a scalar or an array.
+        y (float | np.ndarray): y-coordinate(s) of the point(s) [m]. Can be a scalar or an array.
+        res (float): Target mesh size (characteristic length) assigned to the point(s).
+        tag_pr (int): Previous/starting tag used to track point IDs across calls. Since Gmsh
+            can assign tags internally, this value is used to keep bookkeeping
+            consistent.
 
-    Returns
-    -------
-    max_tag : int
-        Maximum tag assigned during this function call.
-    tag_list : list[int]
-        List of tags for the created point(s), ordered consistently with the input
-        coordinates.
-    coord : np.ndarray
-        Coordinates of the created point(s), typically shaped as (N, 2) for (x, y).
-        If useful downstream, you may include tags alongside coordinates (e.g.,
-        (N, 3) with [tag, x, y])—in that case, document the exact convention.
+    Returns:
+        tuple: A tuple containing:
 
-    Notes
-    -----
-    This function solves the practical problem of creating a set of points (1..N)
-    in Gmsh while retaining a reliable mapping between coordinates and point tags,
-    so that subsequent geometry construction can reference points coherently.
+            - max_tag (int): Maximum tag assigned during this function call.
+            - tag_list (list[int]): List of tags for the created point(s), ordered consistently with the input
+              coordinates.
+            - coord (np.ndarray): Coordinates of the created point(s), typically shaped as (N, 2) for (x, y).
+              If useful downstream, you may include tags alongside coordinates (e.g.,
+              (N, 3) with [tag, x, y])—in that case, document the exact convention.
+
+    Notes:
+        This function solves the practical problem of creating a set of points (1..N)
+        in Gmsh while retaining a reliable mapping between coordinates and point tags,
+        so that subsequent geometry construction can reference points coherently.
     """
 
     tag_list = []
@@ -1001,34 +944,26 @@ def _create_lines(
     referenced consistently later when building curve loops, surfaces, and physical
     groups.
 
-    Parameters
-    ----------
-    mesh : gmsh.model
-        Gmsh model object to be updated.
-    previous : int
-        Previous/starting line tag used for bookkeeping across calls.
-    tag_p : list[int]
-        Point tags used to create the lines. Typically an ordered list of point
-        tags where consecutive pairs define segments.
+    Args:
+        mesh (gmsh.model): Gmsh model object to be updated.
+        previous (int): Previous/starting line tag used for bookkeeping across calls.
+        tag_p (list[int]): Point tags used to create the lines. Typically an ordered list of point
+            tags where consecutive pairs define segments.
 
-    Returns
-    -------
-    max_tag : int
-        Maximum line tag assigned during this function call.
-    tag_l : list[int]
-        List of tags for the created line(s), ordered consistently with the created
-        segments.
-    lines : np.ndarray
-        Array containing line metadata, typically shaped (N, 3) with rows
-        `[p1, p2, tag]`, where `p1` and `p2` are point tags and `tag` is the line tag.
-    mesh_model : gmsh.model
-        Updated Gmsh model containing the created line(s).
+    Returns:
+        tuple: A tuple containing:
 
-    Notes
-    -----
-    This function solves the practical problem of generating a set of lines from an
-    ordered list of point tags while keeping a reliable mapping between endpoint
-    tags and the created line tags for downstream geometry construction.
+            - max_tag (int): Maximum line tag assigned during this function call.
+            - tag_l (list[int]): List of tags for the created line(s), ordered consistently with the created
+              segments.
+            - lines (np.ndarray): Array containing line metadata, typically shaped (N, 3) with rows
+              `[p1, p2, tag]`, where `p1` and `p2` are point tags and `tag` is the line tag.
+            - mesh_model (gmsh.model): Updated Gmsh model containing the created line(s).
+
+    Notes:
+        This function solves the practical problem of generating a set of lines from an
+        ordered list of point tags while keeping a reliable mapping between endpoint
+        tags and the created line tags for downstream geometry construction.
     """
 
     len_p = len(tag_p) - 1

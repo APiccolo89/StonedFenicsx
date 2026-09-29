@@ -140,9 +140,7 @@
           <div class="body" role="main">
             
   <h1>Source code for stonedfenicsx.create_mesh.read_slab_surface</h1><div class="highlight"><pre>
-<span></span>
-
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">CubicSpline</span>
 
@@ -151,67 +149,59 @@
 
 <div class="viewcode-block" id="apply_Savitzky_Golay">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.read_slab_surface.html#stonedfenicsx.create_mesh.read_slab_surface.apply_Savitzky_Golay">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">apply_Savitzky_Golay</span><span class="p">(</span><span class="n">yd</span><span class="p">,</span><span class="n">order</span><span class="p">,</span><span class="n">cf</span><span class="p">):</span>
-    
+<span class="k">def</span><span class="w"> </span><span class="nf">apply_Savitzky_Golay</span><span class="p">(</span><span class="n">yd</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">cf</span><span class="p">):</span>
+
     <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">savgol_filter</span> <span class="k">as</span> <span class="n">sgf</span>
-    
-    <span class="n">yd_smooth</span> <span class="o">=</span> <span class="n">sgf</span><span class="p">(</span><span class="n">yd</span><span class="p">,</span><span class="n">cf</span><span class="p">,</span><span class="n">order</span><span class="p">)</span>
-    
+
+    <span class="n">yd_smooth</span> <span class="o">=</span> <span class="n">sgf</span><span class="p">(</span><span class="n">yd</span><span class="p">,</span> <span class="n">cf</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span>
+
     <span class="k">return</span> <span class="n">yd_smooth</span></div>
+
 
 
 <div class="viewcode-block" id="function_bending_data">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.read_slab_surface.html#stonedfenicsx.create_mesh.read_slab_surface.function_bending_data">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">function_bending_data</span><span class="p">(</span><span class="n">ell</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span><span class="n">theta</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span><span class="o">-&gt;</span><span class="nb">float</span><span class="p">:</span>
-    
-    <span class="n">cs</span><span class="o">=</span><span class="n">CubicSpline</span><span class="p">(</span><span class="n">ell</span><span class="p">,</span><span class="n">theta</span><span class="p">)</span>
-    
-    
-    <span class="k">def</span><span class="w"> </span><span class="nf">f2</span><span class="p">(</span><span class="n">x</span><span class="p">:</span><span class="nb">float</span><span class="o">|</span> <span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">]):</span>
-        
-        <span class="k">return</span> <span class="n">cs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-    
+<span class="k">def</span><span class="w"> </span><span class="nf">function_bending_data</span><span class="p">(</span><span class="n">ell</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">theta</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 
-    <span class="k">return</span> <span class="n">f2</span>  </div>
+    <span class="n">cs</span> <span class="o">=</span> <span class="n">CubicSpline</span><span class="p">(</span><span class="n">ell</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">f2</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">]):</span>
+
+        <span class="k">return</span> <span class="n">cs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">f2</span></div>
+
 
 
 <div class="viewcode-block" id="curve_fitting">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.read_slab_surface.html#stonedfenicsx.create_mesh.read_slab_surface.curve_fitting">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">curve_fitting</span><span class="p">(</span><span class="n">xd</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span><span class="n">yd</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span><span class="n">path</span><span class="p">:</span><span class="nb">str</span> <span class="p">,</span> <span class="n">name</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span><span class="n">max_depth</span><span class="p">:</span><span class="nb">float</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-
+<span class="k">def</span><span class="w"> </span><span class="nf">curve_fitting</span><span class="p">(</span><span class="n">xd</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">yd</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_depth</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""_summary_</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        _type_: _description_</span>
 <span class="sd">    """</span>
-        
 
-    
-    
-    
-    <span class="n">theta</span><span class="p">,</span> <span class="n">ell</span><span class="p">,</span> <span class="n">xd</span><span class="p">,</span><span class="n">yd</span> <span class="o">=</span> <span class="n">compute_bending_angle_length</span><span class="p">(</span><span class="n">xd</span><span class="p">,</span><span class="n">yd</span><span class="p">)</span>
+    <span class="n">theta</span><span class="p">,</span> <span class="n">ell</span><span class="p">,</span> <span class="n">xd</span><span class="p">,</span> <span class="n">yd</span> <span class="o">=</span> <span class="n">compute_bending_angle_length</span><span class="p">(</span><span class="n">xd</span><span class="p">,</span> <span class="n">yd</span><span class="p">)</span>
 
-    <span class="n">theta_sgf</span> <span class="o">=</span> <span class="n">apply_Savitzky_Golay</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">100</span><span class="p">)</span>        
-    
-    <span class="n">f_theta</span> <span class="o">=</span> <span class="n">function_bending_data</span><span class="p">(</span><span class="n">ell</span><span class="p">,</span><span class="n">theta_sgf</span><span class="p">)</span>
+    <span class="n">theta_sgf</span> <span class="o">=</span> <span class="n">apply_Savitzky_Golay</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">yd</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_depth</span><span class="p">:</span> 
+    <span class="n">f_theta</span> <span class="o">=</span> <span class="n">function_bending_data</span><span class="p">(</span><span class="n">ell</span><span class="p">,</span> <span class="n">theta_sgf</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">yd</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_depth</span><span class="p">:</span>
         <span class="n">mind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">yd</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span> 
-        <span class="n">mind</span> <span class="o">=</span> <span class="n">max_depth</span> 
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mind</span> <span class="o">=</span> <span class="n">max_depth</span>
 
-    <span class="n">slab_top</span><span class="p">,</span><span class="n">theta_mean</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">create_slab_surface</span><span class="p">(</span><span class="n">f_theta</span><span class="p">,</span><span class="n">mind</span><span class="p">,</span><span class="n">stp</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">)</span>
+    <span class="n">slab_top</span><span class="p">,</span> <span class="n">theta_mean</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">create_slab_surface</span><span class="p">(</span><span class="n">f_theta</span><span class="p">,</span> <span class="n">mind</span><span class="p">,</span> <span class="n">stp</span><span class="o">=</span><span class="mf">5.0</span><span class="p">)</span>
 
-
-    <span class="k">return</span> <span class="n">slab_top</span><span class="p">,</span><span class="n">theta_mean</span></div>
-
-
+    <span class="k">return</span> <span class="n">slab_top</span><span class="p">,</span> <span class="n">theta_mean</span></div>
 
 
 
 <div class="viewcode-block" id="compute_bending_angle_length">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.read_slab_surface.html#stonedfenicsx.create_mesh.read_slab_surface.compute_bending_angle_length">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">compute_bending_angle_length</span><span class="p">(</span><span class="n">x</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span><span class="n">z</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span><span class="o">-&gt;</span><span class="nb">tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span><span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_bending_angle_length</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">z</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""From the given subduction surface compute the bending angle and the total length</span>
 <span class="sd">    of the slab</span>
 
@@ -221,63 +211,63 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        theta: bending angle of the top surface of the slab</span>
-<span class="sd">        ell : total length of the surface of the slab. </span>
+<span class="sd">        ell : total length of the surface of the slab.</span>
 <span class="sd">    """</span>
-    
-    <span class="k">def</span><span class="w"> </span><span class="nf">cx</span><span class="p">(</span><span class="n">x0</span><span class="p">:</span><span class="nb">float</span><span class="p">,</span><span class="n">x1</span><span class="p">:</span><span class="nb">float</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">float</span><span class="p">:</span> 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">cx</span><span class="p">(</span><span class="n">x0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">x1</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Correct coordinate with the first point x/y coordinate</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            x0 (float): coordinate x or y of the first point </span>
+<span class="sd">            x0 (float): coordinate x or y of the first point</span>
 <span class="sd">            x1 (float): coordinate x or y of the second point</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            float: dx/dy of the given couple of point</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="n">x1</span><span class="o">-</span><span class="n">x0</span>
+        <span class="k">return</span> <span class="n">x1</span> <span class="o">-</span> <span class="n">x0</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">distance</span><span class="p">(</span><span class="n">x0</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span><span class="n">x1</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span><span class="o">-&gt;</span><span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Compute the distance between two points </span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">distance</span><span class="p">(</span><span class="n">x0</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">x1</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Compute the distance between two points</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            x0 (NDArray[float]): point 1 [x,y] coordinate</span>
 <span class="sd">            x1 (NDArray[float]): point 2 [x,y] coordinate</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            float: distance between the two points </span>
+<span class="sd">            float: distance between the two points</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">cx</span><span class="p">(</span><span class="n">x0</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">x1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="n">cx</span><span class="p">(</span><span class="n">x0</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">x1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">cx</span><span class="p">(</span><span class="n">x0</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">cx</span><span class="p">(</span><span class="n">x0</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
 
-    <span class="n">pmax</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span> 
-    
-    <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">pmax</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-    
-    <span class="n">ell</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">pmax</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-    
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pmax</span><span class="p">):</span> 
-        <span class="n">x0</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">z</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
-        <span class="n">x1</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span><span class="n">z</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]]</span>
-        <span class="n">dx</span> <span class="o">=</span> <span class="n">cx</span><span class="p">(</span><span class="n">x0</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">x1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="n">d</span>  <span class="o">=</span> <span class="n">distance</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span><span class="n">x1</span><span class="p">)</span>
-        <span class="n">theta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">dx</span><span class="o">/</span><span class="n">d</span>
-        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">pmax</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span> 
-            <span class="n">theta</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  
-        <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span><span class="mi">0</span><span class="p">:</span>
-            <span class="c1"># Compute the distance of the slab assuming that theta is constant and equal to the first segment of the slab           </span>
-            <span class="n">dy</span> <span class="o">=</span> <span class="n">cx</span><span class="p">(</span><span class="n">x0</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">x1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-            <span class="n">x_t</span> <span class="o">=</span> <span class="o">-</span><span class="n">x0</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">dx</span><span class="o">/</span><span class="n">dy</span><span class="p">)</span><span class="o">+</span><span class="n">x0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">sx</span> <span class="o">=</span> <span class="n">cx</span><span class="p">(</span><span class="n">x_t</span><span class="p">,</span><span class="n">x0</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="n">dl</span> <span class="o">=</span> <span class="n">distance</span><span class="p">([</span><span class="n">x_t</span><span class="p">,</span><span class="mf">0.0</span><span class="p">],</span><span class="n">x0</span><span class="p">)</span>
-            <span class="n">theta_0</span> <span class="o">=</span> <span class="n">sx</span><span class="o">/</span><span class="n">dl</span>
-            <span class="n">ell</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">dl</span>            
-        
-        <span class="n">ell</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">ell</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="n">d</span> 
+    <span class="n">pmax</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
 
-    <span class="c1"># Adding an additional portion of the vector </span>
-    <span class="c1"># Create a tail vector: </span>
-    <span class="n">imax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">dl</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">ell</span><span class="p">))))</span> 
-    <span class="n">dl_tail</span> <span class="o">=</span> <span class="n">dl</span><span class="o">/</span><span class="p">(</span><span class="n">imax</span><span class="p">)</span>
-    
+    <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">pmax</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+    <span class="n">ell</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">pmax</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pmax</span><span class="p">):</span>
+        <span class="n">x0</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">z</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+        <span class="n">x1</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">z</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]]</span>
+        <span class="n">dx</span> <span class="o">=</span> <span class="n">cx</span><span class="p">(</span><span class="n">x0</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">distance</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">)</span>
+        <span class="n">theta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">dx</span> <span class="o">/</span> <span class="n">d</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">pmax</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">theta</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Compute the distance of the slab assuming that theta is constant and equal to the first segment of the slab</span>
+            <span class="n">dy</span> <span class="o">=</span> <span class="n">cx</span><span class="p">(</span><span class="n">x0</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">x_t</span> <span class="o">=</span> <span class="o">-</span><span class="n">x0</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">dx</span> <span class="o">/</span> <span class="n">dy</span><span class="p">)</span> <span class="o">+</span> <span class="n">x0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">sx</span> <span class="o">=</span> <span class="n">cx</span><span class="p">(</span><span class="n">x_t</span><span class="p">,</span> <span class="n">x0</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">dl</span> <span class="o">=</span> <span class="n">distance</span><span class="p">([</span><span class="n">x_t</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">x0</span><span class="p">)</span>
+            <span class="n">theta_0</span> <span class="o">=</span> <span class="n">sx</span> <span class="o">/</span> <span class="n">dl</span>
+            <span class="n">ell</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">dl</span>
+
+        <span class="n">ell</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">ell</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">d</span>
+
+    <span class="c1"># Adding an additional portion of the vector</span>
+    <span class="c1"># Create a tail vector:</span>
+    <span class="n">imax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">dl</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">ell</span><span class="p">))))</span>
+    <span class="n">dl_tail</span> <span class="o">=</span> <span class="n">dl</span> <span class="o">/</span> <span class="p">(</span><span class="n">imax</span><span class="p">)</span>
+
     <span class="n">theta_tail</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">imax</span><span class="p">)</span>
     <span class="n">ell_tail</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">imax</span><span class="p">)</span>
     <span class="n">x_tail</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">imax</span><span class="p">)</span>
@@ -286,62 +276,49 @@
     <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">acos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
     <span class="n">theta_0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">acos</span><span class="p">(</span><span class="n">theta_0</span><span class="p">)</span>
 
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">imax</span><span class="p">):</span> 
-        
-        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> 
-            <span class="n">theta_tail</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">theta_0</span> 
-            <span class="n">ell_tail</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span> 
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">imax</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">theta_tail</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">theta_0</span>
+            <span class="n">ell_tail</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
             <span class="n">x_tail</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">x_t</span>
-            <span class="n">y_tail</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span> 
+            <span class="n">y_tail</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">ell_tail</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">ell_tail</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">dl_tail</span>
-        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">imax</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-            <span class="n">theta_tail</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">theta_0</span>
-            <span class="n">x_tail</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">x_tail</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">dl_tail</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta_tail</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
-            <span class="n">y_tail</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_tail</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">dl_tail</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta_tail</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
-        
-    
-        
+            <span class="n">ell_tail</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">ell_tail</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">dl_tail</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">imax</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">theta_tail</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">theta_0</span>
+            <span class="n">x_tail</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">x_tail</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">dl_tail</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta_tail</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+            <span class="n">y_tail</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_tail</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">dl_tail</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta_tail</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
 
-    <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">theta_tail</span><span class="p">,</span><span class="n">theta</span><span class="p">))</span>
-    <span class="n">ell</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">ell_tail</span><span class="p">,</span><span class="n">ell</span><span class="p">))</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">x_tail</span><span class="p">,</span><span class="n">x</span><span class="p">))</span>
-    <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">y_tail</span><span class="p">,</span><span class="n">z</span><span class="p">))</span>
+    <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">theta_tail</span><span class="p">,</span> <span class="n">theta</span><span class="p">))</span>
+    <span class="n">ell</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">ell_tail</span><span class="p">,</span> <span class="n">ell</span><span class="p">))</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">x_tail</span><span class="p">,</span> <span class="n">x</span><span class="p">))</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">y_tail</span><span class="p">,</span> <span class="n">z</span><span class="p">))</span>
 
-
-    
-    <span class="k">return</span> <span class="n">theta</span><span class="p">,</span> <span class="n">ell</span><span class="p">,</span> <span class="n">x</span><span class="o">-</span><span class="n">x_t</span><span class="p">,</span> <span class="n">z</span> </div>
+    <span class="k">return</span> <span class="n">theta</span><span class="p">,</span> <span class="n">ell</span><span class="p">,</span> <span class="n">x</span> <span class="o">-</span> <span class="n">x_t</span><span class="p">,</span> <span class="n">z</span></div>
 
 
 
 <div class="viewcode-block" id="read_file_slab">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.read_slab_surface.html#stonedfenicsx.create_mesh.read_slab_surface.read_file_slab">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">read_file_slab</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span><span class="n">max_depth</span><span class="p">:</span><span class="nb">float</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span><span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
-    
+<span class="k">def</span><span class="w"> </span><span class="nf">read_file_slab</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_depth</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+
     <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-    
-    <span class="n">slab</span><span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
-    <span class="n">ax</span> <span class="o">=</span> <span class="n">slab</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">ay</span> <span class="o">=</span> <span class="o">-</span><span class="n">slab</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">dz</span> <span class="o">=</span> <span class="n">slab</span><span class="p">[:,</span><span class="mi">2</span><span class="p">]</span>
-    
-    <span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span><span class="p">[</span><span class="n">ay</span><span class="o">&lt;-</span><span class="mi">10</span><span class="p">]</span>
-    <span class="n">dz</span> <span class="o">=</span> <span class="n">dz</span><span class="p">[</span><span class="n">ay</span><span class="o">&lt;-</span><span class="mi">10</span><span class="p">]</span>
-    <span class="n">ay</span> <span class="o">=</span> <span class="n">ay</span><span class="p">[</span><span class="n">ay</span><span class="o">&lt;-</span><span class="mi">10</span><span class="p">]</span>
-    
+
+    <span class="n">slab</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">slab</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">ay</span> <span class="o">=</span> <span class="o">-</span><span class="n">slab</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">dz</span> <span class="o">=</span> <span class="n">slab</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span>
+
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span><span class="p">[</span><span class="n">ay</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">10</span><span class="p">]</span>
+    <span class="n">dz</span> <span class="o">=</span> <span class="n">dz</span><span class="p">[</span><span class="n">ay</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">10</span><span class="p">]</span>
+    <span class="n">ay</span> <span class="o">=</span> <span class="n">ay</span><span class="p">[</span><span class="n">ay</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">10</span><span class="p">]</span>
+
     <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
 
-    <span class="n">slab_top</span><span class="p">,</span> <span class="n">theta_mean</span> <span class="o">=</span> <span class="n">curve_fitting</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span><span class="n">ay</span><span class="p">,</span><span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span><span class="n">path</span><span class="o">.</span><span class="n">stem</span><span class="p">,</span><span class="n">max_depth</span><span class="p">)</span>
+    <span class="n">slab_top</span><span class="p">,</span> <span class="n">theta_mean</span> <span class="o">=</span> <span class="n">curve_fitting</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">ay</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">stem</span><span class="p">,</span> <span class="n">max_depth</span><span class="p">)</span>
 
+    <span class="k">return</span> <span class="n">slab_top</span><span class="p">,</span> <span class="n">theta_mean</span></div>
 
-    <span class="k">return</span> <span class="n">slab_top</span><span class="p">,</span> <span class="n">theta_mean</span> </div>
-
-
-    
-    
-    
-    
-    
 </pre></div>
 
             <div class="clearer"></div>

@@ -4,6 +4,7 @@
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh
+:parser: napoleon_parser
 :allowtitles:
 ```
 
@@ -17,10 +18,12 @@
 
 * - {py:obj}`Class_Points <stonedfenicsx.create_mesh.aux_create_mesh.Class_Points>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.Class_Points
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`Class_Line <stonedfenicsx.create_mesh.aux_create_mesh.Class_Line>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.Class_Line
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -33,82 +36,102 @@
 
 * - {py:obj}`from_line_to_point_coordinate <stonedfenicsx.create_mesh.aux_create_mesh.from_line_to_point_coordinate>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.from_line_to_point_coordinate
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`create_loop <stonedfenicsx.create_mesh.aux_create_mesh.create_loop>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.create_loop
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`find_line_index <stonedfenicsx.create_mesh.aux_create_mesh.find_line_index>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.find_line_index
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`find_tag_line <stonedfenicsx.create_mesh.aux_create_mesh.find_tag_line>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.find_tag_line
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`find_slab_surface <stonedfenicsx.create_mesh.aux_create_mesh.find_slab_surface>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.find_slab_surface
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`compute_angle_parabolic <stonedfenicsx.create_mesh.aux_create_mesh.compute_angle_parabolic>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.compute_angle_parabolic
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`create_slab_surface <stonedfenicsx.create_mesh.aux_create_mesh.create_slab_surface>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.create_slab_surface
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`compute_bending_angle <stonedfenicsx.create_mesh.aux_create_mesh.compute_bending_angle>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.compute_bending_angle
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`ribe_angle <stonedfenicsx.create_mesh.aux_create_mesh.ribe_angle>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.ribe_angle
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`function_create_subducting_plate_geometry <stonedfenicsx.create_mesh.aux_create_mesh.function_create_subducting_plate_geometry>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.function_create_subducting_plate_geometry
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`generate_parallel_layer_subducting_plate <stonedfenicsx.create_mesh.aux_create_mesh.generate_parallel_layer_subducting_plate>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.generate_parallel_layer_subducting_plate
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`_find_e_node <stonedfenicsx.create_mesh.aux_create_mesh._find_e_node>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh._find_e_node
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`_correct_ <stonedfenicsx.create_mesh.aux_create_mesh._correct_>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh._correct_
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`find_extra_node <stonedfenicsx.create_mesh.aux_create_mesh.find_extra_node>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.find_extra_node
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`_create_points <stonedfenicsx.create_mesh.aux_create_mesh._create_points>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh._create_points
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`_create_lines <stonedfenicsx.create_mesh.aux_create_mesh._create_lines>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh._create_lines
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`assign_phases <stonedfenicsx.create_mesh.aux_create_mesh.assign_phases>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.assign_phases
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`create_slab_surface_parabolic <stonedfenicsx.create_mesh.aux_create_mesh.create_slab_surface_parabolic>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.create_slab_surface_parabolic
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`cumulative_distance <stonedfenicsx.create_mesh.aux_create_mesh.cumulative_distance>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.cumulative_distance
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`compute_dip <stonedfenicsx.create_mesh.aux_create_mesh.compute_dip>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.compute_dip
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -121,10 +144,12 @@
 
 * - {py:obj}`dict_surf <stonedfenicsx.create_mesh.aux_create_mesh.dict_surf>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.dict_surf
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`dict_tag_lines <stonedfenicsx.create_mesh.aux_create_mesh.dict_tag_lines>`
   - ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.dict_tag_lines
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -137,6 +162,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.dict_surf
+:parser: napoleon_parser
 ```
 
 ````
@@ -147,6 +173,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.dict_tag_lines
+:parser: napoleon_parser
 ```
 
 ````
@@ -155,12 +182,14 @@
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh.Class_Points
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.Class_Points
+:parser: napoleon_parser
 ```
 
 ````{py:method} update_points(mesh_model: gmsh.model, sx: numpy.ndarray, sy: numpy.ndarray, bx: numpy.ndarray, by: numpy.ndarray, oc_cx: numpy.ndarray | None, oc_cy: numpy.ndarray | None, g_input: stonedfenicsx.config.geometry.GeomInput) -> gmsh.model
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh.Class_Points.update_points
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.Class_Points.update_points
+:parser: napoleon_parser
 ```
 
 ````
@@ -171,12 +200,14 @@
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh.Class_Line
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.Class_Line
+:parser: napoleon_parser
 ```
 
 ````{py:method} update_lines(mesh_model: gmsh.model, CP: stonedfenicsx.create_mesh.aux_create_mesh.Class_Points, g_input: stonedfenicsx.config.geometry.GeomInput) -> gmsh.model
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh.Class_Line.update_lines
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.Class_Line.update_lines
+:parser: napoleon_parser
 ```
 
 ````
@@ -187,6 +218,7 @@
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh.from_line_to_point_coordinate
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.from_line_to_point_coordinate
+:parser: napoleon_parser
 ```
 ````
 
@@ -194,6 +226,7 @@
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh.create_loop
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.create_loop
+:parser: napoleon_parser
 ```
 ````
 
@@ -201,6 +234,7 @@
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh.find_line_index
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.find_line_index
+:parser: napoleon_parser
 ```
 ````
 
@@ -208,13 +242,15 @@
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh.find_tag_line
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.find_tag_line
+:parser: napoleon_parser
 ```
 ````
 
-````{py:function} find_slab_surface(g_input: stonedfenicsx.config.geometry.GeomInput) -> tuple([ndarray[float], ndarray[float]])
+````{py:function} find_slab_surface(g_input: stonedfenicsx.config.geometry.GeomInput) -> tuple[numpy.ndarray[float], numpy.ndarray[float]]
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh.find_slab_surface
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.find_slab_surface
+:parser: napoleon_parser
 ```
 ````
 
@@ -222,6 +258,7 @@
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh.compute_angle_parabolic
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.compute_angle_parabolic
+:parser: napoleon_parser
 ```
 ````
 
@@ -229,6 +266,7 @@
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh.create_slab_surface
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.create_slab_surface
+:parser: napoleon_parser
 ```
 ````
 
@@ -236,6 +274,7 @@
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh.compute_bending_angle
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.compute_bending_angle
+:parser: napoleon_parser
 ```
 ````
 
@@ -243,6 +282,7 @@
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh.ribe_angle
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.ribe_angle
+:parser: napoleon_parser
 ```
 ````
 
@@ -250,6 +290,7 @@
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh.function_create_subducting_plate_geometry
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.function_create_subducting_plate_geometry
+:parser: napoleon_parser
 ```
 ````
 
@@ -257,6 +298,7 @@
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh.generate_parallel_layer_subducting_plate
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.generate_parallel_layer_subducting_plate
+:parser: napoleon_parser
 ```
 ````
 
@@ -264,6 +306,7 @@
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh._find_e_node
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh._find_e_node
+:parser: napoleon_parser
 ```
 ````
 
@@ -271,6 +314,7 @@
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh._correct_
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh._correct_
+:parser: napoleon_parser
 ```
 ````
 
@@ -278,6 +322,7 @@
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh.find_extra_node
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.find_extra_node
+:parser: napoleon_parser
 ```
 ````
 
@@ -285,6 +330,7 @@
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh._create_points
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh._create_points
+:parser: napoleon_parser
 ```
 ````
 
@@ -292,6 +338,7 @@
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh._create_lines
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh._create_lines
+:parser: napoleon_parser
 ```
 ````
 
@@ -299,6 +346,7 @@
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh.assign_phases
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.assign_phases
+:parser: napoleon_parser
 ```
 ````
 
@@ -306,6 +354,7 @@
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh.create_slab_surface_parabolic
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.create_slab_surface_parabolic
+:parser: napoleon_parser
 ```
 ````
 
@@ -313,6 +362,7 @@
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh.cumulative_distance
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.cumulative_distance
+:parser: napoleon_parser
 ```
 ````
 
@@ -320,5 +370,6 @@
 :canonical: stonedfenicsx.create_mesh.aux_create_mesh.compute_dip
 
 ```{autodoc2-docstring} stonedfenicsx.create_mesh.aux_create_mesh.compute_dip
+:parser: napoleon_parser
 ```
 ````

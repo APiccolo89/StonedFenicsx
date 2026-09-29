@@ -185,7 +185,7 @@
 <td><p>Find the line IDs associated with a given point.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.find_tag_line" title="stonedfenicsx.create_mesh.aux_create_mesh.find_tag_line"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_tag_line</span></code></a></p></td>
-<td><p><em>summary</em></p></td>
+<td><p>_summary_</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.find_slab_surface" title="stonedfenicsx.create_mesh.aux_create_mesh.find_slab_surface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_slab_surface</span></code></a></p></td>
 <td><p>Compute the top surface of a kinematic slab as a polyline starting from the trench.</p></td>
@@ -201,8 +201,8 @@
 inputs:
 geometrical information
 current length of the slab
-Returns:
-theta:float -&gt; for a given bending angle function, return theta = f(l) -&gt; l the actual distance along the slab surface from the trench</p></td>
+:returns: float -&gt; for a given bending angle function, return theta = f(l) -&gt; l the actual distance along the slab surface from the trench
+:rtype: theta</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.ribe_angle" title="stonedfenicsx.create_mesh.aux_create_mesh.ribe_angle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ribe_angle</span></code></a></p></td>
 <td><p>ribe_angle
@@ -281,29 +281,33 @@ lgh : float -&gt; current position along the slab surface</p></td>
 <dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.Class_Points.update_points">
 <span class="sig-name descname"><span class="pre">update_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">gmsh.model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">by</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oc_cx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oc_cy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">g_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">gmsh.model</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#Class_Points.update_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.Class_Points.update_points" title="Link to this definition">¶</a></dt>
 <dd><p>Generate the physical points required to build the Gmsh geometry.</p>
-<p>Using the main geometric information stored in <code class="docutils literal notranslate"><span class="pre">g_input</span></code> together with the slab
+<p>Using the main geometric information stored in <cite>g_input</cite> together with the slab
 top/bottom surfaces (and optionally the oceanic Moho), this routine defines the
 physical points that will later be connected into physical lines for the Gmsh
 model.</p>
-<p class="rubric" id="id14">Parameters</p>
-<p>sx : np.ndarray
-x-coordinates of the top surface of the subducting plate.
-sy : np.ndarray
-y-coordinates of the top surface of the subducting plate.
-bx : np.ndarray
-x-coordinates of the bottom surface of the subducting plate.
-by : np.ndarray
-y-coordinates of the bottom surface of the subducting plate.
-oc_cx : np.ndarray | None
-x-coordinates of the oceanic Moho. Can be <code class="docutils literal notranslate"><span class="pre">None</span></code>/empty if the crust is not defined.
-oc_cy : np.ndarray | None
-y-coordinates of the oceanic Moho. Can be <code class="docutils literal notranslate"><span class="pre">None</span></code>/empty if the crust is not defined.
-g_input : GeomInput
-Object containing all input geometric information.</p>
-<p class="rubric" id="id15">Returns</p>
-<p>mesh_model : gmsh.model
-Updated Gmsh model containing the generated points.
--&gt; update the class points with new members</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sx</strong> (<em>np.ndarray</em>) – x-coordinates of the top surface of the subducting plate.</p></li>
+<li><p><strong>sy</strong> (<em>np.ndarray</em>) – y-coordinates of the top surface of the subducting plate.</p></li>
+<li><p><strong>bx</strong> (<em>np.ndarray</em>) – x-coordinates of the bottom surface of the subducting plate.</p></li>
+<li><p><strong>by</strong> (<em>np.ndarray</em>) – y-coordinates of the bottom surface of the subducting plate.</p></li>
+<li><p><strong>oc_cx</strong> (<em>np.ndarray</em><em> | </em><em>None</em>) – x-coordinates of the oceanic Moho. Can be <cite>None</cite>/empty if the crust is not defined.</p></li>
+<li><p><strong>oc_cy</strong> (<em>np.ndarray</em><em> | </em><em>None</em>) – y-coordinates of the oceanic Moho. Can be <cite>None</cite>/empty if the crust is not defined.</p></li>
+<li><p><strong>g_input</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><em>GeomInput</em></a>) – Object containing all input geometric information.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Updated Gmsh model containing the generated points. The point</dt><dd><p>containers of this class are updated with the new members.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>gmsh.model</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -316,24 +320,34 @@ Updated Gmsh model containing the generated points.
 <span class="sig-name descname"><span class="pre">update_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">gmsh.model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">CP</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.Class_Points" title="stonedfenicsx.create_mesh.aux_create_mesh.Class_Points"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.Class_Points</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">g_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">gmsh.model</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#Class_Line.update_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.Class_Line.update_lines" title="Link to this definition">¶</a></dt>
 <dd><p>Generate Gmsh lines and assign tags/IDs.</p>
 <p>This routine creates the physical lines required for the geometry, using the
-previously generated point set stored in <code class="docutils literal notranslate"><span class="pre">CP</span></code>, and assigns consistent tags/IDs
+previously generated point set stored in <cite>CP</cite>, and assigns consistent tags/IDs
 to each line so they can be referenced later (e.g., for boundary markers and
 physical groups).</p>
-<p class="rubric" id="id16">Parameters</p>
-<p>mesh_model : gmsh.model
-Gmsh model object to be updated.
-CP : Class_Points
-Container storing the physical point tags and their coordinates.
-g_input : GeomInput
-Object containing the geometric input parameters controlling which lines
-are created and how they are connected.</p>
-<p class="rubric" id="id17">Returns</p>
-<p>mesh_model : gmsh.model
-Updated Gmsh model containing the generated lines.
-LP : Class_Line
-Updated line container holding the created line IDs/tags and connectivity
-(e.g., mapping line -&gt; endpoint point tags).</p>
-<p class="rubric" id="id18">Notes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh_model</strong> (<em>gmsh.model</em>) – Gmsh model object to be updated.</p></li>
+<li><p><strong>CP</strong> (<a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.Class_Points" title="stonedfenicsx.create_mesh.aux_create_mesh.Class_Points"><em>Class_Points</em></a>) – Container storing the physical point tags and their coordinates.</p></li>
+<li><p><strong>g_input</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><em>GeomInput</em></a>) – Object containing the geometric input parameters controlling which lines
+are created and how they are connected.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>A tuple containing:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>mesh_model (gmsh.model): Updated Gmsh model containing the generated lines.</p></li>
+<li><p>LP (Class_Line): Updated line container holding the created line IDs/tags and connectivity
+(e.g., mapping line -&gt; endpoint point tags).</p></li>
+</ul>
+</div></blockquote>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
 <p>The returned line container is used to:</p>
 <ul class="simple">
 <li><p>build surfaces from line loops,</p></li>
@@ -348,15 +362,24 @@ Updated line container holding the created line IDs/tags and connectivity
 <dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.from_line_to_point_coordinate">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">from_line_to_point_coordinate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">L</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">LG</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.int64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">GP</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#from_line_to_point_coordinate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.from_line_to_point_coordinate" title="Link to this definition">¶</a></dt>
 <dd><p>From a given line, retrieve the extreme points data</p>
-<p>Args:
-L (int): line id
-LG (ndarray[np.int64]): global line database
-GP (ndarray[np.float64]): global points database</p>
-<p>Returns:
-p0 : id point that defines the line
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>L</strong> (<em>int</em>) – line id</p></li>
+<li><p><strong>LG</strong> (<em>ndarray</em><em>[</em><em>np.int64</em><em>]</em>) – global line database</p></li>
+<li><p><strong>GP</strong> (<em>ndarray</em><em>[</em><em>np.float64</em><em>]</em>) – global points database</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>id point that defines the line
 p1 : id point that defines the line
 coord_x : coordinate-x of the points that define the given line
 coord_y : coordinate-y of the points that define the given line</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>p0</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -366,17 +389,22 @@ coord_y : coordinate-y of the points that define the given line</p>
 <p>This function takes an ordered list of line IDs forming a continuous boundary
 and creates a Gmsh curve loop with the specified tag. The resulting loop can
 then be used to define plane surfaces and physical groups.</p>
-<p class="rubric" id="id19">Parameters</p>
-<p>l_list : list[int]
-Ordered list of line IDs defining the loop boundary. Lines must be
-contiguous and oriented consistently to form a closed loop.
-mesh_model : gmsh.model
-Gmsh model object to be updated.
-tag : int
-Tag/ID assigned to the created curve loop.</p>
-<p class="rubric" id="id20">Returns</p>
-<p>mesh_model : gmsh.model
-Updated Gmsh model containing the newly created curve loop.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>l_list</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – Ordered list of line IDs defining the loop boundary. Lines must be
+contiguous and oriented consistently to form a closed loop.</p></li>
+<li><p><strong>mesh_model</strong> (<em>gmsh.model</em>) – Gmsh model object to be updated.</p></li>
+<li><p><strong>tag</strong> (<em>int</em>) – Tag/ID assigned to the created curve loop.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Updated Gmsh model containing the newly created curve loop.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>gmsh.model</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -387,18 +415,26 @@ Updated Gmsh model containing the newly created curve loop.</p>
 From a given depth, loop over the line and check the coordinate. If the
 coordinate is equal to d, stop the loop, and release the index of the
 global line database.</p>
-<p class="rubric" id="id21">Parameters</p>
-<p>Lin_ar : ndarray[np.int64]
-Global line database.
-point : ndarray[np.int64]
-Global database of the points
-d : float
-coordinate-y to find the relative point</p>
-<p class="rubric" id="id22">Returns</p>
-<p>index : int | list[int]
-Line ID(s) (or indices in <code class="docutils literal notranslate"><span class="pre">Lin_ar</span></code>) of the line(s) to which the given point
-belongs.</p>
-<p class="rubric" id="id23">Notes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Lin_ar</strong> (<em>ndarray</em><em>[</em><em>np.int64</em><em>]</em>) – Global line database.</p></li>
+<li><p><strong>point</strong> (<em>ndarray</em><em>[</em><em>np.int64</em><em>]</em>) – Global database of the points</p></li>
+<li><p><strong>d</strong> (<em>float</em>) – coordinate-y to find the relative point</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Line ID(s) (or indices in <cite>Lin_ar</cite>) of the line(s) to which the given point</dt><dd><p>belongs.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int | list[int]</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
 <p>A point may belong to multiple lines (e.g., at junctions or corners). In such
 cases, returning a list of IDs is recommended.</p>
 </dd></dl>
@@ -406,51 +442,69 @@ cases, returning a list of IDs is recommended.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.find_tag_line">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">find_tag_line</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coord</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#find_tag_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.find_tag_line" title="Link to this definition">¶</a></dt>
-<dd><p><em>summary</em></p>
-<p>Args:
-coord (ndarray): coordinate of
-x (float): <em>description</em>
-dir (str): <em>description</em></p>
-<p>Returns:
-int: <em>description</em></p>
+<dd><p>_summary_</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>coord</strong> (<em>ndarray</em>) – coordinate of</p></li>
+<li><p><strong>x</strong> (<em>float</em>) – _description_</p></li>
+<li><p><strong>dir</strong> (<em>str</em>) – _description_</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>_description_</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.find_slab_surface">
-<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">find_slab_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#find_slab_surface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.find_slab_surface" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">find_slab_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#find_slab_surface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.find_slab_surface" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the top surface of a kinematic slab as a polyline starting from the trench.</p>
-<p>The slab surface is discretised into straight segments of length <code class="docutils literal notranslate"><span class="pre">g_input.sub_dl</span></code>.
+<p>The slab surface is discretised into straight segments of length <cite>g_input.sub_dl</cite>.
 At each step we compute the local bending angle at the current and next arc-length
 positions, average them, and use that mean angle to advance to the next point.</p>
-<p class="rubric" id="id24">Angle convention</p>
-<p>theta is measured with respect to the positive horizontal x-axis.</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>     theta
+<p>Angle convention: theta is measured with respect to the positive horizontal x-axis:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>         <span class="n">theta</span>
+<span class="n">x</span><span class="o">-</span><span class="n">axis</span>  <span class="o">-------</span>\<span class="o">------</span>
+                \ <span class="n">theta</span>
+                 \<span class="o">/</span>
 </pre></div>
 </div>
-<p>x-axis  ————-
-\ theta
-/</p>
-<p class="rubric" id="id25">Algorithm (summary)</p>
+<p>Algorithm (summary):</p>
 <ol class="arabic simple">
-<li><p>Initialise <code class="docutils literal notranslate"><span class="pre">top_slab</span></code> with the trench point.</p></li>
-<li><p>Initialise the arc-length <code class="docutils literal notranslate"><span class="pre">lgh</span> <span class="pre">=</span> <span class="pre">0.0</span></code> (distance measured along the slab surface).</p></li>
-<li><p>While the current point is above the model bottom boundary (<code class="docutils literal notranslate"><span class="pre">y</span> <span class="pre">&gt;</span> <span class="pre">ymin</span></code>):
-a. Set <code class="docutils literal notranslate"><span class="pre">lghn</span> <span class="pre">=</span> <span class="pre">lgh</span> <span class="pre">+</span> <span class="pre">g_input.sub_dl</span></code>.
-b. Compute <code class="docutils literal notranslate"><span class="pre">theta</span>&#160; <span class="pre">=</span> <span class="pre">theta(lgh)</span></code>  and <code class="docutils literal notranslate"><span class="pre">theta1</span> <span class="pre">=</span> <span class="pre">theta(lghn)</span></code>.
-c. Compute <code class="docutils literal notranslate"><span class="pre">theta_mean</span> <span class="pre">=</span> <span class="pre">0.5</span> <span class="pre">*</span> <span class="pre">(theta</span> <span class="pre">+</span> <span class="pre">theta1)</span></code>.
-d. Use <code class="docutils literal notranslate"><span class="pre">theta_mean</span></code> to advance one step and append the new point to <code class="docutils literal notranslate"><span class="pre">top_slab</span></code>.
-e. Update <code class="docutils literal notranslate"><span class="pre">lgh</span> <span class="pre">=</span> <span class="pre">lghn</span></code>.</p></li>
+<li><p>Initialise <cite>top_slab</cite> with the trench point.</p></li>
+<li><p>Initialise the arc-length <cite>lgh = 0.0</cite> (distance measured along the slab surface).</p></li>
+<li><p>While the current point is above the model bottom boundary (<cite>y &gt; ymin</cite>):
+a. Set <cite>lghn = lgh + g_input.sub_dl</cite>.
+b. Compute <cite>theta  = theta(lgh)</cite>  and <cite>theta1 = theta(lghn)</cite>.
+c. Compute <cite>theta_mean = 0.5 * (theta + theta1)</cite>.
+d. Use <cite>theta_mean</cite> to advance one step and append the new point to <cite>top_slab</cite>.
+e. Update <cite>lgh = lghn</cite>.</p></li>
 </ol>
-<p class="rubric" id="id26">Returns</p>
-<p>top_slab : (n_segment, 2) ndarray
-Coordinates (x, y) of the slab top surface polyline.
-theta_mean : float
-Mean bending angle used for the last segment (or an average over segments,
-depending on your implementation).</p>
-<p class="rubric" id="id27">Raises</p>
-<p>ValueError
-If the selected slab-surface method is not implemented (only “custom” is
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><p>A tuple containing:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>top_slab ((n_segment, 2) ndarray): Coordinates (x, y) of the slab top surface polyline.</p></li>
+<li><p>theta_mean (float): Mean bending angle used for the last segment (or an average over segments,
+depending on your implementation).</p></li>
+</ul>
+</div></blockquote>
+</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If the selected slab-surface method is not implemented (only “custom” is
 currently supported).</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -470,8 +524,8 @@ currently supported).</p>
 inputs:
 geometrical information
 current length of the slab
-Returns:
-theta:float -&gt; for a given bending angle function, return theta = f(l) -&gt; l the actual distance along the slab surface from the trench</p>
+:returns: float -&gt; for a given bending angle function, return theta = f(l) -&gt; l the actual distance along the slab surface from the trench
+:rtype: theta</p>
 </dd></dl>
 
 <dl class="py function">
@@ -482,8 +536,14 @@ inputs:
 theta_max : float -&gt; maximum angle of the slab
 Lb : float -&gt; critical along slab distance where the bending is occuring
 lgh : float -&gt; current position along the slab surface</p>
-<p>Returns:
-theta :float -&gt; Bending angle at the local point along the top surface slab.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float -&gt; Bending angle at the local point along the top surface slab.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>theta</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -495,27 +555,32 @@ surfaces and, if requested/available, the oceanic Moho. The returned arrays are
 used to define the Gmsh geometry and subsequent mesh generation. The input
 geometry object may be updated (e.g., derived quantities, validated parameters,
 or cached geometry).</p>
-<p class="rubric" id="id28">Parameters</p>
-<p>g_input : GeomInput
-Object containing all input geometric parameters required to construct the
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>g_input</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><em>GeomInput</em></a>) – Object containing all input geometric parameters required to construct the
 slab and associated interfaces.</p>
-<p class="rubric" id="id29">Returns</p>
-<p>ax : np.ndarray
-x-coordinates of the slab top surface.
-ay : np.ndarray
-y-coordinates of the slab top surface.
-bx : np.ndarray
-x-coordinates of the slab bottom surface.
-by : np.ndarray
-y-coordinates of the slab bottom surface.
-ox : np.ndarray | None
-x-coordinates of the oceanic Moho. Can be <code class="docutils literal notranslate"><span class="pre">None</span></code>/empty if the crust is not
-defined or not requested.
-oy : np.ndarray | None
-y-coordinates of the oceanic Moho. Can be <code class="docutils literal notranslate"><span class="pre">None</span></code>/empty if the crust is not
-defined or not requested.
-g_input : GeomInput
-Updated geometry input object (may include derived or validated fields).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>A tuple containing:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>ax (np.ndarray): x-coordinates of the slab top surface.</p></li>
+<li><p>ay (np.ndarray): y-coordinates of the slab top surface.</p></li>
+<li><p>bx (np.ndarray): x-coordinates of the slab bottom surface.</p></li>
+<li><p>by (np.ndarray): y-coordinates of the slab bottom surface.</p></li>
+<li><p>ox (np.ndarray | None): x-coordinates of the oceanic Moho. Can be <cite>None</cite>/empty if the crust is not
+defined or not requested.</p></li>
+<li><p>oy (np.ndarray | None): y-coordinates of the oceanic Moho. Can be <cite>None</cite>/empty if the crust is not
+defined or not requested.</p></li>
+<li><p>g_input (GeomInput): Updated geometry input object (may include derived or validated fields).</p></li>
+</ul>
+</div></blockquote>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -523,29 +588,37 @@ Updated geometry input object (may include derived or validated fields).</p>
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">generate_parallel_layer_subducting_plate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">th</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constant_theta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#generate_parallel_layer_subducting_plate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.generate_parallel_layer_subducting_plate" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the coordinates of an internal layer surface within the subducting plate.</p>
 <p>Given the slab top surface coordinates and a local slab bending angle, this
-function constructs a parallel/offset surface at a distance <code class="docutils literal notranslate"><span class="pre">lt</span></code> (e.g., oceanic
+function constructs a parallel/offset surface at a distance <cite>lt</cite> (e.g., oceanic
 crust thickness or slab thickness), representing an internal layer boundary
 within the subducting plate.</p>
-<p class="rubric" id="id30">Parameters</p>
-<p>sx : ndarray[np.float64]
-x-coordinates of the slab top surface.
-sy : ndarray[np.float64]
-y-coordinates of the slab top surface.
-th : float
-Local slab bending angle associated with the surface points (degrees or
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sx</strong> (<em>ndarray</em><em>[</em><em>np.float64</em><em>]</em>) – x-coordinates of the slab top surface.</p></li>
+<li><p><strong>sy</strong> (<em>ndarray</em><em>[</em><em>np.float64</em><em>]</em>) – y-coordinates of the slab top surface.</p></li>
+<li><p><strong>th</strong> (<em>float</em>) – Local slab bending angle associated with the surface points (degrees or
 radians depending on the implementation; must be consistent with the
-trigonometric functions used).
-lt : float
-Layer thickness used to offset the surface (e.g., oceanic crust thickness
-or slab thickness) (SI units: [m]).
-constant_theta: bool
-Tells whether or not the subduction plate is a constant slope slab (i.e.,
-VanKeken Benchmark)</p>
-<p class="rubric" id="id31">Returns</p>
-<p>cx : ndarray[np.float64]
-x-coordinates of the layer-defining surface.
-cy : ndarray[np.float64]
-y-coordinates of the layer-defining surface.</p>
+trigonometric functions used).</p></li>
+<li><p><strong>lt</strong> (<em>float</em>) – Layer thickness used to offset the surface (e.g., oceanic crust thickness
+or slab thickness) (SI units: [m]).</p></li>
+<li><p><strong>constant_theta</strong> (<em>bool</em>) – Tells whether or not the subduction plate is a constant slope slab (i.e.,
+VanKeken Benchmark)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>A tuple containing:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>cx (ndarray[np.float64]): x-coordinates of the layer-defining surface.</p></li>
+<li><p>cy (ndarray[np.float64]): y-coordinates of the layer-defining surface.</p></li>
+</ul>
+</div></blockquote>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -570,30 +643,37 @@ y-coordinates of the layer-defining surface.</p>
 <p>This helper wraps the Gmsh point-creation call to support creating one or many
 points, while explicitly tracking the assigned tags so they can be referenced
 consistently later when building lines/surfaces.</p>
-<p class="rubric" id="id32">Parameters</p>
-<p>mesh : gmsh.model
-the mesh model
-x : float | np.ndarray
-x-coordinate(s) of the point(s) [m]. Can be a scalar or an array.
-y : float | np.ndarray
-y-coordinate(s) of the point(s) [m]. Can be a scalar or an array.
-res : float
-Target mesh size (characteristic length) assigned to the point(s).
-tag_pr : int
-Previous/starting tag used to track point IDs across calls. Since Gmsh
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh</strong> (<em>gmsh.model</em>) – the mesh model</p></li>
+<li><p><strong>x</strong> (<em>float</em><em> | </em><em>np.ndarray</em>) – x-coordinate(s) of the point(s) [m]. Can be a scalar or an array.</p></li>
+<li><p><strong>y</strong> (<em>float</em><em> | </em><em>np.ndarray</em>) – y-coordinate(s) of the point(s) [m]. Can be a scalar or an array.</p></li>
+<li><p><strong>res</strong> (<em>float</em>) – Target mesh size (characteristic length) assigned to the point(s).</p></li>
+<li><p><strong>tag_pr</strong> (<em>int</em>) – Previous/starting tag used to track point IDs across calls. Since Gmsh
 can assign tags internally, this value is used to keep bookkeeping
-consistent.</p>
-<p class="rubric" id="id33">Returns</p>
-<p>max_tag : int
-Maximum tag assigned during this function call.
-tag_list : list[int]
-List of tags for the created point(s), ordered consistently with the input
-coordinates.
-coord : np.ndarray
-Coordinates of the created point(s), typically shaped as (N, 2) for (x, y).
+consistent.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>A tuple containing:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>max_tag (int): Maximum tag assigned during this function call.</p></li>
+<li><p>tag_list (list[int]): List of tags for the created point(s), ordered consistently with the input
+coordinates.</p></li>
+<li><p>coord (np.ndarray): Coordinates of the created point(s), typically shaped as (N, 2) for (x, y).
 If useful downstream, you may include tags alongside coordinates (e.g.,
-(N, 3) with [tag, x, y])—in that case, document the exact convention.</p>
-<p class="rubric" id="id34">Notes</p>
+(N, 3) with [tag, x, y])—in that case, document the exact convention.</p></li>
+</ul>
+</div></blockquote>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
 <p>This function solves the practical problem of creating a set of points (1..N)
 in Gmsh while retaining a reliable mapping between coordinates and point tags,
 so that subsequent geometry construction can reference points coherently.</p>
@@ -607,26 +687,34 @@ so that subsequent geometry construction can reference points coherently.</p>
 lines, while explicitly tracking the assigned line tags so they can be
 referenced consistently later when building curve loops, surfaces, and physical
 groups.</p>
-<p class="rubric" id="id35">Parameters</p>
-<p>mesh : gmsh.model
-Gmsh model object to be updated.
-previous : int
-Previous/starting line tag used for bookkeeping across calls.
-tag_p : list[int]
-Point tags used to create the lines. Typically an ordered list of point
-tags where consecutive pairs define segments.</p>
-<p class="rubric" id="id36">Returns</p>
-<p>max_tag : int
-Maximum line tag assigned during this function call.
-tag_l : list[int]
-List of tags for the created line(s), ordered consistently with the created
-segments.
-lines : np.ndarray
-Array containing line metadata, typically shaped (N, 3) with rows
-<code class="docutils literal notranslate"><span class="pre">[p1,</span> <span class="pre">p2,</span> <span class="pre">tag]</span></code>, where <code class="docutils literal notranslate"><span class="pre">p1</span></code> and <code class="docutils literal notranslate"><span class="pre">p2</span></code> are point tags and <code class="docutils literal notranslate"><span class="pre">tag</span></code> is the line tag.
-mesh_model : gmsh.model
-Updated Gmsh model containing the created line(s).</p>
-<p class="rubric" id="id37">Notes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh</strong> (<em>gmsh.model</em>) – Gmsh model object to be updated.</p></li>
+<li><p><strong>previous</strong> (<em>int</em>) – Previous/starting line tag used for bookkeeping across calls.</p></li>
+<li><p><strong>tag_p</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – Point tags used to create the lines. Typically an ordered list of point
+tags where consecutive pairs define segments.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>A tuple containing:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>max_tag (int): Maximum line tag assigned during this function call.</p></li>
+<li><p>tag_l (list[int]): List of tags for the created line(s), ordered consistently with the created
+segments.</p></li>
+<li><p>lines (np.ndarray): Array containing line metadata, typically shaped (N, 3) with rows
+<cite>[p1, p2, tag]</cite>, where <cite>p1</cite> and <cite>p2</cite> are point tags and <cite>tag</cite> is the line tag.</p></li>
+<li><p>mesh_model (gmsh.model): Updated Gmsh model containing the created line(s).</p></li>
+</ul>
+</div></blockquote>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
 <p>This function solves the practical problem of generating a set of lines from an
 ordered list of point tags while keeping a reliable mapping between endpoint
 tags and the created line tags for downstream geometry construction.</p>

@@ -148,12 +148,14 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">mpi4py</span><span class="w"> </span><span class="kn">import</span> <span class="n">MPI</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span>
 
-<span class="n">_ELEMENT_P</span>           <span class="o">=</span> <span class="n">basix</span><span class="o">.</span><span class="n">ufl</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">"Lagrange"</span><span class="p">,</span><span class="s2">"triangle"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> 
+<span class="n">_ELEMENT_P</span> <span class="o">=</span> <span class="n">basix</span><span class="o">.</span><span class="n">ufl</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">"Lagrange"</span><span class="p">,</span> <span class="s2">"triangle"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
-<span class="n">_ELEMENT_PT</span>          <span class="o">=</span> <span class="n">basix</span><span class="o">.</span><span class="n">ufl</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">"Lagrange"</span><span class="p">,</span><span class="s2">"triangle"</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">_ELEMENT_PT</span> <span class="o">=</span> <span class="n">basix</span><span class="o">.</span><span class="n">ufl</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">"Lagrange"</span><span class="p">,</span> <span class="s2">"triangle"</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 
-<span class="n">_ELEMENT_V</span>           <span class="o">=</span> <span class="n">basix</span><span class="o">.</span><span class="n">ufl</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">"Lagrange"</span><span class="p">,</span><span class="s2">"triangle"</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,))</span>
-<span class="c1">#------------------------------------------------------------------------------------------------</span>
+<span class="n">_ELEMENT_V</span> <span class="o">=</span> <span class="n">basix</span><span class="o">.</span><span class="n">ufl</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="s2">"Lagrange"</span><span class="p">,</span> <span class="s2">"triangle"</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,))</span>
+
+
+<span class="c1"># ------------------------------------------------------------------------------------------------</span>
 <div class="viewcode-block" id="Domain">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.Domain">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -168,42 +170,26 @@
 <span class="sd">    and extracted submeshes, ensuring consistent handling of markers, facets,</span>
 <span class="sd">    material phases, and boundary conditions.</span>
 
-<span class="sd">    Attributes</span>
-<span class="sd">    ----------</span>
-<span class="sd">    hierarchy : str</span>
-<span class="sd">        Mesh hierarchy level:</span>
-<span class="sd">        - `"parent"` for the global mesh</span>
-<span class="sd">        - `"child"` for a submesh</span>
+<span class="sd">    Attributes:</span>
+<span class="sd">        hierarchy (str): Mesh hierarchy level:</span>
 
-<span class="sd">    cell_par : NDArray[np.int32] | None</span>
-<span class="sd">        Parent cell relationships mapping submesh cells to the global mesh cells.</span>
-<span class="sd">        Only defined if the domain is a submesh.</span>
+<span class="sd">            - `"parent"` for the global mesh</span>
+<span class="sd">            - `"child"` for a submesh</span>
+<span class="sd">        cell_par (NDArray[np.int32] | None): Parent cell relationships mapping submesh cells to the global mesh cells.</span>
+<span class="sd">            Only defined if the domain is a submesh.</span>
+<span class="sd">        node_par (NDArray[np.int32] | None): Parent node relationships mapping submesh nodes to the global mesh nodes.</span>
+<span class="sd">            Only defined if the domain is a submesh.</span>
+<span class="sd">        facets (dolfinx.mesh.MeshTags | None): Tagged facet markers representing boundary features</span>
+<span class="sd">            (e.g., trench, free surface, inflow/outflow).</span>
+<span class="sd">        Tagcells (dolfinx.mesh.MeshTags | None): Tagged cell markers representing physical regions/material domains.</span>
+<span class="sd">        bc_dict (dict): Dictionary mapping boundary condition names to integer tags.</span>
+<span class="sd">        solPh (dolfinx.fem.FunctionSpace | None): Function space used to define material property fields or phase functions.</span>
+<span class="sd">        phase (dolfinx.fem.Function | None): Material phase indicator function defined on the domain.</span>
 
-<span class="sd">    node_par : NDArray[np.int32] | None</span>
-<span class="sd">        Parent node relationships mapping submesh nodes to the global mesh nodes.</span>
-<span class="sd">        Only defined if the domain is a submesh.</span>
-
-<span class="sd">    facets : dolfinx.mesh.MeshTags | None</span>
-<span class="sd">        Tagged facet markers representing boundary features</span>
-<span class="sd">        (e.g., trench, free surface, inflow/outflow).</span>
-
-<span class="sd">    Tagcells : dolfinx.mesh.MeshTags | None</span>
-<span class="sd">        Tagged cell markers representing physical regions/material domains.</span>
-
-<span class="sd">    bc_dict : dict</span>
-<span class="sd">        Dictionary mapping boundary condition names to integer tags.</span>
-
-<span class="sd">    solPh : dolfinx.fem.FunctionSpace | None</span>
-<span class="sd">        Function space used to define material property fields or phase functions.</span>
-
-<span class="sd">    phase : dolfinx.fem.Function | None</span>
-<span class="sd">        Material phase indicator function defined on the domain.</span>
-
-<span class="sd">    Notes</span>
-<span class="sd">    -----</span>
-<span class="sd">    The `Domain` class is a lightweight container for all domain-specific mesh data.</span>
-<span class="sd">    It allows safe communication of field variables, markers, and boundary tags</span>
-<span class="sd">    between the global mesh and its corresponding subdomains.</span>
+<span class="sd">    Notes:</span>
+<span class="sd">        The `Domain` class is a lightweight container for all domain-specific mesh data.</span>
+<span class="sd">        It allows safe communication of field variables, markers, and boundary tags</span>
+<span class="sd">        between the global mesh and its corresponding subdomains.</span>
 <span class="sd">    """</span>
 
     <span class="n">hierarchy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Parent"</span>
@@ -216,9 +202,11 @@
     <span class="n">solph</span><span class="p">:</span> <span class="n">dolfinx</span><span class="o">.</span><span class="n">fem</span><span class="o">.</span><span class="n">FunctionSpace</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">phase</span><span class="p">:</span> <span class="n">dolfinx</span><span class="o">.</span><span class="n">fem</span><span class="o">.</span><span class="n">Function</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">comm</span><span class="p">:</span> <span class="n">MPI</span><span class="o">.</span><span class="n">Intracomm</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span> </div>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span></div>
 
-<span class="c1">#---------------------------------------------------------------------------------------------------</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------------------------------</span>
 <div class="viewcode-block" id="GeomInput">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -228,39 +216,40 @@
 <span class="sd">    Lengths in [km]; angles in [degrees]; lc dimensionless.</span>
 <span class="sd">    ...</span>
 <span class="sd">    """</span>
+
     <span class="n">x</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">660.0</span><span class="p">]))</span>
     <span class="n">y</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">600.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]))</span>
-    <span class="n">redo_mesh</span><span class="p">:</span><span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">redo_mesh</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">slab_tk</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">130.0</span>
     <span class="n">cr</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">30.0</span>
     <span class="n">ocr</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">7.0</span>
     <span class="n">lit_mt</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">20.0</span>
-    <span class="n">lc</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span>                    <span class="c1"># adimensionale, invariato</span>
+    <span class="n">lc</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span>  <span class="c1"># adimensionale, invariato</span>
     <span class="n">ns_depth</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">50.0</span>
     <span class="n">decoupling</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">80.0</span>
     <span class="n">resolution_normal</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span>
     <span class="n">resolution_refine</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span>
-    <span class="n">theta_out_slab</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">45.0</span>       <span class="c1"># gradi, invariato</span>
-    <span class="n">theta_in_slab</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span>        <span class="c1"># gradi, invariato</span>
+    <span class="n">theta_out_slab</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">45.0</span>  <span class="c1"># gradi, invariato</span>
+    <span class="n">theta_in_slab</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span>  <span class="c1"># gradi, invariato</span>
     <span class="n">transition</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span>
     <span class="n">lab_d</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">100.0</span>
     <span class="n">slab_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"CustomParabolic"</span>
     <span class="n">sub_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Not_Defined"</span>
-    <span class="n">sub_parabolic_a</span><span class="p">:</span><span class="nb">float</span> <span class="o">=</span> <span class="mf">5e-4</span> <span class="c1"># Curvature of the parabula (England and May 2021 for reference) [5e-4 -&gt; 3.5e-3]</span>
+    <span class="n">sub_parabolic_a</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5e-4</span>  <span class="c1"># Curvature of the parabula (England and May 2021 for reference) [5e-4 -&gt; 3.5e-3]</span>
     <span class="n">sub_lb</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">300.0</span>
     <span class="n">sub_constant_flag</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="n">sub_theta0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5.0</span>           <span class="c1"># gradi, invariato</span>
-    <span class="n">sub_theta_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">45.0</span>        <span class="c1"># gradi, invariato</span>
+    <span class="n">sub_theta0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5.0</span>  <span class="c1"># gradi, invariato</span>
+    <span class="n">sub_theta_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">45.0</span>  <span class="c1"># gradi, invariato</span>
     <span class="n">sub_trench</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
     <span class="n">sub_dl</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
     <span class="n">wz_tk</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span>
-    <span class="n">van_keken</span> <span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="n">model_full</span> <span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">van_keken</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">model_full</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
 <div class="viewcode-block" id="GeomInput.check_class_consistency">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput.check_class_consistency">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">check_class_consistency</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Check the integrity of the input, and if it respect </span>
+<span class="w">        </span><span class="sd">"""Check the integrity of the input, and if it respect</span>
 <span class="sd">        the requirements</span>
 <span class="sd">        Convert the main bending angle into radians for computation.</span>
 <span class="sd">        Raises:</span>
@@ -270,19 +259,20 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lc</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"lc (lower crust fraction) must be in [0, 1], got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">lc</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">slab_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"CustomRibe"</span><span class="p">,</span><span class="s2">"CustomParabolic"</span><span class="p">,</span> <span class="s2">"FromFile"</span><span class="p">}:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">slab_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"CustomRibe"</span><span class="p">,</span> <span class="s2">"CustomParabolic"</span><span class="p">,</span> <span class="s2">"FromFile"</span><span class="p">}:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">'sub_type must be "CustomRibe", "CustomParabolic" or "Real", got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">slab_type</span><span class="si">!r}</span><span class="s1">'</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">van_keken</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">sub_constant_flag</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'Van Keken benchmark suite requires that the angle flag constant is true'</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">slab_type</span> <span class="o">==</span> <span class="s1">'Real'</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">sub_path</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'Not_Defined'</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'If you want to test a realistic geometry, why would you not inform me on its location?'</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Van Keken benchmark suite requires that the angle flag constant is true"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">slab_type</span> <span class="o">==</span> <span class="s2">"Real"</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">sub_path</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"Not_Defined"</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"If you want to test a realistic geometry, why would you not inform me on its location?"</span><span class="p">)</span>
         <span class="c1"># Convert the angles in radians</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sub_theta0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sub_theta0</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sub_theta_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sub_theta_max</span><span class="p">)</span></div>
 </div>
 
 
-<span class="c1">#---------------------------------------------------------------------------------------------------</span>
+
+<span class="c1"># ---------------------------------------------------------------------------------------------------</span>
 <div class="viewcode-block" id="Mesh">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.Mesh">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -295,51 +285,33 @@
 <span class="sd">    its associated subdomains, and the finite element definitions required for the</span>
 <span class="sd">    numerical discretization of pressure, temperature, and velocity.</span>
 
-<span class="sd">    Attributes</span>
-<span class="sd">    ----------</span>
-<span class="sd">    g_input : Geom_input</span>
-<span class="sd">        Geometric input parameters defining the model setup.</span>
-
-<span class="sd">    domainG : Domain</span>
-<span class="sd">        Global computational domain (full mesh).</span>
-
-<span class="sd">    domainA : Domain</span>
-<span class="sd">        Subduction zone domain (submesh extracted from the global mesh).</span>
-
-<span class="sd">    domainB : Domain</span>
-<span class="sd">        Wedge domain (submesh extracted from the global mesh).</span>
-
-<span class="sd">    domainC : Domain</span>
-<span class="sd">        Overriding plate domain (submesh extracted from the global mesh).</span>
-
-<span class="sd">    rank : int</span>
-<span class="sd">        MPI rank of the current process.</span>
-
-<span class="sd">    size : int</span>
-<span class="sd">        Total number of MPI processes.</span>
-
-<span class="sd">    element_p : ufl.FiniteElement</span>
-<span class="sd">        Finite element definition for the pressure field.</span>
-
-<span class="sd">    element_PT : ufl.FiniteElement</span>
-<span class="sd">        Finite element definition for the temperature field.</span>
-
-<span class="sd">    element_V : ufl.FiniteElement</span>
-<span class="sd">        Finite element definition for the velocity field.</span>
+<span class="sd">    Attributes:</span>
+<span class="sd">        g_input (Geom_input): Geometric input parameters defining the model setup.</span>
+<span class="sd">        domainG (Domain): Global computational domain (full mesh).</span>
+<span class="sd">        domainA (Domain): Subduction zone domain (submesh extracted from the global mesh).</span>
+<span class="sd">        domainB (Domain): Wedge domain (submesh extracted from the global mesh).</span>
+<span class="sd">        domainC (Domain): Overriding plate domain (submesh extracted from the global mesh).</span>
+<span class="sd">        rank (int): MPI rank of the current process.</span>
+<span class="sd">        size (int): Total number of MPI processes.</span>
+<span class="sd">        element_p (ufl.FiniteElement): Finite element definition for the pressure field.</span>
+<span class="sd">        element_PT (ufl.FiniteElement): Finite element definition for the temperature field.</span>
+<span class="sd">        element_V (ufl.FiniteElement): Finite element definition for the velocity field.</span>
 <span class="sd">    """</span>
 
-    <span class="n">g_input</span> <span class="p">:</span> <span class="n">GeomInput</span>    <span class="c1"># Geometric input</span>
-    <span class="n">global_domain</span> <span class="p">:</span> <span class="n">Domain</span>                                <span class="c1"># Domain</span>
-    <span class="n">subduction_plate_domain</span> <span class="p">:</span> <span class="n">Domain</span>
-    <span class="n">wedge_domain</span> <span class="p">:</span> <span class="n">Domain</span>
-    <span class="n">crust_domain</span> <span class="p">:</span> <span class="n">Domain</span>
-    <span class="n">comm</span> <span class="p">:</span> <span class="n">MPI</span><span class="o">.</span><span class="n">Intracomm</span>
-    <span class="n">rank</span> <span class="p">:</span> <span class="nb">int</span>
-    <span class="n">element_p</span>  <span class="o">=</span> <span class="n">_ELEMENT_P</span>
+    <span class="n">g_input</span><span class="p">:</span> <span class="n">GeomInput</span>  <span class="c1"># Geometric input</span>
+    <span class="n">global_domain</span><span class="p">:</span> <span class="n">Domain</span>  <span class="c1"># Domain</span>
+    <span class="n">subduction_plate_domain</span><span class="p">:</span> <span class="n">Domain</span>
+    <span class="n">wedge_domain</span><span class="p">:</span> <span class="n">Domain</span>
+    <span class="n">crust_domain</span><span class="p">:</span> <span class="n">Domain</span>
+    <span class="n">comm</span><span class="p">:</span> <span class="n">MPI</span><span class="o">.</span><span class="n">Intracomm</span>
+    <span class="n">rank</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">element_p</span> <span class="o">=</span> <span class="n">_ELEMENT_P</span>
     <span class="n">element_pt</span> <span class="o">=</span> <span class="n">_ELEMENT_PT</span>
-    <span class="n">element_v</span>  <span class="o">=</span> <span class="n">_ELEMENT_V</span></div>
+    <span class="n">element_v</span> <span class="o">=</span> <span class="n">_ELEMENT_V</span></div>
 
-<span class="c1">#-----------------------------------------------------------------------------------------------------------------</span>
+
+
+<span class="c1"># -----------------------------------------------------------------------------------------------------------------</span>
 </pre></div>
 
             <div class="clearer"></div>

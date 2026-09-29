@@ -4,6 +4,7 @@
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set
+:parser: napoleon_parser
 :allowtitles:
 ```
 
@@ -17,50 +18,62 @@
 
 * - {py:obj}`save_data_set <stonedfenicsx.config.thermal_boundary_bc_set.save_data_set>`
   - ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.save_data_set
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`_compute_lithostatic_pressure <stonedfenicsx.config.thermal_boundary_bc_set._compute_lithostatic_pressure>`
   - ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set._compute_lithostatic_pressure
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`compute_cp_k_rho <stonedfenicsx.config.thermal_boundary_bc_set.compute_cp_k_rho>`
   - ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.compute_cp_k_rho
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`build_coefficient_matrix <stonedfenicsx.config.thermal_boundary_bc_set.build_coefficient_matrix>`
   - ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.build_coefficient_matrix
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`fill_phase_properties <stonedfenicsx.config.thermal_boundary_bc_set.fill_phase_properties>`
   - ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.fill_phase_properties
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`compute_half_space_cooling_model_analytical <stonedfenicsx.config.thermal_boundary_bc_set.compute_half_space_cooling_model_analytical>`
   - ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.compute_half_space_cooling_model_analytical
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`initialise_geometry_1d <stonedfenicsx.config.thermal_boundary_bc_set.initialise_geometry_1d>`
   - ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.initialise_geometry_1d
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`solve_temperature_1d_bc <stonedfenicsx.config.thermal_boundary_bc_set.solve_temperature_1d_bc>`
   - ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.solve_temperature_1d_bc
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`compute_thermal_boundary <stonedfenicsx.config.thermal_boundary_bc_set.compute_thermal_boundary>`
   - ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.compute_thermal_boundary
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`configure_thermal_bc <stonedfenicsx.config.thermal_boundary_bc_set.configure_thermal_bc>`
   - ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.configure_thermal_bc
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`configure_boundary_condition <stonedfenicsx.config.thermal_boundary_bc_set.configure_boundary_condition>`
   - ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.configure_boundary_condition
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`test_configure_boundary <stonedfenicsx.config.thermal_boundary_bc_set.test_configure_boundary>`
   - ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.test_configure_boundary
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -73,6 +86,7 @@
 
 * - {py:obj}`_NAME_H5_FILE_TMP <stonedfenicsx.config.thermal_boundary_bc_set._NAME_H5_FILE_TMP>`
   - ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set._NAME_H5_FILE_TMP
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -85,6 +99,7 @@
    'temporary_file.h5'
 
 ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set._NAME_H5_FILE_TMP
+:parser: napoleon_parser
 ```
 
 ````
@@ -93,6 +108,7 @@
 :canonical: stonedfenicsx.config.thermal_boundary_bc_set.save_data_set
 
 ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.save_data_set
+:parser: napoleon_parser
 ```
 ````
 
@@ -100,6 +116,7 @@
 :canonical: stonedfenicsx.config.thermal_boundary_bc_set._compute_lithostatic_pressure
 
 ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set._compute_lithostatic_pressure
+:parser: napoleon_parser
 ```
 ````
 
@@ -107,6 +124,7 @@
 :canonical: stonedfenicsx.config.thermal_boundary_bc_set.compute_cp_k_rho
 
 ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.compute_cp_k_rho
+:parser: napoleon_parser
 ```
 ````
 
@@ -114,6 +132,7 @@
 :canonical: stonedfenicsx.config.thermal_boundary_bc_set.build_coefficient_matrix
 
 ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.build_coefficient_matrix
+:parser: napoleon_parser
 ```
 ````
 
@@ -121,6 +140,7 @@
 :canonical: stonedfenicsx.config.thermal_boundary_bc_set.fill_phase_properties
 
 ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.fill_phase_properties
+:parser: napoleon_parser
 ```
 ````
 
@@ -128,6 +148,7 @@
 :canonical: stonedfenicsx.config.thermal_boundary_bc_set.compute_half_space_cooling_model_analytical
 
 ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.compute_half_space_cooling_model_analytical
+:parser: napoleon_parser
 ```
 ````
 
@@ -135,6 +156,7 @@
 :canonical: stonedfenicsx.config.thermal_boundary_bc_set.initialise_geometry_1d
 
 ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.initialise_geometry_1d
+:parser: napoleon_parser
 ```
 ````
 
@@ -142,6 +164,7 @@
 :canonical: stonedfenicsx.config.thermal_boundary_bc_set.solve_temperature_1d_bc
 
 ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.solve_temperature_1d_bc
+:parser: napoleon_parser
 ```
 ````
 
@@ -149,6 +172,7 @@
 :canonical: stonedfenicsx.config.thermal_boundary_bc_set.compute_thermal_boundary
 
 ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.compute_thermal_boundary
+:parser: napoleon_parser
 ```
 ````
 
@@ -156,6 +180,7 @@
 :canonical: stonedfenicsx.config.thermal_boundary_bc_set.configure_thermal_bc
 
 ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.configure_thermal_bc
+:parser: napoleon_parser
 ```
 ````
 
@@ -163,6 +188,7 @@
 :canonical: stonedfenicsx.config.thermal_boundary_bc_set.configure_boundary_condition
 
 ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.configure_boundary_condition
+:parser: napoleon_parser
 ```
 ````
 
@@ -170,5 +196,6 @@
 :canonical: stonedfenicsx.config.thermal_boundary_bc_set.test_configure_boundary
 
 ```{autodoc2-docstring} stonedfenicsx.config.thermal_boundary_bc_set.test_configure_boundary
+:parser: napoleon_parser
 ```
 ````

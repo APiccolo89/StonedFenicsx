@@ -161,18 +161,15 @@
 From the g_input data creates the fundamental boundary and
 surfaces through which the gmesh generate an unstructured mesh.
 It saves the mesh in the .msh file, then reads through
-meshio generating the domain:</p>
-<ul class="simple">
-<li><p>global_domain</p></li>
-<li><p>wedge_domain</p></li>
-<li><p>overriding_plate_domain</p></li>
-<li><p>subducting_plate_domain
+meshio generating the domain:
+- global_domain
+- wedge_domain
+- overriding_plate_domain
+- subducting_plate_domain
 Then it creates the MESH object where all the relevant information of each domain
 are stored (i.e., internal boundaries, map from subdomain-global mesh and viceversa)
-and the Phase function space as DG mesh of 1st order.</p></li>
-</ul>
-<hr class="docutils" />
-<p>aux_create_mesh =&gt; gregary module that stores the functions to create the fundamental
+and the Phase function space as DG mesh of 1st order.
+aux_create_mesh =&gt; gregary module that stores the functions to create the fundamental
 geometrical entity for the gmsh, and that stores the dictionary related to the boundary</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
@@ -184,7 +181,7 @@ geometrical entity for the gmsh, and that stores the dictionary related to the b
 <td></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.create_mesh.compare_data" title="stonedfenicsx.create_mesh.create_mesh.compare_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compare_data</span></code></a></p></td>
-<td><p><em>summary</em></p></td>
+<td><p>_summary_</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.create_mesh.write_mesh_data" title="stonedfenicsx.create_mesh.create_mesh.write_mesh_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_mesh_data</span></code></a></p></td>
 <td><p>Save a small database in yaml of the mesh metadata.
@@ -214,9 +211,7 @@ it blocks the simulation.</p></td>
 <td><p>Create a Gmsh model from the slab and crust geometry.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.create_mesh.create_mesh_fenicsx" title="stonedfenicsx.create_mesh.create_mesh.create_mesh_fenicsx"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_mesh_fenicsx</span></code></a></p></td>
-<td><p class="rubric" id="convert-gmsh-into-meshio-object-parameters">Convert gmsh into meshio object
-Parameters</p>
-</td>
+<td><p>Convert gmsh into meshio object</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.create_mesh.extract_facet_boundary" title="stonedfenicsx.create_mesh.create_mesh.extract_facet_boundary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_facet_boundary</span></code></a></p></td>
 <td><p>Extract facet indices for a submesh boundary from global boundary markers.</p></td>
@@ -225,9 +220,7 @@ Parameters</p>
 <td><p>Create the subdomain from the global mesh, and interpolate the phases from the global mesh to the local mesh</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.create_mesh.read_mesh" title="stonedfenicsx.create_mesh.create_mesh.read_mesh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_mesh</span></code></a></p></td>
-<td><p class="rubric" id="read-the-msh-file-and-convert-into-a-dolfinx-mesh-object-and-extract-mesh-tags-from-msh-parameter">read the .msh file, and convert into a dolfinx mesh object and extract mesh tags from .msh
-Parameter</p>
-</td>
+<td><p>read the .msh file, and convert into a dolfinx mesh object and extract mesh tags from .msh</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.create_mesh.create_mesh_object" title="stonedfenicsx.create_mesh.create_mesh.create_mesh_object"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_mesh_object</span></code></a></p></td>
 <td><p>Create a subdomain mesh from the global mesh and interpolate phase information.</p></td>
@@ -245,12 +238,18 @@ Parameter</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.create_mesh.create_mesh.compare_data">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.create_mesh.</span></span><span class="sig-name descname"><span class="pre">compare_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ioctrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls" title="stonedfenicsx.config.numerical_control.IOControls"><span class="pre">stonedfenicsx.config.numerical_control.IOControls</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/create_mesh.html#compare_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.create_mesh.compare_data" title="Link to this definition">¶</a></dt>
-<dd><p><em>summary</em></p>
-<p>Args:
-g_input (GeomInput): <em>description</em>
-ioctrl (IOControls): <em>description</em></p>
-<p>Raises:
-ValueError: <em>description</em></p>
+<dd><p>_summary_</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>g_input</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><em>GeomInput</em></a>) – _description_</p></li>
+<li><p><strong>ioctrl</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls" title="stonedfenicsx.config.numerical_control.IOControls"><em>IOControls</em></a>) – _description_</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – _description_</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -260,11 +259,17 @@ ValueError: <em>description</em></p>
 In case the cached metadata is different from the main mesh data
 it will be compared with the current realisation of the model, and
 it blocks the simulation.</p>
-<p>Args:
-g_input (GeomInput): geometrical input
-ioctrl (IOControls): input and output control</p>
-<p>Returns:
-None</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>g_input</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><em>GeomInput</em></a>) – geometrical input</p></li>
+<li><p><strong>ioctrl</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls" title="stonedfenicsx.config.numerical_control.IOControls"><em>IOControls</em></a>) – input and output control</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -272,168 +277,205 @@ None</p>
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.create_mesh.</span></span><span class="sig-name descname"><span class="pre">create_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ioctrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls" title="stonedfenicsx.config.numerical_control.IOControls"><span class="pre">stonedfenicsx.config.numerical_control.IOControls</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">g_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.NumericalControls" title="stonedfenicsx.config.numerical_control.NumericalControls"><span class="pre">stonedfenicsx.config.numerical_control.NumericalControls</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.Mesh" title="stonedfenicsx.config.geometry.Mesh"><span class="pre">stonedfenicsx.config.geometry.Mesh</span></a></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/create_mesh.html#create_mesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.create_mesh.create_mesh" title="Link to this definition">¶</a></dt>
 <dd><p>Create a Gmsh model and convert it into a FEniCSx mesh.</p>
 <p>This function generates the computational geometry using Gmsh, builds the
-corresponding <code class="docutils literal notranslate"><span class="pre">.msh</span></code> file, and imports it into dolfinx as a finite element mesh.</p>
-<p class="rubric" id="id21">Parameters</p>
-<p>ioctrl : IOControls
-I/O controller handling file paths and output directories.
-sc : Scal
-Scaling object storing nondimensionalisation parameters.
-g_input : GeomInput
-Geometrical input defining the domain and mesh construction.
-ctrl : NumericalControls
-Numerical controls determining the problem setup.</p>
-<p class="rubric" id="id22">Returns</p>
-<p>Mesh
-Mesh wrapper object containing the global mesh, extracted subdomains,
-and associated boundary/cell tags.</p>
+corresponding <cite>.msh</cite> file, and imports it into dolfinx as a finite element mesh.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ioctrl</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls" title="stonedfenicsx.config.numerical_control.IOControls"><em>IOControls</em></a>) – I/O controller handling file paths and output directories.</p></li>
+<li><p><strong>sc</strong> (<a class="reference internal" href="stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><em>Scal</em></a>) – Scaling object storing nondimensionalisation parameters.</p></li>
+<li><p><strong>g_input</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><em>GeomInput</em></a>) – Geometrical input defining the domain and mesh construction.</p></li>
+<li><p><strong>ctrl</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.NumericalControls" title="stonedfenicsx.config.numerical_control.NumericalControls"><em>NumericalControls</em></a>) – Numerical controls determining the problem setup.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Mesh wrapper object containing the global mesh, extracted subdomains,</dt><dd><p>and associated boundary/cell tags.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.Mesh" title="stonedfenicsx.config.geometry.Mesh">Mesh</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.create_mesh.create_mesh.create_gmesh">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.create_mesh.</span></span><span class="sig-name descname"><span class="pre">create_gmesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ioctrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls" title="stonedfenicsx.config.numerical_control.IOControls"><span class="pre">stonedfenicsx.config.numerical_control.IOControls</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">g_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/create_mesh.html#create_gmesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.create_mesh.create_gmesh" title="Link to this definition">¶</a></dt>
 <dd><p>Create a Gmsh geometry model from the provided geometrical input.</p>
-<p>This function generates a <code class="docutils literal notranslate"><span class="pre">.msh</span></code> file, which is later imported and converted
+<p>This function generates a <cite>.msh</cite> file, which is later imported and converted
 into a finite element mesh compatible with FEniCSx (dolfinx).</p>
-<p>The function also updates the <code class="docutils literal notranslate"><span class="pre">GeomInput</span></code> object by computing and storing
+<p>The function also updates the <cite>GeomInput</cite> object by computing and storing
 the initial slab bending angle and the outgoing angle of the subducting plate.
 This information is required to construct the left thermal boundary conditions.</p>
 <p>The lateral extent of the global domain depends on the slab geometry and the
 maximum model depth. Therefore, the function modifies the domain geometry by
 extending the horizontal size by an additional 60 km from the intersection
 between the slab top surface and the maximum depth of the model.</p>
-<p class="rubric" id="id23">Parameters</p>
-<p>ctrl : NumericalControls
-Numerical controls defining the simulation type.
-ctrlio : IOControls
-I/O controller storing input/output directories.
-g_input : GeomInput
-Geometrical input parameters used to construct the domain.</p>
-<p class="rubric" id="id24">Returns</p>
-<p>GeomInput
-Updated geometrical input object containing the computed slab angles and
-modified domain extent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctrl</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.NumericalControls" title="stonedfenicsx.config.numerical_control.NumericalControls"><em>NumericalControls</em></a>) – Numerical controls defining the simulation type.</p></li>
+<li><p><strong>ctrlio</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls" title="stonedfenicsx.config.numerical_control.IOControls"><em>IOControls</em></a>) – I/O controller storing input/output directories.</p></li>
+<li><p><strong>g_input</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><em>GeomInput</em></a>) – Geometrical input parameters used to construct the domain.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Updated geometrical input object containing the computed slab angles and</dt><dd><p>modified domain extent.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput">GeomInput</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.create_mesh.create_mesh.create_domain_subduction_plate">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.create_mesh.</span></span><span class="sig-name descname"><span class="pre">create_domain_subduction_plate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">gmsh.model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">CP</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.Class_Points" title="stonedfenicsx.create_mesh.aux_create_mesh.Class_Points"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.Class_Points</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">LC</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.Class_Line" title="stonedfenicsx.create_mesh.aux_create_mesh.Class_Line"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.Class_Line</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">g_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">gmsh.model</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/create_mesh.html#create_domain_subduction_plate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.create_mesh.create_domain_subduction_plate" title="Link to this definition">¶</a></dt>
 <dd><p>Create the subducting-plate loop in the Gmsh model.</p>
-<p class="rubric" id="id25">Parameters</p>
-<p>mesh_model : gmsh.model
-Gmsh model object containing the geometry/mesh entities.
-CP : Class_Points
-Container of points defining the global mesh (coordinates, point IDs, target resolution).
-LP : Class_Line
-Container of lines defining the global mesh (line IDs and point connectivity).
-g_input : GeomInput
-Geometry input parameters.</p>
-<p class="rubric" id="id26">Returns</p>
-<p>gmsh.model
-The updated Gmsh model with the sub-domain loop entities added.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh_model</strong> (<em>gmsh.model</em>) – Gmsh model object containing the geometry/mesh entities.</p></li>
+<li><p><strong>CP</strong> (<a class="reference internal" href="stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.Class_Points" title="stonedfenicsx.create_mesh.aux_create_mesh.Class_Points"><em>Class_Points</em></a>) – Container of points defining the global mesh (coordinates, point IDs, target resolution).</p></li>
+<li><p><strong>LP</strong> (<a class="reference internal" href="stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.Class_Line" title="stonedfenicsx.create_mesh.aux_create_mesh.Class_Line"><em>Class_Line</em></a>) – Container of lines defining the global mesh (line IDs and point connectivity).</p></li>
+<li><p><strong>g_input</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><em>GeomInput</em></a>) – Geometry input parameters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The updated Gmsh model with the sub-domain loop entities added.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>gmsh.model</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.create_mesh.create_mesh.create_domain_wedge">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.create_mesh.</span></span><span class="sig-name descname"><span class="pre">create_domain_wedge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">CP</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">LC</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">g_input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/create_mesh.html#create_domain_wedge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.create_mesh.create_domain_wedge" title="Link to this definition">¶</a></dt>
 <dd><p>Create the Wedge loop in the Gmsh model.</p>
-<p class="rubric" id="id27">Parameters</p>
-<p>mesh_model : gmsh.model
-Gmsh model object containing the geometry/mesh entities.
-CP : Class_Points
-Container of points defining the global mesh (coordinates, point IDs, target resolution).
-LP : Class_Line
-Container of lines defining the global mesh (line IDs and point connectivity).
-g_input : GeomInput
-Geometry input parameters.</p>
-<p class="rubric" id="id28">Returns</p>
-<p>gmsh.model
-The updated Gmsh model with the sub-domain loop entities added.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh_model</strong> (<em>gmsh.model</em>) – Gmsh model object containing the geometry/mesh entities.</p></li>
+<li><p><strong>CP</strong> (<a class="reference internal" href="stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.Class_Points" title="stonedfenicsx.create_mesh.aux_create_mesh.Class_Points"><em>Class_Points</em></a>) – Container of points defining the global mesh (coordinates, point IDs, target resolution).</p></li>
+<li><p><strong>LP</strong> (<a class="reference internal" href="stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.Class_Line" title="stonedfenicsx.create_mesh.aux_create_mesh.Class_Line"><em>Class_Line</em></a>) – Container of lines defining the global mesh (line IDs and point connectivity).</p></li>
+<li><p><strong>g_input</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><em>GeomInput</em></a>) – Geometry input parameters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The updated Gmsh model with the sub-domain loop entities added.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>gmsh.model</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.create_mesh.create_mesh.create_domain_crust">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.create_mesh.</span></span><span class="sig-name descname"><span class="pre">create_domain_crust</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">CP</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">LC</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">g_input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/create_mesh.html#create_domain_crust"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.create_mesh.create_domain_crust" title="Link to this definition">¶</a></dt>
 <dd><p>Create the Overriding plate loop in the Gmsh model.</p>
-<p class="rubric" id="id29">Parameters</p>
-<p>mesh_model : gmsh.model
-Gmsh model object containing the geometry/mesh entities.
-CP : Class_Points
-Container of points defining the global mesh (coordinates, point IDs, target resolution).
-LP : Class_Line
-Container of lines defining the global mesh (line IDs and point connectivity).
-g_input : GeomInput
-Geometry input parameters.</p>
-<p class="rubric" id="id30">Returns</p>
-<p>gmsh.model
-The updated Gmsh model with the sub-domain loop entities added.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh_model</strong> (<em>gmsh.model</em>) – Gmsh model object containing the geometry/mesh entities.</p></li>
+<li><p><strong>CP</strong> (<a class="reference internal" href="stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.Class_Points" title="stonedfenicsx.create_mesh.aux_create_mesh.Class_Points"><em>Class_Points</em></a>) – Container of points defining the global mesh (coordinates, point IDs, target resolution).</p></li>
+<li><p><strong>LP</strong> (<a class="reference internal" href="stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.Class_Line" title="stonedfenicsx.create_mesh.aux_create_mesh.Class_Line"><em>Class_Line</em></a>) – Container of lines defining the global mesh (line IDs and point connectivity).</p></li>
+<li><p><strong>g_input</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><em>GeomInput</em></a>) – Geometry input parameters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The updated Gmsh model with the sub-domain loop entities added.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>gmsh.model</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.create_mesh.create_mesh.create_physical_line">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.create_mesh.</span></span><span class="sig-name descname"><span class="pre">create_physical_line</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">CP</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.Class_Points" title="stonedfenicsx.create_mesh.aux_create_mesh.Class_Points"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.Class_Points</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">LC</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.Class_Line" title="stonedfenicsx.create_mesh.aux_create_mesh.Class_Line"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.Class_Line</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">g_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">gmsh.model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">gmsh.model</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/create_mesh.html#create_physical_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.create_mesh.create_physical_line" title="Link to this definition">¶</a></dt>
 <dd><p>Create the physical line using the lines.</p>
-<p class="rubric" id="id31">Parameters</p>
-<p>mesh_model : gmsh.model
-Gmsh model object containing the geometry/mesh entities.
-CP : Class_Points
-Container of points defining the global mesh (coordinates, point IDs, target resolution).
-LP : Class_Line
-Container of lines defining the global mesh (line IDs and point connectivity).
-g_input : GeomInput
-Geometry input parameters.</p>
-<p class="rubric" id="id32">Returns</p>
-<p>gmsh.model
-The updated Gmsh model with the physical line loop entities added.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh_model</strong> (<em>gmsh.model</em>) – Gmsh model object containing the geometry/mesh entities.</p></li>
+<li><p><strong>CP</strong> (<a class="reference internal" href="stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.Class_Points" title="stonedfenicsx.create_mesh.aux_create_mesh.Class_Points"><em>Class_Points</em></a>) – Container of points defining the global mesh (coordinates, point IDs, target resolution).</p></li>
+<li><p><strong>LP</strong> (<a class="reference internal" href="stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.Class_Line" title="stonedfenicsx.create_mesh.aux_create_mesh.Class_Line"><em>Class_Line</em></a>) – Container of lines defining the global mesh (line IDs and point connectivity).</p></li>
+<li><p><strong>g_input</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><em>GeomInput</em></a>) – Geometry input parameters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The updated Gmsh model with the physical line loop entities added.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>gmsh.model</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.create_mesh.create_mesh.create_gmsh">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.create_mesh.</span></span><span class="sig-name descname"><span class="pre">create_gmsh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bsx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bsy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oc_cx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oc_cy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">g_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">gmsh.model</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/create_mesh.html#create_gmsh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.create_mesh.create_gmsh" title="Link to this definition">¶</a></dt>
 <dd><p>Create a Gmsh model from the slab and crust geometry.</p>
-<p class="rubric" id="id33">Parameters</p>
-<p>sx : np.ndarray
-x-coordinates of the top surface of the subducting plate.
-sy : np.ndarray
-y-coordinates of the top surface of the subducting plate.
-bsx : np.ndarray
-x-coordinates of the bottom surface of the subducting plate.
-bsy : np.ndarray
-y-coordinates of the bottom surface of the subducting plate.
-oc_cx : np.ndarray
-x-coordinates of the oceanic crust Moho.
-oc_cy : np.ndarray
-y-coordinates of the oceanic crust Moho.
-g_input : GeomInput
-Object containing the geometrical input parameters used to construct the model.</p>
-<p class="rubric" id="id34">Returns</p>
-<p>object
-The generated Gmsh model handle (<code class="docutils literal notranslate"><span class="pre">gmsh.model</span></code>), containing the geometry
-definition (points, curves, surfaces) and the associated physical groups
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sx</strong> (<em>np.ndarray</em>) – x-coordinates of the top surface of the subducting plate.</p></li>
+<li><p><strong>sy</strong> (<em>np.ndarray</em>) – y-coordinates of the top surface of the subducting plate.</p></li>
+<li><p><strong>bsx</strong> (<em>np.ndarray</em>) – x-coordinates of the bottom surface of the subducting plate.</p></li>
+<li><p><strong>bsy</strong> (<em>np.ndarray</em>) – y-coordinates of the bottom surface of the subducting plate.</p></li>
+<li><p><strong>oc_cx</strong> (<em>np.ndarray</em>) – x-coordinates of the oceanic crust Moho.</p></li>
+<li><p><strong>oc_cy</strong> (<em>np.ndarray</em>) – y-coordinates of the oceanic crust Moho.</p></li>
+<li><p><strong>g_input</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><em>GeomInput</em></a>) – Object containing the geometrical input parameters used to construct the model.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>The generated Gmsh model handle (<cite>gmsh.model</cite>), containing the geometry</dt><dd><p>definition (points, curves, surfaces) and the associated physical groups
 (mesh tags).</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>object</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.create_mesh.create_mesh.create_mesh_fenicsx">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.create_mesh.</span></span><span class="sig-name descname"><span class="pre">create_mesh_fenicsx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">meshio._mesh.Mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dolfinx.mesh.Mesh</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/create_mesh.html#create_mesh_fenicsx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.create_mesh.create_mesh_fenicsx" title="Link to this definition">¶</a></dt>
-<dd><p class="rubric" id="id35">Convert gmsh into meshio object
-Parameters</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>mesh : meshio._mesh.Mesh
-    meshio object that contains the .msh model
-cell_type: str
-        element type to process {triangle} or {line}
-prune_z : Bool
-    flag to remove the z coordinate from the mesh model
-</pre></div>
-</div>
-<p class="rubric" id="id36">Returns</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>_type_: _description_
-</pre></div>
-</div>
+<dd><p>Convert gmsh into meshio object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh</strong> (<em>meshio._mesh.Mesh</em>) – meshio object that contains the .msh model</p></li>
+<li><p><strong>cell_type</strong> (<em>str</em>) – element type to process {triangle} or {line}</p></li>
+<li><p><strong>prune_z</strong> (<em>bool</em>) – flag to remove the z coordinate from the mesh model</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>meshio mesh restricted to the requested cell type.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>meshio.Mesh</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.create_mesh.create_mesh.extract_facet_boundary">
-<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.create_mesh.</span></span><span class="sig-name descname"><span class="pre">extract_facet_boundary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.mesh.Mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Mfacet_tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.mesh.MeshTags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">submesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.mesh.Mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sm_vertex_maps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/create_mesh.html#extract_facet_boundary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.create_mesh.extract_facet_boundary" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.create_mesh.</span></span><span class="sig-name descname"><span class="pre">extract_facet_boundary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.mesh.Mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Mfacet_tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.mesh.MeshTags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">submesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.mesh.Mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sm_vertex_maps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/create_mesh.html#extract_facet_boundary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.create_mesh.extract_facet_boundary" title="Link to this definition">¶</a></dt>
 <dd><p>Extract facet indices for a submesh boundary from global boundary markers.</p>
 <p>This function builds the facet-index array (and corresponding marker values) needed to
 define boundary conditions on a <em>submesh</em>, starting from boundary tags defined on the
@@ -444,80 +486,95 @@ Some physical boundaries are represented by multiple tagged pieces on the global
 which neighboring region it touches). When imposing a single boundary condition on a
 subdomain, you often need to <em>merge</em> several of these tagged pieces into one boundary
 set for that subdomain.</p>
-<p>Example (schematic):
-Overriding plate
-<br />
-S(1)    <br />
-__________
-S(2)      \  Wedge
-\</p>
+<dl class="simple">
+<dt>Example (schematic):</dt><dd><dl class="simple">
+<dt>Overriding plate</dt><dd><p></p>
+</dd>
+</dl>
+</dd>
+<dt>S(1)    </dt><dd><p>__________</p>
+</dd>
+<dt>S(2)       Wedge</dt><dd><p></p>
+</dd>
+</dl>
 <p>For the slab subdomain boundary, you may need to combine S(1) and S(2).</p>
-<p class="rubric" id="id37">Parameters</p>
-<p>mesh : dolfinx.mesh.Mesh
-The global mesh.
-mfacet_tag : dolfinx.mesh.meshtags.MeshTags
-Facet MeshTags on the global mesh (dimension = tdim - 1).
-submesh : dolfinx.mesh.Mesh
-The subdomain mesh.
-sm_vertex_maps : np.ndarray | list[int]
-Mapping from submesh vertices to parent (global) mesh vertices.
-boundary : Sequence[int]
-List of global boundary marker IDs to be combined for this submesh boundary.
-m_id : int
-Marker ID to assign to the extracted facets on the submesh.</p>
-<p class="rubric" id="id38">Returns</p>
-<p>chosen_facets : np.ndarray
-Indices of submesh facets that belong to the extracted (internal/external) boundary.
-values : np.ndarray
-Array of shape (len(chosen_facets),) filled with <code class="docutils literal notranslate"><span class="pre">m_id</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh</strong> (<em>dolfinx.mesh.Mesh</em>) – The global mesh.</p></li>
+<li><p><strong>mfacet_tag</strong> (<em>dolfinx.mesh.meshtags.MeshTags</em>) – Facet MeshTags on the global mesh (dimension = tdim - 1).</p></li>
+<li><p><strong>submesh</strong> (<em>dolfinx.mesh.Mesh</em>) – The subdomain mesh.</p></li>
+<li><p><strong>sm_vertex_maps</strong> (<em>np.ndarray</em><em> | </em><em>list</em><em>[</em><em>int</em><em>]</em>) – Mapping from submesh vertices to parent (global) mesh vertices.</p></li>
+<li><p><strong>boundary</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>) – List of global boundary marker IDs to be combined for this submesh boundary.</p></li>
+<li><p><strong>m_id</strong> (<em>int</em>) – Marker ID to assign to the extracted facets on the submesh.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>A tuple containing:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>chosen_facets (np.ndarray): Indices of submesh facets that belong to the extracted (internal/external) boundary.</p></li>
+<li><p>values (np.ndarray): Array of shape (len(chosen_facets),) filled with <cite>m_id</cite>.</p></li>
+</ul>
+</div></blockquote>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.create_mesh.create_mesh.create_subdomain">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.create_mesh.</span></span><span class="sig-name descname"><span class="pre">create_subdomain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.mesh.Mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.mesh.MeshTags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">facet_tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.mesh.MeshTags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase_set</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.function.Function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ioctrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls" title="stonedfenicsx.config.numerical_control.IOControls"><span class="pre">stonedfenicsx.config.numerical_control.IOControls</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.Domain" title="stonedfenicsx.config.geometry.Domain"><span class="pre">stonedfenicsx.config.geometry.Domain</span></a></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/create_mesh.html#create_subdomain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.create_mesh.create_subdomain" title="Link to this definition">¶</a></dt>
 <dd><p>Create the subdomain from the global mesh, and interpolate the phases from the global mesh to the local mesh</p>
-<p class="rubric" id="id39">Parameters</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>mesh : dolfinx.mesh.Mesh
-    global mesh information
-mesh_tag : dolfinx.mesh.MeshTags
-    the mesh tag of the surface {i.e., phase}
-facet_tag : dolfinx.mesh.MeshTags
-    the mesh tag of the linear feature (e.g., subducting top surface)
-phase_set :list
-    the cell marker that constitute the subdomain
-name : str
-    the name of the subdomain
-phase : dolfinx.fem.function.Function
-    function that stores the information of the phase.
-</pre></div>
-</div>
-<p class="rubric" id="id40">Returns</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>domain : Domain
-      Class that contains the information of the subdomain.
-</pre></div>
-</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh</strong> (<em>dolfinx.mesh.Mesh</em>) – global mesh information</p></li>
+<li><p><strong>mesh_tag</strong> (<em>dolfinx.mesh.MeshTags</em>) – the mesh tag of the surface {i.e., phase}</p></li>
+<li><p><strong>facet_tag</strong> (<em>dolfinx.mesh.MeshTags</em>) – the mesh tag of the linear feature (e.g., subducting top surface)</p></li>
+<li><p><strong>phase_set</strong> (<em>list</em>) – the cell marker that constitute the subdomain</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – the name of the subdomain</p></li>
+<li><p><strong>phase</strong> (<em>dolfinx.fem.function.Function</em>) – function that stores the information of the phase.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Class that contains the information of the subdomain.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.Domain" title="stonedfenicsx.config.geometry.Domain">Domain</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="stonedfenicsx.create_mesh.create_mesh.read_mesh">
-<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.create_mesh.</span></span><span class="sig-name descname"><span class="pre">read_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ioctrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls" title="stonedfenicsx.config.numerical_control.IOControls"><span class="pre">stonedfenicsx.config.numerical_control.IOControls</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">redo_mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/create_mesh.html#read_mesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.create_mesh.read_mesh" title="Link to this definition">¶</a></dt>
-<dd><p class="rubric" id="id41">read the .msh file, and convert into a dolfinx mesh object and extract mesh tags from .msh
-Parameter</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>ioctrl : IOControls
-    Input/Output controls object, stores the information of the path of the .msh file
-sc     : Scal
-    Scal object containing the scaling parameters
-</pre></div>
-</div>
-<p class="rubric" id="id42">Returns</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>mesh : dolfinx.mesh.Mesh
-    dolfinx mesh
-cell_markers: dolfinx.mesh.MeshTags
-    cell markers (i.e., physical surface tags)
-facet_markers : dolfinx.mesh.MeshTags
-    facet markers (i.e., physical line tags )
-</pre></div>
-</div>
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.create_mesh.</span></span><span class="sig-name descname"><span class="pre">read_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ioctrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls" title="stonedfenicsx.config.numerical_control.IOControls"><span class="pre">stonedfenicsx.config.numerical_control.IOControls</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">redo_mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">dolfinx.mesh.Mesh</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dolfinx.mesh.MeshTags</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dolfinx.mesh.MeshTags</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/create_mesh.html#read_mesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.create_mesh.read_mesh" title="Link to this definition">¶</a></dt>
+<dd><p>read the .msh file, and convert into a dolfinx mesh object and extract mesh tags from .msh</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ioctrl</strong> (<a class="reference internal" href="stonedfenicsx.config.numerical_control.html#stonedfenicsx.config.numerical_control.IOControls" title="stonedfenicsx.config.numerical_control.IOControls"><em>IOControls</em></a>) – Input/Output controls object, stores the information of the path of the .msh file</p></li>
+<li><p><strong>sc</strong> (<a class="reference internal" href="stonedfenicsx.config.scal.html#stonedfenicsx.config.scal.Scal" title="stonedfenicsx.config.scal.Scal"><em>Scal</em></a>) – Scal object containing the scaling parameters</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>A tuple containing:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>mesh (dolfinx.mesh.Mesh): dolfinx mesh</p></li>
+<li><p>cell_markers (dolfinx.mesh.MeshTags): cell markers (i.e., physical surface tags)</p></li>
+<li><p>facet_markers (dolfinx.mesh.MeshTags): facet markers (i.e., physical line tags )</p></li>
+</ul>
+</div></blockquote>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -527,23 +584,28 @@ facet_markers : dolfinx.mesh.MeshTags
 <p>This function extracts a submesh corresponding to a given set of cell markers
 (phases) from the global mesh. The phase function defined on the global mesh is
 then interpolated or transferred onto the subdomain mesh.</p>
-<p class="rubric" id="id43">Parameters</p>
-<p>mesh : dolfinx.mesh.Mesh
-The global computational mesh.
-mesh_tag : dolfinx.mesh.meshtags.MeshTags
-Cell tags of the global mesh, typically used to identify material phases.
-facet_tag : dolfinx.mesh.meshtags.MeshTags
-Facet tags of the global mesh, defining boundary features (e.g. slab top surface).
-phase_set : list[int]
-List of cell marker IDs that define the subdomain to extract.
-name : str
-Name of the subdomain (used for identification and debugging).
-phase : dolfinx.fem.Function
-Cell-wise (or DG) function storing phase/material information on the global mesh.</p>
-<p class="rubric" id="id44">Returns</p>
-<p>Domain
-A <code class="docutils literal notranslate"><span class="pre">Domain</span></code> object containing the submesh, associated tags, and interpolated
-phase information.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh</strong> (<em>dolfinx.mesh.Mesh</em>) – The global computational mesh.</p></li>
+<li><p><strong>mesh_tag</strong> (<em>dolfinx.mesh.meshtags.MeshTags</em>) – Cell tags of the global mesh, typically used to identify material phases.</p></li>
+<li><p><strong>facet_tag</strong> (<em>dolfinx.mesh.meshtags.MeshTags</em>) – Facet tags of the global mesh, defining boundary features (e.g. slab top surface).</p></li>
+<li><p><strong>phase_set</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – List of cell marker IDs that define the subdomain to extract.</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – Name of the subdomain (used for identification and debugging).</p></li>
+<li><p><strong>phase</strong> (<em>dolfinx.fem.Function</em>) – Cell-wise (or DG) function storing phase/material information on the global mesh.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>A <cite>Domain</cite> object containing the submesh, associated tags, and interpolated</dt><dd><p>phase information.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.Domain" title="stonedfenicsx.config.geometry.Domain">Domain</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

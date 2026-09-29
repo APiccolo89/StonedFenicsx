@@ -4,6 +4,7 @@
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.config.config_utils
+:parser: napoleon_parser
 :allowtitles:
 ```
 
@@ -17,14 +18,17 @@
 
 * - {py:obj}`correct_input <stonedfenicsx.config.config_utils.correct_input>`
   - ```{autodoc2-docstring} stonedfenicsx.config.config_utils.correct_input
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`update_ip_file <stonedfenicsx.config.config_utils.update_ip_file>`
   - ```{autodoc2-docstring} stonedfenicsx.config.config_utils.update_ip_file
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`cast_type <stonedfenicsx.config.config_utils.cast_type>`
   - ```{autodoc2-docstring} stonedfenicsx.config.config_utils.cast_type
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -37,10 +41,12 @@
 
 * - {py:obj}`dict_shear_modes <stonedfenicsx.config.config_utils.dict_shear_modes>`
   - ```{autodoc2-docstring} stonedfenicsx.config.config_utils.dict_shear_modes
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`dict_stokes <stonedfenicsx.config.config_utils.dict_stokes>`
   - ```{autodoc2-docstring} stonedfenicsx.config.config_utils.dict_stokes
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -53,6 +59,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.config_utils.dict_shear_modes
+:parser: napoleon_parser
 ```
 
 ````
@@ -63,6 +70,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.config_utils.dict_stokes
+:parser: napoleon_parser
 ```
 
 ````
@@ -71,6 +79,7 @@
 :canonical: stonedfenicsx.config.config_utils.correct_input
 
 ```{autodoc2-docstring} stonedfenicsx.config.config_utils.correct_input
+:parser: napoleon_parser
 ```
 ````
 
@@ -78,6 +87,7 @@
 :canonical: stonedfenicsx.config.config_utils.update_ip_file
 
 ```{autodoc2-docstring} stonedfenicsx.config.config_utils.update_ip_file
+:parser: napoleon_parser
 ```
 ````
 
@@ -85,5 +95,6 @@
 :canonical: stonedfenicsx.config.config_utils.cast_type
 
 ```{autodoc2-docstring} stonedfenicsx.config.config_utils.cast_type
+:parser: napoleon_parser
 ```
 ````

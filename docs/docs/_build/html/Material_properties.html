@@ -553,74 +553,144 @@ to the reference state.</p>
 <p>In general, the code can handle pressure-dependent material properties. However, these should be used with caution because the kinematic subduction models are incompressible. Consequently, pressure-dependent properties may introduce inconsistencies in the computed thermal field. Adiabatic heating cannot be introduced straightforwardly within this framework. Furthermore, the pressure singularities described by <span class="bibtex-citation" id="id16">[<a class="reference internal" href="reference.html#id12" title="Peter E van Keken, Claire Currie, Scott D King, Mark D Behn, Amandine Cagnioncle, Jiangheng He, Richard F Katz, Shu-Chuan Lin, E Marc Parmentier, Marc Spiegelman, and others. A community benchmark for subduction zone modeling. Physics of the Earth and Planetary Interiors, 171(1-4):187–197, 2008.">vKCK+08</a>]</span> complicate the computation of shear heating without introducing additional assumptions or arbitrary choices.</p>
 <section id="heat-capacity">
 <h4>Heat capacity<a class="headerlink" href="#heat-capacity" title="Link to this heading">¶</a></h4>
-<p><strong>Heat capacity</strong> is computed using the following equation:</p>
+<p>Heat capacity is computed using the following equation:</p>
 <div class="math notranslate nohighlight" id="equation-eq-heat-capacity">
 <span class="eqno">(4)<a class="headerlink" href="#equation-eq-heat-capacity" title="Link to this equation">¶</a></span>\[\begin{split}\begin{aligned}
-C_p(X,T) ={}&amp; C_{p,0}(X)
-+ C_{p,1}(X)T^{-0.5}
-+ C_{p,2}(X)T^{-2} \\
-&amp;+ C_{p,3}(X)T^{-3}
-+ C_{p,4}(X)T
-+ C_{p,5}(X)T^{2}
+C_p(X,T) ={}&amp; cp0(X)
++ cp1(X)T^{-0.5}
++ cp2(X)T^{-2} \\
+&amp;+ cp3(X)T^{-3}
++ cp4(X)T
++ cp5(X)T^{2}
 \end{aligned}\end{split}\]</div>
-<p>where <span class="math notranslate nohighlight">\(C_{p,i}\)</span> are empirical parameters that depend on the mineralogical composition. The data are taken from <span class="bibtex-citation" id="id17">[<a class="reference internal" href="reference.html#id19" title="Christopher J Grose and Juan Carlos Afonso. Comprehensive plate models for the thermal evolution of oceanic lithosphere. Geochemistry, Geophysics, Geosystems, 14(9):3751–3778, 2013.">GA13</a>]</span> and <span class="bibtex-citation" id="id18">[<a class="reference internal" href="reference.html#id28" title="RG Berman and L Ya Aranovich. Optimized standard state and solution properties of minerals: i. model calibration for olivine, orthopyroxene, cordierite, garnet, and ilmenite in the system feo-mgo-cao-al2o3-tio2-sio2. Contributions to Mineralogy and Petrology, 126(1):1–24, 1996.">BA96</a>]</span>. The main parameters used in the current implementation are listed in <span class="xref std std-ref">tab:heat_capacity</span>.</p>
-<p>The coefficients are defined such that $C_p$ is expressed in <span class="math notranslate nohighlight">\(\mathrm{J\,kg^{-1}\,K^{-1}}\)</span>, with T in K. Forsterite and fayalite are the end-member experimental data from <span class="bibtex-citation" id="id19">[<a class="reference internal" href="reference.html#id28" title="RG Berman and L Ya Aranovich. Optimized standard state and solution properties of minerals: i. model calibration for olivine, orthopyroxene, cordierite, garnet, and ilmenite in the system feo-mgo-cao-al2o3-tio2-sio2. Contributions to Mineralogy and Petrology, 126(1):1–24, 1996.">BA96</a>]</span>, while olivine, augite, and plagioclase are the mineral properties listed in <span class="bibtex-citation" id="id20">[<a class="reference internal" href="reference.html#id19" title="Christopher J Grose and Juan Carlos Afonso. Comprehensive plate models for the thermal evolution of oceanic lithosphere. Geochemistry, Geophysics, Geosystems, 14(9):3751–3778, 2013.">GA13</a>]</span>.</p>
-<p>The heat capacity of the mantle is computed using a mixture of 0.9 forsterite and 0.1 fayalite. The crustal heat capacity is computed using a mixture of 0.65 plagioclase, 0.2 augite, and 0.15 olivine, as listed in <span class="bibtex-citation" id="id21">[<a class="reference internal" href="reference.html#id19" title="Christopher J Grose and Juan Carlos Afonso. Comprehensive plate models for the thermal evolution of oceanic lithosphere. Geochemistry, Geophysics, Geosystems, 14(9):3751–3778, 2013.">GA13</a>]</span>.</p>
-<p id="tab-heat-capacity"><em>Heat capacity coefficients used in the non-linear formulation</em></p>
-<table class="docutils align-default">
+<p>where <span class="math notranslate nohighlight">\(cp{i}\)</span> are empirical parameters that depend on the mineralogical composition. The data are taken from <span class="bibtex-citation" id="id17">[<a class="reference internal" href="reference.html#id19" title="Christopher J Grose and Juan Carlos Afonso. Comprehensive plate models for the thermal evolution of oceanic lithosphere. Geochemistry, Geophysics, Geosystems, 14(9):3751–3778, 2013.">GA13</a>]</span> and <span class="bibtex-citation" id="id18">[<a class="reference internal" href="reference.html#id28" title="RG Berman and L Ya Aranovich. Optimized standard state and solution properties of minerals: i. model calibration for olivine, orthopyroxene, cordierite, garnet, and ilmenite in the system feo-mgo-cao-al2o3-tio2-sio2. Contributions to Mineralogy and Petrology, 126(1):1–24, 1996.">BA96</a>]</span>. The main parameters used in the current implementation are listed in <span class="xref std std-ref">tab:heat_capacity</span>.</p>
+<p>The coefficients are defined such that $C_p$ is expressed in <span class="math notranslate nohighlight">\(\mathrm{J\,kg^{-1}\,K^{-1}}\)</span>, with T in K. Forsterite and fayalite are the end-member experimental data from <span class="bibtex-citation" id="id19">[<a class="reference internal" href="reference.html#id28" title="RG Berman and L Ya Aranovich. Optimized standard state and solution properties of minerals: i. model calibration for olivine, orthopyroxene, cordierite, garnet, and ilmenite in the system feo-mgo-cao-al2o3-tio2-sio2. Contributions to Mineralogy and Petrology, 126(1):1–24, 1996.">BA96</a>]</span> or <span class="bibtex-citation" id="id20">[<a class="reference internal" href="reference.html#id29" title="Robert G Berman. Internally-consistent thermodynamic data for minerals in the system na2o-k2o-cao-mgo-feo-fe2o3-al2o3-sio2-tio2-h2o-co2. Journal of petrology, 29(2):445–522, 1988.">Ber88</a>]</span>, while olivine, augite, and plagioclase are the mineral properties listed in <span class="bibtex-citation" id="id21">[<a class="reference internal" href="reference.html#id19" title="Christopher J Grose and Juan Carlos Afonso. Comprehensive plate models for the thermal evolution of oceanic lithosphere. Geochemistry, Geophysics, Geosystems, 14(9):3751–3778, 2013.">GA13</a>]</span>. In Tab <a class="reference internal" href="#tab-original-data"><span class="std std-numref">Table 3</span></a>, the original experimental data are listed, while In Tab <a class="reference internal" href="#tab-mix-data"><span class="std std-numref">Table 4</span></a> the mixture that can be used are listed (using the abbreviation in the name of <a class="reference internal" href="#tab-original-data"><span class="std std-numref">Table 3</span></a>)</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The olivine listed in <span class="bibtex-citation" id="id22">[<a class="reference internal" href="reference.html#id19" title="Christopher J Grose and Juan Carlos Afonso. Comprehensive plate models for the thermal evolution of oceanic lithosphere. Geochemistry, Geophysics, Geosystems, 14(9):3751–3778, 2013.">GA13</a>]</span> it is a mixture computed using the data from <span class="bibtex-citation" id="id23">[<a class="reference internal" href="reference.html#id28" title="RG Berman and L Ya Aranovich. Optimized standard state and solution properties of minerals: i. model calibration for olivine, orthopyroxene, cordierite, garnet, and ilmenite in the system feo-mgo-cao-al2o3-tio2-sio2. Contributions to Mineralogy and Petrology, 126(1):1–24, 1996.">BA96</a>]</span>. While the data of augite and plagioclase, instead, are tabulated from <span class="bibtex-citation" id="id24">[<a class="reference internal" href="reference.html#id34" title="Richard A Robie and Bruce S Hemingway. Thermodynamic properties of minerals and related substances at 298.15 K and 1 bar (105 Pascals) pressure and at higher temperatures. Volume 2131. US Government Printing Office, 1995.">RH95</a>]</span> (NB: in <span class="bibtex-citation" id="id25">[<a class="reference internal" href="reference.html#id19" title="Christopher J Grose and Juan Carlos Afonso. Comprehensive plate models for the thermal evolution of oceanic lithosphere. Geochemistry, Geophysics, Geosystems, 14(9):3751–3778, 2013.">GA13</a>]</span> this is reference is not listed, so the reference here can be wrong.)
+The equation of the heat capacity is not canonical, it is simply the most generalised form that have been conceived to collects all the parameters found in literature. Thus, the reader must map each of the coefficient as a function of the temperature exponent. This was a design solution to avoid to have cases as a function of the mineralogical composition.</p>
+</div>
+<p>The heat capacity of the mantle is computed using a mixture of 0.9 forsterite and 0.1 fayalite. The crustal heat capacity is computed using a mixture of 0.65 plagioclase, 0.2 augite, and 0.15 olivine, as listed in <span class="bibtex-citation" id="id26">[<a class="reference internal" href="reference.html#id19" title="Christopher J Grose and Juan Carlos Afonso. Comprehensive plate models for the thermal evolution of oceanic lithosphere. Geochemistry, Geophysics, Geosystems, 14(9):3751–3778, 2013.">GA13</a>]</span>.</p>
+<div class="sd-tab-set docutils">
+<input checked="checked" id="sd-tab-item-2" name="sd-tab-set-1" type="radio">
+<label class="sd-tab-label" for="sd-tab-item-2">
+Original data</label><div class="sd-tab-content docutils">
+<table class="docutils align-default" id="tab-original-data">
+<caption><span class="caption-number">Table 3 </span><span class="caption-text">Heat capacity</span><a class="headerlink" href="#tab-original-data" title="Link to this table">¶</a></caption>
 <thead>
-<tr class="row-odd"><th class="head"><p>Mineral</p></th>
-<th class="head text-right"><p><span class="math notranslate nohighlight">\(C_{p,0}\)</span> [J <span class="math notranslate nohighlight">\(kg^{-1} K^{-1}\)</span>]</p></th>
-<th class="head text-right"><p><span class="math notranslate nohighlight">\(C_{p,1}\)</span> [J <span class="math notranslate nohighlight">\(kg^{-1} K^{-0.5}\)</span>]</p></th>
-<th class="head text-right"><p><span class="math notranslate nohighlight">\(C_{p,2}\)</span> [J <span class="math notranslate nohighlight">\(kg^{-1} K\)</span>]</p></th>
-<th class="head text-right"><p><span class="math notranslate nohighlight">\(C_{p,3}\)</span> [J <span class="math notranslate nohighlight">\(kg^{-1} K^{2}\)</span>]</p></th>
-<th class="head text-right"><p><span class="math notranslate nohighlight">\(C_{p,4}\)</span> [J <span class="math notranslate nohighlight">\(kg^{-1} K^{-2}\)</span>]</p></th>
-<th class="head text-right"><p><span class="math notranslate nohighlight">\(C_{p,5}\)</span> [J <span class="math notranslate nohighlight">\(kg^{-1} K^{-3}\)</span>]</p></th>
+<tr class="row-odd"><th class="head"><p>Model</p></th>
+<th class="head"><p>cp0</p></th>
+<th class="head"><p>cp1</p></th>
+<th class="head"><p>cp2</p></th>
+<th class="head"><p>cp3</p></th>
+<th class="head"><p>cp4</p></th>
+<th class="head"><p>cp5</p></th>
+<th class="head"><p>ref</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>Forsterite</p></td>
-<td class="text-right"><p>1657.39</p></td>
-<td class="text-right"><p><span class="math notranslate nohighlight">\(-1.281\times10^{4}\)</span></p></td>
-<td class="text-right"><p>0</p></td>
-<td class="text-right"><p><span class="math notranslate nohighlight">\(-1.904\times10^{9}\)</span></p></td>
-<td class="text-right"><p>0</p></td>
-<td class="text-right"><p>0</p></td>
+<tr class="row-even"><td><p>Bermann_Fosterite (<strong>BFo</strong>)</p></td>
+<td><p>1696.199</p></td>
+<td><p>-14224.790</p></td>
+<td><p>0.0</p></td>
+<td><p>-8.262078e8</p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+<td><p><span class="bibtex-citation" id="id27">[<a class="reference internal" href="reference.html#id29" title="Robert G Berman. Internally-consistent thermodynamic data for minerals in the system na2o-k2o-cao-mgo-feo-fe2o3-al2o3-sio2-tio2-h2o-co2. Journal of petrology, 29(2):445–522, 1988.">Ber88</a>]</span></p></td>
 </tr>
-<tr class="row-odd"><td><p>Fayalite</p></td>
-<td class="text-right"><p>1236.68</p></td>
-<td class="text-right"><p><span class="math notranslate nohighlight">\(-9.882\times10^{3}\)</span></p></td>
-<td class="text-right"><p>0</p></td>
-<td class="text-right"><p><span class="math notranslate nohighlight">\(-3.052\times10^{8}\)</span></p></td>
-<td class="text-right"><p>0</p></td>
-<td class="text-right"><p>0</p></td>
+<tr class="row-odd"><td><p>Bermann_Fayalite (<strong>BFa</strong>)</p></td>
+<td><p>1221.616</p></td>
+<td><p>-9441.481</p></td>
+<td><p>0.0</p></td>
+<td><p>-6.826290e8</p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+<td><p><span class="bibtex-citation" id="id28">[<a class="reference internal" href="reference.html#id29" title="Robert G Berman. Internally-consistent thermodynamic data for minerals in the system na2o-k2o-cao-mgo-feo-fe2o3-al2o3-sio2-tio2-h2o-co2. Journal of petrology, 29(2):445–522, 1988.">Ber88</a>]</span></p></td>
 </tr>
-<tr class="row-even"><td><p>Olivine</p></td>
-<td class="text-right"><p>1610.80</p></td>
-<td class="text-right"><p><span class="math notranslate nohighlight">\(-1.248\times10^{4}\)</span></p></td>
-<td class="text-right"><p>0</p></td>
-<td class="text-right"><p><span class="math notranslate nohighlight">\(-1.728\times10^{9}\)</span></p></td>
-<td class="text-right"><p>0</p></td>
-<td class="text-right"><p>0</p></td>
+<tr class="row-even"><td><p>Bermann_Aranovich_Fosterite (<strong>BAFo</strong>)</p></td>
+<td><p>1657.391</p></td>
+<td><p>-12805.368</p></td>
+<td><p>0.0</p></td>
+<td><p>-1.904457e9</p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+<td><p><span class="bibtex-citation" id="id29">[<a class="reference internal" href="reference.html#id28" title="RG Berman and L Ya Aranovich. Optimized standard state and solution properties of minerals: i. model calibration for olivine, orthopyroxene, cordierite, garnet, and ilmenite in the system feo-mgo-cao-al2o3-tio2-sio2. Contributions to Mineralogy and Petrology, 126(1):1–24, 1996.">BA96</a>]</span></p></td>
 </tr>
-<tr class="row-odd"><td><p>Augite</p></td>
-<td class="text-right"><p>2171.50</p></td>
-<td class="text-right"><p><span class="math notranslate nohighlight">\(-2.227\times10^{4}\)</span></p></td>
-<td class="text-right"><p><span class="math notranslate nohighlight">\(1.133\times10^{6}\)</span></p></td>
-<td class="text-right"><p>0</p></td>
-<td class="text-right"><p><span class="math notranslate nohighlight">\(-4.555\times10^{-1}\)</span></p></td>
-<td class="text-right"><p><span class="math notranslate nohighlight">\(1.299\times10^{-4}\)</span></p></td>
+<tr class="row-odd"><td><p>Bermann_Aranovich_Fayalite (<strong>BAFa</strong>)</p></td>
+<td><p>1236.682</p></td>
+<td><p>-9882.172</p></td>
+<td><p>0.0</p></td>
+<td><p>-3.051955e8</p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+<td><p><span class="bibtex-citation" id="id30">[<a class="reference internal" href="reference.html#id28" title="RG Berman and L Ya Aranovich. Optimized standard state and solution properties of minerals: i. model calibration for olivine, orthopyroxene, cordierite, garnet, and ilmenite in the system feo-mgo-cao-al2o3-tio2-sio2. Contributions to Mineralogy and Petrology, 126(1):1–24, 1996.">BA96</a>]</span></p></td>
 </tr>
-<tr class="row-even"><td><p>Plagioclase</p></td>
-<td class="text-right"><p>1857.57</p></td>
-<td class="text-right"><p><span class="math notranslate nohighlight">\(-1.649\times10^{4}\)</span></p></td>
-<td class="text-right"><p><span class="math notranslate nohighlight">\(-5.061\times10^{6}\)</span></p></td>
-<td class="text-right"><p>0</p></td>
-<td class="text-right"><p><span class="math notranslate nohighlight">\(-3.324\times10^{-1}\)</span></p></td>
-<td class="text-right"><p><span class="math notranslate nohighlight">\(1.505\times10^{-4}\)</span></p></td>
+<tr class="row-even"><td><p>olivine (<strong>ol</strong>)</p></td>
+<td><p>1610.8</p></td>
+<td><p>-12478.8</p></td>
+<td><p>0.0</p></td>
+<td><p>-1.728477e9</p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+<td><p><span class="bibtex-citation" id="id31">[<a class="reference internal" href="reference.html#id19" title="Christopher J Grose and Juan Carlos Afonso. Comprehensive plate models for the thermal evolution of oceanic lithosphere. Geochemistry, Geophysics, Geosystems, 14(9):3751–3778, 2013.">GA13</a>]</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>augite (<strong>au</strong>)</p></td>
+<td><p>2171.5</p></td>
+<td><p>-22271.6</p></td>
+<td><p>1.1333e6</p></td>
+<td><p>0.0</p></td>
+<td><p>-4.555e-1</p></td>
+<td><p>1.299e-4</p></td>
+<td><p><span class="bibtex-citation" id="id32">[<a class="reference internal" href="reference.html#id19" title="Christopher J Grose and Juan Carlos Afonso. Comprehensive plate models for the thermal evolution of oceanic lithosphere. Geochemistry, Geophysics, Geosystems, 14(9):3751–3778, 2013.">GA13</a>]</span></p></td>
+</tr>
+<tr class="row-even"><td><p>plagioclase (<strong>plg</strong>)</p></td>
+<td><p>1857.57</p></td>
+<td><p>-16494.6</p></td>
+<td><p>-5.061e6</p></td>
+<td><p>0.0</p></td>
+<td><p>-3.324e-1</p></td>
+<td><p>1.505e-4</p></td>
+<td><p><span class="bibtex-citation" id="id33">[<a class="reference internal" href="reference.html#id19" title="Christopher J Grose and Juan Carlos Afonso. Comprehensive plate models for the thermal evolution of oceanic lithosphere. Geochemistry, Geophysics, Geosystems, 14(9):3751–3778, 2013.">GA13</a>]</span></p></td>
 </tr>
 </tbody>
 </table>
+</div>
+<input id="sd-tab-item-3" name="sd-tab-set-1" type="radio">
+<label class="sd-tab-label" for="sd-tab-item-3">
+Avaiable Mixture</label><div class="sd-tab-content docutils">
+<table class="docutils align-default" id="tab-mix-data">
+<caption><span class="caption-number">Table 4 </span><span class="caption-text">Avaiable mixture</span><a class="headerlink" href="#tab-mix-data" title="Link to this table">¶</a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>Name input</p></th>
+<th class="head"><p>Mixture</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Mantle_Bernard_1988_FO</span></code></p></td>
+<td><p><em>BFo</em> 100%</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Mantle_Bernard_1988_FA</span></code></p></td>
+<td><p><em>BFa</em> 100%</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Mantle_Bernard_Ar_199x_FO</span></code></p></td>
+<td><p><em>BAFo</em> 100%</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Mantle_Bernard_Ar_199x_FA</span></code></p></td>
+<td><p><em>BAFa</em> 100%</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Mantle_Bernard_1988_FO_FA</span></code></p></td>
+<td><p><em>BFo</em> 90% + <em>BFa</em>10%</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Mantle_Bernard_Ar_199x_FO_FA</span></code></p></td>
+<td><p><em>BAFo</em> 90% + <em>BAFa</em>10%</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Oceanic_crust</span></code></p></td>
+<td><p><em>ol</em>15% + <em>au</em>20% +<em>pl</em>65%</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </section>
 <section id="thermal-expansivity">
 <h4>Thermal expansivity<a class="headerlink" href="#thermal-expansivity" title="Link to this heading">¶</a></h4>
@@ -638,16 +708,16 @@ C_p(X,T) ={}&amp; C_{p,0}(X)
 <span class="eqno">(5)<a class="headerlink" href="#equation-lattice-diffusivity" title="Link to this equation">¶</a></span>\[\kappa_{\mathrm{lat}} =
 \kappa_0
 +
-\kappa_1 \frac{-(T-T_{\mathrm{ref}})}{T_0}
+\kappa_1 \exp(\frac{-(T-T_{\mathrm{ref}})}{T_0})
 +
-\kappa_2 \frac{-(T-T_{\mathrm{ref}})}{T_1}
+\kappa_2 \exp(\frac{-(T-T_{\mathrm{ref}})}{T_1})
 \exp(fP)\]</div>
-<p>The parameters used in this formulation are compiled from <span class="bibtex-citation" id="id22">[<a class="reference internal" href="reference.html#id8" title="Fred Richards, Mark Hoggard, Alistair Crosby, Siavash Ghelichkhan, and Nicky White. Structure and dynamics of the oceanic lithosphere-asthenosphere system. Physics of the Earth and Planetary Interiors, 309:106559, 2020.">RHC+20</a>]</span>, <span class="bibtex-citation" id="id23">[<a class="reference internal" href="reference.html#id19" title="Christopher J Grose and Juan Carlos Afonso. Comprehensive plate models for the thermal evolution of oceanic lithosphere. Geochemistry, Geophysics, Geosystems, 14(9):3751–3778, 2013.">GA13</a>]</span>, and <span class="bibtex-citation" id="id24">[<a class="reference internal" href="reference.html#id20" title="Tomoko Korenaga and Jun Korenaga. Evolution of young oceanic lithosphere and the meaning of seafloor subsidence rate. Journal of Geophysical Research: Solid Earth, 121(9):6315–6332, 2016.">KK16</a>]</span> and are listed in <span class="xref std std-ref">Table_lattice_dif</span>. The crustal lattice diffusivity is computed by combining the mantle, augite, and anorthite (<code class="docutils literal notranslate"><span class="pre">AnAb</span></code>) parameterisations. The oceanic crust is assumed to consist of 65% plagioclase, 15% olivine, and 20% clinopyroxene, consistent with the calculation of heat capacity.</p>
+<p>The parameters used in this formulation are compiled from <span class="bibtex-citation" id="id34">[<a class="reference internal" href="reference.html#id8" title="Fred Richards, Mark Hoggard, Alistair Crosby, Siavash Ghelichkhan, and Nicky White. Structure and dynamics of the oceanic lithosphere-asthenosphere system. Physics of the Earth and Planetary Interiors, 309:106559, 2020.">RHC+20</a>]</span>, <span class="bibtex-citation" id="id35">[<a class="reference internal" href="reference.html#id19" title="Christopher J Grose and Juan Carlos Afonso. Comprehensive plate models for the thermal evolution of oceanic lithosphere. Geochemistry, Geophysics, Geosystems, 14(9):3751–3778, 2013.">GA13</a>]</span>, and <span class="bibtex-citation" id="id36">[<a class="reference internal" href="reference.html#id20" title="Tomoko Korenaga and Jun Korenaga. Evolution of young oceanic lithosphere and the meaning of seafloor subsidence rate. Journal of Geophysical Research: Solid Earth, 121(9):6315–6332, 2016.">KK16</a>]</span> and are listed in <span class="xref std std-ref">Table_lattice_dif</span>. The crustal lattice diffusivity is computed by combining the mantle, augite, and anorthite (<code class="docutils literal notranslate"><span class="pre">AnAb</span></code>) parameterisations. The oceanic crust is assumed to consist of 65% plagioclase, 15% olivine, and 20% clinopyroxene, consistent with the calculation of heat capacity.</p>
 <p>The lattice diffusivity is then multiplied by the density and heat capacity to obtain the corresponding lattice thermal conductivity.</p>
 </section>
 <section id="radiative-conductivity">
 <h5>Radiative Conductivity<a class="headerlink" href="#radiative-conductivity" title="Link to this heading">¶</a></h5>
-<p>$k_{\mathrm{rad}}$ is described by the following equation <span class="bibtex-citation" id="id25">[<a class="reference internal" href="reference.html#id19" title="Christopher J Grose and Juan Carlos Afonso. Comprehensive plate models for the thermal evolution of oceanic lithosphere. Geochemistry, Geophysics, Geosystems, 14(9):3751–3778, 2013.">GA13</a>, <a class="reference internal" href="reference.html#id8" title="Fred Richards, Mark Hoggard, Alistair Crosby, Siavash Ghelichkhan, and Nicky White. Structure and dynamics of the oceanic lithosphere-asthenosphere system. Physics of the Earth and Planetary Interiors, 309:106559, 2020.">RHC+20</a>]</span>:</p>
+<p><span class="math notranslate nohighlight">\(k_{\mathrm{rad}}\)</span> is described by the following equation <span class="bibtex-citation" id="id37">[<a class="reference internal" href="reference.html#id19" title="Christopher J Grose and Juan Carlos Afonso. Comprehensive plate models for the thermal evolution of oceanic lithosphere. Geochemistry, Geophysics, Geosystems, 14(9):3751–3778, 2013.">GA13</a>, <a class="reference internal" href="reference.html#id8" title="Fred Richards, Mark Hoggard, Alistair Crosby, Siavash Ghelichkhan, and Nicky White. Structure and dynamics of the oceanic lithosphere-asthenosphere system. Physics of the Earth and Planetary Interiors, 309:106559, 2020.">RHC+20</a>]</span>:</p>
 <div class="math notranslate nohighlight" id="equation-eq-radiative-conductivity">
 <span class="eqno">(6)<a class="headerlink" href="#equation-eq-radiative-conductivity" title="Link to this equation">¶</a></span>\[k_{\mathrm{rad}} =
 A_r \exp\left(-\frac{(T-T_a)^2}{2x_a^2}\right)
@@ -670,7 +740,7 @@ x_a &amp;= 167.5
 x_b &amp;= 465
       + 1700 \exp\left(-\frac{d^{0.94}}{0.175}\right).
 \end{aligned}\end{split}\]</div>
-<p>The default grain size <span class="math notranslate nohighlight">\(d\)</span> is 0.5 cm. This set of equations is given by <span class="bibtex-citation" id="id26">[<a class="reference internal" href="reference.html#id19" title="Christopher J Grose and Juan Carlos Afonso. Comprehensive plate models for the thermal evolution of oceanic lithosphere. Geochemistry, Geophysics, Geosystems, 14(9):3751–3778, 2013.">GA13</a>]</span> and is based on the work of <span class="bibtex-citation" id="id27">[<a class="reference internal" href="reference.html#id21" title="AM Hofmeister. Dependence of diffusive radiative transfer on grain-size, temperature, and fe-content: implications for mantle processes. Journal of Geodynamics, 40(1):51–72, 2005.">Hof05</a>]</span>. In <span class="bibtex-citation" id="id28">[<a class="reference internal" href="reference.html#id21" title="AM Hofmeister. Dependence of diffusive radiative transfer on grain-size, temperature, and fe-content: implications for mantle processes. Journal of Geodynamics, 40(1):51–72, 2005.">Hof05</a>]</span>, radiative conductivity is described by three equations applicable to different grain-size ranges. The formulation of <span class="bibtex-citation" id="id29">[<a class="reference internal" href="reference.html#id19" title="Christopher J Grose and Juan Carlos Afonso. Comprehensive plate models for the thermal evolution of oceanic lithosphere. Geochemistry, Geophysics, Geosystems, 14(9):3751–3778, 2013.">GA13</a>]</span> provides a convenient unified parameterisation and has subsequently been used to model the thermal evolution of cooling oceanic lithosphere in <span class="bibtex-citation" id="id30">[<a class="reference internal" href="reference.html#id8" title="Fred Richards, Mark Hoggard, Alistair Crosby, Siavash Ghelichkhan, and Nicky White. Structure and dynamics of the oceanic lithosphere-asthenosphere system. Physics of the Earth and Planetary Interiors, 309:106559, 2020.">RHC+20</a>]</span> and <span class="bibtex-citation" id="id31">[<a class="reference internal" href="reference.html#id20" title="Tomoko Korenaga and Jun Korenaga. Evolution of young oceanic lithosphere and the meaning of seafloor subsidence rate. Journal of Geophysical Research: Solid Earth, 121(9):6315–6332, 2016.">KK16</a>]</span>.</p>
+<p>The default grain size <span class="math notranslate nohighlight">\(d\)</span> is 0.5 cm. This set of equations is given by <span class="bibtex-citation" id="id38">[<a class="reference internal" href="reference.html#id19" title="Christopher J Grose and Juan Carlos Afonso. Comprehensive plate models for the thermal evolution of oceanic lithosphere. Geochemistry, Geophysics, Geosystems, 14(9):3751–3778, 2013.">GA13</a>]</span> and is based on the work of <span class="bibtex-citation" id="id39">[<a class="reference internal" href="reference.html#id21" title="AM Hofmeister. Dependence of diffusive radiative transfer on grain-size, temperature, and fe-content: implications for mantle processes. Journal of Geodynamics, 40(1):51–72, 2005.">Hof05</a>]</span>. In <span class="bibtex-citation" id="id40">[<a class="reference internal" href="reference.html#id21" title="AM Hofmeister. Dependence of diffusive radiative transfer on grain-size, temperature, and fe-content: implications for mantle processes. Journal of Geodynamics, 40(1):51–72, 2005.">Hof05</a>]</span>, radiative conductivity is described by three equations applicable to different grain-size ranges. The formulation of <span class="bibtex-citation" id="id41">[<a class="reference internal" href="reference.html#id19" title="Christopher J Grose and Juan Carlos Afonso. Comprehensive plate models for the thermal evolution of oceanic lithosphere. Geochemistry, Geophysics, Geosystems, 14(9):3751–3778, 2013.">GA13</a>]</span> provides a convenient unified parameterisation and has subsequently been used to model the thermal evolution of cooling oceanic lithosphere in <span class="bibtex-citation" id="id42">[<a class="reference internal" href="reference.html#id8" title="Fred Richards, Mark Hoggard, Alistair Crosby, Siavash Ghelichkhan, and Nicky White. Structure and dynamics of the oceanic lithosphere-asthenosphere system. Physics of the Earth and Planetary Interiors, 309:106559, 2020.">RHC+20</a>]</span> and <span class="bibtex-citation" id="id43">[<a class="reference internal" href="reference.html#id20" title="Tomoko Korenaga and Jun Korenaga. Evolution of young oceanic lithosphere and the meaning of seafloor subsidence rate. Journal of Geophysical Research: Solid Earth, 121(9):6315–6332, 2016.">KK16</a>]</span>.</p>
 </section>
 <section id="effective-thermal-conductivity">
 <h5>Effective thermal conductivity<a class="headerlink" href="#effective-thermal-conductivity" title="Link to this heading">¶</a></h5>

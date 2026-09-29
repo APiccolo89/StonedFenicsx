@@ -4,6 +4,7 @@
 ```
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry
+:parser: napoleon_parser
 :allowtitles:
 ```
 
@@ -17,14 +18,17 @@
 
 * - {py:obj}`Domain <stonedfenicsx.config.geometry.Domain>`
   - ```{autodoc2-docstring} stonedfenicsx.config.geometry.Domain
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`GeomInput <stonedfenicsx.config.geometry.GeomInput>`
   - ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`Mesh <stonedfenicsx.config.geometry.Mesh>`
   - ```{autodoc2-docstring} stonedfenicsx.config.geometry.Mesh
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -37,14 +41,17 @@
 
 * - {py:obj}`_ELEMENT_P <stonedfenicsx.config.geometry._ELEMENT_P>`
   - ```{autodoc2-docstring} stonedfenicsx.config.geometry._ELEMENT_P
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`_ELEMENT_PT <stonedfenicsx.config.geometry._ELEMENT_PT>`
   - ```{autodoc2-docstring} stonedfenicsx.config.geometry._ELEMENT_PT
+    :parser: napoleon_parser
     :summary:
     ```
 * - {py:obj}`_ELEMENT_V <stonedfenicsx.config.geometry._ELEMENT_V>`
   - ```{autodoc2-docstring} stonedfenicsx.config.geometry._ELEMENT_V
+    :parser: napoleon_parser
     :summary:
     ```
 ````
@@ -57,6 +64,7 @@
    'element(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry._ELEMENT_P
+:parser: napoleon_parser
 ```
 
 ````
@@ -67,6 +75,7 @@
    'element(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry._ELEMENT_PT
+:parser: napoleon_parser
 ```
 
 ````
@@ -77,6 +86,7 @@
    'element(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry._ELEMENT_V
+:parser: napoleon_parser
 ```
 
 ````
@@ -85,6 +95,7 @@
 :canonical: stonedfenicsx.config.geometry.Domain
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Domain
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} hierarchy
@@ -94,6 +105,7 @@
    'Parent'
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Domain.hierarchy
+:parser: napoleon_parser
 ```
 
 ````
@@ -105,6 +117,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Domain.mesh
+:parser: napoleon_parser
 ```
 
 ````
@@ -116,6 +129,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Domain.cell_par
+:parser: napoleon_parser
 ```
 
 ````
@@ -127,6 +141,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Domain.node_par
+:parser: napoleon_parser
 ```
 
 ````
@@ -138,6 +153,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Domain.facets
+:parser: napoleon_parser
 ```
 
 ````
@@ -149,6 +165,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Domain.tagcells
+:parser: napoleon_parser
 ```
 
 ````
@@ -160,6 +177,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Domain.bc_dict
+:parser: napoleon_parser
 ```
 
 ````
@@ -171,6 +189,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Domain.solph
+:parser: napoleon_parser
 ```
 
 ````
@@ -182,6 +201,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Domain.phase
+:parser: napoleon_parser
 ```
 
 ````
@@ -193,6 +213,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Domain.comm
+:parser: napoleon_parser
 ```
 
 ````
@@ -204,6 +225,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Domain.name
+:parser: napoleon_parser
 ```
 
 ````
@@ -214,6 +236,7 @@
 :canonical: stonedfenicsx.config.geometry.GeomInput
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} x
@@ -223,6 +246,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.x
+:parser: napoleon_parser
 ```
 
 ````
@@ -234,6 +258,7 @@
    'field(...)'
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.y
+:parser: napoleon_parser
 ```
 
 ````
@@ -245,6 +270,7 @@
    True
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.redo_mesh
+:parser: napoleon_parser
 ```
 
 ````
@@ -256,6 +282,7 @@
    130.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.slab_tk
+:parser: napoleon_parser
 ```
 
 ````
@@ -267,6 +294,7 @@
    30.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.cr
+:parser: napoleon_parser
 ```
 
 ````
@@ -278,6 +306,7 @@
    7.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.ocr
+:parser: napoleon_parser
 ```
 
 ````
@@ -289,6 +318,7 @@
    20.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.lit_mt
+:parser: napoleon_parser
 ```
 
 ````
@@ -300,6 +330,7 @@
    0.3
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.lc
+:parser: napoleon_parser
 ```
 
 ````
@@ -311,6 +342,7 @@
    50.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.ns_depth
+:parser: napoleon_parser
 ```
 
 ````
@@ -322,6 +354,7 @@
    80.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.decoupling
+:parser: napoleon_parser
 ```
 
 ````
@@ -333,6 +366,7 @@
    2.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.resolution_normal
+:parser: napoleon_parser
 ```
 
 ````
@@ -344,6 +378,7 @@
    2.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.resolution_refine
+:parser: napoleon_parser
 ```
 
 ````
@@ -355,6 +390,7 @@
    45.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.theta_out_slab
+:parser: napoleon_parser
 ```
 
 ````
@@ -366,6 +402,7 @@
    10.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.theta_in_slab
+:parser: napoleon_parser
 ```
 
 ````
@@ -377,6 +414,7 @@
    10.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.transition
+:parser: napoleon_parser
 ```
 
 ````
@@ -388,6 +426,7 @@
    100.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.lab_d
+:parser: napoleon_parser
 ```
 
 ````
@@ -399,6 +438,7 @@
    'CustomParabolic'
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.slab_type
+:parser: napoleon_parser
 ```
 
 ````
@@ -410,6 +450,7 @@
    'Not_Defined'
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.sub_path
+:parser: napoleon_parser
 ```
 
 ````
@@ -421,6 +462,7 @@
    0.0005
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.sub_parabolic_a
+:parser: napoleon_parser
 ```
 
 ````
@@ -432,6 +474,7 @@
    300.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.sub_lb
+:parser: napoleon_parser
 ```
 
 ````
@@ -443,6 +486,7 @@
    False
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.sub_constant_flag
+:parser: napoleon_parser
 ```
 
 ````
@@ -454,6 +498,7 @@
    5.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.sub_theta0
+:parser: napoleon_parser
 ```
 
 ````
@@ -465,6 +510,7 @@
    45.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.sub_theta_max
+:parser: napoleon_parser
 ```
 
 ````
@@ -476,6 +522,7 @@
    0.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.sub_trench
+:parser: napoleon_parser
 ```
 
 ````
@@ -487,6 +534,7 @@
    1.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.sub_dl
+:parser: napoleon_parser
 ```
 
 ````
@@ -498,6 +546,7 @@
    2.0
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.wz_tk
+:parser: napoleon_parser
 ```
 
 ````
@@ -509,6 +558,7 @@
    True
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.van_keken
+:parser: napoleon_parser
 ```
 
 ````
@@ -520,6 +570,7 @@
    False
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.model_full
+:parser: napoleon_parser
 ```
 
 ````
@@ -528,6 +579,7 @@
 :canonical: stonedfenicsx.config.geometry.GeomInput.check_class_consistency
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.GeomInput.check_class_consistency
+:parser: napoleon_parser
 ```
 
 ````
@@ -538,6 +590,7 @@
 :canonical: stonedfenicsx.config.geometry.Mesh
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Mesh
+:parser: napoleon_parser
 ```
 
 ````{py:attribute} g_input
@@ -547,6 +600,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Mesh.g_input
+:parser: napoleon_parser
 ```
 
 ````
@@ -558,6 +612,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Mesh.global_domain
+:parser: napoleon_parser
 ```
 
 ````
@@ -569,6 +624,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Mesh.subduction_plate_domain
+:parser: napoleon_parser
 ```
 
 ````
@@ -580,6 +636,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Mesh.wedge_domain
+:parser: napoleon_parser
 ```
 
 ````
@@ -591,6 +648,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Mesh.crust_domain
+:parser: napoleon_parser
 ```
 
 ````
@@ -602,6 +660,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Mesh.comm
+:parser: napoleon_parser
 ```
 
 ````
@@ -613,6 +672,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Mesh.rank
+:parser: napoleon_parser
 ```
 
 ````
@@ -623,6 +683,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Mesh.element_p
+:parser: napoleon_parser
 ```
 
 ````
@@ -633,6 +694,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Mesh.element_pt
+:parser: napoleon_parser
 ```
 
 ````
@@ -643,6 +705,7 @@
    None
 
 ```{autodoc2-docstring} stonedfenicsx.config.geometry.Mesh.element_v
+:parser: napoleon_parser
 ```
 
 ````

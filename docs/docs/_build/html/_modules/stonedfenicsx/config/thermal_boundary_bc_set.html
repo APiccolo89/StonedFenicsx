@@ -140,10 +140,10 @@
           <div class="body" role="main">
             
   <h1>Source code for stonedfenicsx.config.thermal_boundary_bc_set</h1><div class="highlight"><pre>
-<span></span><span class="c1"># calculate the thermal structure of the ocean according to Richards et al., 2018 JGR: Solid Earth </span>
+<span></span><span class="c1"># calculate the thermal structure of the ocean according to Richards et al., 2018 JGR: Solid Earth</span>
 <span class="c1"># we use a time- and space-centered Crank-Nicholson finite-difference scheme with a predictor-corrector step (Press et al., 1992)</span>
 
-<span class="c1"># import all the constants and defined model setup parameters </span>
+<span class="c1"># import all the constants and defined model setup parameters</span>
 <span class="sd">"""</span>
 <span class="sd">This module is adapted from FieldStone (Van Zelst et al., 2023). It has been refactored to match the current code structure</span>
 <span class="sd">and extended to handle temperature-dependent material properties via a fixed-point (Picard) iteration.</span>
@@ -151,8 +151,8 @@
 <span class="sd">Context (from reviewer feedback in Van Zelst et al., revision):</span>
 <span class="sd">    “Eqns 13–16 define the solution procedure for a linear problem (i.e., when ρ, Cp and k are not functions of T).</span>
 <span class="sd">     You stated earlier you incorporate the nonlinear parameters into this 1D model and use them as boundary conditions.</span>
-<span class="sd">     Please correct the description of the method used to obtain the 1D temperature profile for the non-linear case.” </span>
-<span class="sd">'' https://egusphere.copernicus.org/preprints/2022/egusphere-2022-768/egusphere-2022-768-AR1.pdf'' </span>
+<span class="sd">     Please correct the description of the method used to obtain the 1D temperature profile for the non-linear case.”</span>
+<span class="sd">'' https://egusphere.copernicus.org/preprints/2022/egusphere-2022-768/egusphere-2022-768-AR1.pdf''</span>
 
 
 <span class="sd">Non-linear solution procedure:</span>
@@ -170,8 +170,8 @@
 
 <span class="sd">Convergence criterion:</span>
 <span class="sd">    Convergence is monitored using the relative change in temperature between successive iterations at the same time step,</span>
-<span class="sd">    which is a commonly used stopping criterion in kinematic thermal models. The best alternative is computing the effective </span>
-<span class="sd">    energy conservation residuum, but the amount of work required, is not exactly paying off in accuracy. </span>
+<span class="sd">    which is a commonly used stopping criterion in kinematic thermal models. The best alternative is computing the effective</span>
+<span class="sd">    energy conservation residuum, but the amount of work required, is not exactly paying off in accuracy.</span>
 
 <span class="sd">"""</span>
 
@@ -179,9 +179,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">mpi4py</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">psutil</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pst</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numba</span><span class="w"> </span><span class="kn">import</span> <span class="n">njit</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">erf</span> <span class="k">as</span> <span class="n">erf_sc</span>
@@ -200,14 +198,14 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.scal</span><span class="w"> </span><span class="kn">import</span> <span class="n">Scal</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.create_mesh.create_mesh</span><span class="w"> </span><span class="kn">import</span> <span class="n">dict_surf</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_race_condition</span><span class="p">,</span> <span class="n">timing_function</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timing_function</span>
 
-<span class="n">_NAME_H5_FILE_TMP</span> <span class="o">=</span> <span class="s1">'temporary_file.h5'</span>
+<span class="n">_NAME_H5_FILE_TMP</span> <span class="o">=</span> <span class="s2">"temporary_file.h5"</span>
 
 
 <div class="viewcode-block" id="save_data_set">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.save_data_set">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">save_data_set</span><span class="p">(</span><span class="n">f</span><span class="p">:</span><span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">,</span><span class="n">buf</span><span class="p">:</span><span class="nb">any</span><span class="p">,</span><span class="n">name</span><span class="p">:</span><span class="nb">str</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">save_data_set</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">,</span> <span class="n">buf</span><span class="p">:</span> <span class="nb">any</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Write a dataset to an open HDF5 file, overwriting if it already exists.</span>
 
 <span class="sd">    Args:</span>
@@ -219,20 +217,22 @@
     <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
         <span class="k">del</span> <span class="n">f</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
 
-    <span class="n">f</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">buf</span><span class="p">)</span></div>
+    <span class="n">f</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">buf</span><span class="p">)</span></div>
+
+
 
 <span class="c1"># --–</span>
 <div class="viewcode-block" id="_compute_lithostatic_pressure">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set._compute_lithostatic_pressure">[docs]</a>
 <span class="nd">@njit</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_compute_lithostatic_pressure</span><span class="p">(</span>
-                                 <span class="n">nz</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-                                 <span class="n">ph</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">],</span>          <span class="c1"># (nz,) phase id per level (or per cell)</span>
-                                 <span class="n">g</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>                       <span class="c1"># m/s^2, vertical component</span>
-                                 <span class="n">dz</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>                      <span class="c1"># m</span>
-                                 <span class="n">temp</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>         <span class="c1"># (nz,) K</span>
-                                 <span class="n">pdb</span><span class="p">:</span> <span class="s2">"PhaseDataBase"</span><span class="p">,</span>
-                                <span class="p">)</span>  <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]:</span>
+    <span class="n">nz</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">ph</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">],</span>  <span class="c1"># (nz,) phase id per level (or per cell)</span>
+    <span class="n">g</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>  <span class="c1"># m/s^2, vertical component</span>
+    <span class="n">dz</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>  <span class="c1"># m</span>
+    <span class="n">temp</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>  <span class="c1"># (nz,) K</span>
+    <span class="n">pdb</span><span class="p">:</span> <span class="s2">"PhaseDataBase"</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Compute a 1D lithostatic pressure profile with pressure-dependent properties.</span>
 
@@ -246,103 +246,98 @@
 <span class="sd">    from an initial pressure guess, evaluate rho(P, T), integrate to update P(z),</span>
 <span class="sd">    and repeat until convergence. The relative tollerance is hardcoded to be 1e-6</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    nz : int</span>
-<span class="sd">        Number of grid points in the vertical direction.</span>
-<span class="sd">    ph : NDArray[np.int32]</span>
-<span class="sd">        Phase identifier array along the 1D column (length ``nz``). Used to select</span>
-<span class="sd">        material laws/properties from ``pdb``.</span>
-<span class="sd">    g : float</span>
-<span class="sd">        Vertical component of gravitational acceleration (m/s^2). Use sign</span>
-<span class="sd">        consistently with your z-axis convention.</span>
-<span class="sd">    T : NDArray[np.float64]</span>
-<span class="sd">        Temperature profile along the column (K), length ``nz``.</span>
-<span class="sd">    pdb : object</span>
-<span class="sd">        Material database/dataset providing density and other thermodynamic/elastic</span>
-<span class="sd">        properties as functions of phase, temperature and pressure.</span>
-
 <span class="sd">    NB: all parameters are already in dimensionless (scaled) units when called from the solver.</span>
-<span class="sd">    </span>
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    lit_p : NDArray[np.float64]</span>
-<span class="sd">        Lithostatic pressure profile (Pa), length ``nz``.</span>
 
-<span class="sd">    Notes</span>
-<span class="sd">    -----</span>
-<span class="sd">    - The boundary condition is typically ``P(z_surface) = 0`` (or atmospheric),</span>
-<span class="sd">      and pressure increases downward.</span>
-<span class="sd">    - Convergence is usually checked with a norm on successive pressure iterates,</span>
-<span class="sd">      e.g. ``max(|P_new - P_old|) / max(P_new, eps)``.</span>
-<span class="sd">    - If ``rho`` depends strongly on pressure, under-relaxation may be required.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        nz (int): Number of grid points in the vertical direction.</span>
+<span class="sd">        ph (NDArray[np.int32]): Phase identifier array along the 1D column (length ``nz``). Used to select</span>
+<span class="sd">            material laws/properties from ``pdb``.</span>
+<span class="sd">        g (float): Vertical component of gravitational acceleration (m/s^2). Use sign</span>
+<span class="sd">            consistently with your z-axis convention.</span>
+<span class="sd">        T (NDArray[np.float64]): Temperature profile along the column (K), length ``nz``.</span>
+<span class="sd">        pdb (object): Material database/dataset providing density and other thermodynamic/elastic</span>
+<span class="sd">            properties as functions of phase, temperature and pressure.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        NDArray[np.float64]: Lithostatic pressure profile (Pa), length ``nz``.</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        - The boundary condition is typically ``P(z_surface) = 0`` (or atmospheric),</span>
+<span class="sd">          and pressure increases downward.</span>
+<span class="sd">        - Convergence is usually checked with a norm on successive pressure iterates,</span>
+<span class="sd">          e.g. ``max(|P_new - P_old|) / max(P_new, eps)``.</span>
+<span class="sd">        - If ``rho`` depends strongly on pressure, under-relaxation may be required.</span>
 
 <span class="sd">    """</span>
 
-    <span class="c1">#compute lithostatic pressure:</span>
-    <span class="n">lit_p_o</span> <span class="o">=</span>  <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nz</span><span class="p">))</span>
-    <span class="n">lit_p</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nz</span><span class="p">))</span>
+    <span class="c1"># compute lithostatic pressure:</span>
+    <span class="n">lit_p_o</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nz</span><span class="p">)</span>
+    <span class="n">lit_p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nz</span><span class="p">)</span>
     <span class="n">res</span> <span class="o">=</span> <span class="mf">1.0</span>
-    <span class="k">while</span> <span class="n">res</span><span class="o">&gt;</span><span class="mf">1e-6</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">nz</span><span class="p">):</span>
-            
-            <span class="n">rho</span> <span class="o">=</span> <span class="n">density</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span><span class="n">temp</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">lit_p_o</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-            <span class="n">rhog</span> <span class="o">=</span> <span class="n">rho</span><span class="o">*</span><span class="n">g</span>
+    <span class="k">while</span> <span class="n">res</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nz</span><span class="p">):</span>
+            <span class="n">rho</span> <span class="o">=</span> <span class="n">density</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span> <span class="n">temp</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">lit_p_o</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">rhog</span> <span class="o">=</span> <span class="n">rho</span> <span class="o">*</span> <span class="n">g</span>
             <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">lit_p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">lit_p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">lit_p</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">rhog</span><span class="o">*</span><span class="n">dz</span>
-        
-        <span class="n">res</span> <span class="o">=</span>  <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">lit_p</span><span class="o">-</span><span class="n">lit_p_o</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">lit_p</span><span class="o">+</span><span class="n">lit_p_o</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
-        <span class="n">lit_p_o</span><span class="p">[:]</span><span class="o">=</span><span class="n">lit_p</span>
+                <span class="n">lit_p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">lit_p</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">rhog</span> <span class="o">*</span> <span class="n">dz</span>
+
+        <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">lit_p</span> <span class="o">-</span> <span class="n">lit_p_o</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">lit_p</span> <span class="o">+</span> <span class="n">lit_p_o</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">lit_p_o</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">lit_p</span>
     <span class="k">return</span> <span class="n">lit_p</span></div>
 
 
-<span class="c1">#-----------------------------------------------------------------------------------------</span>
+
+<span class="c1"># -----------------------------------------------------------------------------------------</span>
 <div class="viewcode-block" id="compute_cp_k_rho">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.compute_cp_k_rho">[docs]</a>
 <span class="nd">@njit</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">compute_cp_k_rho</span><span class="p">(</span><span class="n">ph</span>   <span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">]</span>
-                      <span class="p">,</span><span class="n">pdb</span> <span class="p">:</span> <span class="n">PhaseDataBase</span>
-                      <span class="p">,</span><span class="n">temp</span> <span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span>
-                      <span class="p">,</span><span class="n">pres</span>  <span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">])</span><span class="o">-&gt;</span><span class="nb">tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]:</span>
-<span class="w">    </span>
-<span class="w">    </span><span class="sd">"""Compute the thermal material properties </span>
-<span class="sd">    Function that compute all the three material properties that are required for solving the energy equation. </span>
-<span class="sd">    Input: </span>
-<span class="sd">        ph : phase vector </span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_cp_k_rho</span><span class="p">(</span>
+    <span class="n">ph</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">],</span>
+    <span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span><span class="p">,</span>
+    <span class="n">temp</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+    <span class="n">pres</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Compute the thermal material properties</span>
+<span class="sd">    Function that compute all the three material properties that are required for solving the energy equation.</span>
+<span class="sd">    Input:</span>
+<span class="sd">        ph : phase vector</span>
 <span class="sd">        pdb : Material phase structure</span>
 <span class="sd">        temp  : temperature vector</span>
-<span class="sd">        pres   : pressure vector </span>
+<span class="sd">        pres   : pressure vector</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        cp,rho,k =&gt; vector containing density, heat capacity, and conductivities that are computed using pressure and temperature vector</span>
 <span class="sd">    """</span>
-    <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">temp</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-    <span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">temp</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-    <span class="n">rho</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">temp</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-    
-    <span class="k">for</span> <span class="n">jj</span><span class="p">,</span><span class="n">t_i</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">temp</span><span class="p">):</span>
-        <span class="n">cp</span><span class="p">[</span><span class="n">jj</span><span class="p">],</span> <span class="n">rho</span><span class="p">[</span><span class="n">jj</span><span class="p">],</span> <span class="n">k</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span> <span class="o">=</span> <span class="n">compute_thermal_properties</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span><span class="n">t_i</span><span class="p">,</span><span class="n">pres</span><span class="p">[</span><span class="n">jj</span><span class="p">],</span><span class="n">ph</span><span class="p">[</span><span class="n">jj</span><span class="p">])</span>
+    <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">temp</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">temp</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">rho</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">temp</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">cp</span><span class="p">,</span><span class="n">k</span><span class="p">,</span><span class="n">rho</span></div>
+    <span class="k">for</span> <span class="n">jj</span><span class="p">,</span> <span class="n">t_i</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">temp</span><span class="p">):</span>
+        <span class="n">cp</span><span class="p">[</span><span class="n">jj</span><span class="p">],</span> <span class="n">rho</span><span class="p">[</span><span class="n">jj</span><span class="p">],</span> <span class="n">k</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span> <span class="o">=</span> <span class="n">compute_thermal_properties</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span> <span class="n">t_i</span><span class="p">,</span> <span class="n">pres</span><span class="p">[</span><span class="n">jj</span><span class="p">],</span> <span class="n">ph</span><span class="p">[</span><span class="n">jj</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">cp</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">rho</span></div>
 
 
-<span class="c1">#-----------------------------------------------------------------------------------------</span>
+
+<span class="c1"># -----------------------------------------------------------------------------------------</span>
 <div class="viewcode-block" id="build_coefficient_matrix">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.build_coefficient_matrix">[docs]</a>
 <span class="nd">@njit</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">build_coefficient_matrix</span><span class="p">(</span><span class="n">pdb</span><span class="p">:</span><span class="n">PhaseDataBase</span><span class="p">,</span>
-                             <span class="n">ph</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">],</span>
-                             <span class="n">temp_old</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
-                             <span class="n">temp_guess</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
-                             <span class="n">temp_pr</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
-                             <span class="n">step</span><span class="p">:</span><span class="nb">int</span><span class="p">,</span>
-                             <span class="n">lit_p</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
-                             <span class="n">temp_min</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
-                             <span class="n">temp_max</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
-                             <span class="n">nz</span><span class="p">:</span><span class="nb">int</span><span class="p">,</span>
-                             <span class="n">dt</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
-                             <span class="n">dz_m</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_coefficient_matrix</span><span class="p">(</span>
+    <span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span><span class="p">,</span>
+    <span class="n">ph</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">],</span>
+    <span class="n">temp_old</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+    <span class="n">temp_guess</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+    <span class="n">temp_pr</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+    <span class="n">step</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">lit_p</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+    <span class="n">temp_min</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
+    <span class="n">temp_max</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
+    <span class="n">nz</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">dt</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
+    <span class="n">dz_m</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""Assemble the Crank-Nicolson finite-difference system for one predictor or corrector step.</span>
 
 <span class="sd">    Implements the predictor-corrector scheme of Press et al. (1992) extended to</span>
@@ -376,100 +371,86 @@
 <span class="sd">            d_vct       — right-hand side vector, shape (nz,).</span>
 <span class="sd">    """</span>
 
-    <span class="n">mass_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nz</span><span class="p">,</span> <span class="n">nz</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>     <span class="c1"># pre-allocate mass_matrix array</span>
+    <span class="n">mass_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nz</span><span class="p">,</span> <span class="n">nz</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>  <span class="c1"># pre-allocate mass_matrix array</span>
 
+    <span class="n">a_vct</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nz</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">d_vct</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nz</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>  <span class="c1"># pre-allocate D column vector</span>
+    <span class="n">q_vct</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nz</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">b_vct</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nz</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 
-    <span class="n">a_vct</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nz</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-    <span class="n">d_vct</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nz</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>     <span class="c1"># pre-allocate D column vector</span>
-    <span class="n">q_vct</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nz</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-    <span class="n">b_vct</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nz</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-    
     <span class="k">if</span> <span class="n">step</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-
         <span class="c1"># predictor step</span>
 
         <span class="c1"># m = n</span>
         <span class="c1"># Compute the current material property with the guess temperature</span>
-        <span class="n">cp_m</span><span class="p">,</span><span class="n">k_m</span><span class="p">,</span><span class="n">rho_m</span><span class="o">=</span><span class="n">compute_cp_k_rho</span><span class="p">(</span><span class="n">ph</span><span class="o">=</span><span class="n">ph</span>
-                                        <span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
-                                        <span class="p">,</span><span class="n">temp</span><span class="o">=</span><span class="n">temp_guess</span>
-                                        <span class="p">,</span><span class="n">pres</span><span class="o">=</span><span class="n">lit_p</span><span class="p">)</span>
+        <span class="n">cp_m</span><span class="p">,</span> <span class="n">k_m</span><span class="p">,</span> <span class="n">rho_m</span> <span class="o">=</span> <span class="n">compute_cp_k_rho</span><span class="p">(</span><span class="n">ph</span><span class="o">=</span><span class="n">ph</span><span class="p">,</span> <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span> <span class="n">temp</span><span class="o">=</span><span class="n">temp_guess</span><span class="p">,</span> <span class="n">pres</span><span class="o">=</span><span class="n">lit_p</span><span class="p">)</span>
 
     <span class="k">elif</span> <span class="n">step</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-
         <span class="c1"># corrector step</span>
 
         <span class="c1"># m = n+1/2</span>
-        <span class="c1"># Compute the temperature with the guess and with the predicted temperature </span>
-        <span class="n">cp_m0</span><span class="p">,</span><span class="n">k_m0</span><span class="p">,</span><span class="n">rho_m0</span><span class="o">=</span><span class="n">compute_cp_k_rho</span><span class="p">(</span><span class="n">ph</span><span class="o">=</span><span class="n">ph</span>
-                                           <span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
-                                           <span class="p">,</span><span class="n">temp</span> <span class="o">=</span> <span class="n">temp_guess</span>
-                                           <span class="p">,</span><span class="n">pres</span> <span class="o">=</span> <span class="n">lit_p</span><span class="p">)</span>
+        <span class="c1"># Compute the temperature with the guess and with the predicted temperature</span>
+        <span class="n">cp_m0</span><span class="p">,</span> <span class="n">k_m0</span><span class="p">,</span> <span class="n">rho_m0</span> <span class="o">=</span> <span class="n">compute_cp_k_rho</span><span class="p">(</span><span class="n">ph</span><span class="o">=</span><span class="n">ph</span><span class="p">,</span> <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span> <span class="n">temp</span><span class="o">=</span><span class="n">temp_guess</span><span class="p">,</span> <span class="n">pres</span><span class="o">=</span><span class="n">lit_p</span><span class="p">)</span>
 
-        <span class="n">cp_m1</span><span class="p">,</span><span class="n">k_m1</span><span class="p">,</span><span class="n">rho_m1</span><span class="o">=</span><span class="n">compute_cp_k_rho</span><span class="p">(</span><span class="n">ph</span><span class="o">=</span><span class="n">ph</span>
-                                           <span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
-                                           <span class="p">,</span><span class="n">temp</span> <span class="o">=</span> <span class="n">temp_pr</span>
-                                           <span class="p">,</span><span class="n">pres</span> <span class="o">=</span> <span class="n">lit_p</span><span class="p">)</span>
-        <span class="n">cp_m</span> <span class="o">=</span> <span class="p">(</span><span class="n">cp_m1</span><span class="o">+</span><span class="n">cp_m0</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
+        <span class="n">cp_m1</span><span class="p">,</span> <span class="n">k_m1</span><span class="p">,</span> <span class="n">rho_m1</span> <span class="o">=</span> <span class="n">compute_cp_k_rho</span><span class="p">(</span><span class="n">ph</span><span class="o">=</span><span class="n">ph</span><span class="p">,</span> <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span> <span class="n">temp</span><span class="o">=</span><span class="n">temp_pr</span><span class="p">,</span> <span class="n">pres</span><span class="o">=</span><span class="n">lit_p</span><span class="p">)</span>
+        <span class="n">cp_m</span> <span class="o">=</span> <span class="p">(</span><span class="n">cp_m1</span> <span class="o">+</span> <span class="n">cp_m0</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
 
-        <span class="n">k_m</span>              <span class="o">=</span> <span class="p">(</span><span class="n">k_m0</span><span class="o">+</span><span class="n">k_m1</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
+        <span class="n">k_m</span> <span class="o">=</span> <span class="p">(</span><span class="n">k_m0</span> <span class="o">+</span> <span class="n">k_m1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
 
-        <span class="n">rho_m</span>        <span class="o">=</span> <span class="p">(</span><span class="n">rho_m0</span><span class="o">+</span><span class="n">rho_m1</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
-    
-    <span class="n">k_m_m</span> <span class="o">=</span> <span class="p">(</span><span class="n">k_m</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">+</span><span class="n">k_m</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="mi">2</span>
-    
+        <span class="n">rho_m</span> <span class="o">=</span> <span class="p">(</span><span class="n">rho_m0</span> <span class="o">+</span> <span class="n">rho_m1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+
+    <span class="n">k_m_m</span> <span class="o">=</span> <span class="p">(</span><span class="n">k_m</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="n">k_m</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+
     <span class="n">a_vct</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">dt</span> <span class="o">/</span> <span class="p">(</span><span class="n">rho_m</span><span class="p">[:]</span> <span class="o">*</span> <span class="n">cp_m</span><span class="p">[:]</span> <span class="o">*</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">dz_m</span><span class="p">))</span>
-    
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">nz</span><span class="p">):</span>
 
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nz</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># boundary condition at the top</span>
 
-        <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">mass_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
 
-            <span class="c1"># boundary condition at the top </span>
+            <span class="n">d_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp_min</span>
 
-            <span class="n">mass_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
-
-            <span class="n">d_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>   <span class="o">=</span> <span class="n">temp_min</span>
-
-        <span class="k">elif</span> <span class="p">(</span><span class="n">i</span> <span class="o">==</span> <span class="n">nz</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
-
+        <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="n">nz</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
             <span class="c1"># boundary condition at the bottom</span>
 
-            <span class="n">mass_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+            <span class="n">mass_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
 
-            <span class="n">d_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>   <span class="o">=</span> <span class="n">temp_max</span>
+            <span class="n">d_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp_max</span>
 
         <span class="k">else</span><span class="p">:</span>
+            <span class="n">mass_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">a_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">dz_m</span><span class="p">)</span>
+            <span class="n">mass_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="n">a_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]))</span> <span class="o">/</span> <span class="n">dz_m</span>
+            <span class="n">mass_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">a_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">dz_m</span><span class="p">)</span>
 
-            <span class="n">mass_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">a_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span> <span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="o">/</span> <span class="n">dz_m</span><span class="p">)</span>
-            <span class="n">mass_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">+</span> <span class="n">a_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span>  <span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span> <span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span><span class="o">/</span><span class="n">dz_m</span>
-            <span class="n">mass_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">a_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span> <span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="o">/</span> <span class="n">dz_m</span><span class="p">)</span>
-
-            <span class="n">q_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">dz_m</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">temp_old</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">*</span><span class="n">temp_old</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">temp_old</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>     
+            <span class="n">q_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">dz_m</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span>
+                <span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">temp_old</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">*</span> <span class="n">temp_old</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">temp_old</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="p">)</span>
             <span class="n">rho_a</span> <span class="o">=</span> <span class="n">density</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span> <span class="n">temp_old</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">lit_p</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-            <span class="n">cp_a</span>  <span class="o">=</span> <span class="n">heat_capacity</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span> <span class="n">temp_old</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>      
+            <span class="n">cp_a</span> <span class="o">=</span> <span class="n">heat_capacity</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span> <span class="n">temp_old</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">step</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">rho_b</span> <span class="o">=</span> <span class="n">density</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span><span class="n">temp_guess</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">lit_p</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-                <span class="n">cp_b</span> <span class="o">=</span> <span class="n">heat_capacity</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span><span class="n">temp_guess</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">rho_b</span> <span class="o">=</span> <span class="n">density</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span> <span class="n">temp_guess</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">lit_p</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">cp_b</span> <span class="o">=</span> <span class="n">heat_capacity</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span> <span class="n">temp_guess</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
 
-                <span class="c1"># b_vct - predictor step </span>
-                <span class="n">b_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">temp_old</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span> <span class="n">rho_a</span> <span class="o">*</span> <span class="n">cp_a</span> <span class="o">-</span> <span class="n">rho_b</span> <span class="o">*</span> <span class="n">cp_b</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">rho_b</span> <span class="o">*</span> <span class="n">cp_b</span><span class="p">)</span>       
+                <span class="c1"># b_vct - predictor step</span>
+                <span class="n">b_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">temp_old</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">rho_a</span> <span class="o">*</span> <span class="n">cp_a</span> <span class="o">-</span> <span class="n">rho_b</span> <span class="o">*</span> <span class="n">cp_b</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">rho_b</span> <span class="o">*</span> <span class="n">cp_b</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">step</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">rho_b</span> <span class="o">=</span> <span class="n">density</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span><span class="n">temp_pr</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">lit_p</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-                <span class="n">cp_b</span> <span class="o">=</span> <span class="n">heat_capacity</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span><span class="n">temp_pr</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>      
-                <span class="c1"># b_vct - corrector step        </span>
-                <span class="n">b_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span> <span class="p">((</span><span class="n">temp_pr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">temp_old</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">*</span> <span class="p">(</span> <span class="n">rho_b</span><span class="o">*</span><span class="n">cp_b</span> <span class="o">-</span> <span class="n">rho_a</span><span class="o">*</span><span class="n">cp_a</span> <span class="p">)</span> <span class="o">/</span> <span class="p">(</span> <span class="n">rho_b</span><span class="o">*</span><span class="n">cp_b</span> <span class="o">+</span> <span class="n">rho_a</span><span class="o">*</span><span class="n">cp_a</span><span class="p">))</span>        
-            <span class="n">d_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp_old</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">a_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">q_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span> <span class="n">b_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> \
-                <span class="n">dt</span> <span class="o">*</span> <span class="n">pdb</span><span class="o">.</span><span class="n">radiogenic_heat</span><span class="p">[</span><span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">/</span><span class="n">rho_m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">/</span><span class="n">cp_m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-                    
-    <span class="k">return</span> <span class="n">mass_matrix</span><span class="p">,</span><span class="n">d_vct</span></div>
+                <span class="n">rho_b</span> <span class="o">=</span> <span class="n">density</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span> <span class="n">temp_pr</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">lit_p</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">cp_b</span> <span class="o">=</span> <span class="n">heat_capacity</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span> <span class="n">temp_pr</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="c1"># b_vct - corrector step</span>
+                <span class="n">b_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="p">((</span><span class="n">temp_pr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">temp_old</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">*</span> <span class="p">(</span><span class="n">rho_b</span> <span class="o">*</span> <span class="n">cp_b</span> <span class="o">-</span> <span class="n">rho_a</span> <span class="o">*</span> <span class="n">cp_a</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">rho_b</span> <span class="o">*</span> <span class="n">cp_b</span> <span class="o">+</span> <span class="n">rho_a</span> <span class="o">*</span> <span class="n">cp_a</span><span class="p">))</span>
+            <span class="n">d_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">temp_old</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">a_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">q_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">b_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">dt</span> <span class="o">*</span> <span class="n">pdb</span><span class="o">.</span><span class="n">radiogenic_heat</span><span class="p">[</span><span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">/</span> <span class="n">rho_m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">cp_m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="p">)</span>
 
-<span class="c1"># --- </span>
+    <span class="k">return</span> <span class="n">mass_matrix</span><span class="p">,</span> <span class="n">d_vct</span></div>
+
+
+
+<span class="c1"># ---</span>
 <div class="viewcode-block" id="fill_phase_properties">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.fill_phase_properties">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">fill_phase_properties</span><span class="p">(</span><span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span><span class="p">,</span>
-                          <span class="n">z</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
-                          <span class="n">left_right</span><span class="p">:</span><span class="nb">bool</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">fill_phase_properties</span><span class="p">(</span><span class="n">g_input</span><span class="p">:</span> <span class="n">GeomInput</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span> <span class="n">left_right</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Assign a phase index to each node of a 1D vertical column.</span>
 
 <span class="sd">    For the left (subducting) boundary the column contains oceanic crust</span>
@@ -488,27 +469,26 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        NDArray[np.int32]: Phase index per node, shape (nz,), 0-based.</span>
 <span class="sd">    """</span>
-    <span class="n">ph</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">z</span><span class="p">)],</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="n">ph</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">z</span><span class="p">)],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">left_right</span><span class="p">:</span>
-        <span class="n">ph</span><span class="p">[</span><span class="n">z</span><span class="o">&lt;</span><span class="n">g_input</span><span class="o">.</span><span class="n">ocr</span><span class="p">]</span> <span class="o">=</span> <span class="n">dict_surf</span><span class="p">[</span><span class="s1">'oceanic_crust'</span><span class="p">]</span>
-        <span class="n">ph</span><span class="p">[</span><span class="n">z</span><span class="o">&gt;=</span><span class="n">g_input</span><span class="o">.</span><span class="n">ocr</span><span class="p">]</span> <span class="o">=</span> <span class="n">dict_surf</span><span class="p">[</span><span class="s1">'sub_plate'</span><span class="p">]</span>
+        <span class="n">ph</span><span class="p">[</span><span class="n">z</span> <span class="o">&lt;</span> <span class="n">g_input</span><span class="o">.</span><span class="n">ocr</span><span class="p">]</span> <span class="o">=</span> <span class="n">dict_surf</span><span class="p">[</span><span class="s2">"oceanic_crust"</span><span class="p">]</span>
+        <span class="n">ph</span><span class="p">[</span><span class="n">z</span> <span class="o">&gt;=</span> <span class="n">g_input</span><span class="o">.</span><span class="n">ocr</span><span class="p">]</span> <span class="o">=</span> <span class="n">dict_surf</span><span class="p">[</span><span class="s2">"sub_plate"</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">lc</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
-            <span class="n">ph</span><span class="p">[</span><span class="n">z</span><span class="o">&lt;</span><span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">g_input</span><span class="o">.</span><span class="n">lc</span><span class="p">)]</span> <span class="o">=</span> <span class="n">dict_surf</span><span class="p">[</span><span class="s1">'upper_crust'</span><span class="p">]</span>
-            <span class="n">ph</span><span class="p">[(</span><span class="n">z</span><span class="o">&gt;=</span><span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">g_input</span><span class="o">.</span><span class="n">lc</span><span class="p">))</span>
-               <span class="o">&amp;</span> <span class="p">(</span><span class="n">z</span><span class="o">&lt;</span><span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="p">)]</span> <span class="o">=</span> <span class="n">dict_surf</span><span class="p">[</span><span class="s1">'lower_crust'</span><span class="p">]</span>
+            <span class="n">ph</span><span class="p">[</span><span class="n">z</span> <span class="o">&lt;</span> <span class="n">g_input</span><span class="o">.</span><span class="n">cr</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">g_input</span><span class="o">.</span><span class="n">lc</span><span class="p">)]</span> <span class="o">=</span> <span class="n">dict_surf</span><span class="p">[</span><span class="s2">"upper_crust"</span><span class="p">]</span>
+            <span class="n">ph</span><span class="p">[(</span><span class="n">z</span> <span class="o">&gt;=</span> <span class="n">g_input</span><span class="o">.</span><span class="n">cr</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">g_input</span><span class="o">.</span><span class="n">lc</span><span class="p">))</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">z</span> <span class="o">&lt;</span> <span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="p">)]</span> <span class="o">=</span> <span class="n">dict_surf</span><span class="p">[</span><span class="s2">"lower_crust"</span><span class="p">]</span>
         <span class="k">elif</span> <span class="n">g_input</span><span class="o">.</span><span class="n">lc</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
-            <span class="n">ph</span><span class="p">[</span><span class="n">z</span><span class="o">&lt;</span><span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="p">]</span> <span class="o">=</span> <span class="n">dict_surf</span><span class="p">[</span><span class="s1">'upper_crust'</span><span class="p">]</span>
-        <span class="n">ph</span><span class="p">[(</span><span class="n">z</span><span class="o">&gt;=</span><span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="p">)</span> <span class="o">&amp;</span>  <span class="p">(</span><span class="n">z</span><span class="o">&lt;</span><span class="n">g_input</span><span class="o">.</span><span class="n">lit_mt</span><span class="o">+</span><span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="p">)]</span> <span class="o">=</span> <span class="n">dict_surf</span><span class="p">[</span><span class="s1">'overriding_lm'</span><span class="p">]</span>
-        <span class="n">ph</span><span class="p">[(</span><span class="n">z</span><span class="o">&gt;=</span><span class="n">g_input</span><span class="o">.</span><span class="n">lit_mt</span><span class="o">+</span><span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="p">)]</span> <span class="o">=</span> <span class="n">dict_surf</span><span class="p">[</span><span class="s1">'wedge'</span><span class="p">]</span>
-  
-    <span class="k">return</span> <span class="n">ph</span><span class="o">-</span><span class="mi">1</span></div>
+            <span class="n">ph</span><span class="p">[</span><span class="n">z</span> <span class="o">&lt;</span> <span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="p">]</span> <span class="o">=</span> <span class="n">dict_surf</span><span class="p">[</span><span class="s2">"upper_crust"</span><span class="p">]</span>
+        <span class="n">ph</span><span class="p">[(</span><span class="n">z</span> <span class="o">&gt;=</span> <span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">z</span> <span class="o">&lt;</span> <span class="n">g_input</span><span class="o">.</span><span class="n">lit_mt</span> <span class="o">+</span> <span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="p">)]</span> <span class="o">=</span> <span class="n">dict_surf</span><span class="p">[</span><span class="s2">"overriding_lm"</span><span class="p">]</span>
+        <span class="n">ph</span><span class="p">[(</span><span class="n">z</span> <span class="o">&gt;=</span> <span class="n">g_input</span><span class="o">.</span><span class="n">lit_mt</span> <span class="o">+</span> <span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="p">)]</span> <span class="o">=</span> <span class="n">dict_surf</span><span class="p">[</span><span class="s2">"wedge"</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">ph</span> <span class="o">-</span> <span class="mi">1</span></div>
+
 
 
 <div class="viewcode-block" id="compute_half_space_cooling_model_analytical">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.compute_half_space_cooling_model_analytical">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">compute_half_space_cooling_model_analytical</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="p">:</span><span class="n">CtrlTemperatureBC</span><span class="p">,</span>
-                                                <span class="n">z</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">])</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_half_space_cooling_model_analytical</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="p">:</span> <span class="n">CtrlTemperatureBC</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Compute the left boundary temperature using the half-space cooling analytical solution.</span>
 
 <span class="sd">    Used for the Van Keken benchmark suite where constant material properties allow</span>
@@ -529,21 +509,22 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        CtrlTemperatureBC: Updated ctrl_tbc with temperature_1d and z filled.</span>
 <span class="sd">    """</span>
-    <span class="n">cp</span>    <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">cp</span>
-    <span class="n">k</span>     <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">k</span>
-    <span class="n">rho</span>   <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">rho</span>
-    <span class="n">kappa</span> <span class="o">=</span> <span class="n">k</span><span class="o">/</span><span class="n">rho</span><span class="o">/</span><span class="n">cp</span>
-    <span class="n">t</span>     <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">slab_age</span>
-    <span class="n">temperature_bc</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_top</span><span class="o">+</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_max</span><span class="o">-</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_top</span><span class="p">)</span> <span class="o">*</span> <span class="n">erf_sc</span><span class="p">(</span><span class="n">z</span> <span class="o">/</span><span class="mi">2</span> <span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">t</span> <span class="o">*</span> <span class="n">kappa</span><span class="p">))</span>
+    <span class="n">cp</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">cp</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">k</span>
+    <span class="n">rho</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">rho</span>
+    <span class="n">kappa</span> <span class="o">=</span> <span class="n">k</span> <span class="o">/</span> <span class="n">rho</span> <span class="o">/</span> <span class="n">cp</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">slab_age</span>
+    <span class="n">temperature_bc</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_top</span> <span class="o">+</span> <span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_max</span> <span class="o">-</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_top</span><span class="p">)</span> <span class="o">*</span> <span class="n">erf_sc</span><span class="p">(</span><span class="n">z</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">t</span> <span class="o">*</span> <span class="n">kappa</span><span class="p">))</span>
     <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z</span><span class="p">[:]</span> <span class="o">=</span> <span class="o">-</span><span class="n">z</span><span class="p">[:]</span>
     <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_1d</span> <span class="o">=</span> <span class="n">temperature_bc</span></div>
 
 
+
 <div class="viewcode-block" id="initialise_geometry_1d">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.initialise_geometry_1d">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">initialise_geometry_1d</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="p">:</span><span class="n">CtrlTemperatureBC</span>
-                           <span class="p">,</span><span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span>
-                           <span class="p">,</span><span class="n">left_right</span><span class="p">:</span><span class="nb">bool</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">],</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">initialise_geometry_1d</span><span class="p">(</span>
+    <span class="n">ctrl_tbc</span><span class="p">:</span> <span class="n">CtrlTemperatureBC</span><span class="p">,</span> <span class="n">g_input</span><span class="p">:</span> <span class="n">GeomInput</span><span class="p">,</span> <span class="n">left_right</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">],</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""Build the 1D depth grid and phase array for a boundary column.</span>
 
 <span class="sd">    For the left boundary the grid spans [0, (nz-1)*dz] with uniform spacing</span>
@@ -563,28 +544,28 @@
 <span class="sd">    """</span>
 
     <span class="k">if</span> <span class="n">left_right</span><span class="p">:</span>
-        <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,(</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">nz</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">dz</span><span class="p">,</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">nz</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">nz</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">dz</span><span class="p">,</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">nz</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">g_input</span><span class="o">.</span><span class="n">lab_d</span><span class="p">,</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">nz</span><span class="p">)</span>
-    
-    <span class="n">ph</span> <span class="o">=</span> <span class="n">fill_phase_properties</span><span class="p">(</span><span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span>
-                               <span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="n">z</span>
-                               <span class="p">,</span><span class="n">left_right</span><span class="o">=</span><span class="n">left_right</span><span class="p">)</span>
-    
-    
+        <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">g_input</span><span class="o">.</span><span class="n">lab_d</span><span class="p">,</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">nz</span><span class="p">)</span>
+
+    <span class="n">ph</span> <span class="o">=</span> <span class="n">fill_phase_properties</span><span class="p">(</span><span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">left_right</span><span class="o">=</span><span class="n">left_right</span><span class="p">)</span>
+
     <span class="k">return</span> <span class="n">ph</span><span class="p">,</span> <span class="n">z</span></div>
 
-<span class="c1"># --- </span>
+
+
+<span class="c1"># ---</span>
 <div class="viewcode-block" id="solve_temperature_1d_bc">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.solve_temperature_1d_bc">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">solve_temperature_1d_bc</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="p">:</span><span class="n">CtrlTemperatureBC</span>
-                            <span class="p">,</span><span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span>
-                            <span class="p">,</span><span class="n">pdb</span><span class="p">:</span><span class="n">PhaseDataBase</span>
-                            <span class="p">,</span><span class="n">z</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span>
-                            <span class="p">,</span><span class="n">ph</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">]</span>
-                            <span class="p">,</span><span class="n">g</span><span class="p">:</span><span class="nb">float</span>
-                            <span class="p">,</span><span class="n">left_right</span><span class="p">:</span><span class="nb">bool</span><span class="p">):</span>
-
+<span class="k">def</span><span class="w"> </span><span class="nf">solve_temperature_1d_bc</span><span class="p">(</span>
+    <span class="n">ctrl_tbc</span><span class="p">:</span> <span class="n">CtrlTemperatureBC</span><span class="p">,</span>
+    <span class="n">g_input</span><span class="p">:</span> <span class="n">GeomInput</span><span class="p">,</span>
+    <span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span><span class="p">,</span>
+    <span class="n">z</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+    <span class="n">ph</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">],</span>
+    <span class="n">g</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">left_right</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Advance the 1D thermal diffusion equation in time using Crank-Nicolson with Picard iteration.</span>
 
 <span class="sd">    At each time step a predictor-corrector cycle is run (build_coefficient_matrix</span>
@@ -619,94 +600,95 @@
 <span class="sd">                          condition; rows beyond the last step are zero.</span>
 <span class="sd">    """</span>
 
-
     <span class="n">temp_max</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_max</span>
     <span class="n">temp_min</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_top</span>
     <span class="n">nz</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">nz</span>
     <span class="n">nt</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">nt</span>
     <span class="n">dt</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">dt</span>
     <span class="n">dz</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">dz</span>
-    <span class="k">if</span> <span class="n">left_right</span> <span class="ow">or</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">right_boundary</span> <span class="o">==</span> <span class="s1">'Oceanic'</span><span class="p">:</span>
-        <span class="n">temp_old</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">z</span><span class="p">)),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span> <span class="o">*</span> <span class="n">temp_max</span>
+    <span class="k">if</span> <span class="n">left_right</span> <span class="ow">or</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">right_boundary</span> <span class="o">==</span> <span class="s2">"Oceanic"</span><span class="p">:</span>
+        <span class="n">temp_old</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">z</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span> <span class="o">*</span> <span class="n">temp_max</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># Initial guess linear</span>
-        <span class="n">gr</span> <span class="o">=</span> <span class="p">(</span><span class="n">temp_max</span><span class="o">-</span><span class="n">temp_min</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">g_input</span><span class="o">.</span><span class="n">lab_d</span><span class="p">)</span>
+        <span class="n">gr</span> <span class="o">=</span> <span class="p">(</span><span class="n">temp_max</span> <span class="o">-</span> <span class="n">temp_min</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">g_input</span><span class="o">.</span><span class="n">lab_d</span><span class="p">)</span>
         <span class="n">temp_old</span> <span class="o">=</span> <span class="n">temp_min</span> <span class="o">+</span> <span class="n">gr</span> <span class="o">*</span> <span class="n">z</span>
 
-    <span class="n">lit_p</span> <span class="o">=</span> <span class="n">_compute_lithostatic_pressure</span><span class="p">(</span><span class="n">nz</span><span class="p">,</span><span class="n">ph</span><span class="p">,</span><span class="n">g</span><span class="p">,</span><span class="n">dz</span><span class="p">,</span><span class="n">temp_old</span><span class="p">,</span><span class="n">pdb</span><span class="p">)</span>
+    <span class="n">lit_p</span> <span class="o">=</span> <span class="n">_compute_lithostatic_pressure</span><span class="p">(</span><span class="n">nz</span><span class="p">,</span> <span class="n">ph</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">dz</span><span class="p">,</span> <span class="n">temp_old</span><span class="p">,</span> <span class="n">pdb</span><span class="p">)</span>
 
-    <span class="n">temperature</span>       <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">nt</span><span class="p">,</span><span class="n">nz</span><span class="p">],</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-    <span class="n">temp_pr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">nz</span><span class="p">],</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">nt</span><span class="p">],</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-    <span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">temp_old</span>
-    
-    <span class="k">if</span> <span class="n">left_right</span><span class="p">:</span> 
+    <span class="n">temperature</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">nt</span><span class="p">,</span> <span class="n">nz</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">temp_pr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">nz</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">nt</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">temp_old</span>
+
+    <span class="k">if</span> <span class="n">left_right</span><span class="p">:</span>
         <span class="n">end_time</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">end_time</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">end_time</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">right_age</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mf">0.01</span><span class="p">)</span>
 
     <span class="n">time</span> <span class="o">=</span> <span class="mi">1</span>
-    
-    <span class="k">while</span> <span class="n">t</span><span class="p">[</span><span class="n">time</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">end_time</span> <span class="ow">and</span> <span class="n">time</span> <span class="o">&lt;</span> <span class="n">nt</span><span class="p">:</span>
 
-        <span class="n">t</span><span class="p">[</span><span class="n">time</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">time</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">dt</span>
-        <span class="n">temp_old_tl</span> <span class="o">=</span> <span class="n">temperature</span><span class="p">[</span><span class="n">time</span><span class="o">-</span><span class="mi">1</span><span class="p">,:]</span> <span class="c1"># temperature at the previous time step</span>
-        <span class="n">temp_guess</span>  <span class="o">=</span> <span class="n">temp_old_tl</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        
+    <span class="k">while</span> <span class="n">t</span><span class="p">[</span><span class="n">time</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">end_time</span> <span class="ow">and</span> <span class="n">time</span> <span class="o">&lt;</span> <span class="n">nt</span><span class="p">:</span>
+        <span class="n">t</span><span class="p">[</span><span class="n">time</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">time</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">dt</span>
+        <span class="n">temp_old_tl</span> <span class="o">=</span> <span class="n">temperature</span><span class="p">[</span><span class="n">time</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># temperature at the previous time step</span>
+        <span class="n">temp_guess</span> <span class="o">=</span> <span class="n">temp_old_tl</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
         <span class="n">it</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">res</span> <span class="o">=</span> <span class="mf">1.0</span>
         <span class="c1"># Fixed point iteration</span>
         <span class="k">while</span> <span class="n">res</span> <span class="o">&gt;</span> <span class="mf">1e-6</span> <span class="ow">and</span> <span class="n">it</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
-                    <span class="n">mass_matrix</span><span class="p">,</span><span class="n">d_vct</span> <span class="o">=</span> <span class="n">build_coefficient_matrix</span><span class="p">(</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
-                                                                 <span class="p">,</span><span class="n">ph</span><span class="o">=</span><span class="n">ph</span>
-                                                                 <span class="p">,</span><span class="n">temp_old</span> <span class="o">=</span> <span class="n">temp_old_tl</span>
-                                                                 <span class="p">,</span><span class="n">temp_guess</span><span class="o">=</span><span class="n">temp_guess</span>
-                                                                 <span class="p">,</span><span class="n">temp_pr</span><span class="o">=</span><span class="n">temp_pr</span>
-                                                                 <span class="p">,</span><span class="n">step</span><span class="o">=</span><span class="n">step</span>
-                                                                 <span class="p">,</span><span class="n">lit_p</span><span class="o">=</span><span class="n">lit_p</span>
-                                                                 <span class="p">,</span><span class="n">temp_min</span><span class="o">=</span><span class="n">temp_min</span>
-                                                                 <span class="p">,</span><span class="n">temp_max</span><span class="o">=</span><span class="n">temp_max</span>
-                                                                 <span class="p">,</span><span class="n">dt</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">dt</span>
-                                                                 <span class="p">,</span><span class="n">dz_m</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">dz</span>
-                                                                 <span class="p">,</span><span class="n">nz</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">nz</span><span class="p">)</span>
-                    <span class="n">temp_new</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">mass_matrix</span><span class="p">,</span> <span class="n">d_vct</span><span class="p">)</span>
+                <span class="n">mass_matrix</span><span class="p">,</span> <span class="n">d_vct</span> <span class="o">=</span> <span class="n">build_coefficient_matrix</span><span class="p">(</span>
+                    <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span>
+                    <span class="n">ph</span><span class="o">=</span><span class="n">ph</span><span class="p">,</span>
+                    <span class="n">temp_old</span><span class="o">=</span><span class="n">temp_old_tl</span><span class="p">,</span>
+                    <span class="n">temp_guess</span><span class="o">=</span><span class="n">temp_guess</span><span class="p">,</span>
+                    <span class="n">temp_pr</span><span class="o">=</span><span class="n">temp_pr</span><span class="p">,</span>
+                    <span class="n">step</span><span class="o">=</span><span class="n">step</span><span class="p">,</span>
+                    <span class="n">lit_p</span><span class="o">=</span><span class="n">lit_p</span><span class="p">,</span>
+                    <span class="n">temp_min</span><span class="o">=</span><span class="n">temp_min</span><span class="p">,</span>
+                    <span class="n">temp_max</span><span class="o">=</span><span class="n">temp_max</span><span class="p">,</span>
+                    <span class="n">dt</span><span class="o">=</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span>
+                    <span class="n">dz_m</span><span class="o">=</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">dz</span><span class="p">,</span>
+                    <span class="n">nz</span><span class="o">=</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">nz</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">temp_new</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">mass_matrix</span><span class="p">,</span> <span class="n">d_vct</span><span class="p">)</span>
 
-                    <span class="k">if</span> <span class="n">step</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                        <span class="n">temp_pr</span> <span class="o">=</span> <span class="n">temp_new</span>
+                <span class="k">if</span> <span class="n">step</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">temp_pr</span> <span class="o">=</span> <span class="n">temp_new</span>
 
-            <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">temp_new</span><span class="o">-</span><span class="n">temp_guess</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">temp_new</span><span class="o">+</span><span class="n">temp_guess</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
-            
+            <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">temp_new</span> <span class="o">-</span> <span class="n">temp_guess</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">temp_new</span> <span class="o">+</span> <span class="n">temp_guess</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"NaN detected in the residual"</span><span class="p">)</span>
-            
-            
-            <span class="n">lit_p</span> <span class="o">=</span> <span class="n">_compute_lithostatic_pressure</span><span class="p">(</span><span class="n">nz</span><span class="p">,</span><span class="n">ph</span><span class="p">,</span><span class="n">g</span><span class="p">,</span><span class="n">dz</span><span class="p">,</span><span class="n">temp_new</span><span class="p">,</span><span class="n">pdb</span><span class="p">)</span>
+
+            <span class="n">lit_p</span> <span class="o">=</span> <span class="n">_compute_lithostatic_pressure</span><span class="p">(</span><span class="n">nz</span><span class="p">,</span> <span class="n">ph</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">dz</span><span class="p">,</span> <span class="n">temp_new</span><span class="p">,</span> <span class="n">pdb</span><span class="p">)</span>
 
             <span class="n">temp_guess</span> <span class="o">=</span> <span class="n">temp_new</span> <span class="o">*</span> <span class="mf">0.8</span> <span class="o">+</span> <span class="n">temp_guess</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.2</span><span class="p">)</span>
-            
-            <span class="n">it</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="n">lit_p</span> <span class="o">=</span> <span class="n">_compute_lithostatic_pressure</span><span class="p">(</span><span class="n">nz</span><span class="p">,</span><span class="n">ph</span><span class="p">,</span><span class="n">g</span><span class="p">,</span><span class="n">dz</span><span class="p">,</span><span class="n">temp_new</span><span class="p">,</span><span class="n">pdb</span><span class="p">)</span>
 
-        <span class="n">temperature</span><span class="p">[</span><span class="n">time</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">temp_new</span>
+            <span class="n">it</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">lit_p</span> <span class="o">=</span> <span class="n">_compute_lithostatic_pressure</span><span class="p">(</span><span class="n">nz</span><span class="p">,</span> <span class="n">ph</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">dz</span><span class="p">,</span> <span class="n">temp_new</span><span class="p">,</span> <span class="n">pdb</span><span class="p">)</span>
+
+        <span class="n">temperature</span><span class="p">[</span><span class="n">time</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">temp_new</span>
         <span class="n">time</span> <span class="o">=</span> <span class="n">time</span> <span class="o">+</span> <span class="mi">1</span>
 
     <span class="k">return</span> <span class="n">t</span><span class="p">,</span> <span class="n">temperature</span></div>
+
 
 
 <span class="c1"># ---</span>
 <div class="viewcode-block" id="compute_thermal_boundary">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.compute_thermal_boundary">[docs]</a>
 <span class="nd">@timing_function</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">compute_thermal_boundary</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="p">:</span><span class="n">CtrlTemperatureBC</span>
-                                 <span class="p">,</span><span class="n">ctrl</span><span class="p">:</span><span class="n">NumericalControls</span>
-                                 <span class="p">,</span><span class="n">ioctrl</span><span class="p">:</span><span class="n">IOControls</span>
-                                 <span class="p">,</span><span class="n">sc</span><span class="p">:</span><span class="n">Scal</span>
-                                 <span class="p">,</span><span class="n">pdb</span><span class="p">:</span><span class="n">PhaseDataBase</span>
-                                 <span class="p">,</span><span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span>
-                                 <span class="p">,</span><span class="n">save_data</span><span class="p">:</span><span class="nb">bool</span>
-                                 <span class="p">,</span><span class="n">left_right</span><span class="p">:</span><span class="nb">bool</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_thermal_boundary</span><span class="p">(</span>
+    <span class="n">ctrl_tbc</span><span class="p">:</span> <span class="n">CtrlTemperatureBC</span><span class="p">,</span>
+    <span class="n">ctrl</span><span class="p">:</span> <span class="n">NumericalControls</span><span class="p">,</span>
+    <span class="n">ioctrl</span><span class="p">:</span> <span class="n">IOControls</span><span class="p">,</span>
+    <span class="n">sc</span><span class="p">:</span> <span class="n">Scal</span><span class="p">,</span>
+    <span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span><span class="p">,</span>
+    <span class="n">g_input</span><span class="p">:</span> <span class="n">GeomInput</span><span class="p">,</span>
+    <span class="n">save_data</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">left_right</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Compute the 1D thermal boundary condition and optionally cache the result to HDF5.</span>
 
 <span class="sd">    Orchestrates the full boundary computation:</span>
@@ -742,50 +724,53 @@
     <span class="c1"># Spell out the structure</span>
     <span class="n">g</span> <span class="o">=</span> <span class="n">ctrl</span><span class="o">.</span><span class="n">g</span>
 
-    <span class="c1"># Initialise the geometry and the phases </span>
-    <span class="n">ph</span><span class="p">,</span> <span class="n">z</span>  <span class="o">=</span> <span class="n">initialise_geometry_1d</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_tbc</span>
-                           <span class="p">,</span><span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span>
-                           <span class="p">,</span><span class="n">left_right</span><span class="o">=</span><span class="n">left_right</span><span class="p">)</span>
+    <span class="c1"># Initialise the geometry and the phases</span>
+    <span class="n">ph</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">initialise_geometry_1d</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_tbc</span><span class="p">,</span> <span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span><span class="p">,</span> <span class="n">left_right</span><span class="o">=</span><span class="n">left_right</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">van_keken</span> <span class="ow">and</span> <span class="n">left_right</span><span class="p">:</span>
-        <span class="n">compute_half_space_cooling_model_analytical</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="p">,</span><span class="n">z</span><span class="p">)</span>
+        <span class="n">compute_half_space_cooling_model_analytical</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
         <span class="k">return</span>
 
-    <span class="n">time_v</span><span class="p">,</span> <span class="n">temperature</span> <span class="o">=</span> <span class="n">solve_temperature_1d_bc</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_tbc</span>
-                            <span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
-                            <span class="p">,</span><span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span>
-                            <span class="p">,</span><span class="n">g</span><span class="o">=</span><span class="n">g</span>
-                            <span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="n">z</span>
-                            <span class="p">,</span><span class="n">ph</span><span class="o">=</span><span class="n">ph</span>
-                            <span class="p">,</span><span class="n">left_right</span><span class="o">=</span><span class="n">left_right</span><span class="p">)</span>
+    <span class="n">time_v</span><span class="p">,</span> <span class="n">temperature</span> <span class="o">=</span> <span class="n">solve_temperature_1d_bc</span><span class="p">(</span>
+        <span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_tbc</span><span class="p">,</span>
+        <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span>
+        <span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span><span class="p">,</span>
+        <span class="n">g</span><span class="o">=</span><span class="n">g</span><span class="p">,</span>
+        <span class="n">z</span><span class="o">=</span><span class="n">z</span><span class="p">,</span>
+        <span class="n">ph</span><span class="o">=</span><span class="n">ph</span><span class="p">,</span>
+        <span class="n">left_right</span><span class="o">=</span><span class="n">left_right</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="c1"># Current age index</span>
     <span class="k">if</span> <span class="n">left_right</span><span class="p">:</span>
         <span class="n">current_age_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">time_v</span> <span class="o">&gt;=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">slab_age</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">t_res_vec</span> <span class="o">=</span> <span class="n">time_v</span>
-        <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_1d</span> <span class="o">=</span> <span class="n">temperature</span><span class="p">[</span><span class="n">current_age_index</span><span class="p">,:]</span>
-        <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z</span><span class="p">[:]</span> <span class="o">=</span> <span class="o">-</span> <span class="n">z</span>
+        <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_1d</span> <span class="o">=</span> <span class="n">temperature</span><span class="p">[</span><span class="n">current_age_index</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z</span><span class="p">[:]</span> <span class="o">=</span> <span class="o">-</span><span class="n">z</span>
         <span class="k">if</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">constant</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_2d_field</span><span class="p">[:,:]</span> <span class="o">=</span> <span class="n">temperature</span>
-        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_2d_field</span><span class="p">[:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">temperature</span>
+        <span class="k">else</span><span class="p">:</span>
             <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_2d_field</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">current_age_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">time_v</span> <span class="o">&gt;=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">right_age</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_1d_right</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">temperature</span><span class="p">[</span><span class="n">current_age_index</span><span class="p">,:]</span>
-        <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z_right</span> <span class="o">=</span> <span class="o">-</span> <span class="n">z</span></div>
+        <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_1d_right</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">temperature</span><span class="p">[</span><span class="n">current_age_index</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z_right</span> <span class="o">=</span> <span class="o">-</span><span class="n">z</span></div>
 
-    
-<span class="c1"># --- </span>
+
+
+<span class="c1"># ---</span>
 <div class="viewcode-block" id="configure_thermal_bc">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.configure_thermal_bc">[docs]</a>
 <span class="nd">@timing_function</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">configure_thermal_bc</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="p">:</span><span class="n">CtrlTemperatureBC</span>
-                                 <span class="p">,</span><span class="n">ctrl</span><span class="p">:</span><span class="n">NumericalControls</span>
-                                 <span class="p">,</span><span class="n">ioctrl</span><span class="p">:</span><span class="n">IOControls</span>
-                                 <span class="p">,</span><span class="n">sc</span><span class="p">:</span><span class="n">Scal</span>
-                                 <span class="p">,</span><span class="n">pdb</span><span class="p">:</span><span class="n">PhaseDataBase</span>
-                                 <span class="p">,</span><span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span>
-                                 <span class="p">,</span><span class="n">left_right</span><span class="p">:</span><span class="nb">bool</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">configure_thermal_bc</span><span class="p">(</span>
+    <span class="n">ctrl_tbc</span><span class="p">:</span> <span class="n">CtrlTemperatureBC</span><span class="p">,</span>
+    <span class="n">ctrl</span><span class="p">:</span> <span class="n">NumericalControls</span><span class="p">,</span>
+    <span class="n">ioctrl</span><span class="p">:</span> <span class="n">IOControls</span><span class="p">,</span>
+    <span class="n">sc</span><span class="p">:</span> <span class="n">Scal</span><span class="p">,</span>
+    <span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span><span class="p">,</span>
+    <span class="n">g_input</span><span class="p">:</span> <span class="n">GeomInput</span><span class="p">,</span>
+    <span class="n">left_right</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Dispatch thermal boundary computation: recompute from scratch or load from cache.</span>
 
 <span class="sd">    If ctrl_tbc.recalculate is set, runs the full Crank-Nicolson solver and saves</span>
@@ -804,27 +789,30 @@
 
 <span class="sd">    Modifies ctrl_tbc in place: sets temperature_1d / temp_1d_right and z / z_right.</span>
 <span class="sd">    """</span>
-    <span class="n">compute_thermal_boundary</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_tbc</span>
-                                 <span class="p">,</span><span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl</span>
-                                 <span class="p">,</span><span class="n">ioctrl</span><span class="o">=</span><span class="n">ioctrl</span>
-                                 <span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span>
-                                 <span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
-                                 <span class="p">,</span><span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span>
-                                 <span class="p">,</span><span class="n">save_data</span><span class="o">=</span><span class="kc">True</span>
-                                 <span class="p">,</span><span class="n">left_right</span><span class="o">=</span><span class="n">left_right</span><span class="p">)</span></div>
+    <span class="n">compute_thermal_boundary</span><span class="p">(</span>
+        <span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_tbc</span><span class="p">,</span>
+        <span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl</span><span class="p">,</span>
+        <span class="n">ioctrl</span><span class="o">=</span><span class="n">ioctrl</span><span class="p">,</span>
+        <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">,</span>
+        <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span>
+        <span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span><span class="p">,</span>
+        <span class="n">save_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">left_right</span><span class="o">=</span><span class="n">left_right</span><span class="p">,</span>
+    <span class="p">)</span></div>
 
 
 
-<span class="c1"># --- # </span>
+<span class="c1"># --- #</span>
 <div class="viewcode-block" id="configure_boundary_condition">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.configure_boundary_condition">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">configure_boundary_condition</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="p">:</span><span class="n">CtrlTemperatureBC</span>
-                                 <span class="p">,</span><span class="n">ctrl</span><span class="p">:</span><span class="n">NumericalControls</span>
-                                 <span class="p">,</span><span class="n">ioctrl</span><span class="p">:</span><span class="n">IOControls</span>
-                                 <span class="p">,</span><span class="n">sc</span><span class="p">:</span><span class="n">Scal</span>
-                                 <span class="p">,</span><span class="n">pdb</span><span class="p">:</span><span class="n">PhaseDataBase</span>
-                                 <span class="p">,</span><span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
-
+<span class="k">def</span><span class="w"> </span><span class="nf">configure_boundary_condition</span><span class="p">(</span>
+    <span class="n">ctrl_tbc</span><span class="p">:</span> <span class="n">CtrlTemperatureBC</span><span class="p">,</span>
+    <span class="n">ctrl</span><span class="p">:</span> <span class="n">NumericalControls</span><span class="p">,</span>
+    <span class="n">ioctrl</span><span class="p">:</span> <span class="n">IOControls</span><span class="p">,</span>
+    <span class="n">sc</span><span class="p">:</span> <span class="n">Scal</span><span class="p">,</span>
+    <span class="n">pdb</span><span class="p">:</span> <span class="n">PhaseDataBase</span><span class="p">,</span>
+    <span class="n">g_input</span><span class="p">:</span> <span class="n">GeomInput</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Configure both the left and right thermal boundary conditions.</span>
 
 <span class="sd">    Public entry point for the thermal boundary setup. Calls configure_thermal_bc</span>
@@ -842,31 +830,37 @@
 <span class="sd">    Modifies ctrl_tbc in place: temperature_1d (left) and temp_1d_right (right).</span>
 <span class="sd">    """</span>
     <span class="c1"># Configure left boundary condition</span>
-    <span class="n">configure_thermal_bc</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_tbc</span>
-                         <span class="p">,</span><span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl</span>
-                         <span class="p">,</span><span class="n">ioctrl</span><span class="o">=</span><span class="n">ioctrl</span>
-                         <span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span>
-                         <span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
-                         <span class="p">,</span><span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span>
-                         <span class="p">,</span><span class="n">left_right</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">configure_thermal_bc</span><span class="p">(</span>
+        <span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_tbc</span><span class="p">,</span>
+        <span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl</span><span class="p">,</span>
+        <span class="n">ioctrl</span><span class="o">=</span><span class="n">ioctrl</span><span class="p">,</span>
+        <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">,</span>
+        <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span>
+        <span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span><span class="p">,</span>
+        <span class="n">left_right</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="c1"># Configure right boundary condition</span>
-    <span class="n">configure_thermal_bc</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_tbc</span>
-                         <span class="p">,</span><span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl</span>
-                         <span class="p">,</span><span class="n">ioctrl</span><span class="o">=</span><span class="n">ioctrl</span>
-                         <span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span>
-                         <span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
-                         <span class="p">,</span><span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span>
-                         <span class="p">,</span><span class="n">left_right</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+    <span class="n">configure_thermal_bc</span><span class="p">(</span>
+        <span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_tbc</span><span class="p">,</span>
+        <span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl</span><span class="p">,</span>
+        <span class="n">ioctrl</span><span class="o">=</span><span class="n">ioctrl</span><span class="p">,</span>
+        <span class="n">sc</span><span class="o">=</span><span class="n">sc</span><span class="p">,</span>
+        <span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span><span class="p">,</span>
+        <span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span><span class="p">,</span>
+        <span class="n">left_right</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span></div>
 
-<span class="c1"># --- # </span>
+
+
+<span class="c1"># --- #</span>
+
 
 <div class="viewcode-block" id="test_configure_boundary">
 <a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.test_configure_boundary">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">test_configure_boundary</span><span class="p">():</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.simulation_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">configure_simulation</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.input_parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_input</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.phase_db</span><span class="w"> </span><span class="kn">import</span> <span class="n">Phase</span><span class="p">,</span><span class="n">PhInput</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.simulation_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">configure_simulation</span>
 
     <span class="c1"># Find the main folder of the package</span>
     <span class="n">pkg_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
@@ -880,7 +874,7 @@
     <span class="n">input_data</span><span class="o">.</span><span class="n">ctrl_io</span><span class="o">.</span><span class="n">test_name</span> <span class="o">=</span> <span class="n">test_name</span>
     <span class="n">input_data</span><span class="o">.</span><span class="n">ctrl_io</span><span class="o">.</span><span class="n">path_save</span> <span class="o">=</span> <span class="n">path_save</span>
     <span class="n">input_data</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">slab_age</span> <span class="o">=</span> <span class="mf">100.0</span>
-    <span class="c1">#</span>
+
     <span class="n">ph_in</span><span class="o">.</span><span class="n">oceanic_crust</span><span class="o">.</span><span class="n">name_alpha</span> <span class="o">=</span> <span class="s2">"Oceanic_crust"</span>
     <span class="n">ph_in</span><span class="o">.</span><span class="n">oceanic_crust</span><span class="o">.</span><span class="n">name_capacity</span> <span class="o">=</span> <span class="s2">"Oceanic_crust"</span>
     <span class="n">ph_in</span><span class="o">.</span><span class="n">oceanic_crust</span><span class="o">.</span><span class="n">radiative_conductivity</span> <span class="o">=</span> <span class="mi">1</span>
@@ -902,36 +896,48 @@
     <span class="n">ph_in</span><span class="o">.</span><span class="n">wedge_mantle</span><span class="o">.</span><span class="n">name_density</span> <span class="o">=</span> <span class="s2">"PT"</span>
     <span class="n">ph_in</span><span class="o">.</span><span class="n">wedge_mantle</span><span class="o">.</span><span class="n">name_dislocation</span> <span class="o">=</span> <span class="s2">"VK_Dislocation_creep"</span>
     <span class="n">ph_in</span><span class="o">.</span><span class="n">wedge_mantle</span><span class="o">.</span><span class="n">name_diffusion</span> <span class="o">=</span> <span class="s2">"VK_Diffusion_creep"</span>
-    
+
     <span class="n">ph_in</span><span class="o">.</span><span class="n">overriding_lower_crust</span><span class="o">.</span><span class="n">radiogenic_heat</span> <span class="o">=</span> <span class="mf">0.5e-6</span>
     <span class="n">ph_in</span><span class="o">.</span><span class="n">overriding_upper_crust</span><span class="o">.</span><span class="n">radiogenic_heat</span> <span class="o">=</span> <span class="mf">1.0e-6</span>
 
-    
-    <span class="n">ctrl_sim</span><span class="p">,</span> <span class="n">_</span> <span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">sc</span>  <span class="o">=</span> <span class="n">configure_simulation</span><span class="p">(</span><span class="n">ph_in</span><span class="p">,</span> <span class="n">input_data</span><span class="p">)</span>
-    
-    <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span> 
-    
+    <span class="n">ctrl_sim</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">sc</span> <span class="o">=</span> <span class="n">configure_simulation</span><span class="p">(</span><span class="n">ph_in</span><span class="p">,</span> <span class="n">input_data</span><span class="p">)</span>
+
+    <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
     <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
-    <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span> 
-    <span class="n">temp_plate</span> <span class="o">=</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_1d</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="o">-</span><span class="mf">273.15</span> 
-    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_1d</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="o">-</span><span class="mf">273.15</span><span class="p">,</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">length</span><span class="o">/</span><span class="mf">1e3</span><span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="s1">'firebrick'</span><span class="p">)</span>   
-    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_1d_right</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="o">-</span><span class="mf">273.15</span><span class="p">,</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z_right</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">length</span><span class="o">/</span><span class="mf">1e3</span><span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="s1">'forestgreen'</span><span class="p">)</span>  
-    <span class="n">ctrl_tbc</span> <span class="o">=</span> <span class="n">compute_half_space_cooling_model_analytical</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z</span><span class="p">))</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_1d</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="o">-</span><span class="mf">273.15</span><span class="p">,</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">length</span><span class="o">/</span><span class="mf">1e3</span><span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="s1">'cadetblue'</span><span class="p">)</span>   
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+    <span class="n">temp_plate</span> <span class="o">=</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_1d</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span> <span class="o">-</span> <span class="mf">273.15</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+        <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_1d</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span> <span class="o">-</span> <span class="mf">273.15</span><span class="p">,</span>
+        <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">length</span> <span class="o">/</span> <span class="mf">1e3</span><span class="p">,</span>
+        <span class="n">c</span><span class="o">=</span><span class="s2">"firebrick"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+        <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_1d_right</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span> <span class="o">-</span> <span class="mf">273.15</span><span class="p">,</span>
+        <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z_right</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">length</span> <span class="o">/</span> <span class="mf">1e3</span><span class="p">,</span>
+        <span class="n">c</span><span class="o">=</span><span class="s2">"forestgreen"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">ctrl_tbc</span> <span class="o">=</span> <span class="n">compute_half_space_cooling_model_analytical</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z</span><span class="p">))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+        <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_1d</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span> <span class="o">-</span> <span class="mf">273.15</span><span class="p">,</span>
+        <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">length</span> <span class="o">/</span> <span class="mf">1e3</span><span class="p">,</span>
+        <span class="n">c</span><span class="o">=</span><span class="s2">"cadetblue"</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
     <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
-    <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span> 
-    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_1d</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="o">-</span><span class="mf">273.15</span><span class="o">-</span><span class="n">temp_plate</span><span class="p">,</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">length</span><span class="o">/</span><span class="mf">1e3</span><span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="s1">'cadetblue'</span><span class="p">)</span>   
-    
-    
-    
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+        <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_1d</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">temp</span> <span class="o">-</span> <span class="mf">273.15</span> <span class="o">-</span> <span class="n">temp_plate</span><span class="p">,</span>
+        <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">length</span> <span class="o">/</span> <span class="mf">1e3</span><span class="p">,</span>
+        <span class="n">c</span><span class="o">=</span><span class="s2">"cadetblue"</span><span class="p">,</span>
+    <span class="p">)</span>
+
     <span class="k">return</span> <span class="mi">0</span></div>
 
 
 
-
-<span class="sd">'''</span>
+<span class="sd">"""</span>
 <span class="sd">    if rank == 0:</span>
 <span class="sd">        race_condition = check_race_condition(ioctrl=ioctrl,name=_NAME_H5_FILE_TMP)</span>
 <span class="sd">        if race_condition and ctrl_tbc.recalculate == 0: </span>
@@ -998,7 +1004,7 @@
 <span class="sd">                save_data_set(f,time_v,name=f'{name}/time_v')</span>
 <span class="sd">                        </span>
 <span class="sd">                print('             temporary data base is saved...')</span>
-<span class="sd">'''</span>
+<span class="sd">"""</span>
 </pre></div>
 
             <div class="clearer"></div>

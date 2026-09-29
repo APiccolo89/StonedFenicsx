@@ -180,16 +180,16 @@ main instance name:ctrltbc</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.config.numerical_control.CtrlKy" title="stonedfenicsx.config.numerical_control.CtrlKy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CtrlKy</span></code></a></p></td>
 <td><p>Control for the kinematic boundary condition
-Args:
-CTRLBC (<em>type</em>): The superclass
-main instance name: ctrlky</p></td>
+:param CTRLBC: The superclass
+:type CTRLBC: _type_</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.config.numerical_control.SimulationControls" title="stonedfenicsx.config.numerical_control.SimulationControls"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SimulationControls</span></code></a></p></td>
 <td><p>Container of simulation controls:
 ctrl: Numerical controls
 ioctrl: I/O controls
 ctrl_tbc: Thermal Boudary condition controls
-ctrl_ky: Kinematic boundary condition controls</p></td>
+ctrl_ky: Kinematic boundary condition controls
+# name: ctrlsm</p></td>
 </tr>
 </tbody>
 </table>
@@ -463,21 +463,30 @@ method that creates the relative folders and create the path for the current sim
 <dt class="sig sig-object py" id="stonedfenicsx.config.numerical_control.CTRLBC.check_time_variation">
 <span class="sig-name descname"><span class="pre">check_time_variation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.config.numerical_control.NumericalControls" title="stonedfenicsx.config.numerical_control.NumericalControls"><span class="pre">stonedfenicsx.config.numerical_control.NumericalControls</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/config/numerical_control.html#CTRLBC.check_time_variation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.numerical_control.CTRLBC.check_time_variation" title="Link to this definition">¶</a></dt>
 <dd><p>Raise errors in case there are inconsistent option activated</p>
-<p>Args:
-ctrl (NumericalControls): <em>description</em></p>
-<p>Raises:
-ValueError: Inconsistent input. The variation over time of a age or velocity of the slab
-is not consistent with steady state mode of the simulation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ctrl</strong> (<a class="reference internal" href="#stonedfenicsx.config.numerical_control.NumericalControls" title="stonedfenicsx.config.numerical_control.NumericalControls"><em>NumericalControls</em></a>) – _description_</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – Inconsistent input. The variation over time of a age or velocity of the slab</p></li>
+<li><p><strong>is not consistent with steady state mode</strong><strong> of </strong><strong>the simulation</strong> – </p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.config.numerical_control.CTRLBC.update_vel_age">
 <span class="sig-name descname"><span class="pre">update_vel_age</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/numerical_control.html#CTRLBC.update_vel_age"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.numerical_control.CTRLBC.update_vel_age" title="Link to this definition">¶</a></dt>
 <dd><p>update the current velocity and age
-Args:
-t (float): current time of the simulation
-Returns:
-age/velocity update.</p>
+:param t: current time of the simulation
+:type t: float</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>age/velocity update.</p>
+</dd>
+</dl>
 <p>Usage:
 ctrl_kin.vel = ctrl_kin.update_vel_age(t)-&gt; direct update, it is better to not introduce
 if-else statement.</p>
@@ -620,12 +629,18 @@ main instance name:ctrltbc</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="stonedfenicsx.config.numerical_control.CtrlTemperatureBC.update_thermal_bc">
 <span class="sig-name descname"><span class="pre">update_thermal_bc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.config.numerical_control.NumericalControls" title="stonedfenicsx.config.numerical_control.NumericalControls"><span class="pre">stonedfenicsx.config.numerical_control.NumericalControls</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/numerical_control.html#CtrlTemperatureBC.update_thermal_bc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.numerical_control.CtrlTemperatureBC.update_thermal_bc" title="Link to this definition">¶</a></dt>
-<dd><p><em>summary</em></p>
-<p>Args:
-g_input (GeomInput): geometrical information</p>
-<p>Raises:
-ValueError: if dt is an absurd number, raise an error. Despite Crank-Nicolson is unconditionally stable,
-this condition is not necessarely holding up with non-linear thermal properties.</p>
+<dd><p>_summary_</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>g_input</strong> (<a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><em>GeomInput</em></a>) – geometrical information</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – if dt is an absurd number, raise an error. Despite Crank-Nicolson is unconditionally stable,</p></li>
+<li><p><strong>this condition is not necessarely holding up with non-linear thermal properties.</strong> – </p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -640,9 +655,9 @@ this condition is not necessarely holding up with non-linear thermal properties.
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">stonedfenicsx.config.numerical_control.</span></span><span class="sig-name descname"><span class="pre">CtrlKy</span></span><a class="reference internal" href="../../_modules/stonedfenicsx/config/numerical_control.html#CtrlKy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.numerical_control.CtrlKy" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#stonedfenicsx.config.numerical_control.CTRLBC" title="stonedfenicsx.config.numerical_control.CTRLBC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">stonedfenicsx.config.numerical_control.CTRLBC</span></code></a></p>
 <p>Control for the kinematic boundary condition
-Args:
-CTRLBC (<em>type</em>): The superclass
-main instance name: ctrlky</p>
+:param CTRLBC: The superclass
+:type CTRLBC: _type_</p>
+<p>main instance name: ctrlky</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="stonedfenicsx.config.numerical_control.CtrlKy.v_s">
 <span class="sig-name descname"><span class="pre">v_s</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#stonedfenicsx.config.numerical_control.CtrlKy.v_s" title="Link to this definition">¶</a></dt>
@@ -653,11 +668,17 @@ main instance name: ctrlky</p>
 <dt class="sig sig-object py" id="stonedfenicsx.config.numerical_control.CtrlKy.check_kinematic_bc">
 <span class="sig-name descname"><span class="pre">check_kinematic_bc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.config.numerical_control.NumericalControls" title="stonedfenicsx.config.numerical_control.NumericalControls"><span class="pre">stonedfenicsx.config.numerical_control.NumericalControls</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/config/numerical_control.html#CtrlKy.check_kinematic_bc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.config.numerical_control.CtrlKy.check_kinematic_bc" title="Link to this definition">¶</a></dt>
 <dd><p>internal checks of the boundary condition</p>
-<p>Args:
-ctrl (NumericalControls): Main control of the numerical simulation</p>
-<p>Raises:
-ValueError: Consistency check:
-The input initial velocity must be the same of the first entry of the interval of values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ctrl</strong> (<a class="reference internal" href="#stonedfenicsx.config.numerical_control.NumericalControls" title="stonedfenicsx.config.numerical_control.NumericalControls"><em>NumericalControls</em></a>) – Main control of the numerical simulation</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – Consistency check:</p></li>
+<li><p><strong>The input initial velocity must be the same</strong><strong> of </strong><strong>the first entry</strong><strong> of </strong><strong>the interval</strong><strong> of </strong><strong>values</strong> – </p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -669,8 +690,8 @@ The input initial velocity must be the same of the first entry of the interval o
 ctrl: Numerical controls
 ioctrl: I/O controls
 ctrl_tbc: Thermal Boudary condition controls
-ctrl_ky: Kinematic boundary condition controls</p>
-<p class="rubric" id="id1">name: ctrlsm</p>
+ctrl_ky: Kinematic boundary condition controls
+# name: ctrlsm</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="stonedfenicsx.config.numerical_control.SimulationControls.g_input">
 <span class="sig-name descname"><span class="pre">g_input</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dataclasses.InitVar</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#stonedfenicsx.config.numerical_control.SimulationControls.g_input" title="Link to this definition">¶</a></dt>

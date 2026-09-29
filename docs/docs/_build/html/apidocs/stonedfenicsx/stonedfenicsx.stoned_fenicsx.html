@@ -171,10 +171,6 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.stoned_fenicsx.stoned_fenicsx" title="stonedfenicsx.stoned_fenicsx.stoned_fenicsx"><code class="xref py py-obj docutils literal notranslate"><span class="pre">stoned_fenicsx</span></code></a></p></td>
 <td><p>Top-level entry point for the stonedfenicsx subduction simulation.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.stoned_fenicsx.test_function" title="stonedfenicsx.stoned_fenicsx.test_function"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_function</span></code></a></p></td>
-<td><p>Test function to check the functionality of the main function.
-It creates a mock input and phase input, then calls the main function.</p></td>
-</tr>
 </tbody>
 </table>
 </section>
@@ -228,26 +224,26 @@ It creates a mock input and phase input, then calls the main function.</p></td>
 <dt class="sig sig-object py" id="stonedfenicsx.stoned_fenicsx.stoned_fenicsx">
 <span class="sig-prename descclassname"><span class="pre">stonedfenicsx.stoned_fenicsx.</span></span><span class="sig-name descname"><span class="pre">stoned_fenicsx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.input_parser.html#stonedfenicsx.config.input_parser.Input" title="stonedfenicsx.config.input_parser.Input"><span class="pre">stonedfenicsx.config.input_parser.Input</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ph_in</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhInput" title="stonedfenicsx.config.phase_db.PhInput"><span class="pre">stonedfenicsx.config.phase_db.PhInput</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/stoned_fenicsx.html#stoned_fenicsx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.stoned_fenicsx.stoned_fenicsx" title="Link to this definition">¶</a></dt>
 <dd><p>Top-level entry point for the stonedfenicsx subduction simulation.</p>
-<p>Sequences the two top-level stages of the simulation:</p>
-<ol class="arabic simple">
+<dl class="simple">
+<dt>Sequences the two top-level stages of the simulation:</dt><dd><ol class="arabic simple">
 <li><p>configure_simulation – non-dimensionalises all inputs, builds the
 mesh and sub-meshes, and constructs the material-property database.</p></li>
 <li><p>solution_routine – allocates FEM problem objects and drives the
 coupled Picard / time-stepping loop through to completion.</p></li>
 </ol>
-<p>Args:
-inp (Input): Parsed YAML input containing numerical controls, I/O
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inp</strong> (<a class="reference internal" href="stonedfenicsx.config.input_parser.html#stonedfenicsx.config.input_parser.Input" title="stonedfenicsx.config.input_parser.Input"><em>Input</em></a>) – Parsed YAML input containing numerical controls, I/O
 settings, thermal boundary conditions, and kinematic boundary
-conditions.
-ph_in (PhInput): Parsed material-property input for all phases
-(wedge mantle, slab mantle, oceanic crust, overriding crust, etc.).</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="stonedfenicsx.stoned_fenicsx.test_function">
-<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.stoned_fenicsx.</span></span><span class="sig-name descname"><span class="pre">test_function</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/stoned_fenicsx.html#test_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.stoned_fenicsx.test_function" title="Link to this definition">¶</a></dt>
-<dd><p>Test function to check the functionality of the main function.
-It creates a mock input and phase input, then calls the main function.</p>
+conditions.</p></li>
+<li><p><strong>ph_in</strong> (<a class="reference internal" href="stonedfenicsx.config.phase_db.html#stonedfenicsx.config.phase_db.PhInput" title="stonedfenicsx.config.phase_db.PhInput"><em>PhInput</em></a>) – Parsed material-property input for all phases
+(wedge mantle, slab mantle, oceanic crust, overriding crust, etc.).</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -279,7 +275,6 @@ It creates a mock input and phase input, then calls the main function.</p>
 <li><a class="reference internal" href="#stonedfenicsx.stoned_fenicsx.git_info"><code class="docutils literal notranslate"><span class="pre">git_info()</span></code></a></li>
 <li><a class="reference internal" href="#stonedfenicsx.stoned_fenicsx.print_information_code"><code class="docutils literal notranslate"><span class="pre">print_information_code()</span></code></a></li>
 <li><a class="reference internal" href="#stonedfenicsx.stoned_fenicsx.stoned_fenicsx"><code class="docutils literal notranslate"><span class="pre">stoned_fenicsx()</span></code></a></li>
-<li><a class="reference internal" href="#stonedfenicsx.stoned_fenicsx.test_function"><code class="docutils literal notranslate"><span class="pre">test_function()</span></code></a></li>
 </ul>
 </li>
 </ul>
