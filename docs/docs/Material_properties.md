@@ -34,7 +34,7 @@ The customisation of the material properties of each phase depends on the subdom
 | Overriding lower crust | Yes | Constant viscosity | Linear / non-linear | Linear / non-linear | Linear / non-linear | Linear / non-linear | 6 |
 
 ## Material properties
-
+In the following section, the non-linear properties will be described.
 At the end of the pages, there is a succint code interface to call these non-linear properties. 
 
 ### Rheological material properties
@@ -123,6 +123,15 @@ The rheological database is constructed from the original experimental parameter
 
 The units reported for rheological parameters are not always consistent across the literature. When introducing a custom rheology, the user should therefore verify the original units carefully. **StonedFEniCSx** performs the required unit conversions during the configuration stage, so the units of the original parameters must be specified correctly.
 
+In general the correction factor for the pre-exponential factor of each of the rheological law has this form:
+```{math}
+:label: eq:correction_factor
+b_{cor} = F W_0^r d_0^{-m}\Xi b 
+
+```
+where `F` is the correction for the type of experiment, {math}`W_0` is the reference quantity of water fugacity/concentration, {math}`d_0` is the reference grain size, {math}`\Xi` is the conversion factor from MPa to Pa, and `b` is the original pre-exponential factor. 
+
+
 The main rheologies available in the code are listed in the following section. The rheology available for the virtual shear zone is also described.
 
 #### Tables
@@ -131,7 +140,9 @@ The main rheologies available in the code are listed in the following section. T
 
 `Name` is the actual string that must be used in the *input.yml* file.
 
+::::{tab-set}
 
+:::{tab-item} Diffusion Creep
 (Table_Diffusion_Creep)=
 
 *Dislocation Creep*
@@ -140,6 +151,11 @@ The main rheologies available in the code are listed in the following section. T
 | `Hirth_dry_Dislocation_creep` | 1.5e9 | 375.0e3 | 5e-6 | 3.0 | 0 | 10e3 | Simpleshear | 1 | MPa⁻¹ s⁻¹ | None | {cite}`hirth2003rheology` |
 | `Hirth_wet_Diffusion_creep` | 2.7e7 | 375.0e3 | 10e-6 | 3.0 | 0.8 | 10e3 | Simpleshear | 1 | MPa⁻¹ s⁻¹ COH⁻ʳ | COH | {cite}`hirth2003rheology` |
 | `VK_Diffusion_creep` | 3.79e-10 | 335.0e3 | 0e-6 | 1.0 | 0.8 | 1.0 | None | 0 | Pa⁻¹ s⁻¹ | None | {cite}`van2008community` |
+
+:::
+
+:::{tab-item} Dislocation Creep
+Content 2
 
 (Table_Dislocation_Creep)=
 
@@ -154,6 +170,9 @@ The main rheologies available in the code are listed in the following section. T
 | `Hirareth_Serpentinite_Dislocation_creep` | 2.82e-15 | 8900 | 3.2e-6 | 3.8 | 0.0 | Uniaxial | 1 | MPa⁻ⁿ s⁻¹ | None | {cite}`hilairet2007high` |
 | `Wet_Quartzite_2001_Dislocation_creep` | 6.31e-12 | 135.0e3 | 0e6 | 4.0 | 1.0 | Uniaxial | 1 | MPa⁻⁽ⁿ⁺ʳ⁾ s⁻¹ | Fugacity | {cite}`hirth2001evaluation` |
 | `Glaucophane_2025_Dislocation_creep` | 2.32e10 | 450.0e3 | 0e-6 | 3.0 | 0.0 | Uniaxial | 1 | MPa⁻ⁿ s⁻¹ | None | {cite}`hufford2026blueschist` |
+::::
+:::
+
 
 The viscosity is computed using the harmonic average:
 
@@ -170,7 +189,49 @@ The viscosity is computed using the harmonic average:
 
 where {math}`\eta_{\mathrm{eff}}` is the effective viscosity and {math}`\eta_{\mathrm{max}}` is the maximum viscosity, a parameter used to stabilise the numerical computation. Two rheological configurations are available: diffusion creep alone or the full composite rheology. When only diffusion creep is active, the dislocation-creep contribution is omitted from the harmonic average.
 
-**Note:** The reference indicates the source from which a particular rheology was first introduced into **StonedFEniCSx**, rather than necessarily the original publication of the flow law. For example, `VK_Diffusion_creep` ultimately originates from {cite}`karato1993rheology`.
+#### Water fugacity and concentration
+
+The parameters of some rheological laws have been fitted using experimental data that accounted water concentration/fugacity. Water quantity is not accounted in **StonedFEniCSx**. The easiest solution for correcting the pre-exponential factor (which can be interpreted as a trashbin of all the unit of measure of an experimental fitting) is to compute a reference water quantity and multiply the original value for it. However, for certain dislocation flow law was necessary to introduce an additional parameters (i.e., `Wet Quartzite`) to guarantee the reproducibility of the experiments. `Wet Quartzite` is used mainly to describe the rheology of the subduction interface; and it accounts in a questionable way the effects of the fugacity of water as a function of pressure-temperature. To mantain a rigorous treatment of the material property, a P-T correction factor is applied to the viscosity of the shear zone:
+
+```{math}
+:label: eq:water_correction
+
+\begin{aligned}
+W_0 &=
+a_{H_2O} B_{fH_2O}
+\exp\left(
+-\frac{E_{fH_2O} + P_{\mathrm{ref}}V_{fH_2O}}
+{RT_{\mathrm{ref}}}
+\right), \\[6pt]
+W_i &=
+a_{H_2O} B_{fH_2O}
+\exp\left(
+-\frac{E_{fH_2O} + PV_{fH_2O}}
+{RT}
+\right), \\[6pt]
+\frac{W_i}{W_0} = \zeta &=
+\exp\left(
+\frac{
+-RT_{\mathrm{ref}}(E_{fH_2O}+PV_{fH_2O})
++RT(E_{fH_2O}+P_{\mathrm{ref}}V_{fH_2O})
+}
+{RTT_{\mathrm{ref}}}
+\right), \\[6pt]
+W_i &= \zeta W_0.
+\end{aligned}
+```
+
+The reference state is $T_{\mathrm{ref}} = 298.15$ K and
+$P_{\mathrm{ref}} = 10^5$ Pa. Since $W_0$ is already accounted for in the
+corrected pre-exponential factor, it is only necessary to multiply the
+rheological equations by $\zeta$, which describes the variation with respect
+to the reference state.
+
+`````{admonition} Note!: 
+  :class: important_note
+The reference indicates the source from which a particular rheology was first introduced into **StonedFEniCSx**, rather than necessarily the original publication of the flow law. For example, `VK_Diffusion_creep` ultimately originates from {cite}`karato1993rheology`.
+`````
+
 
 ### Thermal properties
 
@@ -304,8 +365,3 @@ k_{\mathrm{rad}}(T)
 | `AnAb` | 0.36e-6 | 0.4e-6 | 300.0 | 0.0 | 1.0 | 0.05e-9 |
 | `Crust_Richards_2018` | 0.432e-6 | 0.44e-6 | 380 | 0.305e-6 | 145.0 | 0.05e-9 |
 
-## References
-
-```{bibliography}
-:all:
-```

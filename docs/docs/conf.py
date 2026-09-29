@@ -17,6 +17,8 @@ html_short_title = project
 extensions = [
     "myst_parser",
     "autodoc2",
+    "alert",
+    "sphinx-togglebutton",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",

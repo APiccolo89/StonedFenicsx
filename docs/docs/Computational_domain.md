@@ -259,10 +259,3 @@ Shear heating is applied along the slab surface from point [`A`] to point [`H`].
 If in `NumericalControls` the option selected is `SelfConsistent`,the strength will be computed using the shear dislocation law (`shear_heating_disl_law`), the friction angle. It is computed using a Drucker-Prager yield criterion without cohesion. In the case the user chooses the `Constant`, the strenght of the shear zone is computed using a constant stress (`tau_min`).
 
 After the strength is computed, the shear heating contribution is computed by multiplying the shear stress with the velocity of the slab and the scaling function that define the decoupling. 
-
-
-## References
-
-```{bibliography}
-:all:
-```
