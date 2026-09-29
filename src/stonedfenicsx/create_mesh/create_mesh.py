@@ -15,6 +15,10 @@ are stored (i.e., internal boundaries, map from subdomain-global mesh and viceve
 and the Phase function space as DG mesh of 1st order.
 aux_create_mesh => gregary module that stores the functions to create the fundamental
 geometrical entity for the gmsh, and that stores the dictionary related to the boundary
+**TO DO**: In the future I would like to introduce a function that checks wheter or not
+the mesh is opened by an other processor. I need to study how these things work, the 
+previous stack-over-flow solution did not work in HPC enviroment with array jobs.
+
 """
 
 # input for iFieldstone
