@@ -3,3 +3,6 @@ myst-parser
 sphinxcontrib-bibtex
 piccolo-theme
 sphinx-autodoc2
+sphinx-book-theme
+sphinx-togglebutton
+sphinx-design
