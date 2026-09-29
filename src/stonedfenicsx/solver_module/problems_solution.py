@@ -1,3 +1,18 @@
+"""
+problem_solution submodule contain the definition of the problems and the relative
+implementation. This module is the core of the package. Each problem will 
+refers to its own domain, and material property. Each problem cache the 
+fem form, which are updated through the resolution of the system each iteration
+and each timestep. 
+**TODO**: in the future I would like to refractor and create more flexible classes
+this require a total reaorganisation of the code, and using also the function themself
+as arguments of the class. This is a project for learning a bit more python, however,
+since it is not going to happen during this contract, I will do when I finish the job.
+**TODO2**: In the mean while I tried to update the docstring, then I would like to
+remove a few quick and dirty solution that I have been using for obtaining results. 
+
+"""
+
 # --- libraries ---
 from dataclasses import dataclass, field
 

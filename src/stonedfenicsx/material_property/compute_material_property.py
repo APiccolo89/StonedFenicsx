@@ -1,3 +1,12 @@
+"""
+Material property module simply create dataclasses containing
+function associated with DG-Phase function space. The material
+property are safely cached, and associated to the respective 
+problem. Moreover, this module contains the actual function 
+used to compute the real material property that will be used by the 
+problems (i.e., the solver associated for each of the subdomain)
+"""
+
 # modules
 from dataclasses import InitVar, dataclass
 

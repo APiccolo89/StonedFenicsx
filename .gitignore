@@ -17,7 +17,7 @@ dist/
 .coverage
 coverage.xml
 htmlcov/
-
+*.prof
 # Environments
 .conda
 .venv/

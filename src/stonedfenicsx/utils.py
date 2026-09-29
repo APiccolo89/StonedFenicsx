@@ -12,7 +12,6 @@ from mpi4py import MPI
 # ---
 _DEBUG_ = False
 
-
 # ---
 def timing_function(fun: Callable) -> Callable:
     """Extract the execution time of the function.

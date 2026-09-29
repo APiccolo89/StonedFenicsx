@@ -1,3 +1,23 @@
+"""
+solution_routine submodule handle the main numerical evoltion of the package:
+generate the classes used - and at the end destroy the solvers -, and handle the 
+time-loop, outer iteration loop for the coupled numerical problem. 
+Inside these routines there are also the initial guesses function:
+steady_state with linear property
+diffusion 
+Both the initial guess serves the goal to create an initial condition for solving the time
+dependent problem. 
+>[!NOTE]
+> The order of the problems changes as a function of the typology of the problems solved:
+> steady_state: lithostatic - stokes - energy 
+> time_dependent: lithostatic - energy - stokes
+> For solving the steady state you need first a velocity field, for solving the time-dependet
+> problem with non-linearities you need first the temperature field otherwise there is a lag effects
+> this phenomena have been noticed through the impossibility to properly converge the residual. 
+
+
+"""
+
 # ---
 # --- mpi4py/petsc4py needed for the permanent per-timestep PETSc garbage
 # cleanup below (see time_loop).
