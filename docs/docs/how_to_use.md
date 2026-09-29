@@ -469,9 +469,3 @@ if __name__ == '__main__':
 ```
 
 **Note**: In case the user wants to use an oceanic plate as overriding plate, the user should use the crustal unit **overriding_upper_crust** to create an oceanic-like crust and set to 0.0 **lc** in the geometry input (or in inp.g_input.lc=0)
-
-## References
-
-```{bibliography}
-:all:
-```

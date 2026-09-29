@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path('../../')
 SRC = ROOT / "src"
 
 sys.path.insert(0, str(SRC))
@@ -17,8 +17,7 @@ html_short_title = project
 extensions = [
     "myst_parser",
     "autodoc2",
-    "alert",
-    "sphinx-togglebutton",
+    "sphinx_design",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
@@ -29,6 +28,12 @@ extensions = [
 ]
 
 autosummary_generate = True
+
+myst_enable_extensions = [
+    "alert",
+    "colon_fence",
+    "amsmath"
+]
 
 autodoc_mock_imports = ["dolfinx", "gmsh", "petsc4py", "mpi4py", "ufl", "basix", "ffcx"]
 

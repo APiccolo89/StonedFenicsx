@@ -24,3 +24,6 @@ dependencies:
       - sphinxcontrib-bibtex
       - sphinx-autodoc2
       - cmcrameri
+      - sphinx-book-theme
+      - sphinx-togglebutton
+      - sphinx-design

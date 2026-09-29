@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>stonedfenicsx.create_mesh.aux_create_mesh &#8212; StonedFEniCSx</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic_mod.css?v=9b2032db" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <script src="../../../_static/js/petite-vue.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body data-dark_mode_code_blocks="true">
+
+<div id="top_nav">
+    
+
+    <nav>
+        
+            
+        
+
+        <p id="toggle_sidebar">
+            <a href="#" title="Toggle sidebar">|||</a>
+        </p>
+        <h1><a href="../../../index.html" title="Go to homepage">StonedFEniCSx</a></h1>
+
+        <a id="mode_toggle" href="#" @click.prevent="handleClick" :title="mode">
+    <template v-if="mode == 'light'">
+        <svg width="100%" height="100%" viewBox="0 0 79 80" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;"><g id="mode_light"><rect id="Bounds" x="0" y="-0" width="78.623" height="79.049" style="fill:none;"/><circle cx="39.311" cy="39.524" r="15.734" style="fill:#fff;"/><g id="beams"><g id="beam"><path id="beam1" serif:id="beam" d="M44.212,4.901c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.9,2.196 -4.9,4.901l-0,9.614c-0,2.705 2.196,4.901 4.9,4.901c2.705,0 4.901,-2.196 4.901,-4.901l0,-9.614Z" style="fill:#fff;"/></g><g id="beam2" serif:id="beam"><path id="beam3" serif:id="beam" d="M67.48,18.073c1.913,-1.912 1.913,-5.018 0,-6.931c-1.912,-1.912 -5.018,-1.912 -6.931,0l-6.798,6.799c-1.912,1.912 -1.912,5.018 0,6.931c1.913,1.912 5.018,1.912 6.931,-0l6.798,-6.799Z" style="fill:#fff;"/></g><g id="beam4" serif:id="beam"><path id="beam5" serif:id="beam" d="M25.728,61.108c1.912,-1.913 1.912,-5.018 -0,-6.931c-1.913,-1.913 -5.019,-1.913 -6.931,-0l-6.799,6.798c-1.912,1.913 -1.912,5.019 0,6.931c1.913,1.913 5.019,1.913 6.931,0l6.799,-6.798Z" style="fill:#fff;"/></g><g id="beam6" serif:id="beam"><path id="beam7" serif:id="beam" d="M60.682,54.177c-1.913,-1.913 -5.018,-1.913 -6.931,-0c-1.912,1.913 -1.912,5.018 0,6.931l6.798,6.798c1.913,1.913 5.019,1.913 6.931,0c1.913,-1.912 1.913,-5.018 0,-6.931l-6.798,-6.798Z" style="fill:#fff;"/></g><g id="beam8" serif:id="beam"><path id="beam9" serif:id="beam" d="M4.901,34.623c-2.705,0 -4.901,2.196 -4.901,4.901c0,2.705 2.196,4.901 4.901,4.901l9.614,0c2.705,0 4.901,-2.196 4.901,-4.901c0,-2.705 -2.196,-4.901 -4.901,-4.901l-9.614,0Z" style="fill:#fff;"/></g><g id="beam10" serif:id="beam"><path id="beam11" serif:id="beam" d="M44.212,64.534c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.9,2.196 -4.9,4.901l-0,9.614c-0,2.705 2.196,4.901 4.9,4.901c2.705,-0 4.901,-2.196 4.901,-4.901l0,-9.614Z" style="fill:#fff;"/></g><g id="beam12" serif:id="beam"><path id="beam13" serif:id="beam" d="M18.929,11.142c-1.912,-1.912 -5.018,-1.912 -6.931,0c-1.912,1.913 -1.912,5.019 0,6.931l6.799,6.799c1.912,1.912 5.018,1.912 6.931,-0c1.912,-1.913 1.912,-5.019 -0,-6.931l-6.799,-6.799Z" style="fill:#fff;"/></g><g id="beam14" serif:id="beam"><path id="beam15" serif:id="beam" d="M64.108,34.623c-2.705,0 -4.901,2.196 -4.901,4.901c-0,2.705 2.196,4.901 4.901,4.901l9.614,0c2.705,0 4.901,-2.196 4.901,-4.901c-0,-2.705 -2.196,-4.901 -4.901,-4.901l-9.614,0Z" style="fill:#fff;"/></g></g></g></svg>
+    </template>
+
+    <template v-if="mode == 'dark'">
+        <svg width="100%" height="100%" viewBox="0 0 79 80" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;"><g id="mode_dark"><rect id="Bounds" x="0" y="-0" width="78.623" height="79.049" style="fill:none;"/><circle cx="39.311" cy="39.524" r="15.734" style="fill:#fff;"/><g id="beams"><g id="beam"><path id="beam1" serif:id="beam" d="M44.212,14.515c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,0 -4.901,2.196 -4.901,4.901c0,2.705 2.197,4.901 4.901,4.901c2.705,0 4.901,-2.196 4.901,-4.901Z" style="fill:#fff;"/></g><g id="beam2" serif:id="beam"><path id="beam3" serif:id="beam" d="M60.662,24.892c1.902,-1.902 1.902,-4.99 0,-6.892l-0.04,-0.039c-1.901,-1.902 -4.989,-1.902 -6.891,-0c-1.901,1.901 -1.901,4.989 0,6.891l0.04,0.04c1.902,1.901 4.989,1.901 6.891,-0Z" style="fill:#fff;"/></g><g id="beam4" serif:id="beam"><path id="beam5" serif:id="beam" d="M25.732,61.103c1.91,-1.91 1.91,-5.011 0,-6.921l-0.009,-0.01c-1.91,-1.91 -5.012,-1.91 -6.921,-0c-1.91,1.91 -1.91,5.011 -0,6.921l0.01,0.01c1.909,1.91 5.011,1.91 6.92,-0Z" style="fill:#fff;"/></g><g id="beam6" serif:id="beam"><path id="beam7" serif:id="beam" d="M60.672,54.167c-1.907,-1.907 -5.004,-1.907 -6.911,0l-0.02,0.02c-1.907,1.907 -1.907,5.004 0,6.911c1.907,1.907 5.004,1.907 6.911,-0l0.02,-0.02c1.907,-1.907 1.907,-5.004 0,-6.911Z" style="fill:#fff;"/></g><g id="beam8" serif:id="beam"><path id="beam9" serif:id="beam" d="M14.52,34.623c-2.702,0 -4.896,2.194 -4.896,4.896l0,0.01c0,2.702 2.194,4.896 4.896,4.896c2.702,0 4.896,-2.194 4.896,-4.896l-0,-0.01c-0,-2.702 -2.194,-4.896 -4.896,-4.896Z" style="fill:#fff;"/></g><g id="beam10" serif:id="beam"><path id="beam11" serif:id="beam" d="M44.212,64.534c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.901,2.196 -4.901,4.901c0,2.704 2.197,4.9 4.901,4.9c2.705,0 4.901,-2.196 4.901,-4.9Z" style="fill:#fff;"/></g><g id="beam12" serif:id="beam"><path id="beam13" serif:id="beam" d="M25.73,17.943c-1.911,-1.911 -5.015,-1.911 -6.926,0l-0.005,0.005c-1.911,1.911 -1.911,5.015 0,6.926c1.911,1.911 5.015,1.911 6.926,0l0.005,-0.005c1.911,-1.911 1.911,-5.014 -0,-6.926Z" style="fill:#fff;"/></g><g id="beam14" serif:id="beam"><path id="beam15" serif:id="beam" d="M64.098,34.623c-2.699,0 -4.891,2.192 -4.891,4.892l-0,0.019c-0,2.699 2.192,4.891 4.891,4.891c2.7,0 4.892,-2.192 4.892,-4.891l0,-0.019c0,-2.7 -2.192,-4.892 -4.892,-4.892Z" style="fill:#fff;"/></g></g></g></svg>
+    </template>
+
+    <template v-if="mode == 'darkest'">
+        <svg width="100%" height="100%" viewBox="0 0 79 80" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;"><g id="mode_darkest"><rect id="Bounds" x="0" y="-0" width="78.623" height="79.049" style="fill:none;"/><path d="M39.315,23.791c8.684,-0 15.734,7.05 15.734,15.733c0,8.684 -7.05,15.734 -15.734,15.734c-8.683,0 -15.733,-7.05 -15.733,-15.734c-0,-8.683 7.05,-15.733 15.733,-15.733Zm0,4.737c6.069,0 10.997,4.927 10.997,10.996c-0,6.069 -4.928,10.996 -10.997,10.996c-6.068,0 -10.996,-4.927 -10.996,-10.996c0,-6.069 4.928,-10.996 10.996,-10.996Z" style="fill:#fff;"/><g id="beams"><g id="beam"><path id="beam1" serif:id="beam" d="M44.216,14.515c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,0 -4.9,2.196 -4.9,4.901c-0,2.705 2.196,4.901 4.9,4.901c2.705,0 4.901,-2.196 4.901,-4.901Z" style="fill:#fff;"/></g><g id="beam2" serif:id="beam"><path id="beam3" serif:id="beam" d="M60.666,24.892c1.902,-1.902 1.902,-4.99 0,-6.892l-0.04,-0.039c-1.901,-1.902 -4.989,-1.902 -6.891,-0c-1.901,1.901 -1.901,4.989 0,6.891l0.04,0.04c1.902,1.901 4.99,1.901 6.891,-0Z" style="fill:#fff;"/></g><g id="beam4" serif:id="beam"><path id="beam5" serif:id="beam" d="M25.737,61.103c1.909,-1.91 1.909,-5.011 -0,-6.921l-0.01,-0.01c-1.91,-1.91 -5.011,-1.91 -6.921,-0c-1.91,1.91 -1.91,5.011 -0,6.921l0.01,0.01c1.91,1.91 5.011,1.91 6.921,-0Z" style="fill:#fff;"/></g><g id="beam6" serif:id="beam"><path id="beam7" serif:id="beam" d="M60.676,54.167c-1.907,-1.907 -5.004,-1.907 -6.911,0l-0.02,0.02c-1.907,1.907 -1.907,5.004 0,6.911c1.907,1.907 5.004,1.907 6.911,-0l0.02,-0.02c1.907,-1.907 1.907,-5.004 0,-6.911Z" style="fill:#fff;"/></g><g id="beam8" serif:id="beam"><path id="beam9" serif:id="beam" d="M14.524,34.623c-2.702,0 -4.896,2.194 -4.896,4.896l0,0.01c0,2.702 2.194,4.896 4.896,4.896c2.702,0 4.896,-2.194 4.896,-4.896l0,-0.01c0,-2.702 -2.194,-4.896 -4.896,-4.896Z" style="fill:#fff;"/></g><g id="beam10" serif:id="beam"><path id="beam11" serif:id="beam" d="M44.216,64.534c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.9,2.196 -4.9,4.901c-0,2.704 2.196,4.9 4.9,4.9c2.705,0 4.901,-2.196 4.901,-4.9Z" style="fill:#fff;"/></g><g id="beam12" serif:id="beam"><path id="beam13" serif:id="beam" d="M25.734,17.943c-1.911,-1.911 -5.015,-1.911 -6.926,0l-0.005,0.005c-1.911,1.911 -1.911,5.015 0,6.926c1.911,1.911 5.015,1.911 6.926,0l0.005,-0.005c1.911,-1.911 1.911,-5.014 0,-6.926Z" style="fill:#fff;"/></g><g id="beam14" serif:id="beam"><path id="beam15" serif:id="beam" d="M64.103,34.623c-2.7,0 -4.892,2.192 -4.892,4.892l-0,0.019c-0,2.699 2.192,4.891 4.892,4.891c2.699,0 4.891,-2.192 4.891,-4.891l0,-0.019c0,-2.7 -2.192,-4.892 -4.891,-4.892Z" style="fill:#fff;"/></g></g></g></svg>
+    </template>
+</a>
+
+<script>
+(function() {
+    const LOCAL_STORAGE_KEY = 'piccoloThemeMode'
+
+    var initialMode = localStorage.getItem(LOCAL_STORAGE_KEY)
+
+    if (initialMode) {
+        // Make sure the value in local storage is valid
+        if (['light', 'dark', 'darkest'].indexOf(initialMode) == -1) {
+            initialMode = 'light'
+            localStorage.setItem(LOCAL_STORAGE_KEY, initialMode)
+        }
+    } else {
+        // Check if the client prefers dark mode
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            initialMode = 'dark'
+        } else {
+            initialMode = 'light'
+        }
+        localStorage.setItem(LOCAL_STORAGE_KEY, initialMode)
+    }
+
+    document.documentElement.dataset.mode = initialMode
+
+    PetiteVue.createApp({
+        'mode': initialMode,
+        handleClick() {
+            let currentMode = this.mode
+
+            if (currentMode == 'light') {
+                this.mode = 'dark'
+            } else if (currentMode == 'dark') {
+                this.mode = 'darkest'
+            } else if (currentMode == 'darkest') {
+                this.mode = 'light'
+            }
+
+            document.documentElement.dataset.mode = this.mode
+            localStorage.setItem(LOCAL_STORAGE_KEY, this.mode)
+
+            console.log(this.mode)
+        }
+    }).mount('#mode_toggle')
+})()
+</script>
+            <p class="mobile_search_link">
+                <a href="../../../search.html" title="Search">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 65 64" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2">
+                        <path d="M14.873 40.009c-2.315-3.943-3.642-8.532-3.642-13.429C11.231 11.91 23.141 0 37.811 0s26.58 11.91 26.58 26.58-11.91 26.58-26.58 26.58a26.44 26.44 0 0 1-14.277-4.161L9.739 62.794a3.12 3.12 0 0 1-4.413 0L.913 58.382c-1.217-1.218-1.217-3.196 0-4.413l13.96-13.96zM37.811 8.054c10.225 0 18.526 8.301 18.526 18.526s-8.301 18.526-18.526 18.526-18.526-8.301-18.526-18.526S27.586 8.054 37.811 8.054z" fill="#fff" />
+                    </svg>
+                </a>
+            </p>
+        
+
+        <div class="searchbox_wrapper">
+            
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+    </nav>
+</div>
+
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper"><p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation and Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../how_to_use.html">Numerical Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../how_to_use.html#how-to-use">How to use</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Computational_domain.html">Computational Domain and Boundary Conditions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Material_properties.html">Material properties</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apidocs/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for stonedfenicsx.create_mesh.aux_create_mesh</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">dolfinx</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gmsh</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">ndarray</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">petsc4py</span><span class="w"> </span><span class="kn">import</span> <span class="n">PETSc</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.geometry</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeomInput</span>
+
+<span class="c1">#---------------------------------------------------------</span>
+
+<span class="n">dict_surf</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">'sub_plate'</span>         <span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s1">'oceanic_crust'</span>     <span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="s1">'wedge'</span>             <span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="s1">'overriding_lm'</span>     <span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="s1">'upper_crust'</span>       <span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="s1">'lower_crust'</span>       <span class="p">:</span> <span class="mi">6</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="c1">#---------------------------------------------------------</span>
+
+
+<span class="n">dict_tag_lines</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">'Top'</span>               <span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s1">'Right_lit'</span>         <span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="s1">'Right_wed'</span>         <span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="s1">'Bottom_wed'</span>        <span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="s1">'Bottom_sla'</span>        <span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="s1">'Subduction_bot'</span>    <span class="p">:</span> <span class="mi">6</span><span class="p">,</span>
+    <span class="s1">'Left_inlet'</span>        <span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
+    <span class="s1">'Subduction_top_lit'</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="s1">'Subduction_top_wed'</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span>
+    <span class="s1">'Oceanic'</span>           <span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="s1">'Overriding_mantle'</span> <span class="p">:</span> <span class="mi">11</span><span class="p">,</span>
+    <span class="s1">'Crust_overplate'</span>   <span class="p">:</span> <span class="mi">12</span><span class="p">,</span>
+    <span class="s1">'LCrust_overplate'</span>  <span class="p">:</span> <span class="mi">13</span><span class="p">,</span>
+    <span class="s1">'Left_inlet_bt'</span>        <span class="p">:</span> <span class="mi">14</span><span class="p">,</span>
+<span class="p">}</span>     
+<span class="c1">#-----------------------------------------------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="Class_Points">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.Class_Points">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Class_Points</span><span class="p">:</span>
+<div class="viewcode-block" id="Class_Points.update_points">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.Class_Points.update_points">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_points</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                      <span class="n">mesh_model</span> <span class="p">:</span> <span class="n">gmsh</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+                      <span class="n">sx</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                      <span class="n">sy</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                      <span class="n">bx</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                      <span class="n">by</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                      <span class="n">oc_cx</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+                      <span class="n">oc_cy</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+                      <span class="n">g_input</span> <span class="p">:</span> <span class="n">GeomInput</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gmsh</span><span class="o">.</span><span class="n">model</span><span class="p">:</span>
+
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Generate the physical points required to build the Gmsh geometry.</span>
+<span class="sd">        </span>
+<span class="sd">        Using the main geometric information stored in `g_input` together with the slab</span>
+<span class="sd">        top/bottom surfaces (and optionally the oceanic Moho), this routine defines the</span>
+<span class="sd">        physical points that will later be connected into physical lines for the Gmsh</span>
+<span class="sd">        model.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        sx : np.ndarray</span>
+<span class="sd">            x-coordinates of the top surface of the subducting plate.</span>
+<span class="sd">        sy : np.ndarray</span>
+<span class="sd">            y-coordinates of the top surface of the subducting plate.</span>
+<span class="sd">        bx : np.ndarray</span>
+<span class="sd">            x-coordinates of the bottom surface of the subducting plate.</span>
+<span class="sd">        by : np.ndarray</span>
+<span class="sd">            y-coordinates of the bottom surface of the subducting plate.</span>
+<span class="sd">        oc_cx : np.ndarray | None</span>
+<span class="sd">            x-coordinates of the oceanic Moho. Can be `None`/empty if the crust is not defined.</span>
+<span class="sd">        oc_cy : np.ndarray | None</span>
+<span class="sd">            y-coordinates of the oceanic Moho. Can be `None`/empty if the crust is not defined.</span>
+<span class="sd">        g_input : GeomInput</span>
+<span class="sd">            Object containing all input geometric information.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        mesh_model : gmsh.model</span>
+<span class="sd">            Updated Gmsh model containing the generated points. </span>
+<span class="sd">        -&gt; update the class points with new members </span>
+<span class="sd">        """</span>
+
+        <span class="c1"># Function CREATE POINTS</span>
+
+        <span class="c1">#-- Create the subduction,channel and oceanic crust points </span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_s</span><span class="p">,</span>  <span class="bp">self</span><span class="o">.</span><span class="n">tag_subduction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord_sub</span><span class="p">,</span>     <span class="n">mesh_model</span>     <span class="o">=</span> <span class="n">_create_points</span><span class="p">(</span><span class="n">mesh_model</span><span class="p">,</span> <span class="n">sx</span><span class="p">,</span>    <span class="n">sy</span><span class="p">,</span>    <span class="n">g_input</span><span class="o">.</span><span class="n">resolution_refine</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_bots</span><span class="p">,</span>  <span class="bp">self</span><span class="o">.</span><span class="n">tag_bottom</span><span class="p">,</span>    <span class="bp">self</span><span class="o">.</span><span class="n">coord_bottom</span><span class="p">,</span> <span class="n">mesh_model</span>     <span class="o">=</span> <span class="n">_create_points</span><span class="p">(</span><span class="n">mesh_model</span><span class="p">,</span> <span class="n">bx</span><span class="p">,</span>    <span class="n">by</span><span class="p">,</span>    <span class="n">g_input</span><span class="o">.</span><span class="n">resolution_normal</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_s</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">model_full</span><span class="p">:</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">max_tags_ltbt</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_ltpt</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord_ltpt</span><span class="p">,</span> <span class="n">mesh_model</span> <span class="o">=</span> <span class="n">_create_points</span><span class="p">(</span><span class="n">mesh_model</span><span class="p">,</span>  <span class="n">g_input</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">g_input</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">g_input</span><span class="o">.</span><span class="n">resolution_normal</span><span class="p">,</span>  <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_bots</span><span class="p">,</span>  <span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_bots</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_tags_ltbt</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">coord_ltpt</span> <span class="o">=</span> <span class="kc">None</span>   
+        <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">ocr</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_oc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_oc</span><span class="p">,</span>         <span class="bp">self</span><span class="o">.</span><span class="n">coord_ocean</span><span class="p">,</span>   <span class="n">mesh_model</span>     <span class="o">=</span> <span class="n">_create_points</span><span class="p">(</span><span class="n">mesh_model</span><span class="p">,</span> <span class="n">oc_cx</span><span class="p">,</span> <span class="n">oc_cy</span><span class="p">,</span> <span class="n">g_input</span><span class="o">.</span><span class="n">resolution_refine</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_bots</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_oc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_bots</span><span class="p">;</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord_ocean</span>  <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># -- Here are the points at the boundary of the model. The size of the model is defined earlier, and subduction zone is modified as such to comply the main geometrical input, </span>
+        <span class="c1"># I used subduction points because they define a few important point. </span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_right_c_b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord_bc</span><span class="p">,</span>  <span class="n">mesh_model</span>            <span class="o">=</span> <span class="n">_create_points</span><span class="p">(</span><span class="n">mesh_model</span><span class="p">,</span>  <span class="n">g_input</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">g_input</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>         <span class="n">g_input</span><span class="o">.</span><span class="n">resolution_normal</span><span class="p">,</span>  <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_oc</span><span class="p">,</span>  <span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_c</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_right_c_l</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord_lr</span><span class="p">,</span>  <span class="n">mesh_model</span>            <span class="o">=</span> <span class="n">_create_points</span><span class="p">(</span><span class="n">mesh_model</span><span class="p">,</span>   <span class="n">g_input</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="n">g_input</span><span class="o">.</span><span class="n">ns_depth</span><span class="p">,</span> <span class="n">g_input</span><span class="o">.</span><span class="n">resolution_normal</span><span class="p">,</span>  <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_b</span><span class="p">,</span>  <span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_d</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_right_c_t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord_top</span><span class="p">,</span> <span class="n">mesh_model</span>            <span class="o">=</span> <span class="n">_create_points</span><span class="p">(</span><span class="n">mesh_model</span><span class="p">,</span>   <span class="n">g_input</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>  <span class="n">g_input</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>         <span class="n">g_input</span><span class="o">.</span><span class="n">resolution_normal</span><span class="p">,</span>  <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_c</span><span class="p">,</span>  <span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">cr</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_e</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_right_c_cr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord_crust</span><span class="p">,</span>    <span class="n">mesh_model</span>  <span class="o">=</span> <span class="n">_create_points</span><span class="p">(</span><span class="n">mesh_model</span><span class="p">,</span>  <span class="n">g_input</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="p">,</span>                <span class="n">g_input</span><span class="o">.</span><span class="n">resolution_normal</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_d</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">lc</span> <span class="o">!=</span><span class="mi">0</span><span class="p">:</span> 
+                    <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_right_c_lcr</span><span class="p">,</span>  <span class="bp">self</span><span class="o">.</span><span class="n">coord_lcr</span><span class="p">,</span> <span class="n">mesh_model</span> <span class="o">=</span> <span class="n">_create_points</span><span class="p">(</span><span class="n">mesh_model</span><span class="p">,</span>  <span class="n">g_input</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">g_input</span><span class="o">.</span><span class="n">lc</span><span class="p">),</span> <span class="n">g_input</span><span class="o">.</span><span class="n">resolution_normal</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_e</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span> 
+                <span class="bp">self</span><span class="o">.</span><span class="n">coord_lcr</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">coord_lcr</span> <span class="o">=</span> <span class="kc">None</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">coord_crust</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Thank Chatgpt </span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">coord_sub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord_bottom</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord_ltpt</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord_ocean</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord_bc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord_lr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord_top</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord_crust</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord_lcr</span><span class="p">]</span>
+        <span class="n">arrays</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arr</span> <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">global_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">arrays</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">mesh_model</span></div>
+</div>
+
+<span class="c1">#-----------------------------------------------------------------------------------------------------------------</span>
+ 
+<div class="viewcode-block" id="Class_Line">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.Class_Line">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Class_Line</span><span class="p">:</span>
+<div class="viewcode-block" id="Class_Line.update_lines">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.Class_Line.update_lines">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                     <span class="n">mesh_model</span><span class="p">:</span><span class="n">gmsh</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> 
+                     <span class="n">CP</span><span class="p">:</span><span class="n">Class_Points</span><span class="p">,</span> 
+                     <span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span><span class="p">)</span><span class="o">-&gt;</span> <span class="n">gmsh</span><span class="o">.</span><span class="n">model</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Generate Gmsh lines and assign tags/IDs.</span>
+<span class="sd">        </span>
+<span class="sd">        This routine creates the physical lines required for the geometry, using the</span>
+<span class="sd">        previously generated point set stored in `CP`, and assigns consistent tags/IDs</span>
+<span class="sd">        to each line so they can be referenced later (e.g., for boundary markers and</span>
+<span class="sd">        physical groups).</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        mesh_model : gmsh.model</span>
+<span class="sd">            Gmsh model object to be updated.</span>
+<span class="sd">        CP : Class_Points</span>
+<span class="sd">            Container storing the physical point tags and their coordinates.</span>
+<span class="sd">        g_input : GeomInput</span>
+<span class="sd">            Object containing the geometric input parameters controlling which lines</span>
+<span class="sd">            are created and how they are connected.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        mesh_model : gmsh.model</span>
+<span class="sd">            Updated Gmsh model containing the generated lines.</span>
+<span class="sd">        LP : Class_Line</span>
+<span class="sd">            Updated line container holding the created line IDs/tags and connectivity</span>
+<span class="sd">            (e.g., mapping line -&gt; endpoint point tags).</span>
+<span class="sd">        </span>
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The returned line container is used to:</span>
+<span class="sd">        - build surfaces from line loops,</span>
+<span class="sd">        - define physical groups for boundaries/regions,</span>
+<span class="sd">        - and maintain consistent bookkeeping between geometry objects.</span>
+<span class="sd">        """</span>
+        
+        <span class="c1"># Top Boundary      </span>
+        <span class="n">p_list</span>                                                    <span class="o">=</span> <span class="p">[</span><span class="n">CP</span><span class="o">.</span><span class="n">tag_subduction</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">CP</span><span class="o">.</span><span class="n">tag_right_c_t</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_top</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_L_T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines_T</span><span class="p">,</span> <span class="n">mesh_model</span>  <span class="o">=</span> <span class="n">_create_lines</span><span class="p">(</span><span class="n">mesh_model</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="n">p_list</span><span class="p">,</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="c1">#[right boundary]</span>
+        <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">cr</span> <span class="o">!=</span><span class="mi">0</span><span class="p">:</span> 
+            <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">lc</span> <span class="o">!=</span><span class="mi">0</span><span class="p">:</span>
+                <span class="n">p_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">CP</span><span class="o">.</span><span class="n">tag_right_c_t</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>  <span class="n">CP</span><span class="o">.</span><span class="n">tag_right_c_lcr</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>  <span class="n">CP</span><span class="o">.</span><span class="n">tag_right_c_cr</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>  <span class="n">CP</span><span class="o">.</span><span class="n">tag_right_c_l</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">CP</span><span class="o">.</span><span class="n">tag_right_c_b</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">p_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">CP</span><span class="o">.</span><span class="n">tag_right_c_t</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>  <span class="n">CP</span><span class="o">.</span><span class="n">tag_right_c_cr</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>   <span class="n">CP</span><span class="o">.</span><span class="n">tag_right_c_l</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>   <span class="n">CP</span><span class="o">.</span><span class="n">tag_right_c_b</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="k">else</span><span class="p">:</span> 
+                <span class="n">p_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">CP</span><span class="o">.</span><span class="n">tag_right_c_t</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>  <span class="n">CP</span><span class="o">.</span><span class="n">tag_right_c_l</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>    <span class="n">CP</span><span class="o">.</span><span class="n">tag_right_c_b</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_right</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_L_R</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines_R</span><span class="p">,</span> <span class="n">mesh_model</span>  <span class="o">=</span> <span class="n">_create_lines</span><span class="p">(</span><span class="n">mesh_model</span><span class="p">,</span>  <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_top</span><span class="p">,</span>  <span class="n">p_list</span><span class="p">,</span>  <span class="kc">False</span><span class="p">)</span>
+        
+        <span class="c1">#[bottom boundary]</span>
+        <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">ocr</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="n">p_list</span>                                                      <span class="o">=</span> <span class="p">[</span><span class="n">CP</span><span class="o">.</span><span class="n">tag_right_c_b</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">CP</span><span class="o">.</span><span class="n">tag_subduction</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">CP</span><span class="o">.</span><span class="n">tag_oc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">CP</span><span class="o">.</span><span class="n">tag_bottom</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">p_list</span>                                                      <span class="o">=</span> <span class="p">[</span><span class="n">CP</span><span class="o">.</span><span class="n">tag_right_c_b</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">CP</span><span class="o">.</span><span class="n">tag_subduction</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">CP</span><span class="o">.</span><span class="n">tag_bottom</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">model_full</span><span class="p">:</span> 
+            <span class="n">p_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CP</span><span class="o">.</span><span class="n">tag_ltpt</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_bottom</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_L_B</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines_B</span><span class="p">,</span> <span class="n">mesh_model</span> <span class="o">=</span> <span class="n">_create_lines</span><span class="p">(</span><span class="n">mesh_model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_right</span><span class="p">,</span> <span class="n">p_list</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        
+        <span class="c1"># ] curved line</span>
+        <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">ocr</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="n">p_list</span>                                                    <span class="o">=</span> <span class="p">[</span><span class="n">CP</span><span class="o">.</span><span class="n">tag_bottom</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">CP</span><span class="o">.</span><span class="n">tag_oc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">CP</span><span class="o">.</span><span class="n">tag_subduction</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">model_full</span><span class="p">:</span> 
+                <span class="n">p_list</span>                                                    <span class="o">=</span> <span class="p">[</span><span class="n">CP</span><span class="o">.</span><span class="n">tag_ltpt</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">CP</span><span class="o">.</span><span class="n">tag_bottom</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">CP</span><span class="o">.</span><span class="n">tag_oc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">CP</span><span class="o">.</span><span class="n">tag_subduction</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">p_list</span>                                                    <span class="o">=</span> <span class="p">[</span><span class="n">CP</span><span class="o">.</span><span class="n">tag_bottom</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">CP</span><span class="o">.</span><span class="n">tag_subduction</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">model_full</span><span class="p">:</span> 
+                <span class="n">p_list</span>                                                    <span class="o">=</span> <span class="p">[</span><span class="n">CP</span><span class="o">.</span><span class="n">tag_ltpt</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">CP</span><span class="o">.</span><span class="n">tag_bottom</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">CP</span><span class="o">.</span><span class="n">tag_subduction</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_left</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_L_L</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines_L</span><span class="p">,</span> <span class="n">mesh_model</span> <span class="o">=</span> <span class="n">_create_lines</span><span class="p">(</span><span class="n">mesh_model</span><span class="p">,</span>  <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_bottom</span><span class="p">,</span>  <span class="n">p_list</span><span class="p">,</span>  <span class="kc">False</span><span class="p">)</span>
+
+        <span class="c1"># -- Create Lines </span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_line_subduction</span><span class="p">,</span>  <span class="bp">self</span><span class="o">.</span><span class="n">tag_L_sub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines_S</span><span class="p">,</span>   <span class="n">mesh_model</span>      <span class="o">=</span> <span class="n">_create_lines</span><span class="p">(</span><span class="n">mesh_model</span><span class="p">,</span>  <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_left</span><span class="p">,</span>           <span class="n">CP</span><span class="o">.</span><span class="n">tag_subduction</span><span class="p">,</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_line_Bsubduction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_L_Bsub</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">lines_BS</span><span class="p">,</span>  <span class="n">mesh_model</span>      <span class="o">=</span> <span class="n">_create_lines</span><span class="p">(</span><span class="n">mesh_model</span><span class="p">,</span>  <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_line_subduction</span><span class="p">,</span>     <span class="n">CP</span><span class="o">.</span><span class="n">tag_bottom</span><span class="p">,</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">ocr</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_line_ocean</span><span class="p">,</span>       <span class="bp">self</span><span class="o">.</span><span class="n">tag_L_oc</span><span class="p">,</span>  <span class="bp">self</span><span class="o">.</span><span class="n">lines_oc</span><span class="p">,</span>  <span class="n">mesh_model</span>      <span class="o">=</span> <span class="n">_create_lines</span><span class="p">(</span><span class="n">mesh_model</span><span class="p">,</span>  <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_line_Bsubduction</span><span class="p">,</span>   <span class="n">CP</span><span class="o">.</span><span class="n">tag_oc</span><span class="p">,</span>        <span class="kc">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lines_oc</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># Create line overriding plate:</span>
+        <span class="c1">#-- find tag of the of the channel # -&gt; find the mistake: confusion with index types</span>
+        <span class="n">i_s</span> <span class="o">=</span> <span class="n">find_tag_line</span><span class="p">(</span><span class="n">CP</span><span class="o">.</span><span class="n">coord_sub</span><span class="p">,</span>     <span class="n">g_input</span><span class="o">.</span><span class="n">ns_depth</span><span class="p">,</span><span class="s1">'y'</span><span class="p">)</span>
+        <span class="n">p_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">i_s</span><span class="p">,</span> <span class="n">CP</span><span class="o">.</span><span class="n">tag_right_c_l</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">ocr</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_line_ov</span><span class="p">,</span>    <span class="bp">self</span><span class="o">.</span><span class="n">tag_L_ov</span><span class="p">,</span>    <span class="bp">self</span><span class="o">.</span><span class="n">lines_L_ov</span><span class="p">,</span>  <span class="n">mesh_model</span>         <span class="o">=</span> <span class="n">_create_lines</span><span class="p">(</span><span class="n">mesh_model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_line_ocean</span><span class="p">,</span> <span class="n">p_list</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_line_ov</span><span class="p">,</span>    <span class="bp">self</span><span class="o">.</span><span class="n">tag_L_ov</span><span class="p">,</span>    <span class="bp">self</span><span class="o">.</span><span class="n">lines_L_ov</span><span class="p">,</span>  <span class="n">mesh_model</span>         <span class="o">=</span> <span class="n">_create_lines</span><span class="p">(</span><span class="n">mesh_model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_line_Bsubduction</span><span class="p">,</span> <span class="n">p_list</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">cr</span> <span class="o">!=</span><span class="mi">0</span><span class="p">:</span> 
+
+            <span class="n">i_c</span> <span class="o">=</span> <span class="n">find_tag_line</span><span class="p">(</span><span class="n">CP</span><span class="o">.</span><span class="n">coord_sub</span><span class="p">,</span> <span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="p">,</span><span class="s1">'y'</span><span class="p">)</span>
+
+            <span class="n">p_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">i_c</span><span class="p">,</span> <span class="n">CP</span><span class="o">.</span><span class="n">tag_right_c_cr</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_line_crust</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_L_cr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines_cr</span><span class="p">,</span> <span class="n">mesh_model</span>             <span class="o">=</span> <span class="n">_create_lines</span><span class="p">(</span><span class="n">mesh_model</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">max_tag_line_ov</span><span class="p">,</span><span class="n">p_list</span><span class="p">,</span><span class="kc">False</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">lc</span> <span class="o">!=</span><span class="mi">0</span><span class="p">:</span>
+
+                <span class="n">i_c</span> <span class="o">=</span> <span class="n">find_tag_line</span><span class="p">(</span><span class="n">CP</span><span class="o">.</span><span class="n">coord_sub</span><span class="p">,(</span><span class="mi">1</span><span class="o">-</span><span class="n">g_input</span><span class="o">.</span><span class="n">lc</span><span class="p">)</span><span class="o">*</span><span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="p">,</span><span class="s1">'y'</span><span class="p">)</span>
+
+                <span class="n">p_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">i_c</span><span class="p">,</span> <span class="n">CP</span><span class="o">.</span><span class="n">tag_right_c_lcr</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_line_Lcrust</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_L_Lcr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines_lcr</span><span class="p">,</span> <span class="n">mesh_model</span>      <span class="o">=</span> <span class="n">_create_lines</span><span class="p">(</span><span class="n">mesh_model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_tag_line_crust</span><span class="p">,</span><span class="n">p_list</span><span class="p">,</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span> 
+                <span class="bp">self</span><span class="o">.</span><span class="n">lines_lcr</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">lines_cr</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lines_lcr</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="n">arr</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">lines_T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines_R</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines_B</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines_L</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines_S</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines_BS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines_oc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines_L_ov</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines_cr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines_lcr</span><span class="p">]</span>
+        <span class="n">arrays</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arr</span> <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_global</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">arrays</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">mesh_model</span></div>
+</div>
+
+<span class="c1">#--------------------------------------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="from_line_to_point_coordinate">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.from_line_to_point_coordinate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">from_line_to_point_coordinate</span><span class="p">(</span><span class="n">L</span><span class="p">:</span><span class="nb">int</span>
+                                  <span class="p">,</span><span class="n">LG</span><span class="p">:</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]</span>
+                                  <span class="p">,</span><span class="n">GP</span><span class="p">:</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">])</span><span class="o">-&gt;</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span><span class="nb">int</span><span class="p">,</span><span class="nb">float</span><span class="p">,</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""From a given line, retrieve the extreme points data</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        L (int): line id</span>
+<span class="sd">        LG (ndarray[np.int64]): global line database</span>
+<span class="sd">        GP (ndarray[np.float64]): global points database</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        p0 : id point that defines the line</span>
+<span class="sd">        p1 : id point that defines the line</span>
+<span class="sd">        coord_x : coordinate-x of the points that define the given line</span>
+<span class="sd">        coord_y : coordinate-y of the points that define the given line</span>
+<span class="sd">    """</span>
+    
+    
+    <span class="n">p0</span>   <span class="o">=</span> <span class="n">LG</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">L</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">p1</span>   <span class="o">=</span> <span class="n">LG</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">L</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">coord_x</span> <span class="o">=</span> <span class="p">[</span><span class="n">GP</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">p0</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span><span class="n">GP</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">p1</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>            
+    <span class="n">coord_y</span> <span class="o">=</span> <span class="p">[</span><span class="n">GP</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">p0</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span><span class="n">GP</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">p1</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+
+    <span class="k">return</span> <span class="n">p0</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">coord_x</span><span class="p">,</span> <span class="n">coord_y</span>                </div>
+
+<span class="c1">#-----------------------------------------------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="create_loop">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.create_loop">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_loop</span><span class="p">(</span><span class="n">l_list</span><span class="p">:</span><span class="nb">list</span><span class="p">,</span>
+                <span class="n">mesh_model</span><span class="p">:</span><span class="n">gmsh</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">tag</span><span class="p">:</span><span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gmsh</span><span class="o">.</span><span class="n">model</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Create a closed curve loop from a list of contiguous lines.</span>
+
+<span class="sd">    This function takes an ordered list of line IDs forming a continuous boundary</span>
+<span class="sd">    and creates a Gmsh curve loop with the specified tag. The resulting loop can</span>
+<span class="sd">    then be used to define plane surfaces and physical groups.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    l_list : list[int]</span>
+<span class="sd">        Ordered list of line IDs defining the loop boundary. Lines must be</span>
+<span class="sd">        contiguous and oriented consistently to form a closed loop.</span>
+<span class="sd">    mesh_model : gmsh.model</span>
+<span class="sd">        Gmsh model object to be updated.</span>
+<span class="sd">    tag : int</span>
+<span class="sd">        Tag/ID assigned to the created curve loop.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    mesh_model : gmsh.model</span>
+<span class="sd">        Updated Gmsh model containing the newly created curve loop.</span>
+<span class="sd">    """</span>
+
+    
+    
+    <span class="n">a</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">l_list</span><span class="p">)):</span>
+        
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">l_list</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">)):</span> 
+            <span class="n">val</span> <span class="o">=</span> <span class="p">[</span><span class="n">l_list</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">val</span> <span class="o">=</span> <span class="n">l_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    
+        <span class="n">a</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        
+    
+    <span class="n">mesh_model</span><span class="o">.</span><span class="n">geo</span><span class="o">.</span><span class="n">addCurveLoop</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">tag</span><span class="p">,</span><span class="n">reorient</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># Left side of the subudction zone</span>
+   
+    <span class="k">return</span> <span class="n">mesh_model</span></div>
+
+<span class="c1">#-----------------------------------------------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="find_line_index">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.find_line_index">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_line_index</span><span class="p">(</span><span class="n">Lin_ar</span><span class="p">:</span><span class="n">ndarray</span><span class="p">,</span>
+                    <span class="n">point</span><span class="p">:</span><span class="n">ndarray</span><span class="p">,</span>
+                    <span class="n">d</span><span class="p">:</span><span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Find the line IDs associated with a given point.</span>
+
+<span class="sd">    From the coordinate-y to line index in the global database of line. </span>
+<span class="sd">    From a given depth, loop over the line and check the coordinate. If the</span>
+<span class="sd">    coordinate is equal to d, stop the loop, and release the index of the </span>
+<span class="sd">    global line database. </span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Lin_ar : ndarray[np.int64]</span>
+<span class="sd">        Global line database. </span>
+<span class="sd">    point : ndarray[np.int64]</span>
+<span class="sd">        Global database of the points</span>
+<span class="sd">    d : float</span>
+<span class="sd">        coordinate-y to find the relative point</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    index : int | list[int]</span>
+<span class="sd">        Line ID(s) (or indices in `Lin_ar`) of the line(s) to which the given point</span>
+<span class="sd">        belongs.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    A point may belong to multiple lines (e.g., at junctions or corners). In such</span>
+<span class="sd">    cases, returning a list of IDs is recommended.</span>
+<span class="sd">"""</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Lin_ar</span><span class="p">[</span><span class="mi">0</span><span class="p">,:])</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="c1"># Select pint of the given line</span>
+        <span class="n">p0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">Lin_ar</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">])</span>
+
+        <span class="n">p1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">Lin_ar</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">i</span><span class="p">])</span>
+        <span class="c1"># find the index of the point </span>
+        <span class="n">ip0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">p0</span><span class="o">==</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">point</span><span class="p">[</span><span class="mi">2</span><span class="p">,:]))</span>
+        <span class="n">ip</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">p1</span><span class="o">==</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">point</span><span class="p">[</span><span class="mi">2</span><span class="p">,:]))</span>
+        <span class="c1"># Check wheter or not the coordinate z is the one. </span>
+        <span class="n">z1</span> <span class="o">=</span> <span class="n">point</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">ip</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">z1</span> <span class="o">==</span> <span class="o">-</span><span class="n">d</span><span class="p">:</span> 
+            <span class="n">X</span> <span class="o">=</span> <span class="p">[</span><span class="n">point</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">ip0</span><span class="p">],</span><span class="n">point</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">ip</span><span class="p">]]</span>
+            <span class="n">Y</span> <span class="o">=</span> <span class="p">[</span><span class="n">point</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">ip0</span><span class="p">],</span><span class="n">point</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">ip</span><span class="p">]]</span>
+
+            <span class="n">index</span> <span class="o">=</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span> 
+            <span class="k">break</span>    
+    
+    
+    <span class="k">return</span> <span class="n">index</span> </div>
+
+
+<span class="c1">#-----------------------------------------------------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="find_tag_line">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.find_tag_line">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_tag_line</span><span class="p">(</span><span class="n">coord</span><span class="p">:</span><span class="n">ndarray</span><span class="p">,</span>
+                  <span class="n">x</span><span class="p">:</span><span class="nb">float</span><span class="p">,</span>
+                  <span class="nb">dir</span><span class="p">:</span><span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""_summary_</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        coord (ndarray): coordinate of</span>
+<span class="sd">        x (float): _description_</span>
+<span class="sd">        dir (str): _description_</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        int: _description_</span>
+<span class="sd">    """</span>
+    
+    <span class="k">if</span> <span class="nb">dir</span> <span class="o">==</span> <span class="s1">'x'</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="mi">0</span> 
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="mi">1</span> 
+    
+    <span class="n">i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">coord</span><span class="p">[</span><span class="n">a</span><span class="p">,:]</span><span class="o">==-</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">coord</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="n">i</span><span class="p">]</span>
+    
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>                 </div>
+
+
+<span class="c1">#-----------------------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="find_slab_surface">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.find_slab_surface">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_slab_surface</span><span class="p">(</span><span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">tuple</span><span class="p">([</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">float</span><span class="p">]]):</span>  
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Compute the top surface of a kinematic slab as a polyline starting from the trench.</span>
+
+<span class="sd">    The slab surface is discretised into straight segments of length `g_input.sub_dl`.</span>
+<span class="sd">    At each step we compute the local bending angle at the current and next arc-length</span>
+<span class="sd">    positions, average them, and use that mean angle to advance to the next point.</span>
+
+<span class="sd">    Angle convention</span>
+<span class="sd">    ----------------</span>
+<span class="sd">    theta is measured with respect to the positive horizontal x-axis.</span>
+
+<span class="sd">             theta</span>
+<span class="sd">    x-axis  -------\------</span>
+<span class="sd">                    \ theta</span>
+<span class="sd">                     \/</span>
+
+<span class="sd">    Algorithm (summary)</span>
+<span class="sd">    -------------------</span>
+<span class="sd">    1. Initialise `top_slab` with the trench point.</span>
+<span class="sd">    2. Initialise the arc-length `lgh = 0.0` (distance measured along the slab surface).</span>
+<span class="sd">    3. While the current point is above the model bottom boundary (`y &gt; ymin`):</span>
+<span class="sd">       a. Set `lghn = lgh + g_input.sub_dl`.</span>
+<span class="sd">       b. Compute `theta  = theta(lgh)`  and `theta1 = theta(lghn)`.</span>
+<span class="sd">       c. Compute `theta_mean = 0.5 * (theta + theta1)`.</span>
+<span class="sd">       d. Use `theta_mean` to advance one step and append the new point to `top_slab`.</span>
+<span class="sd">       e. Update `lgh = lghn`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    top_slab : (n_segment, 2) ndarray</span>
+<span class="sd">        Coordinates (x, y) of the slab top surface polyline.</span>
+<span class="sd">    theta_mean : float</span>
+<span class="sd">        Mean bending angle used for the last segment (or an average over segments,</span>
+<span class="sd">        depending on your implementation).</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If the selected slab-surface method is not implemented (only "custom" is</span>
+<span class="sd">        currently supported).</span>
+<span class="sd">    """</span>
+
+ 
+    <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">slab_type</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'CustomRibe'</span><span class="p">,</span><span class="s1">'CustomParabolic'</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">wrapper_angle</span><span class="p">(</span><span class="n">f_angle</span><span class="p">,</span><span class="n">g_input</span><span class="p">):</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">f_angle</span><span class="p">(</span><span class="n">g_input</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">f</span> 
+
+        <span class="n">f_angle</span>  <span class="o">=</span> <span class="n">wrapper_angle</span><span class="p">(</span><span class="n">compute_bending_angle</span><span class="p">,</span><span class="n">g_input</span><span class="p">)</span>
+        
+        <span class="n">slab_top</span><span class="p">,</span><span class="n">theta_mean</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">create_slab_surface</span><span class="p">(</span><span class="n">f_angle</span><span class="p">,</span><span class="n">g_input</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">stp</span> <span class="o">=</span> <span class="n">g_input</span><span class="o">.</span><span class="n">sub_dl</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">g_input</span><span class="o">.</span><span class="n">slab_type</span> <span class="o">==</span> <span class="s1">'FromFile'</span><span class="p">:</span> 
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.read_slab_surface</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_file_slab</span>
+        
+        <span class="n">path2subduction</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">g_input</span><span class="o">.</span><span class="n">sub_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">path2subduction</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'The txt file of subduction does not exist, please change the path.'</span><span class="p">)</span>
+        <span class="c1"># TO DO: DIVIDE THE READING WITH THE POST_PROCESSING!!!</span>
+        <span class="n">slab_top</span><span class="p">,</span> <span class="n">theta_mean</span> <span class="o">=</span> <span class="n">read_file_slab</span><span class="p">(</span><span class="n">g_input</span><span class="o">.</span><span class="n">sub_path</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">g_input</span><span class="o">.</span><span class="n">y</span><span class="p">))</span>
+        <span class="n">g_input</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">slab_top</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span> 
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Slab surface method '</span><span class="si">{</span><span class="n">g_input</span><span class="o">.</span><span class="n">slab_type</span><span class="si">}</span><span class="s2">' is not implemented. Please choose 'CustomRibe', 'CustomParabolic', or 'FromFile'."</span><span class="p">)</span>    
+            
+    <span class="k">return</span> <span class="n">slab_top</span><span class="p">,</span> <span class="n">theta_mean</span></div>
+
+<span class="c1">#-----------------------------------------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="compute_angle_parabolic">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.compute_angle_parabolic">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_angle_parabolic</span><span class="p">(</span><span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span><span class="p">,</span><span class="n">x</span><span class="p">):</span>
+    <span class="c1"># -&gt; needs to be changed -&gt; now I introduced as function of the cumulative length </span>
+    <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">g_input</span><span class="o">.</span><span class="n">sub_parabolic_a</span><span class="o">*</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">theta</span></div>
+
+
+<span class="c1">#---</span>
+<div class="viewcode-block" id="create_slab_surface">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.create_slab_surface">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_slab_surface</span><span class="p">(</span><span class="n">f</span><span class="p">:</span><span class="nb">callable</span><span class="p">,</span> <span class="n">y_min</span><span class="p">:</span><span class="nb">float</span><span class="p">,</span><span class="n">stp</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span><span class="n">depth</span><span class="p">:</span><span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">tuple</span><span class="p">[</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+    
+    <span class="c1"># Initialise the theta_mean and slab_top array</span>
+    <span class="n">theta_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">2</span><span class="p">],</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">ell_s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">2</span><span class="p">],</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">slab_top</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        
+    <span class="c1"># compute the bending angle as a function of L</span>
+    <span class="n">slab_top</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">slab_top</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">depth</span>
+    <span class="n">dl</span> <span class="o">=</span> <span class="n">stp</span>
+    <span class="n">lghn</span> <span class="o">=</span> <span class="mf">0.0</span> 
+    <span class="n">lgh</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">it</span> <span class="o">=</span> <span class="mi">0</span> 
+    <span class="n">statement</span> <span class="o">=</span> <span class="kc">True</span> 
+    <span class="k">while</span> <span class="n">statement</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">lghn</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">:</span>
+            <span class="n">dl</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">stp</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">dl</span> <span class="o">=</span> <span class="n">stp</span>
+        <span class="n">lghn</span> <span class="o">+=</span> <span class="n">dl</span>
+        <span class="n">theta1</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">lgh</span><span class="p">)</span> <span class="c1"># bending angle at the beginning of the segment</span>
+        <span class="n">theta2</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">lghn</span><span class="p">)</span> <span class="c1"># mean bending angle</span>
+        <span class="n">theta_mean</span><span class="p">[</span><span class="n">it</span><span class="p">]</span><span class="o">=</span> <span class="p">(</span><span class="n">theta1</span><span class="o">+</span><span class="n">theta2</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
+        <span class="n">theta_meani_1</span> <span class="o">=</span> <span class="p">(</span><span class="n">theta1</span><span class="o">+</span><span class="n">theta2</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
+        <span class="c1"># Find the middle of the slab</span>
+        <span class="n">slab_topi_ix</span> <span class="o">=</span> <span class="n">slab_top</span><span class="p">[</span><span class="n">it</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">dl</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta_mean</span><span class="p">[</span><span class="n">it</span><span class="p">]))</span> <span class="c1"># middle of the slab at the end of the segment x</span>
+        <span class="n">slab_topi_iz</span> <span class="o">=</span> <span class="n">slab_top</span><span class="p">[</span><span class="n">it</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">dl</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta_mean</span><span class="p">[</span><span class="n">it</span><span class="p">]))</span> <span class="c1"># middle of the slab at the end of the segment z</span>
+        <span class="n">ell_s</span><span class="p">[</span><span class="n">it</span><span class="p">]</span> <span class="o">=</span> <span class="n">lgh</span>
+
+        <span class="k">if</span> <span class="n">it</span><span class="o">+</span><span class="mi">1</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">slab_top</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">slab_top</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">slab_top</span><span class="p">,[</span><span class="n">slab_topi_ix</span><span class="p">,</span><span class="n">slab_topi_iz</span><span class="p">]])</span>
+            <span class="n">theta_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">theta_mean</span><span class="p">,</span><span class="n">theta_meani_1</span><span class="p">)</span>
+            <span class="n">ell_s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ell_s</span><span class="p">,</span><span class="n">lgh</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">slab_top</span><span class="p">[</span><span class="n">it</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">slab_topi_ix</span>
+            <span class="n">slab_top</span><span class="p">[</span><span class="n">it</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">slab_topi_iz</span>
+            <span class="n">theta_mean</span><span class="p">[</span><span class="n">it</span><span class="p">]</span> <span class="o">=</span> <span class="n">theta_mean</span><span class="p">[</span><span class="n">it</span><span class="p">]</span>
+            <span class="n">theta_mean</span><span class="p">[</span><span class="n">it</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">theta_mean</span><span class="p">[</span><span class="n">it</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">y_min</span> <span class="o">!=</span> <span class="o">-</span><span class="mf">1e23</span><span class="p">:</span> 
+            <span class="n">x</span> <span class="o">=</span> <span class="n">slab_top</span><span class="p">[</span><span class="n">it</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">statement</span> <span class="o">=</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="n">y_min</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">statement</span><span class="p">:</span>
+                <span class="n">dz</span> <span class="o">=</span> <span class="n">slab_top</span><span class="p">[</span><span class="n">it</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">y_min</span>
+                <span class="n">dx</span> <span class="o">=</span> <span class="n">dz</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="n">theta_mean</span><span class="p">[</span><span class="n">it</span><span class="p">])</span>
+                <span class="n">slab_top</span><span class="p">[</span><span class="n">it</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">slab_top</span><span class="p">[</span><span class="n">it</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">dx</span>
+                <span class="n">slab_top</span><span class="p">[</span><span class="n">it</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_min</span>
+        <span class="n">it</span> <span class="o">=</span> <span class="n">it</span><span class="o">+</span><span class="mi">1</span>
+        <span class="n">lgh</span> <span class="o">=</span> <span class="n">lghn</span>
+
+    
+    
+    
+    <span class="k">return</span> <span class="n">slab_top</span><span class="p">,</span><span class="n">theta_mean</span><span class="p">,</span><span class="n">ell_s</span></div>
+
+
+<span class="c1">#------------------------------------------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="compute_bending_angle">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.compute_bending_angle">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_bending_angle</span><span class="p">(</span><span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span>
+                        <span class="p">,</span><span class="n">lgh</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">    </span>
+<span class="w">    </span><span class="sd">"""compute_bending_angle: </span>
+<span class="sd">    inputs: </span>
+<span class="sd">    geometrical information</span>
+<span class="sd">    current length of the slab </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        theta:float -&gt; for a given bending angle function, return theta = f(l) -&gt; l the actual distance along the slab surface from the trench</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">sub_constant_flag</span><span class="p">:</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">g_input</span><span class="o">.</span><span class="n">sub_theta_max</span>
+    <span class="k">elif</span> <span class="n">g_input</span><span class="o">.</span><span class="n">slab_type</span> <span class="o">==</span> <span class="s1">'CustomRibe'</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">lgh</span> <span class="o">&gt;</span> <span class="n">g_input</span><span class="o">.</span><span class="n">sub_lb</span><span class="p">:</span>
+            <span class="n">theta</span> <span class="o">=</span> <span class="n">g_input</span><span class="o">.</span><span class="n">sub_theta_max</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">theta</span> <span class="o">=</span> <span class="n">ribe_angle</span><span class="p">(</span><span class="n">g_input</span><span class="o">.</span><span class="n">sub_theta_max</span><span class="p">,</span> <span class="n">g_input</span><span class="o">.</span><span class="n">sub_lb</span><span class="p">,</span> <span class="n">lgh</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">theta</span><span class="o">&lt;</span><span class="n">g_input</span><span class="o">.</span><span class="n">sub_theta0</span><span class="p">:</span>
+                <span class="n">theta</span> <span class="o">=</span> <span class="n">g_input</span><span class="o">.</span><span class="n">sub_theta0</span>
+    <span class="k">elif</span> <span class="n">g_input</span><span class="o">.</span><span class="n">slab_type</span> <span class="o">==</span> <span class="s1">'CustomParabolic'</span><span class="p">:</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">compute_angle_parabolic</span><span class="p">(</span><span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span><span class="p">,</span><span class="n">x</span><span class="o">=</span><span class="n">lgh</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'Wrong slab type'</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">theta</span></div>
+
+
+<span class="c1">#--------------------------------------------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="ribe_angle">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.ribe_angle">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ribe_angle</span><span class="p">(</span><span class="n">theta_max</span><span class="p">:</span> <span class="nb">float</span>
+                <span class="p">,</span><span class="n">Lb</span><span class="p">:</span> <span class="nb">float</span>
+                <span class="p">,</span><span class="n">lgh</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+
+<span class="w">    </span><span class="sd">"""ribe_angle </span>
+<span class="sd">    inputs: </span>
+<span class="sd">    theta_max : float -&gt; maximum angle of the slab</span>
+<span class="sd">    Lb : float -&gt; critical along slab distance where the bending is occuring </span>
+<span class="sd">    lgh : float -&gt; current position along the slab surface  </span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        theta :float -&gt; Bending angle at the local point along the top surface slab. </span>
+<span class="sd">    """</span>
+
+    <span class="n">theta</span> <span class="o">=</span> <span class="n">theta_max</span><span class="o">*</span><span class="n">lgh</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">Lb</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">lgh</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">Lb</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">theta</span></div>
+
+
+<div class="viewcode-block" id="function_create_subducting_plate_geometry">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.function_create_subducting_plate_geometry">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">function_create_subducting_plate_geometry</span><span class="p">(</span><span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span><span class="p">,</span>
+                                 <span class="p">)</span><span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">GeomInput</span><span class="p">]:</span> 
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Create the main subducting-plate geometry from input parameters.</span>
+
+<span class="sd">    This routine builds the coordinate arrays describing the slab top and bottom</span>
+<span class="sd">    surfaces and, if requested/available, the oceanic Moho. The returned arrays are</span>
+<span class="sd">    used to define the Gmsh geometry and subsequent mesh generation. The input</span>
+<span class="sd">    geometry object may be updated (e.g., derived quantities, validated parameters,</span>
+<span class="sd">    or cached geometry).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    g_input : GeomInput</span>
+<span class="sd">        Object containing all input geometric parameters required to construct the</span>
+<span class="sd">        slab and associated interfaces.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ax : np.ndarray</span>
+<span class="sd">        x-coordinates of the slab top surface.</span>
+<span class="sd">    ay : np.ndarray</span>
+<span class="sd">        y-coordinates of the slab top surface.</span>
+<span class="sd">    bx : np.ndarray</span>
+<span class="sd">        x-coordinates of the slab bottom surface.</span>
+<span class="sd">    by : np.ndarray</span>
+<span class="sd">        y-coordinates of the slab bottom surface.</span>
+<span class="sd">    ox : np.ndarray | None</span>
+<span class="sd">        x-coordinates of the oceanic Moho. Can be `None`/empty if the crust is not</span>
+<span class="sd">        defined or not requested.</span>
+<span class="sd">    oy : np.ndarray | None</span>
+<span class="sd">        y-coordinates of the oceanic Moho. Can be `None`/empty if the crust is not</span>
+<span class="sd">        defined or not requested.</span>
+<span class="sd">    g_input : GeomInput</span>
+<span class="sd">        Updated geometry input object (may include derived or validated fields).</span>
+<span class="sd">    """</span>
+    
+    <span class="c1"># Prepare the slab surface. Slab surface can be derived from real data, or just created ad hoc by the slab routines</span>
+    <span class="c1"># Add the extra node that is required for the interface with the lithosphere. </span>
+    <span class="n">slab_top</span><span class="p">,</span> <span class="n">theta_mean</span> <span class="o">=</span> <span class="n">find_slab_surface</span><span class="p">(</span><span class="n">g_input</span><span class="p">)</span>
+
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">slab_top</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">ay</span> <span class="o">=</span> <span class="n">slab_top</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">bx</span><span class="p">,</span><span class="n">by</span><span class="p">,</span> <span class="n">lt</span> <span class="o">=</span> <span class="n">generate_parallel_layer_subducting_plate</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span>
+                                                         <span class="n">ay</span><span class="p">,</span>
+                                                         <span class="n">theta_mean</span><span class="p">,</span>
+                                                         <span class="n">g_input</span><span class="o">.</span><span class="n">slab_tk</span><span class="p">,</span>
+                                                         <span class="n">g_input</span><span class="o">.</span><span class="n">sub_constant_flag</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">lt</span> <span class="o">!=</span> <span class="n">g_input</span><span class="o">.</span><span class="n">slab_tk</span><span class="p">:</span> 
+        <span class="nb">print</span><span class="p">(</span><span class="s1">'Warning: slab top surface have a curvature that is incompatible with the current slab thickness.'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">' Old Thickness: </span><span class="si">{</span><span class="n">g_input</span><span class="o">.</span><span class="n">slab_tk</span><span class="si">}</span><span class="s1"> [km] New Thickness: </span><span class="si">{</span><span class="n">lt</span><span class="si">}</span><span class="s1"> [km]'</span><span class="p">)</span>
+        <span class="n">g_input</span><span class="o">.</span><span class="n">slab_tk</span> <span class="o">=</span> <span class="n">lt</span>
+
+    <span class="c1"># Create the channel using the subduction interface as guide</span>
+    <span class="c1">#cx,cy = function_create_subduction_channel(ax,ay,theta_mean,g_input)</span>
+    <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">ocr</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="n">ox</span><span class="p">,</span><span class="n">oy</span><span class="p">,</span><span class="n">_</span> <span class="o">=</span> <span class="n">generate_parallel_layer_subducting_plate</span><span class="p">(</span><span class="n">ax</span>
+                                                           <span class="p">,</span><span class="n">ay</span>
+                                                           <span class="p">,</span><span class="n">theta_mean</span>
+                                                           <span class="p">,</span><span class="n">g_input</span><span class="o">.</span><span class="n">ocr</span><span class="p">,</span>
+                                                           <span class="n">g_input</span><span class="o">.</span><span class="n">sub_constant_flag</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ox</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">oy</span> <span class="o">=</span> <span class="kc">None</span> 
+    <span class="c1"># Correct the slab surface and find the extra node</span>
+    <span class="n">ax</span><span class="p">,</span><span class="n">ay</span><span class="p">,</span><span class="n">theta_mean</span> <span class="o">=</span> <span class="n">find_extra_node</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span><span class="n">ay</span><span class="p">,</span><span class="n">theta_mean</span><span class="p">,</span><span class="n">g_input</span><span class="p">)</span>
+    <span class="c1"># Correct the subduction channel as well finding the extranode </span>
+    <span class="c1"># I needed to correct first the slab and then the channel, because otherwise it was</span>
+    <span class="c1"># creating an unrealistic bending of the weak zone. Initially I was recomputing the angle </span>
+    <span class="c1"># between the linear segment, using an average. It is more convinient use two // lines and then </span>
+    <span class="c1"># correcting them. </span>
+
+
+    <span class="c1"># update the g_input</span>
+    <span class="n">g_input</span><span class="o">.</span><span class="n">theta_in_slab</span> <span class="o">=</span> <span class="n">theta_mean</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+
+    <span class="k">return</span> <span class="n">ax</span><span class="p">,</span><span class="n">ay</span><span class="p">,</span><span class="n">bx</span><span class="p">,</span><span class="n">by</span><span class="p">,</span><span class="n">ox</span><span class="p">,</span><span class="n">oy</span><span class="p">,</span><span class="n">g_input</span></div>
+
+
+<span class="c1">#---------------------------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="generate_parallel_layer_subducting_plate">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.generate_parallel_layer_subducting_plate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_parallel_layer_subducting_plate</span><span class="p">(</span><span class="n">sx</span><span class="p">:</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+                                      <span class="n">sy</span><span class="p">:</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+                                      <span class="n">th</span><span class="p">:</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+                                      <span class="n">lt</span><span class="p">:</span><span class="nb">float</span><span class="p">,</span>
+                                      <span class="n">constant_theta</span><span class="p">:</span><span class="nb">bool</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">tuple</span><span class="p">[</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Compute the coordinates of an internal layer surface within the subducting plate.</span>
+<span class="sd">    </span>
+<span class="sd">    Given the slab top surface coordinates and a local slab bending angle, this</span>
+<span class="sd">    function constructs a parallel/offset surface at a distance `lt` (e.g., oceanic</span>
+<span class="sd">    crust thickness or slab thickness), representing an internal layer boundary</span>
+<span class="sd">    within the subducting plate.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sx : ndarray[np.float64]</span>
+<span class="sd">        x-coordinates of the slab top surface.</span>
+<span class="sd">    sy : ndarray[np.float64]</span>
+<span class="sd">        y-coordinates of the slab top surface.</span>
+<span class="sd">    th : float</span>
+<span class="sd">        Local slab bending angle associated with the surface points (degrees or</span>
+<span class="sd">        radians depending on the implementation; must be consistent with the</span>
+<span class="sd">        trigonometric functions used).</span>
+<span class="sd">    lt : float</span>
+<span class="sd">        Layer thickness used to offset the surface (e.g., oceanic crust thickness</span>
+<span class="sd">        or slab thickness) (SI units: [m]).</span>
+<span class="sd">    constant_theta: bool</span>
+<span class="sd">        Tells whether or not the subduction plate is a constant slope slab (i.e.,</span>
+<span class="sd">        VanKeken Benchmark)</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    cx : ndarray[np.float64]</span>
+<span class="sd">        x-coordinates of the layer-defining surface.</span>
+<span class="sd">    cy : ndarray[np.float64]</span>
+<span class="sd">        y-coordinates of the layer-defining surface.</span>
+<span class="sd">    """</span>
+
+    <span class="n">cx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">sx</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">cy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">sx</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span><span class="mi">1</span><span class="p">])</span>
+    <span class="c1"># Loop over the interface of the slab and find the points on the top of the surface of the subduction channel: the point on the of the top of the channel are perpendicular to the slab interface#</span>
+    <span class="c1"># Compute the top surface of the subduction channel</span>
+    
+    
+    <span class="n">ds</span>    <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">sx</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">sy</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">dth</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">th</span><span class="p">)</span>
+    <span class="n">dth_ds</span> <span class="o">=</span> <span class="n">dth</span><span class="o">/</span><span class="n">ds</span>                  <span class="c1"># [rad / m]</span>
+
+
+    
+    <span class="n">kappa</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">sx</span><span class="p">)</span>
+    <span class="n">kappa</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dth_ds</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="mf">0.8</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">kappa</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">lt</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">dth</span><span class="o">==</span><span class="mi">0</span><span class="p">):</span> 
+        <span class="n">lt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="mf">0.8</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">kappa</span><span class="p">))</span>
+    
+    
+    <span class="n">cx</span> <span class="o">=</span> <span class="n">sx</span> <span class="o">-</span> <span class="n">lt</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">th</span><span class="p">)</span>
+    <span class="n">cy</span> <span class="o">=</span> <span class="n">sy</span> <span class="o">-</span> <span class="n">lt</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">th</span><span class="p">)</span>
+
+    <span class="n">e_node2</span><span class="p">,</span><span class="n">t_ex1</span> <span class="o">=</span> <span class="n">_find_e_node</span><span class="p">(</span><span class="n">cx</span><span class="p">,</span><span class="n">cy</span><span class="p">,</span><span class="n">cx</span><span class="o">*</span><span class="mf">0.0</span><span class="p">,</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">sy</span><span class="p">),</span><span class="n">flag</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">cx</span><span class="p">,</span><span class="n">cy</span><span class="p">,</span><span class="n">t</span>  <span class="o">=</span> <span class="n">_correct_</span><span class="p">(</span><span class="n">cx</span><span class="p">,</span><span class="n">cy</span><span class="p">,</span><span class="n">e_node2</span><span class="p">,</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">sy</span><span class="p">),</span><span class="n">cy</span><span class="o">*</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="n">cx_n</span> <span class="o">=</span> <span class="n">cx</span><span class="p">[(</span><span class="n">cx</span><span class="o">&gt;=</span><span class="mf">0.0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">cy</span><span class="o">&gt;=</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">sy</span><span class="p">))]</span>
+    <span class="n">cy_n</span> <span class="o">=</span> <span class="n">cy</span><span class="p">[(</span><span class="n">cx</span><span class="o">&gt;=</span><span class="mf">0.0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">cy</span><span class="o">&gt;=</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">sy</span><span class="p">))]</span>
+    <span class="c1"># Shift the first node: </span>
+    <span class="k">if</span> <span class="n">cx_n</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span> 
+        <span class="n">cx_n</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span> 
+        <span class="n">cy_n</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">lt</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">th</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">cx_n</span><span class="p">,</span><span class="n">cy_n</span><span class="p">,</span><span class="n">lt</span> </div>
+
+    
+<span class="c1">#-----------------------------------------------------------------------------------------------------------------</span>
+  
+<div class="viewcode-block" id="_find_e_node">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh._find_e_node">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_find_e_node</span><span class="p">(</span><span class="n">ax</span><span class="p">:</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span><span class="n">ay</span><span class="p">:</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span><span class="n">t</span><span class="p">:</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span><span class="n">lt</span><span class="p">:</span><span class="nb">float</span><span class="p">,</span><span class="n">flag</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">lt</span> <span class="o">==</span> <span class="mf">0.0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">flag</span><span class="p">:</span> 
+    
+        <span class="k">return</span> <span class="p">[],[]</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+    
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">flag</span><span class="p">:</span> 
+            <span class="n">a</span> <span class="o">=</span> <span class="n">i</span> 
+            <span class="n">b</span> <span class="o">=</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span> 
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">a</span> <span class="o">=</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span> 
+            <span class="n">b</span> <span class="o">=</span> <span class="n">i</span> 
+    
+        <span class="k">if</span> <span class="n">ay</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="n">lt</span><span class="p">:</span>
+            <span class="n">e_node</span> <span class="o">=</span> <span class="mi">0</span>
+    
+        <span class="k">elif</span> <span class="n">ay</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">&gt;</span> <span class="o">-</span><span class="n">lt</span> <span class="ow">and</span> <span class="n">ay</span><span class="p">[</span><span class="n">b</span><span class="p">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">lt</span><span class="p">:</span>
+            <span class="n">e_node</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">index_extra_node</span> <span class="o">=</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span>
+            <span class="n">t_ex</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span><span class="o">+</span><span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span>
+            <span class="k">break</span>
+    <span class="k">if</span> <span class="n">e_node</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[],[]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">index_extra_node</span><span class="p">,</span><span class="n">t_ex</span></div>
+
+
+<span class="c1">#-----------------------------------------------------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="_correct_">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh._correct_">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_correct_</span><span class="p">(</span><span class="n">ax</span><span class="p">:</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+              <span class="n">ay</span><span class="p">:</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+              <span class="n">index_extra_node</span><span class="p">:</span><span class="nb">int</span><span class="p">,</span>
+              <span class="n">lt</span><span class="p">:</span><span class="nb">float</span><span class="p">,</span>
+              <span class="n">t</span><span class="p">:</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+              <span class="n">tex</span><span class="p">:</span><span class="nb">float</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">tuple</span><span class="p">[</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]:</span>
+    
+    <span class="k">if</span> <span class="n">index_extra_node</span> <span class="o">==</span> <span class="p">[]:</span>
+        <span class="k">return</span> <span class="n">ax</span><span class="p">,</span><span class="n">ay</span><span class="p">,</span><span class="n">t</span>
+    
+    <span class="n">ax_ex</span> <span class="o">=</span> <span class="n">ax</span><span class="p">[</span><span class="n">index_extra_node</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span> <span class="p">(</span><span class="n">ax</span><span class="p">[</span><span class="n">index_extra_node</span><span class="p">]</span> <span class="o">-</span> <span class="n">ax</span><span class="p">[</span><span class="n">index_extra_node</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                 <span class="o">*</span> <span class="p">(</span><span class="n">lt</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ay</span><span class="p">[</span><span class="n">index_extra_node</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span> <span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ay</span><span class="p">[</span><span class="n">index_extra_node</span><span class="p">])</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ay</span><span class="p">[</span><span class="n">index_extra_node</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+    
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span><span class="n">index_extra_node</span><span class="p">,</span><span class="n">ax_ex</span><span class="p">)</span> <span class="c1">#ax[index_extra_node-2] + ( (ax[index_extra_node] - ax[index_extra_node-2])* (lt - np.abs(ay[index_extra_node-2])) ) / (np.abs(ay[index_extra_node]) - np.abs(ay[index_extra_node-2])))</span>
+    
+    <span class="n">ay</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">ay</span><span class="p">,</span><span class="n">index_extra_node</span><span class="p">,</span><span class="o">-</span><span class="n">lt</span><span class="p">)</span>  
+    
+    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">index_extra_node</span><span class="p">,</span><span class="n">tex</span><span class="p">)</span>  
+    
+    <span class="k">return</span> <span class="n">ax</span><span class="p">,</span><span class="n">ay</span><span class="p">,</span><span class="n">t</span> </div>
+
+    
+<span class="c1">#-----------------------------------------------------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="find_extra_node">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.find_extra_node">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_extra_node</span><span class="p">(</span><span class="n">ax</span><span class="p">:</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+                    <span class="n">ay</span><span class="p">:</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+                    <span class="n">t</span><span class="p">:</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+                    <span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">tuple</span><span class="p">[</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]:</span>
+
+    <span class="c1">#-- Find nodes </span>
+    <span class="n">e_node_uc</span><span class="p">,</span><span class="n">t_ex1</span> <span class="o">=</span> <span class="n">_find_e_node</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span><span class="n">ay</span><span class="p">,</span><span class="n">t</span><span class="p">,</span><span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">g_input</span><span class="o">.</span><span class="n">lc</span><span class="p">))</span>
+    <span class="n">ax</span><span class="p">,</span><span class="n">ay</span><span class="p">,</span><span class="n">t</span> <span class="o">=</span> <span class="n">_correct_</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span><span class="n">ay</span><span class="p">,</span><span class="n">e_node_uc</span><span class="p">,</span><span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">g_input</span><span class="o">.</span><span class="n">lc</span><span class="p">),</span><span class="n">t</span><span class="p">,</span><span class="n">t_ex1</span><span class="p">)</span>
+
+    
+    <span class="n">e_node_lc</span><span class="p">,</span><span class="n">t_ex2</span> <span class="o">=</span> <span class="n">_find_e_node</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span><span class="n">ay</span><span class="p">,</span><span class="n">t</span><span class="p">,</span><span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="p">)</span>
+    <span class="n">ax</span><span class="p">,</span><span class="n">ay</span><span class="p">,</span><span class="n">t</span> <span class="o">=</span> <span class="n">_correct_</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span><span class="n">ay</span><span class="p">,</span><span class="n">e_node_lc</span><span class="p">,</span><span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="p">,</span><span class="n">t</span><span class="p">,</span><span class="n">t_ex2</span><span class="p">)</span>
+
+    
+    <span class="n">e_node_lit</span><span class="p">,</span><span class="n">t_ex3</span> <span class="o">=</span> <span class="n">_find_e_node</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span><span class="n">ay</span><span class="p">,</span><span class="n">t</span><span class="p">,</span><span class="n">g_input</span><span class="o">.</span><span class="n">ns_depth</span><span class="p">)</span>
+    <span class="n">ax</span><span class="p">,</span><span class="n">ay</span><span class="p">,</span><span class="n">t</span> <span class="o">=</span> <span class="n">_correct_</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span><span class="n">ay</span><span class="p">,</span><span class="n">e_node_lit</span><span class="p">,</span><span class="n">g_input</span><span class="o">.</span><span class="n">ns_depth</span><span class="p">,</span><span class="n">t</span><span class="p">,</span><span class="n">t_ex3</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ax</span><span class="p">,</span><span class="n">ay</span><span class="p">,</span><span class="n">t</span></div>
+
+
+<span class="c1">#----------------------------------------------------------------------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="_create_points">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh._create_points">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_create_points</span><span class="p">(</span><span class="n">mesh</span><span class="p">:</span><span class="n">gmsh</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>                                            <span class="c1"># I am not able to classify </span>
+                   <span class="n">x</span><span class="p">:</span><span class="nb">float</span><span class="p">,</span>                                         <span class="c1"># coordinate point/points</span>
+                   <span class="n">y</span><span class="p">:</span><span class="nb">float</span><span class="p">,</span>                                         <span class="c1"># coordinate point/points</span>
+                   <span class="n">res</span><span class="p">:</span><span class="nb">float</span><span class="p">,</span>                                       <span class="c1"># resolution of the ppint</span>
+                   <span class="n">tag_pr</span><span class="p">:</span><span class="nb">int</span><span class="p">,</span>                                      <span class="c1"># maximum tag of the previous group</span>
+                   <span class="n">point_flag</span><span class="p">:</span><span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span> <span class="c1"># a flag to highlight that there is only one point, yes, lame. </span>
+<span class="w">    </span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Create Gmsh point(s) and keep track of their tags and coordinates.</span>
+
+<span class="sd">    This helper wraps the Gmsh point-creation call to support creating one or many</span>
+<span class="sd">    points, while explicitly tracking the assigned tags so they can be referenced</span>
+<span class="sd">    consistently later when building lines/surfaces.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mesh : gmsh.model</span>
+<span class="sd">        the mesh model </span>
+<span class="sd">    x : float | np.ndarray</span>
+<span class="sd">        x-coordinate(s) of the point(s) [m]. Can be a scalar or an array.</span>
+<span class="sd">    y : float | np.ndarray</span>
+<span class="sd">        y-coordinate(s) of the point(s) [m]. Can be a scalar or an array.</span>
+<span class="sd">    res : float</span>
+<span class="sd">        Target mesh size (characteristic length) assigned to the point(s).</span>
+<span class="sd">    tag_pr : int</span>
+<span class="sd">        Previous/starting tag used to track point IDs across calls. Since Gmsh</span>
+<span class="sd">        can assign tags internally, this value is used to keep bookkeeping</span>
+<span class="sd">        consistent.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    max_tag : int</span>
+<span class="sd">        Maximum tag assigned during this function call.</span>
+<span class="sd">    tag_list : list[int]</span>
+<span class="sd">        List of tags for the created point(s), ordered consistently with the input</span>
+<span class="sd">        coordinates.</span>
+<span class="sd">    coord : np.ndarray</span>
+<span class="sd">        Coordinates of the created point(s), typically shaped as (N, 2) for (x, y).</span>
+<span class="sd">        If useful downstream, you may include tags alongside coordinates (e.g.,</span>
+<span class="sd">        (N, 3) with [tag, x, y])—in that case, document the exact convention.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    This function solves the practical problem of creating a set of points (1..N)</span>
+<span class="sd">    in Gmsh while retaining a reliable mapping between coordinates and point tags,</span>
+<span class="sd">    so that subsequent geometry construction can reference points coherently.</span>
+<span class="sd">    """</span>
+
+    <span class="n">tag_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="n">point_flag</span><span class="p">:</span>
+        <span class="n">coord</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">mesh</span><span class="o">.</span><span class="n">geo</span><span class="o">.</span><span class="n">addPoint</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span><span class="n">res</span><span class="p">,</span><span class="n">tag_pr</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> 
+        <span class="n">tag_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tag_pr</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">coord</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span> 
+        <span class="n">coord</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span>
+        <span class="n">coord</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_pr</span><span class="o">+</span><span class="mi">1</span>
+        
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">coord</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)):</span>
+
+            <span class="n">mesh</span><span class="o">.</span><span class="n">geo</span><span class="o">.</span><span class="n">addPoint</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">tag_pr</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">i</span><span class="p">)</span> 
+            <span class="n">tag_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tag_pr</span><span class="o">+</span><span class="mi">1</span><span class="o">+</span><span class="n">i</span><span class="p">)</span>
+            <span class="n">coord</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">]</span>   <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">coord</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">i</span><span class="p">]</span>   <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> 
+            <span class="n">coord</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="n">i</span><span class="p">]</span>   <span class="o">=</span> <span class="n">tag_pr</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">i</span>
+            
+    
+    <span class="n">max_tag</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">tag_list</span><span class="p">)</span>
+
+    
+    <span class="k">return</span> <span class="n">max_tag</span><span class="p">,</span><span class="n">tag_list</span><span class="p">,</span><span class="n">coord</span><span class="p">,</span><span class="n">mesh</span></div>
+
+
+<span class="c1">#------------------------------------------------------------------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="_create_lines">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh._create_lines">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_create_lines</span><span class="p">(</span><span class="n">mesh_model</span><span class="p">:</span><span class="n">gmsh</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+                  <span class="n">previous</span><span class="p">:</span><span class="nb">int</span><span class="p">,</span>
+                  <span class="n">tag_p</span><span class="p">:</span><span class="nb">list</span><span class="p">,</span>
+                  <span class="n">flag</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">],</span> <span class="n">gmsh</span><span class="o">.</span><span class="n">model</span><span class="p">]:</span>
+
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Create Gmsh line(s) from point tags and keep track of their tags and connectivity.</span>
+<span class="sd">    </span>
+<span class="sd">    This helper wraps the Gmsh line-creation call to support creating one or many</span>
+<span class="sd">    lines, while explicitly tracking the assigned line tags so they can be</span>
+<span class="sd">    referenced consistently later when building curve loops, surfaces, and physical</span>
+<span class="sd">    groups.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mesh : gmsh.model</span>
+<span class="sd">        Gmsh model object to be updated.</span>
+<span class="sd">    previous : int</span>
+<span class="sd">        Previous/starting line tag used for bookkeeping across calls.</span>
+<span class="sd">    tag_p : list[int]</span>
+<span class="sd">        Point tags used to create the lines. Typically an ordered list of point</span>
+<span class="sd">        tags where consecutive pairs define segments.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    max_tag : int</span>
+<span class="sd">        Maximum line tag assigned during this function call.</span>
+<span class="sd">    tag_l : list[int]</span>
+<span class="sd">        List of tags for the created line(s), ordered consistently with the created</span>
+<span class="sd">        segments.</span>
+<span class="sd">    lines : np.ndarray</span>
+<span class="sd">        Array containing line metadata, typically shaped (N, 3) with rows</span>
+<span class="sd">        `[p1, p2, tag]`, where `p1` and `p2` are point tags and `tag` is the line tag.</span>
+<span class="sd">    mesh_model : gmsh.model</span>
+<span class="sd">        Updated Gmsh model containing the created line(s).</span>
+<span class="sd">    </span>
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    This function solves the practical problem of generating a set of lines from an</span>
+<span class="sd">    ordered list of point tags while keeping a reliable mapping between endpoint</span>
+<span class="sd">    tags and the created line tags for downstream geometry construction.</span>
+<span class="sd">    """</span>
+    
+    
+    <span class="n">len_p</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tag_p</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
+    <span class="n">tag_l</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">previous</span> <span class="o">=</span> <span class="n">previous</span><span class="o">+</span><span class="mi">1</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span><span class="n">len_p</span><span class="p">],</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">len_p</span><span class="p">):</span> 
+        <span class="n">a</span> <span class="o">=</span> <span class="n">tag_p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">tag_p</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+        <span class="s1">'it appears that the gmsh is an horrible person: i try to give the golden rule that the tag of the points are following an order,'</span>
+        <span class="s1">'which entails that the minimum of the two point defining a segment is the first -&gt; such that it is always possible determine the  order'</span>
+ 
+        <span class="n">tag_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">])</span>
+        <span class="n">tag_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">])</span> 
+        <span class="n">mesh_model</span><span class="o">.</span><span class="n">geo</span><span class="o">.</span><span class="n">addLine</span><span class="p">(</span><span class="n">tag_1</span><span class="p">,</span><span class="n">tag_2</span><span class="p">,</span><span class="n">previous</span><span class="o">+</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">tag_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">previous</span><span class="o">+</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_1</span> 
+        <span class="n">lines</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag_2</span> 
+        <span class="n">lines</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">previous</span><span class="o">+</span><span class="n">i</span>
+        
+    <span class="n">max_tag</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">tag_l</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">max_tag</span><span class="p">,</span><span class="n">tag_l</span><span class="p">,</span><span class="n">lines</span><span class="p">,</span><span class="n">mesh_model</span></div>
+
+<span class="c1">#------------------------------------------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="assign_phases">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.assign_phases">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">assign_phases</span><span class="p">(</span><span class="n">dict_surf</span><span class="p">:</span><span class="nb">dict</span><span class="p">,</span> 
+                  <span class="n">cell_tags</span><span class="p">:</span><span class="nb">int</span><span class="p">,</span>
+                  <span class="n">phase</span><span class="p">:</span><span class="n">dolfinx</span><span class="o">.</span><span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">dolfinx</span><span class="o">.</span><span class="n">fem</span><span class="o">.</span><span class="n">Function</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Assigns phase tags to the mesh based on the provided surface tags."""</span>
+    <span class="k">for</span> <span class="n">tag</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">dict_surf</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">cell_tags</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> 
+        <span class="n">phase</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">array</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span>  <span class="n">value</span> <span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">PETSc</span><span class="o">.</span><span class="n">IntType</span><span class="p">)</span>
+    
+    <span class="n">phase</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">scatter_forward</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">phase</span></div>
+
+<span class="c1">#---------------------------------------------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="create_slab_surface_parabolic">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.create_slab_surface_parabolic">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_slab_surface_parabolic</span><span class="p">(</span><span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span><span class="p">):</span>
+    
+    <span class="n">num</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">g_input</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">g_input</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="n">num</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">num</span><span class="p">))</span>
+    
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">z</span><span class="o">/</span><span class="n">g_input</span><span class="o">.</span><span class="n">sub_parabolic_a</span><span class="p">))</span>
+    <span class="c1"># Compute the dip angle (radians)</span>
+    <span class="n">dip</span> <span class="o">=</span> <span class="n">compute_dip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">z</span><span class="p">)</span> <span class="c1"># len = len(x)-1</span>
+    <span class="c1"># Compute the cumulative distance</span>
+    <span class="n">x</span><span class="p">,</span><span class="n">z</span><span class="p">,</span><span class="n">dist</span> <span class="o">=</span> <span class="n">cumulative_distance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">z</span><span class="p">)</span><span class="c1"># len = len(x)-1</span>
+    <span class="c1"># Create the main vector</span>
+    <span class="n">crd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span><span class="mi">2</span><span class="p">],</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">dip</span> <span class="o">=</span> <span class="n">dip</span> 
+    <span class="n">length</span> <span class="o">=</span> <span class="n">dist</span> 
+    <span class="c1"># Correct the coordinate </span>
+    <span class="c1"># -&gt; Necessary because the new x,z has as initial coordinate (x[0]+x[1])/2</span>
+    <span class="n">crd</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> 
+    <span class="n">crd</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">z</span> <span class="o">-</span> <span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> 
+    
+    <span class="k">return</span> <span class="n">crd</span><span class="p">,</span><span class="n">dip</span><span class="p">,</span><span class="n">length</span></div>
+
+
+
+<div class="viewcode-block" id="cumulative_distance">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.cumulative_distance">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">cumulative_distance</span><span class="p">(</span><span class="n">x</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">],</span><span class="n">z</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">])</span><span class="o">-&gt;</span><span class="nb">tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">],</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">],</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">]]:</span>
+    <span class="n">dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">z</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">x_m</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span><span class="o">/</span><span class="mi">2</span> 
+    <span class="n">z_m</span> <span class="o">=</span> <span class="p">(</span><span class="n">z</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">z</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span><span class="o">/</span><span class="mi">2</span> 
+    
+    <span class="k">return</span> <span class="n">x_m</span><span class="p">,</span><span class="n">z_m</span><span class="p">,</span><span class="n">dist</span></div>
+
+
+<div class="viewcode-block" id="compute_dip">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.create_mesh.aux_create_mesh.html#stonedfenicsx.create_mesh.aux_create_mesh.compute_dip">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_dip</span><span class="p">(</span><span class="n">x</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">],</span><span class="n">z</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">])</span><span class="o">-&gt;</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">]:</span>
+    
+    <span class="n">dx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">dz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+    <span class="n">dip</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">dz</span><span class="p">,</span><span class="n">dx</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">dip</span></div>
+
+
+    
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="clearer"></div>
+    </div>
+    <div class="button_nav_wrapper">
+        <div class="button_nav">
+            <div class="left">
+                
+            </div>
+
+            <div class="right">
+                
+            </div>
+        </div>
+    </div>
+
+
+    <div class="footer" role="contentinfo">
+    &#169; Copyright .
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.0.
+    </div>
+
+<p id="theme_credit">Styled using the <a href="https://github.com/piccolo-orm/piccolo_theme">Piccolo Theme</a></p>
+  </body>
+</html>

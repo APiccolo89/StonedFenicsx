@@ -5,18 +5,21 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Installation &#8212; StonedFEniCSx</title>
+    <title>Installation and Quick Start &#8212; StonedFEniCSx</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
     <link rel="stylesheet" type="text/css" href="_static/basic_mod.css?v=9b2032db" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
     <script src="_static/documentation_options.js?v=5929fcd5"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
     <script src="_static/js/theme.js"></script>
     <script src="_static/js/petite-vue.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="How to use" href="how_to_use.html" />
-    <link rel="prev" title="StonedFEniCSx documentation" href="index.html" /> 
+    <link rel="next" title="Numerical Design" href="how_to_use.html" />
+    <link rel="prev" title="StonedFEniCSx" href="index.html" /> 
   </head><body data-dark_mode_code_blocks="true">
 
 <div id="top_nav">
@@ -120,10 +123,14 @@
       <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper"><p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="how_to_use.html">How to use</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Computational_domain.html">Computational domain</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation and Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how_to_use.html">Numerical Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how_to_use.html#how-to-use">How to use</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Computational_domain.html">Computational Domain and Boundary Conditions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Material_properties.html">Material properties</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apidocs/index.html">API Reference</a></li>
 </ul>
 
         </div>
@@ -135,16 +142,50 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="installation">
-<h1>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h1>
-<p>First, the user needs to be in the folder containing <strong>stonedfenicsx</strong>, then, the user needs to open the terminal. To install the package is necessary to have conda (miniforge,conda). The first step is to use the following command in the terminal:
-<code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">env</span> <span class="pre">create</span> <span class="pre">-f</span> <span class="pre">stonedenvironment.yml</span></code>
-After all the required packages are installed, it is necessary to install <strong>stonedfenicsx</strong> as an editable package.
-<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.</span></code>
-All the dependency are carried out by the <em>.toml</em> and <em>.yml</em> files. After the installation, the user can check whether or not the package has been installed by opening the REPL of python and typing:
-<code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">stonedfenicsx</span></code></p>
-<p><strong>Note</strong>: Certain clusters have problem with <em>conda</em> installations and in general with the MPI of conda. In this case, it is necessary to understand how to install
-the package only via <em>.toml</em> file, and then use other containers (e.g. <em>spack</em>). In the main folder, the user can find an example used to install the package on the Aire cluster of Leeds.</p>
+  <section id="installation-and-quick-start">
+<h1>Installation and Quick Start<a class="headerlink" href="#installation-and-quick-start" title="Link to this heading">¶</a></h1>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
+<section id="installation-with-conda-miniconda">
+<h3>Installation with Conda/Miniconda<a class="headerlink" href="#installation-with-conda-miniconda" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/APiccolo89/StonedFenicsx.git<span class="w"> </span><span class="c1"># Clone the repository</span>
+<span class="nb">cd</span><span class="w"> </span>StonedFenicsx<span class="w"> </span><span class="c1"># Go to the folder of the repository</span>
+conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>stonedenvironment.yml<span class="w"> </span><span class="c1"># Create the enviroment ** optional --name personalised_name (choose what do you like)</span>
+conda<span class="w"> </span>activate<span class="w"> </span>stonedfenicsx<span class="w"> </span><span class="c1"># or your personalised name</span>
+</pre></div>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Conda can be slow for installing all the dependency. The solution that has been found is the following <a class="reference internal" href="#'https://conda.github.io/conda-libmamba-solver/'"><span class="xref myst">conda-lib-mamba</span></a>. So,
+in the case in which the installation of the depencency tooks ages, you can install it:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span>-n<span class="w"> </span>base<span class="w"> </span>conda-libmamba-solver
+<span class="w"> </span>conda<span class="w"> </span>config<span class="w"> </span>--set<span class="w"> </span>solver<span class="w"> </span>libmamba
+</pre></div>
+</div>
+<p>However, consider to read a bit how to install before doing it.</p>
+</div>
+</section>
+</section>
+<section id="quick-start">
+<h2>Quick start<a class="headerlink" href="#quick-start" title="Link to this heading">¶</a></h2>
+<p>A simulation is configured with two YAML-parsed inputs — numerical/I-O/thermal/kinematic controls, and per-phase material properties — which drive <code class="docutils literal notranslate"><span class="pre">stonedfenicsx.stoned_fenicsx</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.input_parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_input</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.stoned_fenicsx</span><span class="w"> </span><span class="kn">import</span> <span class="n">stoned_fenicsx</span>
+<span class="n">input_data</span><span class="p">,</span> <span class="n">ph_in</span> <span class="o">=</span> <span class="n">parse_input</span><span class="p">(</span><span class="s2">"input.yaml"</span><span class="p">)</span>
+<span class="n">stoned_fenicsx</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">ph_in</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">input.yaml</span></code> at the repo root is a commented example covering units, numerical controls, shear-heating options, and thermal/kinematic boundary conditions. <code class="docutils literal notranslate"><span class="pre">stonedfenicsx/stoned_fenicsx.py::test_function</span></code> shows a fully scripted example that also overrides material properties in code after parsing. <code class="docutils literal notranslate"><span class="pre">examples/data</span></code> contains region-specific driver datasets. Soon, there will be simple scripts to run simulations for specific regions.</p>
+<p>Results are written under <code class="docutils literal notranslate"><span class="pre">Results/&lt;test_name&gt;/</span></code> as XDMF/HDF5 fields.</p>
+<p>Simulations are MPI-parallel; run under <code class="docutils literal notranslate"><span class="pre">mpirun</span></code>/<code class="docutils literal notranslate"><span class="pre">srun</span></code> for multi-rank execution.</p>
+</section>
+<section id="running-the-tests">
+<h2>Running the tests<a class="headerlink" href="#running-the-tests" title="Link to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests/
+</pre></div>
+</div>
+<p>The main physical validation is and <code class="docutils literal notranslate"><span class="pre">tests/test_benchmark_vankeken.py</span></code>, which reproduce reference results from the Van Keken et al. subduction zone benchmark suite (<code class="docutils literal notranslate"><span class="pre">tests/VanKeken/</span></code>) across viscosity/thermal configurations.</p>
+</section>
 </section>
 
 
@@ -152,6 +193,28 @@ the package only via <em>.toml</em> file, and then use other containers (e.g. <e
           </div>
         </div>
       </div>
+    
+        <div id="show_right_sidebar">
+            <p><a class="toggle_right_sidebar" href="#"><span class="icon">&lt;</span><span>Page contents</span></a></p>
+        </div>
+
+        <div id="right_sidebar">
+            <p><a class="toggle_right_sidebar" href="#"><span class="icon">&gt;</span><span>Page contents:</span></a></p>
+            <div class="page_toc">
+                <ul>
+<li><a class="reference internal" href="#">Installation and Quick Start</a><ul>
+<li><a class="reference internal" href="#installation">Installation</a><ul>
+<li><a class="reference internal" href="#installation-with-conda-miniconda">Installation with Conda/Miniconda</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#quick-start">Quick start</a></li>
+<li><a class="reference internal" href="#running-the-tests">Running the tests</a></li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </div>
     
 
       <div class="clearer"></div>
@@ -161,13 +224,13 @@ the package only via <em>.toml</em> file, and then use other containers (e.g. <e
             <div class="left">
                 
                 <a href="index.html">
-                    <span class="icon">&lt;</span><span>StonedFEniCSx documentation</span></a>
+                    <span class="icon">&lt;</span><span>StonedFEniCSx</span></a>
                 
             </div>
 
             <div class="right">
                 
-                    <a href="how_to_use.html"><span>How to use</span><span class="icon">&gt;</span></a>
+                    <a href="how_to_use.html"><span>Numerical Design</span><span class="icon">&gt;</span></a>
                 
             </div>
         </div>
@@ -176,7 +239,7 @@ the package only via <em>.toml</em> file, and then use other containers (e.g. <e
 
     <div class="footer" role="contentinfo">
     &#169; Copyright .
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.0.
     </div>
 
 <p id="theme_credit">Styled using the <a href="https://github.com/piccolo-orm/piccolo_theme">Piccolo Theme</a></p>

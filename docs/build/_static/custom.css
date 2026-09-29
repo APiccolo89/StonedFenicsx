@@ -1,0 +1,53 @@
+/* Tabs: let panels shrink so wide content scrolls instead of stretching */
+.sd-tab-set,
+.sd-tab-content {
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* Wide tables: horizontal scroll */
+table.docutils {
+    display: block;
+    overflow-x: auto;
+    max-width: 100%;
+    white-space: nowrap;
+    scrollbar-width: thin;                  /* Firefox */
+    scrollbar-color: #b0b0b0 transparent;   /* Firefox */
+}
+table.docutils caption {
+    white-space: normal;
+}
+table.docutils::-webkit-scrollbar { height: 8px; }
+table.docutils::-webkit-scrollbar-thumb {
+    background-color: #b0b0b0;
+    border-radius: 4px;
+}
+table.docutils::-webkit-scrollbar-track { background: transparent; }
+
+/* Custom admonitions: translucent backgrounds work in light and dark mode */
+.admonition.input_snips {
+    border-left: 4px solid #6a4c93;
+    background-color: rgba(106, 76, 147, 0.12);
+}
+.admonition.input_snips > .admonition-title {
+    background-color: #6a4c93;
+    color: #ffffff;
+}
+
+.admonition.summary_questions {
+    border-left: 4px solid #1e8449;
+    background-color: rgba(39, 172, 90, 0.12);
+}
+.admonition.summary_questions > .admonition-title {
+    background-color: #1e8449;
+    color: #ffffff;
+}
+
+.admonition.important_note {
+    border-left: 4px solid #b9770e;
+    background-color: rgba(243, 156, 18, 0.12);
+}
+.admonition.important_note > .admonition-title {
+    background-color: #b9770e;
+    color: #ffffff;
+}

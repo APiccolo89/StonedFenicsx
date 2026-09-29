@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>stonedfenicsx.config.thermal_boundary_bc_set &#8212; StonedFEniCSx</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic_mod.css?v=9b2032db" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <script src="../../../_static/js/petite-vue.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body data-dark_mode_code_blocks="true">
+
+<div id="top_nav">
+    
+
+    <nav>
+        
+            
+        
+
+        <p id="toggle_sidebar">
+            <a href="#" title="Toggle sidebar">|||</a>
+        </p>
+        <h1><a href="../../../index.html" title="Go to homepage">StonedFEniCSx</a></h1>
+
+        <a id="mode_toggle" href="#" @click.prevent="handleClick" :title="mode">
+    <template v-if="mode == 'light'">
+        <svg width="100%" height="100%" viewBox="0 0 79 80" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;"><g id="mode_light"><rect id="Bounds" x="0" y="-0" width="78.623" height="79.049" style="fill:none;"/><circle cx="39.311" cy="39.524" r="15.734" style="fill:#fff;"/><g id="beams"><g id="beam"><path id="beam1" serif:id="beam" d="M44.212,4.901c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.9,2.196 -4.9,4.901l-0,9.614c-0,2.705 2.196,4.901 4.9,4.901c2.705,0 4.901,-2.196 4.901,-4.901l0,-9.614Z" style="fill:#fff;"/></g><g id="beam2" serif:id="beam"><path id="beam3" serif:id="beam" d="M67.48,18.073c1.913,-1.912 1.913,-5.018 0,-6.931c-1.912,-1.912 -5.018,-1.912 -6.931,0l-6.798,6.799c-1.912,1.912 -1.912,5.018 0,6.931c1.913,1.912 5.018,1.912 6.931,-0l6.798,-6.799Z" style="fill:#fff;"/></g><g id="beam4" serif:id="beam"><path id="beam5" serif:id="beam" d="M25.728,61.108c1.912,-1.913 1.912,-5.018 -0,-6.931c-1.913,-1.913 -5.019,-1.913 -6.931,-0l-6.799,6.798c-1.912,1.913 -1.912,5.019 0,6.931c1.913,1.913 5.019,1.913 6.931,0l6.799,-6.798Z" style="fill:#fff;"/></g><g id="beam6" serif:id="beam"><path id="beam7" serif:id="beam" d="M60.682,54.177c-1.913,-1.913 -5.018,-1.913 -6.931,-0c-1.912,1.913 -1.912,5.018 0,6.931l6.798,6.798c1.913,1.913 5.019,1.913 6.931,0c1.913,-1.912 1.913,-5.018 0,-6.931l-6.798,-6.798Z" style="fill:#fff;"/></g><g id="beam8" serif:id="beam"><path id="beam9" serif:id="beam" d="M4.901,34.623c-2.705,0 -4.901,2.196 -4.901,4.901c0,2.705 2.196,4.901 4.901,4.901l9.614,0c2.705,0 4.901,-2.196 4.901,-4.901c0,-2.705 -2.196,-4.901 -4.901,-4.901l-9.614,0Z" style="fill:#fff;"/></g><g id="beam10" serif:id="beam"><path id="beam11" serif:id="beam" d="M44.212,64.534c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.9,2.196 -4.9,4.901l-0,9.614c-0,2.705 2.196,4.901 4.9,4.901c2.705,-0 4.901,-2.196 4.901,-4.901l0,-9.614Z" style="fill:#fff;"/></g><g id="beam12" serif:id="beam"><path id="beam13" serif:id="beam" d="M18.929,11.142c-1.912,-1.912 -5.018,-1.912 -6.931,0c-1.912,1.913 -1.912,5.019 0,6.931l6.799,6.799c1.912,1.912 5.018,1.912 6.931,-0c1.912,-1.913 1.912,-5.019 -0,-6.931l-6.799,-6.799Z" style="fill:#fff;"/></g><g id="beam14" serif:id="beam"><path id="beam15" serif:id="beam" d="M64.108,34.623c-2.705,0 -4.901,2.196 -4.901,4.901c-0,2.705 2.196,4.901 4.901,4.901l9.614,0c2.705,0 4.901,-2.196 4.901,-4.901c-0,-2.705 -2.196,-4.901 -4.901,-4.901l-9.614,0Z" style="fill:#fff;"/></g></g></g></svg>
+    </template>
+
+    <template v-if="mode == 'dark'">
+        <svg width="100%" height="100%" viewBox="0 0 79 80" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;"><g id="mode_dark"><rect id="Bounds" x="0" y="-0" width="78.623" height="79.049" style="fill:none;"/><circle cx="39.311" cy="39.524" r="15.734" style="fill:#fff;"/><g id="beams"><g id="beam"><path id="beam1" serif:id="beam" d="M44.212,14.515c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,0 -4.901,2.196 -4.901,4.901c0,2.705 2.197,4.901 4.901,4.901c2.705,0 4.901,-2.196 4.901,-4.901Z" style="fill:#fff;"/></g><g id="beam2" serif:id="beam"><path id="beam3" serif:id="beam" d="M60.662,24.892c1.902,-1.902 1.902,-4.99 0,-6.892l-0.04,-0.039c-1.901,-1.902 -4.989,-1.902 -6.891,-0c-1.901,1.901 -1.901,4.989 0,6.891l0.04,0.04c1.902,1.901 4.989,1.901 6.891,-0Z" style="fill:#fff;"/></g><g id="beam4" serif:id="beam"><path id="beam5" serif:id="beam" d="M25.732,61.103c1.91,-1.91 1.91,-5.011 0,-6.921l-0.009,-0.01c-1.91,-1.91 -5.012,-1.91 -6.921,-0c-1.91,1.91 -1.91,5.011 -0,6.921l0.01,0.01c1.909,1.91 5.011,1.91 6.92,-0Z" style="fill:#fff;"/></g><g id="beam6" serif:id="beam"><path id="beam7" serif:id="beam" d="M60.672,54.167c-1.907,-1.907 -5.004,-1.907 -6.911,0l-0.02,0.02c-1.907,1.907 -1.907,5.004 0,6.911c1.907,1.907 5.004,1.907 6.911,-0l0.02,-0.02c1.907,-1.907 1.907,-5.004 0,-6.911Z" style="fill:#fff;"/></g><g id="beam8" serif:id="beam"><path id="beam9" serif:id="beam" d="M14.52,34.623c-2.702,0 -4.896,2.194 -4.896,4.896l0,0.01c0,2.702 2.194,4.896 4.896,4.896c2.702,0 4.896,-2.194 4.896,-4.896l-0,-0.01c-0,-2.702 -2.194,-4.896 -4.896,-4.896Z" style="fill:#fff;"/></g><g id="beam10" serif:id="beam"><path id="beam11" serif:id="beam" d="M44.212,64.534c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.901,2.196 -4.901,4.901c0,2.704 2.197,4.9 4.901,4.9c2.705,0 4.901,-2.196 4.901,-4.9Z" style="fill:#fff;"/></g><g id="beam12" serif:id="beam"><path id="beam13" serif:id="beam" d="M25.73,17.943c-1.911,-1.911 -5.015,-1.911 -6.926,0l-0.005,0.005c-1.911,1.911 -1.911,5.015 0,6.926c1.911,1.911 5.015,1.911 6.926,0l0.005,-0.005c1.911,-1.911 1.911,-5.014 -0,-6.926Z" style="fill:#fff;"/></g><g id="beam14" serif:id="beam"><path id="beam15" serif:id="beam" d="M64.098,34.623c-2.699,0 -4.891,2.192 -4.891,4.892l-0,0.019c-0,2.699 2.192,4.891 4.891,4.891c2.7,0 4.892,-2.192 4.892,-4.891l0,-0.019c0,-2.7 -2.192,-4.892 -4.892,-4.892Z" style="fill:#fff;"/></g></g></g></svg>
+    </template>
+
+    <template v-if="mode == 'darkest'">
+        <svg width="100%" height="100%" viewBox="0 0 79 80" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;"><g id="mode_darkest"><rect id="Bounds" x="0" y="-0" width="78.623" height="79.049" style="fill:none;"/><path d="M39.315,23.791c8.684,-0 15.734,7.05 15.734,15.733c0,8.684 -7.05,15.734 -15.734,15.734c-8.683,0 -15.733,-7.05 -15.733,-15.734c-0,-8.683 7.05,-15.733 15.733,-15.733Zm0,4.737c6.069,0 10.997,4.927 10.997,10.996c-0,6.069 -4.928,10.996 -10.997,10.996c-6.068,0 -10.996,-4.927 -10.996,-10.996c0,-6.069 4.928,-10.996 10.996,-10.996Z" style="fill:#fff;"/><g id="beams"><g id="beam"><path id="beam1" serif:id="beam" d="M44.216,14.515c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,0 -4.9,2.196 -4.9,4.901c-0,2.705 2.196,4.901 4.9,4.901c2.705,0 4.901,-2.196 4.901,-4.901Z" style="fill:#fff;"/></g><g id="beam2" serif:id="beam"><path id="beam3" serif:id="beam" d="M60.666,24.892c1.902,-1.902 1.902,-4.99 0,-6.892l-0.04,-0.039c-1.901,-1.902 -4.989,-1.902 -6.891,-0c-1.901,1.901 -1.901,4.989 0,6.891l0.04,0.04c1.902,1.901 4.99,1.901 6.891,-0Z" style="fill:#fff;"/></g><g id="beam4" serif:id="beam"><path id="beam5" serif:id="beam" d="M25.737,61.103c1.909,-1.91 1.909,-5.011 -0,-6.921l-0.01,-0.01c-1.91,-1.91 -5.011,-1.91 -6.921,-0c-1.91,1.91 -1.91,5.011 -0,6.921l0.01,0.01c1.91,1.91 5.011,1.91 6.921,-0Z" style="fill:#fff;"/></g><g id="beam6" serif:id="beam"><path id="beam7" serif:id="beam" d="M60.676,54.167c-1.907,-1.907 -5.004,-1.907 -6.911,0l-0.02,0.02c-1.907,1.907 -1.907,5.004 0,6.911c1.907,1.907 5.004,1.907 6.911,-0l0.02,-0.02c1.907,-1.907 1.907,-5.004 0,-6.911Z" style="fill:#fff;"/></g><g id="beam8" serif:id="beam"><path id="beam9" serif:id="beam" d="M14.524,34.623c-2.702,0 -4.896,2.194 -4.896,4.896l0,0.01c0,2.702 2.194,4.896 4.896,4.896c2.702,0 4.896,-2.194 4.896,-4.896l0,-0.01c0,-2.702 -2.194,-4.896 -4.896,-4.896Z" style="fill:#fff;"/></g><g id="beam10" serif:id="beam"><path id="beam11" serif:id="beam" d="M44.216,64.534c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.9,2.196 -4.9,4.901c-0,2.704 2.196,4.9 4.9,4.9c2.705,0 4.901,-2.196 4.901,-4.9Z" style="fill:#fff;"/></g><g id="beam12" serif:id="beam"><path id="beam13" serif:id="beam" d="M25.734,17.943c-1.911,-1.911 -5.015,-1.911 -6.926,0l-0.005,0.005c-1.911,1.911 -1.911,5.015 0,6.926c1.911,1.911 5.015,1.911 6.926,0l0.005,-0.005c1.911,-1.911 1.911,-5.014 0,-6.926Z" style="fill:#fff;"/></g><g id="beam14" serif:id="beam"><path id="beam15" serif:id="beam" d="M64.103,34.623c-2.7,0 -4.892,2.192 -4.892,4.892l-0,0.019c-0,2.699 2.192,4.891 4.892,4.891c2.699,0 4.891,-2.192 4.891,-4.891l0,-0.019c0,-2.7 -2.192,-4.892 -4.891,-4.892Z" style="fill:#fff;"/></g></g></g></svg>
+    </template>
+</a>
+
+<script>
+(function() {
+    const LOCAL_STORAGE_KEY = 'piccoloThemeMode'
+
+    var initialMode = localStorage.getItem(LOCAL_STORAGE_KEY)
+
+    if (initialMode) {
+        // Make sure the value in local storage is valid
+        if (['light', 'dark', 'darkest'].indexOf(initialMode) == -1) {
+            initialMode = 'light'
+            localStorage.setItem(LOCAL_STORAGE_KEY, initialMode)
+        }
+    } else {
+        // Check if the client prefers dark mode
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            initialMode = 'dark'
+        } else {
+            initialMode = 'light'
+        }
+        localStorage.setItem(LOCAL_STORAGE_KEY, initialMode)
+    }
+
+    document.documentElement.dataset.mode = initialMode
+
+    PetiteVue.createApp({
+        'mode': initialMode,
+        handleClick() {
+            let currentMode = this.mode
+
+            if (currentMode == 'light') {
+                this.mode = 'dark'
+            } else if (currentMode == 'dark') {
+                this.mode = 'darkest'
+            } else if (currentMode == 'darkest') {
+                this.mode = 'light'
+            }
+
+            document.documentElement.dataset.mode = this.mode
+            localStorage.setItem(LOCAL_STORAGE_KEY, this.mode)
+
+            console.log(this.mode)
+        }
+    }).mount('#mode_toggle')
+})()
+</script>
+            <p class="mobile_search_link">
+                <a href="../../../search.html" title="Search">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 65 64" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2">
+                        <path d="M14.873 40.009c-2.315-3.943-3.642-8.532-3.642-13.429C11.231 11.91 23.141 0 37.811 0s26.58 11.91 26.58 26.58-11.91 26.58-26.58 26.58a26.44 26.44 0 0 1-14.277-4.161L9.739 62.794a3.12 3.12 0 0 1-4.413 0L.913 58.382c-1.217-1.218-1.217-3.196 0-4.413l13.96-13.96zM37.811 8.054c10.225 0 18.526 8.301 18.526 18.526s-8.301 18.526-18.526 18.526-18.526-8.301-18.526-18.526S27.586 8.054 37.811 8.054z" fill="#fff" />
+                    </svg>
+                </a>
+            </p>
+        
+
+        <div class="searchbox_wrapper">
+            
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+    </nav>
+</div>
+
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper"><p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation and Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../how_to_use.html">Numerical Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../how_to_use.html#how-to-use">How to use</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Computational_domain.html">Computational Domain and Boundary Conditions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Material_properties.html">Material properties</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apidocs/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for stonedfenicsx.config.thermal_boundary_bc_set</h1><div class="highlight"><pre>
+<span></span><span class="c1"># calculate the thermal structure of the ocean according to Richards et al., 2018 JGR: Solid Earth </span>
+<span class="c1"># we use a time- and space-centered Crank-Nicholson finite-difference scheme with a predictor-corrector step (Press et al., 1992)</span>
+
+<span class="c1"># import all the constants and defined model setup parameters </span>
+<span class="sd">"""</span>
+<span class="sd">This module is adapted from FieldStone (Van Zelst et al., 2023). It has been refactored to match the current code structure</span>
+<span class="sd">and extended to handle temperature-dependent material properties via a fixed-point (Picard) iteration.</span>
+
+<span class="sd">Context (from reviewer feedback in Van Zelst et al., revision):</span>
+<span class="sd">    “Eqns 13–16 define the solution procedure for a linear problem (i.e., when ρ, Cp and k are not functions of T).</span>
+<span class="sd">     You stated earlier you incorporate the nonlinear parameters into this 1D model and use them as boundary conditions.</span>
+<span class="sd">     Please correct the description of the method used to obtain the 1D temperature profile for the non-linear case.” </span>
+<span class="sd">'' https://egusphere.copernicus.org/preprints/2022/egusphere-2022-768/egusphere-2022-768-AR1.pdf'' </span>
+
+
+<span class="sd">Non-linear solution procedure:</span>
+<span class="sd">    When ρ(T,P), Cp(T) and/or k(T,P) depend on temperature (and possibly pressure), the 1D temperature profile is obtained</span>
+<span class="sd">    through a fixed-point iteration at each time step. In practice:</span>
+<span class="sd">        1) initialize material properties from the previous time step (or an initial guess);</span>
+<span class="sd">        2) solve the Crank–Nicolson discretization for T using the current material properties;</span>
+<span class="sd">        3) update material properties from the new temperature estimate;</span>
+<span class="sd">        4) repeat steps (2)–(3) until convergence.</span>
+
+<span class="sd">Time stepping and stability:</span>
+<span class="sd">    With temperature-dependent coefficients, the Crank–Nicolson scheme is no longer unconditionally stable for arbitrarily</span>
+<span class="sd">    large time steps. Stability is ensured by using sufficiently small time steps. For the parameter ranges targeted here,</span>
+<span class="sd">    the fixed-point iteration typically converges in 2–3 iterations per time step, and becomes robust after the first step.</span>
+
+<span class="sd">Convergence criterion:</span>
+<span class="sd">    Convergence is monitored using the relative change in temperature between successive iterations at the same time step,</span>
+<span class="sd">    which is a commonly used stopping criterion in kinematic thermal models. The best alternative is computing the effective </span>
+<span class="sd">    energy conservation residuum, but the amount of work required, is not exactly paying off in accuracy. </span>
+
+<span class="sd">"""</span>
+
+<span class="c1"># modules</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">mpi4py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">psutil</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pst</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numba</span><span class="w"> </span><span class="kn">import</span> <span class="n">njit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">erf</span> <span class="k">as</span> <span class="n">erf_sc</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.geometry</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeomInput</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.numerical_control</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CtrlTemperatureBC</span><span class="p">,</span>
+    <span class="n">IOControls</span><span class="p">,</span>
+    <span class="n">NumericalControls</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.phase_db</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PhaseDataBase</span><span class="p">,</span>
+    <span class="n">compute_thermal_properties</span><span class="p">,</span>
+    <span class="n">density</span><span class="p">,</span>
+    <span class="n">heat_capacity</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.scal</span><span class="w"> </span><span class="kn">import</span> <span class="n">Scal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.create_mesh.create_mesh</span><span class="w"> </span><span class="kn">import</span> <span class="n">dict_surf</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_race_condition</span><span class="p">,</span> <span class="n">timing_function</span>
+
+<span class="n">_NAME_H5_FILE_TMP</span> <span class="o">=</span> <span class="s1">'temporary_file.h5'</span>
+
+
+<div class="viewcode-block" id="save_data_set">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.save_data_set">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">save_data_set</span><span class="p">(</span><span class="n">f</span><span class="p">:</span><span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">,</span><span class="n">buf</span><span class="p">:</span><span class="nb">any</span><span class="p">,</span><span class="n">name</span><span class="p">:</span><span class="nb">str</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Write a dataset to an open HDF5 file, overwriting if it already exists.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        f (h5py.File): Open HDF5 file handle (must be writable).</span>
+<span class="sd">        buf (any): Data to write — any type accepted by h5py.create_dataset.</span>
+<span class="sd">        name (str): Full HDF5 path for the dataset (e.g. 'left_bc/temp_save').</span>
+<span class="sd">    """</span>
+
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">del</span> <span class="n">f</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+    <span class="n">f</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">buf</span><span class="p">)</span></div>
+
+<span class="c1"># --–</span>
+<div class="viewcode-block" id="_compute_lithostatic_pressure">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set._compute_lithostatic_pressure">[docs]</a>
+<span class="nd">@njit</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_compute_lithostatic_pressure</span><span class="p">(</span>
+                                 <span class="n">nz</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                                 <span class="n">ph</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">],</span>          <span class="c1"># (nz,) phase id per level (or per cell)</span>
+                                 <span class="n">g</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>                       <span class="c1"># m/s^2, vertical component</span>
+                                 <span class="n">dz</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>                      <span class="c1"># m</span>
+                                 <span class="n">temp</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>         <span class="c1"># (nz,) K</span>
+                                 <span class="n">pdb</span><span class="p">:</span> <span class="s2">"PhaseDataBase"</span><span class="p">,</span>
+                                <span class="p">)</span>  <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Compute a 1D lithostatic pressure profile with pressure-dependent properties.</span>
+
+<span class="sd">    The lithostatic pressure is obtained by vertically integrating the weight of the</span>
+<span class="sd">    overburden:</span>
+
+<span class="sd">        dP/dz = rho(P, T, phase) * g_z</span>
+
+<span class="sd">    Because density (and possibly other properties) may depend on pressure, the</span>
+<span class="sd">    profile is computed with a fixed-point (Picard) nonlinear iteration: starting</span>
+<span class="sd">    from an initial pressure guess, evaluate rho(P, T), integrate to update P(z),</span>
+<span class="sd">    and repeat until convergence. The relative tollerance is hardcoded to be 1e-6</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    nz : int</span>
+<span class="sd">        Number of grid points in the vertical direction.</span>
+<span class="sd">    ph : NDArray[np.int32]</span>
+<span class="sd">        Phase identifier array along the 1D column (length ``nz``). Used to select</span>
+<span class="sd">        material laws/properties from ``pdb``.</span>
+<span class="sd">    g : float</span>
+<span class="sd">        Vertical component of gravitational acceleration (m/s^2). Use sign</span>
+<span class="sd">        consistently with your z-axis convention.</span>
+<span class="sd">    T : NDArray[np.float64]</span>
+<span class="sd">        Temperature profile along the column (K), length ``nz``.</span>
+<span class="sd">    pdb : object</span>
+<span class="sd">        Material database/dataset providing density and other thermodynamic/elastic</span>
+<span class="sd">        properties as functions of phase, temperature and pressure.</span>
+
+<span class="sd">    NB: all parameters are already in dimensionless (scaled) units when called from the solver.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    lit_p : NDArray[np.float64]</span>
+<span class="sd">        Lithostatic pressure profile (Pa), length ``nz``.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    - The boundary condition is typically ``P(z_surface) = 0`` (or atmospheric),</span>
+<span class="sd">      and pressure increases downward.</span>
+<span class="sd">    - Convergence is usually checked with a norm on successive pressure iterates,</span>
+<span class="sd">      e.g. ``max(|P_new - P_old|) / max(P_new, eps)``.</span>
+<span class="sd">    - If ``rho`` depends strongly on pressure, under-relaxation may be required.</span>
+
+<span class="sd">    """</span>
+
+    <span class="c1">#compute lithostatic pressure:</span>
+    <span class="n">lit_p_o</span> <span class="o">=</span>  <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nz</span><span class="p">))</span>
+    <span class="n">lit_p</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nz</span><span class="p">))</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="k">while</span> <span class="n">res</span><span class="o">&gt;</span><span class="mf">1e-6</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">nz</span><span class="p">):</span>
+            
+            <span class="n">rho</span> <span class="o">=</span> <span class="n">density</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span><span class="n">temp</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">lit_p_o</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">rhog</span> <span class="o">=</span> <span class="n">rho</span><span class="o">*</span><span class="n">g</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">lit_p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">lit_p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">lit_p</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">rhog</span><span class="o">*</span><span class="n">dz</span>
+        
+        <span class="n">res</span> <span class="o">=</span>  <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">lit_p</span><span class="o">-</span><span class="n">lit_p_o</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">lit_p</span><span class="o">+</span><span class="n">lit_p_o</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">lit_p_o</span><span class="p">[:]</span><span class="o">=</span><span class="n">lit_p</span>
+    <span class="k">return</span> <span class="n">lit_p</span></div>
+
+
+<span class="c1">#-----------------------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="compute_cp_k_rho">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.compute_cp_k_rho">[docs]</a>
+<span class="nd">@njit</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_cp_k_rho</span><span class="p">(</span><span class="n">ph</span>   <span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">]</span>
+                      <span class="p">,</span><span class="n">pdb</span> <span class="p">:</span> <span class="n">PhaseDataBase</span>
+                      <span class="p">,</span><span class="n">temp</span> <span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span>
+                      <span class="p">,</span><span class="n">pres</span>  <span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">])</span><span class="o">-&gt;</span><span class="nb">tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]:</span>
+<span class="w">    </span>
+<span class="w">    </span><span class="sd">"""Compute the thermal material properties </span>
+<span class="sd">    Function that compute all the three material properties that are required for solving the energy equation. </span>
+<span class="sd">    Input: </span>
+<span class="sd">        ph : phase vector </span>
+<span class="sd">        pdb : Material phase structure</span>
+<span class="sd">        temp  : temperature vector</span>
+<span class="sd">        pres   : pressure vector </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        cp,rho,k =&gt; vector containing density, heat capacity, and conductivities that are computed using pressure and temperature vector</span>
+<span class="sd">    """</span>
+    <span class="n">cp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">temp</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">temp</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">rho</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">temp</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    
+    <span class="k">for</span> <span class="n">jj</span><span class="p">,</span><span class="n">t_i</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">temp</span><span class="p">):</span>
+        <span class="n">cp</span><span class="p">[</span><span class="n">jj</span><span class="p">],</span> <span class="n">rho</span><span class="p">[</span><span class="n">jj</span><span class="p">],</span> <span class="n">k</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span> <span class="o">=</span> <span class="n">compute_thermal_properties</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span><span class="n">t_i</span><span class="p">,</span><span class="n">pres</span><span class="p">[</span><span class="n">jj</span><span class="p">],</span><span class="n">ph</span><span class="p">[</span><span class="n">jj</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">cp</span><span class="p">,</span><span class="n">k</span><span class="p">,</span><span class="n">rho</span></div>
+
+
+<span class="c1">#-----------------------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="build_coefficient_matrix">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.build_coefficient_matrix">[docs]</a>
+<span class="nd">@njit</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_coefficient_matrix</span><span class="p">(</span><span class="n">pdb</span><span class="p">:</span><span class="n">PhaseDataBase</span><span class="p">,</span>
+                             <span class="n">ph</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">],</span>
+                             <span class="n">temp_old</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+                             <span class="n">temp_guess</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+                             <span class="n">temp_pr</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+                             <span class="n">step</span><span class="p">:</span><span class="nb">int</span><span class="p">,</span>
+                             <span class="n">lit_p</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+                             <span class="n">temp_min</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
+                             <span class="n">temp_max</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
+                             <span class="n">nz</span><span class="p">:</span><span class="nb">int</span><span class="p">,</span>
+                             <span class="n">dt</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
+                             <span class="n">dz_m</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Assemble the Crank-Nicolson finite-difference system for one predictor or corrector step.</span>
+
+<span class="sd">    Implements the predictor-corrector scheme of Press et al. (1992) extended to</span>
+<span class="sd">    temperature-dependent material properties. Material properties (ρ, Cp, k) are</span>
+<span class="sd">    evaluated at the guess temperature (predictor, step=0) or as the arithmetic mean</span>
+<span class="sd">    of guess and predicted temperatures (corrector, step=1).</span>
+
+<span class="sd">    The boundary conditions are Dirichlet: T=temp_min at node 0, T=temp_max at node nz-1.</span>
+<span class="sd">    Interior nodes follow the standard CN discretization including a mass-matrix</span>
+<span class="sd">    correction term (b_vct) that accounts for the change in ρCp between time levels,</span>
+<span class="sd">    and a radiogenic heat source term.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        pdb (PhaseDataBase): Phase material database (jitclass).</span>
+<span class="sd">        ph (NDArray[np.int32]): Phase index per node, shape (nz,). 0-based.</span>
+<span class="sd">        temp_old (NDArray[np.float64]): Temperature at the previous time level, shape (nz,).</span>
+<span class="sd">        temp_guess (NDArray[np.float64]): Current Picard iterate (best guess for T^{n+1}), shape (nz,).</span>
+<span class="sd">        temp_pr (NDArray[np.float64]): Predictor temperature (output of step=0 solve), shape (nz,).</span>
+<span class="sd">                                       Only used when step=1.</span>
+<span class="sd">        step (int): 0 for predictor pass, 1 for corrector pass.</span>
+<span class="sd">        lit_p (NDArray[np.float64]): Lithostatic pressure profile, shape (nz,).</span>
+<span class="sd">        temp_min (float): Dirichlet temperature at the top boundary (node 0).</span>
+<span class="sd">        temp_max (float): Dirichlet temperature at the bottom boundary (node nz-1).</span>
+<span class="sd">        nz (int): Number of grid nodes.</span>
+<span class="sd">        dt (float): Time step (dimensionless).</span>
+<span class="sd">        dz_m (float): Uniform node spacing (dimensionless).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple[NDArray[np.float64], NDArray[np.float64]]:</span>
+<span class="sd">            mass_matrix — tridiagonal system matrix, shape (nz, nz).</span>
+<span class="sd">            d_vct       — right-hand side vector, shape (nz,).</span>
+<span class="sd">    """</span>
+
+    <span class="n">mass_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nz</span><span class="p">,</span> <span class="n">nz</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>     <span class="c1"># pre-allocate mass_matrix array</span>
+
+
+    <span class="n">a_vct</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nz</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">d_vct</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nz</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>     <span class="c1"># pre-allocate D column vector</span>
+    <span class="n">q_vct</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nz</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">b_vct</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nz</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">step</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+
+        <span class="c1"># predictor step</span>
+
+        <span class="c1"># m = n</span>
+        <span class="c1"># Compute the current material property with the guess temperature</span>
+        <span class="n">cp_m</span><span class="p">,</span><span class="n">k_m</span><span class="p">,</span><span class="n">rho_m</span><span class="o">=</span><span class="n">compute_cp_k_rho</span><span class="p">(</span><span class="n">ph</span><span class="o">=</span><span class="n">ph</span>
+                                        <span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
+                                        <span class="p">,</span><span class="n">temp</span><span class="o">=</span><span class="n">temp_guess</span>
+                                        <span class="p">,</span><span class="n">pres</span><span class="o">=</span><span class="n">lit_p</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">step</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+
+        <span class="c1"># corrector step</span>
+
+        <span class="c1"># m = n+1/2</span>
+        <span class="c1"># Compute the temperature with the guess and with the predicted temperature </span>
+        <span class="n">cp_m0</span><span class="p">,</span><span class="n">k_m0</span><span class="p">,</span><span class="n">rho_m0</span><span class="o">=</span><span class="n">compute_cp_k_rho</span><span class="p">(</span><span class="n">ph</span><span class="o">=</span><span class="n">ph</span>
+                                           <span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
+                                           <span class="p">,</span><span class="n">temp</span> <span class="o">=</span> <span class="n">temp_guess</span>
+                                           <span class="p">,</span><span class="n">pres</span> <span class="o">=</span> <span class="n">lit_p</span><span class="p">)</span>
+
+        <span class="n">cp_m1</span><span class="p">,</span><span class="n">k_m1</span><span class="p">,</span><span class="n">rho_m1</span><span class="o">=</span><span class="n">compute_cp_k_rho</span><span class="p">(</span><span class="n">ph</span><span class="o">=</span><span class="n">ph</span>
+                                           <span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
+                                           <span class="p">,</span><span class="n">temp</span> <span class="o">=</span> <span class="n">temp_pr</span>
+                                           <span class="p">,</span><span class="n">pres</span> <span class="o">=</span> <span class="n">lit_p</span><span class="p">)</span>
+        <span class="n">cp_m</span> <span class="o">=</span> <span class="p">(</span><span class="n">cp_m1</span><span class="o">+</span><span class="n">cp_m0</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
+
+        <span class="n">k_m</span>              <span class="o">=</span> <span class="p">(</span><span class="n">k_m0</span><span class="o">+</span><span class="n">k_m1</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
+
+        <span class="n">rho_m</span>        <span class="o">=</span> <span class="p">(</span><span class="n">rho_m0</span><span class="o">+</span><span class="n">rho_m1</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
+    
+    <span class="n">k_m_m</span> <span class="o">=</span> <span class="p">(</span><span class="n">k_m</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">+</span><span class="n">k_m</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="mi">2</span>
+    
+    <span class="n">a_vct</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">dt</span> <span class="o">/</span> <span class="p">(</span><span class="n">rho_m</span><span class="p">[:]</span> <span class="o">*</span> <span class="n">cp_m</span><span class="p">[:]</span> <span class="o">*</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">dz_m</span><span class="p">))</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">nz</span><span class="p">):</span>
+
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+
+            <span class="c1"># boundary condition at the top </span>
+
+            <span class="n">mass_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+
+            <span class="n">d_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>   <span class="o">=</span> <span class="n">temp_min</span>
+
+        <span class="k">elif</span> <span class="p">(</span><span class="n">i</span> <span class="o">==</span> <span class="n">nz</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+
+            <span class="c1"># boundary condition at the bottom</span>
+
+            <span class="n">mass_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+
+            <span class="n">d_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>   <span class="o">=</span> <span class="n">temp_max</span>
+
+        <span class="k">else</span><span class="p">:</span>
+
+            <span class="n">mass_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">a_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span> <span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="o">/</span> <span class="n">dz_m</span><span class="p">)</span>
+            <span class="n">mass_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">+</span> <span class="n">a_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span>  <span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span> <span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span><span class="o">/</span><span class="n">dz_m</span>
+            <span class="n">mass_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">a_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span> <span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="o">/</span> <span class="n">dz_m</span><span class="p">)</span>
+
+            <span class="n">q_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">dz_m</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">temp_old</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">*</span><span class="n">temp_old</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="n">k_m_m</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">temp_old</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>     
+            <span class="n">rho_a</span> <span class="o">=</span> <span class="n">density</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span> <span class="n">temp_old</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">lit_p</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">cp_a</span>  <span class="o">=</span> <span class="n">heat_capacity</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span> <span class="n">temp_old</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>      
+            <span class="k">if</span> <span class="n">step</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">rho_b</span> <span class="o">=</span> <span class="n">density</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span><span class="n">temp_guess</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">lit_p</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">cp_b</span> <span class="o">=</span> <span class="n">heat_capacity</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span><span class="n">temp_guess</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+                <span class="c1"># b_vct - predictor step </span>
+                <span class="n">b_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">temp_old</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span> <span class="n">rho_a</span> <span class="o">*</span> <span class="n">cp_a</span> <span class="o">-</span> <span class="n">rho_b</span> <span class="o">*</span> <span class="n">cp_b</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">rho_b</span> <span class="o">*</span> <span class="n">cp_b</span><span class="p">)</span>       
+            <span class="k">elif</span> <span class="n">step</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">rho_b</span> <span class="o">=</span> <span class="n">density</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span><span class="n">temp_pr</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">lit_p</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">cp_b</span> <span class="o">=</span> <span class="n">heat_capacity</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span><span class="n">temp_pr</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>      
+                <span class="c1"># b_vct - corrector step        </span>
+                <span class="n">b_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span> <span class="p">((</span><span class="n">temp_pr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">temp_old</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">*</span> <span class="p">(</span> <span class="n">rho_b</span><span class="o">*</span><span class="n">cp_b</span> <span class="o">-</span> <span class="n">rho_a</span><span class="o">*</span><span class="n">cp_a</span> <span class="p">)</span> <span class="o">/</span> <span class="p">(</span> <span class="n">rho_b</span><span class="o">*</span><span class="n">cp_b</span> <span class="o">+</span> <span class="n">rho_a</span><span class="o">*</span><span class="n">cp_a</span><span class="p">))</span>        
+            <span class="n">d_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp_old</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">a_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">q_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span> <span class="n">b_vct</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> \
+                <span class="n">dt</span> <span class="o">*</span> <span class="n">pdb</span><span class="o">.</span><span class="n">radiogenic_heat</span><span class="p">[</span><span class="n">ph</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">/</span><span class="n">rho_m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">/</span><span class="n">cp_m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    
+    <span class="k">return</span> <span class="n">mass_matrix</span><span class="p">,</span><span class="n">d_vct</span></div>
+
+<span class="c1"># --- </span>
+<div class="viewcode-block" id="fill_phase_properties">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.fill_phase_properties">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fill_phase_properties</span><span class="p">(</span><span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span><span class="p">,</span>
+                          <span class="n">z</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+                          <span class="n">left_right</span><span class="p">:</span><span class="nb">bool</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Assign a phase index to each node of a 1D vertical column.</span>
+
+<span class="sd">    For the left (subducting) boundary the column contains oceanic crust</span>
+<span class="sd">    above ocr and subducting-plate mantle below. For the right (overriding)</span>
+<span class="sd">    boundary it contains upper crust, optionally lower crust, lithospheric</span>
+<span class="sd">    mantle, and asthenospheric wedge, in order of increasing depth.</span>
+
+<span class="sd">    The returned indices are 0-based (i.e. dict_surf values minus 1) to match</span>
+<span class="sd">    the PhaseDataBase array indexing convention.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        g_input (GeomInput): Geometric input parameters (depths in dimensionless units).</span>
+<span class="sd">        z (NDArray[np.float64]): Depth coordinate vector, shape (nz,), increasing downward.</span>
+<span class="sd">        left_right (bool): True → left (subducting) boundary; False → right (overriding) boundary.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        NDArray[np.int32]: Phase index per node, shape (nz,), 0-based.</span>
+<span class="sd">    """</span>
+    <span class="n">ph</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">z</span><span class="p">)],</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">left_right</span><span class="p">:</span>
+        <span class="n">ph</span><span class="p">[</span><span class="n">z</span><span class="o">&lt;</span><span class="n">g_input</span><span class="o">.</span><span class="n">ocr</span><span class="p">]</span> <span class="o">=</span> <span class="n">dict_surf</span><span class="p">[</span><span class="s1">'oceanic_crust'</span><span class="p">]</span>
+        <span class="n">ph</span><span class="p">[</span><span class="n">z</span><span class="o">&gt;=</span><span class="n">g_input</span><span class="o">.</span><span class="n">ocr</span><span class="p">]</span> <span class="o">=</span> <span class="n">dict_surf</span><span class="p">[</span><span class="s1">'sub_plate'</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">lc</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="n">ph</span><span class="p">[</span><span class="n">z</span><span class="o">&lt;</span><span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">g_input</span><span class="o">.</span><span class="n">lc</span><span class="p">)]</span> <span class="o">=</span> <span class="n">dict_surf</span><span class="p">[</span><span class="s1">'upper_crust'</span><span class="p">]</span>
+            <span class="n">ph</span><span class="p">[(</span><span class="n">z</span><span class="o">&gt;=</span><span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">g_input</span><span class="o">.</span><span class="n">lc</span><span class="p">))</span>
+               <span class="o">&amp;</span> <span class="p">(</span><span class="n">z</span><span class="o">&lt;</span><span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="p">)]</span> <span class="o">=</span> <span class="n">dict_surf</span><span class="p">[</span><span class="s1">'lower_crust'</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">g_input</span><span class="o">.</span><span class="n">lc</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="n">ph</span><span class="p">[</span><span class="n">z</span><span class="o">&lt;</span><span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="p">]</span> <span class="o">=</span> <span class="n">dict_surf</span><span class="p">[</span><span class="s1">'upper_crust'</span><span class="p">]</span>
+        <span class="n">ph</span><span class="p">[(</span><span class="n">z</span><span class="o">&gt;=</span><span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="p">)</span> <span class="o">&amp;</span>  <span class="p">(</span><span class="n">z</span><span class="o">&lt;</span><span class="n">g_input</span><span class="o">.</span><span class="n">lit_mt</span><span class="o">+</span><span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="p">)]</span> <span class="o">=</span> <span class="n">dict_surf</span><span class="p">[</span><span class="s1">'overriding_lm'</span><span class="p">]</span>
+        <span class="n">ph</span><span class="p">[(</span><span class="n">z</span><span class="o">&gt;=</span><span class="n">g_input</span><span class="o">.</span><span class="n">lit_mt</span><span class="o">+</span><span class="n">g_input</span><span class="o">.</span><span class="n">cr</span><span class="p">)]</span> <span class="o">=</span> <span class="n">dict_surf</span><span class="p">[</span><span class="s1">'wedge'</span><span class="p">]</span>
+  
+    <span class="k">return</span> <span class="n">ph</span><span class="o">-</span><span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="compute_half_space_cooling_model_analytical">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.compute_half_space_cooling_model_analytical">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_half_space_cooling_model_analytical</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="p">:</span><span class="n">CtrlTemperatureBC</span><span class="p">,</span>
+                                                <span class="n">z</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">])</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Compute the left boundary temperature using the half-space cooling analytical solution.</span>
+
+<span class="sd">    Used for the Van Keken benchmark suite where constant material properties allow</span>
+<span class="sd">    the exact erf solution:</span>
+
+<span class="sd">        T(z, t) = T_top + (T_max - T_top) * erf( z / (2 * sqrt(κ * t)) )</span>
+
+<span class="sd">    where κ = k / (ρ Cp) is the thermal diffusivity computed from the fixed benchmark</span>
+<span class="sd">    values stored in ctrl_tbc (not from the phase database).</span>
+
+<span class="sd">    Writes the result directly into ctrl_tbc.temperature_1d and ctrl_tbc.z.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ctrl_tbc (CtrlTemperatureBC): Thermal BC control object. Must have scalar k, rho, cp,</span>
+<span class="sd">                                      slab_age, temp_top, temp_max set (benchmark values).</span>
+<span class="sd">        z (NDArray[np.float64]): Depth coordinate vector, shape (nz,), positive downward.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        CtrlTemperatureBC: Updated ctrl_tbc with temperature_1d and z filled.</span>
+<span class="sd">    """</span>
+    <span class="n">cp</span>    <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">cp</span>
+    <span class="n">k</span>     <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">k</span>
+    <span class="n">rho</span>   <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">rho</span>
+    <span class="n">kappa</span> <span class="o">=</span> <span class="n">k</span><span class="o">/</span><span class="n">rho</span><span class="o">/</span><span class="n">cp</span>
+    <span class="n">t</span>     <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">slab_age</span>
+    <span class="n">temperature_bc</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_top</span><span class="o">+</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_max</span><span class="o">-</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_top</span><span class="p">)</span> <span class="o">*</span> <span class="n">erf_sc</span><span class="p">(</span><span class="n">z</span> <span class="o">/</span><span class="mi">2</span> <span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">t</span> <span class="o">*</span> <span class="n">kappa</span><span class="p">))</span>
+    <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z</span><span class="p">[:]</span> <span class="o">=</span> <span class="o">-</span><span class="n">z</span><span class="p">[:]</span>
+    <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_1d</span> <span class="o">=</span> <span class="n">temperature_bc</span></div>
+
+
+<div class="viewcode-block" id="initialise_geometry_1d">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.initialise_geometry_1d">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">initialise_geometry_1d</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="p">:</span><span class="n">CtrlTemperatureBC</span>
+                           <span class="p">,</span><span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span>
+                           <span class="p">,</span><span class="n">left_right</span><span class="p">:</span><span class="nb">bool</span><span class="p">)</span><span class="o">-&gt;</span><span class="nb">tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">],</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Build the 1D depth grid and phase array for a boundary column.</span>
+
+<span class="sd">    For the left boundary the grid spans [0, (nz-1)*dz] with uniform spacing</span>
+<span class="sd">    ctrl_tbc.dz, so that np.diff(z).mean() == ctrl_tbc.dz exactly.</span>
+<span class="sd">    For the right boundary the grid spans [0, g_input.lab_d] (lithosphere-</span>
+<span class="sd">    asthenosphere boundary depth) with nz nodes.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ctrl_tbc (CtrlTemperatureBC): Thermal BC control (provides nz, dz).</span>
+<span class="sd">        g_input (GeomInput): Geometric input (provides lab_d for right BC).</span>
+<span class="sd">        left_right (bool): True → left (subducting) boundary; False → right (overriding).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple[NDArray[np.int32], NDArray[np.float64]]:</span>
+<span class="sd">            ph — 0-based phase index per node, shape (nz,).</span>
+<span class="sd">            z  — depth coordinate vector, shape (nz,), positive downward.</span>
+<span class="sd">    """</span>
+
+    <span class="k">if</span> <span class="n">left_right</span><span class="p">:</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,(</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">nz</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">dz</span><span class="p">,</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">nz</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">g_input</span><span class="o">.</span><span class="n">lab_d</span><span class="p">,</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">nz</span><span class="p">)</span>
+    
+    <span class="n">ph</span> <span class="o">=</span> <span class="n">fill_phase_properties</span><span class="p">(</span><span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span>
+                               <span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="n">z</span>
+                               <span class="p">,</span><span class="n">left_right</span><span class="o">=</span><span class="n">left_right</span><span class="p">)</span>
+    
+    
+    <span class="k">return</span> <span class="n">ph</span><span class="p">,</span> <span class="n">z</span></div>
+
+<span class="c1"># --- </span>
+<div class="viewcode-block" id="solve_temperature_1d_bc">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.solve_temperature_1d_bc">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">solve_temperature_1d_bc</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="p">:</span><span class="n">CtrlTemperatureBC</span>
+                            <span class="p">,</span><span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span>
+                            <span class="p">,</span><span class="n">pdb</span><span class="p">:</span><span class="n">PhaseDataBase</span>
+                            <span class="p">,</span><span class="n">z</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span>
+                            <span class="p">,</span><span class="n">ph</span><span class="p">:</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">]</span>
+                            <span class="p">,</span><span class="n">g</span><span class="p">:</span><span class="nb">float</span>
+                            <span class="p">,</span><span class="n">left_right</span><span class="p">:</span><span class="nb">bool</span><span class="p">):</span>
+
+<span class="w">    </span><span class="sd">"""Advance the 1D thermal diffusion equation in time using Crank-Nicolson with Picard iteration.</span>
+
+<span class="sd">    At each time step a predictor-corrector cycle is run (build_coefficient_matrix</span>
+<span class="sd">    with step=0 then step=1), followed by a fixed-point (Picard) iteration that</span>
+<span class="sd">    updates material properties and the lithostatic pressure until the relative</span>
+<span class="sd">    change in temperature falls below 1e-6 or 10 iterations are reached.</span>
+
+<span class="sd">    The initial temperature is either isothermal at temp_max (oceanic / left BC)</span>
+<span class="sd">    or a linear geotherm from temp_top to temp_max over lab_d (continental right BC).</span>
+
+<span class="sd">    The loop runs while t[time-1] &lt; end_time AND time &lt; nt, where</span>
+<span class="sd">    end_time = ctrl_tbc.end_time (left) or ctrl_tbc.right_age * 1.01 (right).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ctrl_tbc (CtrlTemperatureBC): Thermal BC control (nz, nt, dt, dz, temp_max,</span>
+<span class="sd">                                      temp_top, end_time, right_age, right_boundary).</span>
+<span class="sd">        g_input (GeomInput): Geometric input (lab_d for right BC initial condition).</span>
+<span class="sd">        pdb (PhaseDataBase): Phase material database (jitclass).</span>
+<span class="sd">        z (NDArray[np.float64]): Depth coordinate vector, shape (nz,).</span>
+<span class="sd">        ph (NDArray[np.int32]): Phase index per node, shape (nz,). 0-based.</span>
+<span class="sd">        g (float): Gravitational acceleration (dimensionless scaled).</span>
+<span class="sd">        left_right (bool): True → left (subducting) boundary; False → right (overriding).</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If a NaN is detected in the Picard residual.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple[NDArray[np.float64], NDArray[np.float64]]:</span>
+<span class="sd">            t           — time vector, shape (nt,). Entries beyond the last completed</span>
+<span class="sd">                          step remain zero.</span>
+<span class="sd">            temperature — temperature field, shape (nt, nz). Row 0 is the initial</span>
+<span class="sd">                          condition; rows beyond the last step are zero.</span>
+<span class="sd">    """</span>
+
+
+    <span class="n">temp_max</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_max</span>
+    <span class="n">temp_min</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_top</span>
+    <span class="n">nz</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">nz</span>
+    <span class="n">nt</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">nt</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">dt</span>
+    <span class="n">dz</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">dz</span>
+    <span class="k">if</span> <span class="n">left_right</span> <span class="ow">or</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">right_boundary</span> <span class="o">==</span> <span class="s1">'Oceanic'</span><span class="p">:</span>
+        <span class="n">temp_old</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">z</span><span class="p">)),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span> <span class="o">*</span> <span class="n">temp_max</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Initial guess linear</span>
+        <span class="n">gr</span> <span class="o">=</span> <span class="p">(</span><span class="n">temp_max</span><span class="o">-</span><span class="n">temp_min</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">g_input</span><span class="o">.</span><span class="n">lab_d</span><span class="p">)</span>
+        <span class="n">temp_old</span> <span class="o">=</span> <span class="n">temp_min</span> <span class="o">+</span> <span class="n">gr</span> <span class="o">*</span> <span class="n">z</span>
+
+    <span class="n">lit_p</span> <span class="o">=</span> <span class="n">_compute_lithostatic_pressure</span><span class="p">(</span><span class="n">nz</span><span class="p">,</span><span class="n">ph</span><span class="p">,</span><span class="n">g</span><span class="p">,</span><span class="n">dz</span><span class="p">,</span><span class="n">temp_old</span><span class="p">,</span><span class="n">pdb</span><span class="p">)</span>
+
+    <span class="n">temperature</span>       <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">nt</span><span class="p">,</span><span class="n">nz</span><span class="p">],</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">temp_pr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">nz</span><span class="p">],</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">nt</span><span class="p">],</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">temperature</span><span class="p">[</span><span class="mi">0</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">temp_old</span>
+    
+    <span class="k">if</span> <span class="n">left_right</span><span class="p">:</span> 
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">end_time</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">right_age</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mf">0.01</span><span class="p">)</span>
+
+    <span class="n">time</span> <span class="o">=</span> <span class="mi">1</span>
+    
+    <span class="k">while</span> <span class="n">t</span><span class="p">[</span><span class="n">time</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">end_time</span> <span class="ow">and</span> <span class="n">time</span> <span class="o">&lt;</span> <span class="n">nt</span><span class="p">:</span>
+
+        <span class="n">t</span><span class="p">[</span><span class="n">time</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">time</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">dt</span>
+        <span class="n">temp_old_tl</span> <span class="o">=</span> <span class="n">temperature</span><span class="p">[</span><span class="n">time</span><span class="o">-</span><span class="mi">1</span><span class="p">,:]</span> <span class="c1"># temperature at the previous time step</span>
+        <span class="n">temp_guess</span>  <span class="o">=</span> <span class="n">temp_old_tl</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        
+        <span class="n">it</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="c1"># Fixed point iteration</span>
+        <span class="k">while</span> <span class="n">res</span> <span class="o">&gt;</span> <span class="mf">1e-6</span> <span class="ow">and</span> <span class="n">it</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+                    <span class="n">mass_matrix</span><span class="p">,</span><span class="n">d_vct</span> <span class="o">=</span> <span class="n">build_coefficient_matrix</span><span class="p">(</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
+                                                                 <span class="p">,</span><span class="n">ph</span><span class="o">=</span><span class="n">ph</span>
+                                                                 <span class="p">,</span><span class="n">temp_old</span> <span class="o">=</span> <span class="n">temp_old_tl</span>
+                                                                 <span class="p">,</span><span class="n">temp_guess</span><span class="o">=</span><span class="n">temp_guess</span>
+                                                                 <span class="p">,</span><span class="n">temp_pr</span><span class="o">=</span><span class="n">temp_pr</span>
+                                                                 <span class="p">,</span><span class="n">step</span><span class="o">=</span><span class="n">step</span>
+                                                                 <span class="p">,</span><span class="n">lit_p</span><span class="o">=</span><span class="n">lit_p</span>
+                                                                 <span class="p">,</span><span class="n">temp_min</span><span class="o">=</span><span class="n">temp_min</span>
+                                                                 <span class="p">,</span><span class="n">temp_max</span><span class="o">=</span><span class="n">temp_max</span>
+                                                                 <span class="p">,</span><span class="n">dt</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">dt</span>
+                                                                 <span class="p">,</span><span class="n">dz_m</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">dz</span>
+                                                                 <span class="p">,</span><span class="n">nz</span> <span class="o">=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">nz</span><span class="p">)</span>
+                    <span class="n">temp_new</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">mass_matrix</span><span class="p">,</span> <span class="n">d_vct</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">step</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">temp_pr</span> <span class="o">=</span> <span class="n">temp_new</span>
+
+            <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">temp_new</span><span class="o">-</span><span class="n">temp_guess</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">temp_new</span><span class="o">+</span><span class="n">temp_guess</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+            
+
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"NaN detected in the residual"</span><span class="p">)</span>
+            
+            
+            <span class="n">lit_p</span> <span class="o">=</span> <span class="n">_compute_lithostatic_pressure</span><span class="p">(</span><span class="n">nz</span><span class="p">,</span><span class="n">ph</span><span class="p">,</span><span class="n">g</span><span class="p">,</span><span class="n">dz</span><span class="p">,</span><span class="n">temp_new</span><span class="p">,</span><span class="n">pdb</span><span class="p">)</span>
+
+            <span class="n">temp_guess</span> <span class="o">=</span> <span class="n">temp_new</span> <span class="o">*</span> <span class="mf">0.8</span> <span class="o">+</span> <span class="n">temp_guess</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.2</span><span class="p">)</span>
+            
+            <span class="n">it</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">lit_p</span> <span class="o">=</span> <span class="n">_compute_lithostatic_pressure</span><span class="p">(</span><span class="n">nz</span><span class="p">,</span><span class="n">ph</span><span class="p">,</span><span class="n">g</span><span class="p">,</span><span class="n">dz</span><span class="p">,</span><span class="n">temp_new</span><span class="p">,</span><span class="n">pdb</span><span class="p">)</span>
+
+        <span class="n">temperature</span><span class="p">[</span><span class="n">time</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">temp_new</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="n">time</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">t</span><span class="p">,</span> <span class="n">temperature</span></div>
+
+
+<span class="c1"># ---</span>
+<div class="viewcode-block" id="compute_thermal_boundary">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.compute_thermal_boundary">[docs]</a>
+<span class="nd">@timing_function</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_thermal_boundary</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="p">:</span><span class="n">CtrlTemperatureBC</span>
+                                 <span class="p">,</span><span class="n">ctrl</span><span class="p">:</span><span class="n">NumericalControls</span>
+                                 <span class="p">,</span><span class="n">ioctrl</span><span class="p">:</span><span class="n">IOControls</span>
+                                 <span class="p">,</span><span class="n">sc</span><span class="p">:</span><span class="n">Scal</span>
+                                 <span class="p">,</span><span class="n">pdb</span><span class="p">:</span><span class="n">PhaseDataBase</span>
+                                 <span class="p">,</span><span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span>
+                                 <span class="p">,</span><span class="n">save_data</span><span class="p">:</span><span class="nb">bool</span>
+                                 <span class="p">,</span><span class="n">left_right</span><span class="p">:</span><span class="nb">bool</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Compute the 1D thermal boundary condition and optionally cache the result to HDF5.</span>
+
+<span class="sd">    Orchestrates the full boundary computation:</span>
+<span class="sd">      1. Build the depth grid and phase array (initialise_geometry_1d).</span>
+<span class="sd">      2. If van_keken benchmark mode and left BC: use the analytical erf solution.</span>
+<span class="sd">      3. Otherwise: run the Crank-Nicolson + Picard time-stepping solver.</span>
+<span class="sd">      4. Extract the temperature profile at the target age (slab_age or right_age).</span>
+<span class="sd">      5. If save_data=True and MPI rank==0 and no race condition: write the full</span>
+<span class="sd">         time-temperature history and material property arrays to the HDF5 cache.</span>
+
+<span class="sd">    The HDF5 groups are 'left_bc' and 'right_bc'. Within each group:</span>
+<span class="sd">      - temp_save, time_2d          : 2D fields for post-processing (physical units)</span>
+<span class="sd">      - phases                       : unique phase ids present in the column</span>
+<span class="sd">      - phase_properties_&lt;i&gt;/...     : per-phase thermal coefficient arrays</span>
+<span class="sd">      - data_2_load/temperature_1d   : profile at target age (left BC)</span>
+<span class="sd">      - data_2_load/temp_1d_right    : profile at target age (right BC)</span>
+<span class="sd">      - data_2_load/temperature      : full time-temperature array (scaled)</span>
+<span class="sd">      - data_2_load/time_v           : time vector (scaled)</span>
+<span class="sd">      - data_2_load/z                : depth vector (scaled)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ctrl_tbc (CtrlTemperatureBC): Thermal BC control (already scaled).</span>
+<span class="sd">        ctrl (NumericalControls): Numerical controls (provides g).</span>
+<span class="sd">        ioctrl (IOControls): I/O controls (provides cache path).</span>
+<span class="sd">        sc (Scal): Scaling object (used for unit conversion when saving).</span>
+<span class="sd">        pdb (PhaseDataBase): Phase material database (jitclass, already scaled).</span>
+<span class="sd">        g_input (GeomInput): Geometric input (already scaled).</span>
+<span class="sd">        save_data (bool): Whether to write the result to the HDF5 cache.</span>
+<span class="sd">        left_right (bool): True → left (subducting) boundary; False → right (overriding).</span>
+
+<span class="sd">    Modifies ctrl_tbc in place: sets temperature_1d / temp_1d_right and z / z_right.</span>
+<span class="sd">    """</span>
+    <span class="c1"># Spell out the structure</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">ctrl</span><span class="o">.</span><span class="n">g</span>
+
+    <span class="c1"># Initialise the geometry and the phases </span>
+    <span class="n">ph</span><span class="p">,</span> <span class="n">z</span>  <span class="o">=</span> <span class="n">initialise_geometry_1d</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_tbc</span>
+                           <span class="p">,</span><span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span>
+                           <span class="p">,</span><span class="n">left_right</span><span class="o">=</span><span class="n">left_right</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">g_input</span><span class="o">.</span><span class="n">van_keken</span> <span class="ow">and</span> <span class="n">left_right</span><span class="p">:</span>
+        <span class="n">compute_half_space_cooling_model_analytical</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="p">,</span><span class="n">z</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">time_v</span><span class="p">,</span> <span class="n">temperature</span> <span class="o">=</span> <span class="n">solve_temperature_1d_bc</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_tbc</span>
+                            <span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
+                            <span class="p">,</span><span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span>
+                            <span class="p">,</span><span class="n">g</span><span class="o">=</span><span class="n">g</span>
+                            <span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="n">z</span>
+                            <span class="p">,</span><span class="n">ph</span><span class="o">=</span><span class="n">ph</span>
+                            <span class="p">,</span><span class="n">left_right</span><span class="o">=</span><span class="n">left_right</span><span class="p">)</span>
+
+    <span class="c1"># Current age index</span>
+    <span class="k">if</span> <span class="n">left_right</span><span class="p">:</span>
+        <span class="n">current_age_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">time_v</span> <span class="o">&gt;=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">slab_age</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">t_res_vec</span> <span class="o">=</span> <span class="n">time_v</span>
+        <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_1d</span> <span class="o">=</span> <span class="n">temperature</span><span class="p">[</span><span class="n">current_age_index</span><span class="p">,:]</span>
+        <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z</span><span class="p">[:]</span> <span class="o">=</span> <span class="o">-</span> <span class="n">z</span>
+        <span class="k">if</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">constant</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_2d_field</span><span class="p">[:,:]</span> <span class="o">=</span> <span class="n">temperature</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_2d_field</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">current_age_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">time_v</span> <span class="o">&gt;=</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">right_age</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_1d_right</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">temperature</span><span class="p">[</span><span class="n">current_age_index</span><span class="p">,:]</span>
+        <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z_right</span> <span class="o">=</span> <span class="o">-</span> <span class="n">z</span></div>
+
+    
+<span class="c1"># --- </span>
+<div class="viewcode-block" id="configure_thermal_bc">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.configure_thermal_bc">[docs]</a>
+<span class="nd">@timing_function</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">configure_thermal_bc</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="p">:</span><span class="n">CtrlTemperatureBC</span>
+                                 <span class="p">,</span><span class="n">ctrl</span><span class="p">:</span><span class="n">NumericalControls</span>
+                                 <span class="p">,</span><span class="n">ioctrl</span><span class="p">:</span><span class="n">IOControls</span>
+                                 <span class="p">,</span><span class="n">sc</span><span class="p">:</span><span class="n">Scal</span>
+                                 <span class="p">,</span><span class="n">pdb</span><span class="p">:</span><span class="n">PhaseDataBase</span>
+                                 <span class="p">,</span><span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span>
+                                 <span class="p">,</span><span class="n">left_right</span><span class="p">:</span><span class="nb">bool</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Dispatch thermal boundary computation: recompute from scratch or load from cache.</span>
+
+<span class="sd">    If ctrl_tbc.recalculate is set, runs the full Crank-Nicolson solver and saves</span>
+<span class="sd">    the result to the HDF5 cache. Otherwise attempts to load from the existing cache</span>
+<span class="sd">    via read_temporary_file (which itself falls back to recomputation if the file is</span>
+<span class="sd">    absent or the stored material properties do not match).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ctrl_tbc (CtrlTemperatureBC): Thermal BC control (already scaled).</span>
+<span class="sd">        ctrl (NumericalControls): Numerical controls.</span>
+<span class="sd">        ioctrl (IOControls): I/O controls (cache path).</span>
+<span class="sd">        sc (Scal): Scaling object.</span>
+<span class="sd">        pdb (PhaseDataBase): Phase material database (jitclass, already scaled).</span>
+<span class="sd">        g_input (GeomInput): Geometric input (already scaled).</span>
+<span class="sd">        left_right (bool): True → left (subducting) boundary; False → right (overriding).</span>
+
+<span class="sd">    Modifies ctrl_tbc in place: sets temperature_1d / temp_1d_right and z / z_right.</span>
+<span class="sd">    """</span>
+    <span class="n">compute_thermal_boundary</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_tbc</span>
+                                 <span class="p">,</span><span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl</span>
+                                 <span class="p">,</span><span class="n">ioctrl</span><span class="o">=</span><span class="n">ioctrl</span>
+                                 <span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span>
+                                 <span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
+                                 <span class="p">,</span><span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span>
+                                 <span class="p">,</span><span class="n">save_data</span><span class="o">=</span><span class="kc">True</span>
+                                 <span class="p">,</span><span class="n">left_right</span><span class="o">=</span><span class="n">left_right</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># --- # </span>
+<div class="viewcode-block" id="configure_boundary_condition">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.configure_boundary_condition">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">configure_boundary_condition</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="p">:</span><span class="n">CtrlTemperatureBC</span>
+                                 <span class="p">,</span><span class="n">ctrl</span><span class="p">:</span><span class="n">NumericalControls</span>
+                                 <span class="p">,</span><span class="n">ioctrl</span><span class="p">:</span><span class="n">IOControls</span>
+                                 <span class="p">,</span><span class="n">sc</span><span class="p">:</span><span class="n">Scal</span>
+                                 <span class="p">,</span><span class="n">pdb</span><span class="p">:</span><span class="n">PhaseDataBase</span>
+                                 <span class="p">,</span><span class="n">g_input</span><span class="p">:</span><span class="n">GeomInput</span><span class="p">)</span><span class="o">-&gt;</span><span class="kc">None</span><span class="p">:</span>
+
+<span class="w">    </span><span class="sd">"""Configure both the left and right thermal boundary conditions.</span>
+
+<span class="sd">    Public entry point for the thermal boundary setup. Calls configure_thermal_bc</span>
+<span class="sd">    twice — first for the left (subducting slab) boundary, then for the right</span>
+<span class="sd">    (overriding plate) boundary — each of which either recomputes or loads from cache.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ctrl_tbc (CtrlTemperatureBC): Thermal BC control (already scaled).</span>
+<span class="sd">        ctrl (NumericalControls): Numerical controls.</span>
+<span class="sd">        ioctrl (IOControls): I/O controls (cache path).</span>
+<span class="sd">        sc (Scal): Scaling object.</span>
+<span class="sd">        pdb (PhaseDataBase): Phase material database (jitclass, already scaled).</span>
+<span class="sd">        g_input (GeomInput): Geometric input (already scaled).</span>
+
+<span class="sd">    Modifies ctrl_tbc in place: temperature_1d (left) and temp_1d_right (right).</span>
+<span class="sd">    """</span>
+    <span class="c1"># Configure left boundary condition</span>
+    <span class="n">configure_thermal_bc</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_tbc</span>
+                         <span class="p">,</span><span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl</span>
+                         <span class="p">,</span><span class="n">ioctrl</span><span class="o">=</span><span class="n">ioctrl</span>
+                         <span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span>
+                         <span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
+                         <span class="p">,</span><span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span>
+                         <span class="p">,</span><span class="n">left_right</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Configure right boundary condition</span>
+    <span class="n">configure_thermal_bc</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">=</span><span class="n">ctrl_tbc</span>
+                         <span class="p">,</span><span class="n">ctrl</span><span class="o">=</span><span class="n">ctrl</span>
+                         <span class="p">,</span><span class="n">ioctrl</span><span class="o">=</span><span class="n">ioctrl</span>
+                         <span class="p">,</span><span class="n">sc</span><span class="o">=</span><span class="n">sc</span>
+                         <span class="p">,</span><span class="n">pdb</span><span class="o">=</span><span class="n">pdb</span>
+                         <span class="p">,</span><span class="n">g_input</span><span class="o">=</span><span class="n">g_input</span>
+                         <span class="p">,</span><span class="n">left_right</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<span class="c1"># --- # </span>
+
+<div class="viewcode-block" id="test_configure_boundary">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.config.thermal_boundary_bc_set.html#stonedfenicsx.config.thermal_boundary_bc_set.test_configure_boundary">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_configure_boundary</span><span class="p">():</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.simulation_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">configure_simulation</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.input_parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_input</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.config.phase_db</span><span class="w"> </span><span class="kn">import</span> <span class="n">Phase</span><span class="p">,</span><span class="n">PhInput</span>
+
+    <span class="c1"># Find the main folder of the package</span>
+    <span class="n">pkg_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
+    <span class="c1"># Select the appropriate path for the input file</span>
+    <span class="n">input_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">pkg_root</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="s2">"input.yaml"</span><span class="p">)</span>
+    <span class="c1"># parse the input file</span>
+    <span class="n">input_data</span><span class="p">,</span> <span class="n">ph_in</span> <span class="o">=</span> <span class="n">parse_input</span><span class="p">(</span><span class="n">input_file</span><span class="p">)</span>
+    <span class="c1"># Set the path of the tests</span>
+    <span class="n">path_save</span> <span class="o">=</span> <span class="n">pkg_root</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="s2">"Results"</span>
+    <span class="n">test_name</span> <span class="o">=</span> <span class="s2">"Mock_test"</span>
+    <span class="n">input_data</span><span class="o">.</span><span class="n">ctrl_io</span><span class="o">.</span><span class="n">test_name</span> <span class="o">=</span> <span class="n">test_name</span>
+    <span class="n">input_data</span><span class="o">.</span><span class="n">ctrl_io</span><span class="o">.</span><span class="n">path_save</span> <span class="o">=</span> <span class="n">path_save</span>
+    <span class="n">input_data</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">slab_age</span> <span class="o">=</span> <span class="mf">100.0</span>
+    <span class="c1">#</span>
+    <span class="n">ph_in</span><span class="o">.</span><span class="n">oceanic_crust</span><span class="o">.</span><span class="n">name_alpha</span> <span class="o">=</span> <span class="s2">"Oceanic_crust"</span>
+    <span class="n">ph_in</span><span class="o">.</span><span class="n">oceanic_crust</span><span class="o">.</span><span class="n">name_capacity</span> <span class="o">=</span> <span class="s2">"Oceanic_crust"</span>
+    <span class="n">ph_in</span><span class="o">.</span><span class="n">oceanic_crust</span><span class="o">.</span><span class="n">radiative_conductivity</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">ph_in</span><span class="o">.</span><span class="n">oceanic_crust</span><span class="o">.</span><span class="n">rho0</span> <span class="o">=</span> <span class="mi">3300</span>
+    <span class="n">ph_in</span><span class="o">.</span><span class="n">oceanic_crust</span><span class="o">.</span><span class="n">name_conductivity</span> <span class="o">=</span> <span class="s2">"Crust_Richards_2018"</span>
+    <span class="n">ph_in</span><span class="o">.</span><span class="n">oceanic_crust</span><span class="o">.</span><span class="n">name_density</span> <span class="o">=</span> <span class="s2">"PT"</span>
+    <span class="n">ph_in</span><span class="o">.</span><span class="n">oceanic_crust</span><span class="o">.</span><span class="n">radiogenic_heat</span> <span class="o">=</span> <span class="mf">0.25e-6</span>
+
+    <span class="n">ph_in</span><span class="o">.</span><span class="n">subducting_plate_mantle</span><span class="o">.</span><span class="n">name_capacity</span> <span class="o">=</span> <span class="s2">"Mantle_Bernard_Ar_199x_FO_FA"</span>
+    <span class="n">ph_in</span><span class="o">.</span><span class="n">subducting_plate_mantle</span><span class="o">.</span><span class="n">name_conductivity</span> <span class="o">=</span> <span class="s2">"Mantle_Richards_2018"</span>
+    <span class="n">ph_in</span><span class="o">.</span><span class="n">subducting_plate_mantle</span><span class="o">.</span><span class="n">name_alpha</span> <span class="o">=</span> <span class="s2">"Mantle"</span>
+    <span class="n">ph_in</span><span class="o">.</span><span class="n">subducting_plate_mantle</span><span class="o">.</span><span class="n">rho0</span> <span class="o">=</span> <span class="mi">3300</span>
+    <span class="n">ph_in</span><span class="o">.</span><span class="n">subducting_plate_mantle</span><span class="o">.</span><span class="n">name_density</span> <span class="o">=</span> <span class="s2">"PT"</span>
+
+    <span class="n">ph_in</span><span class="o">.</span><span class="n">wedge_mantle</span><span class="o">.</span><span class="n">name_capacity</span> <span class="o">=</span> <span class="s2">"Mantle_Bernard_Ar_199x_FO_FA"</span>
+    <span class="n">ph_in</span><span class="o">.</span><span class="n">wedge_mantle</span><span class="o">.</span><span class="n">name_conductivity</span> <span class="o">=</span> <span class="s2">"Mantle_Richards_2018"</span>
+    <span class="n">ph_in</span><span class="o">.</span><span class="n">wedge_mantle</span><span class="o">.</span><span class="n">name_alpha</span> <span class="o">=</span> <span class="s2">"Mantle"</span>
+    <span class="n">ph_in</span><span class="o">.</span><span class="n">wedge_mantle</span><span class="o">.</span><span class="n">rho0</span> <span class="o">=</span> <span class="mi">3300</span>
+    <span class="n">ph_in</span><span class="o">.</span><span class="n">wedge_mantle</span><span class="o">.</span><span class="n">name_density</span> <span class="o">=</span> <span class="s2">"PT"</span>
+    <span class="n">ph_in</span><span class="o">.</span><span class="n">wedge_mantle</span><span class="o">.</span><span class="n">name_dislocation</span> <span class="o">=</span> <span class="s2">"VK_Dislocation_creep"</span>
+    <span class="n">ph_in</span><span class="o">.</span><span class="n">wedge_mantle</span><span class="o">.</span><span class="n">name_diffusion</span> <span class="o">=</span> <span class="s2">"VK_Diffusion_creep"</span>
+    
+    <span class="n">ph_in</span><span class="o">.</span><span class="n">overriding_lower_crust</span><span class="o">.</span><span class="n">radiogenic_heat</span> <span class="o">=</span> <span class="mf">0.5e-6</span>
+    <span class="n">ph_in</span><span class="o">.</span><span class="n">overriding_upper_crust</span><span class="o">.</span><span class="n">radiogenic_heat</span> <span class="o">=</span> <span class="mf">1.0e-6</span>
+
+    
+    <span class="n">ctrl_sim</span><span class="p">,</span> <span class="n">_</span> <span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">sc</span>  <span class="o">=</span> <span class="n">configure_simulation</span><span class="p">(</span><span class="n">ph_in</span><span class="p">,</span> <span class="n">input_data</span><span class="p">)</span>
+    
+    <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span> 
+    
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span> 
+    <span class="n">temp_plate</span> <span class="o">=</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_1d</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="o">-</span><span class="mf">273.15</span> 
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_1d</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="o">-</span><span class="mf">273.15</span><span class="p">,</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">length</span><span class="o">/</span><span class="mf">1e3</span><span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="s1">'firebrick'</span><span class="p">)</span>   
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temp_1d_right</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="o">-</span><span class="mf">273.15</span><span class="p">,</span> <span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z_right</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">length</span><span class="o">/</span><span class="mf">1e3</span><span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="s1">'forestgreen'</span><span class="p">)</span>  
+    <span class="n">ctrl_tbc</span> <span class="o">=</span> <span class="n">compute_half_space_cooling_model_analytical</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ctrl_sim</span><span class="o">.</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z</span><span class="p">))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_1d</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="o">-</span><span class="mf">273.15</span><span class="p">,</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">length</span><span class="o">/</span><span class="mf">1e3</span><span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="s1">'cadetblue'</span><span class="p">)</span>   
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span> 
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">temperature_1d</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">temp</span><span class="o">-</span><span class="mf">273.15</span><span class="o">-</span><span class="n">temp_plate</span><span class="p">,</span> <span class="n">ctrl_tbc</span><span class="o">.</span><span class="n">z</span><span class="o">*</span><span class="n">sc</span><span class="o">.</span><span class="n">length</span><span class="o">/</span><span class="mf">1e3</span><span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="s1">'cadetblue'</span><span class="p">)</span>   
+    
+    
+    
+    <span class="k">return</span> <span class="mi">0</span></div>
+
+
+
+
+<span class="sd">'''</span>
+<span class="sd">    if rank == 0:</span>
+<span class="sd">        race_condition = check_race_condition(ioctrl=ioctrl,name=_NAME_H5_FILE_TMP)</span>
+<span class="sd">        if race_condition and ctrl_tbc.recalculate == 0: </span>
+<span class="sd">            print('    The file is opened for an other process, skip the save.')</span>
+<span class="sd">        if save_data and not race_condition:</span>
+<span class="sd">            ttime,zz = np.meshgrid(time_v,z)</span>
+<span class="sd">            ttime = ttime*sc.time/365.25/60/60/24/1e6</span>
+<span class="sd">            ttime = ttime[:,1::]</span>
+<span class="sd">            zz    = zz[:,1::]</span>
+<span class="sd">            zz    = zz*sc.length/1e3</span>
+<span class="sd">            temp_save = temperature.T[:,1::]*sc.temp - 273.15</span>
+<span class="sd">            id_phase = np.unique(ph)</span>
+<span class="sd">            path_cache = ioctrl.path_cached_information</span>
+<span class="sd">            path_h5_file = path_cache/_NAME_H5_FILE_TMP</span>
+<span class="sd">            with h5py.File(path_h5_file,'a') as f:</span>
+<span class="sd">                if left_right:</span>
+<span class="sd">                    grp = 'left_bc'</span>
+<span class="sd">                else:</span>
+<span class="sd">                    grp = 'right_bc'</span>
+<span class="sd">                save_data_set(f,temp_save,f'{grp}/temp_save')</span>
+<span class="sd">                save_data_set(f,ttime,f'{grp}/time_2d')</span>
+<span class="sd">                save_data_set(f,id_phase,f'{grp}/phases')</span>
+<span class="sd">                for _,i in enumerate(id_phase):</span>
+<span class="sd">                    array_cp = [pdb.c0[i],</span>
+<span class="sd">                                pdb.c1[i],</span>
+<span class="sd">                                pdb.c2[i],</span>
+<span class="sd">                                pdb.c3[i],</span>
+<span class="sd">                                pdb.c4[i],</span>
+<span class="sd">                                pdb.c5[i]]</span>
+<span class="sd">                    array_k = [pdb.k0[i],</span>
+<span class="sd">                               pdb.k_a[i],</span>
+<span class="sd">                               pdb.k_b[i],</span>
+<span class="sd">                               pdb.k_c[i],</span>
+<span class="sd">                               pdb.k_d[i],</span>
+<span class="sd">                               pdb.k_e[i],</span>
+<span class="sd">                               pdb.k_f[i],</span>
+<span class="sd">                               pdb.radiative_conductivity[i]]</span>
+<span class="sd">                    array_rho = [pdb.rho0[i],</span>
+<span class="sd">                                 pdb.alpha0[i],</span>
+<span class="sd">                                 pdb.alpha1[i],</span>
+<span class="sd">                                 pdb.alpha2[i],</span>
+<span class="sd">                                 pdb.kb[i]]</span>
+<span class="sd">                    hr = pdb.radiogenic_heat[i]</span>
+<span class="sd">                    name = f'{grp}/phase_properties_{i}'</span>
+<span class="sd">                    save_data_set(f,hr,f'{name}/hr')</span>
+<span class="sd">                    save_data_set(f,array_rho,f'{name}/rho_prop')</span>
+<span class="sd">                    save_data_set(f,array_cp,f'{name}/array_cp')</span>
+<span class="sd">                    save_data_set(f,array_k,f'{name}/array_cond')</span>
+<span class="sd">                name = f'{grp}/data_2_load'</span>
+<span class="sd">                if left_right:</span>
+<span class="sd">                    save_data_set(f,ctrl_tbc.temperature_1d,name=f'{name}/temperature_1d')</span>
+<span class="sd">                    save_data_set(f,ctrl_tbc.slab_age,name=f'{name}/slab_age')</span>
+<span class="sd">                    save_data_set(f,ctrl_tbc.z,name=f'{name}/z')</span>
+<span class="sd">                    save_data_set(f,ctrl_tbc.t_res_vec,name=f'{name}/t_res_v')</span>
+
+
+<span class="sd">                else: </span>
+<span class="sd">                    save_data_set(f,ctrl_tbc.temp_1d_right,name=f'{name}/temp_1d_right')</span>
+<span class="sd">                    save_data_set(f,ctrl_tbc.right_age,name=f'{name}/right_age')</span>
+<span class="sd">                    save_data_set(f,ctrl_tbc.z_right,name=f'{name}/z')</span>
+
+<span class="sd">                    </span>
+<span class="sd">                save_data_set(f,temperature,name=f'{name}/temperature')</span>
+<span class="sd">                save_data_set(f,time_v,name=f'{name}/time_v')</span>
+<span class="sd">                        </span>
+<span class="sd">                print('             temporary data base is saved...')</span>
+<span class="sd">'''</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="clearer"></div>
+    </div>
+    <div class="button_nav_wrapper">
+        <div class="button_nav">
+            <div class="left">
+                
+            </div>
+
+            <div class="right">
+                
+            </div>
+        </div>
+    </div>
+
+
+    <div class="footer" role="contentinfo">
+    &#169; Copyright .
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.0.
+    </div>
+
+<p id="theme_credit">Styled using the <a href="https://github.com/piccolo-orm/piccolo_theme">Piccolo Theme</a></p>
+  </body>
+</html>

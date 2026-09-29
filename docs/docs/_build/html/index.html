@@ -5,17 +5,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>StonedFEniCSx documentation &#8212; StonedFEniCSx</title>
+    <title>StonedFEniCSx &#8212; StonedFEniCSx</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
     <link rel="stylesheet" type="text/css" href="_static/basic_mod.css?v=9b2032db" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
     <script src="_static/documentation_options.js?v=5929fcd5"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
     <script src="_static/js/theme.js"></script>
     <script src="_static/js/petite-vue.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Installation" href="installation.html" /> 
+    <link rel="next" title="Installation and Quick Start" href="installation.html" /> 
   </head><body data-dark_mode_code_blocks="true">
 
 <div id="top_nav">
@@ -119,10 +122,14 @@
       <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper"><p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="how_to_use.html">How to use</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Computational_domain.html">Computational domain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation and Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how_to_use.html">Numerical Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how_to_use.html#how-to-use">How to use</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Computational_domain.html">Computational Domain and Boundary Conditions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Material_properties.html">Material properties</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apidocs/index.html">API Reference</a></li>
 </ul>
 
         </div>
@@ -135,46 +142,68 @@
           <div class="body" role="main">
             
   <!-- StonedFenicsx documentation master file -->
-<section id="stonedfenicsx-documentation">
-<h1>StonedFEniCSx documentation<a class="headerlink" href="#stonedfenicsx-documentation" title="Link to this heading">¶</a></h1>
+<section id="stonedfenicsx">
+<h1>StonedFEniCSx<a class="headerlink" href="#stonedfenicsx" title="Link to this heading">¶</a></h1>
 <p>Documentation of the FEM package <strong>StonedFEniCSx</strong>.
 The purpose of the library is to compute the thermal evolution of a subducting plate using the FEniCSx library.<br />
 The project initially started as a Python script (using FieldStone educational framework <a class="reference external" href="https://github.com/irisvanzelst/xFieldstone">xFieldstone</a>) and then evolved into a more structured FEM project. A few of the older routines from  <a class="reference external" href="https://github.com/irisvanzelst/xFieldstone">xFieldstone</a> have been rewritten and updated.</p>
-<p>The package is organised in six modules:
-<strong>stonedfenicsx</strong>/
+<p>The main repository page is <a class="reference external" href="https://github.com/APiccolo89/StonedFenicsx">StonedFEniCSx</a></p>
+<p>The code is underdevelopment and the documentation will be modified in the following weeks.</p>
+<p>The package is organised in six modules:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Stonedfenics/
 ├── config/                  — configure the simulations
 ├── create_mesh/             — creates the mesh via gmsh and meshio
 ├── material_properties/     — computes material properties
 ├── solver_module/           — solution routines
 ├── stoned_fenicsx.py        — top-level entry point
 ├── output.py                — handles output printing
-└── utils.py                 — general-purpose functions (timing, print_ph, …)</p>
+└── utils.py                 — general-purpose functions (timing, print_ph, ...)
+</pre></div>
+</div>
 <p>The intended workflow is to use the configuration module to configure the simulation and then use the top-level function <strong>stonedfenicsx</strong> to run the simulation. The code has a specific purpose: the production of subduction kinematic model. However, the code has been designed to be adapted for other problems, especially the routines that configure the simulation and handle the material properties.</p>
 <p>The code has benefitted of several additional sources:</p>
 <ul class="simple">
 <li><p><a class="reference external" href="https://cianwilson.github.io/fenics-sz/notebooks/0_index.html">FEniCS-SZ</a>- for the overall organisation of the problems -</p></li>
 <li><p><a class="reference external" href="https://fenicsproject.discourse.group/">FEniCS-discourse</a> - especially the tutorials and the discussion concerning how to set solvers, how to optimise the routines</p></li>
 <li><p><a class="reference external" href="https://cedrict.github.io/">FieldStone</a> - a useful and pedagogical introduction to finite element -</p></li>
+<li><p><a class="reference external" href="https://arctraining.github.io/research-software-development/">ResearSoftwareEng_Leeds</a> - a useful guide on how to setting up a python project, and handling all the intricacies on how to follow the FAIR practices.</p></li>
 </ul>
+<p>The documentation is organized in a such way that the code’s component are connected to the relative method. It is a mix of scientific-technical documentation. The guide will introduce a few examples that will be part of manuscript in preparation. The package will link to the repository of these experiments to reproduce the results.</p>
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="how_to_use.html">How to use</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation and Quick Start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#quick-start">Quick start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#running-the-tests">Running the tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="how_to_use.html">Numerical Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how_to_use.html#how-to-use">How to use</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="how_to_use.html#input-file">Input File</a></li>
-<li class="toctree-l2"><a class="reference internal" href="how_to_use.html#geometry">geometry</a></li>
 <li class="toctree-l2"><a class="reference internal" href="how_to_use.html#usage">Usage</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="Computational_domain.html">Computational domain</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="Computational_domain.html#domains">Domains</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Computational_domain.html">Computational Domain and Boundary Conditions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Computational_domain.html#domain-geometry"><em>Domain geometry</em></a></li>
+<li class="toctree-l2"><a class="reference internal" href="Computational_domain.html#overview">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Computational_domain.html#module-create-mesh">Module create mesh</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Computational_domain.html#references">References</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Computational_domain.html#boundary-conditions">Boundary Conditions</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="Material_properties.html">Material properties</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="Material_properties.html#rock-phase-and-ids">Rock phase and IDs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Material_properties.html#rock-phases-and-ids">Rock phases and IDs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Material_properties.html#id1">Material properties</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Examples.html#benchmarks">Benchmarks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Examples.html#sensitivity-study">Sensitivity study</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apidocs/index.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apidocs/stonedfenicsx/stonedfenicsx.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">stonedfenicsx</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -203,7 +232,7 @@ The project initially started as a Python script (using FieldStone educational f
             <p><a class="toggle_right_sidebar" href="#"><span class="icon">&gt;</span><span>Page contents:</span></a></p>
             <div class="page_toc">
                 <ul>
-<li><a class="reference internal" href="#">StonedFEniCSx documentation</a><ul>
+<li><a class="reference internal" href="#">StonedFEniCSx</a><ul>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
 </li>
@@ -223,7 +252,7 @@ The project initially started as a Python script (using FieldStone educational f
 
             <div class="right">
                 
-                    <a href="installation.html"><span>Installation</span><span class="icon">&gt;</span></a>
+                    <a href="installation.html"><span>Installation and Quick Start</span><span class="icon">&gt;</span></a>
                 
             </div>
         </div>
@@ -232,7 +261,7 @@ The project initially started as a Python script (using FieldStone educational f
 
     <div class="footer" role="contentinfo">
     &#169; Copyright .
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.0.
     </div>
 
 <p id="theme_credit">Styled using the <a href="https://github.com/piccolo-orm/piccolo_theme">Piccolo Theme</a></p>

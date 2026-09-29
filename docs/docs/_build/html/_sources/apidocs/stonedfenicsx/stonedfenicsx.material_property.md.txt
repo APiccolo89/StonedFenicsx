@@ -1,0 +1,17 @@
+# {py:mod}`stonedfenicsx.material_property`
+
+```{py:module} stonedfenicsx.material_property
+```
+
+```{autodoc2-docstring} stonedfenicsx.material_property
+:allowtitles:
+```
+
+## Submodules
+
+```{toctree}
+:titlesonly:
+:maxdepth: 1
+
+stonedfenicsx.material_property.compute_material_property
+```

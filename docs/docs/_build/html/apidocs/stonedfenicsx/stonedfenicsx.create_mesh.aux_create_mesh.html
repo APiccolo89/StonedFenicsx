@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>stonedfenicsx.create_mesh.aux_create_mesh &#8212; StonedFEniCSx</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic_mod.css?v=9b2032db" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+    <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <script src="../../_static/js/petite-vue.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="stonedfenicsx.create_mesh.create_mesh" href="stonedfenicsx.create_mesh.create_mesh.html" />
+    <link rel="prev" title="stonedfenicsx.create_mesh.read_slab_surface" href="stonedfenicsx.create_mesh.read_slab_surface.html" /> 
+  </head><body data-dark_mode_code_blocks="true">
+
+<div id="top_nav">
+    
+
+    <nav>
+        
+            
+        
+
+        <p id="toggle_sidebar">
+            <a href="#" title="Toggle sidebar">|||</a>
+        </p>
+        <h1><a href="../../index.html" title="Go to homepage">StonedFEniCSx</a></h1>
+
+        <a id="mode_toggle" href="#" @click.prevent="handleClick" :title="mode">
+    <template v-if="mode == 'light'">
+        <svg width="100%" height="100%" viewBox="0 0 79 80" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;"><g id="mode_light"><rect id="Bounds" x="0" y="-0" width="78.623" height="79.049" style="fill:none;"/><circle cx="39.311" cy="39.524" r="15.734" style="fill:#fff;"/><g id="beams"><g id="beam"><path id="beam1" serif:id="beam" d="M44.212,4.901c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.9,2.196 -4.9,4.901l-0,9.614c-0,2.705 2.196,4.901 4.9,4.901c2.705,0 4.901,-2.196 4.901,-4.901l0,-9.614Z" style="fill:#fff;"/></g><g id="beam2" serif:id="beam"><path id="beam3" serif:id="beam" d="M67.48,18.073c1.913,-1.912 1.913,-5.018 0,-6.931c-1.912,-1.912 -5.018,-1.912 -6.931,0l-6.798,6.799c-1.912,1.912 -1.912,5.018 0,6.931c1.913,1.912 5.018,1.912 6.931,-0l6.798,-6.799Z" style="fill:#fff;"/></g><g id="beam4" serif:id="beam"><path id="beam5" serif:id="beam" d="M25.728,61.108c1.912,-1.913 1.912,-5.018 -0,-6.931c-1.913,-1.913 -5.019,-1.913 -6.931,-0l-6.799,6.798c-1.912,1.913 -1.912,5.019 0,6.931c1.913,1.913 5.019,1.913 6.931,0l6.799,-6.798Z" style="fill:#fff;"/></g><g id="beam6" serif:id="beam"><path id="beam7" serif:id="beam" d="M60.682,54.177c-1.913,-1.913 -5.018,-1.913 -6.931,-0c-1.912,1.913 -1.912,5.018 0,6.931l6.798,6.798c1.913,1.913 5.019,1.913 6.931,0c1.913,-1.912 1.913,-5.018 0,-6.931l-6.798,-6.798Z" style="fill:#fff;"/></g><g id="beam8" serif:id="beam"><path id="beam9" serif:id="beam" d="M4.901,34.623c-2.705,0 -4.901,2.196 -4.901,4.901c0,2.705 2.196,4.901 4.901,4.901l9.614,0c2.705,0 4.901,-2.196 4.901,-4.901c0,-2.705 -2.196,-4.901 -4.901,-4.901l-9.614,0Z" style="fill:#fff;"/></g><g id="beam10" serif:id="beam"><path id="beam11" serif:id="beam" d="M44.212,64.534c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.9,2.196 -4.9,4.901l-0,9.614c-0,2.705 2.196,4.901 4.9,4.901c2.705,-0 4.901,-2.196 4.901,-4.901l0,-9.614Z" style="fill:#fff;"/></g><g id="beam12" serif:id="beam"><path id="beam13" serif:id="beam" d="M18.929,11.142c-1.912,-1.912 -5.018,-1.912 -6.931,0c-1.912,1.913 -1.912,5.019 0,6.931l6.799,6.799c1.912,1.912 5.018,1.912 6.931,-0c1.912,-1.913 1.912,-5.019 -0,-6.931l-6.799,-6.799Z" style="fill:#fff;"/></g><g id="beam14" serif:id="beam"><path id="beam15" serif:id="beam" d="M64.108,34.623c-2.705,0 -4.901,2.196 -4.901,4.901c-0,2.705 2.196,4.901 4.901,4.901l9.614,0c2.705,0 4.901,-2.196 4.901,-4.901c-0,-2.705 -2.196,-4.901 -4.901,-4.901l-9.614,0Z" style="fill:#fff;"/></g></g></g></svg>
+    </template>
+
+    <template v-if="mode == 'dark'">
+        <svg width="100%" height="100%" viewBox="0 0 79 80" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;"><g id="mode_dark"><rect id="Bounds" x="0" y="-0" width="78.623" height="79.049" style="fill:none;"/><circle cx="39.311" cy="39.524" r="15.734" style="fill:#fff;"/><g id="beams"><g id="beam"><path id="beam1" serif:id="beam" d="M44.212,14.515c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,0 -4.901,2.196 -4.901,4.901c0,2.705 2.197,4.901 4.901,4.901c2.705,0 4.901,-2.196 4.901,-4.901Z" style="fill:#fff;"/></g><g id="beam2" serif:id="beam"><path id="beam3" serif:id="beam" d="M60.662,24.892c1.902,-1.902 1.902,-4.99 0,-6.892l-0.04,-0.039c-1.901,-1.902 -4.989,-1.902 -6.891,-0c-1.901,1.901 -1.901,4.989 0,6.891l0.04,0.04c1.902,1.901 4.989,1.901 6.891,-0Z" style="fill:#fff;"/></g><g id="beam4" serif:id="beam"><path id="beam5" serif:id="beam" d="M25.732,61.103c1.91,-1.91 1.91,-5.011 0,-6.921l-0.009,-0.01c-1.91,-1.91 -5.012,-1.91 -6.921,-0c-1.91,1.91 -1.91,5.011 -0,6.921l0.01,0.01c1.909,1.91 5.011,1.91 6.92,-0Z" style="fill:#fff;"/></g><g id="beam6" serif:id="beam"><path id="beam7" serif:id="beam" d="M60.672,54.167c-1.907,-1.907 -5.004,-1.907 -6.911,0l-0.02,0.02c-1.907,1.907 -1.907,5.004 0,6.911c1.907,1.907 5.004,1.907 6.911,-0l0.02,-0.02c1.907,-1.907 1.907,-5.004 0,-6.911Z" style="fill:#fff;"/></g><g id="beam8" serif:id="beam"><path id="beam9" serif:id="beam" d="M14.52,34.623c-2.702,0 -4.896,2.194 -4.896,4.896l0,0.01c0,2.702 2.194,4.896 4.896,4.896c2.702,0 4.896,-2.194 4.896,-4.896l-0,-0.01c-0,-2.702 -2.194,-4.896 -4.896,-4.896Z" style="fill:#fff;"/></g><g id="beam10" serif:id="beam"><path id="beam11" serif:id="beam" d="M44.212,64.534c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.901,2.196 -4.901,4.901c0,2.704 2.197,4.9 4.901,4.9c2.705,0 4.901,-2.196 4.901,-4.9Z" style="fill:#fff;"/></g><g id="beam12" serif:id="beam"><path id="beam13" serif:id="beam" d="M25.73,17.943c-1.911,-1.911 -5.015,-1.911 -6.926,0l-0.005,0.005c-1.911,1.911 -1.911,5.015 0,6.926c1.911,1.911 5.015,1.911 6.926,0l0.005,-0.005c1.911,-1.911 1.911,-5.014 -0,-6.926Z" style="fill:#fff;"/></g><g id="beam14" serif:id="beam"><path id="beam15" serif:id="beam" d="M64.098,34.623c-2.699,0 -4.891,2.192 -4.891,4.892l-0,0.019c-0,2.699 2.192,4.891 4.891,4.891c2.7,0 4.892,-2.192 4.892,-4.891l0,-0.019c0,-2.7 -2.192,-4.892 -4.892,-4.892Z" style="fill:#fff;"/></g></g></g></svg>
+    </template>
+
+    <template v-if="mode == 'darkest'">
+        <svg width="100%" height="100%" viewBox="0 0 79 80" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;"><g id="mode_darkest"><rect id="Bounds" x="0" y="-0" width="78.623" height="79.049" style="fill:none;"/><path d="M39.315,23.791c8.684,-0 15.734,7.05 15.734,15.733c0,8.684 -7.05,15.734 -15.734,15.734c-8.683,0 -15.733,-7.05 -15.733,-15.734c-0,-8.683 7.05,-15.733 15.733,-15.733Zm0,4.737c6.069,0 10.997,4.927 10.997,10.996c-0,6.069 -4.928,10.996 -10.997,10.996c-6.068,0 -10.996,-4.927 -10.996,-10.996c0,-6.069 4.928,-10.996 10.996,-10.996Z" style="fill:#fff;"/><g id="beams"><g id="beam"><path id="beam1" serif:id="beam" d="M44.216,14.515c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,0 -4.9,2.196 -4.9,4.901c-0,2.705 2.196,4.901 4.9,4.901c2.705,0 4.901,-2.196 4.901,-4.901Z" style="fill:#fff;"/></g><g id="beam2" serif:id="beam"><path id="beam3" serif:id="beam" d="M60.666,24.892c1.902,-1.902 1.902,-4.99 0,-6.892l-0.04,-0.039c-1.901,-1.902 -4.989,-1.902 -6.891,-0c-1.901,1.901 -1.901,4.989 0,6.891l0.04,0.04c1.902,1.901 4.99,1.901 6.891,-0Z" style="fill:#fff;"/></g><g id="beam4" serif:id="beam"><path id="beam5" serif:id="beam" d="M25.737,61.103c1.909,-1.91 1.909,-5.011 -0,-6.921l-0.01,-0.01c-1.91,-1.91 -5.011,-1.91 -6.921,-0c-1.91,1.91 -1.91,5.011 -0,6.921l0.01,0.01c1.91,1.91 5.011,1.91 6.921,-0Z" style="fill:#fff;"/></g><g id="beam6" serif:id="beam"><path id="beam7" serif:id="beam" d="M60.676,54.167c-1.907,-1.907 -5.004,-1.907 -6.911,0l-0.02,0.02c-1.907,1.907 -1.907,5.004 0,6.911c1.907,1.907 5.004,1.907 6.911,-0l0.02,-0.02c1.907,-1.907 1.907,-5.004 0,-6.911Z" style="fill:#fff;"/></g><g id="beam8" serif:id="beam"><path id="beam9" serif:id="beam" d="M14.524,34.623c-2.702,0 -4.896,2.194 -4.896,4.896l0,0.01c0,2.702 2.194,4.896 4.896,4.896c2.702,0 4.896,-2.194 4.896,-4.896l0,-0.01c0,-2.702 -2.194,-4.896 -4.896,-4.896Z" style="fill:#fff;"/></g><g id="beam10" serif:id="beam"><path id="beam11" serif:id="beam" d="M44.216,64.534c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.9,2.196 -4.9,4.901c-0,2.704 2.196,4.9 4.9,4.9c2.705,0 4.901,-2.196 4.901,-4.9Z" style="fill:#fff;"/></g><g id="beam12" serif:id="beam"><path id="beam13" serif:id="beam" d="M25.734,17.943c-1.911,-1.911 -5.015,-1.911 -6.926,0l-0.005,0.005c-1.911,1.911 -1.911,5.015 0,6.926c1.911,1.911 5.015,1.911 6.926,0l0.005,-0.005c1.911,-1.911 1.911,-5.014 0,-6.926Z" style="fill:#fff;"/></g><g id="beam14" serif:id="beam"><path id="beam15" serif:id="beam" d="M64.103,34.623c-2.7,0 -4.892,2.192 -4.892,4.892l-0,0.019c-0,2.699 2.192,4.891 4.892,4.891c2.699,0 4.891,-2.192 4.891,-4.891l0,-0.019c0,-2.7 -2.192,-4.892 -4.891,-4.892Z" style="fill:#fff;"/></g></g></g></svg>
+    </template>
+</a>
+
+<script>
+(function() {
+    const LOCAL_STORAGE_KEY = 'piccoloThemeMode'
+
+    var initialMode = localStorage.getItem(LOCAL_STORAGE_KEY)
+
+    if (initialMode) {
+        // Make sure the value in local storage is valid
+        if (['light', 'dark', 'darkest'].indexOf(initialMode) == -1) {
+            initialMode = 'light'
+            localStorage.setItem(LOCAL_STORAGE_KEY, initialMode)
+        }
+    } else {
+        // Check if the client prefers dark mode
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            initialMode = 'dark'
+        } else {
+            initialMode = 'light'
+        }
+        localStorage.setItem(LOCAL_STORAGE_KEY, initialMode)
+    }
+
+    document.documentElement.dataset.mode = initialMode
+
+    PetiteVue.createApp({
+        'mode': initialMode,
+        handleClick() {
+            let currentMode = this.mode
+
+            if (currentMode == 'light') {
+                this.mode = 'dark'
+            } else if (currentMode == 'dark') {
+                this.mode = 'darkest'
+            } else if (currentMode == 'darkest') {
+                this.mode = 'light'
+            }
+
+            document.documentElement.dataset.mode = this.mode
+            localStorage.setItem(LOCAL_STORAGE_KEY, this.mode)
+
+            console.log(this.mode)
+        }
+    }).mount('#mode_toggle')
+})()
+</script>
+            <p class="mobile_search_link">
+                <a href="../../search.html" title="Search">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 65 64" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2">
+                        <path d="M14.873 40.009c-2.315-3.943-3.642-8.532-3.642-13.429C11.231 11.91 23.141 0 37.811 0s26.58 11.91 26.58 26.58-11.91 26.58-26.58 26.58a26.44 26.44 0 0 1-14.277-4.161L9.739 62.794a3.12 3.12 0 0 1-4.413 0L.913 58.382c-1.217-1.218-1.217-3.196 0-4.413l13.96-13.96zM37.811 8.054c10.225 0 18.526 8.301 18.526 18.526s-8.301 18.526-18.526 18.526-18.526-8.301-18.526-18.526S27.586 8.054 37.811 8.054z" fill="#fff" />
+                    </svg>
+                </a>
+            </p>
+        
+
+        <div class="searchbox_wrapper">
+            
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+    </nav>
+</div>
+
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper"><p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation and Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how_to_use.html">Numerical Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how_to_use.html#how-to-use">How to use</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Computational_domain.html">Computational Domain and Boundary Conditions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Material_properties.html">Material properties</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">Bibliography</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="stonedfenicsx.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">stonedfenicsx</span></code></a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="stonedfenicsx.solver_module.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">stonedfenicsx.solver_module</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="stonedfenicsx.config.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">stonedfenicsx.config</span></code></a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="stonedfenicsx.create_mesh.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">stonedfenicsx.create_mesh</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="stonedfenicsx.material_property.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">stonedfenicsx.material_property</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="stonedfenicsx.stoned_fenicsx.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">stonedfenicsx.stoned_fenicsx</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="stonedfenicsx.utils.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">stonedfenicsx.utils</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="stonedfenicsx.output.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">stonedfenicsx.output</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="module-stonedfenicsx.create_mesh.aux_create_mesh">
+<span id="stonedfenicsx-create-mesh-aux-create-mesh"></span><h1><a class="reference internal" href="#module-stonedfenicsx.create_mesh.aux_create_mesh" title="stonedfenicsx.create_mesh.aux_create_mesh"><code class="xref py py-mod docutils literal notranslate"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh</span></code></a><a class="headerlink" href="#module-stonedfenicsx.create_mesh.aux_create_mesh" title="Link to this heading">¶</a></h1>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Link to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-left">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.Class_Points" title="stonedfenicsx.create_mesh.aux_create_mesh.Class_Points"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Class_Points</span></code></a></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.Class_Line" title="stonedfenicsx.create_mesh.aux_create_mesh.Class_Line"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Class_Line</span></code></a></p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Link to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-left">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.from_line_to_point_coordinate" title="stonedfenicsx.create_mesh.aux_create_mesh.from_line_to_point_coordinate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_line_to_point_coordinate</span></code></a></p></td>
+<td><p>From a given line, retrieve the extreme points data</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.create_loop" title="stonedfenicsx.create_mesh.aux_create_mesh.create_loop"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_loop</span></code></a></p></td>
+<td><p>Create a closed curve loop from a list of contiguous lines.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.find_line_index" title="stonedfenicsx.create_mesh.aux_create_mesh.find_line_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_line_index</span></code></a></p></td>
+<td><p>Find the line IDs associated with a given point.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.find_tag_line" title="stonedfenicsx.create_mesh.aux_create_mesh.find_tag_line"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_tag_line</span></code></a></p></td>
+<td><p><em>summary</em></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.find_slab_surface" title="stonedfenicsx.create_mesh.aux_create_mesh.find_slab_surface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_slab_surface</span></code></a></p></td>
+<td><p>Compute the top surface of a kinematic slab as a polyline starting from the trench.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.compute_angle_parabolic" title="stonedfenicsx.create_mesh.aux_create_mesh.compute_angle_parabolic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_angle_parabolic</span></code></a></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.create_slab_surface" title="stonedfenicsx.create_mesh.aux_create_mesh.create_slab_surface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_slab_surface</span></code></a></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.compute_bending_angle" title="stonedfenicsx.create_mesh.aux_create_mesh.compute_bending_angle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_bending_angle</span></code></a></p></td>
+<td><p>compute_bending_angle:
+inputs:
+geometrical information
+current length of the slab
+Returns:
+theta:float -&gt; for a given bending angle function, return theta = f(l) -&gt; l the actual distance along the slab surface from the trench</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.ribe_angle" title="stonedfenicsx.create_mesh.aux_create_mesh.ribe_angle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ribe_angle</span></code></a></p></td>
+<td><p>ribe_angle
+inputs:
+theta_max : float -&gt; maximum angle of the slab
+Lb : float -&gt; critical along slab distance where the bending is occuring
+lgh : float -&gt; current position along the slab surface</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.function_create_subducting_plate_geometry" title="stonedfenicsx.create_mesh.aux_create_mesh.function_create_subducting_plate_geometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">function_create_subducting_plate_geometry</span></code></a></p></td>
+<td><p>Create the main subducting-plate geometry from input parameters.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.generate_parallel_layer_subducting_plate" title="stonedfenicsx.create_mesh.aux_create_mesh.generate_parallel_layer_subducting_plate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_parallel_layer_subducting_plate</span></code></a></p></td>
+<td><p>Compute the coordinates of an internal layer surface within the subducting plate.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh._find_e_node" title="stonedfenicsx.create_mesh.aux_create_mesh._find_e_node"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_find_e_node</span></code></a></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh._correct_" title="stonedfenicsx.create_mesh.aux_create_mesh._correct_"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_correct_</span></code></a></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.find_extra_node" title="stonedfenicsx.create_mesh.aux_create_mesh.find_extra_node"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_extra_node</span></code></a></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh._create_points" title="stonedfenicsx.create_mesh.aux_create_mesh._create_points"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_create_points</span></code></a></p></td>
+<td><p>Create Gmsh point(s) and keep track of their tags and coordinates.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh._create_lines" title="stonedfenicsx.create_mesh.aux_create_mesh._create_lines"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_create_lines</span></code></a></p></td>
+<td><p>Create Gmsh line(s) from point tags and keep track of their tags and connectivity.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.assign_phases" title="stonedfenicsx.create_mesh.aux_create_mesh.assign_phases"><code class="xref py py-obj docutils literal notranslate"><span class="pre">assign_phases</span></code></a></p></td>
+<td><p>Assigns phase tags to the mesh based on the provided surface tags.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.create_slab_surface_parabolic" title="stonedfenicsx.create_mesh.aux_create_mesh.create_slab_surface_parabolic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_slab_surface_parabolic</span></code></a></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.cumulative_distance" title="stonedfenicsx.create_mesh.aux_create_mesh.cumulative_distance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cumulative_distance</span></code></a></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.compute_dip" title="stonedfenicsx.create_mesh.aux_create_mesh.compute_dip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_dip</span></code></a></p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="data">
+<h3>Data<a class="headerlink" href="#data" title="Link to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-left">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.dict_surf" title="stonedfenicsx.create_mesh.aux_create_mesh.dict_surf"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict_surf</span></code></a></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.dict_tag_lines" title="stonedfenicsx.create_mesh.aux_create_mesh.dict_tag_lines"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict_tag_lines</span></code></a></p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="api">
+<h3>API<a class="headerlink" href="#api" title="Link to this heading">¶</a></h3>
+<dl class="py data">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.dict_surf">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">dict_surf</span></span><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.dict_surf" title="Link to this definition">¶</a></dt>
+<dd><p>None</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.dict_tag_lines">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">dict_tag_lines</span></span><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.dict_tag_lines" title="Link to this definition">¶</a></dt>
+<dd><p>None</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.Class_Points">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">Class_Points</span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#Class_Points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.Class_Points" title="Link to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.Class_Points.update_points">
+<span class="sig-name descname"><span class="pre">update_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">gmsh.model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">by</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oc_cx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oc_cy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">g_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">gmsh.model</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#Class_Points.update_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.Class_Points.update_points" title="Link to this definition">¶</a></dt>
+<dd><p>Generate the physical points required to build the Gmsh geometry.</p>
+<p>Using the main geometric information stored in <code class="docutils literal notranslate"><span class="pre">g_input</span></code> together with the slab
+top/bottom surfaces (and optionally the oceanic Moho), this routine defines the
+physical points that will later be connected into physical lines for the Gmsh
+model.</p>
+<p class="rubric" id="id14">Parameters</p>
+<p>sx : np.ndarray
+x-coordinates of the top surface of the subducting plate.
+sy : np.ndarray
+y-coordinates of the top surface of the subducting plate.
+bx : np.ndarray
+x-coordinates of the bottom surface of the subducting plate.
+by : np.ndarray
+y-coordinates of the bottom surface of the subducting plate.
+oc_cx : np.ndarray | None
+x-coordinates of the oceanic Moho. Can be <code class="docutils literal notranslate"><span class="pre">None</span></code>/empty if the crust is not defined.
+oc_cy : np.ndarray | None
+y-coordinates of the oceanic Moho. Can be <code class="docutils literal notranslate"><span class="pre">None</span></code>/empty if the crust is not defined.
+g_input : GeomInput
+Object containing all input geometric information.</p>
+<p class="rubric" id="id15">Returns</p>
+<p>mesh_model : gmsh.model
+Updated Gmsh model containing the generated points.
+-&gt; update the class points with new members</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.Class_Line">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">Class_Line</span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#Class_Line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.Class_Line" title="Link to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.Class_Line.update_lines">
+<span class="sig-name descname"><span class="pre">update_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">gmsh.model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">CP</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.Class_Points" title="stonedfenicsx.create_mesh.aux_create_mesh.Class_Points"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.Class_Points</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">g_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">gmsh.model</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#Class_Line.update_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.Class_Line.update_lines" title="Link to this definition">¶</a></dt>
+<dd><p>Generate Gmsh lines and assign tags/IDs.</p>
+<p>This routine creates the physical lines required for the geometry, using the
+previously generated point set stored in <code class="docutils literal notranslate"><span class="pre">CP</span></code>, and assigns consistent tags/IDs
+to each line so they can be referenced later (e.g., for boundary markers and
+physical groups).</p>
+<p class="rubric" id="id16">Parameters</p>
+<p>mesh_model : gmsh.model
+Gmsh model object to be updated.
+CP : Class_Points
+Container storing the physical point tags and their coordinates.
+g_input : GeomInput
+Object containing the geometric input parameters controlling which lines
+are created and how they are connected.</p>
+<p class="rubric" id="id17">Returns</p>
+<p>mesh_model : gmsh.model
+Updated Gmsh model containing the generated lines.
+LP : Class_Line
+Updated line container holding the created line IDs/tags and connectivity
+(e.g., mapping line -&gt; endpoint point tags).</p>
+<p class="rubric" id="id18">Notes</p>
+<p>The returned line container is used to:</p>
+<ul class="simple">
+<li><p>build surfaces from line loops,</p></li>
+<li><p>define physical groups for boundaries/regions,</p></li>
+<li><p>and maintain consistent bookkeeping between geometry objects.</p></li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.from_line_to_point_coordinate">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">from_line_to_point_coordinate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">L</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">LG</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.int64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">GP</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#from_line_to_point_coordinate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.from_line_to_point_coordinate" title="Link to this definition">¶</a></dt>
+<dd><p>From a given line, retrieve the extreme points data</p>
+<p>Args:
+L (int): line id
+LG (ndarray[np.int64]): global line database
+GP (ndarray[np.float64]): global points database</p>
+<p>Returns:
+p0 : id point that defines the line
+p1 : id point that defines the line
+coord_x : coordinate-x of the points that define the given line
+coord_y : coordinate-y of the points that define the given line</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.create_loop">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">create_loop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">gmsh.model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">gmsh.model</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#create_loop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.create_loop" title="Link to this definition">¶</a></dt>
+<dd><p>Create a closed curve loop from a list of contiguous lines.</p>
+<p>This function takes an ordered list of line IDs forming a continuous boundary
+and creates a Gmsh curve loop with the specified tag. The resulting loop can
+then be used to define plane surfaces and physical groups.</p>
+<p class="rubric" id="id19">Parameters</p>
+<p>l_list : list[int]
+Ordered list of line IDs defining the loop boundary. Lines must be
+contiguous and oriented consistently to form a closed loop.
+mesh_model : gmsh.model
+Gmsh model object to be updated.
+tag : int
+Tag/ID assigned to the created curve loop.</p>
+<p class="rubric" id="id20">Returns</p>
+<p>mesh_model : gmsh.model
+Updated Gmsh model containing the newly created curve loop.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.find_line_index">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">find_line_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Lin_ar</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">point</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#find_line_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.find_line_index" title="Link to this definition">¶</a></dt>
+<dd><p>Find the line IDs associated with a given point.</p>
+<p>From the coordinate-y to line index in the global database of line.
+From a given depth, loop over the line and check the coordinate. If the
+coordinate is equal to d, stop the loop, and release the index of the
+global line database.</p>
+<p class="rubric" id="id21">Parameters</p>
+<p>Lin_ar : ndarray[np.int64]
+Global line database.
+point : ndarray[np.int64]
+Global database of the points
+d : float
+coordinate-y to find the relative point</p>
+<p class="rubric" id="id22">Returns</p>
+<p>index : int | list[int]
+Line ID(s) (or indices in <code class="docutils literal notranslate"><span class="pre">Lin_ar</span></code>) of the line(s) to which the given point
+belongs.</p>
+<p class="rubric" id="id23">Notes</p>
+<p>A point may belong to multiple lines (e.g., at junctions or corners). In such
+cases, returning a list of IDs is recommended.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.find_tag_line">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">find_tag_line</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coord</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#find_tag_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.find_tag_line" title="Link to this definition">¶</a></dt>
+<dd><p><em>summary</em></p>
+<p>Args:
+coord (ndarray): coordinate of
+x (float): <em>description</em>
+dir (str): <em>description</em></p>
+<p>Returns:
+int: <em>description</em></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.find_slab_surface">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">find_slab_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#find_slab_surface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.find_slab_surface" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the top surface of a kinematic slab as a polyline starting from the trench.</p>
+<p>The slab surface is discretised into straight segments of length <code class="docutils literal notranslate"><span class="pre">g_input.sub_dl</span></code>.
+At each step we compute the local bending angle at the current and next arc-length
+positions, average them, and use that mean angle to advance to the next point.</p>
+<p class="rubric" id="id24">Angle convention</p>
+<p>theta is measured with respect to the positive horizontal x-axis.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>     theta
+</pre></div>
+</div>
+<p>x-axis  ————-
+\ theta
+/</p>
+<p class="rubric" id="id25">Algorithm (summary)</p>
+<ol class="arabic simple">
+<li><p>Initialise <code class="docutils literal notranslate"><span class="pre">top_slab</span></code> with the trench point.</p></li>
+<li><p>Initialise the arc-length <code class="docutils literal notranslate"><span class="pre">lgh</span> <span class="pre">=</span> <span class="pre">0.0</span></code> (distance measured along the slab surface).</p></li>
+<li><p>While the current point is above the model bottom boundary (<code class="docutils literal notranslate"><span class="pre">y</span> <span class="pre">&gt;</span> <span class="pre">ymin</span></code>):
+a. Set <code class="docutils literal notranslate"><span class="pre">lghn</span> <span class="pre">=</span> <span class="pre">lgh</span> <span class="pre">+</span> <span class="pre">g_input.sub_dl</span></code>.
+b. Compute <code class="docutils literal notranslate"><span class="pre">theta</span>&#160; <span class="pre">=</span> <span class="pre">theta(lgh)</span></code>  and <code class="docutils literal notranslate"><span class="pre">theta1</span> <span class="pre">=</span> <span class="pre">theta(lghn)</span></code>.
+c. Compute <code class="docutils literal notranslate"><span class="pre">theta_mean</span> <span class="pre">=</span> <span class="pre">0.5</span> <span class="pre">*</span> <span class="pre">(theta</span> <span class="pre">+</span> <span class="pre">theta1)</span></code>.
+d. Use <code class="docutils literal notranslate"><span class="pre">theta_mean</span></code> to advance one step and append the new point to <code class="docutils literal notranslate"><span class="pre">top_slab</span></code>.
+e. Update <code class="docutils literal notranslate"><span class="pre">lgh</span> <span class="pre">=</span> <span class="pre">lghn</span></code>.</p></li>
+</ol>
+<p class="rubric" id="id26">Returns</p>
+<p>top_slab : (n_segment, 2) ndarray
+Coordinates (x, y) of the slab top surface polyline.
+theta_mean : float
+Mean bending angle used for the last segment (or an average over segments,
+depending on your implementation).</p>
+<p class="rubric" id="id27">Raises</p>
+<p>ValueError
+If the selected slab-surface method is not implemented (only “custom” is
+currently supported).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.compute_angle_parabolic">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">compute_angle_parabolic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#compute_angle_parabolic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.compute_angle_parabolic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.create_slab_surface">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">create_slab_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#create_slab_surface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.create_slab_surface" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.compute_bending_angle">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">compute_bending_angle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">lgh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#compute_bending_angle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.compute_bending_angle" title="Link to this definition">¶</a></dt>
+<dd><p>compute_bending_angle:
+inputs:
+geometrical information
+current length of the slab
+Returns:
+theta:float -&gt; for a given bending angle function, return theta = f(l) -&gt; l the actual distance along the slab surface from the trench</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.ribe_angle">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">ribe_angle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Lb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lgh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#ribe_angle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.ribe_angle" title="Link to this definition">¶</a></dt>
+<dd><p>ribe_angle
+inputs:
+theta_max : float -&gt; maximum angle of the slab
+Lb : float -&gt; critical along slab distance where the bending is occuring
+lgh : float -&gt; current position along the slab surface</p>
+<p>Returns:
+theta :float -&gt; Bending angle at the local point along the top surface slab.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.function_create_subducting_plate_geometry">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">function_create_subducting_plate_geometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#function_create_subducting_plate_geometry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.function_create_subducting_plate_geometry" title="Link to this definition">¶</a></dt>
+<dd><p>Create the main subducting-plate geometry from input parameters.</p>
+<p>This routine builds the coordinate arrays describing the slab top and bottom
+surfaces and, if requested/available, the oceanic Moho. The returned arrays are
+used to define the Gmsh geometry and subsequent mesh generation. The input
+geometry object may be updated (e.g., derived quantities, validated parameters,
+or cached geometry).</p>
+<p class="rubric" id="id28">Parameters</p>
+<p>g_input : GeomInput
+Object containing all input geometric parameters required to construct the
+slab and associated interfaces.</p>
+<p class="rubric" id="id29">Returns</p>
+<p>ax : np.ndarray
+x-coordinates of the slab top surface.
+ay : np.ndarray
+y-coordinates of the slab top surface.
+bx : np.ndarray
+x-coordinates of the slab bottom surface.
+by : np.ndarray
+y-coordinates of the slab bottom surface.
+ox : np.ndarray | None
+x-coordinates of the oceanic Moho. Can be <code class="docutils literal notranslate"><span class="pre">None</span></code>/empty if the crust is not
+defined or not requested.
+oy : np.ndarray | None
+y-coordinates of the oceanic Moho. Can be <code class="docutils literal notranslate"><span class="pre">None</span></code>/empty if the crust is not
+defined or not requested.
+g_input : GeomInput
+Updated geometry input object (may include derived or validated fields).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.generate_parallel_layer_subducting_plate">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">generate_parallel_layer_subducting_plate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">th</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constant_theta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#generate_parallel_layer_subducting_plate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.generate_parallel_layer_subducting_plate" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the coordinates of an internal layer surface within the subducting plate.</p>
+<p>Given the slab top surface coordinates and a local slab bending angle, this
+function constructs a parallel/offset surface at a distance <code class="docutils literal notranslate"><span class="pre">lt</span></code> (e.g., oceanic
+crust thickness or slab thickness), representing an internal layer boundary
+within the subducting plate.</p>
+<p class="rubric" id="id30">Parameters</p>
+<p>sx : ndarray[np.float64]
+x-coordinates of the slab top surface.
+sy : ndarray[np.float64]
+y-coordinates of the slab top surface.
+th : float
+Local slab bending angle associated with the surface points (degrees or
+radians depending on the implementation; must be consistent with the
+trigonometric functions used).
+lt : float
+Layer thickness used to offset the surface (e.g., oceanic crust thickness
+or slab thickness) (SI units: [m]).
+constant_theta: bool
+Tells whether or not the subduction plate is a constant slope slab (i.e.,
+VanKeken Benchmark)</p>
+<p class="rubric" id="id31">Returns</p>
+<p>cx : ndarray[np.float64]
+x-coordinates of the layer-defining surface.
+cy : ndarray[np.float64]
+y-coordinates of the layer-defining surface.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh._find_e_node">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">_find_e_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ay</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#_find_e_node"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh._find_e_node" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh._correct_">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">_correct_</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ay</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_extra_node</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#_correct_"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh._correct_" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.find_extra_node">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">find_extra_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ay</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">g_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#find_extra_node"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.find_extra_node" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh._create_points">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">_create_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">gmsh.model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag_pr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">point_flag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#_create_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh._create_points" title="Link to this definition">¶</a></dt>
+<dd><p>Create Gmsh point(s) and keep track of their tags and coordinates.</p>
+<p>This helper wraps the Gmsh point-creation call to support creating one or many
+points, while explicitly tracking the assigned tags so they can be referenced
+consistently later when building lines/surfaces.</p>
+<p class="rubric" id="id32">Parameters</p>
+<p>mesh : gmsh.model
+the mesh model
+x : float | np.ndarray
+x-coordinate(s) of the point(s) [m]. Can be a scalar or an array.
+y : float | np.ndarray
+y-coordinate(s) of the point(s) [m]. Can be a scalar or an array.
+res : float
+Target mesh size (characteristic length) assigned to the point(s).
+tag_pr : int
+Previous/starting tag used to track point IDs across calls. Since Gmsh
+can assign tags internally, this value is used to keep bookkeeping
+consistent.</p>
+<p class="rubric" id="id33">Returns</p>
+<p>max_tag : int
+Maximum tag assigned during this function call.
+tag_list : list[int]
+List of tags for the created point(s), ordered consistently with the input
+coordinates.
+coord : np.ndarray
+Coordinates of the created point(s), typically shaped as (N, 2) for (x, y).
+If useful downstream, you may include tags alongside coordinates (e.g.,
+(N, 3) with [tag, x, y])—in that case, document the exact convention.</p>
+<p class="rubric" id="id34">Notes</p>
+<p>This function solves the practical problem of creating a set of points (1..N)
+in Gmsh while retaining a reliable mapping between coordinates and point tags,
+so that subsequent geometry construction can reference points coherently.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh._create_lines">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">_create_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">gmsh.model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag_p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.int32</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">gmsh.model</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#_create_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh._create_lines" title="Link to this definition">¶</a></dt>
+<dd><p>Create Gmsh line(s) from point tags and keep track of their tags and connectivity.</p>
+<p>This helper wraps the Gmsh line-creation call to support creating one or many
+lines, while explicitly tracking the assigned line tags so they can be
+referenced consistently later when building curve loops, surfaces, and physical
+groups.</p>
+<p class="rubric" id="id35">Parameters</p>
+<p>mesh : gmsh.model
+Gmsh model object to be updated.
+previous : int
+Previous/starting line tag used for bookkeeping across calls.
+tag_p : list[int]
+Point tags used to create the lines. Typically an ordered list of point
+tags where consecutive pairs define segments.</p>
+<p class="rubric" id="id36">Returns</p>
+<p>max_tag : int
+Maximum line tag assigned during this function call.
+tag_l : list[int]
+List of tags for the created line(s), ordered consistently with the created
+segments.
+lines : np.ndarray
+Array containing line metadata, typically shaped (N, 3) with rows
+<code class="docutils literal notranslate"><span class="pre">[p1,</span> <span class="pre">p2,</span> <span class="pre">tag]</span></code>, where <code class="docutils literal notranslate"><span class="pre">p1</span></code> and <code class="docutils literal notranslate"><span class="pre">p2</span></code> are point tags and <code class="docutils literal notranslate"><span class="pre">tag</span></code> is the line tag.
+mesh_model : gmsh.model
+Updated Gmsh model containing the created line(s).</p>
+<p class="rubric" id="id37">Notes</p>
+<p>This function solves the practical problem of generating a set of lines from an
+ordered list of point tags while keeping a reliable mapping between endpoint
+tags and the created line tags for downstream geometry construction.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.assign_phases">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">assign_phases</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dict_surf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_tags</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dolfinx.fem.Function</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dolfinx.fem.Function</span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#assign_phases"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.assign_phases" title="Link to this definition">¶</a></dt>
+<dd><p>Assigns phase tags to the mesh based on the provided surface tags.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.create_slab_surface_parabolic">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">create_slab_surface_parabolic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="stonedfenicsx.config.geometry.html#stonedfenicsx.config.geometry.GeomInput" title="stonedfenicsx.config.geometry.GeomInput"><span class="pre">stonedfenicsx.config.geometry.GeomInput</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#create_slab_surface_parabolic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.create_slab_surface_parabolic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.cumulative_distance">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">cumulative_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#cumulative_distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.cumulative_distance" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="stonedfenicsx.create_mesh.aux_create_mesh.compute_dip">
+<span class="sig-prename descclassname"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh.</span></span><span class="sig-name descname"><span class="pre">compute_dip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.typing.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.float32</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/stonedfenicsx/create_mesh/aux_create_mesh.html#compute_dip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#stonedfenicsx.create_mesh.aux_create_mesh.compute_dip" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+    
+        <div id="show_right_sidebar">
+            <p><a class="toggle_right_sidebar" href="#"><span class="icon">&lt;</span><span>Page contents</span></a></p>
+        </div>
+
+        <div id="right_sidebar">
+            <p><a class="toggle_right_sidebar" href="#"><span class="icon">&gt;</span><span>Page contents:</span></a></p>
+            <div class="page_toc">
+                <ul>
+<li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">stonedfenicsx.create_mesh.aux_create_mesh</span></code></a><ul>
+<li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a></li>
+<li><a class="reference internal" href="#functions">Functions</a></li>
+<li><a class="reference internal" href="#data">Data</a></li>
+<li><a class="reference internal" href="#api">API</a><ul>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.dict_surf"><code class="docutils literal notranslate"><span class="pre">dict_surf</span></code></a></li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.dict_tag_lines"><code class="docutils literal notranslate"><span class="pre">dict_tag_lines</span></code></a></li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.Class_Points"><code class="docutils literal notranslate"><span class="pre">Class_Points</span></code></a><ul>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.Class_Points.update_points"><code class="docutils literal notranslate"><span class="pre">Class_Points.update_points()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.Class_Line"><code class="docutils literal notranslate"><span class="pre">Class_Line</span></code></a><ul>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.Class_Line.update_lines"><code class="docutils literal notranslate"><span class="pre">Class_Line.update_lines()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.from_line_to_point_coordinate"><code class="docutils literal notranslate"><span class="pre">from_line_to_point_coordinate()</span></code></a></li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.create_loop"><code class="docutils literal notranslate"><span class="pre">create_loop()</span></code></a></li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.find_line_index"><code class="docutils literal notranslate"><span class="pre">find_line_index()</span></code></a></li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.find_tag_line"><code class="docutils literal notranslate"><span class="pre">find_tag_line()</span></code></a></li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.find_slab_surface"><code class="docutils literal notranslate"><span class="pre">find_slab_surface()</span></code></a></li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.compute_angle_parabolic"><code class="docutils literal notranslate"><span class="pre">compute_angle_parabolic()</span></code></a></li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.create_slab_surface"><code class="docutils literal notranslate"><span class="pre">create_slab_surface()</span></code></a></li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.compute_bending_angle"><code class="docutils literal notranslate"><span class="pre">compute_bending_angle()</span></code></a></li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.ribe_angle"><code class="docutils literal notranslate"><span class="pre">ribe_angle()</span></code></a></li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.function_create_subducting_plate_geometry"><code class="docutils literal notranslate"><span class="pre">function_create_subducting_plate_geometry()</span></code></a></li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.generate_parallel_layer_subducting_plate"><code class="docutils literal notranslate"><span class="pre">generate_parallel_layer_subducting_plate()</span></code></a></li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh._find_e_node"><code class="docutils literal notranslate"><span class="pre">_find_e_node()</span></code></a></li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh._correct_"><code class="docutils literal notranslate"><span class="pre">_correct_()</span></code></a></li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.find_extra_node"><code class="docutils literal notranslate"><span class="pre">find_extra_node()</span></code></a></li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh._create_points"><code class="docutils literal notranslate"><span class="pre">_create_points()</span></code></a></li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh._create_lines"><code class="docutils literal notranslate"><span class="pre">_create_lines()</span></code></a></li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.assign_phases"><code class="docutils literal notranslate"><span class="pre">assign_phases()</span></code></a></li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.create_slab_surface_parabolic"><code class="docutils literal notranslate"><span class="pre">create_slab_surface_parabolic()</span></code></a></li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.cumulative_distance"><code class="docutils literal notranslate"><span class="pre">cumulative_distance()</span></code></a></li>
+<li><a class="reference internal" href="#stonedfenicsx.create_mesh.aux_create_mesh.compute_dip"><code class="docutils literal notranslate"><span class="pre">compute_dip()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </div>
+    
+
+      <div class="clearer"></div>
+    </div>
+    <div class="button_nav_wrapper">
+        <div class="button_nav">
+            <div class="left">
+                
+                <a href="stonedfenicsx.create_mesh.read_slab_surface.html">
+                    <span class="icon">&lt;</span><span><code class="xref py py-mod docutils literal notranslate"><span class="pre">stonedfenicsx.create_mesh.read_slab_surface</span></code></span></a>
+                
+            </div>
+
+            <div class="right">
+                
+                    <a href="stonedfenicsx.create_mesh.create_mesh.html"><span><code class="xref py py-mod docutils literal notranslate"><span class="pre">stonedfenicsx.create_mesh.create_mesh</span></code></span><span class="icon">&gt;</span></a>
+                
+            </div>
+        </div>
+    </div>
+
+
+    <div class="footer" role="contentinfo">
+    &#169; Copyright .
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.0.
+    </div>
+
+<p id="theme_credit">Styled using the <a href="https://github.com/piccolo-orm/piccolo_theme">Piccolo Theme</a></p>
+  </body>
+</html>

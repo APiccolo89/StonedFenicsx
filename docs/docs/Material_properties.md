@@ -143,23 +143,21 @@ The main rheologies available in the code are listed in the following section. T
 ::::{tab-set}
 
 :::{tab-item} Diffusion Creep
-(Table_Diffusion_Creep)=
 
-*Dislocation Creep*
+```{table} Diffusion creep
+:name: Table_Diffusion_Creep
+
 | Name | b | e [J/mol] | v [m³/mol] | m | r | d [μm] | f (correction) | mpa | b_si | Water corr. | Ref (short) |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| `Hirth_dry_Dislocation_creep` | 1.5e9 | 375.0e3 | 5e-6 | 3.0 | 0 | 10e3 | Simpleshear | 1 | MPa⁻¹ s⁻¹ | None | {cite}`hirth2003rheology` |
+| `Hirth_dry_Diffusion_creep` | 1.5e9 | 375.0e3 | 5e-6 | 3.0 | 0 | 10e3 | Simpleshear | 1 | MPa⁻¹ s⁻¹ | None | {cite}`hirth2003rheology` |
 | `Hirth_wet_Diffusion_creep` | 2.7e7 | 375.0e3 | 10e-6 | 3.0 | 0.8 | 10e3 | Simpleshear | 1 | MPa⁻¹ s⁻¹ COH⁻ʳ | COH | {cite}`hirth2003rheology` |
 | `VK_Diffusion_creep` | 3.79e-10 | 335.0e3 | 0e-6 | 1.0 | 0.8 | 1.0 | None | 0 | Pa⁻¹ s⁻¹ | None | {cite}`van2008community` |
-
+```
 :::
 
 :::{tab-item} Dislocation Creep
-Content 2
-
-(Table_Dislocation_Creep)=
-
-*Dislocation Creep*
+```{table} Dislocation creep
+:name: Table_Dislocation_Creep
 
 | Name | b | e [J/mol] | v [m³/mol] | n | r | f (correction) | mpa | b_si | Water corr. | Ref (short) |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -167,12 +165,13 @@ Content 2
 | `Hirth_wet_Dislocation_creep` | 1600 | 520.0e3 | 22e-6 | 3.5 | 1.2 | Simpleshear | 1 | MPa⁻ⁿ s⁻¹ COH⁻ʳ | COH | {cite}`hirth2003rheology` |
 | `VK_Dislocation_creep` | 2.136e-17 | 540.0e3 | 0.0 | 3.5 | 0.0 | None | 0 | MPa⁻ⁿ s⁻¹ COH⁻ʳ | None | {cite}`van2008community` |
 | `Wet_Quartzite_2001_Dislocation_creep` | 2.7e7 | 345.0e3 | 38e-6 | 3.0 | 0.0 | Uniaxial | 1 | MPa⁻ⁿ s⁻¹ | None | {cite}`rybacki2004deformation` |
-| `Hirareth_Serpentinite_Dislocation_creep` | 2.82e-15 | 8900 | 3.2e-6 | 3.8 | 0.0 | Uniaxial | 1 | MPa⁻ⁿ s⁻¹ | None | {cite}`hilairet2007high` |
-| `Wet_Quartzite_2001_Dislocation_creep` | 6.31e-12 | 135.0e3 | 0e6 | 4.0 | 1.0 | Uniaxial | 1 | MPa⁻⁽ⁿ⁺ʳ⁾ s⁻¹ | Fugacity | {cite}`hirth2001evaluation` |
+| `Hilairet_Serpentinite_Dislocation_creep` | 2.82e-15 | 8900 | 3.2e-6 | 3.8 | 0.0 | Uniaxial | 1 | MPa⁻ⁿ s⁻¹ | None | {cite}`hilairet2007high` |
+| `Wet_Quartzite_2001_Dislocation_creep` | 6.31e-12 | 135.0e3 | 0e-6 | 4.0 | 1.0 | Uniaxial | 1 | MPa⁻⁽ⁿ⁺ʳ⁾ s⁻¹ | Fugacity | {cite}`hirth2001evaluation` |
 | `Glaucophane_2025_Dislocation_creep` | 2.32e10 | 450.0e3 | 0e-6 | 3.0 | 0.0 | Uniaxial | 1 | MPa⁻ⁿ s⁻¹ | None | {cite}`hufford2026blueschist` |
-::::
+```
 :::
 
+::::
 
 The viscosity is computed using the harmonic average:
 
@@ -227,10 +226,8 @@ corrected pre-exponential factor, it is only necessary to multiply the
 rheological equations by $\zeta$, which describes the variation with respect
 to the reference state.
 
-`````{admonition} Note!: 
-  :class: important_note
-The reference indicates the source from which a particular rheology was first introduced into **StonedFEniCSx**, rather than necessarily the original publication of the flow law. For example, `VK_Diffusion_creep` ultimately originates from {cite}`karato1993rheology`.
-`````
+>[!NOTE]
+>The reference indicates the source from which a particular rheology was first introduced into **StonedFEniCSx**, rather than necessarily the original publication of the flow law. For >example, `VK_Diffusion_creep` ultimately originates from {cite}`karato1993rheology`.
 
 
 ### Thermal properties

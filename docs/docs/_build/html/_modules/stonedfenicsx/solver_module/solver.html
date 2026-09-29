@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>stonedfenicsx.solver_module.solver &#8212; StonedFEniCSx</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic_mod.css?v=9b2032db" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <script src="../../../_static/js/petite-vue.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body data-dark_mode_code_blocks="true">
+
+<div id="top_nav">
+    
+
+    <nav>
+        
+            
+        
+
+        <p id="toggle_sidebar">
+            <a href="#" title="Toggle sidebar">|||</a>
+        </p>
+        <h1><a href="../../../index.html" title="Go to homepage">StonedFEniCSx</a></h1>
+
+        <a id="mode_toggle" href="#" @click.prevent="handleClick" :title="mode">
+    <template v-if="mode == 'light'">
+        <svg width="100%" height="100%" viewBox="0 0 79 80" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;"><g id="mode_light"><rect id="Bounds" x="0" y="-0" width="78.623" height="79.049" style="fill:none;"/><circle cx="39.311" cy="39.524" r="15.734" style="fill:#fff;"/><g id="beams"><g id="beam"><path id="beam1" serif:id="beam" d="M44.212,4.901c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.9,2.196 -4.9,4.901l-0,9.614c-0,2.705 2.196,4.901 4.9,4.901c2.705,0 4.901,-2.196 4.901,-4.901l0,-9.614Z" style="fill:#fff;"/></g><g id="beam2" serif:id="beam"><path id="beam3" serif:id="beam" d="M67.48,18.073c1.913,-1.912 1.913,-5.018 0,-6.931c-1.912,-1.912 -5.018,-1.912 -6.931,0l-6.798,6.799c-1.912,1.912 -1.912,5.018 0,6.931c1.913,1.912 5.018,1.912 6.931,-0l6.798,-6.799Z" style="fill:#fff;"/></g><g id="beam4" serif:id="beam"><path id="beam5" serif:id="beam" d="M25.728,61.108c1.912,-1.913 1.912,-5.018 -0,-6.931c-1.913,-1.913 -5.019,-1.913 -6.931,-0l-6.799,6.798c-1.912,1.913 -1.912,5.019 0,6.931c1.913,1.913 5.019,1.913 6.931,0l6.799,-6.798Z" style="fill:#fff;"/></g><g id="beam6" serif:id="beam"><path id="beam7" serif:id="beam" d="M60.682,54.177c-1.913,-1.913 -5.018,-1.913 -6.931,-0c-1.912,1.913 -1.912,5.018 0,6.931l6.798,6.798c1.913,1.913 5.019,1.913 6.931,0c1.913,-1.912 1.913,-5.018 0,-6.931l-6.798,-6.798Z" style="fill:#fff;"/></g><g id="beam8" serif:id="beam"><path id="beam9" serif:id="beam" d="M4.901,34.623c-2.705,0 -4.901,2.196 -4.901,4.901c0,2.705 2.196,4.901 4.901,4.901l9.614,0c2.705,0 4.901,-2.196 4.901,-4.901c0,-2.705 -2.196,-4.901 -4.901,-4.901l-9.614,0Z" style="fill:#fff;"/></g><g id="beam10" serif:id="beam"><path id="beam11" serif:id="beam" d="M44.212,64.534c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.9,2.196 -4.9,4.901l-0,9.614c-0,2.705 2.196,4.901 4.9,4.901c2.705,-0 4.901,-2.196 4.901,-4.901l0,-9.614Z" style="fill:#fff;"/></g><g id="beam12" serif:id="beam"><path id="beam13" serif:id="beam" d="M18.929,11.142c-1.912,-1.912 -5.018,-1.912 -6.931,0c-1.912,1.913 -1.912,5.019 0,6.931l6.799,6.799c1.912,1.912 5.018,1.912 6.931,-0c1.912,-1.913 1.912,-5.019 -0,-6.931l-6.799,-6.799Z" style="fill:#fff;"/></g><g id="beam14" serif:id="beam"><path id="beam15" serif:id="beam" d="M64.108,34.623c-2.705,0 -4.901,2.196 -4.901,4.901c-0,2.705 2.196,4.901 4.901,4.901l9.614,0c2.705,0 4.901,-2.196 4.901,-4.901c-0,-2.705 -2.196,-4.901 -4.901,-4.901l-9.614,0Z" style="fill:#fff;"/></g></g></g></svg>
+    </template>
+
+    <template v-if="mode == 'dark'">
+        <svg width="100%" height="100%" viewBox="0 0 79 80" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;"><g id="mode_dark"><rect id="Bounds" x="0" y="-0" width="78.623" height="79.049" style="fill:none;"/><circle cx="39.311" cy="39.524" r="15.734" style="fill:#fff;"/><g id="beams"><g id="beam"><path id="beam1" serif:id="beam" d="M44.212,14.515c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,0 -4.901,2.196 -4.901,4.901c0,2.705 2.197,4.901 4.901,4.901c2.705,0 4.901,-2.196 4.901,-4.901Z" style="fill:#fff;"/></g><g id="beam2" serif:id="beam"><path id="beam3" serif:id="beam" d="M60.662,24.892c1.902,-1.902 1.902,-4.99 0,-6.892l-0.04,-0.039c-1.901,-1.902 -4.989,-1.902 -6.891,-0c-1.901,1.901 -1.901,4.989 0,6.891l0.04,0.04c1.902,1.901 4.989,1.901 6.891,-0Z" style="fill:#fff;"/></g><g id="beam4" serif:id="beam"><path id="beam5" serif:id="beam" d="M25.732,61.103c1.91,-1.91 1.91,-5.011 0,-6.921l-0.009,-0.01c-1.91,-1.91 -5.012,-1.91 -6.921,-0c-1.91,1.91 -1.91,5.011 -0,6.921l0.01,0.01c1.909,1.91 5.011,1.91 6.92,-0Z" style="fill:#fff;"/></g><g id="beam6" serif:id="beam"><path id="beam7" serif:id="beam" d="M60.672,54.167c-1.907,-1.907 -5.004,-1.907 -6.911,0l-0.02,0.02c-1.907,1.907 -1.907,5.004 0,6.911c1.907,1.907 5.004,1.907 6.911,-0l0.02,-0.02c1.907,-1.907 1.907,-5.004 0,-6.911Z" style="fill:#fff;"/></g><g id="beam8" serif:id="beam"><path id="beam9" serif:id="beam" d="M14.52,34.623c-2.702,0 -4.896,2.194 -4.896,4.896l0,0.01c0,2.702 2.194,4.896 4.896,4.896c2.702,0 4.896,-2.194 4.896,-4.896l-0,-0.01c-0,-2.702 -2.194,-4.896 -4.896,-4.896Z" style="fill:#fff;"/></g><g id="beam10" serif:id="beam"><path id="beam11" serif:id="beam" d="M44.212,64.534c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.901,2.196 -4.901,4.901c0,2.704 2.197,4.9 4.901,4.9c2.705,0 4.901,-2.196 4.901,-4.9Z" style="fill:#fff;"/></g><g id="beam12" serif:id="beam"><path id="beam13" serif:id="beam" d="M25.73,17.943c-1.911,-1.911 -5.015,-1.911 -6.926,0l-0.005,0.005c-1.911,1.911 -1.911,5.015 0,6.926c1.911,1.911 5.015,1.911 6.926,0l0.005,-0.005c1.911,-1.911 1.911,-5.014 -0,-6.926Z" style="fill:#fff;"/></g><g id="beam14" serif:id="beam"><path id="beam15" serif:id="beam" d="M64.098,34.623c-2.699,0 -4.891,2.192 -4.891,4.892l-0,0.019c-0,2.699 2.192,4.891 4.891,4.891c2.7,0 4.892,-2.192 4.892,-4.891l0,-0.019c0,-2.7 -2.192,-4.892 -4.892,-4.892Z" style="fill:#fff;"/></g></g></g></svg>
+    </template>
+
+    <template v-if="mode == 'darkest'">
+        <svg width="100%" height="100%" viewBox="0 0 79 80" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;"><g id="mode_darkest"><rect id="Bounds" x="0" y="-0" width="78.623" height="79.049" style="fill:none;"/><path d="M39.315,23.791c8.684,-0 15.734,7.05 15.734,15.733c0,8.684 -7.05,15.734 -15.734,15.734c-8.683,0 -15.733,-7.05 -15.733,-15.734c-0,-8.683 7.05,-15.733 15.733,-15.733Zm0,4.737c6.069,0 10.997,4.927 10.997,10.996c-0,6.069 -4.928,10.996 -10.997,10.996c-6.068,0 -10.996,-4.927 -10.996,-10.996c0,-6.069 4.928,-10.996 10.996,-10.996Z" style="fill:#fff;"/><g id="beams"><g id="beam"><path id="beam1" serif:id="beam" d="M44.216,14.515c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,0 -4.9,2.196 -4.9,4.901c-0,2.705 2.196,4.901 4.9,4.901c2.705,0 4.901,-2.196 4.901,-4.901Z" style="fill:#fff;"/></g><g id="beam2" serif:id="beam"><path id="beam3" serif:id="beam" d="M60.666,24.892c1.902,-1.902 1.902,-4.99 0,-6.892l-0.04,-0.039c-1.901,-1.902 -4.989,-1.902 -6.891,-0c-1.901,1.901 -1.901,4.989 0,6.891l0.04,0.04c1.902,1.901 4.99,1.901 6.891,-0Z" style="fill:#fff;"/></g><g id="beam4" serif:id="beam"><path id="beam5" serif:id="beam" d="M25.737,61.103c1.909,-1.91 1.909,-5.011 -0,-6.921l-0.01,-0.01c-1.91,-1.91 -5.011,-1.91 -6.921,-0c-1.91,1.91 -1.91,5.011 -0,6.921l0.01,0.01c1.91,1.91 5.011,1.91 6.921,-0Z" style="fill:#fff;"/></g><g id="beam6" serif:id="beam"><path id="beam7" serif:id="beam" d="M60.676,54.167c-1.907,-1.907 -5.004,-1.907 -6.911,0l-0.02,0.02c-1.907,1.907 -1.907,5.004 0,6.911c1.907,1.907 5.004,1.907 6.911,-0l0.02,-0.02c1.907,-1.907 1.907,-5.004 0,-6.911Z" style="fill:#fff;"/></g><g id="beam8" serif:id="beam"><path id="beam9" serif:id="beam" d="M14.524,34.623c-2.702,0 -4.896,2.194 -4.896,4.896l0,0.01c0,2.702 2.194,4.896 4.896,4.896c2.702,0 4.896,-2.194 4.896,-4.896l0,-0.01c0,-2.702 -2.194,-4.896 -4.896,-4.896Z" style="fill:#fff;"/></g><g id="beam10" serif:id="beam"><path id="beam11" serif:id="beam" d="M44.216,64.534c0,-2.705 -2.196,-4.901 -4.901,-4.901c-2.704,-0 -4.9,2.196 -4.9,4.901c-0,2.704 2.196,4.9 4.9,4.9c2.705,0 4.901,-2.196 4.901,-4.9Z" style="fill:#fff;"/></g><g id="beam12" serif:id="beam"><path id="beam13" serif:id="beam" d="M25.734,17.943c-1.911,-1.911 -5.015,-1.911 -6.926,0l-0.005,0.005c-1.911,1.911 -1.911,5.015 0,6.926c1.911,1.911 5.015,1.911 6.926,0l0.005,-0.005c1.911,-1.911 1.911,-5.014 0,-6.926Z" style="fill:#fff;"/></g><g id="beam14" serif:id="beam"><path id="beam15" serif:id="beam" d="M64.103,34.623c-2.7,0 -4.892,2.192 -4.892,4.892l-0,0.019c-0,2.699 2.192,4.891 4.892,4.891c2.699,0 4.891,-2.192 4.891,-4.891l0,-0.019c0,-2.7 -2.192,-4.892 -4.891,-4.892Z" style="fill:#fff;"/></g></g></g></svg>
+    </template>
+</a>
+
+<script>
+(function() {
+    const LOCAL_STORAGE_KEY = 'piccoloThemeMode'
+
+    var initialMode = localStorage.getItem(LOCAL_STORAGE_KEY)
+
+    if (initialMode) {
+        // Make sure the value in local storage is valid
+        if (['light', 'dark', 'darkest'].indexOf(initialMode) == -1) {
+            initialMode = 'light'
+            localStorage.setItem(LOCAL_STORAGE_KEY, initialMode)
+        }
+    } else {
+        // Check if the client prefers dark mode
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            initialMode = 'dark'
+        } else {
+            initialMode = 'light'
+        }
+        localStorage.setItem(LOCAL_STORAGE_KEY, initialMode)
+    }
+
+    document.documentElement.dataset.mode = initialMode
+
+    PetiteVue.createApp({
+        'mode': initialMode,
+        handleClick() {
+            let currentMode = this.mode
+
+            if (currentMode == 'light') {
+                this.mode = 'dark'
+            } else if (currentMode == 'dark') {
+                this.mode = 'darkest'
+            } else if (currentMode == 'darkest') {
+                this.mode = 'light'
+            }
+
+            document.documentElement.dataset.mode = this.mode
+            localStorage.setItem(LOCAL_STORAGE_KEY, this.mode)
+
+            console.log(this.mode)
+        }
+    }).mount('#mode_toggle')
+})()
+</script>
+            <p class="mobile_search_link">
+                <a href="../../../search.html" title="Search">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 65 64" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2">
+                        <path d="M14.873 40.009c-2.315-3.943-3.642-8.532-3.642-13.429C11.231 11.91 23.141 0 37.811 0s26.58 11.91 26.58 26.58-11.91 26.58-26.58 26.58a26.44 26.44 0 0 1-14.277-4.161L9.739 62.794a3.12 3.12 0 0 1-4.413 0L.913 58.382c-1.217-1.218-1.217-3.196 0-4.413l13.96-13.96zM37.811 8.054c10.225 0 18.526 8.301 18.526 18.526s-8.301 18.526-18.526 18.526-18.526-8.301-18.526-18.526S27.586 8.054 37.811 8.054z" fill="#fff" />
+                    </svg>
+                </a>
+            </p>
+        
+
+        <div class="searchbox_wrapper">
+            
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+    </nav>
+</div>
+
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper"><p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation and Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../how_to_use.html">Numerical Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../how_to_use.html#how-to-use">How to use</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Computational_domain.html">Computational Domain and Boundary Conditions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Material_properties.html">Material properties</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apidocs/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for stonedfenicsx.solver_module.solver</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dolfinx</span><span class="w"> </span><span class="kn">import</span> <span class="n">fem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dolfinx.fem.petsc</span><span class="w"> </span><span class="kn">import</span> <span class="n">assemble_matrix_block</span><span class="p">,</span> <span class="n">assemble_vector_block</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mpi4py</span><span class="w"> </span><span class="kn">import</span> <span class="n">MPI</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">petsc4py</span><span class="w"> </span><span class="kn">import</span> <span class="n">PETSc</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">stonedfenicsx.utils</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+
+<span class="sd">"""This section has been created using the default tutorials of FEniCSx. </span>
+<span class="sd">I choose to use monolithic direct/iterative solvers. The choiche of the options depends</span>
+<span class="sd">on the preconditioner that I set up for the stokes for the given problem. </span>
+<span class="sd">"""</span>
+
+<div class="viewcode-block" id="Solvers">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solver.html#stonedfenicsx.solver_module.solver.Solvers">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Solvers</span><span class="p">():</span>
+<div class="viewcode-block" id="Solvers.destroy">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solver.html#stonedfenicsx.solver_module.solver.Solvers.destroy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">destroy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Explicitly free PETSc objects held by this solver."""</span>
+        <span class="c1"># Destroy in roughly reverse order of dependency.</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="c1"># KSPs first (they reference operators/PC)</span>
+            <span class="s2">"ksp_u"</span><span class="p">,</span> <span class="s2">"ksp_p"</span><span class="p">,</span> <span class="s2">"ksp"</span><span class="p">,</span>
+            <span class="c1"># Index sets</span>
+            <span class="s2">"is_u"</span><span class="p">,</span> <span class="s2">"is_p"</span><span class="p">,</span>
+            <span class="c1"># Nullspace + vector</span>
+            <span class="s2">"nsp"</span><span class="p">,</span> <span class="s2">"null_vec"</span><span class="p">,</span>
+            <span class="c1"># Matrices / vectors</span>
+            <span class="s2">"A"</span><span class="p">,</span> <span class="s2">"P"</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">obj</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="c1"># Some PETSc wrappers may already be destroyed; ignore safely.</span>
+                <span class="k">pass</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+</div>
+
+
+<div class="viewcode-block" id="ScalarSolver">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solver.html#stonedfenicsx.solver_module.solver.ScalarSolver">[docs]</a>
+<span class="k">class</span><span class="w">  </span><span class="nc">ScalarSolver</span><span class="p">(</span><span class="n">Solvers</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    class that store all the information for scalar like problems. Temperature and lithostatic pressure (potentially darcy like) are similar problem </span>
+<span class="sd">    they diffuse and advect a scalar. </span>
+<span class="sd">    --- </span>
+<span class="sd">    So -&gt; Solver are more or less the same, I can store a few things and update as a function of the needs. </span>
+<span class="sd">    --- </span>
+<span class="sd">    Solve function require the problem P -&gt; and a decision between linear and non linear -&gt; form are handled by p class, so I do not give a fuck in this class </span>
+<span class="sd">    for now all the parameter will be default. </span>
+<span class="sd">    """</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">a</span> <span class="p">,</span><span class="n">L</span><span class="p">,</span> <span class="n">bcs</span> <span class="p">,</span><span class="n">COMM</span><span class="p">,</span><span class="n">direct</span> <span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Create the PETSc matrix/vector/KSP for a scalar (temperature or lithostatic pressure) problem.</span>
+
+<span class="sd">        Allocates the system matrix `A` (with the sparsity of `a`) and RHS</span>
+<span class="sd">        vector `b`, creates the KSP, and configures either an iterative</span>
+<span class="sd">        (FGMRES + hypre) or direct (LU via MUMPS) solver.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            a (dolfinx.fem.Form | ufl.Form): Bilinear form defining the matrix sparsity/operator.</span>
+<span class="sd">            L (dolfinx.fem.Form | ufl.Form): Linear form defining the RHS vector.</span>
+<span class="sd">            bcs (list): Dirichlet boundary conditions (unused directly here,</span>
+<span class="sd">                kept for interface parity with callers).</span>
+<span class="sd">            COMM (mpi4py.MPI.Comm): MPI communicator for the KSP.</span>
+<span class="sd">            direct (int, optional): 0 for the iterative (fgmres/hypre)</span>
+<span class="sd">                solver, non-zero for the direct (LU/mumps) solver. Defaults to 0.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">petsc</span><span class="o">.</span><span class="n">create_matrix</span><span class="p">(</span><span class="n">fem</span><span class="o">.</span><span class="n">form</span><span class="p">(</span><span class="n">a</span><span class="p">))</span> <span class="c1"># Store the sparsisity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">fem</span><span class="o">.</span><span class="n">petsc</span><span class="o">.</span><span class="n">create_vector</span><span class="p">(</span><span class="n">fem</span><span class="o">.</span><span class="n">form</span><span class="p">(</span><span class="n">L</span><span class="p">))</span> <span class="c1"># Store the vector</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span> <span class="o">=</span> <span class="n">PETSc</span><span class="o">.</span><span class="n">KSP</span><span class="p">()</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">COMM</span><span class="p">)</span>           <span class="c1"># Create the ksp object </span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">setOperators</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">)</span>                <span class="c1"># Set Operator</span>
+        <span class="n">direct_solver</span> <span class="o">=</span> <span class="n">direct</span> 
+        <span class="k">if</span> <span class="n">direct_solver</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> 
+        
+            <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s2">"fgmres"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">setTolerances</span><span class="p">(</span><span class="n">rtol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span> <span class="n">max_it</span><span class="o">=</span><span class="mi">2000</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">getPC</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pc</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s2">"hypre"</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s2">"preonly"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">getPC</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pc</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s2">"lu"</span><span class="p">)</span>       
+            <span class="bp">self</span><span class="o">.</span><span class="n">pc</span><span class="o">.</span><span class="n">setFactorSolverType</span><span class="p">(</span><span class="s1">'mumps'</span><span class="p">)</span>     </div>
+
+
+    
+<div class="viewcode-block" id="SolverStokes">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solver.html#stonedfenicsx.solver_module.solver.SolverStokes">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SolverStokes</span><span class="p">(</span><span class="n">Solvers</span><span class="p">):</span> 
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">a_p</span> <span class="p">,</span><span class="n">L</span> <span class="p">,</span><span class="n">COMM</span><span class="p">,</span> <span class="n">nl</span><span class="p">,</span><span class="n">bcs</span> <span class="p">,</span><span class="n">F0</span><span class="p">,</span><span class="n">F1</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">,</span><span class="n">J</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span><span class="n">it</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">ts</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span><span class="n">slab</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Create the block PETSc solver for a Stokes (velocity-pressure) problem.</span>
+
+<span class="sd">        Dispatches to `set_direct_solver` or `set_iterative_solver` based on</span>
+<span class="sd">        `ctrl.stokes_solver_type` (always direct for the slab domain, whose</span>
+<span class="sd">        internal-wall boundary condition over-constrains the problem).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            a (dolfinx.fem.Form): Compiled block system form (momentum + continuity).</span>
+<span class="sd">            a_p (dolfinx.fem.Form): Compiled preconditioner (pressure mass) block form.</span>
+<span class="sd">            L (dolfinx.fem.Form): Compiled block RHS form.</span>
+<span class="sd">            COMM (mpi4py.MPI.Comm): MPI communicator for the KSP.</span>
+<span class="sd">            nl (int): Nonlinear-solve flag, forwarded to the solver setup (unused directly here).</span>
+<span class="sd">            bcs (list): Dirichlet boundary conditions.</span>
+<span class="sd">            F0 (dolfinx.fem.FunctionSpace): Collapsed velocity subspace (used</span>
+<span class="sd">                for computing the velocity/pressure dof offset).</span>
+<span class="sd">            F1 (dolfinx.fem.FunctionSpace): Collapsed pressure subspace.</span>
+<span class="sd">            ctrl (NumericalControls): Numerical controls; `stokes_solver_type`</span>
+<span class="sd">                selects direct (1) vs. iterative (0).</span>
+<span class="sd">            J (optional): Unused; kept for interface parity. Defaults to None.</span>
+<span class="sd">            r (optional): Unused; kept for interface parity. Defaults to None.</span>
+<span class="sd">            it (int, optional): Outer iteration index, forwarded to the solver setup. Defaults to 0.</span>
+<span class="sd">            ts (int, optional): Timestep index, forwarded to the solver setup. Defaults to 0.</span>
+<span class="sd">            slab (int, optional): 1 forces the direct solver (slab domain). Defaults to 0.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">slab</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">direct_solver</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">direct_solver</span> <span class="o">=</span> <span class="n">ctrl</span><span class="o">.</span><span class="n">stokes_solver_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">=</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map</span><span class="o">.</span><span class="n">size_local</span> <span class="o">*</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map_bs</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct_solver</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_direct_solver</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">a_p</span> <span class="p">,</span><span class="n">L</span> <span class="p">,</span><span class="n">COMM</span><span class="p">,</span> <span class="n">nl</span><span class="p">,</span><span class="n">bcs</span> <span class="p">,</span><span class="n">F0</span><span class="p">,</span><span class="n">F1</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">,</span><span class="n">J</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span><span class="n">it</span><span class="o">=</span><span class="n">it</span><span class="p">,</span> <span class="n">ts</span> <span class="o">=</span> <span class="n">ts</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct_solver</span> <span class="o">==</span><span class="mi">0</span><span class="p">:</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_iterative_solver</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">a_p</span> <span class="p">,</span><span class="n">L</span> <span class="p">,</span><span class="n">COMM</span><span class="p">,</span> <span class="n">nl</span><span class="p">,</span><span class="n">bcs</span> <span class="p">,</span><span class="n">F0</span><span class="p">,</span><span class="n">F1</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">,</span><span class="n">J</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span><span class="n">it</span> <span class="o">=</span> <span class="n">it</span><span class="p">,</span> <span class="n">ts</span> <span class="o">=</span> <span class="n">ts</span><span class="p">)</span>    
+    
+<div class="viewcode-block" id="SolverStokes.set_direct_solver">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solver.html#stonedfenicsx.solver_module.solver.SolverStokes.set_direct_solver">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_direct_solver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                          <span class="n">a</span><span class="p">,</span>
+                          <span class="n">a_p</span><span class="p">,</span>
+                          <span class="n">L</span><span class="p">,</span>
+                          <span class="n">COMM</span><span class="p">,</span> 
+                          <span class="n">nl</span><span class="p">,</span>
+                          <span class="n">bcs</span><span class="p">,</span>
+                          <span class="n">F0</span><span class="p">,</span>
+                          <span class="n">F1</span><span class="p">,</span> 
+                          <span class="n">ctrl</span><span class="p">,</span>
+                          <span class="n">J</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+                          <span class="n">r</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                          <span class="n">it</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                          <span class="n">ts</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Configure a direct (LU/MUMPS) block solver for the Stokes system.</span>
+
+<span class="sd">        On the first solve (`it == 0 and ts == 0`) builds the block</span>
+<span class="sd">        operators/preconditioner and creates a `preonly` KSP with an LU/MUMPS</span>
+<span class="sd">        preconditioner; on subsequent calls just reassembles the block</span>
+<span class="sd">        operators in place via `update_block_operator`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            a (dolfinx.fem.Form): Compiled block system form.</span>
+<span class="sd">            a_p (dolfinx.fem.Form): Compiled preconditioner block form.</span>
+<span class="sd">            L (dolfinx.fem.Form): Compiled block RHS form.</span>
+<span class="sd">            COMM (mpi4py.MPI.Comm): MPI communicator for the KSP.</span>
+<span class="sd">            nl (int): Unused; kept for interface parity.</span>
+<span class="sd">            bcs (list): Dirichlet boundary conditions.</span>
+<span class="sd">            F0 (dolfinx.fem.FunctionSpace): Collapsed velocity subspace.</span>
+<span class="sd">            F1 (dolfinx.fem.FunctionSpace): Collapsed pressure subspace.</span>
+<span class="sd">            ctrl (NumericalControls): Numerical controls (unused directly here).</span>
+<span class="sd">            J (optional): Unused; kept for interface parity. Defaults to None.</span>
+<span class="sd">            r (optional): Unused; kept for interface parity. Defaults to None.</span>
+<span class="sd">            it (int, optional): Outer iteration index. Defaults to 0.</span>
+<span class="sd">            ts (int, optional): Timestep index. Defaults to 0.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">it</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">ts</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_block_operator</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">a_p</span><span class="p">,</span> <span class="n">bcs</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">F0</span><span class="p">,</span> <span class="n">F1</span><span class="p">)</span>
+
+            <span class="c1"># Create a solver</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span> <span class="o">=</span> <span class="n">PETSc</span><span class="o">.</span><span class="n">KSP</span><span class="p">()</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">COMM</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">setOperators</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s2">"preonly"</span><span class="p">)</span>
+
+            <span class="c1"># Set the solver type to MUMPS (LU solver) and configure MUMPS to</span>
+            <span class="c1"># handle pressure nullspace</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">getPC</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pc</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s2">"lu"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pc</span><span class="o">.</span><span class="n">setFactorSolverType</span><span class="p">(</span><span class="s2">"mumps"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pc</span><span class="o">.</span><span class="n">setFactorSetUpSolverType</span><span class="p">()</span>
+            <span class="c1">#self.pc.getFactorMatrix().setMumpsIcntl(icntl=24, ival=1)</span>
+            <span class="c1">#self.pc.getFactorMatrix().setMumpsIcntl(icntl=25, ival=0)</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_block_operator</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">a_p</span><span class="p">,</span><span class="n">bcs</span><span class="p">,</span><span class="n">L</span><span class="p">,</span><span class="n">F0</span><span class="p">,</span><span class="n">F1</span><span class="p">)</span></div>
+
+            
+
+    
+<div class="viewcode-block" id="SolverStokes.set_iterative_solver">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solver.html#stonedfenicsx.solver_module.solver.SolverStokes.set_iterative_solver">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_iterative_solver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">a_p</span> <span class="p">,</span><span class="n">L</span> <span class="p">,</span><span class="n">COMM</span><span class="p">,</span> <span class="n">nl</span><span class="p">,</span><span class="n">bcs</span> <span class="p">,</span><span class="n">F0</span><span class="p">,</span><span class="n">F1</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">,</span><span class="n">J</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span><span class="n">it</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">ts</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Configure an iterative (FGMRES + fieldsplit) block solver for the Stokes system.</span>
+
+<span class="sd">        On the first solve (`it == 0 or ts == 0`) builds the block operators/</span>
+<span class="sd">        preconditioner, computes the velocity/pressure PETSc index sets</span>
+<span class="sd">        (`is_u`/`is_p`) for field-split, and creates an FGMRES KSP with a</span>
+<span class="sd">        multiplicative fieldsplit preconditioner (hypre on each velocity and</span>
+<span class="sd">        pressure sub-block). On subsequent calls just reassembles the block</span>
+<span class="sd">        operators in place via `update_block_operator`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            a (dolfinx.fem.Form): Compiled block system form.</span>
+<span class="sd">            a_p (dolfinx.fem.Form): Compiled preconditioner block form.</span>
+<span class="sd">            L (dolfinx.fem.Form): Compiled block RHS form.</span>
+<span class="sd">            COMM (mpi4py.MPI.Comm): MPI communicator for the KSP.</span>
+<span class="sd">            nl (int): Unused; kept for interface parity.</span>
+<span class="sd">            bcs (list): Dirichlet boundary conditions.</span>
+<span class="sd">            F0 (dolfinx.fem.FunctionSpace): Collapsed velocity subspace.</span>
+<span class="sd">            F1 (dolfinx.fem.FunctionSpace): Collapsed pressure subspace.</span>
+<span class="sd">            ctrl (NumericalControls): Numerical controls; `iterative_solver_tol`</span>
+<span class="sd">                sets the KSP relative tolerance.</span>
+<span class="sd">            J (optional): Unused; kept for interface parity. Defaults to None.</span>
+<span class="sd">            r (optional): Unused; kept for interface parity. Defaults to None.</span>
+<span class="sd">            it (int, optional): Outer iteration index. Defaults to 0.</span>
+<span class="sd">            ts (int, optional): Timestep index. Defaults to 0.</span>
+<span class="sd">        """</span>
+        <span class="c1">#Return block operators and block RHS vector for the Stokes problem'</span>
+        <span class="c1"># nullspace vector [0_u; 1_p] locally</span>
+        <span class="k">if</span> <span class="n">it</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">ts</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Create the block operator and the pre-conditioner</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_block_operator</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">a_p</span><span class="p">,</span><span class="n">bcs</span><span class="p">,</span><span class="n">L</span><span class="p">,</span><span class="n">F0</span><span class="p">,</span><span class="n">F1</span><span class="p">)</span>
+            
+            <span class="c1"># Map the dofs [Find the dofs that belongs to P, and the one that belongs to u]</span>
+            <span class="n">V_map</span> <span class="o">=</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map</span>
+            <span class="n">Q_map</span> <span class="o">=</span> <span class="n">F1</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map</span>
+        
+            <span class="c1"># Rhs = [vu,vp]-&gt; where do they start </span>
+            <span class="c1"># -&gt; more over divided into the processors, so must find the layout for every processor</span>
+            <span class="n">offset_u</span> <span class="o">=</span> <span class="n">V_map</span><span class="o">.</span><span class="n">local_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map_bs</span> <span class="o">+</span> \
+                   <span class="n">Q_map</span><span class="o">.</span><span class="n">local_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">offset_p</span> <span class="o">=</span> <span class="n">offset_u</span> <span class="o">+</span> <span class="n">V_map</span><span class="o">.</span><span class="n">size_local</span> <span class="o">*</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map_bs</span>
+            <span class="c1"># Petsc black magic to create the index array for recognising what node is u or p </span>
+            <span class="n">is_u</span> <span class="o">=</span> <span class="n">PETSc</span><span class="o">.</span><span class="n">IS</span><span class="p">()</span><span class="o">.</span><span class="n">createStride</span><span class="p">(</span><span class="n">V_map</span><span class="o">.</span><span class="n">size_local</span> <span class="o">*</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map_bs</span><span class="p">,</span> <span class="n">offset_u</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">comm</span><span class="o">=</span><span class="n">PETSc</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">)</span>
+            <span class="n">is_p</span> <span class="o">=</span> <span class="n">PETSc</span><span class="o">.</span><span class="n">IS</span><span class="p">()</span><span class="o">.</span><span class="n">createStride</span><span class="p">(</span>
+            <span class="n">Q_map</span><span class="o">.</span><span class="n">size_local</span><span class="p">,</span> <span class="n">offset_p</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="n">PETSc</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">)</span>
+            
+            <span class="c1"># Save the information</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">offset_u</span> <span class="o">=</span> <span class="n">V_map</span><span class="o">.</span><span class="n">local_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map_bs</span> <span class="o">+</span> \
+                   <span class="n">Q_map</span><span class="o">.</span><span class="n">local_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">offset_p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset_u</span> <span class="o">+</span> <span class="n">V_map</span><span class="o">.</span><span class="n">size_local</span> <span class="o">*</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map_bs</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_u</span> <span class="o">=</span> <span class="n">is_u</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_p</span> <span class="o">=</span> <span class="n">is_p</span>
+            
+            <span class="c1"># Create the KSP object</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span> <span class="o">=</span> <span class="n">PETSc</span><span class="o">.</span><span class="n">KSP</span><span class="p">()</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">COMM</span><span class="p">)</span>
+            <span class="c1"># Set the operator </span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">setOperators</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">)</span>
+            <span class="c1"># Set the tollerance of krylov solver</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">setTolerances</span><span class="p">(</span><span class="n">rtol</span><span class="o">=</span><span class="n">ctrl</span><span class="o">.</span><span class="n">iterative_solver_tol</span><span class="p">)</span>
+            <span class="c1"># Set the type fgmres (global minimum residual) -&gt; Iterative solver, solve an approximate inversion of A-&gt; and the residual is the </span>
+            <span class="c1"># the way to quantify how much the iterative solver is converged to real solution</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s2">"fgmres"</span><span class="p">)</span>
+            <span class="c1"># </span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">getPC</span><span class="p">()</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s2">"fieldsplit"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">getPC</span><span class="p">()</span><span class="o">.</span><span class="n">setFieldSplitType</span><span class="p">(</span><span class="n">PETSc</span><span class="o">.</span><span class="n">PC</span><span class="o">.</span><span class="n">CompositeType</span><span class="o">.</span><span class="n">MULTIPLICATIVE</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">getPC</span><span class="p">()</span><span class="o">.</span><span class="n">setFieldSplitIS</span><span class="p">((</span><span class="s2">"u"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_u</span><span class="p">),</span> <span class="p">(</span><span class="s2">"p"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_p</span><span class="p">))</span>
+
+            <span class="c1"># Configure velocity and pressure sub-solvers</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ksp_u</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ksp_p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">getPC</span><span class="p">()</span><span class="o">.</span><span class="n">getFieldSplitSubKSP</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ksp_u</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s2">"preonly"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ksp_u</span><span class="o">.</span><span class="n">getPC</span><span class="p">()</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s2">"hypre"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ksp_p</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s2">"preonly"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ksp_p</span><span class="o">.</span><span class="n">getPC</span><span class="p">()</span><span class="o">.</span><span class="n">setType</span><span class="p">(</span><span class="s2">"hypre"</span><span class="p">)</span>
+
+            <span class="n">monitor_n_digits</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">max_it</span><span class="p">)))</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">monitor</span><span class="p">(</span><span class="n">ksp</span><span class="p">,</span> <span class="n">it</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+<span class="w">                </span><span class="sd">"""Print the KSP iteration count and residual (PETSc KSP monitor callback).</span>
+
+<span class="sd">                Args:</span>
+<span class="sd">                    ksp (PETSc.KSP): The KSP instance (unused, required by the monitor signature).</span>
+<span class="sd">                    it (int): Current iteration number.</span>
+<span class="sd">                    r (float): Current (preconditioned) residual norm.</span>
+<span class="sd">                """</span>
+                <span class="n">PETSc</span><span class="o">.</span><span class="n">Sys</span><span class="o">.</span><span class="n">Print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="w">         </span><span class="n">it</span><span class="si">:</span><span class="s2"> </span><span class="si">{</span><span class="n">monitor_n_digits</span><span class="si">}</span><span class="s2">d</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">r</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+            <span class="c1">#self.ksp.setMonitor(monitor)</span>
+
+            <span class="c1"># The matrix A combined the vector velocity and scalar pressure</span>
+            <span class="c1"># parts, hence has a block size of 1. Unlike the MatNest case, GAMG</span>
+            <span class="c1"># cannot infer the correct near-nullspace from the matrix block</span>
+            <span class="c1"># size. Therefore, we set block size on the top-left block of the</span>
+            <span class="c1"># preconditioner so that GAMG can infer the appropriate near</span>
+            <span class="c1"># nullspace.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">getPC</span><span class="p">()</span><span class="o">.</span><span class="n">setUp</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Pu</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ksp_u</span><span class="o">.</span><span class="n">getPC</span><span class="p">()</span><span class="o">.</span><span class="n">getOperators</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Pu</span><span class="o">.</span><span class="n">setBlockSize</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_block_operator</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">a_p</span><span class="p">,</span><span class="n">bcs</span><span class="p">,</span><span class="n">L</span><span class="p">,</span><span class="n">F0</span><span class="p">,</span><span class="n">F1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SolverStokes.set_block_operator">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solver.html#stonedfenicsx.solver_module.solver.SolverStokes.set_block_operator">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_block_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">a_p</span><span class="p">,</span><span class="n">bcs</span><span class="p">,</span><span class="n">L</span><span class="p">,</span><span class="n">F0</span><span class="p">,</span><span class="n">F1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Assemble the block system matrix, preconditioner matrix, RHS vector and pressure nullspace.</span>
+
+<span class="sd">        Builds `self.A`/`self.P`/`self.b` from scratch via</span>
+<span class="sd">        `assemble_matrix_block`/`assemble_vector_block`, then constructs the</span>
+<span class="sd">        constant-pressure nullspace vector (zero on velocity dofs, uniform</span>
+<span class="sd">        on pressure dofs, normalised) used for pure Neumann/free-slip</span>
+<span class="sd">        pressure setups.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            a (dolfinx.fem.Form): Compiled block system form.</span>
+<span class="sd">            a_p (dolfinx.fem.Form): Compiled preconditioner block form.</span>
+<span class="sd">            bcs (list): Dirichlet boundary conditions.</span>
+<span class="sd">            L (dolfinx.fem.Form): Compiled block RHS form.</span>
+<span class="sd">            F0 (dolfinx.fem.FunctionSpace): Collapsed velocity subspace (used</span>
+<span class="sd">                to size the velocity block of the nullspace vector).</span>
+<span class="sd">            F1 (dolfinx.fem.FunctionSpace): Collapsed pressure subspace (used</span>
+<span class="sd">                to size the pressure block of the nullspace vector).</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">=</span> <span class="n">assemble_matrix_block</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">bcs</span><span class="o">=</span><span class="n">bcs</span><span class="p">)</span>   <span class="p">;</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="o">.</span><span class="n">assemble</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">=</span> <span class="n">assemble_matrix_block</span><span class="p">(</span><span class="n">a_p</span><span class="p">,</span> <span class="n">bcs</span><span class="o">=</span><span class="n">bcs</span><span class="p">)</span> <span class="p">;</span> <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="o">.</span><span class="n">assemble</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">assemble_vector_block</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">bcs</span><span class="o">=</span><span class="n">bcs</span><span class="p">);</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="o">.</span><span class="n">assemble</span><span class="p">()</span>
+        
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="o">.</span><span class="n">ghostUpdate</span><span class="p">(</span><span class="n">addv</span><span class="o">=</span><span class="n">PETSc</span><span class="o">.</span><span class="n">InsertMode</span><span class="o">.</span><span class="n">ADD_VALUES</span><span class="p">,</span>
+                   <span class="n">mode</span><span class="o">=</span><span class="n">PETSc</span><span class="o">.</span><span class="n">ScatterMode</span><span class="o">.</span><span class="n">FORWARD</span><span class="p">)</span>
+
+        <span class="c1"># Solution vector, allocated once and reused by solve_linear_picard</span>
+        <span class="c1"># every outer iteration instead of calling createVecLeft() per call.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="o">.</span><span class="n">createVecLeft</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">null_vec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="o">.</span><span class="n">createVecLeft</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nloc_u</span> <span class="o">=</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map</span><span class="o">.</span><span class="n">size_local</span> <span class="o">*</span> <span class="n">F0</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map_bs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nloc_p</span> <span class="o">=</span> <span class="n">F1</span><span class="o">.</span><span class="n">dofmap</span><span class="o">.</span><span class="n">index_map</span><span class="o">.</span><span class="n">size_local</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">null_vec</span><span class="o">.</span><span class="n">array</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">nloc_u</span><span class="p">]</span>  <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">null_vec</span><span class="o">.</span><span class="n">array</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">nloc_u</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">nloc_u</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">nloc_p</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">null_vec</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nsp</span> <span class="o">=</span> <span class="n">PETSc</span><span class="o">.</span><span class="n">NullSpace</span><span class="p">()</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">vectors</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">null_vec</span><span class="p">])</span></div>
+
+        <span class="c1">#self.A.setNullSpace(self.nsp)</span>
+
+
+<div class="viewcode-block" id="SolverStokes.update_block_operator">
+<a class="viewcode-back" href="../../../apidocs/stonedfenicsx/stonedfenicsx.solver_module.solver.html#stonedfenicsx.solver_module.solver.SolverStokes.update_block_operator">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_block_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">a_p</span><span class="p">,</span><span class="n">bcs</span><span class="p">,</span><span class="n">L</span><span class="p">,</span><span class="n">F0</span><span class="p">,</span><span class="n">F1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Reassemble cached PETSc operators/vectors in-place.</span>
+
+<span class="sd">        Assumes:</span>
+<span class="sd">          - self.A, self.P, self.b were created once and match the block layout of (a, a_p, L)</span>
+<span class="sd">          - FunctionSpaces / dofmaps used by a, a_p, L, and bcs are NOT recreated each timestep</span>
+<span class="sd">        """</span>
+
+        <span class="c1"># -------------------------</span>
+        <span class="c1"># A (system / Jacobian)</span>
+        <span class="c1"># -------------------------</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="o">.</span><span class="n">zeroEntries</span><span class="p">()</span>
+        <span class="n">assemble_matrix_block</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">bcs</span><span class="o">=</span><span class="n">bcs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="o">.</span><span class="n">assemble</span><span class="p">()</span>
+
+        <span class="c1"># -------------------------</span>
+        <span class="c1"># P (preconditioner matrix)</span>
+        <span class="c1"># -------------------------</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="o">.</span><span class="n">zeroEntries</span><span class="p">()</span>
+        <span class="n">assemble_matrix_block</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">,</span> <span class="n">a_p</span><span class="p">,</span> <span class="n">bcs</span><span class="o">=</span><span class="n">bcs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="o">.</span><span class="n">assemble</span><span class="p">()</span>
+
+        <span class="c1"># -------------------------</span>
+        <span class="c1"># b (RHS)</span>
+        <span class="c1"># -------------------------</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="o">.</span><span class="n">localForm</span><span class="p">()</span> <span class="k">as</span> <span class="n">b_u_local</span><span class="p">:</span>
+            <span class="n">b_u_local</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+        
+        <span class="n">dolfinx</span><span class="o">.</span><span class="n">fem</span><span class="o">.</span><span class="n">petsc</span><span class="o">.</span><span class="n">assemble_vector_block</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span><span class="n">bcs</span><span class="o">=</span><span class="n">bcs</span><span class="p">)</span>
+                
+
+        <span class="c1"># -------------------------</span>
+        <span class="c1"># KSP operators</span>
+        <span class="c1"># -------------------------</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct_solver</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Nullspace (e.g., pressure) — set once if possible, but safe here too</span>
+            <span class="c1">#if getattr(self, "nsp", None) is not None:</span>
+            <span class="c1">#    self.A.setNullSpace(self.nsp)</span>
+                <span class="c1">#self.nsp.remove(self.b)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">setOperators</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">)</span>
+
+            <span class="c1"># Debug (optional)</span>
+            <span class="c1"># if MPI.COMM_WORLD.rank == 0:</span>
+            <span class="c1">#     print("A Fro norm:", self.A.norm(PETSc.NormType.FROBENIUS))</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Direct solver: do NOT call ksp.setUp() every timestep (expensive)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ksp</span><span class="o">.</span><span class="n">setOperators</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="clearer"></div>
+    </div>
+    <div class="button_nav_wrapper">
+        <div class="button_nav">
+            <div class="left">
+                
+            </div>
+
+            <div class="right">
+                
+            </div>
+        </div>
+    </div>
+
+
+    <div class="footer" role="contentinfo">
+    &#169; Copyright .
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.0.
+    </div>
+
+<p id="theme_credit">Styled using the <a href="https://github.com/piccolo-orm/piccolo_theme">Piccolo Theme</a></p>
+  </body>
+</html>
