@@ -107,7 +107,8 @@ def _compute_lithostatic_pressure(
             material laws/properties from ``pdb``.
         g (float): Vertical component of gravitational acceleration (m/s^2). Use sign
             consistently with your z-axis convention.
-        T (NDArray[np.float64]): Temperature profile along the column (K), length ``nz``.
+        dz (float): Vertical grid spacing of the column.
+        temp (NDArray[np.float64]): Temperature profile along the column (K), length ``nz``.
         pdb (object): Material database/dataset providing density and other thermodynamic/elastic
             properties as functions of phase, temperature and pressure.
 

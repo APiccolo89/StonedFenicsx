@@ -110,6 +110,7 @@ def filling_the_phase_data_base(materialproperties: dict, shheating: dict, phase
 
     Args:
         materialproperties (dict): Material database coming from input.yaml
+        shheating (dict): Shear heating settings coming from input.yaml
         phase_input (PhInput): Phase database
 
     Returns:

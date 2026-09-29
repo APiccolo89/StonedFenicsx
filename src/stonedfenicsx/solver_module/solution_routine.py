@@ -63,6 +63,7 @@ def outerloop_operation_initial_guess(
         sl (Slab): Subducting-plate Stokes problem.
         sol (Solution): Current solution container; updated in-place and returned.
         pdb (PhaseDataBase): Material-property database.
+        outit (OUTERITERATION_SOL_VAL): Container tracking the outer-iteration residuals.
         ts (int, optional): Current timestep index. Defaults to 0.
 
     Returns:
@@ -282,6 +283,7 @@ def outerloop_operation(
         sl (Slab): Subducting-plate Stokes problem.
         sol (Solution): Current solution container; updated in-place and returned.
         pdb (PhaseDataBase): Material-property database.
+        outit (OUTERITERATION_SOL_VAL): Container tracking the outer-iteration residuals.
         ts (int, optional): Current timestep index. Defaults to 0.
 
     Returns:

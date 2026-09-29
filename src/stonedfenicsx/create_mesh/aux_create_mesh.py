@@ -62,6 +62,7 @@ class Class_Points:
         model.
 
         Args:
+            mesh_model (gmsh.model): Gmsh model object to be updated.
             sx (np.ndarray): x-coordinates of the top surface of the subducting plate.
             sy (np.ndarray): y-coordinates of the top surface of the subducting plate.
             bx (np.ndarray): x-coordinates of the bottom surface of the subducting plate.
@@ -889,6 +890,7 @@ def _create_points(
         tag_pr (int): Previous/starting tag used to track point IDs across calls. Since Gmsh
             can assign tags internally, this value is used to keep bookkeeping
             consistent.
+        point_flag (bool): True if a single point is created (scalar `x`, `y`).
 
     Returns:
         tuple: A tuple containing:
@@ -945,10 +947,11 @@ def _create_lines(
     groups.
 
     Args:
-        mesh (gmsh.model): Gmsh model object to be updated.
+        mesh_model (gmsh.model): Gmsh model object to be updated.
         previous (int): Previous/starting line tag used for bookkeeping across calls.
         tag_p (list[int]): Point tags used to create the lines. Typically an ordered list of point
             tags where consecutive pairs define segments.
+        flag (bool): Unused.
 
     Returns:
         tuple: A tuple containing:

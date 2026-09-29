@@ -195,6 +195,7 @@ class CtrlTemperatureBC(CTRLBC):  # ctrltbc
 
         Args:
             g_input (GeomInput): geometrical information
+            ctrl (NumericalControls): numerical controls (time stepping and steady-state flag)
 
         Raises:
             ValueError: if dt is an absurd number, raise an error. Despite Crank-Nicolson is unconditionally stable,

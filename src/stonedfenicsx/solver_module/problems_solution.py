@@ -192,9 +192,11 @@ class Problem:
         """Initialize the problem
 
         Args:
-            M (Mesh): Mesh object storing the computational domains of the experiment
+            mesh (Mesh): Mesh object storing the computational domains of the experiment
+            pdb (PhaseDataBase): Material properties database.
+            ctrl_sim (SimulationControls): Simulation controls (numerical, I/O, scaling, geometry).
             elements (tuple): Finite elements that describe the main computational problem.
-                             Note: Certain problems require storing additional element and function space.
+                Note: Certain problems require storing additional element and function space.
             name (list): Identifiers of the problem and associated domains.
 
         Raises:
@@ -310,10 +312,10 @@ class Solution:
         """Create the 'fem.Function' for storing the solution of each of the problem
 
         Args:
-            PG Problem(Global_thermal|Global_lithostatic): Global problem (either Thermal or lithostatic)
-            PS Problem(Slab): Subducting plate problem
-            PW Problem(Wedge): Wedge problem
-            elements list: Elements for each of the problem (i.e. -> vectorial or scalar)
+            PG (Problem): Global problem (either Global_thermal or Global_lithostatic)
+            PS (Problem): Subducting plate problem (Slab)
+            PW (Problem): Wedge problem (Wedge)
+            elements (list): Elements for each of the problem (i.e. -> vectorial or scalar)
 
         Returns:
             Solution: Updated solution class with cached function.
@@ -553,10 +555,9 @@ class Global_thermal(Problem):
             T_k (dolfinx.fem.Function, optional): Current iteration/guess temperature. Defaults to None.
             T_O (dolfinx.fem.Function, optional): Old temperature. Defaults to None.
             u_global (dolfinx.fem.Function, optional): Global velocity. Defaults to None.
-            D (Domain, optional): Domain . Defaults to None.
-            FG (Functions_material_properties_global, optional):Cached material properties. Defaults to None.
-            ctrl (NumericalControls, optional): Numerical controls. Defaults to None.
-            it (int, optional): outer iteration. Defaults to 0.
+            it_outer (int, optional): Outer iteration index (unused). Defaults to 0.
+            it_inner (int, optional): Inner iteration index (unused). Defaults to 0.
+            ts (int, optional): Timestep index (unused). Defaults to 0.
 
         Returns:
             tuple[dolfinx.fem.Form,dolfinx.fem.Form]: _description_
@@ -610,7 +611,8 @@ class Global_thermal(Problem):
                 steady state; kept for interface parity with the TD variant).
             u_global (dolfinx.fem.Function, optional): Global velocity field.
             it_inner (int, optional): Inner (Picard) iteration index. Defaults to 0.
-            dt (float, optional): Unused in steady state; kept for interface parity.
+            L (dolfinx.fem.Form, optional): Linear (source) form of the energy equation,
+                subtracted from the residual.
 
         Returns:
             dolfinx.fem.Form: Compiled residual form (diffusion + advection +
@@ -657,7 +659,8 @@ class Global_thermal(Problem):
             T_O (dolfinx.fem.Function, optional): Old (previous timestep) temperature field.
             u_global (dolfinx.fem.Function, optional): Global velocity field.
             it_inner (int, optional): Inner (Picard) iteration index. Defaults to 0.
-            dt (float, optional): Timestep size. Defaults to 0.0.
+            L (dolfinx.fem.Form, optional): Linear (source) form of the energy equation,
+                subtracted from the residual.
 
         Returns:
             float: L2 norm of the assembled residual vector, with Dirichlet
@@ -878,7 +881,6 @@ class Global_thermal(Problem):
         """_summary_
 
         Args:
-            pdb (PhaseDataBase): _description_
             T (dolfinx.fem.function.Function): _description_
             P (dolfinx.fem.function.Function): _description_
 
@@ -1485,23 +1487,26 @@ class Stokes_Problem(Problem):
         dolfinx.fem.Form,
     ]:
         """Function that set linear form (both for picard iteration and linear problem solution)
+
         Args:
-            u : dolfinx.fem.function.Function -> Velocity field, used for computing the viscosity
-            T : dolfinx.fem.function.Function -> Temperature field, used for computing the viscosity
-            PL : dolfinx.fem.function.Function -> Lithostatic pressure field, used for computing the viscosity
-            D : Domain -> Domain object, used for extracting the mesh and the boundary conditions
-            FR : Functions_material_rheology -> Object containing the rheological functions, used for computing the viscosity
-            ctrl : NumericalControls -> Object containing the numerical controls, used for controlling the decoupling of the boundary condition
-            sc : Scal -> Object containing the scaling of the problem, used for computing the viscosity
-            a_p : dolfinx.fem.Form -> Pressure mass form, used for preconditioning the pressure Schur complement.
-            it : int -> Picard iteration number, used for controlling the decoupling of the boundary condition
-            ts : int -> Time step number, used for controlling the decoupling of the boundary
+            vel (dolfinx.fem.function.Function): Velocity field, used for computing the viscosity
+            temp (dolfinx.fem.function.Function): Temperature field, used for computing the viscosity
+            pres_l (dolfinx.fem.function.Function): Lithostatic pressure field, used for computing the viscosity
+            a_p (dolfinx.fem.Form): Pressure mass form, used for preconditioning the pressure Schur complement.
+            it (int): Picard iteration number, used for controlling the decoupling of the boundary condition
+            ts (int): Time step number, used for controlling the decoupling of the boundary
+            slab (int): If 1 (or during the initial guess), use the default constant viscosity
+                instead of the temperature/pressure/strain-rate dependent one.
+
         Returns:
-            a1 : dolfinx.fem.Form -> Linear form for the momentum equation
-            a2 : dolfinx.fem.Form -> Linear form for the pressure equation (divergence of the test function)
-            a3 : dolfinx.fem.Form -> Linear form for the continuity equation (divergence of the trial function)
-            L : dolfinx.fem.Form -> Linear form for the right hand side of the momentum equation
-            a_p0 : dolfinx.fem.Form -> Linear form for the pressure mass matrix, used for preconditioning the pressure Schur complement.
+            tuple: A tuple containing:
+
+                - a1 (dolfinx.fem.Form): Linear form for the momentum equation
+                - a2 (dolfinx.fem.Form): Linear form for the pressure equation (divergence of the test function)
+                - a3 (dolfinx.fem.Form): Linear form for the continuity equation (divergence of the trial function)
+                - L (dolfinx.fem.Form): Linear form for the right hand side of the momentum equation
+                - a_p0 (dolfinx.fem.Form): Linear form for the pressure mass matrix, used for preconditioning
+                  the pressure Schur complement.
         """
 
         u, p = self.trial0, self.trial1
@@ -1535,8 +1540,6 @@ class Stokes_Problem(Problem):
         The velocity field of the moving wall is then used as a Dirichlet boundary condition for the velocity field on the slab domain.
 
         Args:
-            D (Domain): Domain object, used for extracting the mesh and the boundary conditions
-            ctrl (NumericalControls): NumericalControls object, used for controlling the decoupling of the boundary condition
             facet (str): the string that defines the facet on which the moving wall is applied.
         """
 
@@ -1663,19 +1666,19 @@ class Stokes_Problem(Problem):
     @timing_function
     def Solve_the_Problem(self, sol: Solution, it_outer: int = 0, ts: int = 0) -> None:
         """Function that solve the stokes problem for the wedge domain.
-        Args:
-            S : Solution -> Object containing the solution of the problem, used for storing the solution of the stokes problem
-            ctrl : NumericalControls -> Object containing the numerical controls, used for controlling the decoupling of the boundary condition and the type of problem to solve
-            FGW : Functions_material_rheology -> Object containing the rheological functions, used for computing the viscosity
-            D : Domain -> Domain object, used for extracting the mesh and the boundary conditions
-            g : dolfinx.fem.function.Function -> Gravity vector, used for computing the right hand side of the momentum equation
-            sc : Scal -> Object containing the scaling of the problem, used for computing the viscosity
-            g_input : Geom_input -> Object containing the geometric input, used for computing the decoupling function for the boundary condition
-            it : int -> Outer iteration number
-            ts : int -> Time step number
-        Returns:
-            S : Solution -> Object containing the solution of the problem, used for storing the solution of
 
+        Args:
+            sol (Solution): Object containing the solution of the problem, used for storing the solution of the stokes problem
+            it_outer (int): Outer iteration number
+            ts (int): Time step number
+
+        Returns:
+            tuple: A tuple containing:
+
+                - rmom (float): Residual of the momentum equation.
+                - rmom0 (float): Reference (first outer iteration) momentum residual.
+                - rdiv (float): Residual of the continuity equation.
+                - rdiv0 (float): Reference (first outer iteration) continuity residual.
         """
         if (ts == 0) and (it_outer == 0):
             V_subs0 = self.FS.sub(0)
@@ -1771,9 +1774,10 @@ class Wedge(Stokes_Problem):
             feedback from temperature evolution.
 
         Args:
-            M (Mesh): Mesh object containing the mesh and related utilities.
+            mesh (Mesh): Mesh object containing the mesh and related utilities.
             elements (tuple): Tuple containing the elements of the function spaces.
             name (list): Name of the problem, used to extract the domain from the mesh.
+            ctrl_sim (SimulationControls): Simulation controls (numerical, I/O, scaling, geometry).
             pdb (PhaseDataBase): Phase database used to determine the rheology type
                 and therefore whether the problem is linear or non-linear.
         """
@@ -1942,13 +1946,12 @@ class Slab(Stokes_Problem):
         """Set Dirichlet boundary condition (Subducting plate domain)
 
         Args:
-            ctrl (NumericalControls): Numerical control structure containing the main information of the simulation
-            D (Domain): Subdomain meshes and boundary information
-            it (int, optional): iteration of the outer loop. Defaults to 0.
+            Vsubs (dolfinx.fem.FunctionSpace, optional): Collapsed velocity function space (unused). Defaults to None.
+            it_outer (int, optional): iteration of the outer loop. Defaults to 0.
             ts (int, optional): timestep. Defaults to 0.
 
         Returns:
-            list of DirichletBC: List of Dirichlet boundary conditions to be applied on the slab domain.
+            list[DirichletBC]: List of Dirichlet boundary conditions to be applied on the slab domain.
 
         [Explanation]: During the first timestep and first outer iteration the component of the unit vector of the velocity along the slab is computed
         redundantly in the entire function space. Then if the velocity of the slab is changing over time, the dirchlecht boundary condition
@@ -1998,15 +2001,16 @@ class Slab(Stokes_Problem):
         it: int = 0,
     ) -> tuple[ufl.form.Form, ufl.form.Form, ufl.form.Form]:
         """Update the fem form to integrate the weak formulation of free slip boundary condition
+
         Args:
-            D (Domain): Domain object containing the mesh and the boundary information.
-            S (Solution): Solution object containing the current solution fields.
+            sol (Solution): Solution object containing the current solution fields.
             dS (ufl.measure.Measure): Measure for integrating over the boundary facets.
-            a1, a2, a3 (ufl.expression): Current forms of the linear system to be updated with the Nitsche terms.
-            FGS (Functions_material_properties_global): Object containing the global material properties functions.
+            a1 (ufl.form.Form): Momentum form, updated with the Nitsche terms.
+            a2 (ufl.form.Form): Pressure-gradient form, updated with the Nitsche terms.
+            a3 (ufl.form.Form): Continuity form, updated with the Nitsche terms.
             gamma (float): Penalty parameter for the Nitsche method.
-            sc (Scaling): Scaling object for non-dimensionalization.
             it (int, optional): Current iteration number for Picard iteration. Defaults to 0.
+
         Returns:
             tuple: Updated forms (a1, a2, a3) with the Nitsche free slip boundary condition integrated.
         """

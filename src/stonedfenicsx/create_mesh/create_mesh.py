@@ -143,7 +143,6 @@ def create_mesh(
 
     Args:
         ioctrl (IOControls): I/O controller handling file paths and output directories.
-        sc (Scal): Scaling object storing nondimensionalisation parameters.
         g_input (GeomInput): Geometrical input defining the domain and mesh construction.
         ctrl (NumericalControls): Numerical controls determining the problem setup.
 
@@ -181,8 +180,7 @@ def create_gmesh(ioctrl: IOControls, g_input: GeomInput):
     between the slab top surface and the maximum depth of the model.
 
     Args:
-        ctrl (NumericalControls): Numerical controls defining the simulation type.
-        ctrlio (IOControls): I/O controller storing input/output directories.
+        ioctrl (IOControls): I/O controller storing input/output directories.
         g_input (GeomInput): Geometrical input parameters used to construct the domain.
 
     Returns:
@@ -258,7 +256,7 @@ def create_domain_subduction_plate(
     Args:
         mesh_model (gmsh.model): Gmsh model object containing the geometry/mesh entities.
         CP (Class_Points): Container of points defining the global mesh (coordinates, point IDs, target resolution).
-        LP (Class_Line): Container of lines defining the global mesh (line IDs and point connectivity).
+        LC (Class_Line): Container of lines defining the global mesh (line IDs and point connectivity).
         g_input (GeomInput): Geometry input parameters.
 
     Returns:
@@ -320,7 +318,7 @@ def create_domain_wedge(mesh_model, CP, LC, g_input):
     Args:
         mesh_model (gmsh.model): Gmsh model object containing the geometry/mesh entities.
         CP (Class_Points): Container of points defining the global mesh (coordinates, point IDs, target resolution).
-        LP (Class_Line): Container of lines defining the global mesh (line IDs and point connectivity).
+        LC (Class_Line): Container of lines defining the global mesh (line IDs and point connectivity).
         g_input (GeomInput): Geometry input parameters.
 
     Returns:
@@ -347,7 +345,7 @@ def create_domain_crust(mesh_model, CP, LC, g_input):
     Args:
         mesh_model (gmsh.model): Gmsh model object containing the geometry/mesh entities.
         CP (Class_Points): Container of points defining the global mesh (coordinates, point IDs, target resolution).
-        LP (Class_Line): Container of lines defining the global mesh (line IDs and point connectivity).
+        LC (Class_Line): Container of lines defining the global mesh (line IDs and point connectivity).
         g_input (GeomInput): Geometry input parameters.
 
     Returns:
@@ -442,7 +440,7 @@ def create_physical_line(
     Args:
         mesh_model (gmsh.model): Gmsh model object containing the geometry/mesh entities.
         CP (Class_Points): Container of points defining the global mesh (coordinates, point IDs, target resolution).
-        LP (Class_Line): Container of lines defining the global mesh (line IDs and point connectivity).
+        LC (Class_Line): Container of lines defining the global mesh (line IDs and point connectivity).
         g_input (GeomInput): Geometry input parameters.
 
     Returns:
@@ -683,8 +681,8 @@ def extract_facet_boundary(
     For the slab subdomain boundary, you may need to combine S(1) and S(2).
 
     Args:
-        mesh (dolfinx.mesh.Mesh): The global mesh.
-        mfacet_tag (dolfinx.mesh.meshtags.MeshTags): Facet MeshTags on the global mesh (dimension = tdim - 1).
+        Mesh (dolfinx.mesh.Mesh): The global mesh.
+        Mfacet_tag (dolfinx.mesh.meshtags.MeshTags): Facet MeshTags on the global mesh (dimension = tdim - 1).
         submesh (dolfinx.mesh.Mesh): The subdomain mesh.
         sm_vertex_maps (np.ndarray | list[int]): Mapping from submesh vertices to parent (global) mesh vertices.
         boundary (Sequence[int]): List of global boundary marker IDs to be combined for this submesh boundary.
@@ -779,6 +777,7 @@ def create_subdomain(
         phase_set (list): the cell marker that constitute the subdomain
         name (str): the name of the subdomain
         phase (dolfinx.fem.function.Function): function that stores the information of the phase.
+        ioctrl (IOControls): I/O controller (currently unused).
 
     Returns:
         Domain: Class that contains the information of the subdomain.
@@ -935,7 +934,8 @@ def read_mesh(ioctrl: IOControls, redo_mesh: bool) -> tuple[
 
     Args:
         ioctrl (IOControls): Input/Output controls object, stores the information of the path of the .msh file
-        sc (Scal): Scal object containing the scaling parameters
+        redo_mesh (bool): If True, read the newly generated mesh from `ioctrl.path_test` and delete the
+            .msh file afterwards; otherwise read the cached mesh from `ioctrl.path_cached_information`.
 
     Returns:
         tuple: A tuple containing:
@@ -969,23 +969,18 @@ def read_mesh(ioctrl: IOControls, redo_mesh: bool) -> tuple[
 # ------------------------------------------------------------------------------------------------------
 def create_mesh_object(ioctrl: IOControls, g_input: GeomInput) -> Mesh:
     """
-    Create a subdomain mesh from the global mesh and interpolate phase information.
+    Read the .msh file and build the global domain and its subdomains.
 
-    This function extracts a submesh corresponding to a given set of cell markers
-    (phases) from the global mesh. The phase function defined on the global mesh is
-    then interpolated or transferred onto the subdomain mesh.
+    The global mesh and its cell/facet tags are read from the .msh file, the phase
+    field is assigned from the cell tags, and the subducting plate, wedge and
+    overriding plate subdomains are extracted from the global mesh.
 
     Args:
-        mesh (dolfinx.mesh.Mesh): The global computational mesh.
-        mesh_tag (dolfinx.mesh.meshtags.MeshTags): Cell tags of the global mesh, typically used to identify material phases.
-        facet_tag (dolfinx.mesh.meshtags.MeshTags): Facet tags of the global mesh, defining boundary features (e.g. slab top surface).
-        phase_set (list[int]): List of cell marker IDs that define the subdomain to extract.
-        name (str): Name of the subdomain (used for identification and debugging).
-        phase (dolfinx.fem.Function): Cell-wise (or DG) function storing phase/material information on the global mesh.
+        ioctrl (IOControls): I/O controller storing the path of the .msh file.
+        g_input (GeomInput): Geometrical input parameters (stored in the returned object).
 
     Returns:
-        Domain: A `Domain` object containing the submesh, associated tags, and interpolated
-            phase information.
+        Mesh: A `Mesh` object containing the global domain and the three subdomains.
     """
 
     # from stonedfenicsx.scal import dimensionless_ginput

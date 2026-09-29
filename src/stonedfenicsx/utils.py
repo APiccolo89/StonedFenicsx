@@ -91,11 +91,13 @@ def interpolate_from_sub_to_main(
     """
     Interpolate the solution from the subdomain to the main domain.
 
-    Parameters:
-        u_slab (Function): The solution in the subdomain.
-        u_global (Function): The solution in the main domain.
-        M (Mesh): The mesh of the main domain.
-        V (FunctionSpace): The function space of the main domain.
+    Args:
+        u_dest (Function): The function to interpolate into.
+        u_start (Function): The function to interpolate from.
+        cells (np.ndarray): Parent (main domain) cell index of each subdomain cell
+            (e.g. `Domain.cell_par`).
+        parent2child (int): If 0, interpolate from the subdomain to the main domain;
+            otherwise from the main domain to the subdomain.
     """
     if parent2child == 0:
         a = np.arange(len(cells))

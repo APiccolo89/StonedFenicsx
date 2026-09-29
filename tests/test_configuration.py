@@ -80,11 +80,7 @@ def test_scaling():
     assert sc.stress == 1e9 
 
 def test_output():
-    """Test if all the folder have been created
-
-    Args:
-        ctrl_io (_type_): control input output
-    """
+    """Test if all the folder have been created"""
     ctrl_sim, _, _, _ = configure()
 
     assert ctrl_sim.ctrl_io.path_save.is_dir()

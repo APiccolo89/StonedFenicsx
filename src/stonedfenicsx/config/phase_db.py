@@ -392,8 +392,8 @@ def generate_phase(
         n (float): Stress exponent for dislocation creep.
         e_dis (float): Activation energy for dislocation creep [J/mol].
         v_dis (float): Activation volume for dislocation creep [m^3/mol].
-        B_dis (float): Pre-exponential factor for dislocation creep [Pa^-n s^-1].
-        Cp (float): Heat capacity [J/kg/K].
+        b_dis (float): Pre-exponential factor for dislocation creep [Pa^-n s^-1].
+        cp (float): Heat capacity [J/kg/K].
         k (float): Thermal conductivity [W/m/K].
         rho0 (float): Reference density [kg/m^3]. It is a mandatory parameters in any case.
         eta (float): Constant viscosity [Pa s].
@@ -401,8 +401,10 @@ def generate_phase(
         name_conductivity (str): The name of the thermal conductivity model to use.
         name_alpha (str): The name of the thermal expansivity model to use.
         name_density (str): The name of the density model to use.
-        radio (float): Radiogenic heat production [W/kg].
-        radio_flag (float): Flag for radiative conductivity production calculation.
+        alpha0 (float): Constant thermal expansivity [1/K], used if `name_alpha` is 'Constant'.
+        radiogenic_heat (float): Radiogenic heat production [W/kg].
+        radiative_conductivity (float): Flag for radiative conductivity production calculation.
+        pressure_dependency (int): If 0, deactivate the pressure dependency of conductivity and density.
     Returns:
         PhaseDataBase: The updated phase database with the new phase added.
 
@@ -675,7 +677,8 @@ def fill_up_weakzone_data(
 ) -> PhaseDataBase:
     """Function that updates the data of the shear zone that mimick the subduction interface.
     Args:
-        ch (float, optional): Cohesion. Defaults to 10e6.
+        tau_min (float, optional): Constant shear stress [Pa] used for frictional heating along the
+            interface when the friction law is not active. Defaults to 10e6.
         phi (float, optional): Friction angle. Defaults to np.radians(5).
         eta_wz (float, optional): Viscosity. Defaults to 1e20.
         dislocation_creep (str, optional): Dislocation creep law. Defaults to 'Constant'.
@@ -785,7 +788,7 @@ def read_rheology(tag: str, dis_dif: 0) -> RheologicalFlowLaw:
 
     Args:
         tag (str): the name of the rheology from the input file
-        type (0): flag indicating if the rheology is diffusion or dislocation
+        dis_dif (int): flag indicating if the rheology is diffusion (0) or dislocation (1)
 
     Raises:
         ValueError:f'{tag} is not a rheology flow law.') -> The name used in the input
@@ -1050,10 +1053,10 @@ def heat_conductivity(
     """Compute the heat conductivity for a given Pressure and Temperature
     Args:
         pdb (PhaseDataBase): Phase Data Base containing the material properties as numpy arrays, indexed by phase ID
-        T (NDArray[np.float64] | np.float64): Temperature field as a numpy array
-        p (NDArray[np.float64] | np.float64): Pressure field as a numpy array
+        temp (NDArray[np.float64] | np.float64): Temperature field as a numpy array
+        pres (NDArray[np.float64] | np.float64): Pressure field as a numpy array
         rho (NDArray[np.float64] | np.float64): Density field as a numpy array
-        Cp (NDArray[np.float64] | np.float64): Heat capacity field as a numpy array
+        cp (NDArray[np.float64] | np.float64): Heat capacity field as a numpy array
         ph (int): phase ID for which to compute the conductivity, used to index the material properties from the PhaseDataBase
     Returns:
         NDArray[np.float64]: array containing the heat conductivity
@@ -1091,8 +1094,8 @@ def density(
 
     Args:
         pdb (PhaseDataBase): Phase Data Base containing the material properties as numpy arrays, indexed by phase ID
-        T (NDArray[np.float64] | np.float64): Temperature field as a numpy array
-        p (NDArray[np.float64] | np.float64): Pressure field as a numpy array
+        temp (NDArray[np.float64] | np.float64): Temperature field as a numpy array
+        pres (NDArray[np.float64] | np.float64): Pressure field as a numpy array
         ph (int): phase ID for which to compute the density, used to index the material properties from the PhaseDataBase
     Returns:
         NDArray[np.float64]: array containing the density
@@ -1127,7 +1130,7 @@ def heat_capacity(
 
     Args:
         pdb (PhaseDataBase): Phase Data Base containing the material properties as numpy arrays, indexed by phase ID
-        T (NDArray[np.float64] | np.float64): Temperature field as a numpy array
+        temp (NDArray[np.float64] | np.float64): Temperature field as a numpy array
         ph (int): phase ID for which to compute the heat capacity, used to index the material properties from the PhaseDataBase
 
     Returns:

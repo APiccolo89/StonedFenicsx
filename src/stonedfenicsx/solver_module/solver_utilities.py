@@ -131,14 +131,6 @@ class OUTERITERATION_SOL_VAL:
         Args:
             sol (Solution): Current solution container (fields read, history
                 arrays appended in-place).
-            T (dolfinx.fem.Function): Temperature at the start of this outer
-                iteration (snapshot copy made by `outerloop_operation`).
-            PL (dolfinx.fem.Function): Lithostatic pressure at the start of this
-                outer iteration.
-            u (dolfinx.fem.Function): Velocity at the start of this outer
-                iteration.
-            p (dolfinx.fem.Function): Dynamic pressure at the start of this outer
-                iteration.
             it_outer (int): Current outer-loop iteration index (for printing).
             sc (Scal): Non-dimensionalisation scaling object for unit rescaling.
             tA (float): Wall-clock time (from `timing.time()`) at the start of
@@ -334,14 +326,6 @@ class OUTERITERATION_SOL_VAL:
         Args:
             sol (Solution): Current solution container (fields read, history
                 arrays appended in-place).
-            T (dolfinx.fem.Function): Temperature at the start of this outer
-                iteration (snapshot copy made by `outerloop_operation`).
-            PL (dolfinx.fem.Function): Lithostatic pressure at the start of this
-                outer iteration.
-            u (dolfinx.fem.Function): Velocity at the start of this outer
-                iteration.
-            p (dolfinx.fem.Function): Dynamic pressure at the start of this outer
-                iteration.
             it_outer (int): Current outer-loop iteration index (for printing).
             sc (Scal): Non-dimensionalisation scaling object for unit rescaling.
             tA (float): Wall-clock time (from `timing.time()`) at the start of
@@ -628,7 +612,11 @@ def timestep_output(ctrlio: IOControls, ts: int, t: float, time_previous: float,
         ctrlio (IOControls): I/O control settings, including output frequency and file paths.
         ts (int): Current timestep index.
         t (float): Current simulation time.
+        time_previous (float): Simulation time of the last saved output.
         flag_save (bool): Flag indicating whether to save the output files.
+
+    Returns:
+        bool: True if the output files should be saved at this timestep.
     """
 
     if ctrlio.ts_time == 1:
