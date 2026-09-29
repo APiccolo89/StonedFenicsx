@@ -25,13 +25,15 @@ If {math}`L1-\inf` is less than 1e-2 [K], the problem is considered converged; i
 The code is organized to always require the definition of an *input_file.yml*. The blue-print of the input file can be found in the main folder of the package. 
 
 The units of measure in the input code are always: **Myr**, **km**, **cm/yr**, **deg** and **degC** for time, length, velocity, angles and temperatures respectively; the only exception is for the *scaling* options; in this case, the unit of measure are **m**, **Pa**, **Pa s** and **deg C** The conversions in SI units and the relative scaling are performed internally during the configuration step of the simulation. 
+
+
 ### Input File
 
 The input file is divided into 8 subsections:
 
 - **NumericalControls**: the parameters that control the behaviour of the simulation.
 
-- **ShearHeating**: the set of parameters that control the internal boundary heat source (the parametrised shear heating along the seismogenetic zone of the subduction plate).
+- **ShearHeating**: the set of parameters that control the internal boundary heat source (the parametrised shear heating along the seismogenetic zone of the subduction plate). 
 
 - **InputOutputControl**: the set of parameters that control where to save the output files, and under which conditions to write a timestep.
 
@@ -65,9 +67,12 @@ iterative_solver_tol : 1e-9 # Relative tolerance of iterative solver
 CFL : 0.8 # Courant Criteria correction factor
 initial_guess : 'Thermal_Diffusion'  # Initial guess flag
 time_ini_guess : 0.3
+tol_dtemp : 5e-2 # maximum thermla difference to declare convergence [K]
 ```
+>[!NOTE]
+> Plan: introduce a flag to switch the criteria for convergence: residual of the conservation equation/L1-dT. 
 
-> [!NOTE]
+> [!WARNING]
 > The iterative solver is still a work in progress; it must be revisited to make it usable.
 
 - **model_shear**: activates the shear-heating boundary conditions. However, *SelfConsistent* and *Constant* require that *decoupling_ctrl* is 1

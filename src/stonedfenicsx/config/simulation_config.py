@@ -1,9 +1,8 @@
 """Modules"""
 
-from pathlib import Path
 
 from stonedfenicsx.config.geometry import Mesh
-from stonedfenicsx.config.input_parser import Input, PhInput, parse_input
+from stonedfenicsx.config.input_parser import Input, PhInput
 from stonedfenicsx.config.numerical_control import SimulationControls
 from stonedfenicsx.config.phase_db import PhaseDataBase, generate_phase_database
 from stonedfenicsx.config.scal import Scal, scaling_simulation_physical
@@ -13,9 +12,7 @@ from stonedfenicsx.utils import timing_function
 
 
 @timing_function
-def configure_simulation(
-    ph_in: PhInput, inp: Input
-) -> tuple[SimulationControls,PhaseDataBase,Mesh, Scal]:
+def configure_simulation(ph_in: PhInput, inp: Input) -> tuple[SimulationControls, PhaseDataBase, Mesh, Scal]:
     """Function that configure the numerical simulation and scale the property accordingly.
     It takes the information from the input and generate the mesh.
 
@@ -44,33 +41,31 @@ def configure_simulation(
     # update the input/output
     ctrl_io.generate_io()
     # Create the mesh
-    mesh = create_mesh(ioctrl=ctrl_io,g_input=g_input,ctrl=ctrl)
+    mesh = create_mesh(ioctrl=ctrl_io, g_input=g_input, ctrl=ctrl)
     # Generate the phase data base
     pdb = generate_phase_database(
-        pressure_dependency=ctrl.pressure_dependency, eta_max=ctrl.eta_max, phin=ph_in
-    ,scal_temp=sc.temp, scal_press=sc.stress)
+        pressure_dependency=ctrl.pressure_dependency,
+        eta_max=ctrl.eta_max,
+        phin=ph_in,
+        scal_temp=sc.temp,
+        scal_press=sc.stress,
+    )
 
     # Merge the controls into simulation controls
-    ctrl_sim = SimulationControls( ctrl = ctrl
-                                  ,ctrl_ky = ctrl_ky
-                                  ,ctrl_tbc = ctrl_tbc
-                                  ,ctrl_io = ctrl_io
-                                  ,g_input = g_input)
-    
-    
-    
-   
-    
+    ctrl_sim = SimulationControls(ctrl=ctrl, ctrl_ky=ctrl_ky, ctrl_tbc=ctrl_tbc, ctrl_io=ctrl_io, g_input=g_input)
+
     # Scale the simulation parameters
-    scaling_simulation_physical(ctrl_sim=ctrl_sim,pdb=pdb,mesh=mesh,sc=sc)
+    scaling_simulation_physical(ctrl_sim=ctrl_sim, pdb=pdb, mesh=mesh, sc=sc)
 
     # Generate the right boundary and left boundary thermal boundary condition
-    configure_boundary_condition(ctrl_tbc=ctrl_sim.ctrl_tbc
-                                                          ,ctrl=ctrl_sim.ctrl
-                                                          ,ioctrl = ctrl_sim.ctrl_io
-                                                          ,sc=sc
-                                                          ,pdb=pdb
-                                                          ,g_input=mesh.g_input)
+    configure_boundary_condition(
+        ctrl_tbc=ctrl_sim.ctrl_tbc,
+        ctrl=ctrl_sim.ctrl,
+        ioctrl=ctrl_sim.ctrl_io,
+        sc=sc,
+        pdb=pdb,
+        g_input=mesh.g_input,
+    )
     # print the information
 
     # release the new pre-processed class

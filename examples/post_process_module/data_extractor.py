@@ -597,16 +597,20 @@ class Test:
     # ---
     def interpolate_data_slab(self, Data_field, ts=0, steady_state=True):
         """Interpolate the data on a regular grid for visualisation
+
+        Paraview is not able to visualise unstructured data properly,
+        so we need to interpolate the data on a regular grid for visualisation purposes.
+        The nan mask is used to mask the data outside the domain,
+        and giving you the illusion that I was able to generate a curved mesh in python.
+        Ahah.
+
         Args:
             Data_field (str): field to be interpolated
-        Returns:
-            Zi (np.array): interpolated data
+            ts (int): timestep index, used only if `steady_state` is False
+            steady_state (bool): if True the field has no time dimension
 
-            Paraview is not able to visualise unstructured data properly, 
-            so we need to interpolate the data on a regular grid for visualisation purposes.
-            The nan mask is used to mask the data outside the domain,]
-            and giving you the illusion that I was able to generate a curved mesh in python.
-            Ahah.
+        Returns:
+            np.ndarray: interpolated data (Zi)
         """
 
         Xi = self.MeshData.Xi

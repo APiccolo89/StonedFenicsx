@@ -1,6 +1,6 @@
 """Modules"""
+
 from dataclasses import dataclass, field
-from pathlib import Path
 
 from stonedfenicsx.config.config_utils import update_ip_file
 from stonedfenicsx.config.geometry import GeomInput
@@ -23,40 +23,38 @@ class Input:
     other script for configure ensemble of numerical experiments.
 
     """
+
     ctrl: NumericalControls = field(default_factory=NumericalControls)
-    ctrl_io: IOControls = field(default_factory = IOControls)
-    ctrl_tbc: CtrlTemperatureBC = field(default_factory = CtrlTemperatureBC)
+    ctrl_io: IOControls = field(default_factory=IOControls)
+    ctrl_tbc: CtrlTemperatureBC = field(default_factory=CtrlTemperatureBC)
     ctrl_ky: CtrlKy = field(default_factory=CtrlKy)
     g_input: GeomInput = field(default_factory=GeomInput)
     sc: Scal = field(default_factory=Scal)
+
+
 # -----------------------------------------------------------------------------------
 @timing_function
-def parse_input(path: str) -> tuple[Input,PhInput]:
+def parse_input(path: str) -> tuple[Input, PhInput]:
     """
     Read and parse a YAML input file.
 
-    Parameters
-    ----------
-    path : str
-        Path to the main input file.
+    Args:
+        path (str): Path to the main input file.
 
-    Returns
-    -------
-    Input
-        Temporary container holding numerical and physical parameters.
-        The returned object can be modified programmatically before
-        starting the computation.
+    Returns:
+        tuple: A tuple containing:
 
-    Ph_input
-        Temporary container storing material property definitions.
+            - Input: Temporary container holding numerical and physical parameters.
+              The returned object can be modified programmatically before
+              starting the computation.
+            - Ph_input: Temporary container storing material property definitions.
 
-    Notes
-    -----
-    The YAML input file can be used directly as a standalone model
-    configuration, or as a template for generating ensembles of models
-    through external Python scripts. The typical workflow is to define
-    a base scenario in YAML and then modify selected parameters
-    programmatically.
+    Notes:
+        The YAML input file can be used directly as a standalone model
+        configuration, or as a template for generating ensembles of models
+        through external Python scripts. The typical workflow is to define
+        a base scenario in YAML and then modify selected parameters
+        programmatically.
     """
     # import yamlv
     import yaml
@@ -67,10 +65,8 @@ def parse_input(path: str) -> tuple[Input,PhInput]:
         # Import numerical controls [basically structured data like numpy]
         nc = input_file["Input"]["NumericalControls"]  # Numerical controls
         iocr = input_file["Input"]["InputOutputControl"]  # Input Controls
-        lhs = input_file["Input"][
-            "thermal_boundary_condition"
-        ]  # left boundary condition
-        ky = input_file["Input"]['kinematic_boundary_condition']
+        lhs = input_file["Input"]["thermal_boundary_condition"]  # left boundary condition
+        ky = input_file["Input"]["kinematic_boundary_condition"]
         geom = input_file["Input"]["geometry"]  # Geometry
         mp = input_file["Input"]["Material_properties"]  # Material property
         scal = input_file["Input"]["scaling"]  # Scaling
@@ -93,23 +89,28 @@ def parse_input(path: str) -> tuple[Input,PhInput]:
     update_ip_file(ctrl_tbc, lhs)
     update_ip_file(ctrl_ky, ky)
 
-    input_obj = Input(ctrl=ctrl,ctrl_io = ctrl_io,ctrl_ky=ctrl_ky,ctrl_tbc=ctrl_tbc,g_input=g_input,sc=sc)
+    input_obj = Input(
+        ctrl=ctrl,
+        ctrl_io=ctrl_io,
+        ctrl_ky=ctrl_ky,
+        ctrl_tbc=ctrl_tbc,
+        g_input=g_input,
+        sc=sc,
+    )
 
     ph_input = PhInput()
 
-    ph_input = filling_the_phase_data_base(
-        materialproperties=mp, shheating=sheating, phase_input=ph_input
-    )
+    ph_input = filling_the_phase_data_base(materialproperties=mp, shheating=sheating, phase_input=ph_input)
     return input_obj, ph_input
 
+
 # -----------------------------------------------------------------------------------------
-def filling_the_phase_data_base(
-    materialproperties: dict, shheating: dict, phase_input: PhInput
-) -> PhInput:
+def filling_the_phase_data_base(materialproperties: dict, shheating: dict, phase_input: PhInput) -> PhInput:
     """Function that fills the temporary class of the material properties
 
     Args:
         materialproperties (dict): Material database coming from input.yaml
+        shheating (dict): Shear heating settings coming from input.yaml
         phase_input (PhInput): Phase database
 
     Returns:
@@ -130,11 +131,8 @@ def filling_the_phase_data_base(
     for k, v in materialproperties.items():
         buf = Phase()  # Prepare a Phase class to fill up with the new properties
         for j, vv in v.items():  # Loop over the properties of the class phase
-
             if vv is None:
-                vv = (
-                    0.0 if j in ("radiogenic_heat", "radiative_conductivity") else None
-                )
+                vv = 0.0 if j in ("radiogenic_heat", "radiative_conductivity") else None
 
             setattr(buf, j, vv)
         buf.name_phase = k
@@ -142,19 +140,3 @@ def filling_the_phase_data_base(
         setattr(phase_input, k, buf)  # Substitute the buf class with the default one
     return phase_input
 
-def test_function():
-    """Test function for debugging the configuration routines. 
-    """
-    # Find the main folder of the package
-    pkg_root = Path(__file__)
-    # Select the appropriate path for the input file
-    input_file = Path(pkg_root.parents[2], "input.yaml")
-    # parse the input file
-    input_data, ph_in = parse_input(input_file)
-    # Destroy the input data 
-    del input_data
-    del ph_in
-
-# Building the unit test for the configuration of the numerical simulation routine.
-if __name__ == "__main__":
-    test_function()
