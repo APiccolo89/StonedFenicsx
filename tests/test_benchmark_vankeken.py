@@ -342,3 +342,5 @@ def test_composite_NL_crust_P():
     if MPI.COMM_WORLD.rank == 0: 
         read_data_base(2,3)
 #-------------------------------------------------------------------------------
+if __name__ == '__main__':
+    test_isoviscous()

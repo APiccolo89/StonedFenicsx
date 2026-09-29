@@ -611,8 +611,11 @@ def function_create_subducting_plate_geometry(g_input:GeomInput,
 
     ax = slab_top[:,0]
     ay = slab_top[:,1]
-
-    bx,by, lt = generate_parallel_layer_subducting_plate(ax,ay,theta_mean,g_input.slab_tk)
+    bx,by, lt = generate_parallel_layer_subducting_plate(ax,
+                                                         ay,
+                                                         theta_mean,
+                                                         g_input.slab_tk,
+                                                         g_input.sub_constant_flag)
     if lt != g_input.slab_tk: 
         print('Warning: slab top surface have a curvature that is incompatible with the current slab thickness.')
         print(f' Old Thickness: {g_input.slab_tk} [km] New Thickness: {lt} [km]')
@@ -621,7 +624,11 @@ def function_create_subducting_plate_geometry(g_input:GeomInput,
     # Create the channel using the subduction interface as guide
     #cx,cy = function_create_subduction_channel(ax,ay,theta_mean,g_input)
     if g_input.ocr != 0.0:
-        ox,oy,_ = generate_parallel_layer_subducting_plate(ax,ay,theta_mean,g_input.ocr)
+        ox,oy,_ = generate_parallel_layer_subducting_plate(ax
+                                                           ,ay
+                                                           ,theta_mean
+                                                           ,g_input.ocr,
+                                                           g_input.sub_constant_flag)
     else:
         ox = None
         oy = None 
@@ -644,7 +651,8 @@ def function_create_subducting_plate_geometry(g_input:GeomInput,
 def generate_parallel_layer_subducting_plate(sx:ndarray[np.float64],
                                       sy:ndarray[np.float64],
                                       th:ndarray[np.float64],
-                                      lt:float)->tuple[ndarray[np.float64],ndarray[np.float64]]:
+                                      lt:float,
+                                      constant_theta:bool)->tuple[ndarray[np.float64],ndarray[np.float64]]:
     """
     Compute the coordinates of an internal layer surface within the subducting plate.
     
@@ -666,6 +674,9 @@ def generate_parallel_layer_subducting_plate(sx:ndarray[np.float64],
     lt : float
         Layer thickness used to offset the surface (e.g., oceanic crust thickness
         or slab thickness) (SI units: [m]).
+    constant_theta: bool
+        Tells whether or not the subduction plate is a constant slope slab (i.e.,
+        VanKeken Benchmark)
     
     Returns
     -------
@@ -689,10 +700,7 @@ def generate_parallel_layer_subducting_plate(sx:ndarray[np.float64],
     
     kappa = np.zeros_like(sx)
     kappa[1:] = np.abs(dth_ds)
-    
-    if np.nanmin(kappa) == 0 and not all(dth==0): 
-        raise ValueError('The curvature of the slab is wrong, check the geometry')
-    
+
     if 0.8 * np.nanmin(1/kappa) < lt and not all(dth==0): 
         lt = np.floor(0.8 * np.min(1/kappa))
     

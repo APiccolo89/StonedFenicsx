@@ -1,3 +1,25 @@
+"""
+**create_mesh**
+
+Module that create the geometry of the numerical experiment: 
+From the g_input data creates the fundamental boundary and 
+surfaces through which the gmesh generate an unstructured mesh.
+It saves the mesh in the .msh file, then reads through 
+meshio generating the domain:
+- global_domain
+- wedge_domain
+- overriding_plate_domain
+- subducting_plate_domain
+Then it creates the MESH object where all the relevant information of each domain
+are stored (i.e., internal boundaries, map from subdomain-global mesh and viceversa)
+and the Phase function space as DG mesh of 1st order. 
+--- 
+aux_create_mesh => gregary module that stores the functions to create the fundamental 
+geometrical entity for the gmsh, and that stores the dictionary related to the boundary
+"""
+
+
+
 # input for iFieldstone
 import math
 import time

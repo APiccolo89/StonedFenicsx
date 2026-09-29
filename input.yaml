@@ -27,6 +27,7 @@ Input:
     CFL : 0.8
     time_ini_guess : 0.3
     initial_guess : "Thermal_Diffusion" # {Thermal_Diffusion} -> Run Thermal diffusion without velocity for 0.3 Myr -> smoothing the asperities {None}
+    tol_dtemp : 5e-2
 
 
   Shear_Heating: 

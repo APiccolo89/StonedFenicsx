@@ -33,13 +33,27 @@ def git_info(repo=None):
 
 
 def print_information_code() -> None:
+    
+    s=(
+    "\033[0;37;48;2;0;0;0mS"
+    "\033[0;97;48;2;0;0;0mΓ"
+    "\033[0;37;48;2;0;0;0m0"
+    "\033[0;97;48;2;0;0;0m∩Σ"
+    "\033[0;37;48;2;0;0;0mD"
+    "\033[0;90;48;2;0;0;0mƒ"
+    "\033[0;97;48;2;0;0;0mΣ∩"
+    "\033[0;90;48;2;0;0;0mi"
+    "\033[0;97;48;2;0;0;0mC"
+    "\033[0;37;48;2;0;0;0mSX"
+    "\033[0m"
+    )
+    # https://patorjk.com/software/
     print_ph("================================================================")    
-    print_ph("||||||||| ->        StonedFEniCSx       <- |||||||||")
+    print_ph(f"||||||||| ->        {s}       <- |||||||||")
     print_ph(f"      Authors = {_AUTHORS_}")
     print_ph(f"      Version = {_VERSION_}")
     print_ph(f"      Date = {_DATE_}")
     print_ph(" git informations:")
-
     meta_data = git_info()
     if meta_data is None:
         print_ph(" Branch = unavailable (not a git checkout)")
@@ -50,7 +64,6 @@ def print_information_code() -> None:
     print_ph(f" Commit = {meta_data['short']}{dirty}")
     print_ph("main repo link: https://github.com/APiccolo89/StonedFenicsx")
     print_ph("================================================================")
-
 
 
 @timing_function
