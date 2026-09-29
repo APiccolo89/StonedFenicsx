@@ -19,7 +19,6 @@ geometrical entity for the gmsh, and that stores the dictionary related to the b
 
 # input for iFieldstone
 import math
-import time
 from dataclasses import asdict
 from pathlib import Path
 
