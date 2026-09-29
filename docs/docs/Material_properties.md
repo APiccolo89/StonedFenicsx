@@ -237,39 +237,68 @@ The implementation of the thermal properties follows {cite}`richards2020structur
 In general, the code can handle pressure-dependent material properties. However, these should be used with caution because the kinematic subduction models are incompressible. Consequently, pressure-dependent properties may introduce inconsistencies in the computed thermal field. Adiabatic heating cannot be introduced straightforwardly within this framework. Furthermore, the pressure singularities described by {cite}`van2008community` complicate the computation of shear heating without introducing additional assumptions or arbitrary choices.
 
 #### Heat capacity
-**Heat capacity** is computed using the following equation:
+Heat capacity is computed using the following equation:
 
 ```{math}
 :label: eq:heat_capacity
 
 \begin{aligned}
-C_p(X,T) ={}& C_{p,0}(X)
-+ C_{p,1}(X)T^{-0.5}
-+ C_{p,2}(X)T^{-2} \\
-&+ C_{p,3}(X)T^{-3}
-+ C_{p,4}(X)T
-+ C_{p,5}(X)T^{2}
+C_p(X,T) ={}& cp0(X)
++ cp1(X)T^{-0.5}
++ cp2(X)T^{-2} \\
+&+ cp3(X)T^{-3}
++ cp4(X)T
++ cp5(X)T^{2}
 \end{aligned}
 ```
 
-where {math}`C_{p,i}` are empirical parameters that depend on the mineralogical composition. The data are taken from {cite}`grose2013comprehensive` and {cite}`berman1996optimized`. The main parameters used in the current implementation are listed in {ref}`tab:heat_capacity`.
+where {math}`cp{i}` are empirical parameters that depend on the mineralogical composition. The data are taken from {cite}`grose2013comprehensive` and {cite}`berman1996optimized`. The main parameters used in the current implementation are listed in {ref}`tab:heat_capacity`.
 
-The coefficients are defined such that $C_p$ is expressed in {math}`\mathrm{J\,kg^{-1}\,K^{-1}}`, with T in K. Forsterite and fayalite are the end-member experimental data from {cite}`berman1996optimized`, while olivine, augite, and plagioclase are the mineral properties listed in {cite}`grose2013comprehensive`.
+The coefficients are defined such that $C_p$ is expressed in {math}`\mathrm{J\,kg^{-1}\,K^{-1}}`, with T in K. Forsterite and fayalite are the end-member experimental data from {cite}`berman1996optimized` or {cite}`berman1988internally`, while olivine, augite, and plagioclase are the mineral properties listed in {cite}`grose2013comprehensive`. In Tab {numref}`tab-original_data`, the original experimental data are listed, while In Tab {numref}`tab-mix_data` the mixture that can be used are listed (using the abbreviation in the name of {numref}`tab-original_data`)
 
-The heat capacity of the mantle is computed using a mixture of 0.9 forsterite and 0.1 fayalite. The crustal heat capacity is computed using a mixture of 0.65 plagioclase, 0.2 augite, and 0.15 olivine, as listed in {cite}`grose2013comprehensive`.
+>[!NOTE]
+> The olivine listed in {cite}`grose2013comprehensive` it is a mixture computed using the data from {cite}`berman1996optimized`. While the data of augite and plagioclase, instead, are tabulated from {cite}`robie1995thermodynamic` (NB: in {cite}`grose2013comprehensive` this is reference is not listed, so the reference here can be wrong.)
+> The equation of the heat capacity is not canonical, it is simply the most generalised form that have been conceived to collects all the parameters found in literature. Thus, the reader must map each of the coefficient as a function of the temperature exponent. This was a design solution to avoid to have cases as a function of the mineralogical composition. 
 
 
-(tab:heat_capacity)=
+The heat capacity of the mantle is computed using a mixture of 0.9 forsterite and 0.1 fayalite. The crustal heat capacity is computed using a mixture of 0.65 plagioclase, 0.2 augite, and 0.15 olivine, as listed in {cite}`grose2013comprehensive`. 
 
-*Heat capacity coefficients used in the non-linear formulation*
 
-| Mineral | {math}`C_{p,0}` [J {math}`kg^{-1} K^{-1}`] | {math}`C_{p,1}` [J {math}`kg^{-1} K^{-0.5}`] |{math}`C_{p,2}` [J {math}`kg^{-1} K`]|{math}`C_{p,3}` [J {math}`kg^{-1} K^{2}`]| {math}`C_{p,4}` [J {math}`kg^{-1} K^{-2}`] | {math}`C_{p,5}` [J {math}`kg^{-1} K^{-3}`] |
-|---|---:|---:|---:|---:|---:|---:|
-| Forsterite | 1657.39 | {math}`-1.281\times10^{4}` | 0 | {math}`-1.904\times10^{9}` | 0 | 0 |
-| Fayalite | 1236.68 | {math}`-9.882\times10^{3}` | 0 | {math}`-3.052\times10^{8}` | 0 | 0 |
-| Olivine | 1610.80 | {math}`-1.248\times10^{4}` | 0 | {math}`-1.728\times10^{9}` | 0 | 0 |
-| Augite | 2171.50 | {math}`-2.227\times10^{4}` | {math}`1.133\times10^{6}` | 0 | {math}`-4.555\times10^{-1}` | {math}`1.299\times10^{-4}` |
-| Plagioclase | 1857.57 | {math}`-1.649\times10^{4}` | {math}`-5.061\times10^{6}` | 0 | {math}`-3.324\times10^{-1}` | {math}`1.505\times10^{-4}` |
+::::{tab-set}
+
+:::{tab-item} Original data 
+
+```{table} Heat capacity
+:name: tab-original_data
+| Model                             | cp0      | cp1          | cp2       | cp3             | cp4        | cp5       | ref   |
+|-----------------------------------|----------|--------------|-----------|-----------------|------------|-----------|-------
+| Bermann_Fosterite (**BFo**)           | 1696.199 | -14224.790   | 0.0       | -8.262078e8     | 0.0        | 0.0       |{cite}`berman1988internally`|
+| Bermann_Fayalite (**BFa**)           | 1221.616 | -9441.481    | 0.0       | -6.826290e8     | 0.0        | 0.0       |{cite}`berman1988internally`|
+| Bermann_Aranovich_Fosterite (**BAFo**)| 1657.391 | -12805.368   | 0.0       | -1.904457e9     | 0.0        | 0.0       |{cite}`berman1996optimized`|
+| Bermann_Aranovich_Fayalite (**BAFa**)| 1236.682 | -9882.172    | 0.0       | -3.051955e8     | 0.0        | 0.0       |{cite}`berman1996optimized`|
+| olivine (**ol**)                      | 1610.8   | -12478.8     | 0.0       | -1.728477e9     | 0.0        | 0.0       |{cite}`grose2013comprehensive`|
+| augite (**au**)                       | 2171.5   | -22271.6     | 1.1333e6  | 0.0             | -4.555e-1  | 1.299e-4  |{cite}`grose2013comprehensive`|
+| plagioclase (**plg**)                 | 1857.57  | -16494.6     | -5.061e6  | 0.0             | -3.324e-1  | 1.505e-4  |{cite}`grose2013comprehensive`|
+```
+:::
+
+:::{tab-item} Avaiable Mixture
+```{table} Avaiable mixture
+:name: tab-mix_data
+| Name input | Mixture |
+|---|---|
+| `Mantle_Bernard_1988_FO` | *BFo* 100% |
+| `Mantle_Bernard_1988_FA` | *BFa* 100% |
+| `Mantle_Bernard_Ar_199x_FO` | *BAFo* 100% |
+| `Mantle_Bernard_Ar_199x_FA` | *BAFa* 100% |
+| `Mantle_Bernard_1988_FO_FA` | *BFo* 90% + *BFa*10%  |
+| `Mantle_Bernard_Ar_199x_FO_FA` |  *BAFo* 90% + *BAFa*10%  |
+| `Oceanic_crust` | *ol*15% + *au*20% +*pl*65%|
+```
+
+:::
+
+::::
 
 #### Thermal expansivity
 
@@ -289,9 +318,9 @@ The lattice diffusivity is computed according to the following equation:
 \kappa_{\mathrm{lat}} =
 \kappa_0
 +
-\kappa_1 \frac{-(T-T_{\mathrm{ref}})}{T_0}
+\kappa_1 \exp(\frac{-(T-T_{\mathrm{ref}})}{T_0})
 +
-\kappa_2 \frac{-(T-T_{\mathrm{ref}})}{T_1}
+\kappa_2 \exp(\frac{-(T-T_{\mathrm{ref}})}{T_1})
 \exp(fP)
 ```
 
@@ -301,7 +330,7 @@ The lattice diffusivity is then multiplied by the density and heat capacity to o
 
 ##### Radiative Conductivity
 
-$k_{\mathrm{rad}}$ is described by the following equation {cite:p}`grose2013comprehensive,richards2020structure`:
+{math}`k_{\mathrm{rad}}` is described by the following equation {cite:p}`grose2013comprehensive,richards2020structure`:
 
 ```{math}
 :label: eq:radiative_conductivity
