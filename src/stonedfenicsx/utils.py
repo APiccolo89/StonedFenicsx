@@ -3,52 +3,14 @@ from __future__ import annotations
 import time as timing
 from collections.abc import Callable
 from functools import wraps
-from pathlib import Path
-from typing import TYPE_CHECKING
 
 import dolfinx
 import numpy as np
-import psutil as pst
 import ufl
 from mpi4py import MPI
 
-if TYPE_CHECKING:
-    from stonedfenicsx.config.numerical_control import IOControls
-
-# ---------------------------------------------------------------------------------------------------------
+# ---
 _DEBUG_ = False
-def check_race_condition(ioctrl:IOControls,file:str)->bool:
-    """Check whether the temporary  cache file is held open by another process.
-
-    Iterates over all running processes via psutil. Returns True if any process
-    has the cache file open, False otherwise. Processes that have died or are
-    inaccessible between iteration and inspection are silently skipped.
-
-    Args:
-        ioctrl (IOControls): I/O control object providing path_cached_information.
-
-    Returns:
-        bool: True if the file is currently open by another process, False if safe to write.
-    """
-
-    path_cached = ioctrl.path_cached_information
-
-    path_h5 = path_cached/file
-    
-    race = False
-    
-    for proc in pst.process_iter(['pid', 'name']):
-        try:
-            for f in proc.open_files():
-                if Path(f.path).resolve() == Path(path_h5):
-                    race = True
-        except (pst.NoSuchProcess,
-                pst.AccessDenied,
-                pst.ZombieProcess):
-            pass
-
-    return race
-
 
 
 # ---
@@ -63,7 +25,7 @@ def timing_function(fun: Callable) -> Callable:
     """
     if not _DEBUG_:
         return fun
-    
+
     @wraps(fun)
     def wrapper(*args, **kwargs):
         comm = MPI.COMM_WORLD
@@ -79,9 +41,7 @@ def timing_function(fun: Callable) -> Callable:
             elif dt > 3600.0:
                 m, s = divmod(dt, 60)
                 h, m = divmod(m, 60)
-                print(
-                    f".  {fun.__name__} took {dt/3600:.2f} hr, {m:.2f} min and {s:.2f} sec"
-                )
+                print(f".  {fun.__name__} took {h:.2f} hr, {m:.2f} min and {s:.2f} sec")
             else:
                 print(f".  {fun.__name__} took {dt:.2f} sec")
         return result
@@ -103,7 +63,7 @@ def time_the_time(delta_time: float) -> float:
     return global_dt
 
 
-# ---------------------------------------------------------------------------------------------------------
+# ---
 def print_ph(string: str) -> int:
     """function to print information. Print information only in one processor.
     Args:
@@ -119,10 +79,15 @@ def print_ph(string: str) -> int:
     return -1
 
 
-def interpolate_from_sub_to_main(u_dest: dolfinx.fem.Function
-                                 , u_start: dolfinx.fem.Function,
-                                 cells: np.ndarray,
-                                 parent2child: int = 0) -> None:
+# ---
+
+
+def interpolate_from_sub_to_main(
+    u_dest: dolfinx.fem.Function,
+    u_start: dolfinx.fem.Function,
+    cells: np.ndarray,
+    parent2child: int = 0,
+) -> None:
     """
     Interpolate the solution from the subdomain to the main domain.
 
@@ -142,9 +107,11 @@ def interpolate_from_sub_to_main(u_dest: dolfinx.fem.Function
     u_dest.interpolate(u_start, cells0=a, cells1=b)
 
 
+# ---
+
 
 def gather_vector(v):
-    """_summary_
+    """Fenicsx-tools, gather the vector from all the processor
 
     Args:
         v (function): vector/function space to syncronise from local to global
@@ -224,7 +191,9 @@ def gather_coordinates(V):
         return None
 
 
-# ----------------------------------------------------------------------------
+# ---
+
+
 def compute_strain_rate(u):
     """Compute strain rate from the velocity field u.
 
@@ -238,7 +207,7 @@ def compute_strain_rate(u):
     return e
 
 
-# ---------------------------------------------------------------------------
+# ---
 
 
 def compute_eii(e):
@@ -254,10 +223,11 @@ def compute_eii(e):
     return e_ii
 
 
+# ---
 
 
 def evaluate_material_property(
-    expression:dolfinx.fem.Expression, function_space:dolfinx.fem.FunctionSpace
+    expression: dolfinx.fem.Expression, function_space: dolfinx.fem.FunctionSpace
 ) -> dolfinx.fem.Function:
     """Transform an ufl expression into a function
     Args:
@@ -265,11 +235,13 @@ def evaluate_material_property(
         function_space (dolfinx.fem.FunctionSpace): the function space
     Returns:
         target_function: The final function
+
     """
 
     target_function = dolfinx.fem.Function(function_space)
-    target_function.interpolate(
-        dolfinx.fem.Expression(expression, function_space.element.interpolation_points())
-    )
+    target_function.interpolate(dolfinx.fem.Expression(expression, function_space.element.interpolation_points()))
     return target_function
 
+
+# ---
+# ---

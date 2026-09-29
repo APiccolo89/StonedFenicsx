@@ -126,6 +126,36 @@ def test_mesh():
     nodes = np.unique(geom.reshape(-1))
     min_slab_x = np.max(mesh.global_domain.mesh.geometry.x[nodes,0]) * sc.length
     assert np.isclose(660e3-min_slab_x,60e3,1e-2)
-    
+
+def place_holder_phase_pdb():
+    """Place holder -> configure material property, scaling them and read the 
+    database to see the scaling if it holds
+
+    Returns:
+        _type_: _description_
+    """
+    from stonedfenicsx.config.phase_db import read_capacity, read_diffusivity, read_expansivity, read_rheology
+    # Test rheology
+    rqrtz = read_rheology("Wet_Quartzite_2001_Dislocation_creep", 1)
+    rolivinedsl = read_rheology("Hirth_wet_Dislocation_creep", 1)
+    rolivinedff = read_rheology("Hirth_wet_Diffusion_creep", 0)
+    # Test Heat Capacity
+    cp0 = read_capacity("Mantle_Bernard_Ar_199x_FA")
+    cp1 = read_capacity("Mantle_Bernard_Ar_199x_FO")
+    cp2 = read_capacity("Mantle_Bernard_Ar_199x_FO_FA")
+    cp3 = read_capacity("Mantle_Bernard_1988_FA")
+    cp4 = read_capacity("Mantle_Bernard_1988_FO")
+    cp5 = read_capacity("Mantle_Bernard_1988_FO_FA")
+    cp6 = read_capacity("Crust")
+    # Thermal diffusivity
+    dif_0 = read_diffusivity("Mantle_Richards_2018")
+    dif_1 = read_diffusivity("Crust_Richards_2018")
+    # Thermal expansivity
+    alpha_0 = read_expansivity("Mantle")
+    alpha_1 = read_expansivity("Oceanic_crust")
+
+    return 0
+
+
 if __name__ =='__main__':
     test_mesh()

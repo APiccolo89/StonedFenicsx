@@ -6,12 +6,14 @@ import numpy as np
 from mpi4py import MPI
 from numpy.typing import NDArray
 
-_ELEMENT_P           = basix.ufl.element("Lagrange","triangle", 1) 
+_ELEMENT_P = basix.ufl.element("Lagrange", "triangle", 1)
 
-_ELEMENT_PT          = basix.ufl.element("Lagrange","triangle",2)
+_ELEMENT_PT = basix.ufl.element("Lagrange", "triangle", 2)
 
-_ELEMENT_V           = basix.ufl.element("Lagrange","triangle",2,shape=(2,))
-#------------------------------------------------------------------------------------------------
+_ELEMENT_V = basix.ufl.element("Lagrange", "triangle", 2, shape=(2,))
+
+
+# ------------------------------------------------------------------------------------------------
 @dataclass(slots=True)
 class Domain:
     """
@@ -72,8 +74,10 @@ class Domain:
     solph: dolfinx.fem.FunctionSpace = None
     phase: dolfinx.fem.Function = None
     comm: MPI.Intracomm = None
-    name: str = None 
-#---------------------------------------------------------------------------------------------------
+    name: str = None
+
+
+# ---------------------------------------------------------------------------------------------------
 @dataclass(slots=True)
 class GeomInput:
     """
@@ -81,37 +85,38 @@ class GeomInput:
     Lengths in [km]; angles in [degrees]; lc dimensionless.
     ...
     """
+
     x: NDArray[np.float64] = field(default_factory=lambda: np.array([0.0, 660.0]))
     y: NDArray[np.float64] = field(default_factory=lambda: np.array([-600.0, 0.0]))
-    redo_mesh:bool = True
+    redo_mesh: bool = True
     slab_tk: float = 130.0
     cr: float = 30.0
     ocr: float = 7.0
     lit_mt: float = 20.0
-    lc: float = 0.3                    # adimensionale, invariato
+    lc: float = 0.3  # adimensionale, invariato
     ns_depth: float = 50.0
     decoupling: float = 80.0
     resolution_normal: float = 2.0
     resolution_refine: float = 2.0
-    theta_out_slab: float = 45.0       # gradi, invariato
-    theta_in_slab: float = 10.0        # gradi, invariato
+    theta_out_slab: float = 45.0  # gradi, invariato
+    theta_in_slab: float = 10.0  # gradi, invariato
     transition: float = 10.0
     lab_d: float = 100.0
     slab_type: str = "CustomParabolic"
     sub_path: str = "Not_Defined"
-    sub_parabolic_a:float = 5e-4 # Curvature of the parabula (England and May 2021 for reference) [5e-4 -> 3.5e-3]
+    sub_parabolic_a: float = 5e-4  # Curvature of the parabula (England and May 2021 for reference) [5e-4 -> 3.5e-3]
     sub_lb: float = 300.0
     sub_constant_flag: bool = False
-    sub_theta0: float = 5.0           # gradi, invariato
-    sub_theta_max: float = 45.0        # gradi, invariato
+    sub_theta0: float = 5.0  # gradi, invariato
+    sub_theta_max: float = 45.0  # gradi, invariato
     sub_trench: float = 0.0
     sub_dl: float = 1.0
     wz_tk: float = 2.0
-    van_keken : bool = True
-    model_full : bool = False
+    van_keken: bool = True
+    model_full: bool = False
 
     def check_class_consistency(self):
-        """Check the integrity of the input, and if it respect 
+        """Check the integrity of the input, and if it respect
         the requirements
         Convert the main bending angle into radians for computation.
         Raises:
@@ -121,17 +126,18 @@ class GeomInput:
         """
         if not 0.0 <= self.lc <= 1.0:
             raise ValueError(f"lc (lower crust fraction) must be in [0, 1], got {self.lc}")
-        if self.slab_type not in {"CustomRibe","CustomParabolic", "FromFile"}:
+        if self.slab_type not in {"CustomRibe", "CustomParabolic", "FromFile"}:
             raise ValueError(f'sub_type must be "CustomRibe", "CustomParabolic" or "Real", got {self.slab_type!r}')
         if self.van_keken and not self.sub_constant_flag:
-            raise ValueError('Van Keken benchmark suite requires that the angle flag constant is true')
-        if self.slab_type == 'Real' and self.sub_path in ('Not_Defined', None):
-            raise ValueError('If you want to test a realistic geometry, why would you not inform me on its location?')
+            raise ValueError("Van Keken benchmark suite requires that the angle flag constant is true")
+        if self.slab_type == "Real" and self.sub_path in ("Not_Defined", None):
+            raise ValueError("If you want to test a realistic geometry, why would you not inform me on its location?")
         # Convert the angles in radians
         self.sub_theta0 = np.radians(self.sub_theta0)
         self.sub_theta_max = np.radians(self.sub_theta_max)
 
-#---------------------------------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------------------------------
 @dataclass(slots=True)
 class Mesh:
     """
@@ -175,14 +181,16 @@ class Mesh:
         Finite element definition for the velocity field.
     """
 
-    g_input : GeomInput    # Geometric input
-    global_domain : Domain                                # Domain
-    subduction_plate_domain : Domain
-    wedge_domain : Domain
-    crust_domain : Domain
-    comm : MPI.Intracomm
-    rank : int
-    element_p  = _ELEMENT_P
+    g_input: GeomInput  # Geometric input
+    global_domain: Domain  # Domain
+    subduction_plate_domain: Domain
+    wedge_domain: Domain
+    crust_domain: Domain
+    comm: MPI.Intracomm
+    rank: int
+    element_p = _ELEMENT_P
     element_pt = _ELEMENT_PT
-    element_v  = _ELEMENT_V
-#-----------------------------------------------------------------------------------------------------------------
+    element_v = _ELEMENT_V
+
+
+# -----------------------------------------------------------------------------------------------------------------

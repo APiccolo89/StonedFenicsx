@@ -1,10 +1,10 @@
 """
 **create_mesh**
 
-Module that create the geometry of the numerical experiment: 
-From the g_input data creates the fundamental boundary and 
+Module that create the geometry of the numerical experiment:
+From the g_input data creates the fundamental boundary and
 surfaces through which the gmesh generate an unstructured mesh.
-It saves the mesh in the .msh file, then reads through 
+It saves the mesh in the .msh file, then reads through
 meshio generating the domain:
 - global_domain
 - wedge_domain
@@ -12,13 +12,10 @@ meshio generating the domain:
 - subducting_plate_domain
 Then it creates the MESH object where all the relevant information of each domain
 are stored (i.e., internal boundaries, map from subdomain-global mesh and viceversa)
-and the Phase function space as DG mesh of 1st order. 
---- 
-aux_create_mesh => gregary module that stores the functions to create the fundamental 
+and the Phase function space as DG mesh of 1st order.
+aux_create_mesh => gregary module that stores the functions to create the fundamental
 geometrical entity for the gmsh, and that stores the dictionary related to the boundary
 """
-
-
 
 # input for iFieldstone
 import math
@@ -49,16 +46,16 @@ from stonedfenicsx.create_mesh.aux_create_mesh import (
     from_line_to_point_coordinate,
     function_create_subducting_plate_geometry,
 )
-from stonedfenicsx.utils import check_race_condition, print_ph
+from stonedfenicsx.utils import print_ph
 
 
 def _differs(cached, current) -> bool:
     cur = current.tolist() if isinstance(current, np.ndarray) else current
-    if isinstance(cur, list):                       # x, y, array
+    if isinstance(cur, list):  # x, y, array
         return not np.array_equal(cached, cur)
-    if isinstance(cur, float):                      # tolleranza sui float
+    if isinstance(cur, float):  # tolleranza sui float
         return not math.isclose(cached, cur, rel_tol=1e-9, abs_tol=0.0)
-    return cached != cur                            # int, str, bool
+    return cached != cur  # int, str, bool
 
 
 def compare_data(g_input: GeomInput, ioctrl: IOControls) -> None:
@@ -72,12 +69,13 @@ def compare_data(g_input: GeomInput, ioctrl: IOControls) -> None:
         ValueError: _description_
     """
     import yaml
+
     path_cached = Path(ioctrl.path_cached_information) / "mesh_meta_data.yml"
     with open(path_cached, "r", encoding="utf-8") as f:
         cached = yaml.safe_load(f)
 
     for key, cached_val in cached.items():
-        if key in ("decoupling","redo_mesh"):          
+        if key in ("decoupling", "redo_mesh"):
             continue
         current_val = getattr(g_input, key)
         if _differs(cached_val, current_val):
@@ -90,47 +88,47 @@ def compare_data(g_input: GeomInput, ioctrl: IOControls) -> None:
             )
 
 
-#-----------------------------------------------------------
-def write_mesh_data(g_input:GeomInput,ioctrl:IOControls)->None:
-    """Save a small database in yaml of the mesh metadata. 
-    In case the cached metadata is different from the main mesh data 
+# -----------------------------------------------------------
+def write_mesh_data(g_input: GeomInput, ioctrl: IOControls) -> None:
+    """Save a small database in yaml of the mesh metadata.
+    In case the cached metadata is different from the main mesh data
     it will be compared with the current realisation of the model, and
-    it blocks the simulation. 
+    it blocks the simulation.
 
     Args:
-        g_input (GeomInput): geometrical input 
+        g_input (GeomInput): geometrical input
         ioctrl (IOControls): input and output control
 
     Returns:
         None
     """
+
     def convert_yaml_friendly(vl):
         if isinstance(vl, np.ndarray):
             return vl.tolist()
         if isinstance(vl, np.generic):
-            return vl.item()       # np.float64, np.int32, ...
-        if isinstance(vl, dict):          
+            return vl.item()  # np.float64, np.int32, ...
+        if isinstance(vl, dict):
             return {j: convert_yaml_friendly(m) for j, m in vl.items()}
         if isinstance(vl, (list, tuple)):
             return [convert_yaml_friendly(j) for j in vl]
         else:
             return vl
-    
-    def clean_class(dic_class:dict):
-        for i,v in dic_class.items():
+
+    def clean_class(dic_class: dict):
+        for i, v in dic_class.items():
             dic_class[i] = convert_yaml_friendly(v)
-        
+
         return dic_class
-    
-    
-    path_file = Path(ioctrl.path_cached_information,'mesh_meta_data.yml')
-    # Read the geometric input: 
+
+    path_file = Path(ioctrl.path_cached_information, "mesh_meta_data.yml")
+    # Read the geometric input:
     class_dump = asdict(g_input)
     class_dump = clean_class(class_dump)
-    with open(path_file,'w',encoding='utf-8') as f:
-        yaml.dump(class_dump,f,default_flow_style=False)    
-    
-    print_ph('The metadata of the mesh have been saved into the cached folder')
+    with open(path_file, "w", encoding="utf-8") as f:
+        yaml.dump(class_dump, f, default_flow_style=False)
+
+    print_ph("The metadata of the mesh have been saved into the cached folder")
 
 
 # ------------------------------------------------------------------------------------------------------
@@ -232,10 +230,12 @@ def create_gmesh(ioctrl: IOControls, g_input: GeomInput):
     min_x = g_input.x[0]  # The beginning of the model is the trench of the slab
     max_x = g_input.x[1]
 
-    # if the cache folder does not exist and the mesh file does not exist -> create the mesh. 
-    if  not Path(ioctrl.path_cached_information, "mesh.msh").is_file() \
-        or not Path(ioctrl.path_cached_information, "mesh_meta_data.yml").is_file() or g_input.redo_mesh:
-
+    # if the cache folder does not exist and the mesh file does not exist -> create the mesh.
+    if (
+        not Path(ioctrl.path_cached_information, "mesh.msh").is_file()
+        or not Path(ioctrl.path_cached_information, "mesh_meta_data.yml").is_file()
+        or g_input.redo_mesh
+    ):
         mesh_model = create_gmsh(slab_x, slab_y, bot_x, bot_y, oc_cx, oc_cy, g_input)
 
         mesh_model.geo.removeAllDuplicates()
@@ -247,23 +247,16 @@ def create_gmesh(ioctrl: IOControls, g_input: GeomInput):
         mesh_model.mesh.generate(2)
         if not g_input.redo_mesh:
             mesh_name = Path(ioctrl.path_cached_information, "mesh.msh")
-        else: 
+        else:
             mesh_name = Path(ioctrl.path_test, "mesh.msh")
-        # Check Race Condtion
-        race_condition = check_race_condition(ioctrl=ioctrl,file=f"{mesh_name}")
-        if not race_condition: 
-            print_ph('Writing mesh')
-            gmsh.write(f"{mesh_name}")
-            write_mesh_data(g_input=g_input,ioctrl=ioctrl)
-        else: 
-            print_ph('Mesh is already written elsewhere: wait 10 sec')
-            time.sleep(10) 
-            print_ph('The show must go on!')
-        
+        # Check Race Condtion [DEPRECATED, but also Place Holders]
+        print_ph("Writing mesh")
+        gmsh.write(f"{mesh_name}")
+        write_mesh_data(g_input=g_input, ioctrl=ioctrl)
         gmsh.finalize()
     else:
         # Compare the file meta_data and actual class
-        compare_data(g_input = g_input,ioctrl = ioctrl)
+        compare_data(g_input=g_input, ioctrl=ioctrl)
 
     return g_input
 
@@ -291,23 +284,22 @@ def create_domain_subduction_plate(
     gmsh.model
         The updated Gmsh model with the sub-domain loop entities added.
     """
-    
 
     if g_input.ocr != 0.0:
-        if not g_input.model_full: 
+        if not g_input.model_full:
             l_list = [
-            LC.lines_oc[2, :],
-            -LC.lines_B[2, -1],
-            -LC.lines_BS[2, ::-1],
-            LC.lines_L[2, 0],
+                LC.lines_oc[2, :],
+                -LC.lines_B[2, -1],
+                -LC.lines_BS[2, ::-1],
+                LC.lines_L[2, 0],
             ]
-        else: 
+        else:
             l_list = [
-            LC.lines_oc[2, :],
-            -LC.lines_B[2, 2:],
-            LC.lines_L[2, :-1],
+                LC.lines_oc[2, :],
+                -LC.lines_B[2, 2:],
+                LC.lines_L[2, :-1],
             ]
-            
+
         mesh_model = create_loop(l_list, mesh_model, 10)
 
         # Oceanic crust
@@ -319,8 +311,7 @@ def create_domain_subduction_plate(
         ]
         mesh_model = create_loop(l_list, mesh_model, 15)
     else:
-        if not g_input.model_full: 
-        
+        if not g_input.model_full:
             l_list = [
                 LC.lines_S[2, :],
                 LC.lines_B[2, -1],
@@ -364,7 +355,6 @@ def create_domain_wedge(mesh_model, CP, LC, g_input):
     """
 
     index = find_line_index(LC.lines_S, CP.coord_sub, g_input.ns_depth)
-    index = index
     buf_array = LC.lines_S[2, index:]
     buf_array = -buf_array
     buf_array = buf_array[::-1]
@@ -399,9 +389,7 @@ def create_domain_crust(mesh_model, CP, LC, g_input):
     """
 
     if g_input.cr != 0:
-
         if g_input.lc != 0:
-
             index_a = find_line_index(LC.lines_S, CP.coord_sub, g_input.cr)
             index_b = find_line_index(LC.lines_S, CP.coord_sub, g_input.ns_depth) - 1
             buf_array = LC.lines_S[2, index_a : index_b + 1]
@@ -509,7 +497,7 @@ def create_physical_line(
     # Find point above the lithosphere
     for i in range(len(LC.tag_L_R)):
         L = LC.tag_L_R[i]
-        p0, p1, cx, cy = from_line_to_point_coordinate(
+        _, _, _, cy = from_line_to_point_coordinate(
             L, LC.line_global, CP.global_points
         )
         if cy[0] == -g_input.ns_depth or cy[1] == -g_input.ns_depth:
@@ -529,17 +517,17 @@ def create_physical_line(
     mesh_model.addPhysicalGroup(1, LC.tag_L_Bsub, tag=dict_tag_lines["Subduction_bot"])
 
     if g_input.model_full:
-        mesh_model.addPhysicalGroup(1, [LC.tag_L_L[0]], tag=dict_tag_lines["Left_inlet_bt"])
+        mesh_model.addPhysicalGroup(
+            1, [LC.tag_L_L[0]], tag=dict_tag_lines["Left_inlet_bt"]
+        )
         mesh_model.addPhysicalGroup(1, LC.tag_L_L[1:], tag=dict_tag_lines["Left_inlet"])
 
-
-    else: 
+    else:
         mesh_model.addPhysicalGroup(1, LC.tag_L_L, tag=dict_tag_lines["Left_inlet"])
-
 
     for i in range(len(LC.tag_L_sub)):
         L = LC.tag_L_sub[i]
-        p0, p1, cx, cy = from_line_to_point_coordinate(
+        _, _, _, cy = from_line_to_point_coordinate(
             L, LC.line_global, CP.global_points
         )
         if cy[0] == -g_input.ns_depth or cy[1] == -g_input.ns_depth:
@@ -561,7 +549,6 @@ def create_physical_line(
     mesh_model.addPhysicalGroup(1, LC.tag_L_ov, tag=dict_tag_lines["Overriding_mantle"])
 
     if g_input.cr != 0:
-
         mesh_model.addPhysicalGroup(
             1, LC.tag_L_cr, tag=dict_tag_lines["Crust_overplate"]
         )
@@ -724,7 +711,7 @@ def extract_facet_boundary(
     sm_vertex_maps: np.ndarray,
     boundary: list,
     m_id: int,
-) -> tuple([np.ndarray, np.ndarray]):
+) -> tuple[np.ndarray, np.ndarray]:
     r"""
     Extract facet indices for a submesh boundary from global boundary markers.
 
@@ -803,10 +790,6 @@ def extract_facet_boundary(
     # Extract the vertex from submesh
     cell_dim = submesh.topology.dim
     cell_to_vertex = submesh.topology.connectivity(cell_dim, 0)
-
-    # Extract the vertices
-    v_ids = cell_to_vertex.links(0)
-
     # Extract the indices and then find the unique one
     all_vertex_ids = []
     for c in range(submesh.topology.index_map(cell_dim).size_local):
@@ -905,16 +888,14 @@ def create_subdomain(
         chosen_total = []
 
         val_total = []
-        #
         for boundary, m_id in specs:
             ch_f, val = extract_facet_boundary(
                 mesh, facet_tag, submesh, vertex_maps, boundary, m_id
             )
             chosen_total.extend(ch_f)
             val_total.extend(val)
-        #
+
         fac = np.asarray(chosen_total, dtype=np.int32)
-        #
         val = np.asarray(val_total, dtype=np.int32)
         # Create the mesh tag for the given domain
         FT = meshtags(submesh, 1, fac, val)
@@ -929,8 +910,7 @@ def create_subdomain(
         marked_cells.extend(mesh_tag.find(marker))
 
     marked_cells = np.array(marked_cells, dtype=np.int32)
-    #
-    submesh, entity_maps, vertex_maps, node_maps = create_submesh(
+    submesh, entity_maps, vertex_maps, _ = create_submesh(
         mesh, mesh.topology.dim, marked_cells
     )
 
@@ -961,7 +941,6 @@ def create_subdomain(
         bc = facet_BC(mesh, facet_tag, submesh, vertex_maps, specs)
         # --
     elif name == "wedge_domain":
-
         specs = [
             ([11], 1),
             ([4], 2),
@@ -977,7 +956,6 @@ def create_subdomain(
         bc = facet_BC(mesh, facet_tag, submesh, vertex_maps, specs)
 
     elif name == "overriding_plate_domain":
-
         specs = [
             ([11], 1),
             ([1], 2),
@@ -1014,7 +992,7 @@ def create_subdomain(
         phase=ph,
         solph=sol_spaceph,
         bc_dict=dict_local,
-        name = name
+        name=name,
     )
 
     # write_partition(submesh, filename=os.path.join(ioctrl.path_save,f'{ioctrl.sname}_{name}_partition.xdmf'))
@@ -1023,10 +1001,9 @@ def create_subdomain(
 
 
 # ------------------------------------------------------------------------------------------------------
-def read_mesh(
-    ioctrl: IOControls,
-    redo_mesh:bool
-) -> tuple([dolfinx.mesh.Mesh, dolfinx.mesh.MeshTags, dolfinx.mesh.MeshTags]):
+def read_mesh(ioctrl: IOControls, redo_mesh: bool) -> tuple[
+    dolfinx.mesh.Mesh, dolfinx.mesh.MeshTags, dolfinx.mesh.MeshTags
+]:
     """read the .msh file, and convert into a dolfinx mesh object and extract mesh tags from .msh
     Parameter
     ----------
@@ -1049,9 +1026,9 @@ def read_mesh(
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()  # 0, 1, ..., size-1
     if not redo_mesh:
-        path_file = Path(ioctrl.path_cached_information,'mesh.msh')
-    else: 
-        path_file = Path(ioctrl.path_test,'mesh.msh')
+        path_file = Path(ioctrl.path_cached_information, "mesh.msh")
+    else:
+        path_file = Path(ioctrl.path_test, "mesh.msh")
     comm.Set_errhandler(MPI.ERRORS_RETURN)
     mesh, cell_markers, facet_markers = gmshio.read_from_msh(
         path_file, MPI.COMM_WORLD, gdim=2
@@ -1060,14 +1037,14 @@ def read_mesh(
     if rank == 0 and redo_mesh:
         # Read in mesh
         path_file.unlink()
-        print(f'removed {path_file}')        
+        print(f"removed {path_file}")
         # Remove gmsh file, to save memory: every information of the mesh is already known by fenicsx
-    
+
     return mesh, cell_markers, facet_markers
 
 
 # ------------------------------------------------------------------------------------------------------
-def create_mesh_object( ioctrl: IOControls, g_input: GeomInput) -> Mesh:
+def create_mesh_object(ioctrl: IOControls, g_input: GeomInput) -> Mesh:
     """
     Create a subdomain mesh from the global mesh and interpolate phase information.
 
@@ -1097,11 +1074,11 @@ def create_mesh_object( ioctrl: IOControls, g_input: GeomInput) -> Mesh:
         phase information.
     """
 
-    #from stonedfenicsx.scal import dimensionless_ginput
+    # from stonedfenicsx.scal import dimensionless_ginput
 
     print_ph(" Reading global mesh and creating the global domain")
 
-    mesh, cell_markers, facet_markers = read_mesh(ioctrl,g_input.redo_mesh)
+    mesh, cell_markers, facet_markers = read_mesh(ioctrl, g_input.redo_mesh)
 
     pph = fem.functionspace(
         mesh, ("DG", 0)
@@ -1116,7 +1093,9 @@ def create_mesh_object( ioctrl: IOControls, g_input: GeomInput) -> Mesh:
     )  # Assign phases using the cell tags and physical surfaces -> i.e. 10000 = Mantle ? is going to assign unique phase to each node?
 
     # Correct the phase:
-    phase.x.array[:] -= 1  # Rather necessary remember to put plus one once you publish it
+    phase.x.array[:] -= (
+        1  # Rather necessary remember to put plus one once you publish it
+    )
 
     # -- Create additional facet for the shear heating. Since this hell is requiring a lot of useless work,
     # -- I need to create a yet another ad hoc function for this.
@@ -1128,13 +1107,19 @@ def create_mesh_object( ioctrl: IOControls, g_input: GeomInput) -> Mesh:
         phase=phase,
         solph=pph,
         bc_dict=dict_tag_lines,
-        name='global_domain'
+        name="global_domain",
     )
     # Subducting plate domain
     print_ph(" Creating the Subudcting plate domain")
 
     subduction_plate = create_subdomain(
-        mesh, cell_markers, facet_markers, [1, 2], "subduction_plate_domain", phase, ioctrl
+        mesh,
+        cell_markers,
+        facet_markers,
+        [1, 2],
+        "subduction_plate_domain",
+        phase,
+        ioctrl,
     )
     # Wedge plate domain
     print_ph(" Creating the Wedge domain")
@@ -1146,7 +1131,13 @@ def create_mesh_object( ioctrl: IOControls, g_input: GeomInput) -> Mesh:
     print_ph(" Creating the Overriding plate domain")
 
     crust_domain = create_subdomain(
-        mesh, cell_markers, facet_markers, [4, 5, 6], "overriding_plate_domain", phase, ioctrl
+        mesh,
+        cell_markers,
+        facet_markers,
+        [4, 5, 6],
+        "overriding_plate_domain",
+        phase,
+        ioctrl,
     )
 
     # write_partition(mesh,filename=os.path.join(ioctrl.path_save,'%s_global_partition.xdmf'%ioctrl.sname))
@@ -1155,16 +1146,15 @@ def create_mesh_object( ioctrl: IOControls, g_input: GeomInput) -> Mesh:
     wedge_plate.comm = MPI.COMM_WORLD
     subduction_plate.comm = MPI.COMM_WORLD
     global_domain.comm = MPI.COMM_WORLD
-    
-    
+
     mesh = Mesh(
         g_input=g_input,
         global_domain=global_domain,
-        subduction_plate_domain= subduction_plate,
+        subduction_plate_domain=subduction_plate,
         wedge_domain=wedge_plate,
         crust_domain=crust_domain,
         comm=MPI.COMM_WORLD,
-        rank=MPI.COMM_WORLD.Get_rank()
+        rank=MPI.COMM_WORLD.Get_rank(),
     )
 
     print_ph(" Computational mesh and domains have been created...")

@@ -1,5 +1,3 @@
-
-
 # ---
 # --- mpi4py/petsc4py needed for the permanent per-timestep PETSc garbage
 # cleanup below (see time_loop).
@@ -26,16 +24,19 @@ from stonedfenicsx.solver_module.solver_utilities import (
 # ---
 from stonedfenicsx.utils import interpolate_from_sub_to_main, print_ph, timing
 
-def outerloop_operation_initial_guess(ctrl_sim:SimulationControls,
-                        sc:Scal,
-                        eg:Global_thermal,
-                        lg:Global_pressure,
-                        we:Wedge,
-                        sl:Slab,
-                        sol:Solution
-                        ,pdb:PhaseDataBase
-                        ,outit:OUTERITERATION_SOL_VAL
-                        ,ts:int=0)->None:
+
+def outerloop_operation_initial_guess(
+    ctrl_sim: SimulationControls,
+    sc: Scal,
+    eg: Global_thermal,
+    lg: Global_pressure,
+    we: Wedge,
+    sl: Slab,
+    sol: Solution,
+    pdb: PhaseDataBase,
+    outit: OUTERITERATION_SOL_VAL,
+    ts: int = 0,
+) -> None:
     """Execute one complete Picard outer-loop sweep over all coupled sub-problems.
 
     At each outer iteration the sub-problems are solved in the following order:
@@ -69,104 +70,96 @@ def outerloop_operation_initial_guess(ctrl_sim:SimulationControls,
         converged (or exhausted the iteration budget).
     """
     # Initialise the it outer and residual outer
-    it_outer = 0 
-    if eg.typology == 'Linear':
+    it_outer = 0
+    if eg.typology == "Linear":
         max_it = 1
-    else: 
+    else:
         max_it = 3
-    
-    while it_outer < max_it and outit.res > ctrl_sim.ctrl.tol: 
-        
-        print_ph(f'--  --- Outer iteration {it_outer:d} for the thermal diffusion initial guess  --  ---')
-        
+
+    while it_outer < max_it and outit.res > ctrl_sim.ctrl.tol:
+        print_ph(f"--  --- Outer iteration {it_outer:d} for the thermal diffusion initial guess  --  ---")
+
         time_A_outer = timing.time()
-        # Copy the old solution of the outer loop for computing the residual of the equations. 
-        
-        if it_outer == 0:  
-            lg.Solve_the_Problem(sol,
-                                       it_outer
-                                       ,ts=ts)
+        # Copy the old solution of the outer loop for computing the residual of the equations.
 
-    
-        outit.ene_res_gl[0], outit.ene_res_gl[1] = eg.Solve_the_Problem(sol
-                            ,it_outer = it_outer
-                            ,ts = ts)                      
-        
-        outit.compute_residuum_outer_initial_guess_diffusion(sol=sol
-                                     ,it_outer=it_outer
-                                     ,sc=sc
-                                     ,tA=time_A_outer
-                                     ,ts=ts
-                                     ,ctrl_sim=ctrl_sim
-                                    )
-        print_ph('')
+        if it_outer == 0:
+            lg.Solve_the_Problem(sol, it_outer, ts=ts)
+
+        outit.ene_res_gl[0], outit.ene_res_gl[1] = eg.Solve_the_Problem(sol, it_outer=it_outer, ts=ts)
+
+        outit.compute_residuum_outer_initial_guess_diffusion(
+            sol=sol, it_outer=it_outer, sc=sc, tA=time_A_outer, ts=ts, ctrl_sim=ctrl_sim
+        )
+        print_ph("")
         if it_outer > max_it:
-            print_ph(f'Warning: Outer loop did not converge after {max_it:d} iterations. Residual = {outit.res:.3e}!!!!')
+            print_ph(
+                f"Warning: Outer loop did not converge after {max_it:d} iterations. Residual = {outit.res:.3e}!!!!"
+            )
         it_outer = it_outer + 1
-        
-    
+
     # reset outit res:
-    outit.res = 1.0 
+    outit.res = 1.0
 
 
-def diffusion_initial_guess(ctrl_sim:SimulationControls
-              ,eg : Global_thermal
-              ,lg : Global_pressure
-              ,we : Wedge
-              ,sl : Slab
-              ,sol : Solution
-              ,pdb: PhaseDataBase
-              ,sc: Scal
-             ) -> None:
-    outit_td = OUTERITERATION_SOL_VAL(sol=sol,ctrl=ctrl_sim.ctrl,ctrl_io=ctrl_sim.ctrl_io)
+def diffusion_initial_guess(
+    ctrl_sim: SimulationControls,
+    eg: Global_thermal,
+    lg: Global_pressure,
+    we: Wedge,
+    sl: Slab,
+    sol: Solution,
+    pdb: PhaseDataBase,
+    sc: Scal,
+) -> None:
+    outit_td = OUTERITERATION_SOL_VAL(sol=sol, ctrl=ctrl_sim.ctrl, ctrl_io=ctrl_sim.ctrl_io)
     t = 0.0
     ts = 0
-    while t<ctrl_sim.ctrl.time_ini_guess:
+    while t < ctrl_sim.ctrl.time_ini_guess:
         time_A = timing.time()
-        if ctrl_sim.ctrl.steady_state==0:
-            print_ph('||--------------------- || ---------------------||')
-            print_ph(f'Time = {t*sc.time/sc.scale_myr2sec:.3f} Myr, timestep = {ts:d}')
-            print_ph('||--------------------- || ---------------------||')
-            
+        if ctrl_sim.ctrl.steady_state == 0:
+            print_ph("||--------------------- || ---------------------||")
+            print_ph(f"Time = {t * sc.time / sc.scale_myr2sec:.3f} Myr, timestep = {ts:d}")
+            print_ph("||--------------------- || ---------------------||")
+
         # Prepare variable
-        outerloop_operation_initial_guess(ctrl_sim=ctrl_sim
-                                  ,sc=sc
-                                  ,eg=eg
-                                  ,lg=lg
-                                  ,we=we
-                                  ,sl=sl
-                                  ,sol=sol
-                                  ,pdb=pdb
-                                  ,outit=outit_td
-                                  ,ts=ts)
+        outerloop_operation_initial_guess(
+            ctrl_sim=ctrl_sim,
+            sc=sc,
+            eg=eg,
+            lg=lg,
+            we=we,
+            sl=sl,
+            sol=sol,
+            pdb=pdb,
+            outit=outit_td,
+            ts=ts,
+        )
         # --- Save the output if the timestep is a multiple of the output timestep, or if the time is a multiple of the output time, or if the steady state is reached.
-        t = t+ctrl_sim.ctrl.dt
-            
-    
+        t = t + ctrl_sim.ctrl.dt
+
         sol.T_O.x.array[:] = sol.T_N.x.array[:]
         sol.T_O.x.scatter_forward()
-        
-        time_B = timing.time()
-        print_ph(f'---------------------Timestep {ts}  took {time_B-time_A:.2f} ---------------------')
 
-        # I remove a few comments and just highlight the refenrece of this: 
-        # Long Story short: I have been having a few problems related to the petsc version 
-        # I have been tracking the memory with the sys monitor manually and after found the issue 
+        time_B = timing.time()
+        print_ph(f"---------------------Timestep {ts}  took {time_B - time_A:.2f} ---------------------")
+
+        # I remove a few comments and just highlight the refenrece of this:
+        # Long Story short: I have been having a few problems related to the petsc version
+        # I have been tracking the memory with the sys monitor manually and after found the issue
         # I just called garbage_cleanup
-        # Ref: https://gitlab.com/petsc/petsc/-/work_items/1309 
+        # Ref: https://gitlab.com/petsc/petsc/-/work_items/1309
         # Ref2 : https://fenicsproject.discourse.group/t/memory-management-with-petsc4py/18199/2
         PETSc.garbage_cleanup(MPI.COMM_WORLD)
 
         ts = ts + 1
 
-    print_ph('Thermal diffusion initial guess finished. The show must go on... ')
+    print_ph("Thermal diffusion initial guess finished. The show must go on... ")
 
 
 # ---
-def initialise_the_simulation(ctrl_sim:SimulationControls = None
-                              ,pdb:PhaseDataBase = None
-                              ,mesh:Mesh = None
-                              )-> tuple[Solution,Global_thermal,Global_pressure,Wedge,Slab]:
+def initialise_the_simulation(
+    ctrl_sim: SimulationControls = None, pdb: PhaseDataBase = None, mesh: Mesh = None
+) -> tuple[Solution, Global_thermal, Global_pressure, Wedge, Slab]:
     """Instantiate all FEM problem objects and allocate the solution container.
 
     Constructs one problem object per physical sub-problem (global thermal,
@@ -193,48 +186,76 @@ def initialise_the_simulation(ctrl_sim:SimulationControls = None
             we  -- mantle-wedge Stokes problem.
         object created: solution, energy, lithostatic pressure, slab, wedge
     """
-    element_p           = mesh.element_p#basix.ufl.element("Lagrange","triangle", 1) 
-    
-    element_PT          = mesh.element_pt#basix.ufl.element("Lagrange","triangle",2)
-    
-    element_V           = mesh.element_v#basix.ufl.element("Lagrange","triangle",2,shape=(2,))
-          
+    element_p = mesh.element_p  # basix.ufl.element("Lagrange","triangle", 1)
+
+    element_PT = mesh.element_pt  # basix.ufl.element("Lagrange","triangle",2)
+
+    element_V = mesh.element_v  # basix.ufl.element("Lagrange","triangle",2,shape=(2,))
+
     # Define Problem
     # Global energy
-    energy_global = Global_thermal (mesh = mesh, name = ['energy','global_domain']  , elements = (element_PT,), pdb = pdb, ctrl_sim = ctrl_sim)
+    energy_global = Global_thermal(
+        mesh=mesh,
+        name=["energy", "global_domain"],
+        elements=(element_PT,),
+        pdb=pdb,
+        ctrl_sim=ctrl_sim,
+    )
     energy_global.create_cached_material(True)
     # Global lithostatic pressure
-    lithostatic_pressure_global = Global_pressure(mesh = mesh, name = ['pressure','global_domain'], elements = (element_PT,), pdb = pdb, ctrl_sim=ctrl_sim ) 
+    lithostatic_pressure_global = Global_pressure(
+        mesh=mesh,
+        name=["pressure", "global_domain"],
+        elements=(element_PT,),
+        pdb=pdb,
+        ctrl_sim=ctrl_sim,
+    )
     lithostatic_pressure_global.create_cached_material(True)
     # Wedge stokes problem
-    wedge = Wedge(mesh =mesh, name = ['stokes','wedge_domain'  ], elements = (element_V,element_p,element_PT), pdb = pdb,ctrl_sim=ctrl_sim)
+    wedge = Wedge(
+        mesh=mesh,
+        name=["stokes", "wedge_domain"],
+        elements=(element_V, element_p, element_PT),
+        pdb=pdb,
+        ctrl_sim=ctrl_sim,
+    )
     wedge.create_cached_material(False)
     # Slab stokes problem
-    slab = Slab(mesh = mesh, name = ['stokes','subduction_plate_domain'], elements = (element_V,element_p,element_PT),pdb=pdb,ctrl_sim=ctrl_sim)
+    slab = Slab(
+        mesh=mesh,
+        name=["stokes", "subduction_plate_domain"],
+        elements=(element_V, element_p, element_PT),
+        pdb=pdb,
+        ctrl_sim=ctrl_sim,
+    )
     slab.create_cached_material(False)
 
-    # Define Solution 
+    # Define Solution
     # Create instance of solution.
     sol = Solution()
-    # Allocate the function that handles. 
-    sol.create_function(lithostatic_pressure_global,slab,wedge,[element_V,element_p])
+    # Allocate the function that handles.
+    sol.create_function(lithostatic_pressure_global, slab, wedge, [element_V, element_p])
     # Allocate the material properties.
-    # Generate the initial guess for the temperature. 
+    # Generate the initial guess for the temperature.
     sol.T_O = energy_global.initial_temperature_field()
     sol.T_N = sol.T_O.copy()
 
-    return sol, energy_global,lithostatic_pressure_global,slab,wedge
-#---------------------------------------------------------------------------------------------------
-def outerloop_operation(ctrl_sim:SimulationControls,
-                        sc:Scal,
-                        eg:Global_thermal,
-                        lg:Global_pressure,
-                        we:Wedge,
-                        sl:Slab,
-                        sol:Solution
-                        ,pdb:PhaseDataBase
-                        ,outit:OUTERITERATION_SOL_VAL
-                        ,ts:int=0)->None:
+    return sol, energy_global, lithostatic_pressure_global, slab, wedge
+
+
+# ---------------------------------------------------------------------------------------------------
+def outerloop_operation(
+    ctrl_sim: SimulationControls,
+    sc: Scal,
+    eg: Global_thermal,
+    lg: Global_pressure,
+    we: Wedge,
+    sl: Slab,
+    sol: Solution,
+    pdb: PhaseDataBase,
+    outit: OUTERITERATION_SOL_VAL,
+    ts: int = 0,
+) -> None:
     """Execute one complete Picard outer-loop sweep over all coupled sub-problems.
 
     At each outer iteration the sub-problems are solved in the following order:
@@ -268,164 +289,132 @@ def outerloop_operation(ctrl_sim:SimulationControls,
         converged (or exhausted the iteration budget).
     """
     # Initialise the it outer and residual outer
-    it_outer = 0 
-    
-    if (lg.typology == 'LinearProblem' and eg.typology == 'LinearProblem' and we.typology == 'LinearProblem'):
-        max_it = 2
-    elif ctrl_sim.ctrl.initial_guess == 1 and ctrl_sim.ctrl.steady_state==0:
-        max_it = 5
-    else: 
-        max_it = ctrl_sim.ctrl.it_max 
-    import matplotlib.pyplot as plt
+    it_outer = 0
 
-    while it_outer < max_it and outit.res > ctrl_sim.ctrl.tol: 
-        
-        print_ph(f'--  --- Outer iteration {it_outer:d} for the coupled problem  --  ---')
-        
+    if lg.typology == "LinearProblem" and eg.typology == "LinearProblem" and we.typology == "LinearProblem":
+        max_it = 2
+    elif ctrl_sim.ctrl.initial_guess == 1 and ctrl_sim.ctrl.steady_state == 0:
+        max_it = 5
+    else:
+        max_it = ctrl_sim.ctrl.it_max
+
+    while it_outer < max_it and outit.res > ctrl_sim.ctrl.tol:
+        print_ph(f"--  --- Outer iteration {it_outer:d} for the coupled problem  --  ---")
+
         time_A_outer = timing.time()
-        # Copy the old solution of the outer loop for computing the residual of the equations. 
-        
-        if it_outer == 0:  
-            lg.Solve_the_Problem(sol,
-                                       it_outer
-                                       ,ts=ts)
+        # Copy the old solution of the outer loop for computing the residual of the equations.
+
+        if it_outer == 0:
+            lg.Solve_the_Problem(sol, it_outer, ts=ts)
 
         # Interpolate from global to wedge/slab
-        if ctrl_sim.ctrl.steady_state == 0 and ctrl_sim.ctrl.initial_guess==0: 
-            if ts==0 and it_outer == 0: 
-                print_ph('                 Time dep. state solution energy:-> solved before the velocity')
-                
-            outit.ene_res_gl[0], outit.ene_res_gl[1] = eg.Solve_the_Problem(sol
-                            ,it_outer = it_outer
-                            ,ts = ts)                      
-        
-        
-        interpolate_from_sub_to_main(sol.t_owedge
-                                     ,sol.T_N
-                                     ,we.domain.cell_par
-                                     ,1)
+        if ctrl_sim.ctrl.steady_state == 0 and ctrl_sim.ctrl.initial_guess == 0:
+            if ts == 0 and it_outer == 0:
+                print_ph("                 Time dep. state solution energy:-> solved before the velocity")
 
-        interpolate_from_sub_to_main(sol.p_lwedge
-                                     ,sol.PL
-                                     ,we.domain.cell_par
-                                     ,1)
+            outit.ene_res_gl[0], outit.ene_res_gl[1] = eg.Solve_the_Problem(sol, it_outer=it_outer, ts=ts)
 
-        if (ts == 0 and it_outer==0) or (it_outer == 0 and ctrl_sim.ctrl_ky.constant == 0): 
-            (outit.mom_res_slab[0]
-             ,outit.mom_res_slab[1]
-             ,outit.div_res_slab[0]
-             ,outit.div_res_slab[1]) = sl.Solve_the_Problem(sol,
-                                   it_outer = it_outer,
-                                   ts=ts)
+        interpolate_from_sub_to_main(sol.t_owedge, sol.T_N, we.domain.cell_par, 1)
 
-        if (we.typology == 'NonlinearProblem') or (we.typology == 'NonlinearProblemT') or (it_outer == 0):  
-             (outit.mom_res_wedge[0]
-             ,outit.mom_res_wedge[1]
-             ,outit.div_res_wedge[0]
-             ,outit.div_res_wedge[1])=we.Solve_the_Problem(sol=sol
-                                ,it_outer = it_outer
-                                ,ts=ts)
+        interpolate_from_sub_to_main(sol.p_lwedge, sol.PL, we.domain.cell_par, 1)
+
+        if (ts == 0 and it_outer == 0) or (it_outer == 0 and ctrl_sim.ctrl_ky.constant == 0):
+            (
+                outit.mom_res_slab[0],
+                outit.mom_res_slab[1],
+                outit.div_res_slab[0],
+                outit.div_res_slab[1],
+            ) = sl.Solve_the_Problem(sol, it_outer=it_outer, ts=ts)
+
+        if (we.typology == "NonlinearProblem") or (we.typology == "NonlinearProblemT") or (it_outer == 0):
+            (
+                outit.mom_res_wedge[0],
+                outit.mom_res_wedge[1],
+                outit.div_res_wedge[0],
+                outit.div_res_wedge[1],
+            ) = we.Solve_the_Problem(sol=sol, it_outer=it_outer, ts=ts)
 
         # Interpolate from wedge/slab to global
-        interpolate_from_sub_to_main(sol.u_global
-                                      ,sol.u_wedge
-                                      ,we.domain.cell_par)
-        
-        interpolate_from_sub_to_main(sol.u_global
-                                      ,sol.u_slab
-                                      , sl.domain.cell_par)
-    
-        interpolate_from_sub_to_main(sol.p_global
-                                      ,sol.p_wedge
-                                      ,we.domain.cell_par)
-    
-        interpolate_from_sub_to_main(sol.p_global
-                                    ,sol.p_slab
-                                    ,sl.domain.cell_par)
+        interpolate_from_sub_to_main(sol.u_global, sol.u_wedge, we.domain.cell_par)
+
+        interpolate_from_sub_to_main(sol.u_global, sol.u_slab, sl.domain.cell_par)
+
+        interpolate_from_sub_to_main(sol.p_global, sol.p_wedge, we.domain.cell_par)
+
+        interpolate_from_sub_to_main(sol.p_global, sol.p_slab, sl.domain.cell_par)
         # Interpolate from global to wedge/slab
-        if ctrl_sim.ctrl.steady_state == 1 or ctrl_sim.ctrl.initial_guess == 1: 
-            if ts==0 and it_outer == 0: 
-                print_ph('                 Steady state solution energy:-> solved after the velocity')
-                
-            outit.ene_res_gl[0], outit.ene_res_gl[1] = eg.Solve_the_Problem(sol
-                            ,it_outer = it_outer
-                            ,ts = ts)                
-        # Compute residuum 
-        outit.compute_residuum_outer(sol=sol
-                                     ,it_outer=it_outer
-                                     ,sc=sc
-                                     ,tA=time_A_outer
-                                     ,ts=ts
-                                     ,ctrl_sim=ctrl_sim
-                                    )
-        print_ph('')
+        if ctrl_sim.ctrl.steady_state == 1 or ctrl_sim.ctrl.initial_guess == 1:
+            if ts == 0 and it_outer == 0:
+                print_ph("                 Steady state solution energy:-> solved after the velocity")
+
+            outit.ene_res_gl[0], outit.ene_res_gl[1] = eg.Solve_the_Problem(sol, it_outer=it_outer, ts=ts)
+        # Compute residuum
+        outit.compute_residuum_outer(sol=sol, it_outer=it_outer, sc=sc, tA=time_A_outer, ts=ts, ctrl_sim=ctrl_sim)
+        print_ph("")
         if it_outer > max_it:
-            print_ph(f'Warning: Outer loop did not converge after {max_it:d} iterations. Residual = {outit.res:.3e}!!!!')
-        
-        
+            print_ph(
+                f"Warning: Outer loop did not converge after {max_it:d} iterations. Residual = {outit.res:.3e}!!!!"
+            )
+
         it_outer = it_outer + 1
-    
+
     # reset outit res:
-    outit.res = 1.0 
-        
-def initial_guess_simulation(ctrl_sim:SimulationControls
-                             ,sc:Scal
-                             ,eg:Global_thermal
-                             ,lg:Global_pressure
-                             ,we:Wedge
-                             ,sl:Slab 
-                            ,sol:Solution
-                            ,pdb:PhaseDataBase
-                            ,outit:OUTERITERATION_SOL_VAL
-                            ,ts:int=0)->None:
-    """Compute the initial guess for the first Picard iteration of the simulation.
-    """
-    ts = 0 #  fake ts 
+    outit.res = 1.0
+
+
+def initial_guess_simulation(
+    ctrl_sim: SimulationControls,
+    sc: Scal,
+    eg: Global_thermal,
+    lg: Global_pressure,
+    we: Wedge,
+    sl: Slab,
+    sol: Solution,
+    pdb: PhaseDataBase,
+    outit: OUTERITERATION_SOL_VAL,
+    ts: int = 0,
+) -> None:
+    """Compute the initial guess for the first Picard iteration of the simulation."""
+    ts = 0  #  fake ts
     time_A = timing.time()
-    if ctrl_sim.ctrl.initial_guess == 0: return
+    if ctrl_sim.ctrl.initial_guess == 0:
+        return
     if ctrl_sim.ctrl.initial_guess == 1:
-        print_ph('  STEADY STATE  !!! Initial guess of the simulation !!!')
-        outerloop_operation(ctrl_sim=ctrl_sim
-                                      ,sc=sc
-                                      ,eg=eg
-                                      ,lg=lg
-                                     ,we=we
-                                      ,sl=sl
-                                      ,sol=sol
-                                      ,pdb=pdb
-                                      ,outit=outit
-                                      ,ts=ts)
-    elif ctrl_sim.ctrl.initial_guess == 2: 
-        diffusion_initial_guess(ctrl_sim = ctrl_sim
-              ,eg = eg
-              ,lg = lg
-              ,we = we
-              ,sl = sl
-              ,sol = sol
-              ,pdb =  pdb
-              ,sc = sc
-             )
-        
-        
-        
-    ctrl_sim.ctrl.initial_guess = 0 
+        print_ph("  STEADY STATE  !!! Initial guess of the simulation !!!")
+        outerloop_operation(
+            ctrl_sim=ctrl_sim,
+            sc=sc,
+            eg=eg,
+            lg=lg,
+            we=we,
+            sl=sl,
+            sol=sol,
+            pdb=pdb,
+            outit=outit,
+            ts=ts,
+        )
+    elif ctrl_sim.ctrl.initial_guess == 2:
+        diffusion_initial_guess(ctrl_sim=ctrl_sim, eg=eg, lg=lg, we=we, sl=sl, sol=sol, pdb=pdb, sc=sc)
+
+    ctrl_sim.ctrl.initial_guess = 0
     sol.T_O.x.array[:] = sol.T_N.x.array[:]
     sol.T_O.x.scatter_forward()
     time_B = timing.time()
-    print_ph(f'              !!! Initial guess of the simulation took {time_B-time_A:.2f} seconds !!!')
+    print_ph(f"              !!! Initial guess of the simulation took {time_B - time_A:.2f} seconds !!!")
 
 
-#---------------------------------------------------------------------------------------------------
-# Def time_loop 
-def time_loop(ctrl_sim:SimulationControls
-              ,eg : Global_thermal
-              ,lg : Global_pressure
-              ,we : Wedge
-              ,sl : Slab
-              ,sol : Solution
-              ,pdb: PhaseDataBase
-              ,sc: Scal
-             ) -> None:
+# ---------------------------------------------------------------------------------------------------
+# Def time_loop
+def time_loop(
+    ctrl_sim: SimulationControls,
+    eg: Global_thermal,
+    lg: Global_pressure,
+    we: Wedge,
+    sl: Slab,
+    sol: Solution,
+    pdb: PhaseDataBase,
+    sc: Scal,
+) -> None:
     """Drive the time-stepping loop and write output at the requested intervals.
 
     Instantiates the OUTPUT object once before entering the loop.  At every
@@ -463,116 +452,133 @@ def time_loop(ctrl_sim:SimulationControls
         None
     """
     if ctrl_sim.ctrl.steady_state == 1:
-        print_ph(' --------------------- Steady State Solution   --------------------- ')
+        print_ph(" --------------------- Steady State Solution   --------------------- ")
     else:
-        print_ph('---------------------- Time Dependent Solution --------------------- ')
+        print_ph("---------------------- Time Dependent Solution --------------------- ")
 
-    flag_output = False     
-    tbs = 0.0     
-    t  = 0.0
+    flag_output = False
+    tbs = 0.0
+    t = 0.0
     ts = 0
-    output_class  = OUTPUT(domain=eg.domain,ctrl_sim=ctrl_sim,sc=sc,pdb=pdb,cach_mat_thermal=eg.cached_mat,comm=eg.domain.mesh.comm)
-    outit = OUTERITERATION_SOL_VAL(sol=sol,ctrl=ctrl_sim.ctrl,ctrl_io=ctrl_sim.ctrl_io)
+    output_class = OUTPUT(
+        domain=eg.domain,
+        ctrl_sim=ctrl_sim,
+        sc=sc,
+        pdb=pdb,
+        cach_mat_thermal=eg.cached_mat,
+        comm=eg.domain.mesh.comm,
+    )
+    outit = OUTERITERATION_SOL_VAL(sol=sol, ctrl=ctrl_sim.ctrl, ctrl_io=ctrl_sim.ctrl_io)
 
-    # Initial guess for the outer loop: -> linear problem with constant viscosity, no shear heating. 
-    if ctrl_sim.ctrl.steady_state==0:
-        initial_guess_simulation(ctrl_sim=ctrl_sim
-                                  ,sc=sc
-                                  ,eg=eg
-                                  ,lg=lg
-                                  ,we=we
-                                  ,sl=sl
-                                  ,sol=sol
-                                  ,pdb=pdb
-                                  ,outit=outit)
-    
+    # Initial guess for the outer loop: -> linear problem with constant viscosity, no shear heating.
+    if ctrl_sim.ctrl.steady_state == 0:
+        initial_guess_simulation(
+            ctrl_sim=ctrl_sim,
+            sc=sc,
+            eg=eg,
+            lg=lg,
+            we=we,
+            sl=sl,
+            sol=sol,
+            pdb=pdb,
+            outit=outit,
+        )
 
-    # --- 
-    while t<ctrl_sim.ctrl.time_max:
+    # ---
+    while t < ctrl_sim.ctrl.time_max:
         time_A = timing.time()
-        if ctrl_sim.ctrl.steady_state==0:
-            print_ph('||--------------------- || ---------------------||')
-            print_ph(f'Time = {t*sc.time/sc.scale_myr2sec:.3f} Myr, timestep = {ts:d}')
-            print_ph('||--------------------- || ---------------------||')
-            
+        if ctrl_sim.ctrl.steady_state == 0:
+            print_ph("||--------------------- || ---------------------||")
+            print_ph(f"Time = {t * sc.time / sc.scale_myr2sec:.3f} Myr, timestep = {ts:d}")
+            print_ph("||--------------------- || ---------------------||")
 
-        if ctrl_sim.ctrl_tbc.constant == 0: 
+        if ctrl_sim.ctrl_tbc.constant == 0:
             ctrl_sim.ctrl_tbc.update_vel_age(t)
             ctrl_sim.ctrl_tbc.update_1d_vector_left()
 
-            
-        if ctrl_sim.ctrl_ky.constant == 0: 
+        if ctrl_sim.ctrl_ky.constant == 0:
             ctrl_sim.ctrl_ky.update_vel_age(t)
 
         # Prepare variable
-        outerloop_operation(ctrl_sim=ctrl_sim
-                                  ,sc=sc
-                                  ,eg=eg
-                                  ,lg=lg
-                                  ,we=we
-                                  ,sl=sl
-                                  ,sol=sol
-                                  ,pdb=pdb
-                                  ,outit=outit
-                                  ,ts=ts)
+        outerloop_operation(
+            ctrl_sim=ctrl_sim,
+            sc=sc,
+            eg=eg,
+            lg=lg,
+            we=we,
+            sl=sl,
+            sol=sol,
+            pdb=pdb,
+            outit=outit,
+            ts=ts,
+        )
         # --- Save the output if the timestep is a multiple of the output timestep, or if the time is a multiple of the output time, or if the steady state is reached.
-        flag_output = timestep_output(ctrlio=ctrl_sim.ctrl_io,ts=ts,t=t,time_previous=tbs,flag_save=flag_output)
+        flag_output = timestep_output(
+            ctrlio=ctrl_sim.ctrl_io,
+            ts=ts,
+            t=t,
+            time_previous=tbs,
+            flag_save=flag_output,
+        )
         if ctrl_sim.ctrl.steady_state == 1 or flag_output:
-            print_ph('OUTPUT...')
-            eg.compute_shear_heating_visualisation(sol=sol,ts=ts,it_outer=0)
-            output_class.print_output(sol=sol,ctrl_sim=ctrl_sim,sc=sc,ts=ts,it_outer=0,time=t*sc.time/sc.scale_myr2sec)
-            print_ph('finished')
-            tbs = t 
+            print_ph("OUTPUT...")
+            eg.compute_shear_heating_visualisation(sol=sol, ts=ts, it_outer=0)
+            output_class.print_output(
+                sol=sol,
+                ctrl_sim=ctrl_sim,
+                sc=sc,
+                ts=ts,
+                it_outer=0,
+                time=t * sc.time / sc.scale_myr2sec,
+            )
+            print_ph("finished")
+            tbs = t
             flag_output = False
 
-        if ctrl_sim.ctrl.steady_state == 1: 
-            print_ph('---------------------End Steady State solution, printing the benchmarks')
+        if ctrl_sim.ctrl.steady_state == 1:
+            print_ph("---------------------End Steady State solution, printing the benchmarks")
             t = ctrl_sim.ctrl.time_max
-            if eg.g_input.van_keken == 1: 
+            if eg.g_input.van_keken == 1:
                 from stonedfenicsx.output import _benchmark_van_keken
-                _benchmark_van_keken(sol,ctrl_sim.ctrl_io,sc)
 
-        
-            
-        t = t+ctrl_sim.ctrl.dt
-            
-    
+                _benchmark_van_keken(sol, ctrl_sim.ctrl_io, sc)
+
+        t = t + ctrl_sim.ctrl.dt
+
         sol.T_O.x.array[:] = sol.T_N.x.array[:]
         sol.T_O.x.scatter_forward()
-        
+
         time_B = timing.time()
-        print_ph(f'---------------------Timestep {ts}  took {time_B-time_A:.2f} ---------------------')
-        # I remove a few comments and just highlight the refenrece of this: 
-        # Long Story short: I have been having a few problems related to the petsc version 
-        # I have been tracking the memory with the sys monitor manually and after found the issue 
+        print_ph(f"---------------------Timestep {ts}  took {time_B - time_A:.2f} ---------------------")
+        # I remove a few comments and just highlight the refenrece of this:
+        # Long Story short: I have been having a few problems related to the petsc version
+        # I have been tracking the memory with the sys monitor manually and after found the issue
         # I just called garbage_cleanup
-        # Ref: https://gitlab.com/petsc/petsc/-/work_items/1309 
+        # Ref: https://gitlab.com/petsc/petsc/-/work_items/1309
         # Ref2 : https://fenicsproject.discourse.group/t/memory-management-with-petsc4py/18199/2
         PETSc.garbage_cleanup(MPI.COMM_WORLD)
 
         ts = ts + 1
 
-    print_ph('---------------------Destroy Petsc Object and finish the simulation---------------------')
-    
+    print_ph("---------------------Destroy Petsc Object and finish the simulation---------------------")
+
     eg.solv.destroy()
     lg.solv.destroy()
     sl.solv.destroy()
     we.solv.destroy()
-    
-    print_ph('')
-    print_ph('')    
-    print_ph('You will hear of wars and rumors of wars, but see to it that you are not alarmed. Such things must happen, but the end is still to come:')
-    print_ph('Ex Falso sequitor quodlibet.')
-    print_ph('')
-    print_ph('')
+
+    print_ph("")
+    print_ph("")
+    print_ph(
+        "You will hear of wars and rumors of wars, but see to it that you are not alarmed. Such things must happen, but the end is still to come:"
+    )
+    print_ph("Ex Falso sequitor quodlibet.")
+    print_ph("")
+    print_ph("")
 
 
-#------------------------------------------------------------------------------------------------------------
-def solution_routine(ctrl_sim:SimulationControls
-                     ,pdb:PhaseDataBase
-                     ,mesh:Mesh
-                     ,sc:Scal
-                    )->None:
+# ------------------------------------------------------------------------------------------------------------
+def solution_routine(ctrl_sim: SimulationControls, pdb: PhaseDataBase, mesh: Mesh, sc: Scal) -> None:
     """Top-level solver entry point: initialise and run the full simulation.
 
     Thin orchestration function that sequences the two main phases of the
@@ -600,18 +606,13 @@ def solution_routine(ctrl_sim:SimulationControls
     """
 
     # Initialise
-    sol,eg,lg,sl,we = initialise_the_simulation(ctrl_sim=ctrl_sim,pdb=pdb,mesh=mesh)                # Scaling 
-    
-    # Time Loop 
-    
-    time_loop(ctrl_sim=ctrl_sim
-              ,eg = eg
-              ,lg = lg
-              ,we = we
-              ,sl = sl 
-              ,sol = sol 
-              ,pdb=pdb
-              ,sc=sc)
-    
-    return 0 
-#--------------------------------------------------------------------------------------------
+    sol, eg, lg, sl, we = initialise_the_simulation(ctrl_sim=ctrl_sim, pdb=pdb, mesh=mesh)  # Scaling
+
+    # Time Loop
+
+    time_loop(ctrl_sim=ctrl_sim, eg=eg, lg=lg, we=we, sl=sl, sol=sol, pdb=pdb, sc=sc)
+
+    return 0
+
+
+# --------------------------------------------------------------------------------------------

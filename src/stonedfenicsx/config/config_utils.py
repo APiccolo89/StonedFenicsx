@@ -4,22 +4,24 @@ import numpy as np
 
 dict_shear_modes = {"NoShear": 0, "SelfConsistent": 1, "Constant": 2}
 dict_stokes = {"Direct": np.int32(1), "Iterative": np.int32(0)}
+
+
 # -----------------------------------------------------------------------------------
 def correct_input(k: str, v: str) -> int | float | str:
-    """function that convert the string into int-flag variable. 
-    Mode_shear or the solvers option are defined as string in the main input file. 
-    In the code these options are evaluated as a function of a 0-1 flag system. 
+    """function that convert the string into int-flag variable.
+    Mode_shear or the solvers option are defined as string in the main input file.
+    In the code these options are evaluated as a function of a 0-1 flag system.
     The dictionaries at the top of the file, convert the string into this flag system.
     Certain value are naturally interpreted as a string (e.g., eta_max = 1e26). These variable
     are not transformed, as an other function would handle the effective conversion
-    to the float number. 
+    to the float number.
 
     Args:
-        k (str): key of the block 
-        v (str): value 
+        k (str): key of the block
+        v (str): value
 
     Returns:
-        v(int|float|str): transformed value. 
+        v(int|float|str): transformed value.
     """
     if k == "model_shear":
         v = dict_shear_modes[v]
@@ -42,10 +44,11 @@ def update_ip_file(obj: object, block: dict) -> None:
         if k not in hints:
             raise ValueError(f"Unknown field '{k}' for {obj.__class__.__name__}")
         tp = hints[k]
-        if k in ('stokes_solver_type', 'energy_solver_type','model_shear'):
+        if k in ("stokes_solver_type", "energy_solver_type", "model_shear"):
             setattr(obj, k, v)
         else:
             setattr(obj, k, cast_type(v, tp))
+
 
 def cast_type(v: any, tp: any) -> any:
     """Ensure that the typing of input is the same of the target class
@@ -57,7 +60,8 @@ def cast_type(v: any, tp: any) -> any:
     Returns:
         v: converted value
     """
-    def check_bool(vbuf:bool|str|int)->bool: 
+
+    def check_bool(vbuf: bool | str | int) -> bool:
         """_summary_
 
         Args:
@@ -95,7 +99,7 @@ def cast_type(v: any, tp: any) -> any:
         subtype = args[0] if args else object
         v = tuple(cast_type(value, subtype) for value in v)
     elif origin is np.ndarray:
-        v =  np.asarray(v)
+        v = np.asarray(v)
     elif len(args) > 1:
         for arg in args:
             try:
@@ -105,7 +109,7 @@ def cast_type(v: any, tp: any) -> any:
                 continue
         else:
             raise ValueError(f"Cannot cast value {v} to any of the types in {args}")
-           
+
     else:
         v = tp(v)
     return v
