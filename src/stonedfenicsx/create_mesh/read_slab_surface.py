@@ -1,3 +1,15 @@
+"""
+read_slab_surface submodule is a sub-module that filter the data of any 
+realistic subduction surface. The main functions corrects the input - e.g, 
+the slab's surface in the examples folder do not have the 1st 10 km of depth - 
+then it filters out the local discontinuities and smoothen up the bending
+angle for any given slab surface. 
+This heuristic method uses several routine used for generating the custom curved
+slab (ribe mode in particular) and a mobile moving polynomial average. This was
+generated through a few experimentation and google search. The Savitzsky-Golay 
+filter is used to smoothen up extremely noisy data. 
+"""
+
 import numpy as np
 from numpy.typing import NDArray
 from scipy.interpolate import CubicSpline

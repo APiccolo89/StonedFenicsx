@@ -1,3 +1,9 @@
+"""
+solver_utilities contains all **orphan** function. These function are those that are
+used by all the problems, or simply assist the computation. On top of that contains the
+class OUTIT, which handle the status of convergence of the simulation. 
+"""
+
 # ---
 from __future__ import annotations
 

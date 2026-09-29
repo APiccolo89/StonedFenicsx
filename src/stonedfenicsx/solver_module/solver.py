@@ -1,16 +1,49 @@
+"""PETSc linear-solver wrappers for the scalar and Stokes problems.
+
+Classes:
+    Solvers: Base class. Provides one method ``destroy()``, which destroys the
+        PETSc objects after the completion of the numerical experiment.
+    ScalarSolver: Solver for advection-diffusion Poisson-like problems (i.e.,
+        energy conservation equation and lithostatic pressure global problems).
+        It has two types of solver: Direct (LU/MUMPS) or Iterative (FGMRES + hypre).
+    SolverStokes: Block solver for the Stokes equation (mass+momentum
+        conservation): Direct (LU/MUMPS) or Iterative (FGMRES + multiplicative
+        fieldsplit).
+
+In all these solvers, the operators are assembled during the first
+timestep/iteration and updated in place.
+
+Author's Note: These solvers have been adapted from the basic tutorial, they
+do not represent a mature, deep knowledge of the subject. The tutorials
+that have been used can be found here:
+https://jsdokken.com/fenics22-tutorial/comparing_elements.html
+
+Note:
+    Pressure nullspace. Pressure nullspace is commented from the base
+    implementation that has been adapted from the tutorial above. In general,
+    the pressure should be defined up to a constant. To define this constant,
+    the user must introduce a nullspace (or pin a value of pressure). However,
+    this is not always required, specifically in problems with do-nothing
+    boundary conditions this condition can be detrimental for the solution of
+    the numerical problem. In the future, there will be an option file in which
+    to activate or deactivate this instead of leaving it as a comment.
+"""
+
 from dolfinx import fem
 from dolfinx.fem.petsc import assemble_matrix_block, assemble_vector_block
 from petsc4py import PETSc
 
 from stonedfenicsx.utils import *
 
-"""This section has been created using the default tutorials of FEniCSx. 
-I choose to use monolithic direct/iterative solvers. The choiche of the options depends
-on the preconditioner that I set up for the stokes for the given problem. 
-"""
-
 
 class Solvers:
+    """Create solver object.
+
+    This class is the parent of the solvers. It provides one
+    method, ``destroy``, designed to free the memory
+    of the PETSc linear solver.
+    """
+
     def destroy(self):
         """Explicitly free PETSc objects held by this solver."""
         # Destroy in roughly reverse order of dependency.
@@ -41,14 +74,12 @@ class Solvers:
 
 
 class ScalarSolver(Solvers):
-    """
-    class that store all the information for scalar like problems. Temperature and lithostatic pressure (potentially darcy like) are similar problem
-    they diffuse and advect a scalar.
-    ---
-    So -> Solver are more or less the same, I can store a few things and update as a function of the needs.
-    ---
-    Solve function require the problem P -> and a decision between linear and non linear -> form are handled by p class, so I do not give a fuck in this class
-    for now all the parameter will be default.
+    """Create the scalar solver.
+
+    Scalar solver is the solver that solves advection-diffusion/Poisson-like
+    problems. The class creates the PETSc linear solver at the beginning of
+    each simulation, then the operators are updated in place in the
+    respective problems.
     """
 
     def __init__(self, a, L, bcs, COMM, direct=0):
@@ -67,7 +98,7 @@ class ScalarSolver(Solvers):
             direct (int, optional): 0 for the iterative (fgmres/hypre)
                 solver, non-zero for the direct (LU/mumps) solver. Defaults to 0.
         """
-        self.A = fem.petsc.create_matrix(fem.form(a))  # Store the sparsisity
+        self.A = fem.petsc.create_matrix(fem.form(a))  # Store the sparsity
         self.b = fem.petsc.create_vector(fem.form(L))  # Store the vector
         self.ksp = PETSc.KSP().create(COMM)  # Create the ksp object
         self.ksp.setOperators(self.A)  # Set Operator
@@ -85,6 +116,12 @@ class ScalarSolver(Solvers):
 
 
 class SolverStokes(Solvers):
+    """Build the block solver for the Stokes equation.
+
+    This class builds at the beginning of the simulation the solver object
+    to solve the Stokes equation (mass+momentum conservation equation).
+    """
+
     def __init__(self, a, a_p, L, COMM, nl, bcs, F0, F1, ctrl, J=None, r=None, it=0, ts=0, slab=0):
         """Create the block PETSc solver for a Stokes (velocity-pressure) problem.
 
@@ -165,7 +202,7 @@ class SolverStokes(Solvers):
     def set_iterative_solver(self, a, a_p, L, COMM, nl, bcs, F0, F1, ctrl, J=None, r=None, it=0, ts=0):
         """Configure an iterative (FGMRES + fieldsplit) block solver for the Stokes system.
 
-        On the first solve (`it == 0 or ts == 0`) builds the block operators/
+        On the first solve (`it == 0 and ts == 0`) builds the block operators/
         preconditioner, computes the velocity/pressure PETSc index sets
         (`is_u`/`is_p`) for field-split, and creates an FGMRES KSP with a
         multiplicative fieldsplit preconditioner (hypre on each velocity and
@@ -190,7 +227,7 @@ class SolverStokes(Solvers):
         """
         # Return block operators and block RHS vector for the Stokes problem'
         # nullspace vector [0_u; 1_p] locally
-        if it == 0 or ts == 0:
+        if it == 0 and ts == 0:
             # Create the block operator and the pre-conditioner
             self.set_block_operator(a, a_p, bcs, L, F0, F1)
 
