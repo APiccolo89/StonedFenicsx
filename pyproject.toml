@@ -13,8 +13,6 @@ dependencies = [
     "pandas==2.3.3",
     "meshio==5.3.5",
     "numba==0.61.2",
-    "pytest",
-    "sphinx==9.0.0",
     "myst-parser",
     "piccolo_theme",
     "sphinxcontrib-bibtex",
