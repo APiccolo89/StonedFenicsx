@@ -246,7 +246,63 @@ def test_cp(configure):
             assert approved
 
 
-#def test_conductivity(configure_simulation):
+def test_conductivity(configure):
+    # Extract relevant data: 
+    pdb=configure['pdb']
+    ph_in=configure['ph_in']
+    sc = configure['sc']
+    
+    # --- 
+    def clausure_k_check(target_array:dict,sc,pdb)->bool:
+
+        scal_dif = sc.length**2 / sc.time
+    
+
+        name = target_array['name_conductivity']
+        k = target_array['k']
+        id_ph = target_array['id_ph'] - 1
+        if name in 'Constant':
+            approved_test = np.isclose(k
+                                       ,pdb.k0[id_ph] *  sc.k
+                                       ,_TOL_)
+        else: 
+            buf = read_diffusivity(name)
+            a = np.isclose(buf.a
+                          ,pdb.k_a[id_ph] *  scal_dif
+                          ,_TOL_)
+            b = np.isclose(buf.b
+                          ,pdb.k_b[id_ph] * scal_dif
+                          ,_TOL_)
+            c = np.isclose(buf.c 
+                          ,pdb.k_c[id_ph] * sc.temp
+                          ,_TOL_)
+            d = np.isclose(buf.d
+                          ,pdb.k_d[id_ph] * scal_dif
+                          ,_TOL_)
+            e = np.isclose(buf.e
+                          ,pdb.k_e[id_ph] * sc.temp
+                          ,_TOL_)
+            f = np.isclose(buf.f
+                          ,pdb.k_f[id_ph] * 1/sc.stress
+                          ,_TOL_)            
+            approved_test =  all([a, b, c, d, e, f])
+            
+        
+        
+        return approved_test
+    # --- 
+    target_k_array = iterate_ph_in(ph_in=ph_in
+                                       ,exclude=True
+                                       ,target='cond')
+    for i in target_k_array: 
+        approved = clausure_k_check(target_array=target_k_array[i]
+                                        ,pdb=pdb,sc=sc)
+        try: 
+            assert approved 
+        except Warning as w:
+            raise Warning(f'{i} for conductivity/diffusivity property failed the test',w)
+            assert approved
+
 #def test_rho(configure_simulation):
 #
 
@@ -281,4 +337,5 @@ def place_holder_phase_pdb():
 
 if __name__ == "__main__":
     #test_alpha(configure=configure())
-    test_cp(configure=configure())
+    #test_cp(configure=configure())
+    test_conductivity(configure=configure())
