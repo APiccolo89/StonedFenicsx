@@ -54,7 +54,8 @@ def perform_test():
 def test_default():
     # Test Van Keken 
     perform_test() # IsoViscous
-    pt = os.path.join(os.path.dirname(os.path.realpath(__file__)),'VanKeken')
+    pkg_root = Path(__file__)
+    pt = pkg_root.parents[0] / _PATH_
     test='_TEST_'
     pt_test= Path(f"{pt}/{test}")
     pt_output = Path(f"{pt_test}/{'Steady_State.h5'}")
