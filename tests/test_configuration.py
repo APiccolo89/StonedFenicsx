@@ -1,12 +1,12 @@
 """Test configuration module
 
 The configuration tests simply checks wheter or not the mesh is created, or if the scaling
-are read properly. 
+are read properly.
 
-This section is still under-construction, and most likely will results in a few refractoring. 
+This section is still under-construction, and most likely will results in a few refractoring.
 Each part of the configuration module is interconnected, the next steps are to create indipendency between
 the component and testing if from the scaled material parameters is possible to recompute the original
-values. 
+values.
 """
 
 import shutil
@@ -19,13 +19,17 @@ import pytest
 from stonedfenicsx.config.input_parser import parse_input
 from stonedfenicsx.config.simulation_config import configure_simulation
 
+from .global_variables import _PATH_, _TEST_
+
 
 @pytest.fixture(scope="session", autouse=True)
 def cleanup_output():
     yield
     pt = str(Path(__file__).resolve().parents[0])
-    shutil.rmtree(f"{pt}/Results", ignore_errors=True)
+    shutil.rmtree(f"{pt}/{_PATH_}", ignore_errors=True)
 
+
+@pytest.fixture(scope="session", autouse=True)
 def configure() -> int:
     """Test Function for configuring the simulation
     It serves for debugging purpose and as a stand-alone test.
@@ -38,8 +42,8 @@ def configure() -> int:
     # parse the input file
     input_data, ph_in = parse_input(input_file)
     # Set the path of the tests
-    path_save = pkg_root.parents[0] / "Results"
-    test_name = "Mock_test"
+    path_save = pkg_root.parents[0] / _PATH_
+    test_name = _TEST_
     input_data.ctrl_io.test_name = test_name
     input_data.ctrl_io.path_save = path_save
 
@@ -64,94 +68,65 @@ def configure() -> int:
     ph_in.wedge_mantle.name_dislocation = "VK_Dislocation_creep"
     ph_in.wedge_mantle.name_diffusion = "VK_Diffusion_creep"
     ctrl_sim, mesh, pdb, sc = configure_simulation(ph_in, input_data)
-    
-    return ctrl_sim, mesh, pdb, sc
+
+    return {"ctrl_sim": ctrl_sim, "mesh": mesh, "pdb": pdb, "sc": sc}
 
 
-def test_scaling():
+def test_scaling(configure):
     """
     Test the scaling from input
-    """    
-    _, _, _, sc = configure()
-
-    assert sc.length == 600e3 
+    """
+    sc = configure["sc"]
+    assert sc.length == 600e3
     assert sc.eta == 1e21
-    assert sc.temp == 1333.0 
-    assert sc.stress == 1e9 
+    assert sc.temp == 1333.0
+    assert sc.stress == 1e9
 
-def test_output():
+
+def test_output(configure):
     """Test if all the folder have been created"""
-    ctrl_sim, _, _, _ = configure()
+    ctrl_sim = configure["ctrl_sim"]
 
     assert ctrl_sim.ctrl_io.path_save.is_dir()
     assert ctrl_sim.ctrl_io.path_test.is_dir()
     assert ctrl_sim.ctrl_io.path_cached_information.is_dir()
 
-def test_mesh():
-    
+
+def test_mesh(configure):
+
     from stonedfenicsx.create_mesh.aux_create_mesh import dict_tag_lines
-    
-    _, mesh, _, sc = configure()
-    
+
+    mesh = configure["mesh"]
+    sc = configure["sc"]
+
     # Do The domain exists?
-    assert hasattr(mesh,'global_domain')
-    assert hasattr(mesh,'wedge_domain')
-    assert hasattr(mesh,'subduction_plate_domain')
-    assert hasattr(mesh,'crust_domain')
-    
-    # Do the basic mesh complies to the internal rule? 
-    lower_left_corner = np.array([np.min(mesh.global_domain.mesh.geometry.x[:,0])
-                                  ,np.min(mesh.global_domain.mesh.geometry.x[:,1])])
-    lower_left_corner = lower_left_corner*sc.length 
-    lower_right_corner = np.array([np.max(mesh.global_domain.mesh.geometry.x[:,0])
-                                   ,np.min(mesh.global_domain.mesh.geometry.x[:,1])])
-    lower_right_corner = lower_right_corner*sc.length     
+    assert hasattr(mesh, "global_domain")
+    assert hasattr(mesh, "wedge_domain")
+    assert hasattr(mesh, "subduction_plate_domain")
+    assert hasattr(mesh, "crust_domain")
+
+    # Do the basic mesh complies to the internal rule?
+    lower_left_corner = np.array(
+        [np.min(mesh.global_domain.mesh.geometry.x[:, 0]), np.min(mesh.global_domain.mesh.geometry.x[:, 1])]
+    )
+    lower_left_corner = lower_left_corner * sc.length
+    lower_right_corner = np.array(
+        [np.max(mesh.global_domain.mesh.geometry.x[:, 0]), np.min(mesh.global_domain.mesh.geometry.x[:, 1])]
+    )
+    lower_right_corner = lower_right_corner * sc.length
 
     # Check left lower corner
-    assert np.isclose(lower_left_corner[0],0,1e-2)
-    assert np.isclose(lower_left_corner[1],-600e3,1e-2)
-    # Check right lower corner 
-    assert np.isclose(lower_right_corner[0],660e3,1e-2)
-    assert np.isclose(lower_right_corner[1],-600e3,1e-2)
+    assert np.isclose(lower_left_corner[0], 0, 1e-2)
+    assert np.isclose(lower_left_corner[1], -600e3, 1e-2)
+    # Check right lower corner
+    assert np.isclose(lower_right_corner[0], 660e3, 1e-2)
+    assert np.isclose(lower_right_corner[1], -600e3, 1e-2)
     # Check if the slab point is at 60 km from the lower left corner
-    facets = mesh.global_domain.facets.find(dict_tag_lines['Subduction_top_wed'])
+    facets = mesh.global_domain.facets.find(dict_tag_lines["Subduction_top_wed"])
     assert facets.size != 0
     # (n_facets, n_nodes_per_facet) array of geometry dof indices
     geom = dolfinx.mesh.entities_to_geometry(mesh.global_domain.mesh, 1, facets)
     # Check for duplicate and purge them
     nodes = np.unique(geom.reshape(-1))
-    min_slab_x = np.max(mesh.global_domain.mesh.geometry.x[nodes,0]) * sc.length
-    assert np.isclose(660e3-min_slab_x,60e3,1e-2)
-
-def place_holder_phase_pdb():
-    """Place holder -> configure material property, scaling them and read the 
-    database to see the scaling if it holds
-
-    Returns:
-        _type_: _description_
-    """
-    from stonedfenicsx.config.phase_db import read_capacity, read_diffusivity, read_expansivity, read_rheology
-    # Test rheology
-    rqrtz = read_rheology("Wet_Quartzite_2001_Dislocation_creep", 1)
-    rolivinedsl = read_rheology("Hirth_wet_Dislocation_creep", 1)
-    rolivinedff = read_rheology("Hirth_wet_Diffusion_creep", 0)
-    # Test Heat Capacity
-    cp0 = read_capacity("Mantle_Bernard_Ar_199x_FA")
-    cp1 = read_capacity("Mantle_Bernard_Ar_199x_FO")
-    cp2 = read_capacity("Mantle_Bernard_Ar_199x_FO_FA")
-    cp3 = read_capacity("Mantle_Bernard_1988_FA")
-    cp4 = read_capacity("Mantle_Bernard_1988_FO")
-    cp5 = read_capacity("Mantle_Bernard_1988_FO_FA")
-    cp6 = read_capacity("Crust")
-    # Thermal diffusivity
-    dif_0 = read_diffusivity("Mantle_Richards_2018")
-    dif_1 = read_diffusivity("Crust_Richards_2018")
-    # Thermal expansivity
-    alpha_0 = read_expansivity("Mantle")
-    alpha_1 = read_expansivity("Oceanic_crust")
-
-    return 0
-
-
-if __name__ =='__main__':
-    test_mesh()
+    min_slab_x = np.max(mesh.global_domain.mesh.geometry.x[nodes, 0]) * sc.length
+    assert np.isclose(660e3 - min_slab_x, 60e3, 1e-2)

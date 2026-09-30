@@ -747,12 +747,19 @@ def extract_facet_boundary(
     # 3. Loop over all the facet -> extract the node ids of the facet of the submesh if both of them exist in the array ind_facet
     # -> collect the number of the facet and collect into a list -> then turn into an array -> you have your boundary
     connectivity = submesh.topology.connectivity(1, 0)
+    # Create a set that is more efficient to find the nodes
+    ind_facet_set = set(ind_facet)
+
     chosen_facet = []
+
     for facet_index in range(submesh.topology.index_map(1).size_local):
         sub_mesh_vertex_index = connectivity.links(facet_index)
-        if (np.isin(sub_mesh_vertex_index[0], ind_facet)) and (
-            np.isin(sub_mesh_vertex_index[1], ind_facet)
+        # Check if the vertex index belongs in the segment
+        if (
+            sub_mesh_vertex_index[0] in ind_facet_set
+            and sub_mesh_vertex_index[1] in ind_facet_set
         ):
+            # append the index
             chosen_facet.append(facet_index)
 
     chosen_facet = np.asarray(chosen_facet, dtype=np.int32)

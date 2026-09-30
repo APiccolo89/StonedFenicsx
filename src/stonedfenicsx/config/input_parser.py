@@ -116,6 +116,10 @@ def filling_the_phase_data_base(materialproperties: dict, shheating: dict, phase
     Returns:
         phase_input: Phase database
     """
+    from typing import get_type_hints
+
+    from .config_utils import cast_type
+
     dict_phase_id = {
         "subducting_plate_mantle": 1,
         "oceanic_crust": 2,
@@ -126,14 +130,16 @@ def filling_the_phase_data_base(materialproperties: dict, shheating: dict, phase
     }
 
     update_ip_file(phase_input, shheating)
-
+    hints = get_type_hints(Phase().__class__)
     # Loop over the MP items. MP items, is a multilevel dictionary
     for k, v in materialproperties.items():
         buf = Phase()  # Prepare a Phase class to fill up with the new properties
         for j, vv in v.items():  # Loop over the properties of the class phase
             if vv is None:
                 vv = 0.0 if j in ("radiogenic_heat", "radiative_conductivity") else None
-
+            tp = hints[j]
+            if vv is not None:
+                vv = cast_type(vv, tp)
             setattr(buf, j, vv)
         buf.name_phase = k
         buf.id_ph = dict_phase_id[k]
