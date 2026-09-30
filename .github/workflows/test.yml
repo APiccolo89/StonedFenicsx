@@ -1,6 +1,10 @@
 name: _testing_code_
-
-on: [push, workflow_dispatch]
+# Run the tests for pull request 
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
 
 jobs:
   build-linux:
@@ -10,7 +14,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python 3.10
+    - name: Set up Python 3.13
       uses: actions/setup-python@v3
       with:
         python-version: '3.13'
@@ -23,5 +27,4 @@ jobs:
         conda env update --file stonedenvironment.yml --name base
     - name: Test with pytest and coverage
       run: |
-        conda install pytest pytest-cov
         pytest --cov=stonedfenicsx --cov-report=xml
