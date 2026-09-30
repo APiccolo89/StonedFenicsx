@@ -12,7 +12,7 @@ import pytest
 from stonedfenicsx.config.input_parser import parse_input
 from stonedfenicsx.stoned_fenicsx import stoned_fenicsx
 
-from global_variables import _PATH_, _TEST_
+from .global_variables import _PATH_, _TEST_
 
 # Global flag to decide wether or not to remove the results -> debug reason. 
 DEBUG = False
