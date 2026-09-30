@@ -1,5 +1,5 @@
 # StonedFEniCSx
-[![CodeQL](https://github.com/APiccolo89/StonedFenicsx/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/APiccolo89/StonedFenicsx/actions/workflows/github-code-scanning/codeql)
+[![CodeQL](https://github.com/APiccolo89/StonedFenicsx/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/APiccolo89/StonedFenicsx/actions/workflows/github-code-scanning/codeql) [![docs](https://github.com/APiccolo89/StonedFenicsx/actions/workflows/docs.yml/badge.svg)](https://github.com/APiccolo89/StonedFenicsx/actions/workflows/docs.yml)
 
 ![Simplified model setup](docs/docs/images_doc/Initial_setup.png)
 *Fig 1: Simplified model setup used in StonedFEniCSx*
