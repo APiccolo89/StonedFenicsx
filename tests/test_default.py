@@ -1,20 +1,14 @@
 """
-Module with the Van Keken classical benchmarks. 
-ALLERT0: These tests relies on the input_test.yml. Do not modify the input_test.yml otherwise
-these test will fail. 
-ALLERT1: The benchmark are sensitive to the resolution of the mesh. These tests, then, are 
-valid specifically for the resolution that has been set. In the manuscript, the tests have 
-been performed with an higher resolution. 
-ALLERT2: The tests have been updated 19.09.2026 to have a lower resolution, because with high
-resolution the test took too much time. 
+Module to test the default properties: 
+read the input_yaml. 
+This test is suititable to profile the code as well. 
 """
 import os
 import shutil
 from pathlib import Path
 
-import numpy as np
 import pytest
-from mpi4py import MPI
+from global_variables import _PATH_, _TEST_
 
 from stonedfenicsx.config.input_parser import parse_input
 from stonedfenicsx.stoned_fenicsx import stoned_fenicsx
@@ -25,7 +19,7 @@ DEBUG = False
 def cleanup_output():
     yield
     pt = str(Path(__file__).resolve().parents[0])
-    shutil.rmtree(f"{pt}/VanKeken", ignore_errors=True)
+    shutil.rmtree(f"{pt}/{_PATH_}", ignore_errors=True)
 #-------------------------------------------------------------------------------
 def perform_test():
     # Path 2 test
@@ -39,8 +33,10 @@ def perform_test():
     # common property of the simulation, and modify the produced object for personalising 
     # the ensemble of simulations. 
     inp,ph_input = parse_input(path_input)
-    inp.ctrl_io.test_name = f'T_default'
-    inp.ctrl_io.path_save = os.path.join(os.path.dirname(os.path.realpath(__file__)),'VanKeken')
+    # ctrl_io handles the creation of the folders, you need to set up the test name 
+    # and the overall folder where all the tests are contained
+    inp.ctrl_io.test_name = _TEST_
+    inp.ctrl_io.path_save = Path(__file__).resolve().parents[0] / _PATH_ 
     
     name_diffusion = 'VK_Diffusion_creep'
     name_dislocation = 'VK_Dislocation_creep'   

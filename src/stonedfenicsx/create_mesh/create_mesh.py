@@ -759,7 +759,7 @@ def extract_facet_boundary(
             sub_mesh_vertex_index[0] in ind_facet_set
             and sub_mesh_vertex_index[1] in ind_facet_set
         ):
-            # append the 
+            # append the index
             chosen_facet.append(facet_index)
 
     chosen_facet = np.asarray(chosen_facet, dtype=np.int32)
