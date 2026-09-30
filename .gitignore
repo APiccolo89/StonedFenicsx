@@ -45,7 +45,7 @@ docs/docs/apidocs/
 *.xdmf
 Results/
 Cached_information/
-
+*.txt
 
 # ---------------------------------------------------------------------------
 # LaTeX build files
