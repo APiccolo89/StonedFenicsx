@@ -16,7 +16,6 @@ dependencies = [
     "pytest",
     "sphinx==9.0.0",
     "myst-parser",
-    "pyyaml",
     "piccolo_theme",
     "sphinxcontrib-bibtex",
     "pyyaml==6.0.3",
@@ -35,12 +34,24 @@ include = ["stonedfenicsx*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
+
+
+
+
+
+
+
+
+
+
+
+# For cluster user in case that Conda is not set up for parallel
 #[tool.spack]
 #python = "3.11"
 #mpi = true
 #petsc = true
 #dolfinx = true
-h5py = true
+#h5py = true
 
 # FOR HPC user
 # -> Install the software, then load spack 

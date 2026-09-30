@@ -11,6 +11,7 @@ dependencies:
   - meshio=5.3.5
   - numba=0.61.2
   - pytest
+  - pytest-cov
   - sphinx=9.1.0
   - myst-parser
   - pyyaml
@@ -20,10 +21,5 @@ dependencies:
   - pip:
       - gmsh
       - --editable .
-      - piccolo_theme
       - sphinxcontrib-bibtex
-      - sphinx-autodoc2
       - cmcrameri
-      - sphinx-book-theme
-      - sphinx-togglebutton
-      - sphinx-design
