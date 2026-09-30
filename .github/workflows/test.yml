@@ -10,9 +10,6 @@ jobs:
   build-linux:
     name : pytest
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 5
-
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python 3.13
