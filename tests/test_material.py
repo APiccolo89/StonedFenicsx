@@ -24,7 +24,7 @@ _SET_SHEAR_ZONE_ = {'shear_heating_disl_law','shear_heating_disl_tau_min','shear
 _SET_ALPHA_ = {'id_ph','alpha0','name_alpha'}
 _SET_RHO_ = {'id_ph','rho0','name_density'}
 _SET_K_ = {'id_ph','k','name_conductivity'}
-_SET_CP_ = {'id_ph','cp','name_conductivity'}
+_SET_CP_ = {'id_ph','cp','name_capacity'}
 _SET_VIS_ = {'id_ph','name_diffusion','name_dislocation','eta'}
 _DICT_ = {'alpha':_SET_ALPHA_
           ,'rho':_SET_RHO_
@@ -184,13 +184,68 @@ def test_alpha(configure):
             raise Warning(f'{i} for alpha property failed the test',w)
             assert approved
 
-
+# --- 
+def test_cp(configure):
+    # Extract relevant data: 
+    pdb=configure['pdb']
+    ph_in=configure['ph_in']
+    sc = configure['sc']
     
-    
-    
+    # --- 
+    def clausure_cp_check(target_array:dict,sc,pdb)->bool:
+
+        scal_c1 = sc.energy / sc.mass / sc.temp ** (0.5)
+        scal_c2 = (sc.energy * sc.temp) / sc.mass
+        scal_c3 = (sc.energy * sc.temp**2) / sc.mass
+        scal_c4 = (sc.energy) / sc.mass / sc.temp**2
+        scal_c5 = (sc.energy) / sc.mass / sc.temp**3
+
+        name = target_array['name_capacity']
+        cp = target_array['cp']
+        id_ph = target_array['id_ph'] - 1
+        if name in 'Constant':
+            approved_test = np.isclose(cp
+                                       ,pdb.c0[id_ph] *  sc.cp
+                                       ,_TOL_)
+        else: 
+            buf = read_capacity(name)
+            a = np.isclose(buf.c0
+                          ,pdb.c0[id_ph] *  sc.cp
+                          ,_TOL_)
+            b = np.isclose(buf.c1
+                          ,pdb.c1[id_ph] * scal_c1
+                          ,_TOL_)
+            c = np.isclose(buf.c2 
+                          ,pdb.c2[id_ph] * scal_c2
+                          ,_TOL_)
+            d = np.isclose(buf.c3
+                          ,pdb.c3[id_ph] * scal_c3
+                          ,_TOL_)
+            e = np.isclose(buf.c4
+                          ,pdb.c4[id_ph] * scal_c4
+                          ,_TOL_)
+            f = np.isclose(buf.c5
+                          ,pdb.c5[id_ph] * scal_c5
+                          ,_TOL_)            
+            approved_test =  all([a, b, c, d, e, f])
+            
+        
+        
+        return approved_test
+    # --- 
+    target_cp_array = iterate_ph_in(ph_in=ph_in
+                                       ,exclude=True
+                                       ,target='capc')
+    for i in target_cp_array: 
+        approved = clausure_cp_check(target_array=target_cp_array[i]
+                                        ,pdb=pdb,sc=sc)
+        try: 
+            assert approved 
+        except Warning as w:
+            raise Warning(f'{i} for capacity property failed the test',w)
+            assert approved
 
 
-#def test_cp(configure_simulation): 
 #def test_conductivity(configure_simulation):
 #def test_rho(configure_simulation):
 #
@@ -225,4 +280,5 @@ def place_holder_phase_pdb():
     return 0
 
 if __name__ == "__main__":
-    test_alpha(configure=configure())
+    #test_alpha(configure=configure())
+    test_cp(configure=configure())
