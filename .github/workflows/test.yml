@@ -1,4 +1,4 @@
-name: StonedFEniCSx using Conda
+name: _testing_code_
 
 on: [push, workflow_dispatch]
 
