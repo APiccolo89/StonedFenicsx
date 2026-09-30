@@ -12,7 +12,7 @@ import pytest
 from stonedfenicsx.config.input_parser import parse_input
 from stonedfenicsx.stoned_fenicsx import stoned_fenicsx
 
-from .global_variables import _PATH_, _TEST_
+from global_variables import _PATH_, _TEST_
 
 # Global flag to decide wether or not to remove the results -> debug reason. 
 DEBUG = False
@@ -39,11 +39,11 @@ def perform_test():
     inp.ctrl_io.test_name = _TEST_
     inp.ctrl_io.path_save = Path(__file__).resolve().parents[0] / _PATH_ 
     
-    name_diffusion = 'VK_Diffusion_creep'
-    name_dislocation = 'VK_Dislocation_creep'   
+    #name_diffusion = 'VK_Diffusion_creep'
+    #name_dislocation = 'VK_Dislocation_creep'   
     
-    ph_input.wedge_mantle.name_diffusion = name_diffusion
-    ph_input.wedge_mantle.name_dislocation = name_dislocation
+    #ph_input.wedge_mantle.name_diffusion = name_diffusion
+    #ph_input.wedge_mantle.name_dislocation = name_dislocation
 
     # Initialise the input
     # After the user change the required data, and update the input and phase input, he must 
@@ -60,7 +60,7 @@ def test_default():
     pt_test= Path(f"{pt}/{test}")
     pt_output = Path(f"{pt_test}/{'Steady_State.h5'}")
     assert pt_test.is_dir
-    assert pt_output.is_file()
+    assert pt_output.is_file
     # Read Data Base and compare data 
 #-------------------------------------------------------------------------------
 if __name__ == '__main__':
