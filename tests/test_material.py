@@ -178,12 +178,12 @@ def test_alpha(configure):
         alpha0 = target_array["alpha0"]
         id_ph = target_array["id_ph"] - 1
         if name in "Constant":
-            approved_test = np.isclose(alpha0, pdb.alpha0[id_ph] * 1 / sc.temp, atol=_TOL_)
+            approved_test = np.isclose(alpha0, pdb.alpha0[id_ph] * 1 / sc.temp, rtol=_TOL_)
         else:
             buf = read_expansivity(name)
-            a = np.isclose(buf.alpha0, pdb.alpha0[id_ph] * 1 / sc.temp, atol=_TOL_)
-            b = np.isclose(buf.alpha1, pdb.alpha1[id_ph] * 1 / sc.temp**2, atol=_TOL_)
-            c = np.isclose(buf.alpha2, pdb.alpha2[id_ph] * 1 / sc.stress, atol=_TOL_)
+            a = np.isclose(buf.alpha0, pdb.alpha0[id_ph] * 1 / sc.temp, rtol=_TOL_)
+            b = np.isclose(buf.alpha1, pdb.alpha1[id_ph] * 1 / sc.temp**2, rtol=_TOL_)
+            c = np.isclose(buf.alpha2, pdb.alpha2[id_ph] * 1 / sc.stress, rtol=_TOL_)
             approved_test = all([a, b, c])
 
         return approved_test
@@ -215,15 +215,15 @@ def test_cp(configure):
         cp = target_array["cp"]
         id_ph = target_array["id_ph"] - 1
         if name in "Constant":
-            approved_test = np.isclose(cp, pdb.c0[id_ph] * sc.cp, atol=_TOL_)
+            approved_test = np.isclose(cp, pdb.c0[id_ph] * sc.cp, rtol=_TOL_)
         else:
             buf = read_capacity(name)
-            a = np.isclose(buf.c0, pdb.c0[id_ph] * sc.cp, atol=_TOL_)
-            b = np.isclose(buf.c1, pdb.c1[id_ph] * scal_c1, atol=_TOL_)
-            c = np.isclose(buf.c2, pdb.c2[id_ph] * scal_c2, atol=_TOL_)
-            d = np.isclose(buf.c3, pdb.c3[id_ph] * scal_c3, atol=_TOL_)
-            e = np.isclose(buf.c4, pdb.c4[id_ph] * scal_c4, atol=_TOL_)
-            f = np.isclose(buf.c5, pdb.c5[id_ph] * scal_c5, atol=_TOL_)
+            a = np.isclose(buf.c0, pdb.c0[id_ph] * sc.cp, rtol=_TOL_)
+            b = np.isclose(buf.c1, pdb.c1[id_ph] * scal_c1, rtol=_TOL_)
+            c = np.isclose(buf.c2, pdb.c2[id_ph] * scal_c2, rtol=_TOL_)
+            d = np.isclose(buf.c3, pdb.c3[id_ph] * scal_c3, rtol=_TOL_)
+            e = np.isclose(buf.c4, pdb.c4[id_ph] * scal_c4, rtol=_TOL_)
+            f = np.isclose(buf.c5, pdb.c5[id_ph] * scal_c5, rtol=_TOL_)
             approved_test = all([a, b, c, d, e, f])
 
         return approved_test
@@ -251,15 +251,15 @@ def test_conductivity(configure):
         k = target_array["k"]
         id_ph = target_array["id_ph"] - 1
         if name in "Constant":
-            approved_test = np.isclose(k, pdb.k0[id_ph] * sc.k, atol=_TOL_)
+            approved_test = np.isclose(k, pdb.k0[id_ph] * sc.k, rtol=_TOL_)
         else:
             buf = read_diffusivity(name)
-            a = np.isclose(buf.a, pdb.k_a[id_ph] * scal_dif, atol=_TOL_)
-            b = np.isclose(buf.b, pdb.k_b[id_ph] * scal_dif, atol=_TOL_)
-            c = np.isclose(buf.c, pdb.k_c[id_ph] * sc.temp, atol=_TOL_)
-            d = np.isclose(buf.d, pdb.k_d[id_ph] * scal_dif, atol=_TOL_)
-            e = np.isclose(buf.e, pdb.k_e[id_ph] * sc.temp, atol=_TOL_)
-            f = np.isclose(buf.f, pdb.k_f[id_ph] * 1 / sc.stress, atol=_TOL_)
+            a = np.isclose(buf.a, pdb.k_a[id_ph] * scal_dif, rtol=_TOL_)
+            b = np.isclose(buf.b, pdb.k_b[id_ph] * scal_dif, rtol=_TOL_)
+            c = np.isclose(buf.c, pdb.k_c[id_ph] * sc.temp, rtol=_TOL_)
+            d = np.isclose(buf.d, pdb.k_d[id_ph] * scal_dif, rtol=_TOL_)
+            e = np.isclose(buf.e, pdb.k_e[id_ph] * sc.temp, rtol=_TOL_)
+            f = np.isclose(buf.f, pdb.k_f[id_ph] * 1 / sc.stress, rtol=_TOL_)
             approved_test = all([a, b, c, d, e, f])
 
         return approved_test
@@ -310,13 +310,13 @@ def test_rheology(configure):
 
         buf = read_rheology(name, dif)
         # Test the pre-exponential factor
-        a = np.isclose(buf.b, b_pr, atol=_TOL_)
-        b = np.isclose(buf.e, e, atol=_TOL_)
-        c = np.isclose(buf.v, v, atol=_TOL_)
+        a = np.isclose(buf.b, b_pr, rtol=_TOL_)
+        b = np.isclose(buf.e, e, rtol=_TOL_)
+        c = np.isclose(buf.v, v, rtol=_TOL_)
         if n == -1.0:
             d = True
         else:
-            d = np.isclose(buf.n, n, atol=_TOL_)
+            d = np.isclose(buf.n, n, rtol=_TOL_)
 
         approved_test = all([a, b, c, d])
 
@@ -338,7 +338,7 @@ def test_rheology(configure):
             approved_dif = clausure_rheology_viscosity(target_array=target_viscosity, pdb=pdb, sc=sc, dif=0)
         if target_viscosity["name_dislocation"] == "Constant" and target_viscosity["name_diffusion"] == "Constant":
             approved_eta = np.isclose(
-                target_viscosity["eta"], pdb.eta[target_viscosity["id_ph"] - 1] * sc.eta, atol=_TOL_
+                target_viscosity["eta"], pdb.eta[target_viscosity["id_ph"] - 1] * sc.eta, rtol=_TOL_
             )
         approved = all([approved_dif, approved_eta, approved_dsl])
         seal_of_approval(approved=approved, i=i, property="viscosity and rheology")
