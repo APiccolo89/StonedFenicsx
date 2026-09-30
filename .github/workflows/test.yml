@@ -1,4 +1,4 @@
-name: _testing_code_
+name: Tests
 # Run the tests for pull request 
 on:
   pull_request:
