@@ -34,9 +34,6 @@ jobs:
         run: |
           pytest --cov=stonedfenicsx --cov-report=xml
 
-      - name: Update Coverage Badge # Update the coverage badge 
-        uses: we-cli/coverage-badge-action@main
-
   post-test: # Deployment enviroment => This must succed to be able to push to master
     needs: build-linux
     runs-on: ubuntu-latest
