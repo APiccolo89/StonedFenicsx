@@ -1,4 +1,6 @@
 name: test_git_action
+permissions:
+  contents: read
 # Run the tests for pull request 
 on:
   pull_request:
