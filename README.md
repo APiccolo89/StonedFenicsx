@@ -1,7 +1,7 @@
 # StonedFEniCSx
 [![Documentation](https://github.com/APiccolo89/StonedFenicsx/actions/workflows/docs.yml/badge.svg)](https://github.com/APiccolo89/StonedFenicsx/actions/workflows/docs.yml)
-[![Tests](https://github.com/APiccolo89/StonedFenicsx/actions/workflows/python-package-conda.yml/badge.svg)](https://github.com/APiccolo89/StonedFenicsx/actions/workflows/python-package-conda.yml)
-[![cov](https://github.com/APiccolo89/StonedFenicsx/badges/coverage.svg)](https://github.com/<you>/<repo>/actions)
+[![test_git_action](https://github.com/APiccolo89/StonedFenicsx/actions/workflows/test.yml/badge.svg)](https://github.com/APiccolo89/StonedFenicsx/actions/workflows/test.yml)
+[![cov](https://github.com/APiccolo89/StonedFenicsx/badges/coverage.svg)](actions/workflows/test.yml)
 ![Simplified model setup](docs/docs/images_doc/Initial_setup.png)
 *Fig 1: Simplified model setup used in StonedFEniCSx*
 
