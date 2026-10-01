@@ -758,8 +758,8 @@ def generate_parallel_layer_subducting_plate(
     kappa = np.zeros_like(sx)
     kappa[1:] = np.abs(dth_ds)
 
-    if 0.8 * np.nanmin(1 / kappa) < lt and not all(dth == 0):
-        lt = np.floor(0.8 * np.min(1 / kappa))
+    if 0.8 * np.nanmin(1 / kappa[kappa!=0.0]) < lt and not all(dth == 0):
+        lt = np.floor(0.8 * np.min(1 / kappa[kappa!=0.0]))
 
     cx = sx - lt * np.sin(th)
     cy = sy - lt * np.cos(th)
