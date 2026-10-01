@@ -22,13 +22,14 @@ from stonedfenicsx.config.simulation_config import configure_simulation
 from .global_variables import _PATH_, _TEST_
 
 
+# ---
 @pytest.fixture(scope="session", autouse=True)
 def cleanup_output():
     yield
     pt = str(Path(__file__).resolve().parents[0])
     shutil.rmtree(f"{pt}/{_PATH_}", ignore_errors=True)
 
-
+# ---
 @pytest.fixture(scope="session", autouse=True)
 def configure() -> int:
     """Test Function for configuring the simulation
@@ -47,31 +48,11 @@ def configure() -> int:
     input_data.ctrl_io.test_name = test_name
     input_data.ctrl_io.path_save = path_save
 
-    ph_in.oceanic_crust.name_alpha = "Oceanic_crust"
-    ph_in.oceanic_crust.name_capacity = "Oceanic_crust"
-    ph_in.oceanic_crust.radiative_conductivity = 1
-    ph_in.oceanic_crust.rho0 = 2800
-    ph_in.oceanic_crust.name_conductivity = "Crust_Richards_2018"
-    ph_in.oceanic_crust.name_density = "PT"
-
-    ph_in.subducting_plate_mantle.name_capacity = "Mantle_Bernard_Ar_199x_FO_FA"
-    ph_in.subducting_plate_mantle.name_conductivity = "Mantle_Richards_2018"
-    ph_in.subducting_plate_mantle.name_alpha = "Mantle"
-    ph_in.subducting_plate_mantle.rho0 = 3300
-    ph_in.subducting_plate_mantle.name_density = "PT"
-
-    ph_in.wedge_mantle.name_capacity = "Mantle_Bernard_Ar_199x_FO_FA"
-    ph_in.wedge_mantle.name_conductivity = "Mantle_Richards_2018"
-    ph_in.wedge_mantle.name_alpha = "Mantle"
-    ph_in.wedge_mantle.rho0 = 3300
-    ph_in.wedge_mantle.name_density = "PT"
-    ph_in.wedge_mantle.name_dislocation = "VK_Dislocation_creep"
-    ph_in.wedge_mantle.name_diffusion = "VK_Diffusion_creep"
     ctrl_sim, mesh, pdb, sc = configure_simulation(ph_in, input_data)
 
     return {"ctrl_sim": ctrl_sim, "mesh": mesh, "pdb": pdb, "sc": sc}
 
-
+# ---
 def test_scaling(configure):
     """
     Test the scaling from input
@@ -82,7 +63,7 @@ def test_scaling(configure):
     assert sc.temp == 1333.0
     assert sc.stress == 1e9
 
-
+# ---
 def test_output(configure):
     """Test if all the folder have been created"""
     ctrl_sim = configure["ctrl_sim"]
@@ -91,7 +72,7 @@ def test_output(configure):
     assert ctrl_sim.ctrl_io.path_test.is_dir()
     assert ctrl_sim.ctrl_io.path_cached_information.is_dir()
 
-
+# ---
 def test_mesh(configure):
 
     from stonedfenicsx.create_mesh.aux_create_mesh import dict_tag_lines
@@ -130,3 +111,5 @@ def test_mesh(configure):
     nodes = np.unique(geom.reshape(-1))
     min_slab_x = np.max(mesh.global_domain.mesh.geometry.x[nodes, 0]) * sc.length
     assert np.isclose(660e3 - min_slab_x, 60e3, 1e-2)
+# ---
+# ---
