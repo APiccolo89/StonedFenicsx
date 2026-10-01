@@ -1,44 +1,44 @@
 name: test_git_action
-permissions:
-  contents: read
-# Run the tests for pull request 
-on:
+
+on: # Tell to do these checks only during pull request to main
   pull_request:
     branches: [main]
   push:
     branches: [main]
 
-permissions:
-  contents: read
-
 jobs:
-  build-linux:
+  build-linux: 
     name: test_git_action
     runs-on: ubuntu-latest
-    strategy:
+
+    permissions: # Tell that it can write
+      contents: write
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v3
-      with:
-        python-version: '3.13'
-    - name: Add conda to system path
-      run: |
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
-        echo $CONDA/bin >> $GITHUB_PATH
-    - name: Install dependencies
-      run: |
-        conda env update --file stonedenvironment.yml --name base
-    - name: Test with pytest and coverage
-      run: |
-        pytest --cov=stonedfenicsx --cov-report=xml
+      - uses: actions/checkout@v4 # use the action
 
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v3 # setup pythonv3
+        with:
+          python-version: '3.13' # Use this version of python
+ 
+      - name: Add conda to system path # Add conda to path
+        run: |
+          echo $CONDA/bin >> $GITHUB_PATH
 
-  post-test:
+      - name: Install dependencies # Install dependency
+        run: |
+          conda env update --file stonedenvironment.yml --name base
+
+      - name: Test with pytest and coverage # run all the tests
+        run: |
+          pytest --cov=stonedfenicsx --cov-report=xml
+
+      - name: Update Coverage Badge # Update the coverage badge 
+        uses: we-cli/coverage-badge-action@main
+
+  post-test: # Deployment enviroment => This must succed to be able to push to master
     needs: build-linux
-    permissions:
-      contents: write
     runs-on: ubuntu-latest
 
     environment:
@@ -48,5 +48,5 @@ jobs:
       - name: Post-test successful
         run: echo "Tests passed successfully."
 
-      - name: Update Coverage Badge
-        uses: we-cli/coverage-badge-action@main
+
+# git actions => do the test job => status check => rule set => yes/no merging 
