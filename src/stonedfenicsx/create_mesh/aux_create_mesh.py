@@ -750,16 +750,17 @@ def generate_parallel_layer_subducting_plate(
     cy = np.zeros([np.amax(sx.shape), 1])
     # Loop over the interface of the slab and find the points on the top of the surface of the subduction channel: the point on the of the top of the channel are perpendicular to the slab interface#
     # Compute the top surface of the subduction channel
+    if not constant_theta:
+        # If the curvature is constant, do not check the curvature
+        ds = np.sqrt(np.diff(sx) ** 2 + np.diff(sy) ** 2)
+        dth = np.diff(th)
+        dth_ds = dth / ds  # [rad / m]
 
-    ds = np.sqrt(np.diff(sx) ** 2 + np.diff(sy) ** 2)
-    dth = np.diff(th)
-    dth_ds = dth / ds  # [rad / m]
+        kappa = np.zeros_like(sx)
+        kappa[1:] = np.abs(dth_ds)
 
-    kappa = np.zeros_like(sx)
-    kappa[1:] = np.abs(dth_ds)
-
-    if 0.8 * np.nanmin(1 / kappa[kappa!=0.0]) < lt and not all(dth == 0):
-        lt = np.floor(0.8 * np.min(1 / kappa[kappa!=0.0]))
+        if 0.8 * np.nanmin(1 / kappa[kappa!=0.0]) < lt and not all(dth == 0):
+            lt = np.floor(0.8 * np.min(1 / kappa[kappa!=0.0]))
 
     cx = sx - lt * np.sin(th)
     cy = sy - lt * np.cos(th)
