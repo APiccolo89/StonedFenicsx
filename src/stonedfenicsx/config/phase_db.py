@@ -309,6 +309,7 @@ class PhaseDataBase:
         self.option_cp = np.zeros(number_phases, dtype=np.int32)  # Option for heat capacity calculation
 
         # Thermal conductivity
+        self.option_k = np.zeros(number_phases, dtype=np.int32)  # Option for conductivity calculation
         self.k0 = np.zeros(number_phases, dtype=np.float64)  # Reference heat conductivity [W/m/K]
         self.k_a = np.zeros(number_phases, dtype=np.float64)  # Thermal expansivity [1/Pa]
         self.k_b = np.zeros(number_phases, dtype=np.float64)  # exponent
@@ -492,6 +493,7 @@ def generate_phase(
         pdb.c3[id_ph] = buf_cp.c3
         pdb.c4[id_ph] = buf_cp.c4
         pdb.c5[id_ph] = buf_cp.c5
+    pdb.option_cp[id_ph] = np.int32(0) if name_capacity == "Constant" else np.int32(1)
 
     if name_conductivity == "Constant":
         buf_data_diffusivity = LatticeDiffusivity()
@@ -515,6 +517,9 @@ def generate_phase(
     pdb.k_f[id_ph] = buf_data_diffusivity.f
     pdb.k0[id_ph] = k * buf_data_diffusivity.g
     pdb.radiative_conductivity[id_ph] = radiative_conductivity
+    pdb.option_k[id_ph] = (
+        np.int32(0) if (name_conductivity == "Constant" and radiative_conductivity == 0) else np.int32(1)
+    )
     # Density
     if name_alpha != "Constant":
         alpha = read_expansivity(name_alpha)

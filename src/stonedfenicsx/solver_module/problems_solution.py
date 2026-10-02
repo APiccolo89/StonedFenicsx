@@ -505,17 +505,17 @@ class Global_thermal(Problem):
         # L - > Old temperature
         # -> Source term is assumed constant in time and do not vary between the timesteps
 
-        rho_k = density_FX(self.cached_mat, T_k, p)  # frozen
+        rho_k = density_FX(self.cached_mat, T_k, p,self.pdb.option_rho)  # frozen
 
-        Cp_k = heat_capacity_FX(self.cached_mat, T_k)  # frozen
+        Cp_k = heat_capacity_FX(self.cached_mat, T_k,self.pdb.option_cp)  # frozen
 
-        k_k = heat_conductivity_FX(self.cached_mat, T_k, p, Cp_k, rho_k)  # frozen
+        k_k = heat_conductivity_FX(self.cached_mat, T_k, p, Cp_k, rho_k, self.pdb.option_k)  # frozen
 
-        rho_k0 = density_FX(self.cached_mat, T_O, p)  # frozen
+        rho_k0 = density_FX(self.cached_mat, T_O, p, self.pdb.option_rho )  # frozen
 
-        Cp_k0 = heat_capacity_FX(self.cached_mat, T_O)  # frozen
+        Cp_k0 = heat_capacity_FX(self.cached_mat, T_O, self.pdb.option_cp)  # frozen
 
-        k_k0 = heat_conductivity_FX(self.cached_mat, T_O, p, Cp_k0, rho_k0)  # frozen
+        k_k0 = heat_conductivity_FX(self.cached_mat, T_O, p, Cp_k0, rho_k0, self.pdb.option_k)  # frozen
 
         rhocp = rho_k * Cp_k
 
@@ -580,11 +580,11 @@ class Global_thermal(Problem):
 
         # Function that set linear form and linear picard for picard iteration
 
-        rho_k = density_FX(self.cached_mat, T_k, p)  # frozen
+        rho_k = density_FX(self.cached_mat, T_k, p,self.pdb.option_rho)  # frozen
 
-        Cp_k = heat_capacity_FX(self.cached_mat, T_k)  # frozen
+        Cp_k = heat_capacity_FX(self.cached_mat, T_k,self.pdb.option_cp)  # frozen
 
-        k_k = heat_conductivity_FX(self.cached_mat, T_k, p, Cp_k, rho_k)  # frozen
+        k_k = heat_conductivity_FX(self.cached_mat, T_k, p, Cp_k, rho_k, self.pdb.option_k)  # frozen
 
         f = self.energy_source  # source term
 
@@ -634,11 +634,11 @@ class Global_thermal(Problem):
             SUPG stabilisation - source, including shear heating if
             `model_shear > 0`).
         """
-        rho_k = density_FX(self.cached_mat, T, p)  # frozen
+        rho_k = density_FX(self.cached_mat, T, p, self.pdb.option_rho)  # frozen
 
-        Cp_k = heat_capacity_FX(self.cached_mat, T)  # frozen
+        Cp_k = heat_capacity_FX(self.cached_mat, T, self.pdb.option_cp)  # frozen
 
-        k_k = heat_conductivity_FX(self.cached_mat, T, p, Cp_k, rho_k)  # frozen
+        k_k = heat_conductivity_FX(self.cached_mat, T, p, Cp_k, rho_k, self.pdb.option_k)  # frozen
 
         dx = self.dx
 
@@ -682,11 +682,11 @@ class Global_thermal(Problem):
             dofs excluded.
         """
 
-        rho_k = density_FX(self.cached_mat, T, p)  # frozen
+        rho_k = density_FX(self.cached_mat, T, p, self.pdb.option_rho)  # frozen
 
-        Cp_k = heat_capacity_FX(self.cached_mat, T)  # frozen
+        Cp_k = heat_capacity_FX(self.cached_mat, T,self.pdb.option_cp)  # frozen
 
-        k_k = heat_conductivity_FX(self.cached_mat, T, p, Cp_k, rho_k)  # frozen
+        k_k = heat_conductivity_FX(self.cached_mat, T, p, Cp_k, rho_k,self.pdb.option_k)  # frozen
 
         rhocp = rho_k * Cp_k
 
@@ -981,9 +981,9 @@ class Global_thermal(Problem):
 
         # compute the kappa form
         if ts == 0 and it_outer == 0:
-            rho = density_FX(self.cached_mat, sol.T_N, sol.PL)
-            cp = heat_capacity_FX(self.cached_mat, sol.T_N)
-            k = heat_conductivity_FX(self.cached_mat, sol.T_N, sol.PL, cp, rho)
+            rho = density_FX(self.cached_mat, sol.T_N, sol.PL, self.pdb.option_rho)
+            cp = heat_capacity_FX(self.cached_mat, sol.T_N,self.pdb.option_cp)
+            k = heat_conductivity_FX(self.cached_mat, sol.T_N, sol.PL, cp, rho, self.pdb.option_k)
             kappa = k / rho / cp
             h = ufl.CellDiameter(self.domain.mesh)
             u_norm = ufl.sqrt(ufl.dot(sol.u_global, sol.u_global) + 1.0e-30)
@@ -1250,7 +1250,7 @@ class Global_pressure(Problem):
         # Function that set linear form and linear picard for picard iteration
 
         if self.cached_form.a is None:
-            rho_k = density_FX(self.cached_mat, T, p_k)  # frozen
+            rho_k = density_FX(self.cached_mat, T, p_k, self.pdb.option_rho)  # frozen
 
             # Linear operator with frozen coefficients
             if it == 0:

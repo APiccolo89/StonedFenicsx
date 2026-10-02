@@ -212,7 +212,6 @@ def read_data_base(option_viscous, option_thermal=0):
         v1 = 392.5243
         v2 = 506.2739
         v3 = 855.8698
-        #
 
     if option_viscous == 1 and option_thermal == 0:
         data = np.array(
@@ -268,20 +267,16 @@ def read_data_base(option_viscous, option_thermal=0):
 
     print(f"Test_viscous{option_viscous}, T_11_11 is {T_11_11:.4f}. Tested against {v1:.4f}.")
     if option_thermal == 0:
-        rel_err = (T_11_11 - db_vk1[1]) / (db_vk1[2] - db_vk1[1])
         print(f"                             Van Keken benchmark : mean T_11_11 = {db_vk1[0]:.2f}.")
         print(f"                             Van Keken benchmark : range T_11_11 = {db_vk1[1]:.2f}-{db_vk1[2]:.2f}.")
 
     print(f"Test_viscous{option_viscous}, L2_A is {L2_A:.4f}. Tested against {v2:.4f}.")
     if option_thermal == 0:
-        rel_err = (L2_A - db_vk2[1]) / (db_vk2[2] - db_vk2[1])
-
         print(f"                             Van Keken benchmark : mean L2_A = {db_vk2[0]:.2f}.")
         print(f"                             Van Keken benchmark : range L2_A = {db_vk2[1]:.2f}-{db_vk2[2]:.2f}.")
 
     print(f"Test_viscous{option_viscous}, L2_B is {L2_B:.4f}. Tested against {v3:.4f}.")
     if option_thermal == 0:
-        rel_err = (L2_B - db_vk3[1]) / (db_vk3[2] - db_vk3[1])
         print(f"                             Van Keken benchmark : mean L2_A = {db_vk3[0]:.2f}.")
         print(f"                             Van Keken benchmark : range L2_A = {db_vk3[1]:.2f}-{db_vk3[2]:.2f}.")
 
@@ -290,67 +285,48 @@ def read_data_base(option_viscous, option_thermal=0):
     assert test_3
 
     f.close()
-
-
-# -------------------------------------------------------------------------------
+# ---
 def test_isoviscous():
     # Test Van Keken
     perform_test(0)  # IsoViscous
     # Read Data Base and compare data
     if MPI.COMM_WORLD.rank == 0:
         read_data_base(0)
-
-
+# ---
 def test_diffusion():
     # Test Van Keken
     perform_test(1)  # IsoViscous
     # Read Data Base and compare data
     if MPI.COMM_WORLD.rank == 0:
         read_data_base(1)
-
-
-# -------------------------------------------------------------------------------
-
-
+# ---
 def test_composite():
     # Test Van Keken
     perform_test(2)  # IsoViscous
     # Read Data Base and compare data
     if MPI.COMM_WORLD.rank == 0:
         read_data_base(2)
-
-
-# -------------------------------------------------------------------------------
-
-
+# ---
 def test_composite_NL_no_crust():
     # Test Van Keken
     perform_test(2, 1)  # IsoViscous
     # Read Data Base and compare data
     if MPI.COMM_WORLD.rank == 0:
         read_data_base(2, 1)
-
-
-# -------------------------------------------------------------------------------
-
-
+# ---
 def test_composite_NL_crust():
     # Test Van Keken
     perform_test(2, 2)  # IsoViscous
     # Read Data Base and compare data
     if MPI.COMM_WORLD.rank == 0:
         read_data_base(2, 2)
-
-
-# -------------------------------------------------------------------------------
+# ---
 def test_composite_NL_crust_P():
     # Test Van Keken
     perform_test(2, 3)  # IsoViscous
     # Read Data Base and compare data
     if MPI.COMM_WORLD.rank == 0:
         read_data_base(2, 3)
-
-
-# -------------------------------------------------------------------------------
+# ---
 if __name__ == "__main__":
     test_isoviscous()

@@ -17,8 +17,6 @@ _DICT_CONFIGURATION_ = {
     "chile": {"slab_type": "FromFile", "sub_path": "Chile"},
     "tonga": {"slab_type": "FromFile", "sub_path": "Tonga"},
 }
-
-
 # ---
 # ---
 def define_geometrical_input(dict_configuration: dict) -> GeomInput:
@@ -56,8 +54,6 @@ def define_geometrical_input(dict_configuration: dict) -> GeomInput:
     g_input.check_class_consistency()
 
     return g_input
-
-
 # ---
 def check_point(tested: NDArray, control: NDArray) -> tuple[bool, int]:
     """Check if the tested array has the same
@@ -94,7 +90,7 @@ def check_length(tested_x: NDArray, tested_y: NDArray, control_x: NDArray, contr
     Returns:
         tuple[bool,float]: tuple: if the length is the same, and the difference of length
     """
-
+    # ---
     def compute_length(a, b):
         return np.max(np.cumsum(np.diff(a) ** 2 + np.diff(b) ** 2))
 
@@ -102,8 +98,7 @@ def check_length(tested_x: NDArray, tested_y: NDArray, control_x: NDArray, contr
         np.isclose(compute_length(tested_x, tested_y), compute_length(control_x, control_y), rtol=_TOL_),
         compute_length(tested_x, tested_y) - compute_length(control_x, control_y),
     )
-
-
+# ---
 def check_coordinate(tx: NDArray, ty: NDArray, cx: NDArray, cy: NDArray) -> bool:
     """_summary_
 
@@ -131,8 +126,6 @@ def check_coordinate(tx: NDArray, ty: NDArray, cx: NDArray, cy: NDArray) -> bool
         seal_approval = False
 
     return seal_approval
-
-
 # ---
 def main_test(g_input: GeomInput, name: str):
 
@@ -191,38 +184,24 @@ def main_test(g_input: GeomInput, name: str):
             w,
         )
     print("All the test have a seal of approval!")
-
-
 # ---
 def test_ribe_geometry() -> None:
     main_test(define_geometrical_input(_DICT_CONFIGURATION_["ribe_geometry"]), "ribe")
-
-
 # ---
 def test_parabolic_geometry() -> None:
     main_test(define_geometrical_input(_DICT_CONFIGURATION_["parabolic_geometry"]), "parabolic")
-
-
 # ---
 def test_japan_geometry() -> None:
     main_test(define_geometrical_input(_DICT_CONFIGURATION_["japan"]), "japan")
-
-
 # ---
 def test_mexico_geometry() -> None:
     main_test(define_geometrical_input(_DICT_CONFIGURATION_["mexico"]), "mexico")
-
-
 # ---
 def test_chile_geometry() -> None:
     main_test(define_geometrical_input(_DICT_CONFIGURATION_["chile"]), "chile")
-
-
 # ---
 def test_tonga_geometry() -> None:
     main_test(define_geometrical_input(_DICT_CONFIGURATION_["tonga"]), "tonga")
-
-
 # ---
 
 

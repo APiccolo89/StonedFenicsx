@@ -13,6 +13,7 @@ from dataclasses import InitVar, dataclass
 import numpy as np
 import ufl
 from dolfinx import fem
+from numpy.typing import NDArray
 from ufl import conditional, eq, exp, inner, sin, sqrt
 
 from stonedfenicsx.config.phase_db import PhaseDataBase
@@ -246,6 +247,7 @@ def heat_conductivity_FX(
     p: fem.Function,
     Cp: fem.Expression,
     rho: fem.Expression,
+    options: NDArray
 ) -> fem.Expression:
     """Build the UFL expression for thermal conductivity as a function of T and P.
 
@@ -275,27 +277,31 @@ def heat_conductivity_FX(
         fem.Expression: UFL expression for k, to be used directly in the
         bilinear form of the energy equation.
     """
-
-    # Compute the radiative conductivity
-    k_rad = scal_cached.a_rad * exp(
-        -((T - scal_cached.temp_a) ** 2) / (2 * scal_cached.x_a**2)
-    ) + scal_cached.b_rad * exp(-((T - scal_cached.temp_b) ** 2) / (2 * scal_cached.x_b**2))
-    # Compute the lattice conductivity
-    kappa_lat = (
-        scal_cached.k_a
-        + scal_cached.k_b * exp(-(T - scal_cached.temp_ref) / scal_cached.k_c)
-        + scal_cached.k_d * exp(-(T - scal_cached.temp_ref) / scal_cached.k_e)
-    )
-    # Compute the pressure dependence of the conductivity
-    kappa_p = exp(scal_cached.k_f * p)
-    # Compute the total conductivity scal_cached.k0 -> constant conductivity, if the phase has it, otherwise 0.0
-    k = scal_cached.k0 + (kappa_lat * kappa_p * Cp * rho + k_rad * scal_cached.rg_cached)
+    if np.any(options != 0):
+        # Compute the radiative conductivity
+        k_rad = scal_cached.a_rad * exp(
+            -((T - scal_cached.temp_a) ** 2) / (2 * scal_cached.x_a**2)
+        ) + scal_cached.b_rad * exp(-((T - scal_cached.temp_b) ** 2) / (2 * scal_cached.x_b**2))
+        # Compute the lattice conductivity
+        kappa_lat = (
+            scal_cached.k_a
+            + scal_cached.k_b * exp(-(T - scal_cached.temp_ref) / scal_cached.k_c)
+            + scal_cached.k_d * exp(-(T - scal_cached.temp_ref) / scal_cached.k_e)
+        )
+        # Compute the pressure dependence of the conductivity
+        kappa_p = exp(scal_cached.k_f * p)
+        # Compute the total conductivity scal_cached.k0 -> constant conductivity, if the phase has it, otherwise 0.0
+        k = scal_cached.k0 + (kappa_lat * kappa_p * Cp * rho + k_rad * scal_cached.rg_cached)
+    else: 
+        k = scal_cached.k0
 
     return k
 
 
 # ---
-def heat_capacity_FX(scal_cached: THERMALCACHED, T: fem.Function) -> fem.Expression:
+def heat_capacity_FX(scal_cached: THERMALCACHED
+                     ,T: fem.Function
+                     ,options:NDArray) -> fem.Expression:
     """Build the UFL expression for heat capacity as a polynomial in T.
 
     Implements the Berman (1988) polynomial:
@@ -314,14 +320,17 @@ def heat_capacity_FX(scal_cached: THERMALCACHED, T: fem.Function) -> fem.Express
         bilinear form and passed to `heat_conductivity_FX`.
     """
     # General formula for the heat capacity, it is an expression because it depends on T. C0 = Cp in case the heat capacity is constant, otherwise the other parameters are active.
-    C_p = (
-        scal_cached.c0
-        + scal_cached.c1 * (T ** (-0.5))
-        + scal_cached.c2 * T ** (-2.0)
-        + scal_cached.c3 * (T ** (-3.0))
-        + scal_cached.c4 * T
-        + scal_cached.c5 * T**2
-    )
+    if np.any(options != 0):
+        C_p = (
+            scal_cached.c0
+            + scal_cached.c1 * (T ** (-0.5))
+            + scal_cached.c2 * T ** (-2.0)
+            + scal_cached.c3 * (T ** (-3.0))
+            + scal_cached.c4 * T
+            + scal_cached.c5 * T**2
+        )
+    else: 
+        C_p = scal_cached.c0
 
     return C_p
 
@@ -347,7 +356,10 @@ def compute_radiogenic(scal_cached: THERMALCACHED, hs: fem.Function) -> fem.Func
 
 
 # ---
-def density_FX(scal_cached: THERMALCACHED, T: fem.Function, p: fem.Function) -> fem.Expression:
+def density_FX(scal_cached: THERMALCACHED
+               ,T: fem.Function
+               ,p: fem.Function
+               ,options:NDArray) -> fem.Expression:
     """Build the UFL expression for density as a function of T and P.
 
     Selects one of three density formulations per element via UFL conditional
@@ -371,19 +383,21 @@ def density_FX(scal_cached: THERMALCACHED, T: fem.Function, p: fem.Function) -> 
         fem.Expression: UFL expression for density, to be inserted into the
         energy and Stokes bilinear forms.
     """
+    if np.any(options != 0):
+        # Base density (with temperature dependence)
+        temp_term = exp(-p * scal_cached.alpha2) * (
+            scal_cached.alpha0 * (T - scal_cached.temp_ref) + (scal_cached.alpha1 / 2.0) * (T**2 - scal_cached.temp_ref**2)
+        )
+        rho_temp = scal_cached.rho0 * (1 - temp_term)
 
-    # Base density (with temperature dependence)
-    temp_term = exp(-p * scal_cached.alpha2) * (
-        scal_cached.alpha0 * (T - scal_cached.temp_ref) + (scal_cached.alpha1 / 2.0) * (T**2 - scal_cached.temp_ref**2)
-    )
-    rho_temp = scal_cached.rho0 * (1 - temp_term)
-
-    # Add pressure dependence if needed
-    rho = conditional(
-        eq(scal_cached.option_rho, 0),
-        scal_cached.rho0,
-        conditional(eq(scal_cached.option_rho, 1), rho_temp, rho_temp * exp(p / scal_cached.kb)),
-    )
+        # Add pressure dependence if needed
+        rho = conditional(
+            eq(scal_cached.option_rho, 0),
+            scal_cached.rho0,
+            conditional(eq(scal_cached.option_rho, 1), rho_temp, rho_temp * exp(p / scal_cached.kb)),
+        )
+    else: 
+        rho = scal_cached.rho0
 
     return rho
 
@@ -458,43 +472,43 @@ def compute_viscosity_FX(
         fem.Expression: UFL expression for eta, to be inserted into the Stokes
         bilinear form.
     """
+    if np.any(pdb.option_eta != 0):
+        def compute_eii(e):
+            e_ii = sqrt(0.5 * inner(e, e) + 1e-15)
+            return e_ii
 
-    def compute_eii(e):
-        e_ii = sqrt(0.5 * inner(e, e) + 1e-15)
-        return e_ii
+        e_ii = compute_eii(e)
 
-    e_ii = compute_eii(e)
+        # Eta max
+        # strain indipendent
+        cdf = rg_cached.b_dif * exp(
+            -(rg_cached.e_dif + pres_in * pdb.pres_scal * rg_cached.v_dif)
+            / (rg_cached.gas_constant * temp_in * pdb.temp_scal)
+        )
+        cds = rg_cached.b_dis * exp(
+            -(rg_cached.e_dis + pres_in * pdb.pres_scal * rg_cached.v_dis)
+            / (rg_cached.gas_constant * temp_in * pdb.temp_scal)
+        )
+        # compute tau guess
+        n_co = (1 - rg_cached.n) / rg_cached.n
+        n_inv = 1 / rg_cached.n
+        # Se esiste un cazzo di inferno in culo a Satana ci vanno quelli che hanno generato
+        # sto modo creativo di fare gli esponenti.
+        etads = 0.5 * cds ** (-n_inv) * e_ii**n_co
+        etadf = 0.5 * cdf ** (-1)
+        eta_av = 1 / (1 / etads + 1 / etadf + 1 / rg_cached.eta_max)
+        eta_df = 1 / (1 / etadf + 1 / rg_cached.eta_max)
 
-    # Eta max
-    # strain indipendent
-    cdf = rg_cached.b_dif * exp(
-        -(rg_cached.e_dif + pres_in * pdb.pres_scal * rg_cached.v_dif)
-        / (rg_cached.gas_constant * temp_in * pdb.temp_scal)
-    )
-    cds = rg_cached.b_dis * exp(
-        -(rg_cached.e_dis + pres_in * pdb.pres_scal * rg_cached.v_dis)
-        / (rg_cached.gas_constant * temp_in * pdb.temp_scal)
-    )
-    # compute tau guess
-    n_co = (1 - rg_cached.n) / rg_cached.n
-    n_inv = 1 / rg_cached.n
-    # Se esiste un cazzo di inferno in culo a Satana ci vanno quelli che hanno generato
-    # sto modo creativo di fare gli esponenti.
-    etads = 0.5 * cds ** (-n_inv) * e_ii**n_co
-    etadf = 0.5 * cdf ** (-1)
-    eta_av = 1 / (1 / etads + 1 / etadf + 1 / rg_cached.eta_max)
-    eta_df = 1 / (1 / etadf + 1 / rg_cached.eta_max)
-
-    # check if the option_eta -> constant or not, otherwise release the composite eta
-    eta = ufl.conditional(
-        ufl.eq(rg_cached.option_eta, 0.0),
-        rg_cached.eta,
-        ufl.conditional(ufl.eq(rg_cached.option_eta, 1.0), eta_df, eta_av),
-    )
+        # check if the option_eta -> constant or not, otherwise release the composite eta
+        eta = ufl.conditional(
+            ufl.eq(rg_cached.option_eta, 0.0),
+            rg_cached.eta,
+            ufl.conditional(ufl.eq(rg_cached.option_eta, 1.0), eta_df, eta_av),
+        )
+    else: 
+        eta = rg_cached.eta
 
     return eta
-
-
 # ---
 def compute_plastic_strain(
     e_ii: fem.Expression,
@@ -585,8 +599,6 @@ def compute_plastic_strain(
     tau_eff = tau_vis * ufl.tanh(tau_lim / tau_vis)
 
     return tau_eff, tau_vis, tau_lim
-
-
 # ---
 # ---
 # ---
