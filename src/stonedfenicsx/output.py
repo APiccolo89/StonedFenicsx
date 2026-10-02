@@ -194,19 +194,19 @@ class OUTPUT:
         self.alpha.x.scatter_forward()
 
         # density
-        rho = density_FX(self.cached_mat_thermal, sol.T_N, sol.PL)
+        rho = density_FX(self.cached_mat_thermal, sol.T_N, sol.PL, self.pdb.option_rho)
         interpolate_expression(self.rho, rho)
         self.rho.x.array[:] = self.rho.x.array[:] * sc.rho
         self.rho.x.scatter_forward()
 
         # Cp
-        Cp = heat_capacity_FX(self.cached_mat_thermal, sol.T_N)
+        Cp = heat_capacity_FX(self.cached_mat_thermal, sol.T_N, self.pdb.option_cp)
         interpolate_expression(self.cp, Cp)
         self.cp.x.array[:] = self.cp.x.array[:] * sc.cp
         self.cp.x.scatter_forward()
 
         # k
-        k = heat_conductivity_FX(self.cached_mat_thermal, sol.T_N, sol.PL, Cp, rho)
+        k = heat_conductivity_FX(self.cached_mat_thermal, sol.T_N, sol.PL, Cp, rho, self.pdb.option_k)
         interpolate_expression(self.k, k)
         self.k.x.array[:] = self.k.x.array[:] * sc.watt / (sc.length * sc.temp)
         self.k.x.scatter_forward()
@@ -230,7 +230,10 @@ class OUTPUT:
         self.eta.x.scatter_forward()
         # heat flux
 
-        q_expr = -(heat_conductivity_FX(self.cached_mat_thermal, sol.T_N, sol.PL, Cp, rho) * ufl.grad(sol.T_N))
+        q_expr = -(
+            heat_conductivity_FX(self.cached_mat_thermal, sol.T_N, sol.PL, Cp, rho, self.pdb.option_k)
+            * ufl.grad(sol.T_N)
+        )
         interpolate_expression(self.flux, q_expr)
         self.flux.x.array[:] = self.flux.x.array[:] * sc.watt / (sc.length**2)
         self.flux.x.scatter_forward()

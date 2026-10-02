@@ -11,6 +11,8 @@ from mpi4py import MPI
 
 # ---
 _DEBUG_ = False
+
+
 # ---
 def timing_function(fun: Callable) -> Callable:
     """Extract the execution time of the function.
@@ -45,6 +47,8 @@ def timing_function(fun: Callable) -> Callable:
         return result
 
     return wrapper
+
+
 # ---
 def time_the_time(delta_time: float) -> float:
     """_summary_
@@ -58,6 +62,8 @@ def time_the_time(delta_time: float) -> float:
     comm = MPI.COMM_WORLD
     global_dt = comm.allreduce(delta_time, op=MPI.MAX)
     return global_dt
+
+
 # ---
 def print_ph(string: str) -> None:
     """function to print information. Print information only in one processor.
@@ -70,6 +76,8 @@ def print_ph(string: str) -> None:
     comm = MPI.COMM_WORLD
     if comm.rank == 0:
         print(string)
+
+
 # ---
 def interpolate_from_sub_to_main(
     u_dest: dolfinx.fem.Function,
@@ -96,6 +104,8 @@ def interpolate_from_sub_to_main(
         b = np.arange(len(cells))
 
     u_dest.interpolate(u_start, cells0=a, cells1=b)
+
+
 # ---
 def gather_vector(v):
     """Fenicsx-tools, gather the vector from all the processor
@@ -138,6 +148,8 @@ def gather_vector(v):
         return lv
     else:
         return gv  # TO CHECK!!!!!
+
+
 # ---
 def gather_coordinates(V):
     """
@@ -175,6 +187,8 @@ def gather_coordinates(V):
         return recvbuf.reshape(-1, gdim)
     else:
         return None
+
+
 # ---
 def compute_strain_rate(u):
     """Compute strain rate from the velocity field u.
@@ -187,6 +201,8 @@ def compute_strain_rate(u):
     e = ufl.sym(ufl.grad(u))
 
     return e
+
+
 # ---
 def compute_eii(e):
     """Compute the second invariant of the strain rate from the strain rate field.
@@ -199,6 +215,8 @@ def compute_eii(e):
     """
     e_ii = ufl.sqrt(0.5 * ufl.inner(e, e))
     return e_ii
+
+
 # ---
 def evaluate_material_property(
     expression: dolfinx.fem.Expression, function_space: dolfinx.fem.FunctionSpace
@@ -215,5 +233,7 @@ def evaluate_material_property(
     target_function = dolfinx.fem.Function(function_space)
     target_function.interpolate(dolfinx.fem.Expression(expression, function_space.element.interpolation_points()))
     return target_function
+
+
 # ---
 # ---
