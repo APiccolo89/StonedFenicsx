@@ -1,8 +1,9 @@
 # StonedFEniCSx
 [![Documentation](https://github.com/APiccolo89/StonedFenicsx/actions/workflows/docs.yml/badge.svg)](https://github.com/APiccolo89/StonedFenicsx/actions/workflows/docs.yml)
 [![test_git_action](https://github.com/APiccolo89/StonedFenicsx/actions/workflows/test.yml/badge.svg)](https://github.com/APiccolo89/StonedFenicsx/actions/workflows/test.yml)
-[![cov](https://github.com/APiccolo89/StonedFenicsx/badges/coverage.svg)](actions/workflows/test.yml)
+[![codecov](https://codecov.io/github/APiccolo89/StonedFenicsx/graph/badge.svg?token=T7C8GHNNTP)](https://codecov.io/github/APiccolo89/StonedFenicsx)
 ![Simplified model setup](docs/docs/images_doc/Initial_setup.png)
+
 *Fig 1: Simplified model setup used in StonedFEniCSx*
 
 A FEniCSx (dolfinx)-based FEM package for simulating the thermal and mechanical evolution of a 2D subduction zone: coupled steady-state/time-dependent thermal, Stokes (velocity–pressure), and lithostatic pressure problems on wedge, slab, and global sub-domains, with temperature- and pressure-dependent rheology and shear heating.
