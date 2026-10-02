@@ -51,7 +51,6 @@ def configure() -> int:
     ctrl_sim, mesh, pdb, sc = configure_simulation(ph_in, input_data)
 
     return {"ctrl_sim": ctrl_sim, "mesh": mesh, "pdb": pdb, "sc": sc}
-
 # ---
 def test_scaling(configure):
     """
@@ -62,7 +61,6 @@ def test_scaling(configure):
     assert sc.eta == 1e21
     assert sc.temp == 1333.0
     assert sc.stress == 1e9
-
 # ---
 def test_output(configure):
     """Test if all the folder have been created"""
