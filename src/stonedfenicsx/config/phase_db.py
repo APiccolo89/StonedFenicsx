@@ -13,7 +13,7 @@ from stonedfenicsx.config.config_utils import update_ip_file
 from stonedfenicsx.utils import print_ph
 
 # TO DO in the future.
-# The jit class is a pain in the ass. I used to use the numba routine for creating the left boundary condition and right
+# The jit class is cumbersome. I used to use the numba routine for creating the left boundary condition and right
 # boundary condition. I kept the Iris FD code, adapting and making usable, but, on the second thought, I can convert all these configuration
 # routine into a fenicsx small 1D numerical code. In this way, it is possible to convert the PhaseDataBase into a dataclass and split into two
 # classes: one super-classes that contains the essential portion of the given problem (i.e., the intelectual hoax of the kynematic models), and
