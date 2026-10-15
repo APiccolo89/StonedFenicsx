@@ -247,7 +247,7 @@ class Problem:
             mixed_element = basix.ufl.mixed_element([elements[0], elements[1]])
             self.FS = dolfinx.fem.functionspace(
                 self.domain.mesh, mixed_element
-            )  # MA cristoiddio, perche' cazzo hanno messo FunctionSpace and functionspace come nomi, ma sono degli stronzi? (camelcase python, ora lo)
+            )
             self.F0, _ = self.FS.sub(0).collapse()
             self.F1, _ = self.FS.sub(1).collapse()
             # Define trial/test on mixed FS
@@ -341,7 +341,7 @@ class Solution:
 
         mixed_element = basix.ufl.mixed_element([elements[0], elements[1]])
 
-        space_GL = dolfinx.fem.functionspace(PG.FS.mesh, mixed_element)  # PORCO DIO
+        space_GL = dolfinx.fem.functionspace(PG.FS.mesh, mixed_element)
 
         def gives_Function(space):
             """Collapse the velocity/pressure subspaces of a mixed space and
@@ -367,7 +367,7 @@ class Solution:
 
         self.PL = dolfinx.fem.Function(
             PG.FS
-        )  # Thermal and Pressure problems share the same functional space -> Need to enforce this bullshit
+        )  # Thermal and Pressure problems share the same functional space -> Need to enforce this
         self.T_O = dolfinx.fem.Function(PG.FS)
         self.T_N = dolfinx.fem.Function(PG.FS)
         self.Hs_global = dolfinx.fem.Function(PG.FS)
@@ -376,11 +376,11 @@ class Solution:
         self.T_i = dolfinx.fem.Function(PG.FS)
         self.p_lwedge = dolfinx.fem.Function(
             PW.FSPT
-        )  # PW.SolPT -> It is the only part of this lovercraftian nightmare that needs to have temperature and pressure -> Viscosity depends pressure and temperature potentially
-        self.t_owedge = dolfinx.fem.Function(PW.FSPT)  # same stuff as before, again, this is a nightmare: why the fuck.
+        )  # PW.SolPT -> It is the only part that needs to have temperature and pressure -> Viscosity depends pressure and temperature potentially
+        self.t_owedge = dolfinx.fem.Function(PW.FSPT)  # same as before
         self.p_lslab = dolfinx.fem.Function(
             PS.FSPT
-        )  # PW.SolPT -> It is the only part of this lovercraftian nightmare that needs to have temperature and pressure -> Viscosity depends pressure and temperature potentially
+        )  # PW.SolPT -> It is the only part that needs to have temperature and pressure -> Viscosity depends pressure and temperature potentially
         self.t_oslab = dolfinx.fem.Function(PS.FSPT)
         self.u_global, self.p_global = gives_Function(space_GL)
         self.u_slab, self.p_slab = gives_Function(PS.FS)
@@ -716,7 +716,7 @@ class Global_thermal(Problem):
             it_outer (int): _description_
             ts (int): _description_
         """
-        # -> Initialise the vector of temp_k for avoiding idiotic solution
+        # -> Initialise the vector of temp_k for avoiding spurious solution
 
         if self.cached_form.a is None:
             self.compute_shear_heating(sol.PL, sol.T_N)
@@ -804,7 +804,7 @@ class Global_thermal(Problem):
             # Top
             facets = domain.facets.find(domain.bc_dict["Top"])
             dofs_top = dolfinx.fem.locate_dofs_topological(self.FS, domain.mesh.topology.dim - 1, facets)
-            # -> Probably I need to use some parallel shit here
+            # -> Probably I need to handle parallel here
             self.bc_top = dolfinx.fem.dirichletbc(temp_min, dofs_top, self.FS)
             # Right Lithosphere
             facets = domain.facets.find(domain.bc_dict["Right_lit"])

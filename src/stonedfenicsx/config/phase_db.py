@@ -13,10 +13,10 @@ from stonedfenicsx.config.config_utils import update_ip_file
 from stonedfenicsx.utils import print_ph
 
 # TO DO in the future.
-# The jit class is a pain in the ass. I used to use the numba routine for creating the left boundary condition and right
+# The jit class are problematic. I used to use the numba routine for creating the left boundary condition and right
 # boundary condition. I kept the Iris FD code, adapting and making usable, but, on the second thought, I can convert all these configuration
 # routine into a fenicsx small 1D numerical code. In this way, it is possible to convert the PhaseDataBase into a dataclass and split into two
-# classes: one super-classes that contains the essential portion of the given problem (i.e., the intelectual hoax of the kynematic models), and
+# classes: one super-classes that contains the essential portion of the given problem, and
 # a more generic soul that stores the essential portion of any geodynamic code.
 # For example, I am envisioning that the configuration routine, can be used for having a compressible fenicsx tool to explore the magmatic conduit,
 # with compressibility and more nice physics behind. config module can be used in a more generic way, and adapted. For the current pubblication,
@@ -309,7 +309,7 @@ class PhaseDataBase:
         self.option_cp = np.zeros(number_phases, dtype=np.int32)  # Option for heat capacity calculation
 
         # Thermal conductivity
-        self.option_k = np.zeros(number_phases, dtype=np.int32)  # Option for conductivity calculation
+        self.option_k = np.zeros(number_phases, dtype=np.int32)
         self.k0 = np.zeros(number_phases, dtype=np.float64)  # Reference heat conductivity [W/m/K]
         self.k_a = np.zeros(number_phases, dtype=np.float64)  # Thermal expansivity [1/Pa]
         self.k_b = np.zeros(number_phases, dtype=np.float64)  # exponent
@@ -485,6 +485,8 @@ def generate_phase(
         pdb.c3[id_ph] = 0.0
         pdb.c4[id_ph] = 0.0
         pdb.c5[id_ph] = 0.0
+        pdb.option_cp[id_ph] = 0
+
     else:
         buf_cp = read_capacity(name_capacity)
         pdb.c0[id_ph] = buf_cp.c0
@@ -493,7 +495,8 @@ def generate_phase(
         pdb.c3[id_ph] = buf_cp.c3
         pdb.c4[id_ph] = buf_cp.c4
         pdb.c5[id_ph] = buf_cp.c5
-    pdb.option_cp[id_ph] = np.int32(0) if name_capacity == "Constant" else np.int32(1)
+        pdb.option_cp[id_ph] = 1
+
 
     if name_conductivity == "Constant":
         buf_data_diffusivity = LatticeDiffusivity()
@@ -504,8 +507,10 @@ def generate_phase(
         buf_data_diffusivity.e = 1.0
         buf_data_diffusivity.f = 0.0
         buf_data_diffusivity.g = 1.0
+        pdb.option_k[id_ph] = 0
     else:
         buf_data_diffusivity = read_diffusivity(name_conductivity)
+        pdb.option_k[id_ph] = 1
     if pressure_dependency == 0:
         buf_data_diffusivity.f = 0.0
 
@@ -517,9 +522,6 @@ def generate_phase(
     pdb.k_f[id_ph] = buf_data_diffusivity.f
     pdb.k0[id_ph] = k * buf_data_diffusivity.g
     pdb.radiative_conductivity[id_ph] = radiative_conductivity
-    pdb.option_k[id_ph] = (
-        np.int32(0) if (name_conductivity == "Constant" and radiative_conductivity == 0) else np.int32(1)
-    )
     # Density
     if name_alpha != "Constant":
         alpha = read_expansivity(name_alpha)
@@ -545,8 +547,7 @@ def generate_phase(
         pdb.option_rho[id_ph] = np.int32(2)
 
     return pdb
-
-
+# ---
 def generate_phase_database(
     pressure_dependency: int,
     eta_max: float,
@@ -671,8 +672,7 @@ def generate_phase_database(
     pdb.pres_scal = scal_press
 
     return pdb
-
-
+# --- 
 def fill_up_weakzone_data(
     tau_min: float = 10e6,
     phi: float = np.radians(5),

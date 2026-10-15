@@ -23,4 +23,3 @@ dependencies:
       - --editable .
       - sphinxcontrib-bibtex
       - cmcrameri
-      - pre-commit

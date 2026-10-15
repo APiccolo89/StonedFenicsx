@@ -1016,7 +1016,7 @@ def create_mesh_object(ioctrl: IOControls, g_input: GeomInput) -> Mesh:
         1  # Rather necessary remember to put plus one once you publish it
     )
 
-    # -- Create additional facet for the shear heating. Since this hell is requiring a lot of useless work,
+    # -- Create additional facet for the shear heating. Since this requires a lot of extra work,
     # -- I need to create a yet another ad hoc function for this.
     # --
     global_domain = Domain(

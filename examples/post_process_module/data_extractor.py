@@ -4,17 +4,13 @@ Module that extract the data from the output of StonedFEniCSx
 
 import os
 import warnings
-
-import dataclasses
-from dataclasses import field,InitVar,dataclass
-import h5py
-import numpy as np
-from numpy.typing import NDArray
+from dataclasses import InitVar, dataclass, field
 from pathlib import Path
 
-from global_var import _R_GRID_,_T_CUT_OFF_LIT,_V_CONVERSION_KM_MYR_,_POINT_FILTER_OVERRIDING
-
+import h5py
 import numpy as np
+from global_var import _POINT_FILTER_OVERRIDING, _R_GRID_, _T_CUT_OFF_LIT, _V_CONVERSION_KM_MYR_
+from numpy.typing import NDArray
 from scipy.interpolate import griddata
 from shapely import contains_xy as scontains_xy
 from shapely.geometry import Polygon as sPolygon
@@ -797,7 +793,7 @@ class Test:
         #       : compute the inverse of the slope
         #       : transform coordinate 
         #       : set up system of equation and find out that: 
-        #       : dy = - dx * 1/s Dio porco, me e la mia memoria -1/s
+        #       : dy = - dx * -1/s
         #       : d = (dx**2+dy**2)**(1/2)
         #       : dx = dy * s 
         #       : d = (dy*(1+s**2)**(1/2))
