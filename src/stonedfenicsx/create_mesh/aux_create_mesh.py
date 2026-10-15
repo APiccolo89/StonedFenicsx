@@ -977,8 +977,6 @@ def _create_lines(
     for i in range(len_p):
         a = tag_p[i]
         b = tag_p[i + 1]
-        "it appears that the gmsh is an horrible person: i try to give the golden rule that the tag of the points are following an order,"
-        "which entails that the minimum of the two point defining a segment is the first -> such that it is always possible determine the  order"
 
         tag_1 = np.min([a, b])
         tag_2 = np.max([a, b])

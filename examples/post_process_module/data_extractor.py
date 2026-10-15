@@ -797,7 +797,7 @@ class Test:
         #       : compute the inverse of the slope
         #       : transform coordinate 
         #       : set up system of equation and find out that: 
-        #       : dy = - dx * 1/s Dio porco, me e la mia memoria -1/s
+        #       : dy = - dx * 1/s 
         #       : d = (dx**2+dy**2)**(1/2)
         #       : dx = dy * s 
         #       : d = (dy*(1+s**2)**(1/2))

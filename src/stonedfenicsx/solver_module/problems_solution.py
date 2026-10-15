@@ -247,7 +247,7 @@ class Problem:
             mixed_element = basix.ufl.mixed_element([elements[0], elements[1]])
             self.FS = dolfinx.fem.functionspace(
                 self.domain.mesh, mixed_element
-            )  # MA cristoiddio, perche' cazzo hanno messo FunctionSpace and functionspace come nomi, ma sono degli stronzi? (camelcase python, ora lo)
+            )
             self.F0, _ = self.FS.sub(0).collapse()
             self.F1, _ = self.FS.sub(1).collapse()
             # Define trial/test on mixed FS
@@ -341,7 +341,7 @@ class Solution:
 
         mixed_element = basix.ufl.mixed_element([elements[0], elements[1]])
 
-        space_GL = dolfinx.fem.functionspace(PG.FS.mesh, mixed_element)  # PORCO DIO
+        space_GL = dolfinx.fem.functionspace(PG.FS.mesh, mixed_element) 
 
         def gives_Function(space):
             """Collapse the velocity/pressure subspaces of a mixed space and
@@ -367,7 +367,7 @@ class Solution:
 
         self.PL = dolfinx.fem.Function(
             PG.FS
-        )  # Thermal and Pressure problems share the same functional space -> Need to enforce this bullshit
+        )  # Thermal and Pressure problems share the same functional space
         self.T_O = dolfinx.fem.Function(PG.FS)
         self.T_N = dolfinx.fem.Function(PG.FS)
         self.Hs_global = dolfinx.fem.Function(PG.FS)
@@ -376,11 +376,11 @@ class Solution:
         self.T_i = dolfinx.fem.Function(PG.FS)
         self.p_lwedge = dolfinx.fem.Function(
             PW.FSPT
-        )  # PW.SolPT -> It is the only part of this lovercraftian nightmare that needs to have temperature and pressure -> Viscosity depends pressure and temperature potentially
+        )  
         self.t_owedge = dolfinx.fem.Function(PW.FSPT)  # same stuff as before, again, this is a nightmare: why the fuck.
         self.p_lslab = dolfinx.fem.Function(
             PS.FSPT
-        )  # PW.SolPT -> It is the only part of this lovercraftian nightmare that needs to have temperature and pressure -> Viscosity depends pressure and temperature potentially
+        ) 
         self.t_oslab = dolfinx.fem.Function(PS.FSPT)
         self.u_global, self.p_global = gives_Function(space_GL)
         self.u_slab, self.p_slab = gives_Function(PS.FS)
@@ -509,13 +509,13 @@ class Global_thermal(Problem):
 
         Cp_k = heat_capacity_FX(self.cached_mat, T_k,self.pdb.option_cp)  # frozen
 
-        k_k = heat_conductivity_FX(self.cached_mat, T_k, p, Cp_k, rho_k, self.pdb.option_k)  # frozen
+        k_k = heat_conductivity_FX(self.cached_mat, T_k, p, Cp_k,self.pdb.option_k)  # frozen
 
         rho_k0 = density_FX(self.cached_mat, T_O, p, self.pdb.option_rho )  # frozen
 
         Cp_k0 = heat_capacity_FX(self.cached_mat, T_O, self.pdb.option_cp)  # frozen
 
-        k_k0 = heat_conductivity_FX(self.cached_mat, T_O, p, Cp_k0, rho_k0, self.pdb.option_k)  # frozen
+        k_k0 = heat_conductivity_FX(self.cached_mat, T_O, p, Cp_k0, self.pdb.option_k)  # frozen
 
         rhocp = rho_k * Cp_k
 
@@ -634,11 +634,11 @@ class Global_thermal(Problem):
             SUPG stabilisation - source, including shear heating if
             `model_shear > 0`).
         """
-        rho_k = density_FX(self.cached_mat, T, p, self.pdb.option_rho)  # frozen
+        rho_k = density_FX(self.cached_mat, T, p,self.pdb.option_rho)  # frozen
 
         Cp_k = heat_capacity_FX(self.cached_mat, T, self.pdb.option_cp)  # frozen
 
-        k_k = heat_conductivity_FX(self.cached_mat, T, p, Cp_k, rho_k, self.pdb.option_k)  # frozen
+        k_k = heat_conductivity_FX(self.cached_mat, T, p, Cp_k, rho_k,self.pdb.option_k)  # frozen
 
         dx = self.dx
 
@@ -716,7 +716,6 @@ class Global_thermal(Problem):
             it_outer (int): _description_
             ts (int): _description_
         """
-        # -> Initialise the vector of temp_k for avoiding idiotic solution
 
         if self.cached_form.a is None:
             self.compute_shear_heating(sol.PL, sol.T_N)
@@ -804,7 +803,6 @@ class Global_thermal(Problem):
             # Top
             facets = domain.facets.find(domain.bc_dict["Top"])
             dofs_top = dolfinx.fem.locate_dofs_topological(self.FS, domain.mesh.topology.dim - 1, facets)
-            # -> Probably I need to use some parallel shit here
             self.bc_top = dolfinx.fem.dirichletbc(temp_min, dofs_top, self.FS)
             # Right Lithosphere
             facets = domain.facets.find(domain.bc_dict["Right_lit"])
@@ -983,7 +981,7 @@ class Global_thermal(Problem):
         if ts == 0 and it_outer == 0:
             rho = density_FX(self.cached_mat, sol.T_N, sol.PL, self.pdb.option_rho)
             cp = heat_capacity_FX(self.cached_mat, sol.T_N,self.pdb.option_cp)
-            k = heat_conductivity_FX(self.cached_mat, sol.T_N, sol.PL, cp, rho, self.pdb.option_k)
+            k = heat_conductivity_FX(self.cached_mat, sol.T_N, sol.PL, cp, rho,self.option_k)
             kappa = k / rho / cp
             h = ufl.CellDiameter(self.domain.mesh)
             u_norm = ufl.sqrt(ufl.dot(sol.u_global, sol.u_global) + 1.0e-30)
@@ -1250,7 +1248,7 @@ class Global_pressure(Problem):
         # Function that set linear form and linear picard for picard iteration
 
         if self.cached_form.a is None:
-            rho_k = density_FX(self.cached_mat, T, p_k, self.pdb.option_rho)  # frozen
+            rho_k = density_FX(self.cached_mat, T, p_k)  # frozen
 
             # Linear operator with frozen coefficients
             if it == 0:

@@ -492,8 +492,7 @@ def compute_viscosity_FX(
         # compute tau guess
         n_co = (1 - rg_cached.n) / rg_cached.n
         n_inv = 1 / rg_cached.n
-        # Se esiste un cazzo di inferno in culo a Satana ci vanno quelli che hanno generato
-        # sto modo creativo di fare gli esponenti.
+
         etads = 0.5 * cds ** (-n_inv) * e_ii**n_co
         etadf = 0.5 * cdf ** (-1)
         eta_av = 1 / (1 / etads + 1 / etadf + 1 / rg_cached.eta_max)
@@ -564,7 +563,6 @@ def compute_plastic_strain(
             tau_lim  -- Drucker-Prager yield stress (UFL expression).
     """
 
-    # UNFORTUNATELY I AM STUPID and i do not have any idea how to scale the energies such that it would be easier to handle. Since the scale of force and legth is self-consistently related to mass, i do not know how to deal with the fucking useless mol in the energy of activation
     # NOTE: rescale as UFL expressions on temp_in/pres_in directly (do NOT .copy() into
     # a detached Function) -> compute_shear_heating() is only called once (its form is
     # cached and reused for the whole run), so tau_eff must keep a live UFL reference to
