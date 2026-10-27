@@ -743,9 +743,10 @@ class RheologicalFlowLaw:
         if f_code == 1:  # simple shear
             b *= 2 ** (self.n - 1)
         elif f_code == 2:  # uniaxial
-            b *= (3 ** (self.n + 1) / 2) / 2
+            b *= 3 ** ((self.n + 1) / 2) / 2
         if self.mpa == 1:  # MPa -> Pa
-            b *= 10 ** (-self.n * 6)
+            exp_mpa = self.n + (self.r if self.water_cor == 2 else 0.0)
+            b *= 10 ** (-exp_mpa * 6)
         if self.water_cor == 1:  # COH
             water_con = 1000**self.r
         elif self.water_cor == 2:  # fugacity
