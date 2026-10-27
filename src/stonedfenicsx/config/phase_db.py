@@ -789,7 +789,7 @@ def check_data_base(tag: str, property_m: str) -> str:
 
 
 # ---
-def read_rheology(tag: str, dis_dif: 0) -> RheologicalFlowLaw:
+def read_rheology(tag: str, dis_dif:int) -> RheologicalFlowLaw:
     """Read rheology
 
     Args:
