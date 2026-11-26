@@ -1230,7 +1230,7 @@ class Global_pressure(Problem):
         return bc
 
     # ---
-    def set_linear_picard(self, p_k: dolfinx.fem.Function, T: dolfinx.fem.Function, it: int = 0):
+    def set_linear_picard(self, p_k: dolfinx.fem.Function, T: dolfinx.fem.Function, it: int = 0, ts:int=0):
         """Set up and cache the bilinear/linear forms of the lithostatic pressure problem.
 
         Built only once (`self.cached_form.a is None`): a Poisson-type
@@ -1258,7 +1258,7 @@ class Global_pressure(Problem):
             rho_k = density_FX(self.cached_mat, T, p_k, self.pdb.option_rho)  # frozen
 
             # Linear operator with frozen coefficients
-            if it == 0:
+            if it == 0 and ts == 0:
                 a = ufl.inner(ufl.grad(self.trial0), ufl.grad(self.test0)) * self.dx
             else:
                 a = None
@@ -1283,7 +1283,7 @@ class Global_pressure(Problem):
         """
         print_ph(f"    --- Solution of the Lit. Pressure problem in {self.domain.name} --  ---")
 
-        a, L = self.set_linear_picard(sol.PL, sol.T_N)
+        a, L = self.set_linear_picard(sol.PL, sol.T_N,ts=ts,it=it_outer)
         if it_outer == 0 & ts == 0:
             self.solv = ScalarSolver(a, L, self.bc, self.domain.comm, self.ctrl_sim.ctrl.energy_solver_type)
 
