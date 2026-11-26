@@ -1284,7 +1284,7 @@ class Global_pressure(Problem):
         print_ph(f"    --- Solution of the Lit. Pressure problem in {self.domain.name} --  ---")
 
         a, L = self.set_linear_picard(sol.PL, sol.T_N,ts=ts,it=it_outer)
-        if it_outer == 0 & ts == 0:
+        if (it_outer == 0) and (ts == 0):
             self.solv = ScalarSolver(a, L, self.bc, self.domain.comm, self.ctrl_sim.ctrl.energy_solver_type)
 
         self.solve_the_linear(a, L, sol.PL)
