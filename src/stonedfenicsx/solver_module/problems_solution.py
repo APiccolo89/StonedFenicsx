@@ -56,6 +56,7 @@ from stonedfenicsx.solver_module.solver_utilities import (
 from stonedfenicsx.utils import compute_strain_rate, print_ph, timing_function
 
 
+
 def debug_boundary_condition(bc, name):
     """Print the global min/max of a Dirichlet BC value across all MPI ranks.
 
@@ -431,6 +432,7 @@ class Global_thermal(Problem):
             ctrl_sim (SimulationControls): Simulation control parameters.
         """
         super().__init__(mesh=mesh, elements=elements, name=name, ctrl_sim=ctrl_sim, pdb=pdb)
+        self.dx = ufl.Measure("dx", domain=self.domain.mesh, metadata={"quadrature_degree": 6})
         self.steady_state = ctrl_sim.ctrl.steady_state
 
         if (
@@ -867,7 +869,7 @@ class Global_thermal(Problem):
 
         """
         domain = self.domain
-        dS = ufl.Measure("dS", domain=domain.mesh, subdomain_data=domain.facets)
+        dS = ufl.Measure("dS", domain=domain.mesh, subdomain_data=domain.facets,metadata={"quadrature_degree": 4})
         mode_shear = self.ctrl_sim.ctrl.model_shear
         expression = dolfinx.fem.Constant(domain.mesh, (0.0)) * (
             dS(domain.bc_dict["Subduction_top_lit"]) + dS(domain.bc_dict["Subduction_top_wed"])
@@ -1202,7 +1204,7 @@ class Global_pressure(Problem):
             ctrl_sim (SimulationControls): Simulation control parameters.
         """
         super().__init__(mesh=mesh, elements=elements, name=name, ctrl_sim=ctrl_sim, pdb=pdb)
-
+        self.dx = ufl.Measure("dx", domain=self.domain.mesh, metadata={"quadrature_degree": 6})
         if np.all(pdb.option_rho < 2):
             self.typology = "LinearProblem"
         else:
