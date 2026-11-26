@@ -996,7 +996,10 @@ class Global_thermal(Problem):
                 dt_adv, self.domain.solph.element.interpolation_points()
             )
 
-        if ts == 0 and it_outer == 0 or self.ctrl_sim.ctrl_ky.constant == 0:
+        if (ts <=1 and it_outer == 0) or self.ctrl_sim.ctrl_ky.constant == 0:
+            # The velocity is not computed at the first iteration of the first ts 
+            # The simpliest patch is to repeat the computation of dt during the first
+            # timestep. 
             clausure_compute_dt_update_dt()
 
     # ---
