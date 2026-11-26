@@ -321,8 +321,9 @@ class SolverStokes(Solvers):
         """
         self.A = assemble_matrix_block(a, bcs=bcs)
         self.A.assemble()
-        self.P = assemble_matrix_block(a_p, bcs=bcs)
-        self.P.assemble()
+        if self.direct_solver == 0:
+            self.P = assemble_matrix_block(a_p, bcs=bcs)
+            self.P.assemble()
         self.b = assemble_vector_block(L, a, bcs=bcs)
         self.b.assemble()
 
@@ -359,9 +360,10 @@ class SolverStokes(Solvers):
         # -------------------------
         # P (preconditioner matrix)
         # -------------------------
-        self.P.zeroEntries()
-        assemble_matrix_block(self.P, a_p, bcs=bcs)
-        self.P.assemble()
+        if self.direct_solver == 0: 
+            self.P.zeroEntries()
+            assemble_matrix_block(self.P, a_p, bcs=bcs)
+            self.P.assemble()
 
         # -------------------------
         # b (RHS)

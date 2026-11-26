@@ -56,6 +56,7 @@ from stonedfenicsx.solver_module.solver_utilities import (
 from stonedfenicsx.utils import compute_strain_rate, print_ph, timing_function
 
 
+
 def debug_boundary_condition(bc, name):
     """Print the global min/max of a Dirichlet BC value across all MPI ranks.
 
@@ -431,6 +432,7 @@ class Global_thermal(Problem):
             ctrl_sim (SimulationControls): Simulation control parameters.
         """
         super().__init__(mesh=mesh, elements=elements, name=name, ctrl_sim=ctrl_sim, pdb=pdb)
+        self.dx = ufl.Measure("dx", domain=self.domain.mesh, metadata={"quadrature_degree": 6})
         self.steady_state = ctrl_sim.ctrl.steady_state
 
         if (
@@ -867,7 +869,7 @@ class Global_thermal(Problem):
 
         """
         domain = self.domain
-        dS = ufl.Measure("dS", domain=domain.mesh, subdomain_data=domain.facets)
+        dS = ufl.Measure("dS", domain=domain.mesh, subdomain_data=domain.facets,metadata={"quadrature_degree": 4})
         mode_shear = self.ctrl_sim.ctrl.model_shear
         expression = dolfinx.fem.Constant(domain.mesh, (0.0)) * (
             dS(domain.bc_dict["Subduction_top_lit"]) + dS(domain.bc_dict["Subduction_top_wed"])
@@ -996,7 +998,10 @@ class Global_thermal(Problem):
                 dt_adv, self.domain.solph.element.interpolation_points()
             )
 
-        if ts == 0 and it_outer == 0 or self.ctrl_sim.ctrl_ky.constant == 0:
+        if (ts <=1 and it_outer == 0) or self.ctrl_sim.ctrl_ky.constant == 0:
+            # The velocity is not computed at the first iteration of the first ts 
+            # The simpliest patch is to repeat the computation of dt during the first
+            # timestep. 
             clausure_compute_dt_update_dt()
 
     # ---
@@ -1199,7 +1204,7 @@ class Global_pressure(Problem):
             ctrl_sim (SimulationControls): Simulation control parameters.
         """
         super().__init__(mesh=mesh, elements=elements, name=name, ctrl_sim=ctrl_sim, pdb=pdb)
-
+        self.dx = ufl.Measure("dx", domain=self.domain.mesh, metadata={"quadrature_degree": 6})
         if np.all(pdb.option_rho < 2):
             self.typology = "LinearProblem"
         else:
@@ -1225,7 +1230,7 @@ class Global_pressure(Problem):
         return bc
 
     # ---
-    def set_linear_picard(self, p_k: dolfinx.fem.Function, T: dolfinx.fem.Function, it: int = 0):
+    def set_linear_picard(self, p_k: dolfinx.fem.Function, T: dolfinx.fem.Function, it: int = 0, ts:int=0):
         """Set up and cache the bilinear/linear forms of the lithostatic pressure problem.
 
         Built only once (`self.cached_form.a is None`): a Poisson-type
@@ -1253,7 +1258,7 @@ class Global_pressure(Problem):
             rho_k = density_FX(self.cached_mat, T, p_k, self.pdb.option_rho)  # frozen
 
             # Linear operator with frozen coefficients
-            if it == 0:
+            if it == 0 and ts == 0:
                 a = ufl.inner(ufl.grad(self.trial0), ufl.grad(self.test0)) * self.dx
             else:
                 a = None
@@ -1278,8 +1283,8 @@ class Global_pressure(Problem):
         """
         print_ph(f"    --- Solution of the Lit. Pressure problem in {self.domain.name} --  ---")
 
-        a, L = self.set_linear_picard(sol.PL, sol.T_N)
-        if it_outer == 0 & ts == 0:
+        a, L = self.set_linear_picard(sol.PL, sol.T_N,ts=ts,it=it_outer)
+        if (it_outer == 0) and (ts == 0):
             self.solv = ScalarSolver(a, L, self.bc, self.domain.comm, self.ctrl_sim.ctrl.energy_solver_type)
 
         self.solve_the_linear(a, L, sol.PL)

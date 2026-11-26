@@ -8,7 +8,7 @@ from stonedfenicsx.solver_module.solution_routine import solution_routine
 from stonedfenicsx.utils import print_ph, timing_function
 
 _VERSION_ = "0.0.1"
-_DATE_ = "26/08/2026"
+_DATE_ = "26/11/2026"
 _AUTHORS_ = "Andrea Piccolo, Timothy Craig"
 
 
